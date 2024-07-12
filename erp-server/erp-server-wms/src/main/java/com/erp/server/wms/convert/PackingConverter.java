@@ -101,7 +101,13 @@ public interface PackingConverter {
     })
     PackingTaskDetailEntity firstMileDeliveryDetailToPackingTaskDetail(FirstMileDeliveryDetailEntity detailEntity);
     List<PackingTaskDetailEntity> firstMileDeliveryDetailToPackingTaskDetail(List<FirstMileDeliveryDetailEntity> detailEntityList);
-
+    @Mappings({
+            @Mapping(target = "skuId", source = "skuId"),
+            @Mapping(target = "skuNo", source = "skuNo"),
+            @Mapping(target = "packQty", source = "packQty"),
+            @Mapping(target = "grossWeight", source = "grossWeight"),
+            @Mapping(target = "weightUnit", source = "weightUnit")
+    })
     WmsCartonSpecDTO.CartonDetailDTO cartonDetailToDTO(WmsCartonDetailEntity detailEntity);
     List<WmsCartonSpecDTO.CartonDetailDTO> cartonDetailToDTO(List<WmsCartonDetailEntity> detailEntityList);
 

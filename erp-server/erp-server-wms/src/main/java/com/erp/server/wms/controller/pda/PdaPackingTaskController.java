@@ -94,18 +94,6 @@ public class PdaPackingTaskController extends BaseController {
     public ApiResult<WmsCartonSpecDTO.PackedView> packedDetailView(@RequestParam("id") String id){
         return success(packingTaskService.packedDetailView(id));
     }
-    /**
-     * 装箱-详情(箱规+产品明细)
-     * @Author zdy
-     * @Date 2024/7/8 17:44
-     * @param id 装箱任务id
-     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
-     **/
-    @GetMapping("/packingView")
-    public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingView(@RequestParam("id") String id) {
-        WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = packingTaskService.packingView(id);
-        return success(wmsCartonSpecView);
-    }
 
     /**
      * 装箱-详情(箱规+产品明细)

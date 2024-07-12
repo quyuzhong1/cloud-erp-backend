@@ -71,6 +71,7 @@ public class PackingTaskDetailDTO implements Serializable {
         * fnSku
         */
         private String fnSku;
+        private String ean;
 
         private String sourceCode;
 
