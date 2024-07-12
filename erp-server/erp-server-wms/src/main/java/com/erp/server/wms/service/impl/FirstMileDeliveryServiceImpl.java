@@ -626,7 +626,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已生成装箱清单且装箱中&已装箱不允许删除");
         }
         //删除装箱信息
-        packingTaskService.delete(packingTask);
+        if(Objects.nonNull(packingTask)){
+            packingTaskService.delete(packingTask);
+        }
 
         String id = entity.getId();
         // 删除明细数据
