@@ -985,6 +985,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             WmsCartonSpecEntity wmsCartonSpecEntity = wmsCartonSpecService.getById(specId);
             //存在则删除之前装箱明细
             wmsCartonDetailService.deleteByCartonIds(Collections.singletonList(cartonEntity.getId()));
+            addDTO.setCartonId(cartonEntity.getId());
             String cartonId = wmsCartonService.add(addDTO,wmsCartonSpecEntity);
             WmsCartonEntity wmsCartonEntity = wmsCartonService.getById(cartonId);
             return packingTaskEntity.getSourceCode()+"-"+wmsCartonEntity.getBoxNo();
@@ -1049,37 +1050,23 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String cartonId = dto.getCartonId();
         WmsCartonEntity wmsCartonEntity = wmsCartonService.getById(cartonId);
         PackingTaskEntity packingTaskEntity = this.getById(wmsCartonEntity.getPackingTaskId());
-        List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonId));
+//        List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonId));
         //不同物流属性配置校验
-        List<String> skuIds1 = dto.getCartonDetailList().stream().map(WmsCartonDTO.AdjustDetailDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<String> skuIds2 = detailEntityList.stream().map(WmsCartonDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIds = dto.getCartonDetailList().stream().map(WmsCartonDTO.AdjustDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+//        List<String> skuIds2 = detailEntityList.stream().map(WmsCartonDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //合并sku
-        List<String> skuIds = Stream.concat(skuIds1.stream(), skuIds2.stream()).distinct().collect(Collectors.toList());
+//        List<String> skuIds = Stream.concat(skuIds1.stream(), skuIds2.stream()).distinct().collect(Collectors.toList());
         wmsCartonSpecService.checkProductPropertyIds(packingTaskEntity.getSourceType(), skuIds);
 
         List<WmsCartonDTO.AdjustDetailDTO> adjustDetailDTOList = dto.getCartonDetailList();
         for (WmsCartonDTO.AdjustDetailDTO adjustDetailDTO : adjustDetailDTOList){
-            WmsCartonDetailEntity wmsCartonDetailEntity = detailEntityList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
-            if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType())){
-                if (Objects.isNull(wmsCartonDetailEntity)){
-                    wmsCartonDetailEntity = PackingConverter.INSTANCE.cartonDtoToDetail(adjustDetailDTO, cartonId);
-                }else {
-                    wmsCartonDetailEntity.setPackQty(wmsCartonDetailEntity.getPackQty() + adjustDetailDTO.getPackQty());
-                    wmsCartonDetailEntity.setGrossWeight(adjustDetailDTO.getGrossWeight());
-                    wmsCartonDetailEntity.setWeightUnit(adjustDetailDTO.getWeightUnit());
-                }
+            WmsCartonDetailEntity wmsCartonDetailEntity = PackingConverter.INSTANCE.cartonDtoToDetail(adjustDetailDTO, cartonId);
+            if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType()) || AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
+                wmsCartonDetailEntity.setPackQty(adjustDetailDTO.getPackQty() + adjustDetailDTO.getAdjustQty());
             }else if (AdjustTypeEnum.PRETEND.getCode().equals(dto.getAdjustType())){
-                if (Objects.isNull(wmsCartonDetailEntity)){
-                    throw new ServiceException(ApiError.ERROR_92150,adjustDetailDTO.getSkuNo());
-                }else {
-                    wmsCartonDetailEntity.setPackQty(wmsCartonDetailEntity.getPackQty() - adjustDetailDTO.getPackQty());
-                    wmsCartonDetailEntity.setGrossWeight(adjustDetailDTO.getGrossWeight());
-                    wmsCartonDetailEntity.setWeightUnit(adjustDetailDTO.getWeightUnit());
-                }
-            }else if (AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
-                wmsCartonDetailEntity = PackingConverter.INSTANCE.cartonDtoToDetail(adjustDetailDTO, cartonId);
+                wmsCartonDetailEntity.setPackQty(adjustDetailDTO.getPackQty() - adjustDetailDTO.getAdjustQty());
             }
-            wmsCartonDetailService.saveOrUpdate(wmsCartonDetailEntity);
+            wmsCartonDetailService.save(wmsCartonDetailEntity);
             String adjustType = AdjustTypeEnum.getName(dto.getAdjustType());
             String msg = StrUtil.format("【{}】装箱【{}】【{}】", adjustType, wmsCartonEntity.getBoxNo() , wmsCartonDetailEntity.getSkuNo() + "*" + wmsCartonDetailEntity.getPackQty());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON_DETAIL.getCode(), packingTaskEntity.getId(), "调整装箱");
@@ -1106,7 +1093,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 if (Objects.isNull(groupSkuDTO)){
                     throw new ServiceException(ApiError.ERROR_92149,adjustDetailDTO.getSkuNo());
                 }
-                if (groupSkuDTO.getWaitPackQty() < adjustDetailDTO.getPackQty()){
+                int adjustQty = adjustDetailDTO.getAdjustQty() + adjustDetailDTO.getPackQty();
+                if (groupSkuDTO.getWaitPackQty() < adjustQty){
                     throw new ServiceException(ApiError.ERROR_92147,adjustDetailDTO.getSkuNo(), groupSkuDTO.getWaitPackQty());
                 }
             });
@@ -1114,13 +1102,17 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }else if (AdjustTypeEnum.PRETEND.getCode().equals(dto.getAdjustType())){
             List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(dto.getCartonId()));
             dto.getCartonDetailList().forEach(adjustDetailDTO -> {
+                WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO = groupSkuDTOList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
+                if (Objects.isNull(groupSkuDTO)){
+                    throw new ServiceException(ApiError.ERROR_92149,adjustDetailDTO.getSkuNo());
+                }
                 WmsCartonDetailEntity wmsCartonDetailEntity = detailEntityList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
                 if (Objects.isNull(wmsCartonDetailEntity)){
                     throw new ServiceException(ApiError.ERROR_92150,adjustDetailDTO.getSkuNo());
                 }
-                int packQty = detailEntityList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).map(WmsCartonDetailEntity::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (Objects.isNull(adjustDetailDTO.getPackQty()) || packQty < adjustDetailDTO.getPackQty()){
-                    throw new ServiceException(ApiError.ERROR_92148,adjustDetailDTO.getSkuNo(), packQty);
+                int adjustQty = adjustDetailDTO.getPackQty() - adjustDetailDTO.getAdjustQty();
+                if (adjustQty < 0){
+                    throw new ServiceException(ApiError.ERROR_92148,adjustDetailDTO.getSkuNo(), adjustDetailDTO.getPackQty());
                 }
             });
         }

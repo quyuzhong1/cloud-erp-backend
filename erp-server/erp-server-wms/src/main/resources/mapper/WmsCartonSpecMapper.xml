@@ -35,7 +35,7 @@
         FROM wms_carton_spec wcs
         LEFT JOIN wms_carton wc ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
         LEFT JOIN wms_carton_detail wcd ON wc.id = wcd.main_id AND wcd.is_deleted = FALSE
-        WHERE wcs.is_deleted = FALSE
+        WHERE wcs.is_deleted = FALSE AND wcd.sku_id is not null
         <if test="mainId != null and mainId != ''">
             AND wcs.main_id = #{mainId}
         </if>

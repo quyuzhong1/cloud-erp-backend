@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -82,6 +83,7 @@ public class WmsCartonDTO {
         /**
          * 调整装箱详情
          */
+        @Valid
         private List<AdjustDetailDTO> cartonDetailList;
     }
     @Data
@@ -92,9 +94,14 @@ public class WmsCartonDTO {
         /**
          * 装箱数量（调整装箱数量）
          */
-        @NotNull(message = "装箱数量不能为空")
-        @Min(value = 1,message = "装箱数量最小值为1")
+        @NotNull(message = "调整装箱数量不能为空")
+        @Min(value = 1,message = "调整装箱数量最小值为1")
+        private Integer adjustQty;
+        /**
+         * 本箱已装
+         */
         private Integer packQty;
+
         /**
          * 毛重
          */
