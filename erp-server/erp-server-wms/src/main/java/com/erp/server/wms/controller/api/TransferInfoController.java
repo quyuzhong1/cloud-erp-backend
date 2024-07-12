@@ -265,7 +265,7 @@ public class TransferInfoController extends BaseController {
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferInfoService.disApprove(dto.getIds(), Boolean.TRUE);
+        Boolean flag = transferInfoService.disApprove(dto.getIds(), Boolean.TRUE,Boolean.TRUE);
         return flag == true ? success() : failure();
     }
 

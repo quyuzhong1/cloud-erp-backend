@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -14,19 +16,13 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.PrintWayBillPdfDetailDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.dto.PrintWayBillPdfDTO;
-import com.common.business.dto.PrintWayBillPdfDetailDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -51,10 +47,6 @@ import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -75,13 +67,10 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -191,6 +180,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private CfgRuleOutService cfgRuleOutService;
     @Resource
     private WmsAttachmentService attachmentService;
+
+
+    @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
+
+    @Resource
+    private TransferInfoService transferInfoService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -1684,6 +1683,96 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      */
     private SoB2cDeliveryEntity getBySoCode (String soCode) {
        return lambdaQuery().eq(SoB2cDeliveryEntity::getSoCode,soCode).last("limit 1").one();
+    }
+
+    @Override
+    @Transactional(rollbackFor =  Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean deliveryOutStock(SoB2cDeliveryEntity entity) {
+        //TODO 插入是否中转配置判断是否中转
+        if (true) {
+            //生成直接调拨单
+            generateTransferInfo(entity);
+        }
+        //生成出库单
+        this.generateB2cSoOutstock(entity);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public BatchResultDTO retryOutstock(String id) {
+        return null;
+    }
+
+    /**
+     * 生成直接调拨单
+     * @author will
+     * @date 2024/7/11 16:13
+     * @param entity
+     */
+    private void generateTransferInfo (SoB2cDeliveryEntity entity) {
+        //发货单明细信息
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        if (CollectionUtil.isEmpty(soB2cDeliveryDetailList)) {
+            throw new ServiceException("B2C发货单明细不能为空");
+        }
+
+        TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
+        //跨组织调拨
+        addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        addDTO.setBillDate(LocalDate.now());
+        addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        //中转设置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity)) {
+           throw new ServiceException("未找到中转设置");
+        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
+        String transitWarehouseId = transitSettingDTO.getWarehouseId();
+
+        //发货组织默认取第一条仓库的组织，现阶段单个发货单组织一致
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(Arrays.asList(soB2cDeliveryDetailList.get(0).getWarehouseId(),transitWarehouseId));
+
+        //调出仓库
+        WarehouseEntity outWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), soB2cDeliveryDetailList.get(0).getWarehouseId())).findFirst().orElse(null);
+        if (ObjectUtil.isEmpty(outWarehouseEntity)) {
+            throw new ServiceException("调出仓库不能为空");
+        }
+        //调入仓库
+        WarehouseEntity inWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), transitWarehouseId)).findFirst().orElse(null);
+        if (ObjectUtil.isEmpty(inWarehouseEntity)) {
+            throw new ServiceException("调入仓库不能为空");
+        }
+
+        //批次号
+        String batchNo = IdUtil.getSnowflake().nextIdStr();
+        addDTO.setBatchNo(batchNo);
+        addDTO.setInOrgId(inWarehouseEntity.getOrgId());
+        addDTO.setOutOrgId(outWarehouseEntity.getOrgId());
+        addDTO.setRemark(StrUtil.format("【{}】发货自动生成调拨",entity.getCode()));
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        addDTO.setSourceCode(entity.getCode());
+        List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
+        for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
+            TransferInfoDetailDTO.AddDTO detailAddDTO = new TransferInfoDetailDTO.AddDTO();
+            detailAddDTO.setSkuId(detailEntity.getSkuId());
+            detailAddDTO.setSkuNo(detailEntity.getSkuNo());
+            detailAddDTO.setSourceDetailId(detailEntity.getId());
+            detailAddDTO.setQty(detailEntity.getDeliveryQty());
+            detailAddDTO.setOutWarehouseId(outWarehouseEntity.getId());
+            detailAddDTO.setInWarehouseId(inWarehouseEntity.getId());
+            detailList.add(detailAddDTO);
+        }
+        String id = transferInfoService.addAndSubmit(addDTO);
+        //审核
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(id));
+        baseApproveParamDTO.setType(ApproveType.PASS);
+        transferInfoService.approve(baseApproveParamDTO,Boolean.TRUE);
     }
 
     /**

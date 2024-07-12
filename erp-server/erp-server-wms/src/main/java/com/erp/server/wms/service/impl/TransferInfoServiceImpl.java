@@ -665,13 +665,22 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
-    public Boolean disApprove(List<String> ids, Boolean isPushKingDee) {
+    public Boolean disApprove(List<String> ids, Boolean isPushKingDee,Boolean isManual) {
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
         //已审核允许反审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
+        }
+        //发货单来源和发货通知单来源的直接调拨单不允许手动反审核
+        if (isManual) {
+            String codeList = list.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C_DELIVERY.getCode())
+                            || StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
+                    .map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
+            if (StrUtil.isNotBlank(codeList)) {
+                throw new ServiceException(StrUtil.format("直接调拨单【{}】不支持手动反审核"));
+            }
         }
 
         log.info("直接调拨单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
@@ -865,6 +874,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         List<TransferDTO>  addTransferList = new ArrayList<>();
         List<TransferDTO>  pushTransferList = new ArrayList<>();
+        List<TransferDTO>  deliveryTransferList = new ArrayList<>();
 
         for (TransferInfoDetailEntity detailEntity : detailList) {
 
@@ -889,6 +899,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             transferDTO.setQty(detailEntity.getQty());
             if (SourceTypeEnum.TRANSFER_APPLICATION.getCode().equals(transferInfoEntity.getSourceType())) {
                 pushTransferList.add(transferDTO);
+            } else if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(transferInfoEntity.getSourceType())){
+                deliveryTransferList.add(transferDTO);
             } else {
                 addTransferList.add(transferDTO);
             }
@@ -901,11 +913,19 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }
-        //下推数据更新库存
+        //调拨申请下推数据更新库存
         if (CollectionUtils.isNotEmpty(pushTransferList)) {
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
             inventoryTransferDTO.setParamList(pushTransferList);
             inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+        //B2C发货单下推数据更新库存
+        if (CollectionUtils.isNotEmpty(deliveryTransferList)) {
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setParamList(deliveryTransferList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DELIVERY_PUSH_TRANSFER.getCode());
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }
@@ -1199,7 +1219,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //如果是已审核，反审核
             if (ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
                 try {
-                    this.disApprove(Arrays.asList(entity.getId()), Boolean.TRUE);
+                    this.disApprove(Arrays.asList(entity.getId()), Boolean.TRUE,Boolean.TRUE);
                 } catch (Exception e) {
                     throw new ServiceException(ApiError.TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS, entity.getCode());
                 }
@@ -1269,7 +1289,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CollectionUtils.isNotEmpty(approveList)){
             List<String> approveIds = approveList.stream().map(BaseEntity::getId).collect(Collectors.toList());
             // 反审核
-            disApprove(approveIds, true);
+            disApprove(approveIds, true,Boolean.TRUE);
         }
 
         List<TransferInfoEntity> unSubmitList = list.stream()
@@ -1283,6 +1303,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         // 删除
         delete(delIds);
         return true;
+    }
+
+    @Override
+    public List<TransferInfoEntity> listByBatchNoList(List<String> batchNoList) {
+        if (CollectionUtils.isEmpty(batchNoList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(TransferInfoEntity::getBatchNo,batchNoList).list();
     }
 
     /**

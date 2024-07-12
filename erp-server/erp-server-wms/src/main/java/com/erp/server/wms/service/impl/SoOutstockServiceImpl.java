@@ -243,6 +243,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private PickingListsService pickingListsService;
 
+    @Resource
+    private TransferInfoService transferInfoService;
+
+
+
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
         return lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE)
@@ -1195,7 +1200,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         Boolean result = this.removeByIds(ids);
-        String b2cType = OrderTypeEnum.B2C.getCode();
         if (result) {
             //添加日志
             String content = "删除销售订单[%s]";
@@ -1203,7 +1207,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "删除");
             //删除明细
             soOutstockDetailService.removeByMainIdList(ids);
-            List<SoOutstockEntity> haveSoIdList = list.stream().filter(h -> StringUtils.isNotBlank(h.getSoId())).collect(Collectors.toList());
+
+            //自动删除同批次的直接调拨单
+            deleteTransferInfo(list);
 
             //B2B发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
@@ -1211,6 +1217,35 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return result;
     }
 
+    /**
+     * 删除直接调拨单
+     * @author will
+     * @date 2024/7/12 10:05
+     * @param list
+     */
+    private void deleteTransferInfo (List<SoOutstockEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //批次号集合
+        List<String> batchNoList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getBatchNo())).map(SoOutstockEntity::getBatchNo).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(batchNoList)) {
+            return;
+        }
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listByBatchNoList(batchNoList);
+        if (CollectionUtils.isEmpty(transferInfoList)) {
+            return;
+        }
+        List<String> transferIdList = transferInfoList.stream().map(TransferInfoEntity::getId).collect(Collectors.toList());
+        Boolean isDisApprove = transferInfoService.disApprove(transferIdList, Boolean.TRUE,Boolean.FALSE);
+        if (!isDisApprove) {
+            throw new ServiceException("直接调拨单反审核失败");
+        }
+        Boolean isDelete = transferInfoService.delete(transferIdList);
+        if (!isDelete) {
+            throw new ServiceException("直接调拨单删除失败");
+        }
+    }
 
     /**
      * 作废
@@ -1254,7 +1289,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         String content = "作废了一个销售出库单【%s】,作废原因: ".concat(remark);
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "作废");
-        String b2cType = OrderTypeEnum.B2C.getCode();
+
+        //自动删除同批次的直接调拨单
+        deleteTransferInfo(list);
+
         //B2B发送金蝶
         sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());
         return Boolean.TRUE;

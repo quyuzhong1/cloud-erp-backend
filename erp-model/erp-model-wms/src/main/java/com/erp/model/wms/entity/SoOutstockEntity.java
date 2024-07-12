@@ -280,6 +280,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("created")
     private LocalDateTime created;
 
+    /**
+     * 批次号，下推时生成
+     */
+    @TableField("batch_no")
+    private String batchNo;
+
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 
