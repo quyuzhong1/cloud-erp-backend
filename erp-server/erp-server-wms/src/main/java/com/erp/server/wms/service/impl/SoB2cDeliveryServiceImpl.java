@@ -1492,6 +1492,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.ERROR_99116);
         }
         List<SoB2cDeliveryDetailEntity> detailList = soB2cDeliveryDetailService.listByMainIds(dto.getIds());
+        List<String> warehouseIds = detailList.stream().map(SoB2cDeliveryDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(warehouseIds) && warehouseIds.size() > 1) {
+            throw new ServiceException(ApiError.ERROR_99121);
+        }
         for (SoB2cDeliveryEntity entity : b2cDelivery) {
             List<SoB2cDeliveryDetailEntity> detailEntities = detailList.stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
             try {
