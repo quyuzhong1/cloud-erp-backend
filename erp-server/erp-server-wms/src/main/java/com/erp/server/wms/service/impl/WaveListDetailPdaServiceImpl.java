@@ -76,6 +76,23 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 .set("status", WaveStatusEnum.HANG_UP.getCode())
                 .set(isOutStock, "is_out_stock", true)
         );
+
+        //更新波次明细状态
+        WaveListDetailDTO.ViewDTO view = waveDetailService.view(hangUpDTO.getWaveId());
+        List<WaveListDetailDTO.DeliveryInfoDTO> deliveryInfoList = view.getDeliveryInfoList();
+        Set<String> deliveryIds = new HashSet<>();
+        for (WaveListDetailDTO.DeliveryInfoDTO dto : deliveryInfoList) {
+            if(Objects.equals(dto.getSalesQty(), dto.getPickedSumQty())){
+                deliveryIds.add(dto.getDeliveryId());
+            }
+        }
+        if(! deliveryIds.isEmpty()){
+            waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>()
+                    .set("picking_status", PickingStatusEnum.FINISH.getCode())
+                    .in("delivery_id", deliveryIds)
+            );
+        }
+
         return Boolean.TRUE;
     }
 
