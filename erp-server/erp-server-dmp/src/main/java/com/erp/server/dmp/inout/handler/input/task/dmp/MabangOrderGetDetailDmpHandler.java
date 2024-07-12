@@ -14,9 +14,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+/**
+ * 获取马帮订单详情数据
+ */
 @Service
 @Scope("prototype")
-public class DmpInputMabangNextDmpHandler extends DmpInputDoNextDmpHandler{
+public class MabangOrderGetDetailDmpHandler extends DmpInputDoNextDmpHandler{
 
 	@Override
 	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){

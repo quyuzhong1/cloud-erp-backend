@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Scope("prototype")
-public class DmpInputMabangDmpHandler extends DmpInputThirdCodeDbDmpHandler{
+public class MabangDmpHandler extends DmpInputThirdCodeDbDmpHandler{
 
 	@Override
 	protected DmpBasicSystemCodeEnum getDmpBasicSystemCodeEnum() {

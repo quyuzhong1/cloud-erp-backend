@@ -8,7 +8,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.erp.server.dmp.inout.dto.request.*;
-import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputMabangApiInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.MabangOrderApiInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.MabangReturnApiInitHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -21,8 +22,6 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
-import com.erp.model.dmp.entity.DmpCfgInputChildEntity;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgInputTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
@@ -35,9 +34,7 @@ import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpCfgApiService;
-import com.erp.server.dmp.service.DmpCfgInputChildService;
 
-import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -128,11 +125,21 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				dmpInputWdtApiInitRequest.setRequestParam(extendJson);
 				dmpInputWdtApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
 			}else if(DmpBasicSystemCodeEnum.MABANG.getCode().equals(dmpBasicSystemEntity.getCode())){
-				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputMabangApiInitHandler.class);
+				String code = dmpCfgInputEntity.getCode();
+				if ("order".equals(code)) {
+					//销售订单
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangOrderApiInitHandler.class);
+				} else if ("orderReturn".equals(code)) {
+					//退货单
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangReturnApiInitHandler.class);
+				}
+
 				DmpInputMabangApiInitRequest dmpInputMabangApiInitRequest = new DmpInputMabangApiInitRequest();
 				dmpInputApiInitRequest = dmpInputMabangApiInitRequest;
 				dmpInputMabangApiInitRequest.setRequestParam(extendJson);
 				dmpInputMabangApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
+
+
 			}
 			
 			dmpInputApiInitRequest.setStartTime(startTime);

@@ -1,7 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.util.StrUtil;
-import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.enums.MabangOriginalOrderStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
@@ -14,13 +13,11 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * dmp处理下一个扩展handler，如何订单收货人信息单独一张表，使用此handler即可，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
- *
- * @author Administrator
+ * 退货订单主表字段映射转换
  */
 @Service
 @Scope("prototype")
-public class DmpInputMabangOrderDmpHandler extends DmpInputMabangDmpHandler {
+public class MabangReturnOrderDmpHandler extends MabangDmpHandler {
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
