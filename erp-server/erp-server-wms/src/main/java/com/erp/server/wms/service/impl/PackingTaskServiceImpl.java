@@ -783,10 +783,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 cartonDetailList.add(cartonDetailDTO);
             }
             view.setCartonDetailList(cartonDetailList);
-            //如果箱子中重量未计算
-            if (BigDecimal.ZERO.compareTo(view.getGrossWeight()) == 0){
-                view.setGrossWeight(cartonDetailList.stream().map(WmsCartonDTO.CartonDetailDTO::getGrossWeight).reduce(BigDecimal.ZERO,BigDecimal::add));
-            }
         }
         return view;
     }
@@ -1214,6 +1210,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.SUCCESS.getCode());
             wmsCartonService.updateById(wmsCartonEntity);
             operateLogService.addModuleOperateLog(log, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "修改箱规");
+            updatePackingStatus(listGroupSkuById(wmsCartonEntity.getPackingTaskId()),wmsCartonEntity.getPackingTaskId());
             return ApiResult.success(checkDTO.getMsg());
         }else{
             //更新状态为称重失败

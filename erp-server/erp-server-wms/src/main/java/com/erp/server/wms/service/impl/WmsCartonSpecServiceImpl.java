@@ -226,8 +226,8 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         if (CollectionUtils.isEmpty(propertyIds)){
             return;
         }
-        List<String> containIds1 = cannotPackingPropertyIds.stream().filter(e -> propertyIds.stream().allMatch(e::equals)).collect(Collectors.toList());
-        List<String> containIds2 = canPackingPropertyIds.stream().filter(e -> propertyIds.stream().allMatch(e::equals)).collect(Collectors.toList());
+        List<String> containIds1 = cannotPackingPropertyIds.stream().filter(propertyIds::contains).collect(Collectors.toList());
+        List<String> containIds2 = canPackingPropertyIds.stream().filter(propertyIds::contains).collect(Collectors.toList());
         List<BasicDictEntity> declarePropertyList = plmTaskFeign.listDictByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
         Map<String, String> dictMap = declarePropertyList.stream().collect(Collectors.toMap(BasicDictEntity::getId, BasicDictEntity::getName));
         if (CollectionUtils.isNotEmpty(containIds1) && CollectionUtils.isNotEmpty(containIds2)){
