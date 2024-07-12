@@ -55,6 +55,14 @@ public class ServiceException extends RuntimeException {
         log.error(msg);
     }
 
+    public ServiceException(String formatErrMsg,Object... args) {
+        // 加上super，否则会显示null
+        super(StrUtil.format(formatErrMsg,args) );
+        this.code = ApiError.Default.code;
+        this.msg = StrUtil.format(formatErrMsg,args) ;
+        log.error(msg);
+    }
+
     /**
      * 从枚举中获取参数
      *
@@ -96,10 +104,17 @@ public class ServiceException extends RuntimeException {
 
     /**
      * 抛出 ServiceException 异常
-     * @param msg   错误消息
+     * @param msg    错误消息,支持格式化
      */
     public static void runError(String msg) {
         throw new ServiceException(msg);
+    }
+    /**
+     * 抛出 ServiceException 异常
+     * @param formatedErrMsg    错误消息,支持格式化，如：XXX[{}]成功
+     */
+    public static void runError(String formatedErrMsg,Object... params) {
+        throw new ServiceException(formatedErrMsg,params);
     }
 
     /**
