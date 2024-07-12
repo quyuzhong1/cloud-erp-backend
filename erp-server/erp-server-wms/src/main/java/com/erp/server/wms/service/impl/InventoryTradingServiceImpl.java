@@ -3,7 +3,9 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.InventoryClosedRecordEnum;
@@ -18,6 +20,8 @@ import com.erp.model.wms.entity.InventoryHisEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.service.*;
+import com.google.common.base.Stopwatch;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.IteratorUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -27,14 +31,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * @Classname: InventoryTradingServiceImpl
- * @Description: 库存交易辅助类
- * @CreateTime: 2024-07-04
- * @Author: Edison.Qu
+ * 库存交易辅助类，用于处理各种库存交易操作。
+ * @since 2024-07-04
+ * @author Edison.Qu
  */
+@Slf4j
 @Service
 public class InventoryTradingServiceImpl implements InventoryTradingService {
     @Resource
@@ -53,53 +58,64 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     private StocktakingProfitLossServiceImpl stocktakingProfitLossService;
 
     @Override
-    @DistributeLocker(keyName = "skuId,warehouseId,warehouseLocation,inventoryStatus", businessType = InventoryTransCoreService.BUSINESS_TYPE )
+    @DistributeLocker(businessType = InventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.warehouseLocation,transactionList.inventoryStatus")
     public void doTransactionList(List<InventoryTransactionDTO> transactionList, String approveType) {
         if(CollectionUtils.isEmpty(transactionList)) {
+            log.warn("库存交易列表为空！");
             return;
         }
-        //校验单据是否已经审批
-        if(approveType.equals(InventoryTradingService.APPROVE)) {
-            this.checkHasApproved(transactionList.get(0));
-        }
+        // 计时器-开始
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            // 1-校验单据是否已经审批
+            if(approveType.equals(InventoryTradingService.APPROVE)) {
+                this.checkHasApproved(transactionList.get(0));
+            }
+            // 2-移除忽略的sku
+            transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
+            // 排序
+            transactionList = this.sortInventoryTransactionList(transactionList);
+            // 3-检查业务是否允许交易
+            this.checkAllowTransactionList(transactionList);
+            // 检查库存是否充足
+            this.checkInventoryList(transactionList);
+            // 4-检查每日库存是否充足
+            this.checkInventoryHisList(transactionList);
+            // 5-处理库存更新逻辑
+            for (InventoryTransactionDTO transactionDTO : transactionList) {
+                this.doTransaction(transactionDTO,approveType.equals(InventoryTradingService.APPROVE));
+            }
+            // 6-反审核时，批量删除交易记录
+            if(approveType.equals(InventoryTradingService.UNAPPROVE)){
+                List<String> ids = this.getTransactionFlowIds(transactionList);
+                this.deleteTransactionFlowList(ids);
+            }
 
-        // 移除忽略的sku
-        transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
-        // 排序
-        transactionList = this.sortInventoryTransactionList(transactionList);
-
-        // 检查业务是否允许交易
-        this.checkAllowTransactionList(transactionList);
-        // 检查每日库存是否充足
-        this.checkInventoryHisList(transactionList);
-        // 检查库存是否充足
-        this.checkInventoryList(transactionList);
-
-        // 处理库存更新逻辑
-        for (InventoryTransactionDTO transactionDTO : transactionList) {
-            this.doTransaction(transactionDTO);
-        }
-        // 保存/删除交易记录
-        if(approveType.equals(InventoryTradingService.APPROVE)){
-            // 批量增加交易记录
-            List<TransactionFlowEntity> transactionFlowList= this.convertTransactionFlowList(transactionList);
-            this.saveTransactionFlowList(transactionFlowList);
-
-        }else{
-            // 批量删除交易记录
-            List<String> ids = this.getTransactionFlowIds(transactionList);
-            this.deleteTransactionFlowList(ids);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            stopwatch.stop();
+            // 计时器-结束
+            log.info("单据编号：{}，库存交易耗时：{} ms", transactionList.get(0).getSourceCode(),stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
     /**
      * 处理库存交易
-     * @param transactionDTO    库存交易信息
+     * @param transactionDTO 库存交易信息
+     * @param isApprove     是否审批
      */
-    public void doTransaction(InventoryTransactionDTO transactionDTO) {
+    public void doTransaction(InventoryTransactionDTO transactionDTO, boolean isApprove) {
         this.checkInventoryList(Collections.singletonList(transactionDTO));
+        // 更新库存
         this.updateInventory(transactionDTO);
+        // 更新库存历史
         this.updateInventoryHis(transactionDTO);
+        // 保存当前审批的交易记录
+        if(isApprove){
+            this.saveCurrTransactionFlow(transactionDTO);
+        }
+        // 更新库存交易记录 剩余库存
         this.updateInventoryTransaction(transactionDTO);
     }
 
@@ -108,7 +124,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * @param transactionDTO    交易记录
      */
     private void checkHasApproved(InventoryTransactionDTO transactionDTO) {
-        TransactionFlowEntity transactionFlow = new TransactionFlowEntity();
+        TransactionFlowEntity transactionFlow;
         QueryWrapper<TransactionFlowEntity> wrapper = new QueryWrapper<>();
         wrapper.lambda().eq(TransactionFlowEntity::getSourceType, transactionDTO.getSourceType())
                 .eq(TransactionFlowEntity::getSourceId, transactionDTO.getSourceId())
@@ -117,7 +133,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                 .last("limit 1");
         transactionFlow = transactionFlowService.getOne(wrapper);
         if(transactionFlow != null) {
-            ServiceException.runError("单据已经审批,单据类型:{}编号:{},不能重复审批", transactionDTO.getSourceTypeName(), transactionDTO.getSourceCode());
+            ServiceException.runError("重复审批！单据编号=[{}] 已存在库存流水,请刷新后查看单据状态", transactionDTO.getSourceCode());
         }
     }
 
@@ -316,7 +332,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
 
         }
         if(inventoryQty + transactionDTO.getQty() < 0) {
-            return StrUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]库存不足,库存:{},交易数:{}\n"
+            return StrUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{}\n"
                     , transactionDTO.getSkuNo()
                     , transactionDTO.getWarehouseName()
                     , transactionDTO.getWarehouseLocationName()
@@ -338,19 +354,19 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         }
 
         if(null != transactionDTO.getInventoryId()) {
-            List<InventoryHisEntity> inventoryHisList = inventoryHisService.list(new QueryWrapper<InventoryHisEntity>()
-                    .eq("info_id", transactionDTO.getInventoryId())
-                    .gt("bill_date", transactionDTO.getBillDate()));
+            List<InventoryHisEntity> inventoryHisList = inventoryHisService.list(new LambdaQueryWrapper<InventoryHisEntity>()
+                    .eq(InventoryHisEntity::getInfoId, transactionDTO.getInventoryId())
+                    .ge(InventoryHisEntity::getBillDate, transactionDTO.getBillDate()));
 
             for (InventoryHisEntity inventoryHisEntity : inventoryHisList) {
                 int inventoryQty = inventoryHisEntity.getQty();
                 if (inventoryQty + transactionDTO.getQty() < 0) {
-                    return StrUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]交易会导致[{}]库存不足,库存:{},交易数:{}\n"
+                    return StrUtil.format("交易会导致[{}]库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}]，当日库存:{},交易数:{}\n"
+                            , inventoryHisEntity.getBillDate()
                             , transactionDTO.getSkuNo()
                             , transactionDTO.getWarehouseName()
                             , transactionDTO.getWarehouseLocationName()
                             , transactionDTO.getInventoryStatusName()
-                            , inventoryHisEntity.getBillDate()
                             , inventoryQty
                             , transactionDTO.getQty());
                 }
@@ -366,20 +382,37 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      */
     private void updateInventory(InventoryTransactionDTO transactionDTO) {
         if(null == transactionDTO.getInventoryId()) {
-            ServiceException.runError("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}],inventory_id为空,请让【实施工程师】协调开发人员处理",
+            ServiceException.runError("inventory_id为空：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],请让【实施工程师】协调开发人员处理",
                     transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),transactionDTO.getWarehouseLocationName(),transactionDTO.getInventoryStatusName());
         }
+        InventoryEntity inventoryEntity = inventoryService.getById(transactionDTO.getInventoryId());
+        if(null == inventoryEntity) {
+            inventoryEntity=new InventoryEntity();
+            inventoryEntity.setSkuId(transactionDTO.getSkuId());
+            inventoryEntity.setOrgId(transactionDTO.getOrgId());
+            inventoryEntity.setWarehouseId(transactionDTO.getWarehouseId());
+            inventoryEntity.setWarehouseLocation(transactionDTO.getWarehouseLocation());
+            inventoryEntity.setDictInventoryStatus(transactionDTO.getInventoryStatus());
+            inventoryEntity.setQty(transactionDTO.getQty());
+            inventoryEntity.setCreateTime(LocalDateTime.now());
+            inventoryEntity.setCreateUserId(transactionDTO.getUserId());
+            inventoryEntity.setCreateUserName(transactionDTO.getUserName());
+            inventoryEntity.setUpdateTime(LocalDateTime.now());
+            inventoryEntity.setUpdateUserId(transactionDTO.getUserId());
+            inventoryEntity.setUpdateUserName(transactionDTO.getUserName());
+            inventoryService.save(inventoryEntity);
+        }else{
+            UpdateWrapper<InventoryEntity> wrapper = new UpdateWrapper<>();
+            wrapper.setSql("qty = qty + " +transactionDTO.getQty())
+                    .lambda()
+                    .set(InventoryEntity::getUpdateTime, LocalDateTime.now())
+                    .set(InventoryEntity::getUpdateUserId, transactionDTO.getUserId())
+                    .set(InventoryEntity::getUpdateUserName, transactionDTO.getUserName())
+                    //条件
+                    .eq(InventoryEntity::getId, transactionDTO.getInventoryId());
 
-        UpdateWrapper<InventoryEntity> wrapper = new UpdateWrapper<>();
-        wrapper.setSql("qty = qty + " +transactionDTO.getQty())
-                .lambda()
-                .set(InventoryEntity::getUpdateTime, LocalDateTime.now())
-                .set(InventoryEntity::getUpdateUserId, transactionDTO.getUserId())
-                .set(InventoryEntity::getUpdateUserName, transactionDTO.getUserName())
-                //条件
-                .eq(InventoryEntity::getId, transactionDTO.getInventoryId());
-
-        inventoryService.update(wrapper);
+            inventoryService.update(wrapper);
+        }
     }
 
     /**
@@ -392,9 +425,12 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                     transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),transactionDTO.getWarehouseLocationName(),transactionDTO.getInventoryStatusName());
         }
 
-        UpdateWrapper<InventoryHisEntity> wrapper = new UpdateWrapper<>();
+        // 查询当天历史库存
+        saveInventoryCurrentday(transactionDTO);
+
+        // 更新当天之后的历史库存
+        LambdaUpdateWrapper<InventoryHisEntity> wrapper = new LambdaUpdateWrapper<>();
         wrapper.setSql("qty = qty + " + transactionDTO.getQty())
-                .lambda()
                 .set(InventoryHisEntity::getUpdateTime, LocalDateTime.now())
                 .set(InventoryHisEntity::getUpdateUserId, transactionDTO.getUserId())
                 .set(InventoryHisEntity::getUpdateUserName, transactionDTO.getUserName())
@@ -403,6 +439,68 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                 .gt(InventoryHisEntity::getBillDate, transactionDTO.getBillDate());
 
         inventoryHisService.update(wrapper);
+    }
+
+    /**
+     * 保存当天历史库存
+     * @param transactionDTO    库存交易信息
+     */
+    private void saveInventoryCurrentday(InventoryTransactionDTO transactionDTO) {
+        InventoryHisEntity inventoryHis = this.queryInventoryHisLast(transactionDTO.getInventoryId(), transactionDTO.getBillDate(),true);
+
+        if(null == inventoryHis) {
+            // 查询当天以前的库存
+            inventoryHis = this.queryInventoryHisLast(transactionDTO.getInventoryId(), transactionDTO.getBillDate(),false);
+            int inventoryQty = (null == inventoryHis) ? 0 : inventoryHis.getQty();
+
+            inventoryHis = new InventoryHisEntity();
+            inventoryHis.setInfoId(transactionDTO.getInventoryId());
+            inventoryHis.setBillDate(transactionDTO.getBillDate());
+            inventoryHis.setQty(inventoryQty+ transactionDTO.getQty());
+            inventoryHis.setCreateUserId(transactionDTO.getUserId());
+            inventoryHis.setCreateUserName(transactionDTO.getUserName());
+            inventoryHis.setCreateTime(LocalDateTime.now());
+            inventoryHis.setUpdateUserId(transactionDTO.getUserId());
+            inventoryHis.setUpdateUserName(transactionDTO.getUserName());
+            inventoryHis.setUpdateTime(LocalDateTime.now());
+
+            inventoryHisService.save(inventoryHis);
+        }else {
+            // 更新当天历史库存
+            UpdateWrapper<InventoryHisEntity> wrapper = new UpdateWrapper<>();
+            wrapper.setSql("qty = qty + " + transactionDTO.getQty())
+                    .lambda()
+                    .set(InventoryHisEntity::getUpdateTime, LocalDateTime.now())
+                    .set(InventoryHisEntity::getUpdateUserId, transactionDTO.getUserId())
+                    .set(InventoryHisEntity::getUpdateUserName, transactionDTO.getUserName())
+                    //条件
+                    .eq(InventoryHisEntity::getId, inventoryHis.getId());
+
+            inventoryHisService.update(wrapper);
+        }
+    }
+
+    /**
+     * 查询库存历史
+     * @param inventoryId   库存id
+     * @param billDate      交易日期
+     * @param isOnlyCurrBillDate   是否只查询当天的历史
+     * @return  库存历史
+     */
+    private InventoryHisEntity queryInventoryHisLast(String inventoryId, LocalDate billDate, boolean isOnlyCurrBillDate) {
+        LambdaQueryWrapper<InventoryHisEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper
+                .eq(InventoryHisEntity::getInfoId, inventoryId)
+                .orderByDesc(InventoryHisEntity::getBillDate)
+                .orderByDesc(InventoryHisEntity::getId)
+                .last("limit 1");
+        if(isOnlyCurrBillDate) {
+            queryWrapper.eq(InventoryHisEntity::getBillDate, billDate);
+        }else{
+            queryWrapper.lt(InventoryHisEntity::getBillDate, billDate);
+        }
+        return inventoryHisService.getOne(queryWrapper);
+
     }
 
     /**
@@ -415,9 +513,8 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                     transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),transactionDTO.getWarehouseLocationName(),transactionDTO.getInventoryStatusName());
         }
 
-        UpdateWrapper<TransactionFlowEntity> wrapper = new UpdateWrapper<>();
+        LambdaUpdateWrapper<TransactionFlowEntity> wrapper = new LambdaUpdateWrapper<>();
         wrapper.setSql("cur_inventory_qty = cur_inventory_qty + " + transactionDTO.getQty())
-                .lambda()
                 .set(TransactionFlowEntity::getUpdateTime, LocalDateTime.now())
                 .set(TransactionFlowEntity::getUpdateUserId, transactionDTO.getUserId())
                 .set(TransactionFlowEntity::getUpdateUserName, transactionDTO.getUserName())
@@ -430,76 +527,74 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     }
 
     /**
-     * 转换交易记录列表
-     * @param transactionList   交易记录列表
-     * @return  交易记录列表
+     * 获取最后一次交易记录的剩余库存数量
+     * @param transactionDTO   交易记录
+     * @return  最后一次交易记录的剩余库存数量
      */
-    private List<TransactionFlowEntity> convertTransactionFlowList(List<InventoryTransactionDTO> transactionList) {
-        List<TransactionFlowEntity> result = new ArrayList<>();
+    private int getLastTransactionInventoryQty(InventoryTransactionDTO transactionDTO) {
+        int initInventoryQty = 0;
+        LambdaQueryWrapper<TransactionFlowEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper
+                .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId())
+                .le(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate())
+                .eq(TransactionFlowEntity::getIsUnapproved, false)
+                .orderByDesc(TransactionFlowEntity::getBillDate)
+                .orderByDesc(TransactionFlowEntity::getId)
+                .last("limit 1");
 
-        for(InventoryTransactionDTO transactionDTO:transactionList) {
-            TransactionFlowEntity transactionFlowEntity = new TransactionFlowEntity();
-
-            // 交易头部信息
-            transactionFlowEntity.setId(transactionDTO.getId());
-            transactionFlowEntity.setTransactionNo(transactionDTO.getTransactionNo());
-            transactionFlowEntity.setTransactionRuleId(transactionDTO.getTransactionRuleId());
-
-            // 交易明细信息
-            transactionFlowEntity.setInventoryId(transactionDTO.getInventoryId());
-            transactionFlowEntity.setSkuId(transactionDTO.getSkuId());
-            transactionFlowEntity.setSkuNo(transactionDTO.getSkuNo());
-            transactionFlowEntity.setOrgId(transactionDTO.getOrgId());
-            transactionFlowEntity.setWarehouseId(transactionDTO.getWarehouseId());
-            transactionFlowEntity.setWarehouseLocation(transactionDTO.getWarehouseLocation());
-            transactionFlowEntity.setDictInventoryStatus(transactionDTO.getInventoryStatus());
-
-            // 交易时间 & 单据类型
-            transactionFlowEntity.setBillDate(transactionDTO.getBillDate());
-            transactionFlowEntity.setDictBizType(transactionDTO.getDictBizType());
-            transactionFlowEntity.setSourceType(transactionDTO.getSourceType());
-            transactionFlowEntity.setSourceId(transactionDTO.getSourceId());
-            transactionFlowEntity.setSourceCode(transactionDTO.getSourceCode());
-            transactionFlowEntity.setSourceDetailId(transactionDTO.getSourceDetailId());
-
-            // 交易数量
-            transactionFlowEntity.setQty(transactionDTO.getQty());
-
-            // 交易人员信息
-            transactionFlowEntity.setCreateUserId(transactionDTO.getUserId());
-            transactionFlowEntity.setCreateUserName(transactionDTO.getUserName());
-            transactionFlowEntity.setCreateTime(LocalDateTime.now());
-
-            transactionFlowEntity.setUpdateUserId(transactionDTO.getUserId());
-            transactionFlowEntity.setUpdateUserName(transactionDTO.getUserName());
-            transactionFlowEntity.setUpdateTime(LocalDateTime.now());
-
-            transactionFlowEntity.setUserId(transactionDTO.getUserId());
-            transactionFlowEntity.setTradeTime(LocalDateTime.now());
-            transactionFlowEntity.setOperationMode("approve");
-
-            result.add(transactionFlowEntity);
-        }
-        return result;
+        TransactionFlowEntity transactionFlow =transactionFlowService.getOne(queryWrapper);
+        return null == transactionFlow ? initInventoryQty : transactionFlow.getCurInventoryQty();
     }
 
     /**
-     * 批量保存交易记录
-     * @param transactionFlowList   交易记录列表
+     * 保存交易记录
+     * @param transactionDTO   交易记录列表
      */
-    private void saveTransactionFlowList(List<TransactionFlowEntity> transactionFlowList) {
-        // 设置每页大小
-        int pageSize = 200;
+    private void saveCurrTransactionFlow(InventoryTransactionDTO transactionDTO) {
+        TransactionFlowEntity transactionFlowEntity = new TransactionFlowEntity();
 
-        // 创建迭代器
-        Iterator<TransactionFlowEntity> iterator = transactionFlowList.iterator();
+        // 交易头部信息
+        transactionFlowEntity.setId(transactionDTO.getId());
+        transactionFlowEntity.setTransactionNo(transactionDTO.getTransactionNo());
+        transactionFlowEntity.setTransactionRuleId(transactionDTO.getTransactionRuleId());
 
-        // 按页批量保存
-        while (iterator.hasNext()) {
-            List<TransactionFlowEntity> page = IteratorUtils.toList(IteratorUtils.boundedIterator(iterator, pageSize));
-            transactionFlowService.saveBatch(page);
-        }
+        // 交易明细信息
+        transactionFlowEntity.setInventoryId(transactionDTO.getInventoryId());
+        transactionFlowEntity.setSkuId(transactionDTO.getSkuId());
+        transactionFlowEntity.setSkuNo(transactionDTO.getSkuNo());
+        transactionFlowEntity.setOrgId(transactionDTO.getOrgId());
+        transactionFlowEntity.setWarehouseId(transactionDTO.getWarehouseId());
+        transactionFlowEntity.setWarehouseName(transactionDTO.getWarehouseName());
+        transactionFlowEntity.setWarehouseLocation(transactionDTO.getWarehouseLocation());
+        transactionFlowEntity.setDictInventoryStatus(transactionDTO.getInventoryStatus());
 
+        // 交易时间 & 单据类型
+        transactionFlowEntity.setBillDate(transactionDTO.getBillDate());
+        transactionFlowEntity.setTradeTime(LocalDateTime.now());
+        transactionFlowEntity.setDictBizType(transactionDTO.getDictBizType());
+        transactionFlowEntity.setSourceType(transactionDTO.getSourceType());
+        transactionFlowEntity.setSourceId(transactionDTO.getSourceId());
+        transactionFlowEntity.setSourceCode(transactionDTO.getSourceCode());
+        transactionFlowEntity.setSourceDetailId(transactionDTO.getSourceDetailId());
+
+        // 交易数量
+        transactionFlowEntity.setQty(transactionDTO.getQty());
+        transactionFlowEntity.setCurInventoryQty(getLastTransactionInventoryQty(transactionDTO)+transactionDTO.getQty());
+
+        // 交易人员信息
+        transactionFlowEntity.setCreateUserId(transactionDTO.getUserId());
+        transactionFlowEntity.setCreateUserName(transactionDTO.getUserName());
+        transactionFlowEntity.setCreateTime(LocalDateTime.now());
+
+        transactionFlowEntity.setUpdateUserId(transactionDTO.getUserId());
+        transactionFlowEntity.setUpdateUserName(transactionDTO.getUserName());
+        transactionFlowEntity.setUpdateTime(LocalDateTime.now());
+
+        transactionFlowEntity.setUserId(transactionDTO.getUserId());
+        transactionFlowEntity.setTradeTime(LocalDateTime.now());
+        transactionFlowEntity.setOperationMode("approve");
+
+        transactionFlowService.save(transactionFlowEntity);
     }
 
     /**

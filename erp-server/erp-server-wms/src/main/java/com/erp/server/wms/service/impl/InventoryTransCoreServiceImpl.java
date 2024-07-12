@@ -17,6 +17,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,11 +28,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * @Classname: InventoryTransCoreServiceImpl
- * @Description: 库存交易核心处理类
- * @CreateTime: 2024-07-04
- * @Author: Edison.Qu
+ * 库存交易核心处理类
+ * @since  2024-07-04
+ * @author Edison.Qu
  */
+@Slf4j
 @Service
 public class InventoryTransCoreServiceImpl implements InventoryTransCoreService {
     @Resource
@@ -83,7 +84,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         //校验规则
         this.checkRule(param.getRules());
         //解析库存交易数据
-        List<InventoryTransactionDTO> transactionDtoList= this.parseTransactionList(param.getParamList(),param.getRules());
+        List<InventoryTransactionDTO> transactionDtoList= this.parseTransactionFromTransfer(param.getParamList(),param.getRules());
         //执行库存交易
         tradingService.doTransactionList(transactionDtoList,InventoryTradingService.APPROVE);
     }
@@ -98,7 +99,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         //校验规则
         this.checkRule(param.getRules());
         //解析库存交易数据
-        List<InventoryTransactionDTO> transactionDtoList=this.parseTranactionList(param.getParamList(),param.getRules());
+        List<InventoryTransactionDTO> transactionDtoList=this.parseTranactionFromInOut(param.getParamList(),param.getRules());
         //执行库存交易
         tradingService.doTransactionList(transactionDtoList,InventoryTradingService.APPROVE);
     }
@@ -107,7 +108,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Override
     public void unApprove(InventoryUnApproveDTO param) {
         List< TransactionFlowEntity> transactionFlowList = this.queryTransactionFlowList(param.getSourceType(),param.getBillId());
-        List<InventoryTransactionDTO> transactionDtoList= this.parseTransactionList(transactionFlowList);
+        List<InventoryTransactionDTO> transactionDtoList= this.parseTransactionForUnApprove(transactionFlowList);
         tradingService.doTransactionList(transactionDtoList,InventoryTradingService.UNAPPROVE);
     }
 
@@ -121,7 +122,6 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             this.unApprove(inventoryUnApproveDTO);
         });
     }
-
 
     /**
      * 根据业务类型获取交易规则
@@ -207,10 +207,10 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
      * @param rules 交易规则
      * @return  交易数据
      */
-    private List<InventoryTransactionDTO> parseTranactionList(List<InOutStockDTO> inOutStockList, List<TransactionRuleDTO> rules) {
+    private List<InventoryTransactionDTO> parseTranactionFromInOut(List<InOutStockDTO> inOutStockList, List<TransactionRuleDTO> rules) {
         List<InventoryTransactionDTO> result = Lists.newArrayList();
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<WarehouseEntity> warehouseEntityList = warehouseService.list();
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listWarehouseWithCaches();
         List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
 
         // 关联交易号
@@ -280,10 +280,10 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
      * @param rules         交易规则
      * @return              交易数据
      */
-    private List<InventoryTransactionDTO> parseTransactionList(List<TransferDTO> transferList, List<TransactionRuleDTO> rules) {
+    private List<InventoryTransactionDTO> parseTransactionFromTransfer(List<TransferDTO> transferList, List<TransactionRuleDTO> rules) {
         List<InventoryTransactionDTO> result = Lists.newArrayList();
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<WarehouseEntity> warehouseEntityList = warehouseService.list();
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listWarehouseWithCaches();
         List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
 
         // 关联交易号
@@ -305,13 +305,13 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                     stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getCurWarehouseId()));
                     stockBaseDTO.setWarehouseId(flow.getCurWarehouseId());
                     stockBaseDTO.setWarehouseLocation(flow.getCurWarehouseLocation());
-                    stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
+                    stockBaseDTO.setInventoryStatus(rule.getInventoryStatus()); // 调出仓的库存状态
 
                 }else {
                     stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getTargetWarehouseId()));
                     stockBaseDTO.setWarehouseId(flow.getTargetWarehouseId());
                     stockBaseDTO.setWarehouseLocation(flow.getTargetWarehouseLocation());
-                    stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
+                    stockBaseDTO.setInventoryStatus(rule.getInventoryStatus()); // 调入仓的库存状态
                 }
                 transactionDTO.setInventoryId(getSavedInventoryId(stockBaseDTO));
 
@@ -358,10 +358,10 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
      * @param transactionFlowList   交易流水列表
      * @return  交易数据
      */
-    private List<InventoryTransactionDTO> parseTransactionList(List<TransactionFlowEntity> transactionFlowList) {
+    private List<InventoryTransactionDTO> parseTransactionForUnApprove(List<TransactionFlowEntity> transactionFlowList) {
         List<InventoryTransactionDTO> result = Lists.newArrayList();
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<WarehouseEntity> warehouseEntityList = warehouseService.list();
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listWarehouseWithCaches();
         List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
 
         transactionFlowList.forEach(flow->{
@@ -396,7 +396,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             transactionDTO.setSourceDetailId(flow.getSourceDetailId());
 
             // 交易数量
-            transactionDTO.setQty(flow.getQty());
+            transactionDTO.setQty(flow.getQty()*-1);
 
             // 交易人员信息
             transactionDTO.setUserId(userInfo.getUid());
@@ -420,7 +420,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             return;
         }
         // 查询仓库信息
-        List<WarehouseEntity> warehouseEntityList = warehouseService.list();
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listWarehouseWithCaches();
         // 查询忽略库存的sku
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
