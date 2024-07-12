@@ -1716,7 +1716,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(StrUtil.format("发货单【{}】已下推出库单不支持重新出库",entity.getCode()));
         }
         //生成出库单
-        this.generateB2cSoOutstock(entity);
+        this.deliveryOutStock(entity);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】重新出库单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
