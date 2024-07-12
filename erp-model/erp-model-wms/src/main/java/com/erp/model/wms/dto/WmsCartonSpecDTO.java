@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -669,7 +668,7 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
          * 已装箱（箱数）
          */
-        private Integer boxQty;
+        private Integer boxNum;
         /**
          * 已装箱数量
          */
