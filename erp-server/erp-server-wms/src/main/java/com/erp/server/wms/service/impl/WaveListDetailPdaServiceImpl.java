@@ -17,6 +17,7 @@ import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
+import com.erp.model.wms.enums.PickingStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
@@ -237,6 +238,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         List<PickingDetailEntity> pickingDetails = pickingDetailService.list(new QueryWrapper<PickingDetailEntity>().in("main_id", pickingIds));
 
         List<PickingDetailEntity> updateList = new ArrayList<>();
+        Set<String> pickedDeliveryIds = new HashSet<>();
         //遍历PDA上显示的每个拣货仓位
         for (WaveListDetailPdaDTO.PickingLocationDTO dto : pickingLocationList) {
             Boolean isOutStock = dto.getIsOutStock();   //业务人员标记是否缺货
@@ -259,6 +261,9 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 updateList.add(updateDto);
 
                 outStockDeliveryIds.add(deliveryId);
+                if(basketDTO.getPickedQty() > 0){
+                    pickedDeliveryIds.add(deliveryId);
+                }
             }
             //仓位标记缺货，则所有涉及的发货单都置为异常
             if(isOutStock){
@@ -267,6 +272,12 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                         .set("abnormal_cause", AbnormalCauseEnum.PICK_MARKINGS.getCode())
                         .in("id", outStockDeliveryIds));
             }
+        }
+        //将有已拣数量的发货单标记为拣货中
+        if(! pickedDeliveryIds.isEmpty()){
+            waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>()
+                    .set("picking_status", PickingStatusEnum.PICK_ING.getCode())
+                    .in("delivery_id", pickedDeliveryIds));
         }
         return updateList;
     }
