@@ -52,6 +52,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     private PickingCartTypeService pickingCartTypeService;
     @Resource
     private WaveListCartTypeMapper waveListCartTypeMapper;
+    @Resource
+    private PickingListsService pickingListsService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -219,6 +221,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         this.baseMapper.deleteById(entity);
         //释放冻结库存
         deliveryService.rollbackInventory(collect);
+        //删除拣货单
+        pickingListsService.deleteBySourceId(deliveryIds);
         //修改发货单状态
         deliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>().in("id", collect).set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode()));
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "成功");

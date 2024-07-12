@@ -507,7 +507,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 String format = String.format("仓位可用库存不足，可用数量：%s，总取货数量：%s", inventory.getQty(), sum);
                 verifyList.add(BatchResultDTO.fail(String.valueOf(i), warehouseId + " ：" + warehouseLocation + " ：" + skuId, format));
             }else {
-                verifyList.add(BatchResultDTO.fail(String.valueOf(i), warehouseId + " ：" + warehouseLocation + " ：" + skuId, "成功"));
+                verifyList.add(BatchResultDTO.success(String.valueOf(i), warehouseId + " ：" + warehouseLocation + " ：" + skuId, "成功"));
             }
             i++;
         }
