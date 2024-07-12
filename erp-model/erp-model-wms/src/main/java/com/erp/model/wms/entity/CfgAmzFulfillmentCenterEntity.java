@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
 
@@ -21,6 +22,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("cfg_amz_fulfillment_center")
 public class CfgAmzFulfillmentCenterEntity extends BaseEntity<CfgAmzFulfillmentCenterEntity> {
 
@@ -54,9 +56,14 @@ public class CfgAmzFulfillmentCenterEntity extends BaseEntity<CfgAmzFulfillmentC
 
     public static final String DISABLED = "disabled";
 
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
+    /**
+     * 新增未知国家仓库中心代号记录
+     */
+    public CfgAmzFulfillmentCenterEntity(String code) {
+        this.remark = "";
+        this.code = code;
+        this.country = "";
+        this.disabled = false;
+    }
 }
