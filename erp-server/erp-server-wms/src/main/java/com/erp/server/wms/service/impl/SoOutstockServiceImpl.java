@@ -760,7 +760,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
         }
         for (InOutStockDTO member : members) {
-            member.setSourceType(inventorySourceTypeEnum);
+            member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
             // B2C销售出库单出库等待时间20秒
             member.setLockWaitTime(20L);
         }
