@@ -93,6 +93,7 @@ public class WaveListDetailDTO implements Serializable {
         /**
          * 波次ID
          */
+        @Deprecated
         private String waveId;
 
         /**
