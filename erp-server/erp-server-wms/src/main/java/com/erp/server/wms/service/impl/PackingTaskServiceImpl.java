@@ -23,6 +23,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
@@ -61,7 +63,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -121,6 +122,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Resource
     private WmsAttachmentService attachmentService;
+    @Resource
+    private MQProducerService mqProducerService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -353,9 +356,22 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }else if (CollectionUtils.isEmpty(groupSkuDTOList) && (PickingSourceTypeEnum.FBA.getCode().equals(packingTask.getSourceType()) || PickingSourceTypeEnum.THIRD.getCode().equals(packingTask.getSourceType()))){
             autoGenerateFirstMileDelivery(packingTask,firstMileDeliveryEntity);
         }
+        //发送飞书通知
+        this.sendNoticeMsg(dto.getTaskId(), dto.getOperation(), dto.getContent());
         return Boolean.TRUE;
     }
 
+    /**
+     * 发送通知
+     */
+    @Override
+    public void sendNoticeMsg(String taskId, String operation, String content){
+        //检查配置
+        //组装数据
+        //发送消息
+        NoticeMsgInfoDTO msgInfoDTO = new NoticeMsgInfoDTO();
+//        mqProducerService.sendNoticeMsg(msgInfoDTO);
+    }
     @Override
     public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
         WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
@@ -979,6 +995,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             specId = wmsCartonSpecService.add(addDTO);
             List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(addDTO.getTaskId()));
             WmsCartonEntity wmsCartonEntity = cartonEntityList.stream().filter(e -> e.getSpecId().equals(specId)).findFirst().orElse(new WmsCartonEntity());
+            //发送飞书通知
+            this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
             return packingTaskEntity.getSourceCode()+"-"+wmsCartonEntity.getBoxNo();
         }else {
             specId = cartonEntity.getSpecId();
@@ -987,6 +1005,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wmsCartonDetailService.deleteByCartonIds(Collections.singletonList(cartonEntity.getId()));
             addDTO.setCartonId(cartonEntity.getId());
             String cartonId = wmsCartonService.add(addDTO,wmsCartonSpecEntity);
+            //发送飞书通知
+            this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
             WmsCartonEntity wmsCartonEntity = wmsCartonService.getById(cartonId);
             return packingTaskEntity.getSourceCode()+"-"+wmsCartonEntity.getBoxNo();
         }
@@ -1043,6 +1063,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         checkAdjustData(dto);
         //更新调整数量
         Integer boxNo = updateAdjustData(dto);
+        //发送飞书通知
+        this.sendNoticeMsg(dto.getTaskId(), "装箱任务", "调整装箱-" + AdjustTypeEnum.getName(dto.getAdjustType()));
         return packingTaskEntity.getSourceCode() + "-" + boxNo;
     }
 
