@@ -305,8 +305,12 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             //遍历每个拣货仓位的篮筐
             for (WaveListDetailPdaDTO.BasketDTO basketDTO : basketList) {
                 //根据篮筐号拿到发货单
-                WaveListDetailEntity waveDetailEntity = waveDetailList.stream().filter(item -> item.getBasketNo().equals(basketDTO.getNo())).findFirst().get();
-                String deliveryId = waveDetailEntity.getDeliveryId();
+                Optional<WaveListDetailEntity> first = waveDetailList.stream().filter(item -> item.getBasketNo().equals(basketDTO.getNo())).findFirst();
+                if(! first.isPresent()){
+                    //波次在拣货的过程中，发货单被移出波次
+                    continue;
+                }
+                String deliveryId = first.get().getDeliveryId();
                 //根据发货单和sku拿到拣货单
                 PickingListsDTO.SourceView pickingEntity = pickingBillList.stream().filter(item -> item.getSourceId().equals(deliveryId) && item.getSkuId().equals(skuId)).findFirst().get();
                 PickingDetailEntity pickingDetail = pickingDetails.stream().filter(item -> StringUtils.equals(item.getMainId(), pickingEntity.getId()) && StringUtils.equals(item.getSkuId(), skuId)).findFirst().get();
