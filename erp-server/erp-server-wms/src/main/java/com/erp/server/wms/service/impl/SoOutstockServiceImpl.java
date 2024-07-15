@@ -3226,7 +3226,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
     @Override
     public Boolean afreshGenerateB2cOutstock(List<String> ids) {
-        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(ids);
         Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
                 .stream()
                 .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
@@ -3236,7 +3235,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 if (null == currentEntity){
                     throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
                 }
-                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
+                PlatformRetryHandler.retrySoOutStock(currentEntity, Collections.singletonList(currentEntity));
             } catch (Exception e) {
                 String message = e.getMessage();
                 log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
