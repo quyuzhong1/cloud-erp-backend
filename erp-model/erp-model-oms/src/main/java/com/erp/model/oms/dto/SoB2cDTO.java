@@ -665,7 +665,10 @@ public class SoB2cDTO implements Serializable {
          * 运费收入
          */
         private String shippingFee;
-
+        /**
+         * 扩展字段
+         */
+        private String extendData;
         /**
          * 物流信息
          */
@@ -889,6 +892,10 @@ public class SoB2cDTO implements Serializable {
          * 来源订单编码
          */
         private String sourceCode;
+        /**
+         * 扩展字段
+         */
+        private String extendData;
 
         /**
          * 物流信息
