@@ -87,6 +87,9 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             if(pickedQty < qty && pickedQty != 0){
                 waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>().set("picking_status", PickingStatusEnum.PICK_ING.getCode()).eq("delivery_id", waveDetail.getDeliveryId()));
             }
+            if(pickedQty == 0){
+                waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>().set("picking_status", PickingStatusEnum.NOT_START.getCode()).eq("delivery_id", waveDetail.getDeliveryId()));
+            }
         }
 
 //        WaveListDetailDTO.ViewDTO view = waveDetailService.view(hangUpDTO.getWaveId());
@@ -260,6 +263,9 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             if(pickedQty < qty && pickedQty != 0){
                 waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>().set("picking_status", PickingStatusEnum.PICK_ING.getCode()).eq("delivery_id", waveDetail.getDeliveryId()));
             }
+            if(pickedQty == 0){
+                waveDetailService.update(new UpdateWrapper<WaveListDetailEntity>().set("picking_status", PickingStatusEnum.NOT_START.getCode()).eq("delivery_id", waveDetail.getDeliveryId()));
+            }
         }
 
         return resultDTO;
@@ -321,7 +327,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                     if(pickedTotalQty >= basketDTO.getShouldPickingQty()){
                         basketDTO.setPickedQty(basketDTO.getShouldPickingQty());
                         pickedTotalQty -= basketDTO.getPickedQty();
-                    } else if (pickedTotalQty > 0) {
+                    } else if (pickedTotalQty >= 0) {
                         basketDTO.setPickedQty(pickedTotalQty);
                         pickedTotalQty = 0;
                     }

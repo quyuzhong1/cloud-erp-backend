@@ -192,7 +192,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         //删除该明细
         baseMapper.deleteBatchIds(ids);
         //如果波次下明细为空，删除波次
-        List<WaveListDetailEntity> detailList = this.list(new QueryWrapper<WaveListDetailEntity>().eq("main_id", mainIds));
+        List<WaveListDetailEntity> detailList = this.list(new QueryWrapper<WaveListDetailEntity>().in("main_id", mainIds));
         if(detailList.isEmpty()){
             waveListService.getBaseMapper().delete(new QueryWrapper<WaveListEntity>().in("id", mainIds));
         }
