@@ -870,6 +870,7 @@ public enum ApiError implements Serializable {
     ERROR_99121(99121,"只允许同一仓库生成波次"),
 
     ERROR_99122(99122,"单据【{}】处于异常单生成波次缺货自动触发补货中，不允许打印"),
+    ERROR_99123(99123,"单据【{}】所属的波次处于拣货中或挂起状态，不允许拦截"),
 
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
@@ -1029,6 +1030,7 @@ public enum ApiError implements Serializable {
     ERROR_92149(92149,"SKU【{}】在关联单中没有记录"),
     ERROR_92150(92150,"SKU【{}】在装箱中没有记录不能移出"),
     ERROR_92251(92251,"关联单号已审核，不支持编辑修改删除"),
+    ERROR_92252(92252,"装箱中SKU【{}】累计装箱数量【{}】不可大于拣货数量【{}】"),
 
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),

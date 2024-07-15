@@ -1509,8 +1509,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } else {
             result.setOrderCode(entity.getCode());
         }
-
-        result.setOrderType(OrderTypeEnum.B2C.getCode());
+        //增加订单类型传递
+        result.setOrderType(entity.getSourceType());
 
         result.setShopId(shopId);
         result.setShopName(entity.getShopName());
@@ -5628,25 +5628,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } else {
             shopInfoEntities = shopInfoService.listByIds(list);
         }
-        //是否缺货
-        List<SoB2cDetailEntity> allDetailEntityList = soB2cDetailService.listByMainIds(soIds);
-        List<String> skuIds = allDetailEntityList.stream().map(v->v.getSkuId()).distinct().collect(Collectors.toList());
-        List<String> warehouseIds = allDetailEntityList.stream().map(v->v.getWarehouseId()).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
-        List<String> childSkuIdList = bomChildrenList.stream().filter(obj -> StrUtil.isNotBlank(obj.getSkuId()))
-                .map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(childSkuIdList)) {
-            skuIds.addAll(childSkuIdList);
-        }
-        InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
-        skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
-        skuInventoryDTO.setWarehouseIdList(warehouseIds);
-        skuInventoryDTO.setSkuIdList(skuIds);
-        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
-        // 忽略库存计算SKU
-        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(ignoreInventorySkuList) ?
-                ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : com.google.common.collect.Lists.newArrayList();
 
         //查询买家信息
         List<SoB2cReceiverEntity> soB2cReceiverEntities = soB2cReceiverService.listByMainIds(soIds);
@@ -5685,37 +5666,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 printWayBillPdfDTO.setChannelName(logisticsEntity.getLogisticsChannelName());
                 printWayBillPdfDTO.setWeight(logisticsEntity.getWeight());
                 printWayBillPdfDTO.setLogisticsChannelId(logisticsEntity.getLogisticsChannelId());
-            }
-            //是否缺货
-            List<SoB2cDetailEntity> detailList = allDetailEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
-            List<SoB2cDetailDTO.ListDTO> soB2cDetailList = BeanMapperUtils.copyList(SoB2cDetailDTO.ListDTO.class, detailList);
-            for (SoB2cDetailDTO.ListDTO detailDTO : soB2cDetailList) {
-                Integer useableQty = MathUtil.ZERO;
-                Integer freezeQty = MathUtil.ZERO;
-                if (CollectionUtils.isNotEmpty(inventoryList)) {
-                    //可用库存
-                    useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
-                                    && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
-                                    && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
-                                    && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                            .orElse(MathUtil.ZERO);
-                    //冻结库存
-                    freezeQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
-                                    && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
-                                    && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
-                                    && InventoryStatusEnum.FROZEN.getCode().equals(obj.getInventoryStatus()))
-                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                            .orElse(MathUtil.ZERO);
-                }
-                detailDTO.setUseableQty(useableQty);
-                detailDTO.setFreezeQty(freezeQty);
-                if(!printWayBillPdfDTO.getIsOutStock()){
-                    Boolean outStock = isOutStock(bomChildrenList, inventoryList, detailDTO, ignoreInventorySkuIds);
-                    if(outStock){
-                        printWayBillPdfDTO.setIsOutStock(true);
-                    }
-                }
             }
             //拦截标识
             printWayBillPdfDTO.setIsIntercept(soB2cEntity.getIsIntercept());

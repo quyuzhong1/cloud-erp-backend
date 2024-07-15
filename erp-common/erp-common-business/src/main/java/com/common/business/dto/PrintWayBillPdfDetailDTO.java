@@ -12,6 +12,11 @@ import java.util.List;
  */
 @Data
 public class PrintWayBillPdfDetailDTO {
+
+    /**
+     * 销售订单id
+     */
+    private String soId;
     /**
      * 图片
      */
@@ -36,4 +41,8 @@ public class PrintWayBillPdfDetailDTO {
      * 多属性
      */
     private String variantProperty;
+    /**
+     * 是否缺货
+     */
+    private Boolean isOutStock;
 }

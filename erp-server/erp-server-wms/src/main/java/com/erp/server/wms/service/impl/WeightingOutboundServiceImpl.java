@@ -6,7 +6,6 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.constant.EnumMessage;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -35,6 +34,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -200,26 +201,32 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
             soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
-            soB2cDeliveryService.generateB2cSoOutstock(entity);
-
             String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "称重出库", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
-
-            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                // 调用第三方平台SDK标记发货(独立事务)
-                String businessDesc = "称重出库";
-                asyncService.asyncShipOrder(soB2cEntity.getId(),
-                        soB2cEntity.getCode(),
-                        soB2cEntity.getDictPlatform(),
-                        soB2cEntity.convertSubmitPlatformUniqueKey(),
-                        JSONUtil.toJsonStr(dto),
-                        businessDesc, false);
-            } else {
-                log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
-            }
-
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    generateB2cSoOutstock(dto, entity, soB2cEntity);
+                }
+            });
         }
         return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus(), trackNo);
+    }
+
+    public void generateB2cSoOutstock(WeightingOutboundDTO.ScanDTO dto, SoB2cDeliveryEntity entity, SoB2cEntity soB2cEntity) {
+        soB2cDeliveryService.generateB2cSoOutstock(entity);
+        if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+            // 调用第三方平台SDK标记发货(独立事务)
+            String businessDesc = "称重出库";
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
+                    soB2cEntity.getCode(),
+                    soB2cEntity.getDictPlatform(),
+                    soB2cEntity.convertSubmitPlatformUniqueKey(),
+                    JSONUtil.toJsonStr(dto),
+                    businessDesc, false);
+        } else {
+            log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+        }
     }
 
     @Override

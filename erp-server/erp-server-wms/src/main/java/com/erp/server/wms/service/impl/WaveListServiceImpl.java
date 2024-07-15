@@ -5,10 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -21,7 +21,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.WaveListDTO;
-import com.erp.model.wms.dto.WaveListDetailDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.server.wms.mapper.WaveListCartTypeMapper;
@@ -37,7 +37,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveListEntity> implements WaveListService {
@@ -263,8 +262,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
                 .set("status", WaveStatusEnum.AWAIT_PICK.getCode())
                 .set("picking_user_id", "")
                 .set("picking_user_name", "")
-                .set("picking_time", "")
-                .set("print_time", "")
+                .set("picking_time", null)
+                .set("print_time", null)
         );
         return BatchResultDTO.success(waveListEntity.getId(), waveListEntity.getCode(), "成功");
     }
@@ -304,10 +303,22 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingBill(List<String> ids) {
+    public List<SoB2cDeliveryDTO.PrintPickingMainViewDTO> printPickingBill(List<String> ids) {
+        List<SoB2cDeliveryDTO.PrintPickingMainViewDTO> resultList = new ArrayList<>();
         List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(ids);
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
-        return deliveryService.printPickingView(deliveryIds);
+        List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = deliveryService.printPickingView(deliveryIds);
+        if (CollectionUtil.isEmpty(printPickingViewList)) {
+            return Collections.EMPTY_LIST;
+        }
+        Map<String, List<SoB2cDeliveryDTO.PrintPickingViewDTO>> map = printPickingViewList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDTO.PrintPickingViewDTO::getWaveCode));
+        for (Map.Entry<String, List<SoB2cDeliveryDTO.PrintPickingViewDTO>> entry : map.entrySet()) {
+            SoB2cDeliveryDTO.PrintPickingMainViewDTO printPickingMainViewDTO = new SoB2cDeliveryDTO.PrintPickingMainViewDTO();
+            printPickingMainViewDTO.setWaveCode(entry.getKey());
+            printPickingMainViewDTO.setDetailList(entry.getValue());
+            resultList.add(printPickingMainViewDTO);
+        }
+        return resultList;
     }
 
     @Override
@@ -324,5 +335,18 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         }
         return lambdaQuery().in(WaveListEntity::getPickingCartCode,pickingCartCodeList)
                 .list();
+    }
+
+    @Override
+    public void cleanException(String deliveryId) {
+        WaveListDetailEntity detail = waveListDetailService.getOne(Wrappers.<WaveListDetailEntity>lambdaQuery().eq(WaveListDetailEntity::getDeliveryId, deliveryId));
+        List<WaveListDetailEntity> detailList = waveListDetailService.listByMainId(detail.getMainId());
+        List<String> deliveryIds = detailList.stream().map(WaveListDetailEntity::getDeliveryId).filter(v -> !deliveryId.equals(v)).collect(Collectors.toList());
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(deliveryIds);
+        boolean isOutStock = views.stream().anyMatch(PickingListsDTO.SourceView::getIsOutStock);
+        if (isOutStock) {
+            return;
+        }
+        update(Wrappers.<WaveListEntity>lambdaUpdate().set(WaveListEntity::getIsOutStock, false).eq(WaveListEntity::getId, detail.getMainId()));
     }
 }

@@ -200,6 +200,14 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         }
     }
 
+    @Override
+    public WmsCartonEntity getBySpecId(String specId) {
+        if (StringUtils.isNotBlank(specId)){
+            return lambdaQuery().eq(WmsCartonEntity::getSpecId, specId).last("limit 1").one();
+        }
+        return null;
+    }
+
     /**
     * 新增修改处理数据
     */

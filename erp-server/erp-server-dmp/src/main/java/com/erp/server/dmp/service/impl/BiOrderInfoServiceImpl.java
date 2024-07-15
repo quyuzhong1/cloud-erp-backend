@@ -111,23 +111,6 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         return this.update(biOrderInfoEntity, lambdaQueryWrapper);
     }
 
-    @Override
-
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean removeOrderByIds(List<String> ids) {
-        //删除订单
-        List<BiOrderInfoEntity> list = baseMapper.selectBatchIds(ids);
-        log.info("删除bi_order_info订单：{}", JSON.toJSONString(list));
-        if (CollectionUtils.isNotEmpty(list)) {
-            //删除明细记录
-            list.forEach(dmpOrderInfoEntity -> {
-                List<BiOrderItemSplitEntity> itemEntities = biOrderItemSplitService.getByOrderId(dmpOrderInfoEntity.getId());
-                biOrderItemSplitService.removeByIds(itemEntities.stream().map(BiOrderItemSplitEntity::getId).collect(Collectors.toList()));
-                this.removeById(dmpOrderInfoEntity.getId());
-            });
-        }
-        return Boolean.TRUE;
-    }
 
     @Override
     public Boolean removeOrderByCode(List<String> codes) {

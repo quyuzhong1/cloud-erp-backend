@@ -445,6 +445,8 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                         Integer mapQty = sameMap.get(key);
                         isSame =  (ObjectUtil.isEmpty(mapQty) || MathUtil.compareTo(mapQty,totalDeliveryQty) != MathUtil.ZERO) ? Boolean.FALSE : Boolean.TRUE;
                     }
+
+
                 }
             }
 
@@ -453,7 +455,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                     || orderQty > entity.getMaxOrderQty()) {
 
                 //原波次数量和单数必须大于等于最小数量
-                if ((MathUtil.compareTo(entity.getMinQty(),MathUtil.ZERO) != MathUtil.ZERO && totalQty >= entity.getMinQty())
+                if (((MathUtil.compareTo(entity.getMinQty(),MathUtil.ZERO) != MathUtil.ZERO && totalQty >= entity.getMinQty()) || MathUtil.compareTo(entity.getMinQty(),MathUtil.ZERO) == MathUtil.ZERO)
                         &&  orderQty > entity.getMinOrderQty()) {
                     //非同类波次不添加数据
                     if (!isSame) {

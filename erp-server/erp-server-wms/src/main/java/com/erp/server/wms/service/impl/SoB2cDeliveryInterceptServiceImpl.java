@@ -37,10 +37,7 @@ import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptDetailEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -401,6 +398,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
                 List<String> ids = soB2cDeliveryEntities.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
+                List<WaveListDetailEntity> waveLists = waveListDetailService.listCancelByDeliveryIds(ids);
+                String cancelCodes = waveLists.stream().map(WaveListDetailEntity::getDeliveryCode).collect(Collectors.joining(","));
+                if (ObjectUtil.isNotEmpty(cancelCodes)) {
+                    throw new ServiceException(ApiError.ERROR_99123, cancelCodes);
+                }
                 soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
                 // 待处理和异常状态中的生成波次异常无需回滚库存
                 List<String> rollbackInventoryIds = soB2cDeliveryEntities.stream().filter(e -> !SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(e.getStatus()))

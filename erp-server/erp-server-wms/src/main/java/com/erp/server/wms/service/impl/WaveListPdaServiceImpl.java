@@ -10,6 +10,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -206,14 +207,22 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         List<String> soIds = waveDetailList.stream().map(item -> item.getSoId()).distinct().collect(Collectors.toList());
         List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(soIds);
         Map<String, List<SoB2cDetailEntity>> soDetailMap = soDetailList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
+        List<WaveListCartTypeEntity> waveCartTypeList = waveListCartTypeMapper.selectList(new QueryWrapper<WaveListCartTypeEntity>().in("wave_id", ids));
+        Map<String, List<WaveListCartTypeEntity>> cartTypeMap = waveCartTypeList.stream().collect(Collectors.groupingBy(item -> item.getWaveId()));
 
         List<PickingCartEntity> pickingCartList = pickingCartService.list();
         List<PickingCartTypeEntity> pickingCartTypeList = pickingCartTypeService.list();
+        Map<String, String> typeMap = pickingCartTypeList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getName()));
 
         for (WaveListEntity waveEntity : records) {
             WaveListPdaDTO.ViewDTO view = new WaveListPdaDTO.ViewDTO();
             //波次明细
-            WaveListDetailDTO.ViewDTO waveDetailView = waveDetailService.view(waveEntity.getId());
+            WaveListDetailDTO.ViewDTO waveDetailView = null;
+            try {
+                waveDetailView = waveDetailService.view(waveEntity.getId());
+            }catch (ServiceException e){
+                continue;
+            }
             List<WaveListDetailDTO.DeliveryInfoDTO> deliveryInfoList = waveDetailView.getDeliveryInfoList();
             //波次id，波次编码，波次名称，创建时间
             BeanMapper.copy(waveEntity, view);
@@ -225,8 +234,22 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
             PickingCartEntity pickingCart = pickingCartList.stream().filter(item -> item.getCode().equals(waveEntity.getPickingCartCode())).findFirst().orElse(new PickingCartEntity());
             view.setPickingCartTypeId(pickingCart.getTypeId());
             //拣货车类型名称
-            PickingCartTypeEntity pickingCartType = pickingCartTypeList.stream().filter(item -> item.getId().equals(pickingCart.getTypeId())).findFirst().orElse(new PickingCartTypeEntity());
-            view.setPickingCartTypeName(pickingCartType.getName());
+//            PickingCartTypeEntity pickingCartType = pickingCartTypeList.stream().filter(item -> item.getId().equals(pickingCart.getTypeId())).findFirst().orElse(new PickingCartTypeEntity());
+//            view.setPickingCartTypeName(pickingCartType.getName());
+
+            if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(waveEntity.getPickingCartCode())){
+                List<WaveListCartTypeEntity> entityList = cartTypeMap.get(waveEntity.getId());
+                if(entityList != null && !entityList.isEmpty()){
+                    List<String> typeIds = entityList.stream().map(WaveListCartTypeEntity::getPickingCartTypeId).collect(Collectors.toList());
+                    List<String> typeNameList = new ArrayList<>();
+                    typeIds.forEach(id -> typeNameList.add(typeMap.get(id)));
+                    String cartTypeName = String.join(",", typeNameList);
+                    view.setPickingCartTypeName(cartTypeName);
+                }
+            }else {
+                view.setPickingCartTypeName(typeMap.get(waveEntity.getPickingCartType()));
+            }
+
             //分拣方式
             view.setPickingTypeName(WavePickingTypeEnum.getName(waveEntity.getPickingType()));
             //订单数量

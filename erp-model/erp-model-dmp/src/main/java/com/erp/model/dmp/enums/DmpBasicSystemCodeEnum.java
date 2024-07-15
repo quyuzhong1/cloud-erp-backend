@@ -16,6 +16,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
 	AMAZON("amazon", "亚马逊"),
 	KINGDEE("kingdee", "金蝶"),
 	WDT("wdt", "旺店通"),
+	MABANG("mabang", "马帮"),
     ;
     /**
      * 类型
