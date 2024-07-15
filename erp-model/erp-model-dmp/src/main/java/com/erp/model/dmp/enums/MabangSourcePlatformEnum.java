@@ -22,7 +22,8 @@ public enum MabangSourcePlatformEnum {
     JD("65", "京东", "京东","JD"),
     TIANMAO("69", "天猫", "天猫","Tmall"),
     OTHER("80", "其他", "其他","Other"),
-    TikTok("81", "TikTokShop", "TikTokShop","TikTok"),
+    TikTokShop("81", "TikTokShop", "TikTokShop","TikTok"),
+    TikTok("82", "TikTok", "抖音小店","TikTok"),
     ;
 
     private final String code;

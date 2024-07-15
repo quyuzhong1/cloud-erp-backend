@@ -10,17 +10,17 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * 订单详情字段映射转换
+ * 退款单详情字段映射转换
  */
 @Service
 @Scope("prototype")
-public class MabangOrderNextDmpHandler extends MabangOrderGetDetailDmpHandler {
+public class MabangRefundOrderNextDmpHandler extends MabangRefundOrderGetDetailDmpHandler {
 
 	@Override
 	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
 		List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
 		detailList.forEach(d -> {
-			d.put("platformOrderId", dmpInputMongoEntity.get("platformOrderId"));
+			d.put("refundplatformOrderId", dmpInputMongoEntity.get("refundplatformOrderId"));
 		});
 		return detailList;
 	}
@@ -33,23 +33,12 @@ public class MabangOrderNextDmpHandler extends MabangOrderGetDetailDmpHandler {
 			HashMap<String, Integer> skuCountMap = new HashMap<>();
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 
-				Object isGift = dmpDataMap.get("isGift");
-				if (isGift != null) {
-					//是否是赠品 1是 2否
-					Integer returnedStatus = Integer.valueOf(isGift + "");
-					if (returnedStatus == 1) {
-						dmpDataMap.put("isGift", Boolean.TRUE);
-					} else {
-						dmpDataMap.put("isGift", Boolean.FALSE);
-					}
-				}
-
-				Object skuNo = dmpDataMap.get("skuNo");
-				Object platformOrderId = dmpDataMap.get("platformOrderId");
-				if (skuNo != null) {
+				Object refundStock = dmpDataMap.get("refundStock");
+				Object refundplatformOrderId = dmpDataMap.get("refundplatformOrderId");
+				if (refundStock != null) {
 					//erp平台商品id
-					String erpOrderItemId = platformOrderId + "_" + skuNo;
-					erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, String.valueOf(skuNo), erpOrderItemId);
+					String erpOrderItemId = refundplatformOrderId + "_" + refundStock;
+					erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, String.valueOf(refundStock), erpOrderItemId);
 					dmpDataMap.put("thirdDetailId", erpOrderItemId);
 				}
 			}

@@ -28,9 +28,6 @@ public class MabangOrderDmpHandler extends MabangDmpHandler {
                 Object platformId = dmpDataMap.get("platformId");
                 if (platformId != null) {
                     String platform = String.valueOf(platformId);
-                    if(StrUtil.isNotBlank(platform) && platform.contains("亚马逊")){
-                        platform = MabangSourcePlatformEnum.AMAZON_FBA.getCode();
-                    }
 
                     //平台编码转ERP编码
                     MabangSourcePlatformEnum platformEnum = MabangSourcePlatformEnum.getByCode(platform) == null ?
@@ -40,7 +37,7 @@ public class MabangOrderDmpHandler extends MabangDmpHandler {
                         platformEnum = MabangSourcePlatformEnum.getByName(platform);
                     }
                     if (platformEnum != null) {
-                        dmpDataMap.put("platformId", platformEnum.getErpPlatformCode());
+                        dmpDataMap.put("sourcePlatform", platformEnum.getErpPlatformCode());
                     }
                 }
 

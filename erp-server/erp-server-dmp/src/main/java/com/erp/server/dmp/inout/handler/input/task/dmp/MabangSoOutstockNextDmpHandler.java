@@ -10,28 +10,36 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * 订单详情字段映射转换
+ * 退款单详情字段映射转换
  */
 @Service
 @Scope("prototype")
-public class MabangOrderNextDmpHandler extends MabangOrderGetDetailDmpHandler {
+public class MabangSoOutstockNextDmpHandler extends MabangOrderGetDetailDmpHandler {
 
 	@Override
 	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
 		List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
 		detailList.forEach(d -> {
-			d.put("platformOrderId", dmpInputMongoEntity.get("platformOrderId"));
+			d.put("refundplatformOrderId", dmpInputMongoEntity.get("refundplatformOrderId"));
 		});
 		return detailList;
 	}
 
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			HashMap<String, Integer> skuCountMap = new HashMap<>();
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+
+				Object stockSku = dmpDataMap.get("stockSku");
+				Object platformOrderId = dmpDataMap.get("platformOrderId");
+				if (stockSku != null) {
+					//erp平台商品id
+					String erpOrderItemId = platformOrderId + "_" + stockSku;
+					erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, String.valueOf(stockSku), erpOrderItemId);
+					dmpDataMap.put("thirdDetailId", erpOrderItemId);
+				}
 
 				Object isGift = dmpDataMap.get("isGift");
 				if (isGift != null) {
@@ -42,15 +50,6 @@ public class MabangOrderNextDmpHandler extends MabangOrderGetDetailDmpHandler {
 					} else {
 						dmpDataMap.put("isGift", Boolean.FALSE);
 					}
-				}
-
-				Object skuNo = dmpDataMap.get("skuNo");
-				Object platformOrderId = dmpDataMap.get("platformOrderId");
-				if (skuNo != null) {
-					//erp平台商品id
-					String erpOrderItemId = platformOrderId + "_" + skuNo;
-					erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, String.valueOf(skuNo), erpOrderItemId);
-					dmpDataMap.put("thirdDetailId", erpOrderItemId);
 				}
 			}
 		}

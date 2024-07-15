@@ -9,7 +9,9 @@ import java.util.stream.Collectors;
 
 import com.erp.server.dmp.inout.dto.request.*;
 import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangOrderApiInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangRefundApiInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangReturnApiInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangShopInfoApiInitHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -132,6 +134,12 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				} else if ("orderReturn".equals(code)) {
 					//退货单
 					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangReturnApiInitHandler.class);
+				} else if ("orderRefund".equals(code)) {
+					//退款单
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangRefundApiInitHandler.class);
+				} else if ("shop".equals(code)) {
+					//店铺
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangShopInfoApiInitHandler.class);
 				}
 
 				DmpInputMabangApiInitRequest dmpInputMabangApiInitRequest = new DmpInputMabangApiInitRequest();
