@@ -784,8 +784,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public String pdaPackingSave(WmsCartonSpecDTO.AddDTO dto) {
         dto.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
         String code = this.stagingPacking(dto);
-        //更新装箱状态
-        this.updatePackingStatus(listGroupSkuById(dto.getTaskId()),dto.getTaskId());
         return code;
     }
 
@@ -996,6 +994,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             specId = wmsCartonSpecService.add(addDTO);
             List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(addDTO.getTaskId()));
             WmsCartonEntity wmsCartonEntity = cartonEntityList.stream().filter(e -> e.getSpecId().equals(specId)).findFirst().orElse(new WmsCartonEntity());
+            //更新装箱状态
+            this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),addDTO.getTaskId());
             //发送飞书通知
             this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
             return packingTaskEntity.getSourceCode()+"-"+wmsCartonEntity.getBoxNo();
@@ -1006,6 +1006,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wmsCartonDetailService.deleteByCartonIds(Collections.singletonList(cartonEntity.getId()));
             addDTO.setCartonId(cartonEntity.getId());
             String cartonId = wmsCartonService.add(addDTO,wmsCartonSpecEntity);
+            //更新装箱状态
+            this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),addDTO.getTaskId());
             //发送飞书通知
             this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
             WmsCartonEntity wmsCartonEntity = wmsCartonService.getById(cartonId);
