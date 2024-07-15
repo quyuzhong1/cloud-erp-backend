@@ -33,7 +33,7 @@
         sbd.inspection_time as inspectionTime,
         sbd.weighing_time as weighingTime,
         sbd.platform_code as platformCode,
-        sbd.abnormal_cause as abnormalCause
+        sbd.abnormal_cause as abnormalCause,
         sbl.code as logisticsCode,
         sbl.track_no as trackCode
         FROM so_b2c_delivery sbd
