@@ -179,7 +179,10 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         BeanMapper.copy(dto, searchParamDto);
         List<WarehouseLocationReplenishEntity> entityList = this.baseMapper.listByParam(searchParamDto);
         List<WarehouseLocationReplenishDTO.ViewDTO> viewList = fillViewList(entityList);
-        List<String> ids = viewList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+        List<String> waitHandleIds = viewList.stream()
+                .filter(item -> item.getStatus().equals(ReplenishBillStatusEnum.WAIT_HANDLE.getCode()))
+                .map(WarehouseLocationReplenishDTO.ViewDTO::getId)
+                .collect(Collectors.toList());
         try {
             String fileName = "仓位补货" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             String excelPath = "excel/warehouseLocationReplenishExport.xlsx";
@@ -187,10 +190,10 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
             //只有勾选导出的才更新状态：处理中
             boolean isExportById = dto.getAdvanceQueryDTOList().stream().anyMatch(item -> item.getField().equals("id"));
-            if(isExportById){
-                WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
-                updateEntity.setStatus(ReplenishBillStatusEnum.HANDLE_ING.getCode());
-                this.baseMapper.update(updateEntity, new QueryWrapper<WarehouseLocationReplenishEntity>().in("id", ids));
+            if(isExportById && !waitHandleIds.isEmpty()){
+                this.update(new UpdateWrapper<WarehouseLocationReplenishEntity>()
+                        .set("status", ReplenishBillStatusEnum.HANDLE_ING.getCode())
+                        .in("id", waitHandleIds));
             }
         } catch (IOException e) {
             log.error("导出仓位补货清单失败：{}", e);
