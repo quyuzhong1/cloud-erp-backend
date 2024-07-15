@@ -61,11 +61,6 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
     List<String> listKingdeeCode(Map<String, Object> conditon);
 
     /**
-     * 统一发送MQ消息并保存任务
-     * @param dto
-     */
-    void sendMqAndSaveTask(DmpSyncTaskDTO.AddDTO dto);
-    /**
      * @description: 列表tab
      * @author Will
      * @date: 2023/10/17 14:38
@@ -108,35 +103,6 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      */
     Boolean batchNoNeedSync(List<String> ids);
 
-    /* 处理oms推送订单审核消息
-     *
-     * @param resultMap
-     */
-    void syncOmsOrderToDmp(Map<String, Object> resultMap);
-    /**
-     * 处理oms推送出库订单审核消息
-     *
-     * @param resultMap
-     */
-    void syncWmsOutStockToDmp(Map<String, Object> resultMap);
-    /**
-     * 处理oms推送入库订单审核消息
-     *
-     * @param resultMap
-     */
-    void syncOmsReturnToDmp(Map<String, Object> resultMap);
-    /**
-     * 发送mq并保存任务
-     * @param dto
-     */
-    Boolean sendMqAndSaveTask(DmpPullTaskFeignDTO dto);
-
-    /**
-     * 发送mq并保存任务
-     * @param dto
-     */
-    String savePullTask(DmpPullTaskFeignDTO dto);
-
     /**
      * @description: 预警
      * @author Will
@@ -163,4 +129,10 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
     int countMonth(LocalDateTime date);
 
     List<DmpPullTaskEntity> listMonth(LocalDateTime date, int pageSize, int effect);
+
+    /**
+     * 获取飞书预警信息需要推送的(PullTask任务记录)
+     * @return
+     */
+    List<DmpPullTaskEntity> getWarnPullTaskList();
 }

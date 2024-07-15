@@ -45,13 +45,7 @@ public interface BiOrderInfoService extends IService<BiOrderInfoEntity> {
      **/
     Boolean updateOrderByPlatformOrderId(BiOrderInfoEntity biOrderInfoEntity);
 
-    /**
-     * 根据id删除订单记录
-     *
-     * @param ids
-     * @return
-     */
-    Boolean removeOrderByIds(List<String> ids);
+
 
     /**
      * 根据id删除订单记录
