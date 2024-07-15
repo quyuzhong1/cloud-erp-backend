@@ -95,17 +95,15 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
         for (WaveListDetailDTO.DeliveryInfoDTO deliveryDto : deliveryList) {
             String skuId = deliveryDto.getSkuId();
-            if(salesQtyMap.containsKey(skuId)){
-                salesQtyMap.put(skuId, salesQtyMap.get(skuId) + deliveryDto.getSalesQty());
-            }else {
+            if(! salesQtyMap.containsKey(skuId)){
                 salesQtyMap.put(skuId, 0);
             }
+            salesQtyMap.put(skuId, salesQtyMap.get(skuId) + deliveryDto.getSalesQty());
 
-            if(pickedTotalQtyMap.containsKey(skuId)){
-                pickedTotalQtyMap.put(skuId, pickedTotalQtyMap.get(skuId) + deliveryDto.getPickedSumQty());
-            }else {
+            if(! pickedTotalQtyMap.containsKey(skuId)){
                 pickedTotalQtyMap.put(skuId, 0);
             }
+            pickedTotalQtyMap.put(skuId, pickedTotalQtyMap.get(skuId) + deliveryDto.getPickedSumQty());
         }
 
         List<WaveListPdaDTO.ProductDetailDTO> productDetailList = new ArrayList<>();
