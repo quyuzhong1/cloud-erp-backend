@@ -72,7 +72,8 @@ public class DataRecoveryJob {
 
         ids.parallelStream().forEach(item -> {
             BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
-            idsDTO.setIds(Collections.singletonList(item));
+//            idsDTO.setIds(Collections.singletonList(item));
+            SoOutstockEntity soOutstock = soOutstockService.getById(item);
             try {
                 if(StrUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
                     SoReturnInstockEntity entity = soReturnInstockService.getById(item);
@@ -82,10 +83,10 @@ public class DataRecoveryJob {
                 }else if(StrUtil.isNotBlank(type) && "transferInfoService".equals(type)){
                     TransferInfoEntity entity = transferInfoService.getById(item);
                     if (Objects.nonNull(entity)){
-                        transferInfoService.disApprove(entity, isPushKingdee,isManual);
+                        transferInfoService.disApprove(entity, isPushKingdee, Boolean.TRUE);
                     }
                 }else if(StrUtil.isNotBlank(type) && "soOutstockService".equals(type)){
-                    soOutstockService.disApprove(idsDTO, isPushKingdee);
+                    soOutstockService.disApprove(soOutstock, isPushKingdee);
                 }
             } catch (Exception e) {
                 XxlJobHelper.log("数据修复失败，id={} e ={}", item, e);

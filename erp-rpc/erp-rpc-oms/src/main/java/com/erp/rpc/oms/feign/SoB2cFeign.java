@@ -292,7 +292,7 @@ public interface SoB2cFeign {
      * @param mainId
      * @param errorType
      * @author Lambda
-     * @return 
+     * @return
      * @create 2024-01-01 12:27
      */
     @PostMapping("/feign/soB2cError/getB2cError")
@@ -468,7 +468,7 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2cError/deleteAll")
     void checkAndDeleteAllError(@RequestBody SoB2cErrorDTO.DeleteDetailDTO deleteDTO);
-    
+
     /**
      * 修改速卖通订单仓库
      * @Author Luo_WG
@@ -594,4 +594,12 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/listSoB2cData")
     SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO);
 
+
+    /**
+     * 根据销售订单更新跟踪单号
+     * @param soId
+     * @param trackNo
+     */
+    @PostMapping("/feign/soB2c/updateLogisticsBySoId")
+    void updateLogisticsBySoId(@RequestParam("soId") String soId, @RequestParam("trackNo") String trackNo);
 }

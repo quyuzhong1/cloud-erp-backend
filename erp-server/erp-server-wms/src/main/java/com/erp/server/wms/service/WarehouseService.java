@@ -47,11 +47,11 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @author Will
      * @date: 2024/5/23 18:21
      * @param dto
-     * @return List<ListInventoryQtyDTO> 
+     * @return List<ListInventoryQtyDTO>
      */
     List<WarehouseDTO.ListInventoryQtyDTO> listWarehouseInventoryQty(WarehouseDTO.ListInventoryQtyParamDTO dto);
 
-    
+
     /**
      * 添加仓库
      * @author yl
@@ -61,7 +61,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     String add(WarehouseDTO.AddDTO dto);
 
-    
+
     /**
      * 修改仓库
      * @author yl
@@ -71,7 +71,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     String updateWarehouse(WarehouseDTO.UpdateDTO dto);
 
-    
+
     /**
      * 提交并审核
      * @author yl
@@ -81,7 +81,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     Boolean addAndSubmit(WarehouseDTO.AddDTO dto);
 
-    
+
     /**
      * 仓库提交审核
      * @author yl
@@ -91,7 +91,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     Boolean submit(List<String> ids);
 
-    
+
     /**
      * 更改仓库状态
      * @author yl
@@ -113,7 +113,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     BatchResultDTO approve(WarehouseEntity entity, String type, String comment, Boolean isNeedProcess);
 
-    
+
     /**
      * 反审核
      * @author yl
@@ -141,7 +141,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     WarehouseDTO.UpdateDTO view(String id);
 
-    
+
     /**
      * 分页获取仓库数据
      * @author yl
@@ -170,7 +170,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     void downloadTemplate(HttpServletResponse response);
 
-    
+
     /**
      * 导入仓库数据
      * @author yl
@@ -181,7 +181,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
-    
+
     /**
      * 修改并审核
      * @author yl
@@ -289,6 +289,12 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return PagingVO<ListDTO>
      */
     PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> dto);
+
+    /**
+     * 查询所有仓库信息(不带权限控制) 不带权限控制的查询所有仓库信息
+     * @return List<WarehouseEntity>    仓库信息
+     */
+    List<WarehouseEntity> listWarehouseWithCaches();
 
 
 }
