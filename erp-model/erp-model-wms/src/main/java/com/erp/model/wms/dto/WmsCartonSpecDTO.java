@@ -8,10 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -179,6 +176,12 @@ public class WmsCartonSpecDTO implements Serializable {
          * 字典接口地址
          */
         private String packingStatus;
+        /**
+         * 称重状态-单箱(unweighed 未称重,success 称重成功,fail 称重失败 )
+         * PackingWeightStatusEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/92/interface/api/13147 type= weightingStatusSingle单箱 /  weightingStatus 总
+         */
+        private String weightingStatus;
         /**
          * 重量单位
          */
@@ -825,6 +828,10 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String cartonId;
         /**
+         * 箱号
+         */
+        private String boxNo;
+        /**
          * 箱规id
          */
         @NotBlank(message = "箱规id不能为空")
@@ -835,6 +842,8 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
          * 包装重量
          */
+        @NotNull(message = "箱子包装重量必填不能为空")
+        @Digits(integer = 10, fraction = 2, message = "箱子包装重量必填整数位不能超过10位，小数位不能超过2位")
         private BigDecimal packageWeight;
         /**
          * 重量单位 kg
@@ -843,14 +852,20 @@ public class WmsCartonSpecDTO implements Serializable {
         /**
          * 箱规长
          */
+        @NotNull(message = "箱规长必填不能为空")
+        @Digits(integer = 10, fraction = 2, message = "箱规长必填整数位不能超过10位，小数位不能超过2位")
         private BigDecimal boxLength;
         /**
          * 箱规宽
          */
+        @NotNull(message = "箱规宽必填不能为空")
+        @Digits(integer = 10, fraction = 2, message = "箱规宽必填整数位不能超过10位，小数位不能超过2位")
         private BigDecimal boxWidth;
         /**
          * 箱规高
          */
+        @NotNull(message = "箱规高必填不能为空")
+        @Digits(integer = 10, fraction = 2, message = "箱规高必填整数位不能超过10位，小数位不能超过2位")
         private BigDecimal boxHeight;
         /**
          * 尺寸单位 cm
