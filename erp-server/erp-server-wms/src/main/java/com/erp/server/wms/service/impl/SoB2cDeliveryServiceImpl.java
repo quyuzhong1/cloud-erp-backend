@@ -403,6 +403,55 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动标发");
     }
 
+    public List<SoB2cDeliveryDTO.AllocateCargoViewDTO> allocateCargoDetail(List<PrintWayBillPdfDTO> allPrintWayBillPdfResultList) {
+        List<String> soIds = allPrintWayBillPdfResultList.stream().map(v->v.getSoId()).collect(Collectors.toList());
+        List<SoB2cDeliveryEntity> deliveryEntityList = this.listBySourceIds(soIds);
+        List<String> deliveryIds = deliveryEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<SoB2cDeliveryDTO.AllocateCargoViewDTO> viewList = new ArrayList<>();
+        List<PickingListsEntity> list = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, deliveryIds));
+        List<String> pickingIds = list.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
+        List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, pickingIds));
+        List<String> skuIds = pickingDetails.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<PrintWayBillPdfDetailDTO> allDetailDTOList = new ArrayList<>();
+        for (PickingDetailEntity pickingDetail : pickingDetails) {
+            PickingListsEntity pickingLists = list.stream()
+                    .filter(v -> v.getId().equals(pickingDetail.getMainId()))
+                    .findFirst()
+                    .orElse(new PickingListsEntity());
+            //备注
+            SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(req -> req.getId().equals(pickingLists.getSourceId())).findFirst().orElse(new SoB2cDeliveryEntity());
+            PrintWayBillPdfDetailDTO detailDTO = new PrintWayBillPdfDetailDTO();
+            detailDTO.setQty(pickingDetail.getQty());
+            detailDTO.setSoId(entity.getSourceId());
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(pickingDetail.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(skuVO)) {
+                detailDTO.setSkuImagesUrl(skuVO.getSkuImagesUrl());
+                if (skuVO.getVariantProperty() == null) {
+                    detailDTO.setVariantProperty("");
+                } else {
+                    detailDTO.setVariantProperty(skuVO.getVariantProperty());
+                }
+                detailDTO.setSkuNo(skuVO.getSkuNo());
+                detailDTO.setProductName(skuVO.getSkuName());
+                detailDTO.setWarehouseLocation(pickingDetail.getWarehouseLocation());
+                detailDTO.setIsOutStock(pickingDetail.getIsOutStock());
+                allDetailDTOList.add(detailDTO);
+            }
+        }
+        for (PrintWayBillPdfDTO printWayBillPdfDTO : allPrintWayBillPdfResultList) {
+            List<PrintWayBillPdfDetailDTO> detailDTOList = allDetailDTOList.stream().filter(v->v.getSoId().equals(printWayBillPdfDTO.getSoId())).collect(Collectors.toList());
+            printWayBillPdfDTO.setDetailList(detailDTOList);
+            printWayBillPdfDTO.setIsOutStock(detailDTOList.stream().anyMatch(PrintWayBillPdfDetailDTO::getIsOutStock));
+        }
+        List<String> notDetailCodes = allPrintWayBillPdfResultList.stream().filter(v->CollectionUtils.isEmpty(v.getDetailList())).map(v->v.getSoCode()).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(notDetailCodes)){
+            throw new ServiceException(StrUtil.format("销售订单{}拣货明细为空",notDetailCodes));
+        }
+        return viewList;
+    }
+
+
     @Override
     public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids) {
         List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
@@ -657,9 +706,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> base64List = new ArrayList<>();
 
         //查询打印类型
-        List<String> channelIds = detailList.stream().map(req -> req.getLogisticsChannelId()).collect(Collectors.toList());
+        List<String> channelIds = detailList.stream().map(SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO::getLogisticsChannelId).collect(Collectors.toList());
         List<LogisticsPrintTypeDTO.ViewDTO> logisticsPrintTypeEntities = logisticsBillFeign.listPrintTypeByChannelIds(channelIds);
 
+        //匹配订单字段，用于打印
+        List<String> allSoIds = detailList.stream().map(SoB2cDeliveryDTO.PrintLogisticsWaybillDetailDTO::getSoB2cId).distinct().collect(Collectors.toList());
+        //订单波次篮号信息
+        Map<String, String> orderBasketNoMap = waveListDetailService.getOrderBasketNoMap(allSoIds);
+        List<PrintWayBillPdfDTO> allPrintWayBillPdfResultList = soB2cFeign.printWayBillPdf(allSoIds);
+        allPrintWayBillPdfResultList.forEach(v->{
+            v.setBasketNo(orderBasketNoMap.getOrDefault(v.getSoId(), ""));
+        });
+        detailList.forEach(v -> v.setIndex(orderBasketNoMap.containsKey(v.getSoB2cId()) ? Integer.parseInt(orderBasketNoMap.get(v.getSoB2cId())) : Integer.MAX_VALUE));
+
+        //明细取值为拣货单
+        this.allocateCargoDetail(allPrintWayBillPdfResultList);
         //循环打印的渠道
         for (String logisticsChannel : logisticsChannelIdList) {
 
@@ -668,13 +729,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             //匹配订单字段，用于打印
             List<String> soIds = waybillDetailDTOList.stream().map(req -> req.getSoB2cId()).distinct().collect(Collectors.toList());
-            //订单波次篮号信息
-            Map<String, String> orderBasketNoMap = waveListDetailService.getOrderBasketNoMap(soIds);
-            List<PrintWayBillPdfDTO> printWayBillPdfResultList = soB2cFeign.printWayBillPdf(soIds);
-            printWayBillPdfResultList.forEach(v->{
-                v.setBasketNo(orderBasketNoMap.getOrDefault(v.getSoId(), ""));
-            });
-            waybillDetailDTOList.forEach(v -> v.setIndex(orderBasketNoMap.containsKey(v.getSoB2cId()) ? Integer.parseInt(orderBasketNoMap.get(v.getSoB2cId())) : Integer.MAX_VALUE));
+            List<PrintWayBillPdfDTO> printWayBillPdfResultList = allPrintWayBillPdfResultList.stream().filter(v->soIds.contains(v.getSoId())).collect(Collectors.toList());
 
             //根据篮号排序，为空放最后
             waybillDetailDTOList = waybillDetailDTOList.stream()
@@ -1905,39 +1960,35 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<PrintWayBillPdfDetailDTO> wayBillDetailList = new ArrayList<>();
 
         //详情信息
-        List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(logisticsWaybillDetailDTO.getId()));
-
-        List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewDTOList = this.printPickingView(Arrays.asList(logisticsWaybillDetailDTO.getId()));
-        boolean isStockOut =printWayBillPdf.getIsOutStock() || printPickingViewDTOList.stream().anyMatch(SoB2cDeliveryDTO.PrintPickingViewDTO::getIsOutStock);
-        printWayBillPdf.setIsOutStock(isStockOut);
+//        List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(logisticsWaybillDetailDTO.getId()));
         //查询产品信息
-        List<String> skuNoList = deliveryDetailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuNoList);
+//        List<String> skuNoList = deliveryDetailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+//        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuNoList);
 
+        List<PrintWayBillPdfDetailDTO> detailDTOList = printWayBillPdf.getDetailList();
         //商品种类个数
-        printWayBillPdf.setSkuTotal(deliveryDetailEntityList.size());
+        printWayBillPdf.setSkuTotal((int) detailDTOList.stream().map(v->v.getSkuNo()).distinct().count());
 
         //商品件数
-        int qtySum = deliveryDetailEntityList.stream().mapToInt(req -> req.getDeliveryQty()).sum();
+        int qtySum = detailDTOList.stream().mapToInt(req -> req.getQty()).sum();
         printWayBillPdf.setQtySum(qtySum);
-        for (SoB2cDeliveryDetailEntity deliveryDetailEntity : deliveryDetailEntityList) {
-            PrintWayBillPdfDetailDTO detailDTO = new PrintWayBillPdfDetailDTO();
-            detailDTO.setQty(deliveryDetailEntity.getDeliveryQty());
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(deliveryDetailEntity.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(skuVO)) {
-                detailDTO.setSkuImagesUrl(skuVO.getSkuImagesUrl());
-                if (skuVO.getVariantProperty() == null) {
-                    detailDTO.setVariantProperty("");
-                } else {
-                    detailDTO.setVariantProperty(skuVO.getVariantProperty());
-                }
-                detailDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
-                detailDTO.setSkuNo(skuVO.getSkuNo());
-                detailDTO.setProductName(skuVO.getSkuName());
-            }
-            wayBillDetailList.add(detailDTO);
-        }
-        printWayBillPdf.setDetailList(wayBillDetailList);
+//        for (SoB2cDeliveryDetailEntity deliveryDetailEntity : deliveryDetailEntityList) {
+//            PrintWayBillPdfDetailDTO detailDTO = new PrintWayBillPdfDetailDTO();
+//            detailDTO.setQty(deliveryDetailEntity.getDeliveryQty());
+//            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(deliveryDetailEntity.getSkuId())).findFirst().orElse(null);
+//            if (ObjectUtil.isNotEmpty(skuVO)) {
+//                detailDTO.setSkuImagesUrl(skuVO.getSkuImagesUrl());
+//                if (skuVO.getVariantProperty() == null) {
+//                    detailDTO.setVariantProperty("");
+//                } else {
+//                    detailDTO.setVariantProperty(skuVO.getVariantProperty());
+//                }
+//                detailDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
+//                detailDTO.setSkuNo(skuVO.getSkuNo());
+//                detailDTO.setProductName(skuVO.getSkuName());
+//            }
+//            wayBillDetailList.add(detailDTO);
+//        }
 
         printWayBillPdf.setBasketNo(StringUtils.isNotBlank(printWayBillPdf.getBasketNo())?"#"+printWayBillPdf.getBasketNo():"");
         String orderTip = printWayBillPdf.getIsOutStock()?printWayBillPdf.getIsIntercept()?"缺货订单/拦截订单":"缺货订单":printWayBillPdf.getIsIntercept()?"拦截订单":"";
