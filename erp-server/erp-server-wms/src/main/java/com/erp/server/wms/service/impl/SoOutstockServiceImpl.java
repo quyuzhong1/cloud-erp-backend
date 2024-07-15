@@ -1081,7 +1081,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
             //反审核
-            InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, ids);
+            InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, Collections.singletonList(entity.getId()));
             //扣虚拟仓库库存
             virtualInventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
             //扣实体仓库存
