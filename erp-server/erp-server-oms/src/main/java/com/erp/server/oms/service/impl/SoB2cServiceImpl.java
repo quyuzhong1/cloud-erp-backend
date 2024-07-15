@@ -1508,8 +1508,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } else {
             result.setOrderCode(entity.getCode());
         }
-
-        result.setOrderType(OrderTypeEnum.B2C.getCode());
+        //增加订单类型传递
+        result.setOrderType(entity.getSourceType());
 
         result.setShopId(shopId);
         result.setShopName(entity.getShopName());
