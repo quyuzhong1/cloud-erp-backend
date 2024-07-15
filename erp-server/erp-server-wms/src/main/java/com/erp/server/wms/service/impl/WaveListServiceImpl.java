@@ -21,6 +21,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.WaveListDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.server.wms.mapper.WaveListCartTypeMapper;
@@ -334,5 +335,18 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         }
         return lambdaQuery().in(WaveListEntity::getPickingCartCode,pickingCartCodeList)
                 .list();
+    }
+
+    @Override
+    public void cleanException(String deliveryId) {
+        WaveListDetailEntity detail = waveListDetailService.getOne(Wrappers.<WaveListDetailEntity>lambdaQuery().eq(WaveListDetailEntity::getDeliveryId, deliveryId));
+        List<WaveListDetailEntity> detailList = waveListDetailService.listByMainId(detail.getMainId());
+        List<String> deliveryIds = detailList.stream().map(WaveListDetailEntity::getDeliveryId).filter(v -> !deliveryId.equals(v)).collect(Collectors.toList());
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(deliveryIds);
+        boolean isOutStock = views.stream().anyMatch(PickingListsDTO.SourceView::getIsOutStock);
+        if (isOutStock) {
+            return;
+        }
+        update(Wrappers.<WaveListEntity>lambdaUpdate().set(WaveListEntity::getIsOutStock, false).eq(WaveListEntity::getId, detail.getMainId()));
     }
 }
