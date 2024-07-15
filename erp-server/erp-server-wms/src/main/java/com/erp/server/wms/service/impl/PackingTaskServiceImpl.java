@@ -698,6 +698,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonEntity.getId()));
         WmsCartonDTO.WmsCartonView cartonView = new WmsCartonDTO.WmsCartonView();
+        cartonView.setTaskId(packingTaskEntity.getId());
         cartonView.setSourceId(packingTaskEntity.getSourceId());
         cartonView.setCartonId(cartonEntity.getId());
         cartonView.setSourceCode(packingTaskEntity.getSourceCode());
@@ -1017,6 +1018,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (StringUtils.isBlank(requestDTO.getOutBoxNo())){
             throw new ServiceException("外部单号不能为空");
         }
+        if (!requestDTO.getOutBoxNo().contains("-")){
+            throw new ServiceException("外部单号格式【关联单号-箱号】错误");
+        }
         String[] split = requestDTO.getOutBoxNo().split("-");
         String sourceCode = split[0];
         Integer boxNo = Integer.valueOf(split[1]);
@@ -1168,6 +1172,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String outBoxNo = adjustDTO.getOutBoxNo();
         if (StringUtils.isBlank(outBoxNo)){
             throw new ServiceException("外部单号不能为空");
+        }
+        if(!outBoxNo.contains("-")){
+            throw new ServiceException("外部单号格式【关联单号-箱号】错误");
         }
         String[] split = outBoxNo.split("-");
         String sourceCode = split[0];

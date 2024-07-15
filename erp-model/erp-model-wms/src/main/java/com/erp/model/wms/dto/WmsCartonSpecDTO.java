@@ -861,8 +861,8 @@ public class WmsCartonSpecDTO implements Serializable {
          * MeasureSourceEnum
          * 字典接口地址
          */
-        @NotBlank(message = "箱规来源不能为空")
-        @StateEnumValue(strValues = {"device","manual"},message = "箱规来源有误")
+//        @NotBlank(message = "箱规来源不能为空")
+//        @StateEnumValue(strValues = {"device","manual"},message = "箱规来源有误")
         private String measureSource;
     }
     @Data
@@ -870,12 +870,13 @@ public class WmsCartonSpecDTO implements Serializable {
     public static class SpecRequestDTO {
 
         /**
-         * 箱子id(如果输入值，则以该值为准，否则以outBoxNo为准)
+         * 箱子id
          */
         private String cartonId;
         /**
          * 外箱单号(关联单号{发货单}-箱号)
          */
+        @NotBlank(message = "外部单号不能为空")
         private String outBoxNo;
         /**
          * 源单号【后端使用】
