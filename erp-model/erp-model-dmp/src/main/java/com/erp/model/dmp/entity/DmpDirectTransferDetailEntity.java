@@ -40,22 +40,22 @@ public class DmpDirectTransferDetailEntity extends BaseEntity<DmpDirectTransferD
     * 平台原始详情id
     */
     @TableField("platform_detail_id")
-    private String platformDetailId;
+    private String platformDetailId = "";
     /**
     * 产品id
     */
     @TableField("sku_id")
-    private String skuId;
+    private String skuId = "";
     /**
     * 产品编码
     */
     @TableField("sku_no")
-    private String skuNo;
+    private String skuNo = "";
     /**
     * 产品名称
     */
     @TableField("sku_name")
-    private String skuName;
+    private String skuName = "";
     /**
     * 数量
     */
@@ -65,43 +65,43 @@ public class DmpDirectTransferDetailEntity extends BaseEntity<DmpDirectTransferD
     * 单位
     */
     @TableField("product_unit")
-    private String productUnit;
+    private String productUnit = "";
     /**
     * 调出仓库编码
     */
     @TableField("out_warehouse_code")
-    private String outWarehouseCode;
+    private String outWarehouseCode = "";
     /**
     * 调出仓库名称
     */
     @TableField("out_warehouse_name")
-    private String outWarehouseName;
+    private String outWarehouseName = "";
     /**
     * 调出仓位
     */
     @TableField("out_warehouse_location")
-    private String outWarehouseLocation;
+    private String outWarehouseLocation = "";
     /**
     * 调入仓库编码
     */
     @TableField("in_warehouse_code")
-    private String inWarehouseCode;
+    private String inWarehouseCode = "";
     /**
     * 调入仓库名称
     */
     @TableField("in_warehouse_name")
-    private String inWarehouseName;
+    private String inWarehouseName = "";
     /**
     * 调入仓位
     */
     @TableField("in_warehouse_location")
-    private String inWarehouseLocation;
+    private String inWarehouseLocation = "";
     
     /**
      * 物料名称
      */
      @TableField("product_name")
-     private String productName;
+     private String productName = "";
      
      /**
       * 入库时间
@@ -113,31 +113,31 @@ public class DmpDirectTransferDetailEntity extends BaseEntity<DmpDirectTransferD
       * 入库库存状态编码
       */
      @TableField("in_stock_status_code")
-     private String inStockStatusCode;
+     private String inStockStatusCode = "";
      
      /**
       * 入库库存状态名称
       */
      @TableField("in_stock_status_name")
-     private String inStockStatusName;
+     private String inStockStatusName = "";
      
      /**
       * 出库库存状态编码
       */
      @TableField("out_stock_status_code")
-     private String outStockStatusCode;
+     private String outStockStatusCode = "";
      
      /**
       * 出库库存状态名称
       */
      @TableField("out_stock_status_name")
-     private String outStockStatusName;
+     private String outStockStatusName = "";
     
     /**
     * 备注
     */
     @TableField("remark")
-    private String remark;
+    private String remark = "";
     /**
     * 输入任务id
     */

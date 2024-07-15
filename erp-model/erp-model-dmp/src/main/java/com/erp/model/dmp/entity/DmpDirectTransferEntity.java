@@ -45,12 +45,12 @@ public class DmpDirectTransferEntity extends BaseEntity<DmpDirectTransferEntity>
     * 订单来源平台（编码）：Amazon，AliExpress，shopify，...
     */
     @TableField("source_platform")
-    private String sourcePlatform;
+    private String sourcePlatform = "";
     /**
     * 来源平台：gyy，kingdee，mabang
     */
     @TableField("source_system")
-    private String sourceSystem;
+    private String sourceSystem = "";
     /**
     * 第三方单据编号
     */
@@ -60,7 +60,7 @@ public class DmpDirectTransferEntity extends BaseEntity<DmpDirectTransferEntity>
     * 销售平台原始单号
     */
     @TableField("platform_code")
-    private String platformCode;
+    private String platformCode = "";
     /**
     * 作废状态（false未作废，true已作废）
     */
@@ -74,87 +74,87 @@ rejectt：审核不通过
 approvet：已审核
     */
     @TableField("status")
-    private String status;
+    private String status = "";
     /**
     * 调拨类型
  InnerOrgTransfer：组织内调拨
 OverOrgTransfer：跨组织调拨
     */
     @TableField("transfer_type")
-    private String transferType;
+    private String transferType = "";
     /**
     * 调拨方向 
 GENERAL：普通 
 RETURN：退货
     */
     @TableField("transfer_direct")
-    private String transferDirect;
+    private String transferDirect = "";
     /**
     * 调出库存组织编码
     */
     @TableField("out_org_code")
-    private String outOrgCode;
+    private String outOrgCode = "";
     /**
     * 调出库存组织名称
     */
     @TableField("out_org_name")
-    private String outOrgName;
+    private String outOrgName = "";
     /**
     * 调入库存组织编码
     */
     @TableField("in_org_code")
-    private String inOrgCode;
+    private String inOrgCode = "";
     /**
     * 调入库存组织名称
     */
     @TableField("in_org_name")
-    private String inOrgName;
+    private String inOrgName = "";
     /**
     * 仓管员编码
     */
     @TableField("warehouse_keeper_code")
-    private String warehouseKeeperCode;
+    private String warehouseKeeperCode = "";
     /**
     * 仓管员名称
     */
     @TableField("warehouse_keeper_name")
-    private String warehouseKeeperName;
+    private String warehouseKeeperName = "";
     
     /**
      * 销售组织名称
      */
      @TableField("sale_org_name")
-     private String saleOrgName;
+     private String saleOrgName = "";
      
      /**
       * 业务类型
       */
      @TableField("biz_type")
-     private String bizType;
+     private String bizType = "";
      
      /**
       * 调入库存组织id
       */
      @TableField("in_org_id")
-     private String inOrgId;
+     private String inOrgId = "";
      
      /**
       * 调出库存组织id
       */
      @TableField("out_org_id")
-     private String outOrgId;
+     private String outOrgId = "";
      
      /**
       * 创建人名称
       */
      @TableField("platform_create_user_name")
-     private String platformCreateUserName;
+     private String platformCreateUserName = "";
      
      /**
       * 审核人名称
       */
      @TableField("approve_user_name")
-     private String approveUserName;
+     private String approveUserName = "";
      
      /**
       * 审核日期
@@ -172,7 +172,7 @@ RETURN：退货
       * 作废名称
       */
      @TableField("invalid_user_name")
-     private String invalidUserName;
+     private String invalidUserName = "";
      
      /**
       * 最后更新时间
@@ -184,7 +184,7 @@ RETURN：退货
       * 最后更新人
       */
      @TableField("last_updated_user_name")
-     private String lastUpdatedUserName;
+     private String lastUpdatedUserName = "";
      
      
     
@@ -192,7 +192,7 @@ RETURN：退货
     * 备注
     */
     @TableField("remark")
-    private String remark;
+    private String remark = "";
     /**
     * 输入任务id
     */

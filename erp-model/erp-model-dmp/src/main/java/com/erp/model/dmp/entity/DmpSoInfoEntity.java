@@ -40,12 +40,12 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 订单来源平台（编码）：Amazon，AliExpress，shopify，...
     */
     @TableField("source_platform")
-    private String sourcePlatform;
+    private String sourcePlatform = "";
     /**
     * 来源平台：gyy，kingdee，mabang
     */
     @TableField("source_system")
-    private String sourceSystem;
+    private String sourceSystem = "";
     /**
     * 第三方单据编号
     */
@@ -55,7 +55,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 销售平台原始单号
     */
     @TableField("platform_code")
-    private String platformCode;
+    private String platformCode = "";
     /**
     * 作废状态（false未作废，true已作废）
     */
@@ -65,42 +65,42 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 订单状态 waitSubmit.待提交 approveIng.审核中 reject.审核不通过 approve.已审核
     */
     @TableField("order_status")
-    private String orderStatus;
+    private String orderStatus = "";
     /**
     * 发货状态 waitDistribution:待配货，inDistribution:配货中,waitShipped:待发货，shipped：已发货，partialShipped：部分发货
     */
     @TableField("delivery_status")
-    private String deliveryStatus;
+    private String deliveryStatus = "";
     /**
     * 退货状态 orderReturn：已退货，partialReturn部分退，notReturn：未退货
     */
     @TableField("return_status")
-    private String returnStatus;
+    private String returnStatus = "";
     /**
     * 平台原始状态
     */
     @TableField("platform_original_status")
-    private String platformOriginalStatus;
+    private String platformOriginalStatus = "";
     /**
     * 店铺编号
     */
     @TableField("shop_id")
-    private String shopId;
+    private String shopId = "";
     /**
     * 店铺名称
     */
     @TableField("shop_name")
-    private String shopName;
+    private String shopName = "";
     /**
     * 卖家备注
     */
     @TableField("sell_remark")
-    private String sellRemark;
+    private String sellRemark = "";
     /**
     * 买家备注
     */
     @TableField("buyer_remark")
-    private String buyerRemark;
+    private String buyerRemark = "";
     /**
     * 支付时间
     */
@@ -115,12 +115,12 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 付款方式
     */
     @TableField("pay_method")
-    private String payMethod;
+    private String payMethod = "";
     /**
     * 币种编码
     */
     @TableField("currency_code")
-    private String currencyCode;
+    private String currencyCode = "";
     /**
     * 汇率
     */
@@ -165,17 +165,17 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 物流单号
     */
     @TableField("logistics_code")
-    private String logisticsCode;
+    private String logisticsCode = "";
     /**
     * 物流名称
     */
     @TableField("logistics_name")
-    private String logisticsName;
+    private String logisticsName = "";
     /**
     * 拓展字段
     */
     @TableField("extend_data")
-    private String extendData;
+    private String extendData = "{}";
     /**
     * 唯一字段md5值
     */

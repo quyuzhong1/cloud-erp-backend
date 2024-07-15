@@ -29,6 +29,7 @@ import com.erp.server.dmp.service.DmpCfgInputChildService;
 import com.erp.server.dmp.service.DmpInputMongoDmpRelationService;
 
 import cn.hutool.core.collection.CollUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * dmp处理子类任务handler，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -37,6 +38,7 @@ import cn.hutool.core.collection.CollUtil;
  */
 @Service
 @Scope("prototype")
+@Slf4j
 public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 	
 	@Autowired
@@ -58,7 +60,8 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 						TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
 						Object mainDmpIdObj = dmpInputMongoChildEntity.get(MAIN_ID);
 						if(mainDmpIdObj == null) {
-							throw new ServiceException("子类数据mongo集合" + childMongoStorageName + "的id=" + dmpInputMongoChildEntity.get(DmpInputMongoHandler.MONGO_BASE_ID) + "未查询到dmpid");
+							log.error("子类数据mongo集合" + childMongoStorageName + "的id=" + dmpInputMongoChildEntity.get(DmpInputMongoHandler.MONGO_BASE_ID) + "未查询到dmpid");
+							continue;
 						}
 						String mainDmpId = mainDmpIdObj.toString();
 						if(StringUtils.isNotBlank(mainDmpId)) {
@@ -78,6 +81,7 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 				}
 			}
 		}
+		this.afterConvertData(dmpInputDataDmpRelationMaps);
 		return dmpInputDataDmpRelationMaps;
 	}
 	
