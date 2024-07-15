@@ -45,15 +45,6 @@ public class WarehouseOpenApi {
     }
 
     /**
-     * 文件上传
-     * @return
-     */
-    @OpenApi("uploadFile")
-    public ApiResult<String> uploadFile(MultipartFile multipartFile) {
-        String url = FastDFSClientUtil.uploadFile(multipartFile);
-        return ApiResult.success(url);
-    }
-    /**
      * 称重
      * @param dto 参数
      */
