@@ -94,4 +94,15 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
         }
         return this.lambdaQuery().in(PickingDetailEntity::getSourceDetailId,detailIds).list();
     }
+
+    @Override
+    public void cleanException(String deliveryId) {
+        List<PickingListsEntity> pickingLists = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().eq(PickingListsEntity::getSourceId, deliveryId));
+        if (CollectionUtils.isEmpty(pickingLists)) {
+            return;
+        }
+        List<String> ids = pickingLists.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
+        update(Wrappers.<PickingDetailEntity>lambdaUpdate().set(PickingDetailEntity::getIsOutStock, false)
+                .in(PickingDetailEntity::getMainId, ids));
+    }
 }
