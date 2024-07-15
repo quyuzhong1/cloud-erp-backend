@@ -778,8 +778,12 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
 
             List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
-            transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
-            transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
+            TransactionRuleDTO current = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK);
+            current.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+            transactionRuleDTOList.add(current);
+            TransactionRuleDTO target = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK);
+            target.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+            transactionRuleDTOList.add(target);
             ruleDTO.setParamList(transferDTOList);
             ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
             ruleDTO.setRules(transactionRuleDTOList);
