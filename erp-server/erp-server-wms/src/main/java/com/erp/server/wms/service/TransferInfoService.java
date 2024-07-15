@@ -217,6 +217,4 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return java.lang.Boolean 处理结果
      **/
     Boolean checkHistoryAndDel(String sourceCode,String sourceType, LocalDate billDate);
-
-    void pushWangDian(String code);
 }

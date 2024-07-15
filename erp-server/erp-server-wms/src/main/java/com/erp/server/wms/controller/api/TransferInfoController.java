@@ -320,9 +320,4 @@ public class TransferInfoController extends BaseController {
         return success( "", msg);
     }
 
-    @PostMapping("/pushWangDian")
-    public ApiResult<String> pushWangDian(@RequestParam String code) {
-        transferInfoService.pushWangDian(code);
-        return success();
-    }
 }
