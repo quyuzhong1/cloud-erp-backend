@@ -67,7 +67,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     }
 
     @Override
-    public WaveListDetailDTO.ViewDTO view(String waveId) {
+    public WaveListDetailDTO.ViewDTO view(String waveId) throws ServiceException {
         WaveListEntity waveEntity = waveListService.getById(waveId);
         WaveListDetailDTO.ViewDTO viewDTO = new WaveListDetailDTO.ViewDTO();
         BeanMapper.copy(waveEntity, viewDTO);

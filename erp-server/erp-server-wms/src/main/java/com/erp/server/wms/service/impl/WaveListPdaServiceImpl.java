@@ -10,6 +10,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -213,7 +214,12 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         for (WaveListEntity waveEntity : records) {
             WaveListPdaDTO.ViewDTO view = new WaveListPdaDTO.ViewDTO();
             //波次明细
-            WaveListDetailDTO.ViewDTO waveDetailView = waveDetailService.view(waveEntity.getId());
+            WaveListDetailDTO.ViewDTO waveDetailView = null;
+            try {
+                waveDetailView = waveDetailService.view(waveEntity.getId());
+            }catch (ServiceException e){
+                continue;
+            }
             List<WaveListDetailDTO.DeliveryInfoDTO> deliveryInfoList = waveDetailView.getDeliveryInfoList();
             //波次id，波次编码，波次名称，创建时间
             BeanMapper.copy(waveEntity, view);
