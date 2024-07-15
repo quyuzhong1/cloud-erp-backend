@@ -261,8 +261,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
                 .set("status", WaveStatusEnum.AWAIT_PICK.getCode())
                 .set("picking_user_id", "")
                 .set("picking_user_name", "")
-                .set("picking_time", "")
-                .set("print_time", "")
+                .set("picking_time", null)
+                .set("print_time", null)
         );
         return BatchResultDTO.success(waveListEntity.getId(), waveListEntity.getCode(), "成功");
     }
