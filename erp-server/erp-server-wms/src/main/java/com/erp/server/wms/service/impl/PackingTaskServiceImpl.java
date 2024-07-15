@@ -13,11 +13,13 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
+import com.common.business.utils.JasperHelperUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
@@ -27,6 +29,8 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.FileTemplateDTO;
+import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
@@ -36,6 +40,7 @@ import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.server.wms.convert.CartonConverter;
@@ -124,6 +129,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private WmsAttachmentService attachmentService;
     @Resource
     private MQProducerService mqProducerService;
+    @Resource
+    private FileTemplateFeign fileTemplateFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -838,7 +845,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public String pdaPackingSave(WmsCartonSpecDTO.AddDTO dto) {
         dto.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
         String code = this.stagingPacking(dto);
-        return code;
+        return getOutBoxNoBase64(code);
     }
 
     @Override
@@ -1899,6 +1906,38 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         return tabList;
     }
 
+    @Override
+    public String getOutBoxNoBase64(String outBoxNo) {
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.PACKING_TASK);
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.PACKING_TASK.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
+        if (inputStream == null) {
+            log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+            return null;
+        }
+        Map<String, Object> map = new HashMap<>();
+        map.put("outBoxNo", outBoxNo);
+        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Collections.singletonList(outBoxNo));
+        String base = Base64.getEncoder().encodeToString(bytes);
+        return "data:application/pdf;base64," + base;
+    }
+
+    @Override
+    public String getPrintBarCode(String cartonId) {
+        WmsCartonEntity cartonEntity = wmsCartonService.getById(cartonId);
+        if (Objects.isNull(cartonEntity)){
+            throw new ServiceException(ApiError.ERROR_92146);
+        }
+        PackingTaskEntity packingTaskEntity = this.getById(cartonEntity.getPackingTaskId());
+        if (ObjectUtils.isEmpty(packingTaskEntity)) {
+            throw new ServiceException(ApiError.ERROR_98001);
+        }
+        return getOutBoxNoBase64(packingTaskEntity.getSourceCode()+"-"+cartonEntity.getBoxNo());
+    }
 
     /**
     * 新增修改处理数据
