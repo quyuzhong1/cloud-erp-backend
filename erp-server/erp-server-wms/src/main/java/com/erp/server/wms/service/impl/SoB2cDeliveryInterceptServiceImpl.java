@@ -401,7 +401,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 List<WaveListDetailEntity> waveLists = waveListDetailService.listCancelByDeliveryIds(ids);
                 String cancelCodes = waveLists.stream().map(WaveListDetailEntity::getDeliveryCode).collect(Collectors.joining(","));
                 if (ObjectUtil.isNotEmpty(cancelCodes)) {
-                    throw new ServiceException(ApiError.ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT, cancelCodes);
+                    throw new ServiceException(ApiError.ERROR_99123, cancelCodes);
                 }
                 soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
                 // 待处理和异常状态中的生成波次异常无需回滚库存
