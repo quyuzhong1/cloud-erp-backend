@@ -120,4 +120,10 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * @return List<WaveListEntity>
      */
     List<WaveListEntity> listByPickingCartCodeList(List<String> pickingCartCodeList);
+
+    /**
+     * 发货单清除波次主表缺货标识
+     * @param deliveryId 发货单id
+     */
+    void cleanException(String deliveryId);
 }
