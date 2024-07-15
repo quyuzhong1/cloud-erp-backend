@@ -1348,6 +1348,10 @@ public class OrdersV0Api {
             return new OrdersV0Api(new ApiClient()
                     .setAWSSigV4Signer(awsSigV4Signer)
                     .setLWAAuthorizationSigner(lwaAuthorizationSigner)
+                    // 超时时间1分钟（单位毫秒）
+                    .setReadTimeout(60000)
+                    .setWriteTimeout(60000)
+                    .setConnectTimeout(60000)
                     .setBasePath(endpoint)
                     .setRateLimiter(rateLimitConfiguration));
         }

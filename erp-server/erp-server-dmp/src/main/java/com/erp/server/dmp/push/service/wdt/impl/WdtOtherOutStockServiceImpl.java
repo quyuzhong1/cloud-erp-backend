@@ -13,18 +13,19 @@ import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherOutStockService;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
-import com.sdk.wangdian.sdk.api.wms.external.out.CreateStockExternalOutRequest;
-import com.sdk.wangdian.sdk.api.wms.external.out.CreateStockExternalOutResponse;
-import com.sdk.wangdian.sdk.api.wms.external.out.StockExternalOutAPI;
+import com.sdk.wangdian.sdk.api.wms.external.out.*;
 import com.sdk.wangdian.sdk.api.wms.stockout.StockoutAPI;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.*;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutResponse;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutOtherQueryRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.StockoutOtherQueryResponse;
 import com.sdk.wangdian.server.WangDianClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 import java.net.ConnectException;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -115,14 +116,24 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
     public StockoutOtherQueryResponse queryWithDetail(CreateOtherStockoutRequest createOutstock) {
         StockoutOtherQueryRequest request = new StockoutOtherQueryRequest();
         StockoutAPI stockoutAPI = wangDianClientService.get(StockoutAPI.class);
-        StockoutOtherQueryResponse salesStockoutResponse;
+        StockoutOtherQueryResponse response;
         request.setStockoutNo(createOutstock.getOuterNo());
         Pager pager = new Pager(10, 0, true);
         try {
-            salesStockoutResponse = stockoutAPI.searchOther(request, pager);
+            log.info("查询其他出库单：{}，{}", JSON.toJSONString(createOutstock), JSON.toJSONString(request));
+            response = stockoutAPI.searchOther(request, pager);
+            log.info("查询其他入库单response：{}", JSON.toJSONString(response));
         } catch (WdtErpException | ConnectException e) {
             throw new RuntimeException(e);
         }
-        return salesStockoutResponse;
+        return response;
+    }
+
+    @Override
+    public StockExternalOutResponse querySelfOut(CreateOtherStockoutRequest request) {
+        StockExternalOutAPI stockExternalOutAPI = wangDianClientService.get(StockExternalOutAPI.class);
+        StockExternalOutRequest outRequest = new StockExternalOutRequest();
+        outRequest.setOuterOutNo(request.getOuterNo());
+        return stockExternalOutAPI.queryWithDetail(outRequest, new Pager(10, 0, true));
     }
 }

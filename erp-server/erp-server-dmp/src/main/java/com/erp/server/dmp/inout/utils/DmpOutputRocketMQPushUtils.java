@@ -128,7 +128,7 @@ public class DmpOutputRocketMQPushUtils{
 			});
 			
 			i = i + 1;
-			if(i % 50 == 0) {
+			if(i % 3 == 0) {
 				try {
 					Thread.sleep(i);
 				} catch (InterruptedException e) {}
@@ -141,7 +141,7 @@ public class DmpOutputRocketMQPushUtils{
 		if(status.contains(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordService.getById(id);
 			errorCount = dmpOutputTaskRecordEntity.getErrorCount() + 1;
-			if(errorCount == 3) {
+			if(errorCount == 10) {
 				status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
 			}
 		}

@@ -9,6 +9,8 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -33,11 +35,15 @@ import com.erp.server.dmp.service.DmpOutputTaskService;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 
+@Service
+@Scope("prototype")
 public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	@Autowired
 	protected DmpOutputTaskService dmpOutputTaskService;
 	@Autowired
 	protected DmpHandlerCache dmpHandlerCache;
+	
+	protected boolean isNotValidate = false;
 	
 	@Override
 	public void doDmpHandler(DmpOutputRequest dmpRequest, DmpOutputResponse dmpResponse, DmpHandlerChain chain) {
@@ -51,6 +57,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	}
 	
 	protected void doDmpHandler(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse, DmpHandlerChain chain) {
+		isNotValidate = dmpRequest.isNotValidate();
 		DmpCfgOutputEntity dmpCfgOutputEntity = dmpResponse.getDmpCfgOutputEntity();
 		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getInputConvertId()));
 		if(CollUtil.isNotEmpty(dmpCfgInputConvertEntityList)) {
@@ -85,6 +92,9 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	}
 	
 	private boolean validate(Object value , DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity) {
+		if(isNotValidate) {
+			return false;
+		}
 		String compareSign = dmpCfgOutputBlackEntity.getCompareSign();
 		String dataType = dmpCfgOutputBlackEntity.getDataType();
 		if(StringUtils.isBlank(compareSign) || StringUtils.isBlank(dataType)) {

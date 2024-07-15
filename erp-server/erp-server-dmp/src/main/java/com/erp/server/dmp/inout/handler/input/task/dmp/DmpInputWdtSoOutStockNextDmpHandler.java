@@ -1,10 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -29,17 +26,4 @@ public class DmpInputWdtSoOutStockNextDmpHandler extends DmpInputWdtNextDmpHandl
 		return detailList;
 	}
 	
-	@Override
-	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
-			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
-			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-				Object amount = dmpDataMap.get("amount");
-				Object qty = dmpDataMap.get("qty");
-				if(amount != null && qty != null) {
-					dmpDataMap.put("sellPrice", new BigDecimal(amount.toString()).divide(new BigDecimal(qty.toString()) , 2, RoundingMode.HALF_UP));
-				}
-			}
-		}
-	}
 }

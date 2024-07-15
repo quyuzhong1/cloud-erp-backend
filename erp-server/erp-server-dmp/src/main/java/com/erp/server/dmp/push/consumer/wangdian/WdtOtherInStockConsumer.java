@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.consumer.wangdian;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
@@ -23,7 +24,9 @@ import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdWarehouseService;
+import com.sdk.wangdian.enums.WdtExtInStockStatusEnum;
 import com.sdk.wangdian.enums.WdtInStockStatusEnum;
+import com.sdk.wangdian.sdk.api.wms.external.in.StockExternalInResponse;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.OtherStockinResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -113,22 +116,6 @@ public class WdtOtherInStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
         if(count > 0){
             return ApiResult.error(ApiError.ERROR_WDT_CANCEL_PUSH.code, String.format("前序任务未完成, 跳过本次推送: %s", request));
         }
-        //查询其他入库单
-        OtherStockinResponse.DataInfoDto dataInfoDto = wdtPushOtherInStockService.queryWithDetail(request);
-        List<OtherStockinResponse.OrderInfoDto> order = dataInfoDto.getOrder();
-        //旺店通已经存在这个单据
-        if(order != null && ! order.isEmpty()){
-            OtherStockinResponse.OrderInfoDto dto = dataInfoDto.getOrder().get(0);
-            if (dto.getStatus().equals(80)) {
-                //修改推送任务状态为同步成功
-                return ApiResult.success();
-            }else {
-                //修改任务的错误消息
-                String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtInStockStatusEnum.getName(String.valueOf(dto.getStatus())));
-                return ApiResult.error(format);
-            }
-        }
-
         ThirdMappingEntity thirdMapping = thirdMappingService.getByThirdCodeAndType(request.getWarehouseNo(), ThirdSysTypeEnum.WDT.getCode(), ThirdSysTypeEnum.WAREHOUSE.getCode());
         if (ObjectUtils.isEmpty(thirdMapping)) {
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: 三方仓库%s未映射", request.getWarehouseNo()));
@@ -140,10 +127,36 @@ public class WdtOtherInStockConsumer<T extends DmpSyncTaskIdDTO> extends Abstrac
         //根据旺店通仓库类型，决定调用的API
         if (WdtWarehouseTypeEnum.SELF_TRANSFER.getCode().equals(thirdWarehouse.getType())) {
             limiter.acquire();
+            StockExternalInResponse stockExternalInResponse = wdtPushOtherInStockService.querySelfIn(request);
+            if (ObjectUtils.isNotEmpty(stockExternalInResponse) && CollectionUtils.isNotEmpty(stockExternalInResponse.getOrder())) {
+                StockExternalInResponse.Order order = stockExternalInResponse.getOrder().get(0);
+                if (WdtExtInStockStatusEnum.finish().contains(order.getStatus())) {
+                    return ApiResult.success();
+                } else {
+                    //修改任务的错误消息
+                    String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtExtInStockStatusEnum.getName(order.getStatus()));
+                    return ApiResult.error(format);
+                }
+            }
             wdtPushOtherInStockService.executeSelfConsumer(request);
         }else {
             //请求旺店通
             limiter.acquire();
+            //查询其他入库单
+            OtherStockinResponse.DataInfoDto dataInfoDto = wdtPushOtherInStockService.queryWithDetail(request);
+            List<OtherStockinResponse.OrderInfoDto> order = dataInfoDto.getOrder();
+            //旺店通已经存在这个单据
+            if(order != null && ! order.isEmpty()){
+                OtherStockinResponse.OrderInfoDto dto = dataInfoDto.getOrder().get(0);
+                if (dto.getStatus().equals(80)) {
+                    //修改推送任务状态为同步成功
+                    return ApiResult.success();
+                }else {
+                    //修改任务的错误消息
+                    String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtInStockStatusEnum.getName(String.valueOf(dto.getStatus())));
+                    return ApiResult.error(format);
+                }
+            }
             wdtPushOtherInStockService.executeConsumer(request);
         }
         return ApiResult.success();

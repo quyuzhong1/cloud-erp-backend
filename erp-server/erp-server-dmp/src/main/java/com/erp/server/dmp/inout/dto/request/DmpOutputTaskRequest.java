@@ -56,4 +56,9 @@ public class DmpOutputTaskRequest extends DmpOutputRequest{
 	 */
 	private Map<DmpCfgInputConvertEntity , List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = new HashMap<>();
 	
+	/**
+	 * 是否校验数据
+	 */
+	private boolean isNotValidate = false; 
+	
 }
