@@ -1,14 +1,19 @@
 package com.erp.server.dmp.inout.utils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.stream.CollectorUtil;
+import com.alibaba.excel.util.StringUtils;
+import com.common.business.utils.CollectionUtils;
+import com.common.business.utils.StringUtil;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -329,5 +334,22 @@ public class DmpHandlerCache implements CommandLineRunner{
 		this.dealRocketMQTemplate(dmpCfgMqService.lambdaQuery()
 					.eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
 					.eq(DmpCfgMqEntity::getDisabled, false).list());
+	}
+
+
+	/**
+	 * 查询国家信息
+	 * @param country 国家二字码/国家中文名/国家英文名
+	 */
+	public List<DictCountryEntity> getDictCountry(String country) {
+		if (StringUtils.isEmpty(country)) {
+			return Collections.emptyList();
+		}
+		List<DictCountryEntity> list = FeignQuery.list(
+				FeignQuery.create(DictCountryEntity.class)
+						.eq(DictCountryEntity::getId, country)
+						.last("or name_cn = '" + country + "' or name_en = '" + country + "'")
+		);
+		return list;
 	}
 }

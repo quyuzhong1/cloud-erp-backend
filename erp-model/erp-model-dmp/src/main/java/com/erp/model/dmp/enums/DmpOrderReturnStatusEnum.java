@@ -1,22 +1,17 @@
 package com.erp.model.dmp.enums;
+
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * <p>
- * 外部系统 系统代码 枚举
- * </p>
- *
- * @author shukai
- * @since 2024-06-11 09:37:12
+ * 中台订单退货状态
  */
-public enum DmpBasicSystemCodeEnum implements EnumMessage {
-	AMAZON("amazon", "亚马逊"),
-	KINGDEE("kingdee", "金蝶"),
-	WDT("wdt", "旺店通"),
-	MABANG("mabang", "马帮"),
+public enum  DmpOrderReturnStatusEnum implements EnumMessage {
+    ORDER_RETURN("orderReturn", "已退货"),
+    PARTIAL_RETURN("partialReturn", "部分退货"),
+    NOT_RETURN("notReturn", "未退货"),
     ;
     /**
      * 类型
@@ -29,7 +24,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
      */
     private String name;
 
-    DmpBasicSystemCodeEnum(String code, String name) {
+    DmpOrderReturnStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }

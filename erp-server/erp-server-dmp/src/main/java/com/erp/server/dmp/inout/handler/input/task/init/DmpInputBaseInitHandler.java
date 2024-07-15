@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.server.dmp.inout.dto.request.*;
+import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangOrderApiInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangRefundApiInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangReturnApiInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangShopInfoApiInitHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -19,16 +24,10 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
-import com.erp.model.dmp.entity.DmpCfgInputChildEntity;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgInputTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
-import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputKingdeeApiInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputWdtApiInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputKingdeeApiInitHandler;
@@ -37,9 +36,7 @@ import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpCfgApiService;
-import com.erp.server.dmp.service.DmpCfgInputChildService;
 
-import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -129,6 +126,28 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				dmpInputApiInitRequest = dmpInputWdtApiInitRequest;
 				dmpInputWdtApiInitRequest.setRequestParam(extendJson);
 				dmpInputWdtApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
+			}else if(DmpBasicSystemCodeEnum.MABANG.getCode().equals(dmpBasicSystemEntity.getCode())){
+				String code = dmpCfgInputEntity.getCode();
+				if ("order".equals(code)) {
+					//销售订单
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangOrderApiInitHandler.class);
+				} else if ("orderReturn".equals(code)) {
+					//退货单
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangReturnApiInitHandler.class);
+				} else if ("orderRefund".equals(code)) {
+					//退款单
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangRefundApiInitHandler.class);
+				} else if ("shop".equals(code)) {
+					//店铺
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangShopInfoApiInitHandler.class);
+				}
+
+				DmpInputMabangApiInitRequest dmpInputMabangApiInitRequest = new DmpInputMabangApiInitRequest();
+				dmpInputApiInitRequest = dmpInputMabangApiInitRequest;
+				dmpInputMabangApiInitRequest.setRequestParam(extendJson);
+				dmpInputMabangApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
+
+
 			}
 			
 			dmpInputApiInitRequest.setStartTime(startTime);
