@@ -1029,6 +1029,7 @@ public enum ApiError implements Serializable {
     ERROR_92149(92149,"SKU【{}】在关联单中没有记录"),
     ERROR_92150(92150,"SKU【{}】在装箱中没有记录不能移出"),
     ERROR_92251(92251,"关联单号已审核，不支持编辑修改删除"),
+    ERROR_92252(92252,"装箱中SKU【{}】累计装箱数量【{}】不可大于拣货数量【{}】"),
 
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
