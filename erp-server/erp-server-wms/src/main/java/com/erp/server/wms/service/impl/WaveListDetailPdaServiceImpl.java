@@ -321,7 +321,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                     if(pickedTotalQty >= basketDTO.getShouldPickingQty()){
                         basketDTO.setPickedQty(basketDTO.getShouldPickingQty());
                         pickedTotalQty -= basketDTO.getPickedQty();
-                    } else if (pickedTotalQty > 0) {
+                    } else if (pickedTotalQty >= 0) {
                         basketDTO.setPickedQty(pickedTotalQty);
                         pickedTotalQty = 0;
                     }
