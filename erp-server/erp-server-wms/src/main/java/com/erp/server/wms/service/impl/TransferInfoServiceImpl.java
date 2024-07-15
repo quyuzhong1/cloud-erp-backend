@@ -1282,6 +1282,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         return true;
     }
 
+    @Override
+    public void pushWangDian(String code) {
+        TransferInfoEntity entity = getTransferInfoByCode(code);
+        syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+    }
+
     /**
      * @description: 推送金蝶
      * @author Will

@@ -5,10 +5,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
+import com.erp.model.wms.entity.TransferInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
@@ -215,4 +217,6 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return java.lang.Boolean 处理结果
      **/
     Boolean checkHistoryAndDel(String sourceCode,String sourceType, LocalDate billDate);
+
+    void pushWangDian(String code);
 }
