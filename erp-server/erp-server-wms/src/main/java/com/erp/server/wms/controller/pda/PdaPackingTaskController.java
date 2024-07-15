@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.pda;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -19,15 +20,18 @@ import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.server.wms.query.PackingTaskQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
 import lombok.extern.slf4j.Slf4j;
+import org.omg.CORBA.OBJ_ADAPTER;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * PDA装箱任务
@@ -147,6 +151,9 @@ public class PdaPackingTaskController extends BaseController {
     public ApiResult<String> stagingPacking(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
         dto.setOperation("装箱操作");
         dto.setContent("暂存本箱");
+        if (StringUtils.isBlank(dto.getPackingStatus())){
+            dto.setPackingStatus(PackingTaskStatusEnum.INCOMPLETE.getCode());
+        }
         String code = packingTaskService.stagingPacking(dto);
         return success(code);
     }
