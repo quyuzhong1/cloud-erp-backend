@@ -128,7 +128,7 @@ public class DmpOutputRocketMQPushUtils{
 			});
 			
 			i = i + 1;
-			if(i % 30 == 0) {
+			if(i % 5 == 0) {
 				try {
 					Thread.sleep(i);
 				} catch (InterruptedException e) {}
