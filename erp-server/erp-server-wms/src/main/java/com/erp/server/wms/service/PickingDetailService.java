@@ -41,4 +41,10 @@ public interface PickingDetailService extends SuperService<PickingDetailEntity> 
       * @return
       */
      List<PickingDetailEntity> listPickingDetailBySourceDetailIds(List<String> detailIds);
+
+     /**
+      * 清除拣货单明细
+      * @param deliveryId 发货单id
+      */
+    void cleanException(String deliveryId);
 }
