@@ -25,4 +25,11 @@ public interface WaveListDetailService extends SuperService<WaveListDetailEntity
     List<WaveListDetailEntity> listByMainIds(List<String> waveIds);
 
     ApiResult<?> moveOut(String deliveryId);
+
+    /**
+     * 根据发货单查询波次
+     *
+     * @param deliveryIds 发货单
+     */
+    List<WaveListDetailEntity> listCancelByDeliveryIds(List<String> deliveryIds);
 }
