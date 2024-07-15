@@ -1,41 +1,40 @@
 package com.erp.model.dmp.enums;
+
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
+
 /**
- * <p>
- * 外部系统 系统代码 枚举
- * </p>
- *
- * @author shukai
- * @since 2024-06-11 09:37:12
+ * 马帮原始订单状态
  */
-public enum DmpBasicSystemCodeEnum implements EnumMessage {
-	AMAZON("amazon", "亚马逊"),
-	KINGDEE("kingdee", "金蝶"),
-	WDT("wdt", "旺店通"),
-	MABANG("mabang", "马帮"),
+public enum MabangOriginalOrderStatusEnum implements EnumMessage {
+    INDISTRIBUTION(2, "配货中"),
+    SHIPPED(3, "已发货"),
+    FINISH(4, "已完成"),
+    INVALID(5, "已作废"),
     ;
+
     /**
      * 类型
      */
     @EnumValue
     @JsonValue
-    private String code;
+    private Integer code;
     /**
      * 名称
      */
     private String name;
 
-    DmpBasicSystemCodeEnum(String code, String name) {
+    MabangOriginalOrderStatusEnum(Integer code, String name) {
         this.code = code;
         this.name = name;
     }
 
     @Override
-    public String getCode() {
+    public Integer getCode() {
         return code;
     }
 
@@ -48,11 +47,18 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DmpBasicSystemCodeEnum statusEnum : DmpBasicSystemCodeEnum.values()) {
+        for (MabangOriginalOrderStatusEnum statusEnum : MabangOriginalOrderStatusEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }
         }
         return "";
+    }
+
+    public static MabangOriginalOrderStatusEnum getByCode(Integer code) {
+        return Arrays.stream(MabangOriginalOrderStatusEnum.values())
+                .filter(platform -> platform.getCode().equals(code))
+                .findFirst()
+                .orElse(null);
     }
 }
