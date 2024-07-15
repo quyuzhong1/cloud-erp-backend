@@ -375,11 +375,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
                 //查询已审核的出库单，进行反审核
-                List<String> approveIds = soOutstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
-                BaseIdsDTO.IdsDTO approveIdDto = new BaseIdsDTO.IdsDTO();
-                approveIdDto.setIds(approveIds);
-                if (CollectionUtils.isNotEmpty(approveIds)) {
-                    soOutstockService.disApprove(approveIdDto, Boolean.FALSE);
+                List<SoOutstockEntity> soOutstockEntityList = soOutstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).collect(Collectors.toList());
+//                BaseIdsDTO.IdsDTO approveIdDto = new BaseIdsDTO.IdsDTO();
+//                approveIdDto.setIds(approveIds);
+                if (CollectionUtils.isNotEmpty(soOutstockEntityList)) {
+                    soOutstockEntityList.forEach(soOutstockEntity -> {
+                        soOutstockService.disApprove(soOutstockEntity, Boolean.FALSE);
+                    });
                 }
 
                 //查询已提交的出库单，进行撤销

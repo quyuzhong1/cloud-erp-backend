@@ -110,10 +110,10 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 反审核
      * @author yl
      * @date 2023-05-19 12:10
-     * @param dto
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean disApprove(BaseIdsDTO.IdsDTO dto, Boolean isPushKingDee);
+    BatchResultDTO disApprove(SoOutstockEntity entity, Boolean isPushKingDee);
 
     /**
      * 撤销流程
