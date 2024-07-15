@@ -121,6 +121,7 @@ public class WmsCartonDTO {
         /**
          * 箱号信息
          */
+        @NotBlank(message = "关联单号不能为空")
         private String sourceCode;
         /**
          * 产品信息(输入SKU/FNSKU/EAN码)
