@@ -101,4 +101,11 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * @param cartonDTOList
      */
     void saveHistoryCartonList(String taskId, List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList);
+
+    /**
+     * 根据箱规获取箱子id
+     * @param specId
+     * @return
+     */
+    WmsCartonEntity getBySpecId(String specId);
 }

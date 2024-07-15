@@ -335,6 +335,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             List<WmsCartonDetailDTO.AddDTO> detailList = dto.getWmsCartonList().stream().map(WmsCartonSpecDTO.AddDTO::getDetailList).flatMap(List::stream).collect(Collectors.toList());
             checkPackQtyByPickQty(packingTask, detailList);
         }
+        PickingSourceTypeEnum type = PickingSourceTypeEnum.getByStatus(packingTask.getSourceType());
         //新增装箱信息
         for (WmsCartonSpecDTO.AddDTO addDTO : dto.getWmsCartonList()) {
             addDTO.setTaskId(dto.getTaskId());
@@ -343,6 +344,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //不同物流属性配置校验
             List<String> skuIds = addDTO.getDetailList().stream().map(WmsCartonDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
             wmsCartonSpecService.checkProductPropertyIds(packingTask.getSourceType(), skuIds);
+            //重置装箱信息 根据配置进行更新装箱状态
+            buildCartonSpectWeight(addDTO, type);
             //新增装箱信息
             wmsCartonSpecService.add(addDTO);
             //根据主表id分组sku查询发货及待装箱数
@@ -366,6 +369,24 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //发送飞书通知
         this.sendNoticeMsg(dto.getTaskId(), dto.getOperation(), dto.getContent());
         return Boolean.TRUE;
+    }
+
+    private void buildCartonSpectWeight(WmsCartonSpecDTO.AddDTO dto, PickingSourceTypeEnum type) {
+        CfgRuleOutDTO.OverweightDTO overweightDTO = CfgRuleOutDTO.OverweightDTO.builder()
+                .type(type)
+                .scanWeight(dto.getPackageWeight())
+                .scanLength(dto.getBoxLength())
+                .scanWidth(dto.getBoxWidth())
+                .scanHeight(dto.getBoxHeight())
+                .build();
+        CfgRuleOutDTO.CheckDTO checkDTO = cfgRuleOutService.handleOverweight(overweightDTO);
+        if (checkDTO.getResult()){
+            dto.setWeightingStatus(PackingWeightStatusEnum.SUCCESS.getCode());
+            dto.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
+        }
+        if (StringUtils.isNotBlank(checkDTO.getMsg())){
+            operateLogService.addModuleOperateLog(checkDTO.getMsg(), ModuleTypeEnum.PACKING_TASK.getCode(), dto.getTaskId(), dto.getOperation());
+        }
     }
 
     /**
@@ -1196,6 +1217,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.ERROR_92145);
         }
+        PackingTaskEntity packingTaskEntity = this.getById(old.getMainId());
+        if (ObjectUtils.isEmpty(packingTaskEntity)) {
+            throw new ServiceException(ApiError.ERROR_92141);
+        }
+        WmsCartonEntity wmsCartonEntity = wmsCartonService.getBySpecId(dto.getSpecId());
+        if (Objects.isNull(wmsCartonEntity)){
+            throw new ServiceException(ApiError.ERROR_92146);
+        }
         if (StringUtils.isBlank(dto.getMeasureSource())){
             dto.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
         }
@@ -1205,10 +1234,34 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (StringUtils.isBlank(dto.getWeightUnit())){
             dto.setSizeUnit(UnitEnum.WeightUnitEnum.KG.code);
         }
+        //配置校验
+        PickingSourceTypeEnum type = PickingSourceTypeEnum.getByStatus(packingTaskEntity.getSourceType());
+        CfgRuleOutDTO.OverweightDTO overweightDTO = CfgRuleOutDTO.OverweightDTO.builder()
+                .type(type)
+                .scanWeight(dto.getPackageWeight())
+                .scanLength(dto.getBoxLength())
+                .scanWidth(dto.getBoxWidth())
+                .scanHeight(dto.getBoxHeight())
+                .build();
+        CfgRuleOutDTO.CheckDTO checkDTO = cfgRuleOutService.handleOverweight(overweightDTO);
+        if (checkDTO.getResult()){
+            wmsCartonEntity.setErrorMsg("");
+            wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.SUCCESS.getCode());
+            dto.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
+        }else {
+            wmsCartonEntity.setErrorMsg(checkDTO.getMsg());
+            wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.FAIL.getCode());
+            dto.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
+        }
+        wmsCartonService.updateById(wmsCartonEntity);
         WmsCartonSpecEntity specEntity = CartonConverter.INSTANCE.convertDtoToCartonSpec(dto);
         wmsCartonSpecService.updateSpec(specEntity);
+        packingTaskService.updateWeightStatus(packingTaskEntity);
         String msg = StrUtil.format("修改箱规信息-箱规编号【{}】 ", old.getBoxSpecNo());
         operateLogService.addModuleOperateLogByObj(old, specEntity, ModuleTypeEnum.CARTON_SPC.getCode(), old.getMainId(), msg);
+        if (StringUtils.isNotBlank(checkDTO.getMsg())){
+            operateLogService.addModuleOperateLog(checkDTO.getMsg(), ModuleTypeEnum.PACKING_TASK.getCode(), dto.getTaskId(), "修改箱规信息");
+        }
     }
 
     private void getCartonInfo(WmsCartonDTO.AdjustDTO adjustDTO) {
@@ -1341,9 +1394,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wmsCartonSpecEntity.setMeasureSource(MeasureSourceEnum.DEVICE.getCode());
             wmsCartonSpecService.updateById(wmsCartonSpecEntity);
             wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.SUCCESS.getCode());
+            //装箱成功需要清除称重异常原因
+            wmsCartonEntity.setErrorMsg("");
             wmsCartonService.updateById(wmsCartonEntity);
             packingTaskService.updateWeightStatus(packingTaskEntity);
             operateLogService.addModuleOperateLog(log, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "修改箱规");
+            if (StringUtils.isNotBlank(checkDTO.getMsg())){
+                operateLogService.addModuleOperateLog(checkDTO.getMsg(), ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "设备扫描称重");
+            }
             return ApiResult.success(checkDTO.getMsg());
         }else{
             //更新状态为称重失败
@@ -1351,6 +1409,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wmsCartonEntity.setErrorMsg(checkDTO.getMsg());
             wmsCartonService.updateById(wmsCartonEntity);
             packingTaskService.updateWeightStatus(packingTaskEntity);
+            if (StringUtils.isNotBlank(checkDTO.getMsg())){
+                operateLogService.addModuleOperateLog(checkDTO.getMsg(), ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "设备扫描称重");
+            }
             return ApiResult.error(checkDTO.getMsg());
         }
     }
