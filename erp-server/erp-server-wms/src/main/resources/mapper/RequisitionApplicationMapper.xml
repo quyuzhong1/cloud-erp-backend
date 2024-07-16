@@ -223,6 +223,7 @@
         rad.id AS sourceDetailId,
         ra.code AS sourceCode,
         rad.from_warehouse_id AS deliveryWarehouseId,
+        rad.from_warehouse_name AS deliveryWarehouseName,
         ra.requisition_warehouse_id AS toWarehouseId,
         ra.requisition_warehouse_name AS toWarehouseName,
         rad.sku_id,
