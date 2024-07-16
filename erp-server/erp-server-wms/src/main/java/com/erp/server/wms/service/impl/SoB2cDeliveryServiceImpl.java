@@ -31,6 +31,7 @@ import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -838,34 +839,31 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public String dimensionalWeightPipeline(DimensionalWeightDTO dto) {
+    public ApiResult<String> dimensionalWeightPipeline(DimensionalWeightDTO dto) {
         //物流单编码
         String logisticsCode = dto.getBarCode();
+        String errorPortCode = CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
         //物流单信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cFeign.getByTrackNoOrTransportNo(logisticsCode);
         if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
             log.error("物流编码【{}】未查询到物流单信息",logisticsCode);
-            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+            return ApiResult.success(StrUtil.format("物流编码【{}】未查询到物流单信息",logisticsCode),errorPortCode);
         }
         SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class,soB2cLogisticsEntity.getMainId());
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             log.error("物流编码【{}】未查询到销售单信息",logisticsCode);
-            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+            return ApiResult.success(StrUtil.format("物流编码【{}】未查询到销售单信息",logisticsCode),errorPortCode);
         }
 
         //发货单信息
         SoB2cDeliveryEntity old = getBySoCode(soB2cEntity.getCode());
         if (ObjectUtil.isEmpty(old)) {
             log.error("编码【{}】未查询到发货单信息",soB2cEntity.getCode());
-            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+            return ApiResult.success(StrUtil.format("编码【{}】未查询到发货单信息",soB2cEntity.getCode()),errorPortCode);
         }
         //现发货单
         SoB2cDeliveryEntity entity = new SoB2cDeliveryEntity();
         BeanMapperUtils.copy(old,entity);
-        if (!StrUtil.equals(entity.getStatus(),SoB2cDeliveryStatusEnum.PICKING.getCode())) {
-            log.error("编码【{}】非已拣货不支持更新",soB2cEntity.getCode());
-            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
-        }
 
         entity.setLength(dto.getLength());
         entity.setWidth(dto.getWidth());
@@ -878,14 +876,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //查询渠道信息
         if (StrUtil.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
             log.error("编码【{}】未查询到渠道id信息",soB2cEntity.getCode());
-            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+            return ApiResult.success(StrUtil.format("编码【{}】未查询到渠道id信息",soB2cEntity.getCode()),errorPortCode);
         }
 
         //查询渠道信息
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
         if (ObjectUtil.isEmpty(channelEntity)) {
             log.error("编码【{}】未查询到渠道信息",soB2cEntity.getCode());
-            return CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode();
+            return ApiResult.success(StrUtil.format("编码【{}】未查询到渠道信息",soB2cEntity.getCode()),errorPortCode);
         }
 
         //出库配置
@@ -933,7 +931,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //发货单操作日志
         //操作日志
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "", "");
-        return sortingPort;
+
+        if(sortingPort.equals(errorPortCode)){
+            return ApiResult.success("出库配置返回异常口",errorPortCode);
+        }else{
+            return ApiResult.success(sortingPort);
+        }
     }
 
     @Override
