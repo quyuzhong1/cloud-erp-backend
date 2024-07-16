@@ -1291,7 +1291,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 if (Objects.isNull(groupSkuDTO)){
                     throw new ServiceException(ApiError.ERROR_92149,adjustDetailDTO.getSkuNo());
                 }
-                int adjustQty = adjustDetailDTO.getAdjustQty() + adjustDetailDTO.getPackQty();
+                int adjustQty = adjustDetailDTO.getAdjustQty();
                 if (groupSkuDTO.getWaitPackQty() < adjustQty){
                     throw new ServiceException(ApiError.ERROR_92147,adjustDetailDTO.getSkuNo(), groupSkuDTO.getWaitPackQty());
                 }
