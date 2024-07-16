@@ -189,6 +189,8 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         waveListService.update(new UpdateWrapper<WaveListEntity>()
                 .eq("id", exitDTO.getId())
                 .set("picking_cart_code", "")
+                .set("picking_cart_type", "")
+                .set("is_out_stock", false)
                 .set("status", WaveStatusEnum.AWAIT_PICK.getCode()));
         return ApiResult.success();
     }
