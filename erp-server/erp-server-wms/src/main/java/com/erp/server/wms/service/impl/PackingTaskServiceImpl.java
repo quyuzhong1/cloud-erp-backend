@@ -1240,12 +1240,29 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if (Objects.isNull(wmsCartonDetailEntity)){
                 wmsCartonDetailEntity = PackingConverter.INSTANCE.cartonDtoToDetail(adjustDetailDTO, cartonId);
             }
-            if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType()) || AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
+            if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType())){
                 wmsCartonDetailEntity.setPackQty(adjustDetailDTO.getPackQty() + adjustDetailDTO.getAdjustQty());
+                if (Objects.nonNull(wmsCartonDetailEntity.getGrossWeight())){
+                    BigDecimal add = wmsCartonDetailEntity.getGrossWeight().add(adjustDetailDTO.getGrossWeight());
+                    wmsCartonDetailEntity.setGrossWeight(add);
+                }
             }else if (AdjustTypeEnum.PRETEND.getCode().equals(dto.getAdjustType())){
                 wmsCartonDetailEntity.setPackQty(adjustDetailDTO.getPackQty() - adjustDetailDTO.getAdjustQty());
+                if (Objects.nonNull(wmsCartonDetailEntity.getGrossWeight())){
+                    BigDecimal subtract = wmsCartonDetailEntity.getGrossWeight().subtract(adjustDetailDTO.getGrossWeight());
+                    wmsCartonDetailEntity.setGrossWeight(subtract);
+                }
+            }else if (AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
+                wmsCartonDetailEntity.setPackQty(adjustDetailDTO.getAdjustQty());
+                wmsCartonDetailEntity.setGrossWeight(adjustDetailDTO.getGrossWeight());
             }
-            wmsCartonDetailService.saveOrUpdate(wmsCartonDetailEntity);
+            if (0 == wmsCartonDetailEntity.getPackQty()){
+                if (Objects.nonNull(wmsCartonDetailEntity.getId())){
+                    wmsCartonDetailService.removeById(wmsCartonDetailEntity.getId());
+                }
+            }else {
+                wmsCartonDetailService.saveOrUpdate(wmsCartonDetailEntity);
+            }
             String adjustType = AdjustTypeEnum.getName(dto.getAdjustType());
             String msg = StrUtil.format("【{}】装箱【{}】【{}】", adjustType, wmsCartonEntity.getBoxNo() , wmsCartonDetailEntity.getSkuNo() + "*" + wmsCartonDetailEntity.getPackQty());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON_DETAIL.getCode(), packingTaskEntity.getId(), "调整装箱");
@@ -1268,7 +1285,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = this.listGroupSkuById(dto.getTaskId());
         PackingTaskEntity packingTask = packingTaskService.getById(dto.getTaskId());
         List<PickingListsDTO.DetailPickDTO> detailPickDTOS = pickingListsService.listDetailBySourceIds(Collections.singletonList(packingTask.getSourceId()));
-        if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType()) || AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
+        if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType())){
             dto.getCartonDetailList().forEach(adjustDetailDTO -> {
                 WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO = groupSkuDTOList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
                 if (Objects.isNull(groupSkuDTO)){
@@ -1301,6 +1318,22 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 int adjustQty = adjustDetailDTO.getPackQty() - adjustDetailDTO.getAdjustQty();
                 if (adjustQty < 0){
                     throw new ServiceException(ApiError.ERROR_92148,adjustDetailDTO.getSkuNo(), adjustDetailDTO.getPackQty());
+                }
+            });
+        }else if (AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
+            dto.getCartonDetailList().forEach(adjustDetailDTO -> {
+                WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO = groupSkuDTOList.stream().filter(e -> e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
+                if (Objects.isNull(groupSkuDTO)){
+                    throw new ServiceException(ApiError.ERROR_92149,adjustDetailDTO.getSkuNo());
+                }
+                int adjustQty = adjustDetailDTO.getAdjustQty();
+                if (groupSkuDTO.getWaitPackQty() < adjustQty){
+                    throw new ServiceException(ApiError.ERROR_92147,adjustDetailDTO.getSkuNo(), groupSkuDTO.getWaitPackQty());
+                }
+                //校验累计装箱数量不可大于拣货数量
+                Integer pickQty = detailPickDTOS.stream().map(PickingListsDTO.DetailPickDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (adjustQty > pickQty){
+                    throw new ServiceException(StrUtil.format(ApiError.ERROR_92252.msg,adjustDetailDTO.getSkuNo(), adjustQty, pickQty));
                 }
             });
         }
