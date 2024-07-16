@@ -69,6 +69,7 @@ public class SyncNewWdtRefundOrderConsumer implements RocketMQListener<Object> {
             log.error("旺店通直接退货单同步失败，msg = {}",e.getMessage());
             updateDTO.setStatus(DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode());
             updateDTO.setResponseData("旺店通退货单消费数据失败：" + ExceptionUtil.stacktraceToOneLineString(e));
+            updateDTO.setMessage(e.getMessage());
         }
         dmpInoutTaskFeign.updateOutputTaskRecord(updateDTO);
     }

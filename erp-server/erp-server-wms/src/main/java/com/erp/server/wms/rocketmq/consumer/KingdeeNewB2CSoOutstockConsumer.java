@@ -79,6 +79,7 @@ public class KingdeeNewB2CSoOutstockConsumer implements RocketMQListener<Object>
             log.error("金蝶直接销售出库单同步失败，msg = {}",e.getMessage());
             updateDTO.setStatus(DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode());
             updateDTO.setResponseData("金蝶销售出库消费数据失败：" + ExceptionUtil.stacktraceToOneLineString(e));
+            updateDTO.setMessage(e.getMessage());
         }
         dmpInoutTaskFeign.updateOutputTaskRecord(updateDTO);
     }

@@ -116,9 +116,9 @@ public class DmpOutputRocketMQPushUtils{
 							status = DmpOutputTaskRecordStatusEnum.MQERROR.getCode();
 							responseData = StrUtil.format("发送RocketMQ数据异常，id=：{}，mq信息：{}", id , JSON.toJSONString(dmpCfgMqEntity));
 						}
-						this.updateStatus(id, status, responseData);
+						this.updateStatus(id, status, responseData , "发送RocketMQ数据异常");
 					} catch (Exception e) {
-						this.updateStatus(id, DmpOutputTaskRecordStatusEnum.MQERROR.getCode(), "发送RocketMQ前失败" + ExceptionUtil.stacktraceToOneLineString(e));
+						this.updateStatus(id, DmpOutputTaskRecordStatusEnum.MQERROR.getCode(), "发送RocketMQ前失败" + ExceptionUtil.stacktraceToOneLineString(e) , "发送RocketMQ前失败");
 					}finally {
 						redisTemplate.delete(redisKey);
 					}
@@ -136,7 +136,7 @@ public class DmpOutputRocketMQPushUtils{
     	}
 	}
 	
-	public void updateStatus(String id , String status , String responseData) {
+	public void updateStatus(String id , String status , String responseData , String message) {
 		Integer errorCount = null;
 		if(status.contains(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordService.getById(id);
@@ -170,7 +170,7 @@ public class DmpOutputRocketMQPushUtils{
 			bodyMap.put("msg_type", "text");
 			Map<String, String> contentMap = new HashMap<String, String>();
 			
-			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "输出任务记录id=" + id + "处理失败");
+			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "输出任务记录id=" + id + "处理失败：" + message);
 			bodyMap.put("content", contentMap);
 			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
 		}
