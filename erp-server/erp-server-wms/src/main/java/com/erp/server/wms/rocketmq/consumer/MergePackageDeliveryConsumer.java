@@ -1,26 +1,20 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.DistributedLockEnum;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.RedisUtil;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
@@ -42,7 +36,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -90,17 +83,19 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         if (null == curDeliveryEntity) {
             return;
         }
+        int retryCount = 1;
         // 重试次数key防止无限重试
         String retryCountKey = StrUtil.format(RedisCacheConstants.MERGE_PACKAGE_RETRY_COUNT_KEY, soId);
         Object retryCountObj = redisTemplate.opsForValue().get(retryCountKey);
         if (null != retryCountObj) {
-            int retryCount = (Integer) retryCountObj;
+            retryCount = (Integer) retryCountObj;
             if (retryCount > 200) {
                 log.warn("【组包处理消费】销售单【{}】重试次数超过100终止消费", curDeliveryEntity.getSoCode());
                 return;
             }
+            retryCount = retryCount + 1;
             // 记录重试次数
-            redisUtil.set(retryCountKey, retryCount + 1, 86400);
+            redisUtil.set(retryCountKey, retryCount, 86400);
         } else {
             redisUtil.set(retryCountKey, 1, 86400);
         }
@@ -112,7 +107,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
             log.warn("【组包处理消费】销售单【{}】因标记发货处理中重试", curDeliveryEntity.getSoCode());
             // 延时推送到队列重试
             SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
-                    soId, soId, 1);
+                    soId, soId, convertSignDelayLevel(retryCount));
             if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
             }
@@ -158,7 +153,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
                 log.warn("【组包处理消费】销售单【{}】因生销售出库单或库存处理中重试", curDeliveryEntity.getSoCode());
                 // 延时推送到队列重试
                 SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
-                        soId, soId, 2);
+                        soId, soId, convertSoOutStockDelayLevel(retryCount));
                 if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
                     throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
                 }
@@ -211,5 +206,35 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
             }
         }
         log.debug("【组包预报虚假标记发货】销售单【{}】标记发货结束", curDeliveryEntity.getSoCode());
+    }
+
+    /**
+     * 标记发货重试队列延时等级
+     */
+    private int convertSignDelayLevel(int retryCount) {
+        if (retryCount <= 1){
+            // 首次延时等级1=1秒后重试
+            return 1;
+        } if (retryCount <= 4){
+            // 其他延时等级2=5秒后重试
+            return 2;
+        }else {
+            // 其他延时等级3=10秒后重试
+            return 3;
+        }
+    }
+
+    /**
+     * 生成销售出库单重试队列延时等级
+     */
+
+    private int convertSoOutStockDelayLevel(int retryCount) {
+        if (retryCount <= 2){
+            // 首次延时等级2=5秒后重试
+            return 2;
+        }else {
+            // 其他延时等级3=10秒后重试
+            return 3;
+        }
     }
 }
