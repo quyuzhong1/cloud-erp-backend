@@ -42,7 +42,7 @@ public class MabangOrderDmpHandler extends MabangDmpHandler {
                 }
 
                 //销售原始订单状态
-                Object orderStatus = dmpDataMap.get("orderStatus");
+                Object orderStatus = dmpDataMap.get("orderstatus");
                 if (orderStatus != null) {
                     MabangOriginalOrderStatusEnum orderStatusEnum = MabangOriginalOrderStatusEnum.getByCode(Integer.valueOf(orderStatus + ""));
                     if (orderStatusEnum.getCode().equals(MabangOriginalOrderStatusEnum.INVALID.getCode())) {
