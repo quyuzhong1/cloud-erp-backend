@@ -67,6 +67,11 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     public String add(WmsCartonSpecDTO.AddDTO addDTO) {
         WmsCartonSpecEntity wmsCartonSpecEntity = new WmsCartonSpecEntity();
         BeanMapperUtils.copy(addDTO, wmsCartonSpecEntity);
+        //检查数据是否存在
+        if (StrUtil.isNotBlank(addDTO.getSpecId())){
+            WmsCartonSpecEntity old = this.getById(addDTO.getSpecId());
+            wmsCartonSpecEntity.setId(Objects.isNull(old)? null: old.getId());
+        }
         // 数据处理
         handleData(wmsCartonSpecEntity, addDTO.getTaskId());
 
@@ -315,6 +320,9 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
             }else {
                 wmsCartonSpecEntity.setBoxSpecNo(boxSpecNo + 1);
             }
+        }
+        if (Objects.isNull(wmsCartonSpecEntity.getPackageWeight())){
+            wmsCartonSpecEntity.setPackageWeight(BigDecimal.ZERO);
         }
     }
 }

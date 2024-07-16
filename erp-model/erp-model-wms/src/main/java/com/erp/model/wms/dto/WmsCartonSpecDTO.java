@@ -134,6 +134,10 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String cartonId;
         /**
+         * 箱号
+         */
+        private Integer boxNo;
+        /**
          * 装箱任务id
          */
 //        @NotBlank(message = "装箱任务id不能为空")
@@ -216,6 +220,10 @@ public class WmsCartonSpecDTO implements Serializable {
          * 字典接口地址
          */
         private String measureSource;
+        /**
+         * 异常原因
+         */
+        private String errorMsg;
     }
 
 

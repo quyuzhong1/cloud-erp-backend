@@ -136,6 +136,11 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         addDTO.setSpecId(wmsCartonSpecEntity.getId());
         addDTO.setTaskId(addDTO.getTaskId());
         BeanMapperUtils.copy(addDTO, wmsCartonEntity);
+        //检查数据是否存在
+        if (StrUtil.isNotBlank(addDTO.getSpecId())){
+            WmsCartonEntity old = this.getById(addDTO.getSpecId());
+            wmsCartonEntity.setId(Objects.isNull(old)? null: old.getId());
+        }
         // 数据处理
         handleData(wmsCartonEntity, addDTO);
 
