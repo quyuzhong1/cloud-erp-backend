@@ -535,6 +535,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String waveCode;
         /**
+         * 订单数量
+         */
+        private Integer orderCount;
+        /**
          * 拣货单信息
          */
         private List<PrintPickingViewDTO> detailList;
@@ -547,6 +551,10 @@ public class SoB2cDeliveryDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PrintPickingViewDTO {
+        /**
+         * 发货单id
+         */
+        private String deliveryId;
         /**
          * 波次号
          */
