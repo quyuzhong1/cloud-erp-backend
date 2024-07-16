@@ -185,4 +185,5 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
     List<DmpPushTaskEntity> getWarnPushTaskList();
 
     List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
+    List<DmpPushTaskEntity> getWarnPushTaskList(List<String> statusList);
 }

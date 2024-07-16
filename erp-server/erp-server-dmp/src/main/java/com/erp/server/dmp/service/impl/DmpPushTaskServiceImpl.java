@@ -423,8 +423,18 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     }
 
     @Override
-    public List<DmpPushTaskEntity> getWarnPushTaskList() {
-        return lambdaQuery().eq(DmpPushTaskEntity::getStatus, 4).eq(DmpPushTaskEntity::getIsDeleted, Boolean.FALSE).list();
+    public List<DmpPushTaskEntity> getWarnPushTaskList(List<String> statusList) {
+        if (CollectionUtils.isEmpty(statusList)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().select(DmpPushTaskEntity::getSourceId,
+                        DmpPushTaskEntity::getSourceType,
+                        DmpPushTaskEntity::getSourceCode,
+                        DmpPushTaskEntity::getSourcePlatformName,
+                        DmpPushTaskEntity::getTargetPlatformName,
+                        DmpPushTaskEntity::getReturnMsg,
+                        DmpPushTaskEntity::getUpdateTime)
+                .in(DmpPushTaskEntity::getStatus, statusList).eq(DmpPushTaskEntity::getIsDeleted, Boolean.FALSE).list();
     }
 
 

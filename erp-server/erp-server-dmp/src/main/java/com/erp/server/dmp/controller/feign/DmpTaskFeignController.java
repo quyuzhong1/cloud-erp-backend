@@ -74,8 +74,8 @@ public class DmpTaskFeignController {
      * @return
      */
     @PostMapping("/getWarnPushTaskList")
-    public List<DmpPushTaskEntity> getWarnPushTaskList(){
-        return dmpPushTaskService.getWarnPushTaskList();
+    public List<DmpPushTaskEntity> getWarnPushTaskList(@RequestBody List<String> statusList){
+        return dmpPushTaskService.getWarnPushTaskList(statusList);
     }
 
     /**
@@ -83,7 +83,7 @@ public class DmpTaskFeignController {
      * @return
      */
     @PostMapping("/getWarnPullTaskList")
-    public List<DmpPullTaskEntity> getWarnPullTaskList(){
-        return dmpPullTaskService.getWarnPullTaskList();
+    public List<DmpPullTaskEntity> getWarnPullTaskList(@RequestBody List<String> statusList){
+        return dmpPullTaskService.getWarnPullTaskList(statusList);
     }
 }
