@@ -62,7 +62,6 @@ public class AliExpressOrderHandlerImplTest {
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
         authMap.put("url","https://api-sg.aliexpress.com");
-//        authMap.put("url","https://open.aliexpress.com");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
@@ -198,7 +197,7 @@ public class AliExpressOrderHandlerImplTest {
     @Test
     public void queryOrder() throws com.erp.tms.aliexpress.util.ApiException {
         QueryOrderRequest queryOrderRequest = QueryOrderRequest.builder()
-                .trade_order_id("3037838269760227")
+                .trade_order_id("3038372496666771")
                 .current_page(1)
                 .page_size(20)
                 .build();

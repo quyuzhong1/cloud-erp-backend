@@ -176,6 +176,8 @@ public class WmsCartonDetailDTO implements Serializable {
          * 装箱sku
          */
         private String sku;
+        private String skuId;
+        private String skuNo;
         /**
          * 箱号
          */
