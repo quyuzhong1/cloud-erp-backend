@@ -175,6 +175,10 @@ public class PickingListsDTO {
          */
         private String skuNo;
         /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
          * 产品名称
          */
         private String productName;

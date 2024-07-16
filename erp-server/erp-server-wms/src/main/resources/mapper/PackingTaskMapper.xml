@@ -112,6 +112,7 @@
                 #{item}
             </foreach>
         </if>
+        group by pt.id,pt.source_code,pt.packing_status,pt.weighting_status
     </select>
     <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">
         SELECT
@@ -192,6 +193,8 @@
             wcs.box_length as length,
             wcs.box_width as width,
             wcs.box_height as height,
+            wcd.sku_id,
+            wcd.sku_no,
             concat(wcd.sku_no,'*',wcd.pack_qty) AS sku
         FROM wms_carton_detail wcd
         INNER JOIN wms_carton wc ON wc.id = wcd.main_id AND wc.is_deleted = FALSE
@@ -314,5 +317,6 @@
                 #{item}
             </foreach>
         </if>
+        group by pt.id,pt.source_code,pt.packing_status,pt.weighting_status
     </select>
 </mapper>
