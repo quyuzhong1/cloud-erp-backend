@@ -131,7 +131,7 @@ public interface PackingConverter {
             @Mapping(target = "skuId", source = "adjustDetailDTO.skuId"),
             @Mapping(target = "skuNo", source = "adjustDetailDTO.skuNo"),
             @Mapping(target = "packQty", ignore = true),
-            @Mapping(target = "grossWeight", source = "adjustDetailDTO.grossWeight"),
+            @Mapping(target = "grossWeight", ignore = true),
             @Mapping(target = "weightUnit", constant = "kg"),
     })
     WmsCartonDetailEntity cartonDtoToDetail(WmsCartonDTO.AdjustDetailDTO adjustDetailDTO, String cartonId);
