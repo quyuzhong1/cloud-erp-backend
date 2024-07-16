@@ -1226,7 +1226,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String cartonId = dto.getCartonId();
         WmsCartonEntity wmsCartonEntity = wmsCartonService.getById(cartonId);
         PackingTaskEntity packingTaskEntity = this.getById(wmsCartonEntity.getPackingTaskId());
-//        List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonId));
+        List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonId));
         //不同物流属性配置校验
         List<String> skuIds = dto.getCartonDetailList().stream().map(WmsCartonDTO.AdjustDetailDTO::getSkuId).distinct().collect(Collectors.toList());
 //        List<String> skuIds2 = detailEntityList.stream().map(WmsCartonDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -1236,13 +1236,16 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
         List<WmsCartonDTO.AdjustDetailDTO> adjustDetailDTOList = dto.getCartonDetailList();
         for (WmsCartonDTO.AdjustDetailDTO adjustDetailDTO : adjustDetailDTOList){
-            WmsCartonDetailEntity wmsCartonDetailEntity = PackingConverter.INSTANCE.cartonDtoToDetail(adjustDetailDTO, cartonId);
+            WmsCartonDetailEntity wmsCartonDetailEntity = detailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(wmsCartonDetailEntity)){
+                wmsCartonDetailEntity = PackingConverter.INSTANCE.cartonDtoToDetail(adjustDetailDTO, cartonId);
+            }
             if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType()) || AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
                 wmsCartonDetailEntity.setPackQty(adjustDetailDTO.getPackQty() + adjustDetailDTO.getAdjustQty());
             }else if (AdjustTypeEnum.PRETEND.getCode().equals(dto.getAdjustType())){
                 wmsCartonDetailEntity.setPackQty(adjustDetailDTO.getPackQty() - adjustDetailDTO.getAdjustQty());
             }
-            wmsCartonDetailService.save(wmsCartonDetailEntity);
+            wmsCartonDetailService.saveOrUpdate(wmsCartonDetailEntity);
             String adjustType = AdjustTypeEnum.getName(dto.getAdjustType());
             String msg = StrUtil.format("【{}】装箱【{}】【{}】", adjustType, wmsCartonEntity.getBoxNo() , wmsCartonDetailEntity.getSkuNo() + "*" + wmsCartonDetailEntity.getPackQty());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON_DETAIL.getCode(), packingTaskEntity.getId(), "调整装箱");
