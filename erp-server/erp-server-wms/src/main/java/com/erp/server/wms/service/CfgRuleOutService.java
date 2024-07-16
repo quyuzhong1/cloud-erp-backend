@@ -38,4 +38,6 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
      * @return Boolean
      */
     Boolean handleB2cAllowableDeviations(CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations, CfgRuleOutDTO.SortingPortRuleDTO dto);
+
+    Boolean matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto);
 }

@@ -3,7 +3,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.dto.SpElExpressionDTO;
@@ -67,6 +70,14 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         Map<String, Object> b2cAllowableDeviationsMap = BeanUtil.beanToMap(commonDTO.getB2cAllowableDeviations());
         this.checkB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations());
         b2cAllowableDeviationsEntity.setRuleContent(b2cAllowableDeviationsMap);
+
+        //中转配置
+        CfgRuleOutEntity transferEntity = new CfgRuleOutEntity();
+        transferEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode());
+        Map<String, Object> transferDTOMap = BeanUtil.beanToMap(commonDTO.getTransferDTO());
+        this.checkTransferRule(commonDTO.getTransferDTO());
+        transferEntity.setRuleContent(transferDTOMap);
+
         //删除数据后再保存
         service.remove(new QueryWrapper<>());
         service.saveBatch(Arrays.asList(equipmentSortingPortEntity, b2cAllowableDeviationsEntity));
@@ -131,9 +142,11 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity equipmentSortingPortEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.EQUIPMENT_SORTING_PORT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutEntity b2cAllowableDeviationsEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.B2C_ALLOWABLE_DEVIATIONS.getCode())).findFirst().orElse(new CfgRuleOutEntity()  );
+        CfgRuleOutEntity transferEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode())).findFirst().orElse(new CfgRuleOutEntity()  );
         CfgRuleOutDTO.CommonDTO commonDTO = new CfgRuleOutDTO.CommonDTO();
         commonDTO.setEquipmentSortingPortDTO(BeanUtil.mapToBean(equipmentSortingPortEntity.getRuleContent(), CfgRuleOutDTO.EquipmentSortingPortDTO.class,true));;
         commonDTO.setB2cAllowableDeviations(BeanUtil.mapToBean(b2cAllowableDeviationsEntity.getRuleContent(), CfgRuleOutDTO.B2cAllowableDeviations.class,true));
+        commonDTO.setTransferDTO(BeanUtil.mapToBean(transferEntity.getRuleContent(), CfgRuleOutDTO.TransferDTO.class,true));
         return commonDTO;
     }
 
@@ -211,5 +224,49 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             map.put(VOLUME_DIFFERENCE_VALUE_HEIGHT.getCode(),dto.getOrderHeight().subtract(dto.getScanHeight()).abs());
         }
         return map;
+    }
+
+    @Override
+    public Boolean matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", dto.getType());
+        if(StringUtils.isNotBlank(dto.getReceiveCountry())){
+            map.put("receiveCountry", dto.getReceiveCountry());
+        }
+        if(StringUtils.isNotBlank(dto.getTargetWarehouse())){
+            map.put("targetWarehouse", dto.getTargetWarehouse());
+        }
+
+        List<CfgRuleOutEntity> cfgRuleOutList = this.baseMapper.selectList(new LambdaQueryWrapper<CfgRuleOutEntity>().eq(CfgRuleOutEntity::getType, CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode()));
+        for (CfgRuleOutEntity entity : cfgRuleOutList) {
+            Map<String, Object> ruleContent = entity.getRuleContent();
+            CfgRuleOutDTO.TransferDTO transferDTO = BeanUtil.toBean(ruleContent, CfgRuleOutDTO.TransferDTO.class);
+            List<ConditionElement> conditionList = transferDTO.getConditionList();
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionList, map);
+            if(matchResult){
+                return Boolean.TRUE;
+            }
+        }
+
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 校验中转配置表达式是否合法
+     */
+    private void checkTransferRule(CfgRuleOutDTO.TransferDTO transferDTO) {
+        if(Objects.isNull(transferDTO)){
+            return;
+        }
+        List<ConditionElement> conditionList = transferDTO.getConditionList();
+        if(CollectionUtil.isEmpty(conditionList)){
+            return;
+        }
+        SpElExpressionDTO splElDTO = spElServer.getConditionExpression(conditionList, Map.class);
+        String expression = splElDTO.getExpression();
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+        }
     }
 }
