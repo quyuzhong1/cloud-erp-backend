@@ -51,6 +51,7 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
+        order by create_time desc
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseLocationReplenishEntity">
         select id,
