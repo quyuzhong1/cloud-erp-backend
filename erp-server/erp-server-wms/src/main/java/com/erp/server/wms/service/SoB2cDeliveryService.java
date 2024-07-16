@@ -8,6 +8,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
@@ -292,7 +293,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @author will
      * @date 2024/6/28 15:48
      */
-    String dimensionalWeightPipeline(DimensionalWeightDTO dto);
+    ApiResult<String> dimensionalWeightPipeline(DimensionalWeightDTO dto);
 
     Boolean updateAbnormal(List<String> ids, AbnormalCauseEnum abnormalCauseEnum);
 
