@@ -68,11 +68,11 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         pickingDetailService.updateBatchById(updateList);
 
         //更新波次列表状态
-        boolean isOutStock = updateList.stream().anyMatch(item -> item.getIsOutStock());
+        boolean isOutStock = updateList.stream().anyMatch(PickingDetailEntity::getIsOutStock);
         waveListService.update(new UpdateWrapper<WaveListEntity>()
                 .eq("id", hangUpDTO.getWaveId())
                 .set("status", WaveStatusEnum.HANG_UP.getCode())
-                .set(isOutStock, "is_out_stock", true)
+                .set("is_out_stock", isOutStock)
         );
 
         //更新波次明细状态
@@ -249,7 +249,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 .set("picking_time", LocalDateTime.now())
                 .set("picking_user_id", loginUser.getUid())
                 .set("picking_user_name", loginUser.getUserName())
-                .set(isOutStock, "is_out_stock", true)
+                .set("is_out_stock", isOutStock)
                 .eq("id", finishParamDTO.getWaveId()));
         //更新波次明细状态
         List<WaveListDetailEntity> waveDetailList = waveDetailService.list(new QueryWrapper<WaveListDetailEntity>().eq("main_id", finishParamDTO.getWaveId()));
