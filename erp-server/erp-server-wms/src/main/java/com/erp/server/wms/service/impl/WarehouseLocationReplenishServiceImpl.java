@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Bean;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -203,6 +204,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO add(WarehouseLocationReplenishDTO.AddDTO dto) {
         WarehouseLocationReplenishEntity entity = new WarehouseLocationReplenishEntity();
         entity.setSkuId(dto.getSkuId());
@@ -244,38 +246,44 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("dict_inventory_status", "usable")
                     .orderByAsc("qty")
             );
-            InventoryEntity minQtyInventoryEntity = pickInventoryList.get(0);
-            entity.setToWarehouseLocation(minQtyInventoryEntity.getWarehouseLocation());
+            //所有的仓位都补货
+            List<WarehouseLocationReplenishEntity> replenishList = new ArrayList<>();
+            for (InventoryEntity inventoryEntity : pickInventoryList) {
+                WarehouseLocationReplenishEntity replenishItem = new WarehouseLocationReplenishEntity();
+                BeanMapper.copy(entity, replenishItem);
+                replenishItem.setToWarehouseLocation(inventoryEntity.getWarehouseLocation());
 
-            //推荐补货库区
-            WarehouseLocationEntity locationEntity = pickLocationList.stream().filter(item -> item.getCode().equals(minQtyInventoryEntity.getWarehouseLocation())).findAny().get();
-            WarehouseLocationEntity pickAreaEntity = pickAreaList.stream().filter(item -> item.getId().equals(locationEntity.getParentId())).findAny().get();
-            entity.setToWarehouseArea(pickAreaEntity.getCode());
+                //推荐补货库区
+                WarehouseLocationEntity locationEntity = pickLocationList.stream().filter(item -> item.getCode().equals(inventoryEntity.getWarehouseLocation())).findAny().get();
+                WarehouseLocationEntity pickAreaEntity = pickAreaList.stream().filter(item -> item.getId().equals(locationEntity.getParentId())).findAny().get();
+                replenishItem.setToWarehouseArea(pickAreaEntity.getCode());
 
-            Integer suggestQty = 0;
-            WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
-                    .eq("sku_id", dto.getSkuId())
-                    .eq("warehouse_id", dto.getWarehouseId())
-                    .eq("warehouse_location", minQtyInventoryEntity.getWarehouseLocation())
-            );
-            if(safetyInventoryEntity != null){
-                //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
-                if(safetyInventoryEntity.getMaxQty() != 0){
-                    suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - minQtyInventoryEntity.getQty();
-                }
-                //无最大补货量有安全库存时：等于安全库存+缺货数量-仓位可用库存
-                if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0){
-                    suggestQty = safetyInventoryEntity.getSafetyQty() + dto.getQty() - minQtyInventoryEntity.getQty();
-                }
-                //无最大补货量无安全库存时：等于缺货数量
-                if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() == 0){
+                Integer suggestQty = 0;
+                WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
+                        .eq("sku_id", dto.getSkuId())
+                        .eq("warehouse_id", dto.getWarehouseId())
+                        .eq("warehouse_location", inventoryEntity.getWarehouseLocation())
+                );
+                if(safetyInventoryEntity != null){
+                    //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
+                    if(safetyInventoryEntity.getMaxQty() != 0){
+                        suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - inventoryEntity.getQty();
+                    }
+                    //无最大补货量有安全库存时：等于安全库存+缺货数量-仓位可用库存
+                    if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0){
+                        suggestQty = safetyInventoryEntity.getSafetyQty() + dto.getQty() - inventoryEntity.getQty();
+                    }
+                    //无最大补货量无安全库存时：等于缺货数量
+                    if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() == 0){
+                        suggestQty = dto.getQty();
+                    }
+                }else {
                     suggestQty = dto.getQty();
                 }
-            }else {
-                suggestQty = dto.getQty();
+                replenishItem.setSuggestQty(suggestQty);
+                replenishList.add(replenishItem);
             }
-
-            entity.setSuggestQty(suggestQty);
+            this.saveBatch(replenishList);
         }
 
         //安全库存补货
@@ -316,9 +324,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
             }
             entity.setSuggestQty(suggestQty);
+            this.save(entity);
         }
 
-        this.baseMapper.insert(entity);
         return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);
     }
 
