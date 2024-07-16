@@ -456,7 +456,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //备注
             SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(req -> req.getId().equals(pickingLists.getSourceId())).findFirst().orElse(new SoB2cDeliveryEntity());
             viewDTO.setRemark(entity.getRemark());
-            viewDTO.setDeliveryCode(entity.getCode());
             viewDTO.setDeliveryId(entity.getId());
             //波次信息
             WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> StrUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
@@ -466,9 +465,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 合并处理数量不相同的行
         Map<SoB2cDeliveryDTO.PrintPickingViewDTO, Integer> mergedMap = printPickingViewList.stream()
                 .collect(Collectors.toMap(dto -> dto, SoB2cDeliveryDTO.PrintPickingViewDTO::getPickingQty, Integer::sum));
+
+        List<SoB2cDeliveryDTO.PrintPickingViewDTO> finalPrintPickingViewList = printPickingViewList;
         printPickingViewList =  mergedMap.entrySet().stream()
                 .map(entry -> {
                     SoB2cDeliveryDTO.PrintPickingViewDTO dto = entry.getKey();
+                    List<String> deliveryIdList = finalPrintPickingViewList.stream().filter(obj -> obj.equals(dto)).map(SoB2cDeliveryDTO.PrintPickingViewDTO::getDeliveryId).distinct().collect(Collectors.toList());
+                    dto.setDeliveryIdList(deliveryIdList);
                     dto.setPickingQty(entry.getValue());
                     return dto;
                 })
