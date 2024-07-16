@@ -660,7 +660,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //有效发货通知单
         List<String> sodIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<String> warehouseIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
         InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
@@ -681,6 +680,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
+
+        //虚拟仓库存
+        List<String> virtualWarehouseIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
+        paramDTO.setWarehouseIdList(warehouseIdList);
+        paramDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
+        paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setSkuIdList(skuIdList);
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryFeign.listInventoryQty(paramDTO);
 
         //根据SKU查询BOM判断是否是组合SKU
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
@@ -712,6 +720,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setCountryName(countryName);
             }
 
+            //虚拟仓可用库存
+            Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), item.getSkuId())
+                            && StrUtil.equals(obj.getVirtualWarehouseId(), item.getVirtualWarehouseId())
+                            && StrUtil.equals(obj.getWarehouseId(), item.getWarehouseId()))
+                    .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
+                    .findFirst().orElse(MathUtil.ZERO);
+            item.setVirtualUsableQty(virtualUsableQty);
 
             //作废状态
             Boolean invalidStatus = item.getInvalidStatus();

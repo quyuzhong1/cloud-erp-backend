@@ -17,6 +17,7 @@
         si.create_user_name AS createUserName,
         si.create_time AS createTime,
         si.warehouse_id AS warehouseId,
+        si.virtual_warehouse_id as virtualWarehouseId,
         si.receive_amount AS receiveAmount,
         si.id,sod.id AS detailId,
         si.approve_user_name AS approveUserName,
@@ -41,7 +42,8 @@
         ci.country_id as countryId,
         sod.exchange_rate AS exchangeRate,
         sod.amount_local_currency AS amountLocalCurrency,
-        sod.all_amount_local_currency AS allAmountLocalCurrency
+        sod.all_amount_local_currency AS allAmountLocalCurrency,
+        sod.frozen_qty as frozenQty
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false

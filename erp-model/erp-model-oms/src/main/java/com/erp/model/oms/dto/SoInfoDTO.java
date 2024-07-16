@@ -141,6 +141,11 @@ public class SoInfoDTO implements Serializable {
         private String warehouseName;
 
         /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+
+        /**
          * 客户id
          */
         private String customerId;
@@ -230,10 +235,21 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer qty;
 
+
         /**
          * 缺货数量
          */
         private Integer scarceQty;
+
+        /**
+         * 锁定数量（冻结数量）
+         */
+        private Integer frozenQty;
+
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
 
         /**
          * 有效发货通知数量
