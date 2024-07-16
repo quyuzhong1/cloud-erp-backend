@@ -1582,10 +1582,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             throw new ServiceException(ApiError.ERROR_92015);
         }
         //销售订单
-        SoInfoEntity soInfoEntity = soInfoService.getById(soDetailEntity.getId());
-        if (ObjectUtil.isEmpty(soDetailEntity)) {
+        SoInfoEntity soInfoEntity = soInfoService.getById(soDetailEntity.getMainId());
+        if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
+        //校验冻结数量
+        if (MathUtil.compareTo(saveDTO.getFrozenQty(), soDetailEntity.getFrozenQty()) == MathUtil.ZERO) {
+            throw new ServiceException("冻结数量未边无需更新");
+        }
+
         //发货通知单
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(Arrays.asList(soDetailEntity.getId()));
 
@@ -1606,7 +1611,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         //库存扣减
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-        stockParamDTO.setParamList(lockVirtualInventory(soInfoEntity,soDetailEntity,frozenQty));
+        stockParamDTO.setParamList(lockVirtualInventory(soInfoEntity,soDetailEntity,frozenQty - oldFrozenQty));
         stockParamDTO.setBusinessType(frozenQty > oldFrozenQty ? VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getCode() : VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_LESS.getCode());
         virtualInventoryFeign.approveByType(stockParamDTO);
         return new BatchResultDTO(soDetailEntity.getId(),soInfoEntity.getCode(),"库存锁定成功",Boolean.TRUE);
@@ -1645,17 +1650,17 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2024/7/16 14:04
      * @param soInfoEntity
      * @param soDetailEntity
-     * @param frozenQty
+     * @param qty
      * @return List<OutInStockDTO>
      */
-    private List<VirtualInventoryStockDTO.OutInStockDTO> lockVirtualInventory(SoInfoEntity soInfoEntity,SoDetailEntity soDetailEntity,Integer frozenQty) {
+    private List<VirtualInventoryStockDTO.OutInStockDTO> lockVirtualInventory(SoInfoEntity soInfoEntity,SoDetailEntity soDetailEntity,Integer qty) {
         VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
         outInStockDTO.setSkuId(soDetailEntity.getSkuId());
         outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
         outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
         outInStockDTO.setBillDate(LocalDate.now());
-        outInStockDTO.setQty(Math.abs(frozenQty - soDetailEntity.getFrozenQty()));
+        outInStockDTO.setQty(Math.abs(qty));
         outInStockDTO.setSourceId(soInfoEntity.getId());
         outInStockDTO.setSourceCode(soInfoEntity.getCode());
         outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_INFO);

@@ -3441,6 +3441,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             batchLockDTO.setId(soInfoEntity.getId());
             batchLockDTO.setDetailId(soDetailEntity.getId());
             batchLockDTO.setCode(soInfoEntity.getCode());
+            batchLockDTO.setRemark(soInfoEntity.getRemark());
             //客户信息
             String customerName = customerInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), soInfoEntity.getCustomerId())).map(CustomerInfoEntity::getName).findFirst().orElse("");
             batchLockDTO.setCustomerName(customerName);
@@ -3457,7 +3458,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String productName = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             batchLockDTO.setProductName(productName);
             batchLockDTO.setQty(soDetailEntity.getQty());
-
+            batchLockDTO.setFrozenQty(soDetailEntity.getFrozenQty());
             //虚拟可用库存
             Integer virtualUsableQty = virtualInventoryQtyList.stream().filter(obj ->
                     StrUtil.equals(obj.getVirtualWarehouseId(), soInfoEntity.getVirtualWarehouseId())
@@ -3482,13 +3483,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setEffectiveNoticeQty(effectiveNoticeQty);
-
+            batchLockDTO.setToFrozenQty(soDetailEntity.getQty() - effectiveNoticeQty);
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
                     && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setOutstockQty(outstockQty);
             batchLockDTO.setUnOutstockQty(soDetailEntity.getDeliveryQty() - outstockQty);
+            batchLockDTO.setDetailRemark(soDetailEntity.getRemark());
             resultList.add(batchLockDTO);
         }
         return resultList;
@@ -3566,7 +3568,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                             && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
             ).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
             detailDTO.setVirtualUsableQty(virtualUsableQty);
-
+            detailDTO.setFrozenQty(soDetailEntity.getFrozenQty());
             //最大待冻结数量
             Integer qty = soDetailEntity.getDeliveryQty() - soDetailEntity.getFrozenQty();
 
@@ -3583,7 +3585,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             detailDTO.setEffectiveNoticeQty(effectiveNoticeQty);
-
+            detailDTO.setToFrozenQty(soDetailEntity.getQty() - effectiveNoticeQty);
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
                     && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())

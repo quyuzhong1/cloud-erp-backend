@@ -720,6 +720,7 @@ public class SoInfoController extends BaseController {
      * @param list
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "锁定库存",keyIdName = "detailId")
     @PostMapping("/saveLockVirtualInventory")
     public ApiResult<List<BatchResultDTO>> saveLockVirtualInventory(@RequestBody @Validated List<SoInfoDTO.LockVirtualInventorySaveDTO> list) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
@@ -749,6 +750,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "释放库存")
     @PostMapping("/unLockVirtualInventory")
     public ApiResult unLockVirtualInventory(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = soInfoService.unLockVirtualInventory(dto.getId());

@@ -35,7 +35,7 @@ public interface VirtualInventoryFeign {
      * @date 2024/7/16 9:17
      * @param stockParamDTO
      */
-    @PostMapping(value = "/feign/virtualInventory/approveByType")
+    @PostMapping(value = "/approveByType")
     Boolean approveByType(@RequestBody @Valid VirtualInventoryStockDTO.StockParamDTO stockParamDTO);
 }
 

@@ -2483,6 +2483,10 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer toFrozenQty;
         /**
+         * 锁定数量(冻结数量)
+         */
+        private Integer frozenQty;
+        /**
          * 缺货数量
          */
         private Integer scarceQty;
@@ -2569,6 +2573,10 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer toFrozenQty;
         /**
+         * 锁定数量(冻结数量)
+         */
+        private Integer frozenQty;
+        /**
          * 缺货数量
          */
         private Integer scarceQty;
@@ -2593,6 +2601,11 @@ public class SoInfoDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
     }
 
     @Data
