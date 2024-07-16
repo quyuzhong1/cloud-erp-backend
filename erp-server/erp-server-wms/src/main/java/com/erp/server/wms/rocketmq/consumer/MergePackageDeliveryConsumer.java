@@ -218,12 +218,9 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         if (retryCount <= 1){
             // 首次延时等级1=1秒后重试
             return 1;
-        } if (retryCount <= 4){
+        }else {
             // 其他延时等级2=5秒后重试
             return 2;
-        }else {
-            // 其他延时等级3=10秒后重试
-            return 3;
         }
     }
 
@@ -232,12 +229,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
      */
 
     private int convertSoOutStockDelayLevel(int retryCount) {
-        if (retryCount <= 2){
-            // 首次延时等级2=5秒后重试
-            return 2;
-        }else {
-            // 其他延时等级3=10秒后重试
-            return 3;
-        }
+      // 首次延时等级2=5秒后重试
+      return 2;
     }
 }
