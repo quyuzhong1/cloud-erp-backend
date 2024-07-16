@@ -79,38 +79,6 @@ public class PackingTaskController extends BaseController {
     }
 
     /**
-    * 新增
-    * @author zdy
-    * @date:  2024-07-02
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "装箱任务表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated PackingTaskDTO.AddDTO dto) {
-        return success(packingTaskService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author zdy
-    * @date:  2024-07-02
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "装箱任务表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:packingTask:update",
-        serviceClass = PackingTaskService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated PackingTaskDTO.UpdateDTO dto) {
-        packingTaskService.update(dto);
-        return success();
-    }
-
-    /**
      * 装箱-详情(箱规+产品明细)
      * @Author Luo_WG
      * @Date 2023/11/28 17:44
