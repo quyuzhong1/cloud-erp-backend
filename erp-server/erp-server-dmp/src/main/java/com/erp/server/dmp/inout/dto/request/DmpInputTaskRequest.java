@@ -1,0 +1,28 @@
+package com.erp.server.dmp.inout.dto.request;
+
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+
+import lombok.Data;
+
+/**
+ * 输入任务状态请求参数
+ * @author Administrator
+ *
+ */
+@Data
+public class DmpInputTaskRequest extends DmpInputRequest{
+	/**
+	 * 输入信息任务id
+	 */
+	private String inputTaskId;
+	
+	/**
+	 * 处理的任务状态
+	 */
+	private DmpInputTaskStatusEnum dealTaskStatus;
+	
+	/**
+	    * 执行超时时间，单位秒
+	*/
+	private Integer execTimeout;
+}

@@ -2592,7 +2592,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         Integer skuStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        return baseMapper.getSkuBySkuNos(skuNoList, skuStatus);
+        List<SkuVO> skuList = baseMapper.getSkuBySkuNos(skuNoList, skuStatus);
+        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
+        for (SkuVO skuVO : skuList) {
+            if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
+                skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
+                skuVO.setNotTaxCostPrice(dmpSkuCost.getNotTaxCostPrice());
+            }
+        }
+        return skuList;
     }
 
     /**
@@ -3981,7 +3990,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!flag) {
             throw new ServiceException(ApiError.ERROR_95243);
         }
-        List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, dto.getIds()).list();
+        productLogisticsService.saveOrUpdateParentPropertyIdByChildSkuId(dto.getIds());
         //同步到SCM
 //        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
         //同步到WMS
@@ -5163,7 +5172,37 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         List<SkuVO> skuList = baseMapper.listSkuLogisticsByIds(skuIds);
+        this.handleProperty(skuList);
         return skuList;
+    }
+
+    private void handleProperty(List<SkuVO> skuList) {
+        List<BasicDictEntity> allBasicDictEntities = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+        skuList.forEach(v->{
+            SkuVO.PropertyDTO propertyDTO =new SkuVO.PropertyDTO();
+            v.setPropertyDTO(propertyDTO);
+            if(StringUtils.isBlank(v.getProductPropertyId())){
+                return;
+            }
+            List<String> propertyIds = Arrays.asList(v.getProductPropertyId().split(","));
+            List<String> propertyNameList = allBasicDictEntities.stream().filter(t->propertyIds.contains(t.getId())).map(BasicDictEntity::getName).collect(Collectors.toList());
+            propertyDTO.setIsElectric(propertyNameList.stream().anyMatch(t->t.contains("电") && !t.contains("充电盒")));
+            propertyDTO.setElectricName(propertyNameList.stream().filter(t->t.contains("电") && !t.contains("充电盒")).collect(Collectors.joining(",")));
+            propertyDTO.setIsMagnetism(propertyNameList.stream().anyMatch(t->t.contains("磁")));
+            propertyDTO.setMagnetismName(propertyNameList.stream().filter(t->t.contains("磁")).collect(Collectors.joining(",")));
+            propertyDTO.setIsLiquid(propertyNameList.stream().anyMatch(t->t.contains("液体")));
+            propertyDTO.setLiquidName(propertyNameList.stream().filter(t->t.contains("液体")).collect(Collectors.joining(",")));
+            propertyDTO.setIsWood(propertyNameList.stream().anyMatch(t->t.contains("木")));
+            propertyDTO.setWoodName(propertyNameList.stream().filter(t->t.contains("木")).collect(Collectors.joining(",")));
+            propertyDTO.setIsPowder(propertyNameList.stream().anyMatch(t->t.contains("粉末")));
+            propertyDTO.setPowderName(propertyNameList.stream().filter(t->t.contains("粉末")).collect(Collectors.joining(",")));
+            propertyDTO.setIsPlaster(propertyNameList.stream().anyMatch(t->t.contains("膏体")));
+            propertyDTO.setPlasterName(propertyNameList.stream().filter(t->t.contains("膏体")).collect(Collectors.joining(",")));
+            propertyDTO.setIsCuttingTool(propertyNameList.stream().anyMatch(t->t.contains("刀具")));
+            propertyDTO.setCuttingToolName(propertyNameList.stream().filter(t->t.contains("刀具")).collect(Collectors.joining(",")));
+            propertyDTO.setIsOther(propertyNameList.stream().anyMatch(t->t.contains("CCC")));
+            propertyDTO.setOtherName(propertyNameList.stream().filter(t->t.contains("CCC")).collect(Collectors.joining(",")));
+        });
     }
 
     @Override

@@ -1,15 +1,11 @@
 package com.erp.server.plm.controller.api;
 
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.server.plm.service.BasicCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -17,9 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.common.core.controller.BaseController;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 公共接口

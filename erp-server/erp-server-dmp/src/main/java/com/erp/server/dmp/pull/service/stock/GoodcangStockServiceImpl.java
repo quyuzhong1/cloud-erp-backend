@@ -38,7 +38,7 @@ public class GoodcangStockServiceImpl implements GoodcangStockService {
     @Resource
     private MQProducerService<GoodcangDTO.MessageDTO> mqProducerService;
     @Override
-    @Transactional(transactionManager = "mongoTransactionManager", rollbackFor = Exception.class)
+//    @Transactional(transactionManager = "mongoTransactionManager", rollbackFor = Exception.class)
     public void receiveGoDownEntry(GoodcangDTO.MessageDTO message) {
         // 保存到mongo
         // 处理数据

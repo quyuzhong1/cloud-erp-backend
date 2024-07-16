@@ -132,7 +132,7 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
             //是否作废
             dto.setInvalidStatus(false);
             //销售订单code
-            dto.setSoCode(order.getSrcOrderNo());
+            dto.setSoCode(order.getSrcTradeNo());
             //店铺id
             dto.setShopId(String.valueOf(order.getShopId()));
             dto.setShopName(order.getShopName());
@@ -187,7 +187,6 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
                 detail.setRemark(detailItem.getRemark());
                 detail.setSourceDetailId(String.valueOf(detailItem.getSrcOrderDetailId()));
                 detail.setInvalidStatus(false);
-                detailList.add(detail);
 
                 List<WdtWmsStockoutSalesQuerywithdetailResponse.PositionDetailsList> list = detailItem.getPositionDetailsList();
                 List<WdtSoOutStockDetailDTO.PositionDetailsList> detailsLists = list.stream()

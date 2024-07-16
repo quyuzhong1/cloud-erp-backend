@@ -726,4 +726,15 @@ public class SoB2cFeignController extends BaseController {
     public SoB2cEntity getSoCode(@RequestParam("soB2cCode") String soB2cCode) {
         return soB2cService.getByCode(soB2cCode);
     }
+
+
+    /**
+     * 根据id和当前仓库ID获取到需要销售出单的数据
+     */
+    @GetMapping("/getSoOutStockByIdAndWarehouseId")
+    public SoOutstockDTO.GenerateB2cDTO getSoOutStockByIdAndWarehouseId(@RequestParam(value = "soId") String soId,
+                                                              @RequestParam(value = "warehouseId", required = false) String warehouseId
+    ) {
+       return soB2cService.getSoOutstockByIdAndWarehouseId(soId, warehouseId);
+    }
 }

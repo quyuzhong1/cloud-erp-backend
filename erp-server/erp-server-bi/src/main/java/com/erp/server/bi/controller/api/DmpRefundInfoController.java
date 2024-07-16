@@ -14,10 +14,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoSearchDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpRefundInfoService;
-import com.erp.server.bi.service.DmpRefundItemService;
-import com.erp.server.bi.service.DmpShopInfoService;
+import com.erp.server.bi.service.BiOrderInfoService;
+import com.erp.server.bi.service.BiRefundInfoService;
+import com.erp.server.bi.service.BiRefundItemService;
+import com.erp.server.bi.service.BiShopInfoService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -44,16 +44,16 @@ import java.io.OutputStream;
 public class DmpRefundInfoController extends BaseController {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
+    private BiRefundInfoService biRefundInfoService;
 
     @Resource
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
 
     @Resource
-    private DmpRefundItemService dmpRefundItemService;
+    private BiRefundItemService biRefundItemService;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -67,7 +67,7 @@ public class DmpRefundInfoController extends BaseController {
     @PostMapping("/paging")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpRefundInfo:paging", tableAlias = "dri")
     public ApiResult<PagingVO<DmpRefundInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpRefundInfoSearchDTO> dto) {
-        PagingVO<DmpRefundInfoDTO> pagingVO = dmpRefundInfoService.paging(dto);
+        PagingVO<DmpRefundInfoDTO> pagingVO = biRefundInfoService.paging(dto);
         return success(pagingVO);
     }
 
@@ -82,7 +82,7 @@ public class DmpRefundInfoController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpRefundInfo:paging", tableAlias = "dri")
     public ApiResult exportExcel(@RequestBody DmpRefundInfoSearchDTO dto, HttpServletResponse response) {
-        dmpRefundInfoService.exportExcel(dto, response);
+        biRefundInfoService.exportExcel(dto, response);
         return success();
     }
 
@@ -98,7 +98,7 @@ public class DmpRefundInfoController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "退款数据导入")
     @PostMapping("/importRefundFile")
     public ApiResult importRefundFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        Boolean flag = dmpRefundInfoService.importOrderFile(excelFile, importType, response);
+        Boolean flag = biRefundInfoService.importOrderFile(excelFile, importType, response);
         return flag == true ? this.success() : this.failure();
     }
 

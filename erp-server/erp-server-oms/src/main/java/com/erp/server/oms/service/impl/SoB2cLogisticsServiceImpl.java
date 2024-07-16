@@ -279,6 +279,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 if (null != entity.getHeight() && entity.getHeight().compareTo(BigDecimal.ZERO) > 0){
                     totalHeight  = entity.getHeight();
                 }
+                if (StringUtils.isNotBlank(entity.getCode())){
+                    entity2.setCode(entity.getCode());
+                }
+                if (StringUtils.isNotBlank(entity.getTrackNo())){
+                    entity2.setTrackNo(entity.getTrackNo());
+                }
 
                 //如果美客多平台订单不是平台仓发货，不更新物流单号
                 if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {

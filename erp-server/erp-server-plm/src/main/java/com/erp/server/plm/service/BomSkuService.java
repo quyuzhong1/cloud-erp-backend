@@ -41,6 +41,17 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      */
     List<BomSkuEntity> listByParentSkuNos(List<String> parentSkuNos);
     /**
+     * @description: 根据父级skuId查询
+     */
+    List<BomSkuEntity> listByParentSkuIds(List<String> parentSkuIds);
+
+    /**
+     * 根据子级sku查询
+     * @param childSkuIds
+     * @return
+     */
+    List<BomSkuEntity> listByChildSkuIds(List<String> childSkuIds);
+    /**
      * @description: 查询所有状态子集SKU
      * @author Will
      * @date: 2023/5/17 9:40

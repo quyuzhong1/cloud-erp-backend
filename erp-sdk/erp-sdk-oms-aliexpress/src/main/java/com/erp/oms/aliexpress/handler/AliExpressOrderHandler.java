@@ -216,7 +216,10 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
             List<LogisitcsDTO> logisticInfoList = platformAliExpressOrderDTO.getAliExpressOrder().getDetail().getLogisticInfoList();
             if (!CollectionUtils.isEmpty(logisticInfoList)){
                 for (LogisitcsDTO logisitcsDTO : logisticInfoList) {
-                    ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean = deliveryList.stream().filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId()) && req.getTrackingNo().equals(logisitcsDTO.getLogisticsNo())).findFirst().orElse(null);
+                    ErpFulfillmentForwardDtoBean erpFulfillmentForwardDtoBean = deliveryList.stream()
+                            .filter(e -> StringUtils.isNotBlank(e.getTradeOrderNo()) && StringUtils.isNotBlank(e.getTrackingNo()) )
+                            .filter(req -> req.getTradeOrderNo().equals(platformAliExpressOrderDTO.getAliExpressOrder().getOrderId()) && req.getTrackingNo().equals(logisitcsDTO.getLogisticsNo()))
+                            .findFirst().orElse(null);
                     if (null != erpFulfillmentForwardDtoBean) {
                         logisitcsDTO.setWarehouseName(erpFulfillmentForwardDtoBean.getWarehouseName());
                     } else {

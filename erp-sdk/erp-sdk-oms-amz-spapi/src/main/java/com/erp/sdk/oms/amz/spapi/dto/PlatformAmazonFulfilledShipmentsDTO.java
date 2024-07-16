@@ -4,20 +4,13 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
-import com.common.core.exception.ServiceException;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.python.antlr.ast.Str;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.zone.ZoneRulesException;
 
 
 /**
@@ -201,27 +194,5 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
 
     public String convertOrderIdWithPlatformShopCode(){
         return StrUtil.format("{}_{}", this.amazonOrderId, this.platformShopCode);
-    }
-
-    public static OffsetDateTime parseOffsetDateTime(String dateTimeStr) {
-        if (StringUtils.isBlank(dateTimeStr)){
-            return null;
-        }
-        //  兼容地区解析
-        if (dateTimeStr.contains("[") || dateTimeStr.contains("]") ) {
-            // 尝试解析包含时区的字符串
-            ZonedDateTime zdt = ZonedDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_ZONED_DATE_TIME);
-            return zdt.toOffsetDateTime();
-        } else {
-            // 解析不包含时区的字符串
-            return OffsetDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-        }
-    }
-
-    public static void main(String[] args) {
-        String ss = "2024-06-18T21:03:31+01:00[Europe/London]";
-        String ss1 = "2024-06-16T12:26:27+02:00";
-        System.out.println(parseOffsetDateTime(ss));
-        System.out.println(parseOffsetDateTime(ss1));
     }
 }

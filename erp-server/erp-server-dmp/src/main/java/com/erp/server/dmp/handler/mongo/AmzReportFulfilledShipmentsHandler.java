@@ -1,28 +1,23 @@
 package com.erp.server.dmp.handler.mongo;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.MongoSuperDTO;
 import com.common.business.dto.RequestDTO;
 import com.common.business.dto.UniqueDto;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.entity.DmpMongoHandleTaskEntity;
-import com.erp.model.dmp.enums.CleanStatusEnum;
-import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsAmazonFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
 import com.erp.sdk.oms.amz.spapi.dto.*;
@@ -34,7 +29,6 @@ import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DmpMongoHandleTaskService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -71,6 +65,8 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
     private AmazonDownloadService amazonDownloadService;
     @Resource
     private WmsWarehouseFeign wmsWarehouseFeign;
+    @Resource
+    private WmsAmazonFeign wmsAmazonFeign;
 
 
     @Override
@@ -197,6 +193,16 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
                 .stream()
                 .collect(Collectors.toMap(CfgAmzFulfillmentCenterEntity::getCode, Function.identity()));
 
+        // 新增未存在的仓储中心
+        List<String> notExistCenterIds = centerCodeList.stream().filter(e -> !centerMap.containsKey(e)).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(notExistCenterIds)){
+            List<CfgAmzFulfillmentCenterEntity> newCenterList = notExistCenterIds.stream()
+                    .map(CfgAmzFulfillmentCenterEntity::new)
+                    .collect(Collectors.toList());
+            wmsAmazonFeign.addCfgAmzFulfillmentCenterList(newCenterList);
+        }
+
+
         // 店铺信息
         List<ShopInfoEntity> shopList =  FeignQuery.create(ShopInfoEntity.class)
                 .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode())
@@ -271,20 +277,15 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         // 设置仓库中心对应仓库
         if (null != centerEntity && !curMap.isEmpty()){
             ShopInfoEntity shopInfo = curMap.get(centerEntity.getCountry());
-            e.setWarehouseId(shopInfo.getWarehouseId());
-            if (!CollectionUtils.isEmpty(warehouseMap) && warehouseMap.containsKey(shopInfo.getWarehouseId())){
-                WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(shopInfo.getWarehouseId());
-                e.setWarehouseName(warehouseDTO.getName());
-                e.setWarehouseOrgId(warehouseDTO.getOrgId());
-                e.setWarehouseOrgName(warehouseDTO.getOrgName());
-            }
+            // 补充仓库信息
+            fillWarehouseInfo(e, warehouseMap, shopInfo);
         }
         if (e.hasMultiChannel()) {
             // 多渠道订单
             parseMultiChannel(e, timeList, curMap, centerEntity);
         } else {
             // B2C订单
-            parseB2cOrder(e, timeList, curMap, centerEntity);
+            parseB2cOrder(e, timeList, curMap, centerEntity, warehouseMap);
         }
 
         return e;
@@ -293,7 +294,7 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
     /**
      * 补充信息(B2C销售订单)
      */
-    private static void parseB2cOrder(ReportFulfilledShipmentsMongoDTO e, List<CfgTimezoneEntity> timeList, Map<String, ShopInfoEntity> curMap, CfgAmzFulfillmentCenterEntity centerEntity) {
+    private static void parseB2cOrder(ReportFulfilledShipmentsMongoDTO e, List<CfgTimezoneEntity> timeList, Map<String, ShopInfoEntity> curMap, CfgAmzFulfillmentCenterEntity centerEntity, Map<String, WarehouseDTO.ListDTO> warehouseMap) {
         // 解析后的时区(按销售渠道)
         CfgTimezoneEntity timeZoneEntity = timeList.stream()
                 .filter(t -> t.getAndParseCondition().contains(e.getSalesChannel()))
@@ -305,6 +306,11 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
             if (!curMap.isEmpty() && curMap.containsKey(timeZoneEntity.getCountry())) {
                 ShopInfoEntity shopInfo = curMap.get(timeZoneEntity.getCountry());
                 e.setShopId(shopInfo.getId());
+                // 仓储中心为空按销售渠道对应仓库出库
+                if (null == centerEntity){
+                    // 补充仓库信息
+                    fillWarehouseInfo(e, warehouseMap, shopInfo);
+                }
             }
         }
     }
@@ -331,5 +337,16 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         }
     }
 
-
+    /**
+     * 填充仓库信息
+     */
+    private static void fillWarehouseInfo(ReportFulfilledShipmentsMongoDTO e, Map<String, WarehouseDTO.ListDTO> warehouseMap, ShopInfoEntity shopInfo) {
+        e.setWarehouseId(shopInfo.getWarehouseId());
+        if (!CollectionUtils.isEmpty(warehouseMap) && warehouseMap.containsKey(shopInfo.getWarehouseId())){
+            WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(shopInfo.getWarehouseId());
+            e.setWarehouseName(warehouseDTO.getName());
+            e.setWarehouseOrgId(warehouseDTO.getOrgId());
+            e.setWarehouseOrgName(warehouseDTO.getOrgName());
+        }
+    }
 }

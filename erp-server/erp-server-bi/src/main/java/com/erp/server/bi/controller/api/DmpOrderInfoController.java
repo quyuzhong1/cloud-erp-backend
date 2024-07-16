@@ -14,7 +14,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.dmp.dto.DmpOrderStateDTO;
-import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.BiOrderInfoService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -25,8 +25,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -43,7 +41,7 @@ import java.io.OutputStream;
 public class DmpOrderInfoController extends BaseController {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     /**
      * 销售数据-分页查询
@@ -55,7 +53,7 @@ public class DmpOrderInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpOrderInfo:paging", tableAlias = "doi")
     public ApiResult<PagingVO<DmpOrderInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpOrderInfoSearchDTO> dto) {
-        PagingVO<DmpOrderInfoDTO> pagingVO = dmpOrderInfoService.paging(dto);
+        PagingVO<DmpOrderInfoDTO> pagingVO = biOrderInfoService.paging(dto);
         return success(pagingVO);
     }
 
@@ -69,7 +67,7 @@ public class DmpOrderInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "销售数据修改状态：id={id},订单修正状态={state}(2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款)")
     @PostMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated DmpOrderStateDTO dto) {
-        Boolean flag = dmpOrderInfoService.updateState(dto);
+        Boolean flag = biOrderInfoService.updateState(dto);
         return flag == true ? this.success() : this.failure();
     }
 
@@ -84,7 +82,7 @@ public class DmpOrderInfoController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpOrderInfo:paging", tableAlias = "doi")
     public ApiResult exportExcel(@RequestBody DmpOrderInfoSearchDTO dto, HttpServletResponse response) {
-        dmpOrderInfoService.exportExcel(dto, response);
+        biOrderInfoService.exportExcel(dto, response);
         return success();
     }
 
@@ -100,7 +98,7 @@ public class DmpOrderInfoController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "销售数据导入")
     @PostMapping("/importOrderFile")
     public ApiResult importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        Boolean flag = dmpOrderInfoService.importOrderFile(excelFile, importType, response);
+        Boolean flag = biOrderInfoService.importOrderFile(excelFile, importType, response);
         return flag == true ? this.success() : this.failure();
     }
 

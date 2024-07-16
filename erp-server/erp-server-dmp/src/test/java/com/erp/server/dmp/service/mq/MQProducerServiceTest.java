@@ -9,14 +9,14 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.utils.MapUtil;
-import com.erp.model.dmp.entity.DmpOrderItemSplitEntity;
+import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
 import com.erp.server.dmp.ErpServerDmpApplication;
-import com.erp.server.dmp.pull.mapper.DmpOrderItemSplitMapper;
+import com.erp.server.dmp.pull.mapper.BiOrderItemSplitMapper;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.service.DmpOrderItemSplitService;
+import com.erp.server.dmp.service.BiOrderItemSplitService;
 import com.erp.server.dmp.service.DmpSkuCostService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,10 +43,10 @@ public  class MQProducerServiceTest {
 //    private MQProducerService mQProducerService;
 
     @Resource
-    private DmpOrderItemSplitService dmpOrderItemSplitService;
+    private BiOrderItemSplitService biOrderItemSplitService;
 
     @Resource
-    private DmpOrderItemSplitMapper dmpOrderItemSplitMapper;
+    private BiOrderItemSplitMapper biOrderItemSplitMapper;
 
     @Resource
     private DmpSkuCostService dmpSkuCostService;
@@ -92,8 +92,8 @@ public  class MQProducerServiceTest {
 
     @Test
     public void testSendBatch() {
-        List<DmpOrderItemSplitEntity> itemEntityList = dmpOrderItemSplitService.listByIds(Arrays.asList("1679163638713159686"));
-        List<DmpOrderItemSplitEntity> itemEntityList1 = dmpOrderItemSplitService.splitOrderItem(itemEntityList, PlatformEnum.MABANG.getDesc());
+        List<BiOrderItemSplitEntity> itemEntityList = biOrderItemSplitService.listByIds(Arrays.asList("1679163638713159686"));
+        List<BiOrderItemSplitEntity> itemEntityList1 = biOrderItemSplitService.splitOrderItem(itemEntityList, PlatformEnum.MABANG.getDesc());
         System.out.println(itemEntityList1);
 
 //
