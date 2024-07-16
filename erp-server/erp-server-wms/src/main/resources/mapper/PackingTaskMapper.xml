@@ -96,7 +96,7 @@
             (SELECT CASE WHEN error_msg is null or error_msg = '' THEN '' ELSE concat('第',wc.box_no,'箱:',wc.error_msg) END AS errorMsg FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE order by wc.create_time DESC limit 1) as errorMsg,
             (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) as packedQty,
             (SELECT COALESCE(SUM(wcs.package_weight), 0) FROM wms_carton_spec wcs WHERE wcs.main_id = pt.ID AND wcs.is_deleted = FALSE) as packingWeight,
-            (SELECT COALESCE(SUM(pd.picked_qty), 0) FROM picking_lists pl LEFT JOIN picking_detail pd on pd.main_id = pl.id and pd.is_deleted = FALSE WHERE pl.source_id = pt.source_id AND pl.is_deleted = FALSE) as pickedQty
+            (SELECT COALESCE(SUM(pd.qty), 0) FROM picking_lists pl LEFT JOIN picking_detail pd on pd.main_id = pl.id and pd.is_deleted = FALSE WHERE pl.source_id = pt.source_id AND pl.is_deleted = FALSE) as pickQty
         FROM
             packing_task pt
         where pt.is_deleted = FALSE
@@ -196,6 +196,7 @@
         FROM wms_carton_detail wcd
         INNER JOIN wms_carton wc ON wc.id = wcd.main_id AND wc.is_deleted = FALSE
         JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
+        JOIN packing_task pt ON wc.packing_task_id = pt.id and pt.is_deleted = FALSE
         WHERE wcd.is_deleted = FALSE
             AND wcd.pack_qty > 0
         <if test="taskIds != null and taskIds.size > 0">
@@ -204,7 +205,7 @@
                 #{id}
             </foreach>
         </if>
-        ORDER BY wc.box_no
+        ORDER BY pt.source_code
     </select>
     <select id="selectHistoryCartonList"
             resultType="com.erp.model.wms.dto.PackingTaskDetailDTO$HistoryCartonDTO">
