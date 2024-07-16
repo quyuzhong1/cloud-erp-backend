@@ -24,6 +24,6 @@ public class DmpInoutTaskFeignController{
 	 */
 	@PostMapping("/updateOutputTaskRecord")
     public void updateOutputTaskRecord(@RequestBody DmpOutputTaskRecordDTO.UpdateDTO updateDTO) {
-		dmpOutputRocketMQPushUtils.updateStatus(updateDTO.getId(), updateDTO.getStatus(), updateDTO.getResponseData());
+		dmpOutputRocketMQPushUtils.updateStatus(updateDTO.getId(), updateDTO.getStatus(), updateDTO.getResponseData() , updateDTO.getMessage());
 	}
 }

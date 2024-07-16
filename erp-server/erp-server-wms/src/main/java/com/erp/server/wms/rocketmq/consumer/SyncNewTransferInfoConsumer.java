@@ -74,6 +74,7 @@ public class SyncNewTransferInfoConsumer implements RocketMQListener<Object> {
             log.error("金蝶直接调拨单同步失败，msg = {}",e.getMessage());
             updateDTO.setStatus(DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode());
             updateDTO.setResponseData("金蝶调拨单消费数据失败：" + ExceptionUtil.stacktraceToOneLineString(e));
+            updateDTO.setMessage(e.getMessage());
         }
         dmpInoutTaskFeign.updateOutputTaskRecord(updateDTO);
     }
