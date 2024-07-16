@@ -80,6 +80,10 @@ public class CfgSettingDTO implements Serializable {
          * 发货拦截设置
          */
         private CfgSettingValueDTO.B2cDeliveryInterceptDTO b2cDeliveryInterceptDTO;
+        /**
+         * 装箱完成通知
+         */
+        private CfgSettingValueDTO.FinishPackingNoticeDTO finishPackingNoticeDTO;
     }
 
 

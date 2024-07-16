@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -26,11 +27,14 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
@@ -41,6 +45,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
+import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.server.wms.convert.CartonConverter;
@@ -53,6 +58,8 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -65,6 +72,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -131,6 +141,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private MQProducerService mqProducerService;
     @Resource
     private FileTemplateFeign fileTemplateFeign;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
+
+    @Resource
+    private SysPostFeign sysPostFeign;
+
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -436,10 +455,49 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     public void sendNoticeMsg(String taskId, String operation, String content){
         //检查配置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.FINISH_PACKING_NOTICE.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+            return;
+        }
+        CfgSettingValueDTO.FinishPackingNoticeDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.FinishPackingNoticeDTO.class);
+
+        List<String> noticeUserIdList = new ArrayList<>();
+        //岗位处理
+        if (CollectionUtils.isNotEmpty(dto.getPostIdList())) {
+            List<SysPostUserEntity> sysPostList = sysPostFeign.listPostUserByPostIdList(dto.getPostIdList());
+            //岗位下用户
+            List<String> postUserIdList = sysPostList.stream().map(SysPostUserEntity::getUserId).distinct().collect(Collectors.toList());
+            noticeUserIdList.addAll(postUserIdList);
+        }
+        //抄送人员
+        if (CollectionUtils.isNotEmpty(dto.getUserIdList())) {
+            noticeUserIdList.addAll(dto.getUserIdList());
+            noticeUserIdList = noticeUserIdList.stream().distinct().collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(noticeUserIdList)) {
+            return;
+        }
         //组装数据
+        PackingTaskEntity entity = this.getById(taskId);
+        String titleCode = "";
+        if(entity.getSourceType().equals(PickingSourceTypeEnum.FBA.getCode())){
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getByCode(entity.getSourceCode());
+            if(Objects.nonNull(firstMileDeliveryEntity)){
+                RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(firstMileDeliveryEntity.getSourceId());
+                if(Objects.nonNull(requisitionApplication)){
+                    titleCode = requisitionApplication.getFbaShipmentCode();
+                }
+            }
+        }
         //发送消息
-        NoticeMsgInfoDTO msgInfoDTO = new NoticeMsgInfoDTO();
-//        mqProducerService.sendNoticeMsg(msgInfoDTO);
+        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+        noticeMsgInfoDTO.setReceiverUserIds(noticeUserIdList);
+        String title = StrUtil.format(NoticeMsgConstant.FS_FINISH_PACKING_HEAD,titleCode);
+        noticeMsgInfoDTO.setTitle(title);
+        String msgContent = StrUtil.format(NoticeMsgConstant.FS_FINISH_PACKING_CONTENT,operation+"-"+content,entity.getSourceCode());
+        noticeMsgInfoDTO.setContent(msgContent);
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
+        mqProducerService.sendNoticeMsg(noticeMsgInfoDTO);
     }
     @Override
     public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {

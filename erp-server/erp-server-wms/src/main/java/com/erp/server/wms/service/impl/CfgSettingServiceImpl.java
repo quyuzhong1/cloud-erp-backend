@@ -156,6 +156,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case DELIVERY_INTERCEPT:
                 jsonObject = JSONUtil.parseObj(addDTO.getB2cDeliveryInterceptDTO());
                 break;
+            case FINISH_PACKING_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFinishPackingNoticeDTO());
+                break;
             default:
                 break;
         }
@@ -212,6 +215,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case DELIVERY_INTERCEPT:
                 CfgSettingValueDTO.B2cDeliveryInterceptDTO deliveryInterceptDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.B2cDeliveryInterceptDTO.class);
                 viewDTO.setB2cDeliveryInterceptDTO(deliveryInterceptDTO);
+                break;
+            case FINISH_PACKING_NOTICE:
+                CfgSettingValueDTO.FinishPackingNoticeDTO finishPackingNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FinishPackingNoticeDTO.class);
+                viewDTO.setFinishPackingNoticeDTO(finishPackingNoticeDTO);
                 break;
             default:
                 break;
