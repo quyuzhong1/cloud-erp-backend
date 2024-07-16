@@ -48,7 +48,7 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @param sourceCodes
      * @return
      */
-    List<PackingTaskDTO.StatusDTO> selectPackingStatusByIds(@Param("taskIds") List<String> taskIds,@Param("sourceCodes") List<String> sourceCodes);
+    List<PackingTaskDTO.StatusDTO> selectB2BPackingStatusByIds(@Param("taskIds") List<String> taskIds, @Param("sourceCodes") List<String> sourceCodes);
     List<PackingTaskDTO.ProductNum> selectProductNumByIds(@Param("taskIds") List<String> taskIds);
 
     /**
@@ -82,4 +82,13 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
     IPage<PackingTaskDTO.PackingTreeDTO> pagingSelect(@Param("query") Page<PackingTaskDTO.PackingTreeDTO> query, @Param("params") PackingTaskDTO.SearchSourceCodeDTO dto);
 
     List<WmsCartonSpecDTO.SpecDTO> getCartonSpecByTaskId(@Param("taskId") String taskId);
+
+    /**
+     * 根据任务id汇总状态
+     *
+     * @param taskIds
+     * @param sourceCodes
+     * @return
+     */
+    List<PackingTaskDTO.StatusDTO> selectRequisitionPackingStatusByIds(@Param("taskIds") List<String> taskIds, @Param("sourceCodes") List<String> sourceCodes);
 }

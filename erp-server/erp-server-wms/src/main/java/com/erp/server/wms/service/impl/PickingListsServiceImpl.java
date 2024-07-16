@@ -37,7 +37,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +48,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -501,7 +501,15 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     public List<PickingListsDTO.DetailPickDTO> listDetailBySourceIds(List<String> sourceIds) {
-        return baseMapper.listDetailBySourceIds(sourceIds);
+        if (CollectionUtils.isEmpty(sourceIds)){
+            return Collections.emptyList();
+        }
+        //B2B
+        List<PickingListsDTO.DetailPickDTO> detailB2BPickDTOS = baseMapper.listB2BDetailBySourceIds(sourceIds);
+        //头程
+        List<PickingListsDTO.DetailPickDTO> detailRequitPickDTOS = baseMapper.listRequitDetailBySourceIds(sourceIds);
+        //合并集合
+        return Stream.concat(detailB2BPickDTOS.stream(), detailRequitPickDTOS.stream()).collect(Collectors.toList());
     }
 
     /**
