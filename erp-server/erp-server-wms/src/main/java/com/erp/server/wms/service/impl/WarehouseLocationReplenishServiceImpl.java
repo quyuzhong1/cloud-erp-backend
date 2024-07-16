@@ -358,6 +358,21 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             return BatchResultDTO.fail(fullEntity.getId(), fullEntity.getSourceCode(), OperationTypeEnum.UPDATE);
         }
 
+        //修改发货单状态，清除异常
+        if(StringUtils.isNotBlank(fullEntity.getSourceId())){
+            List<WarehouseLocationReplenishEntity> commonSourceList = this.baseMapper.selectList(new QueryWrapper<WarehouseLocationReplenishEntity>().eq("source_id", fullEntity.getSourceId()));
+            boolean allMatch = commonSourceList.stream().allMatch(item -> {
+                String status = item.getStatus();
+                return StringUtils.equals(ReplenishBillStatusEnum.HANDLED.getCode(), status) || StringUtils.equals(ReplenishBillStatusEnum.NO_NEED_HANDLE.getCode(), status);
+            });
+            if(allMatch){
+                soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
+                        .set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
+                        .set("abnormal_cause", "")
+                        .eq("id", fullEntity.getSourceId()));
+            }
+        }
+
         return BatchResultDTO.success(fullEntity.getId(), fullEntity.getSourceCode(), OperationTypeEnum.UPDATE);
     }
 
