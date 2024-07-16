@@ -746,8 +746,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     map(SkuVO::getSkuId).orElse("");
             Boolean isError = Boolean.FALSE;
             ProductLogisticsEntity logistics = productLogisticsList.stream().
-                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(new ProductLogisticsEntity());
+                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+
             List<LogisticsProductExcelDTO> value = entry.getValue();
+            if (Objects.isNull(logistics)){
+                value.forEach(logisticsProductExcelDTO -> {
+                    logisticsProductExcelDTO.setErrorMsg("sku不存在或者sku未审核通过");
+                });
+                continue;
+            }
             List<ProductCustomsEntity> customsList = new ArrayList<>(value.size());
 
             for (LogisticsProductExcelDTO item : value) {
