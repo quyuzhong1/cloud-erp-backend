@@ -435,4 +435,29 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     List<SoInfoDTO.GenerateSoOutView> generateSoOutView(List<String> ids);
 
     List<BatchResultDTO> generateSoOut(List<SoInfoDTO.GenerateSoOutView> generateSoOutViewList);
+    /**
+     * 查询单个锁定的数据
+     * @author will
+     * @date 2024/7/15 11:20
+     * @param id
+     * @return SoInfoDTO.LockVirtualInventoryDTO
+     */
+    SoInfoDTO.LockVirtualInventoryDTO viewLockVirtualInventory(String id);
+    /**
+     * 批量锁定查询
+     * @author will
+     * @date 2024/7/15 15:08
+     * @param detailIdList
+     * @return List<BatchLockVirtualInventoryDTO>
+     */
+    List<SoInfoDTO.BatchLockVirtualInventoryDTO> viewBatchLockVirtualInventory(List<String> detailIdList);
+
+    /**
+     * 单个释放
+     * @author will
+     * @date 2024/7/16 8:57
+     * @param id
+     * @return Boolean
+     */
+    Boolean unLockVirtualInventory(String id);
 }

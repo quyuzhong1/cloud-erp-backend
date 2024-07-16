@@ -37,6 +37,22 @@ public enum VirtualInventoryBusinessTypeEnum {
      * 销售出库单，减冻结
      */
     SO_OUT_STOCK("so_out_stock", "06","销售出库单"),
+
+    /**
+     * B2B销售订单锁定库存，添加冻结减少可用
+     */
+    SO_INFO_LOCK_ADD("so_info_lock_add", "07","B2B销售订单"),
+
+    /**
+     * B2B销售订单锁定库存，添加可用减少冻结
+     */
+    SO_INFO_LOCK_LESS("so_info_lock_less", "08","B2B销售订单"),
+
+    /**
+     * B2B销售订单释放库存，减冻结加可用
+     */
+    SO_INFO_UNLOCK("so_info_unlock", "09","B2B销售订单"),
+
     ;
 
     private String code;

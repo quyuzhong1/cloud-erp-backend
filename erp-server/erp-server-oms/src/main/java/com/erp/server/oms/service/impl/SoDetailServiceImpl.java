@@ -7,6 +7,7 @@ import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,7 +20,6 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -32,17 +32,20 @@ import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -370,7 +373,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setWaitQty(waitQty);
 
             //虚拟可用库存
-            Integer virtualUsableQty = virtualInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId)).findFirst().
+            Integer virtualUsableQty = virtualInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getDictInventoryStatus(),InventoryStatusEnum.USABLE.getCode())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryQty())).orElse(MathUtil.ZERO);
             item.setVirtualAvailableQty(MathUtil.compareTo(virtualUsableQty,qty) > MathUtil.ZERO ? qty : virtualUsableQty);
 
@@ -1366,7 +1369,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 .update(new SoDetailEntity());
     }
 
-    private List<VirtualInventoryDTO.VirtualInventoryQtyDTO> handleVirtualInventory(SoInfoEntity soInfoEntity,List<String> skuIdList) {
+    @Override
+    public List<VirtualInventoryDTO.VirtualInventoryQtyDTO> handleVirtualInventory(SoInfoEntity soInfoEntity,List<String> skuIdList) {
         //客户信息
         CustomerInfoEntity customerInfoEntity = customerInfoService.getCustomerById(soInfoEntity.getCustomerId());
         if (ObjectUtil.isEmpty(customerInfoEntity)) {
@@ -1386,7 +1390,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         paramDTO.setSkuIdList(skuIdList);
         paramDTO.setWarehouseIdList(Arrays.asList(soInfoEntity.getWarehouseId()));
         paramDTO.setVirtualWarehouseIdList(Arrays.asList(virtualWarehouseList.get(0).getVirtualWarehouseId()));
-        paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventorList = virtualInventoryFeign.listInventoryQty(paramDTO);
         return virtualInventorList;
     }
@@ -1571,5 +1574,115 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO saveLockVirtualInventory(SoInfoDTO.LockVirtualInventorySaveDTO saveDTO) {
+        SoDetailEntity soDetailEntity = this.getById(saveDTO.getDetailId());
+        if (ObjectUtil.isEmpty(soDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_92015);
+        }
+        //销售订单
+        SoInfoEntity soInfoEntity = soInfoService.getById(soDetailEntity.getId());
+        if (ObjectUtil.isEmpty(soDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        //发货通知单
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(Arrays.asList(soDetailEntity.getId()));
 
+        //旧冻结库存
+        Integer oldFrozenQty = soDetailEntity.getFrozenQty();
+        //冻结数量
+        Integer frozenQty = saveDTO.getFrozenQty();
+
+        //发货通知单下推数量
+        Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
+                        && StrUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus()))
+                .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+        if (frozenQty + totalNoticeQty > soDetailEntity.getQty()) {
+            throw new ServiceException(StrUtil.format("销售订单【{}】SKU【{}】“销售数量【{}】不得小于锁定数量与发货通知单审核数量之和【{}】",soInfoEntity.getCode(),soDetailEntity.getSkuNo(),soDetailEntity.getQty(),totalNoticeQty + frozenQty));
+        }
+        soDetailEntity.setFrozenQty(frozenQty);
+        this.updateById(soDetailEntity);
+
+        //库存扣减
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        stockParamDTO.setParamList(lockVirtualInventory(soInfoEntity,soDetailEntity,frozenQty));
+        stockParamDTO.setBusinessType(frozenQty > oldFrozenQty ? VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getCode() : VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_LESS.getCode());
+        virtualInventoryFeign.approveByType(stockParamDTO);
+        return new BatchResultDTO(soDetailEntity.getId(),soInfoEntity.getCode(),"库存锁定成功",Boolean.TRUE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO batchUnLockVirtualInventory(String detailId) {
+        SoDetailEntity soDetailEntity = this.getById(detailId);
+        if (ObjectUtil.isEmpty(soDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_92015);
+        }
+        SoInfoEntity soInfoEntity = soInfoService.getById(soDetailEntity.getMainId());
+        if (ObjectUtil.isEmpty(soInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        //无虚拟仓库
+        if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
+            throw new ServiceException("释放库存虚拟仓库不能为空");
+        }
+        //无锁定库存
+        if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+            return new BatchResultDTO(soDetailEntity.getId(),soInfoEntity.getCode(),"无需要释放的锁定库存",Boolean.TRUE);
+        }
+
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        stockParamDTO.setParamList(unLockVirtualInventory(soInfoEntity,soDetailEntity));
+        stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_UNLOCK.getCode());
+        virtualInventoryFeign.approveByType(stockParamDTO);
+        return new BatchResultDTO(soDetailEntity.getId(),soInfoEntity.getCode(),"释放库存成功",Boolean.TRUE);
+    }
+
+    /**
+     * 锁定库存
+     * @author will
+     * @date 2024/7/16 14:04
+     * @param soInfoEntity
+     * @param soDetailEntity
+     * @param frozenQty
+     * @return List<OutInStockDTO>
+     */
+    private List<VirtualInventoryStockDTO.OutInStockDTO> lockVirtualInventory(SoInfoEntity soInfoEntity,SoDetailEntity soDetailEntity,Integer frozenQty) {
+        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+        outInStockDTO.setSkuId(soDetailEntity.getSkuId());
+        outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
+        outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
+        outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setQty(Math.abs(frozenQty - soDetailEntity.getFrozenQty()));
+        outInStockDTO.setSourceId(soInfoEntity.getId());
+        outInStockDTO.setSourceCode(soInfoEntity.getCode());
+        outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_INFO);
+        outInStockDTO.setSourceDetailId(soDetailEntity.getId());
+        return Arrays.asList(outInStockDTO);
+    }
+
+    /**
+     * 处理库存数据
+     * @author will
+     * @date 2024/7/16 9:41
+     * @param soInfoEntity
+     * @param soDetailEntity
+     * @return List<OutInStockDTO>
+     */
+    private List<VirtualInventoryStockDTO.OutInStockDTO> unLockVirtualInventory (SoInfoEntity soInfoEntity, SoDetailEntity soDetailEntity) {
+        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+        outInStockDTO.setSkuId(soDetailEntity.getSkuId());
+        outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
+        outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
+        outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setQty(soDetailEntity.getFrozenQty());
+        outInStockDTO.setSourceId(soInfoEntity.getId());
+        outInStockDTO.setSourceCode(soInfoEntity.getCode());
+        outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_INFO);
+        outInStockDTO.setSourceDetailId(soDetailEntity.getId());
+       return Arrays.asList(outInStockDTO);
+    }
 }

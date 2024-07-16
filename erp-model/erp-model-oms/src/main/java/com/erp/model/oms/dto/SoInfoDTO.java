@@ -6,7 +6,6 @@ import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.oms.enums.TradeTermEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,7 +17,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.util.List;
 import java.util.Map;
 
@@ -2380,4 +2378,223 @@ public class SoInfoDTO implements Serializable {
 
     }
 
+    /**
+     * 单个锁定
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LockVirtualInventoryDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 客户
+         */
+        private String customerName;
+        /**
+         * 销售单号
+         */
+        private String code;
+        /**
+         * 单据类型
+         */
+        private String orderTypeName;
+        /**
+         * 销售组织
+         */
+        private String salesOrgName;
+        /**
+         * 销售员
+         */
+        private String  sellerName;
+        /**
+         * 销售员部门
+         */
+        private String salesDeptName;
+        /**
+         * 要货日期
+         */
+        private LocalDate requireDate;
+        /**
+         * 订单备注
+         */
+        private String remark;
+        /**
+         * 实体仓
+         */
+        private String warehouseName;
+        /**
+         * 虚拟仓
+         */
+        private String virtualWarehouseName;
+        /**
+         * 明细
+         */
+        private List<LockVirtualInventoryDetailDTO> detailList;
+    }
+
+
+    /**
+     * 单个锁定明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LockVirtualInventoryDetailDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+        /**
+         * 最大可锁数(可冻结数量)
+         */
+        private Integer toFrozenQty;
+        /**
+         * 缺货数量
+         */
+        private Integer scarceQty;
+        /**
+         * 发货通知数量（总数量）
+         */
+        private Integer totalNoticeQty;
+        /**
+         * 发货通知数量（已审核）
+         */
+        private Integer effectiveNoticeQty;
+        /**
+         * 已出库数量
+         */
+        private Integer outstockQty;
+        /**
+         * 未出库数量
+         */
+        private Integer unOutstockQty;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    /**
+     * 批量锁定
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchLockVirtualInventoryDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 客户
+         */
+        private String customerName;
+        /**
+         * 销售单号
+         */
+        private String code;
+        /**
+         * 销售员
+         */
+        private String  sellerName;
+
+        /**
+         * 要货日期
+         */
+        private LocalDate requireDate;
+        /**
+         * 实体仓
+         */
+        private String warehouseName;
+        /**
+         * 虚拟仓
+         */
+        private String virtualWarehouseName;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+        /**
+         * 最大可锁数(可冻结数量)
+         */
+        private Integer toFrozenQty;
+        /**
+         * 缺货数量
+         */
+        private Integer scarceQty;
+        /**
+         * 发货通知数量（总数量）
+         */
+        private Integer totalNoticeQty;
+        /**
+         * 发货通知数量（已审核）
+         */
+        private Integer effectiveNoticeQty;
+        /**
+         * 已出库数量
+         */
+        private Integer outstockQty;
+        /**
+         * 未出库数量
+         */
+        private Integer unOutstockQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LockVirtualInventorySaveDTO {
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+
+        /**
+         * 冻结数量
+         */
+        @NotNull(message = "请填写锁定数量")
+        @Min(value = 1,message = "锁定数量最小值为1")
+        @Max(value = 999999999,message = "锁定数量最大值为999999999")
+        private Integer frozenQty;
+    }
 }
