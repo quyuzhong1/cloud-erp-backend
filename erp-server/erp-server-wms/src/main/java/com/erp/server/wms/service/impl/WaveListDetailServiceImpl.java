@@ -212,6 +212,11 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         return baseMapper.listByWaveListCode(WaveStatusEnum.AWAIT_PICK.getCode(), WaveStatusEnum.FINISH.getCode());
     }
 
+    @Override
+    public void deleteByMainId(String mainId) {
+        lambdaUpdate().eq(WaveListDetailEntity::getMainId,mainId).remove();
+    }
+
     /**
      * 根据发货单ID获取拣货单明细
      */

@@ -36,8 +36,6 @@ import com.erp.model.wms.dto.CfgRuleWaveRecordDTO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
-import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
-import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -111,6 +109,11 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     @Resource
     @Lazy
     private CfgRuleWaveService cfgRuleWaveService;
+
+
+    @Resource
+    private PickingListsService pickingListsService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -346,54 +349,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             }
         }
     }
-    /**
-     * 添加数量
-     * @author will
-     * @date 2024/7/16 10:44
-     * @param inventoryUnionMap
-     * @param detailList
-     */
-    private  List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> handleInventoryUnionMap (HashMap<String,Integer> inventoryUnionMap,List<SoB2cDeliveryDetailEntity> detailList) {
-        List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> cfgExecutionDetailList = new ArrayList<>();
-
-        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
-        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
-            List<SoB2cDeliveryDetailEntity> value = entry.getValue();
-            Integer totalQty = value.stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            String mapKey = StrUtil.format("{}_{}",value.get(0).getSkuId(),value.get(0).getWarehouseId());
-            Integer oldQty = inventoryUnionMap.get(mapKey);
-            if (ObjectUtil.isEmpty(oldQty)) {
-                inventoryUnionMap.put(mapKey,totalQty);
-            } else {
-                inventoryUnionMap.put(mapKey,MathUtil.add(totalQty,oldQty));
-            }
-            //添加拣货仓库信息
-            CfgRulePickingDTO.CfgExecutionDataDetailDTO cfgExecutionDataDetailDTO = new CfgRulePickingDTO.CfgExecutionDataDetailDTO(value.get(0).getWarehouseId(), value.get(0).getSkuId(), value.get(0).getSkuNo(), inventoryUnionMap.get(mapKey));
-            cfgExecutionDetailList.add(cfgExecutionDataDetailDTO);
-        }
-        return cfgExecutionDetailList;
-    }
-
-    /**
-     * 清除数量
-     * @author will
-     * @date 2024/7/16 10:44
-     * @param inventoryUnionMap
-     * @param detailList
-     */
-    private void cleanInventoryUnionMap (HashMap<String,Integer> inventoryUnionMap,List<SoB2cDeliveryDetailEntity> detailList) {
-        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
-        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
-            List<SoB2cDeliveryDetailEntity> value = entry.getValue();
-            Integer totalQty = value.stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            String mapKey = StrUtil.format("{}_{}",value.get(0).getSkuId(),value.get(0).getWarehouseId());
-            Integer oldQty = inventoryUnionMap.get(mapKey);
-            if (ObjectUtil.isEmpty(oldQty) || totalQty > oldQty) {
-                continue;
-            }
-            inventoryUnionMap.put(mapKey,oldQty - totalQty);
-        }
-    }
 
     /**
      * 生成拣货波次列表数据
@@ -437,10 +392,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         List<String> deliveryIdList = new ArrayList<>();
         //需要新增的波次数据
         List<WaveListDTO.AddDTO> resultList = new ArrayList<>();
-        //拣货规则信息（先校验库存，后生成拣货单引用扣减）
-        HashMap<String,Object> locationMap = new HashMap<>();
-        //库存扣减数量map
-        HashMap<String,Integer> inventoryUnionMap = new HashMap<>();
 
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
 
@@ -458,38 +409,10 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 log.error("发货单【{}】未找到明细数据",deliveryEntity.getCode());
                 continue;
             }
-
-            //添加拣货数量
-            List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> cfgExecutionDetailList = handleInventoryUnionMap(inventoryUnionMap,detailList);
-
-            List<LocationInventoryResultDTO> ruleOrderMatchResult = new ArrayList<>();
-            try {
-                //拣货规则
-                CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
-                executionData.setBillType("B2C");
-                executionData.setDetails(cfgExecutionDetailList);
-                ruleOrderMatchResult = cfgRulePickingService.getRuleOrderMatchResult(executionData);
-
-            } catch (ServiceException e) {
-                //生成缺货补货数据
-                generateReplenish(detailList,deliveryEntity);
-                //添加波次生成的缺货异常
-                updateDeliveryList.add(deliveryEntity.getId());
-                //清除拣货Map数量
-                cleanInventoryUnionMap(inventoryUnionMap,detailList);
-                continue;
-            }
-
-            //判断是否匹配仓位成功
-            long count = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocationId())).count();
-            if (count > MathUtil.ZERO) {
-                String skuNos = ruleOrderMatchResult.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocationId())).map(LocationInventoryResultDTO::getSkuNo).collect(Collectors.joining(","));
-                log.warn("发货单【{}】SKU【{}】匹配仓卫不成功",deliveryEntity.getCode(),skuNos);
-                continue;
-            }
+            //添加同类波次Map
+            handleSameMap(detailList,sameMap,entity);
 
             //判断是否是同类波次,同类波次需要保证波次列表中sku一致
-            //标记是否同类波次
             Boolean isSame = Boolean.TRUE;
             if (StrUtil.equals(entity.getWaveType(),PickingWaveTypeEnum.SAME_WAVE.getCode())) {
                 Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDetailEntity::getSkuId));
@@ -503,6 +426,20 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                     }
                 }
             }
+            //非同类波次则跳过
+            if (!isSame) {
+                continue;
+            }
+
+            try {
+                soB2cDeliveryService.generatePickingDetail(deliveryEntity,detailList);
+            } catch (ServiceException e) {
+                //生成缺货补货数据
+                generateReplenish(detailList,deliveryEntity);
+                //添加波次生成的缺货异常
+                updateDeliveryList.add(deliveryEntity.getId());
+                continue;
+            }
 
             //商品总数超出最大数量后另起波次,或者发货单数量超过最大单数后另起波次
             if ((MathUtil.compareTo(entity.getMaxQty(),MathUtil.ZERO) != MathUtil.ZERO && detailTotalQty + totalQty > entity.getMaxQty())
@@ -511,10 +448,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 //原波次数量和单数必须大于等于最小数量
                 if (((MathUtil.compareTo(entity.getMinQty(),MathUtil.ZERO) != MathUtil.ZERO && totalQty >= entity.getMinQty()) || MathUtil.compareTo(entity.getMinQty(),MathUtil.ZERO) == MathUtil.ZERO)
                         &&  orderQty > entity.getMinOrderQty()) {
-                    //非同类波次不添加数据
-                    if (!isSame) {
-                        continue;
-                    }
                     addDTO.setDeliveryIdList(deliveryIdList);
                     resultList.add(addDTO);
                 }
@@ -527,13 +460,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 addDTO.setPickingType(entity.getPickingType());
                 addDTO.setName(entity.getName());
                 addDTO.setPickCartTypeIdList(pickingCartTypeIdList);
-            } else {
-                //订单数和商品数不符合并且也不是同类波次则跳过
-                if (!isSame) {
-                    continue;
-                }
             }
-
             //添加发货单
             deliveryIdList.add(deliveryEntity.getId());
 
@@ -543,11 +470,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //发货单订单数量
             orderQty++;
 
-            //添加同类波次Map
-            handleSameMap(detailList,sameMap,entity);
-
-            //添加拣货规则返回信息
-            locationMap.put(deliveryEntity.getId(),ruleOrderMatchResult);
         }
         //添加波次生成的缺货异常
         if (CollectionUtil.isNotEmpty(updateDeliveryList)) {
@@ -558,12 +480,15 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         if (CollectionUtil.isNotEmpty(deliveryIdList) && deliveryIdList.size() >= entity.getMinOrderQty() && MathUtil.compareTo(totalQty,entity.getMinQty()) >= MathUtil.ZERO) {
             addDTO.setDeliveryIdList(deliveryIdList);
             resultList.add(addDTO);
+        } else {
+            if (CollectionUtil.isNotEmpty(deliveryIdList)) {
+                //删除拣货单
+                pickingListsService.deleteBySourceId(deliveryIdList);
+            }
         }
         if (CollectionUtil.isEmpty(resultList)) {
             return;
         }
-        //生成拣货单
-        generatePickingDetailList(compliantList,allDetailList,locationMap,resultList);
 
         for (WaveListDTO.AddDTO waveAddDTO : resultList) {
             BaseResultDTO.AddDTO add = waveListService.add(waveAddDTO);
@@ -584,51 +509,16 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
      * @param entity
      */
     private void handleSameMap ( List<SoB2cDeliveryDetailEntity> detailList, HashMap<String, Integer> sameMap, CfgRuleWaveEntity entity) {
-
-        //判断是否是同类波次,同类波次需要保证波次列表中sku一致
-        //标记是否同类波次
-        if (StrUtil.equals(entity.getWaveType(),PickingWaveTypeEnum.SAME_WAVE.getCode())) {
-            Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDetailEntity::getSkuId));
-            for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
-                String key = entry.getKey();
-                //添加map数据
-                Integer totalDeliveryQty = entry.getValue().stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-                sameMap.put(key,totalDeliveryQty);
-            }
-        }
-    }
-
-    /**
-     * 生成拣货单
-     * @author will
-     * @date 2024/7/12 15:00
-     * @param compliantList
-     * @param locationMap
-     * @param allDetailList
-     * @param resultList
-     */
-    private void generatePickingDetailList (List<SoB2cDeliveryEntity> compliantList, List<SoB2cDeliveryDetailEntity> allDetailList
-            ,HashMap<String,Object> locationMap, List<WaveListDTO.AddDTO> resultList) {
-        if (CollectionUtil.isEmpty(resultList)) {
+        if (CollectionUtil.isEmpty(detailList) || CollectionUtil.isNotEmpty(sameMap) || !StrUtil.equals(entity.getWaveType(),PickingWaveTypeEnum.SAME_WAVE.getCode())) {
             return;
         }
-        List<String> deliveryIdList = resultList.stream().flatMap(obj -> Stream.of(obj.getDeliveryIdList().stream().toArray(String[]::new))).collect(Collectors.toList());
-        for (String deliveryId : deliveryIdList) {
-            //发货信息
-            SoB2cDeliveryEntity soB2cDeliveryEntity = compliantList.stream().filter(obj -> StrUtil.equals(obj.getId(), deliveryId)).findFirst().orElse(new SoB2cDeliveryEntity());
-            if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
-                throw new ServiceException("未找到发货单信息");
-            }
-            List<SoB2cDeliveryDetailEntity> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryId)).collect(Collectors.toList());
-            if (CollectionUtil.isEmpty(detailList)) {
-                throw new ServiceException("未找到发货明细信息");
-            }
-            //仓位匹配信息
-            List<LocationInventoryResultDTO> ruleOrderMatchResult = (List<LocationInventoryResultDTO>)locationMap.get(deliveryId);
-            if (CollectionUtil.isEmpty(ruleOrderMatchResult)) {
-                throw new ServiceException("拣货规则仓位匹配信息未找到");
-            }
-            soB2cDeliveryService.generatePickingDetail(soB2cDeliveryEntity,detailList,ruleOrderMatchResult);
+        //标记同类波次
+        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDetailEntity::getSkuId));
+        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
+            String key = entry.getKey();
+            //添加map数据
+            Integer totalDeliveryQty = entry.getValue().stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            sameMap.put(key,totalDeliveryQty);
         }
     }
 

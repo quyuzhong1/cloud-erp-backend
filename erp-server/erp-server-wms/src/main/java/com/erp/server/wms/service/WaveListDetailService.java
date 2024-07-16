@@ -34,5 +34,7 @@ public interface WaveListDetailService extends SuperService<WaveListDetailEntity
      */
     List<WaveListDetailEntity> listCancelByDeliveryIds(List<String> deliveryIds);
 
+    void deleteByMainId(String mainId);
+
     List<PickingDetailEntity> getPickingDetail(List<String> deliveryIds);
 }
