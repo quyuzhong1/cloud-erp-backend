@@ -69,13 +69,13 @@ public class SpringAsyncConfig {
 	public static void printThreadPoolStatus(ThreadPoolTaskExecutor threadPool) {
 		ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(1, createThreadFactory("print-images/thread-pool-status"));
 		scheduledExecutorService.scheduleAtFixedRate(() -> {
-			log.debug("=========================");
-			log.debug("ThreadPool Size: [{}]", threadPool.getPoolSize());
-			log.debug("Active Threads: {}", threadPool.getActiveCount());
-			log.debug("Number of Tasks : {}", threadPool.getThreadPoolExecutor().getTaskCount());
-			log.debug("Number of Tasks in Queue: {}", threadPool.getThreadPoolExecutor().getQueue().size());
-			log.debug("=========================");
-		}, 0, 30, TimeUnit.SECONDS);
+			log.info("=========================");
+			log.info("ThreadPool Size: [{}]", threadPool.getPoolSize());
+			log.info("Active Threads: {}", threadPool.getActiveCount());
+			log.info("Number of Tasks : {}", threadPool.getThreadPoolExecutor().getTaskCount());
+			log.info("Number of Tasks in Queue: {}", threadPool.getThreadPoolExecutor().getQueue().size());
+			log.info("=========================");
+		}, 0, 5*60, TimeUnit.SECONDS);
 	}
 
 }
