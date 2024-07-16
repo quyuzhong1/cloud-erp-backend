@@ -69,7 +69,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         try {
             // 1-校验单据是否已经审批
             if(approveType.equals(InventoryTradingService.APPROVE)) {
-                this.checkHasApproved(transactionList.get(0));
+//                this.checkHasApproved(transactionList.get(0));
             }
             // 2-移除忽略的sku
             transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
