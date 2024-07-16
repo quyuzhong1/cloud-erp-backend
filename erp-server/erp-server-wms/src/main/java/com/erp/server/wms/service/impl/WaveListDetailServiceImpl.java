@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -163,8 +164,13 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         }
         //释放冻结库存
         deliveryService.rollbackInventory(Collections.singletonList(deliveryId));
-        //修改发货单状态
+        //修改发货单状态：待处理
         deliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>().set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode()).eq("id", deliveryId));
+        //删除拣货单
+        PickingListsEntity pickingListEntity = pickingListsService.getOne(new LambdaQueryWrapper<PickingListsEntity>().eq(PickingListsEntity::getSourceId, deliveryId));
+        pickingListsService.remove(new LambdaQueryWrapper<PickingListsEntity>().eq(PickingListsEntity::getId, pickingListEntity.getId()));
+        //删除拣货单明细
+        pickingDetailService.remove(new LambdaQueryWrapper<PickingDetailEntity>().eq(PickingDetailEntity::getMainId, pickingListEntity.getId()));
         //记录日志
         operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), waveId, "编辑操作", user.getUid(), user.getUserName());
         return ApiResult.success();
@@ -204,5 +210,10 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     @Override
     public List<WaveListDetailEntity> listCancelByDeliveryIds(List<String> deliveryIds) {
         return baseMapper.listByWaveListCode(WaveStatusEnum.AWAIT_PICK.getCode(), WaveStatusEnum.FINISH.getCode());
+    }
+
+    @Override
+    public void deleteByMainId(String mainId) {
+        lambdaUpdate().eq(WaveListDetailEntity::getMainId,mainId).remove();
     }
 }
