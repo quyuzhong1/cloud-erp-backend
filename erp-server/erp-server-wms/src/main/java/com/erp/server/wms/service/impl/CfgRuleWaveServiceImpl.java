@@ -47,6 +47,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -107,6 +108,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     @Resource
     private WarehouseLocationReplenishService warehouseLocationReplenishService;
 
+    @Resource
+    @Lazy
+    private CfgRuleWaveService cfgRuleWaveService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -332,7 +336,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         for (CfgRuleWaveEntity waveEntity : cfgRuleWaveList) {
             try {
                 //执行规则
-                executeRule(waveEntity.getId());
+                cfgRuleWaveService.executeRule(waveEntity.getId());
             } catch (Exception e) {
                 CfgRuleWaveRecordDTO.AddDTO addDTO = new CfgRuleWaveRecordDTO.AddDTO();
                 addDTO.setRuleWaveId(waveEntity.getId());
@@ -340,6 +344,54 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 addDTO.setReturnMsg(e.getMessage());
                 cfgRuleWaveRecordService.add(addDTO);
             }
+        }
+    }
+    /**
+     * 添加数量
+     * @author will
+     * @date 2024/7/16 10:44
+     * @param inventoryUnionMap
+     * @param detailList
+     */
+    private  List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> handleInventoryUnionMap (HashMap<String,Integer> inventoryUnionMap,List<SoB2cDeliveryDetailEntity> detailList) {
+        List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> cfgExecutionDetailList = new ArrayList<>();
+
+        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
+        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
+            List<SoB2cDeliveryDetailEntity> value = entry.getValue();
+            Integer totalQty = value.stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            String mapKey = StrUtil.format("{}_{}",value.get(0).getSkuId(),value.get(0).getWarehouseId());
+            Integer oldQty = inventoryUnionMap.get(mapKey);
+            if (ObjectUtil.isEmpty(oldQty)) {
+                inventoryUnionMap.put(mapKey,totalQty);
+            } else {
+                inventoryUnionMap.put(mapKey,MathUtil.add(totalQty,oldQty));
+            }
+            //添加拣货仓库信息
+            CfgRulePickingDTO.CfgExecutionDataDetailDTO cfgExecutionDataDetailDTO = new CfgRulePickingDTO.CfgExecutionDataDetailDTO(value.get(0).getWarehouseId(), value.get(0).getSkuId(), value.get(0).getSkuNo(), inventoryUnionMap.get(mapKey));
+            cfgExecutionDetailList.add(cfgExecutionDataDetailDTO);
+        }
+        return cfgExecutionDetailList;
+    }
+
+    /**
+     * 清除数量
+     * @author will
+     * @date 2024/7/16 10:44
+     * @param inventoryUnionMap
+     * @param detailList
+     */
+    private void cleanInventoryUnionMap (HashMap<String,Integer> inventoryUnionMap,List<SoB2cDeliveryDetailEntity> detailList) {
+        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
+        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
+            List<SoB2cDeliveryDetailEntity> value = entry.getValue();
+            Integer totalQty = value.stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            String mapKey = StrUtil.format("{}_{}",value.get(0).getSkuId(),value.get(0).getWarehouseId());
+            Integer oldQty = inventoryUnionMap.get(mapKey);
+            if (ObjectUtil.isEmpty(oldQty) || totalQty > oldQty) {
+                continue;
+            }
+            inventoryUnionMap.put(mapKey,oldQty - totalQty);
         }
     }
 
@@ -385,8 +437,10 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         List<String> deliveryIdList = new ArrayList<>();
         //需要新增的波次数据
         List<WaveListDTO.AddDTO> resultList = new ArrayList<>();
-
+        //拣货规则信息（先校验库存，后生成拣货单引用扣减）
         HashMap<String,Object> locationMap = new HashMap<>();
+        //库存扣减数量map
+        HashMap<String,Integer> inventoryUnionMap = new HashMap<>();
 
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
 
@@ -405,22 +459,24 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 continue;
             }
 
+            //添加拣货数量
+            List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> cfgExecutionDetailList = handleInventoryUnionMap(inventoryUnionMap,detailList);
+
             List<LocationInventoryResultDTO> ruleOrderMatchResult = new ArrayList<>();
             try {
-                //发货明细
-                List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> cfgExecutionDetailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
-                        .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getDeliveryQty()))
-                        .collect(Collectors.toList());
                 //拣货规则
                 CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
                 executionData.setBillType("B2C");
                 executionData.setDetails(cfgExecutionDetailList);
                 ruleOrderMatchResult = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+
             } catch (ServiceException e) {
                 //生成缺货补货数据
                 generateReplenish(detailList,deliveryEntity);
                 //添加波次生成的缺货异常
                 updateDeliveryList.add(deliveryEntity.getId());
+                //清除拣货Map数量
+                cleanInventoryUnionMap(inventoryUnionMap,detailList);
                 continue;
             }
 
@@ -445,8 +501,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                         Integer mapQty = sameMap.get(key);
                         isSame =  (ObjectUtil.isEmpty(mapQty) || MathUtil.compareTo(mapQty,totalDeliveryQty) != MathUtil.ZERO) ? Boolean.FALSE : Boolean.TRUE;
                     }
-
-
                 }
             }
 

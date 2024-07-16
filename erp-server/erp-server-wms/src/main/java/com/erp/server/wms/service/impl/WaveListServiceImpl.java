@@ -315,6 +315,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         for (Map.Entry<String, List<SoB2cDeliveryDTO.PrintPickingViewDTO>> entry : map.entrySet()) {
             SoB2cDeliveryDTO.PrintPickingMainViewDTO printPickingMainViewDTO = new SoB2cDeliveryDTO.PrintPickingMainViewDTO();
             printPickingMainViewDTO.setWaveCode(entry.getKey());
+            //订单数量
+            long orderCount = entry.getValue().stream().map(SoB2cDeliveryDTO.PrintPickingViewDTO::getDeliveryId).distinct().count();
+            printPickingMainViewDTO.setOrderCount(Math.toIntExact(orderCount));
             printPickingMainViewDTO.setDetailList(entry.getValue());
             resultList.add(printPickingMainViewDTO);
         }
