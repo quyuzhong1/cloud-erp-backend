@@ -26,6 +26,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -775,6 +776,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         for (InOutStockDTO member : members) {
             member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
+            // B2C销售出库单出库等待时间20秒
+            member.setLockWaitTime(20L);
         }
         if (CollectionUtils.isNotEmpty(members)) {
             //无虚拟仓无需扣减库存
@@ -2276,7 +2279,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             ApproveStatusEnum approveStatus = outstock.getApproveStatus();
             // 检查关账时间
             LocalDate closedDate = inventoryClosedRecordService.checkClosed(outstock.getWarehouseOrgId(), outstock.getBillDate());
-            if (null == closedDate){
+            if (null != closedDate){
                 // 已关账
                 return Boolean.TRUE;
             }
@@ -3210,6 +3213,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             dto.setWarehouseName(platformDeliveryDetailDTO.get(0).getWarehouseName());
             dto.setWarehouseOrgId(platformDeliveryDetailDTO.get(0).getWarehouseOrgId());
             dto.setWarehouseOrgName(platformDeliveryDetailDTO.get(0).getWarehouseOrgName());
+
+            // 临时跳过生成已关账之前的销售出库单
+            // 查询订单发货时间
+            List<SoB2cLogisticsEntity> list = FeignQuery.create(SoB2cLogisticsEntity.class)
+                    .eq(SoB2cLogisticsEntity::getMainId, soB2cId)
+                    .list();
+            if (CollectionUtils.isNotEmpty(list)){
+                LocalDateTime deliveryTime = list.stream()
+                        .map(SoB2cLogisticsEntity::getDeliveryTime)
+                        .findFirst()
+                        .orElse(null);
+                if (null != deliveryTime){
+                    // 检查关账时间
+                    LocalDate closedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), deliveryTime.toLocalDate());
+                    if (null != closedDate){
+                        // 临时跳过生成已关账之前的销售出库单
+                        return false;
+                    }
+                }
+            }
+
+
             //通过平台发货单生成销售出库单，不与销售订单明细关联
             LinkedList<SoOutstockDetailDTO.AddDTO> skuList = new LinkedList<>();
             for (PlatformDeliveryDetailDTO deliveryDetailDTO : platformDeliveryDetailDTO) {
@@ -3225,7 +3250,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             ApproveStatusEnum approveStatus = outstock.getApproveStatus();
             // 检查关账时间
             LocalDate closedDate = inventoryClosedRecordService.checkClosed(outstock.getWarehouseOrgId(), outstock.getBillDate());
-            if (null == closedDate) {
+            if (null != closedDate){
                 // 已关账
                 return;
             }
@@ -3244,7 +3269,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
     @Override
     public Boolean afreshGenerateB2cOutstock(List<String> ids) {
-        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(ids);
         Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
                 .stream()
                 .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
@@ -3254,7 +3278,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 if (null == currentEntity){
                     throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
                 }
-                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
+                PlatformRetryHandler.retrySoOutStock(currentEntity, Collections.singletonList(currentEntity));
             } catch (Exception e) {
                 String message = e.getMessage();
                 log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
