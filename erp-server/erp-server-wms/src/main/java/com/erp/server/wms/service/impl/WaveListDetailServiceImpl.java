@@ -211,4 +211,17 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     public List<WaveListDetailEntity> listCancelByDeliveryIds(List<String> deliveryIds) {
         return baseMapper.listByWaveListCode(WaveStatusEnum.AWAIT_PICK.getCode(), WaveStatusEnum.FINISH.getCode());
     }
+
+    /**
+     * 根据发货单ID获取拣货单明细
+     */
+    @Override
+    public List<PickingDetailEntity> getPickingDetail(List<String> deliveryIds){
+        List<PickingListsEntity> pickingList = pickingListsService.list(new LambdaQueryWrapper<PickingListsEntity>().in(PickingListsEntity::getSourceId, deliveryIds));
+        if(pickingList.isEmpty()){
+            return Collections.emptyList();
+        }
+        List<String> pickingIds = pickingList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        return pickingDetailService.list(new LambdaQueryWrapper<PickingDetailEntity>().in(PickingDetailEntity::getMainId, pickingIds));
+    }
 }

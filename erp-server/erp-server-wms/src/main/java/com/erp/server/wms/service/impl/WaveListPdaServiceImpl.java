@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,6 +12,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -57,6 +60,8 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     private WaveListCartTypeMapper waveListCartTypeMapper;
     @Resource
     private PickingListsService pickingListsService;
+    @Resource
+    private PickingDetailService pickingDetailService;
 
     @Override
     public PagingVO<WaveListPdaDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
@@ -192,6 +197,13 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
                 .set("picking_cart_type", "")
                 .set("is_out_stock", false)
                 .set("status", WaveStatusEnum.AWAIT_PICK.getCode()));
+        List<WaveListDetailEntity> waveDetailList = waveDetailService.list(new LambdaQueryWrapper<WaveListDetailEntity>().eq(WaveListDetailEntity::getMainId, exitDTO.getId()));
+        if(! waveDetailList.isEmpty()){
+            List<String> deliveryIds = waveDetailList.stream().map(WaveListDetailEntity::getDeliveryId).collect(Collectors.toList());
+            List<PickingDetailEntity> pickingDetailList = waveDetailService.getPickingDetail(deliveryIds);
+            List<String> pickingDetailIds = pickingDetailList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            pickingDetailService.update(new LambdaUpdateWrapper<PickingDetailEntity>().set(PickingDetailEntity::getIsOutStock, false).in(PickingDetailEntity::getId, pickingDetailIds));
+        }
         return ApiResult.success();
     }
 

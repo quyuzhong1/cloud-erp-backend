@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.WaveListDetailDTO;
+import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 
 import java.util.List;
@@ -32,4 +33,6 @@ public interface WaveListDetailService extends SuperService<WaveListDetailEntity
      * @param deliveryIds 发货单
      */
     List<WaveListDetailEntity> listCancelByDeliveryIds(List<String> deliveryIds);
+
+    List<PickingDetailEntity> getPickingDetail(List<String> deliveryIds);
 }
