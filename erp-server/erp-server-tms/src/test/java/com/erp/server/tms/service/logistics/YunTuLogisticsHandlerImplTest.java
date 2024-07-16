@@ -36,8 +36,9 @@ public class YunTuLogisticsHandlerImplTest {
 //        authMap.put("clientId","ITC0893791");
 //        authMap.put("clientSecret","axzc2utvPbfc9UbJDOh+7w==");
         //正式环境
-        authMap.put("clientId","CN19564");
-        authMap.put("clientSecret","rBM7VwsVHRE=");
+        authMap.put("clientId","CNH1896658");
+        authMap.put("clientSecret","58d89eba9f63431f9883de6800bd98df");
+        authMap.put("url","http://oms.api.yunexpress.com");
     }
     public Map<String, String> getLogisticsAuthConfig(){
         Map<String, String> logisticsAuthConfig = yunTuLogisticsHandler.getLogisticsAuthConfigByShopId("");
@@ -132,10 +133,12 @@ public class YunTuLogisticsHandlerImplTest {
     public void queryOrderListTest() throws IOException {
         LogisticsQueryBaseVO labelVO = new LogisticsQueryBaseVO();
         LogisticsQueryBaseVO labelVO2 = new LogisticsQueryBaseVO();
-        labelVO.setDeliveryNo("WEIJI2023110901004");
+        labelVO.setDeliveryNo("XSDD24052302333");
+        labelVO.setTransportNo("YT2414421901000199");
         labelVO.setAuthMap(authMap);
         labelVO2.setAuthMap(authMap);
-        labelVO2.setDeliveryNo("WEIJI2023111001007");
+        labelVO2.setDeliveryNo("XSDD24052300936");
+        labelVO2.setTransportNo("YT2414421901000237");
         ApiResult<List<LogisticsOrderResponseVO>> apiResult = yunTuLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }
