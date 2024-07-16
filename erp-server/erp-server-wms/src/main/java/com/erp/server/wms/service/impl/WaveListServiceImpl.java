@@ -234,6 +234,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
         //删除波次
         this.baseMapper.deleteById(entity);
+        waveListDetailService.deleteByMainId(entity.getId());
         //释放冻结库存
         deliveryService.rollbackInventory(collect);
         //删除拣货单

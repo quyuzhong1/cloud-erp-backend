@@ -211,4 +211,9 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     public List<WaveListDetailEntity> listCancelByDeliveryIds(List<String> deliveryIds) {
         return baseMapper.listByWaveListCode(WaveStatusEnum.AWAIT_PICK.getCode(), WaveStatusEnum.FINISH.getCode());
     }
+
+    @Override
+    public void deleteByMainId(String mainId) {
+        lambdaUpdate().eq(WaveListDetailEntity::getMainId,mainId).remove();
+    }
 }
