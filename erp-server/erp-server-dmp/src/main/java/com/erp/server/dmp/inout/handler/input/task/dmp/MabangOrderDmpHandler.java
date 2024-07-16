@@ -40,6 +40,12 @@ public class MabangOrderDmpHandler extends MabangDmpHandler {
                         dmpDataMap.put("sourcePlatform", platformEnum.getErpPlatformCode());
                     }
                 }
+                //平台单号
+                Object thirdCodeObj = dmpDataMap.get("thirdCode");
+                if (thirdCodeObj != null) {
+                    String thirdCode = String.valueOf(thirdCodeObj);
+                    dmpDataMap.put("platformCode", thirdCode);
+                }
 
                 //销售原始订单状态
                 Object orderStatus = dmpDataMap.get("orderstatus");
