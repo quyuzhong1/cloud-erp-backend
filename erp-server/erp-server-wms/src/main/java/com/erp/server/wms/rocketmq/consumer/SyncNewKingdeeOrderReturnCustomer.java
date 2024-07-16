@@ -71,6 +71,7 @@ public class SyncNewKingdeeOrderReturnCustomer implements RocketMQListener<Objec
             log.error("金蝶直接退货单同步失败，msg = {}",e.getMessage());
             updateDTO.setStatus(DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode());
             updateDTO.setResponseData("金蝶退货单消费数据失败：" + ExceptionUtil.stacktraceToOneLineString(e));
+            updateDTO.setMessage(e.getMessage());
         }
         dmpInoutTaskFeign.updateOutputTaskRecord(updateDTO);
     }
