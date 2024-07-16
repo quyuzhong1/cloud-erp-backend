@@ -342,7 +342,7 @@ public class PackingTaskDTO implements Serializable {
         /**
          * 拣货数量
          */
-        private Integer pickedQty;
+        private Integer pickQty;
         /**
          * 装箱重量（设备更新）
          */
