@@ -6,8 +6,12 @@
         select wld.*
         from wave_list_detail as wld
                  inner join wave_list as wl on wl.id = wld.main_id and wl.is_deleted = false
-        where wld.is_deleted = false and wl.code in
+        where wld.is_deleted = false and wl.status in
         <foreach collection="code" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        and wld.delivery_id in
+        <foreach collection="deliveryIds" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
     </select>

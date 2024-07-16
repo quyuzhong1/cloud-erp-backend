@@ -9,6 +9,6 @@ import java.util.List;
 
 @Mapper
 public interface WaveListDetailMapper extends BaseMapper<WaveListDetailEntity> {
-    List<WaveListDetailEntity> listByWaveListCode(@Param("code") String... code);
+    List<WaveListDetailEntity> listByWaveListCode(@Param("deliveryIds") List<String> deliveryIds, @Param("code") String... code);
 
 }
