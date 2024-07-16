@@ -170,7 +170,7 @@ public class DmpOutputRocketMQPushUtils{
 			bodyMap.put("msg_type", "text");
 			Map<String, String> contentMap = new HashMap<String, String>();
 			
-			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "输出任务记录id=" + id + "处理失败" + responseData);
+			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "输出任务记录id=" + id + "处理失败");
 			bodyMap.put("content", contentMap);
 			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
 		}
