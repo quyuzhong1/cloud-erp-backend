@@ -8,10 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.erp.server.dmp.inout.dto.request.*;
-import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangOrderApiInitHandler;
-import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangRefundApiInitHandler;
-import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangReturnApiInitHandler;
-import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.MabangShopInfoApiInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -140,6 +137,9 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				} else if ("shop".equals(code)) {
 					//店铺
 					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangShopInfoApiInitHandler.class);
+				} else if ("orderHistory".equals(code)) {
+					//店铺
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangOrderHistoryApiInitHandler.class);
 				}
 
 				DmpInputMabangApiInitRequest dmpInputMabangApiInitRequest = new DmpInputMabangApiInitRequest();
