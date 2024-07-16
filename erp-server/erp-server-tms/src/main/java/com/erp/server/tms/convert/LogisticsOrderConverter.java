@@ -362,9 +362,9 @@ public interface LogisticsOrderConverter {
     YunTuCreateOrderRequest.Parcels orderRequestByYunTu(LogisticsProductVO productVO);
 
     @Mappings({
-            @Mapping(target = "transportNo" ,source = "customerOrderNumber"),
+            @Mapping(target = "transportNo" ,source = "wayBillNumber"),
             @Mapping(target = "trackNo" ,source = "trackingNumber"),
-            @Mapping(target = "deliveryNo" ,source = "wayBillNumber"),
+            @Mapping(target = "deliveryNo" ,source = "customerOrderNumber"),
             @Mapping(target = "code" ,constant = "200"),
             @Mapping(target = "message" ,constant = "调用成功")
     })
