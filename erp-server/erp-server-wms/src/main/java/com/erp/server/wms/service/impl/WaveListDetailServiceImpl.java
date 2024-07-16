@@ -147,7 +147,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     public ApiResult<?> moveOut(WaveListDetailDTO.MoveOutDTO moveOutDTO) {
         LoginUser user = UserContext.getNonLoginUser();
 
-        WaveListDetailEntity entity = baseMapper.selectOne(new QueryWrapper<WaveListDetailEntity>().eq("delivery_id", moveOutDTO.getDeliveryId()));
+        WaveListDetailEntity entity = baseMapper.selectOne(new QueryWrapper<WaveListDetailEntity>().eq("id", moveOutDTO.getWaveId()).eq("delivery_id", moveOutDTO.getDeliveryId()));
         if(! entity.getPickingStatus().equals(PickingStatusEnum.NOT_START.getCode())){
             return ApiResult.error("只能针对未开始的订单移出波次");
         }
