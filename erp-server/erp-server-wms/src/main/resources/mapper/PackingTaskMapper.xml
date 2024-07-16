@@ -99,7 +99,7 @@
             (SELECT COALESCE(SUM(pd.qty), 0) FROM picking_lists pl LEFT JOIN picking_detail pd on pd.main_id = pl.id and pd.is_deleted = FALSE WHERE pl.source_id = pt.source_id AND pl.is_deleted = FALSE) as pickQty
         FROM
             packing_task pt
-        where pt.is_deleted = FALSE
+        where pt.is_deleted = FALSE and pt.source_type in ('B2B')
         <if test="taskIds!= null and taskIds.size > 0">
             AND pt.id IN
             <foreach collection="taskIds" item="item" open="(" close=")" separator=",">
@@ -304,7 +304,7 @@
         (SELECT COALESCE(SUM(rad.picking_qty), 0) FROM first_mile_delivery fmd LEFT JOIN requisition_application_detail rad on fmd.source_id = rad.main_id and rad.is_deleted = FALSE WHERE fmd.id = pt.source_id AND fmd.is_deleted = FALSE) as pickQty
         FROM
         packing_task pt
-        where pt.is_deleted = FALSE
+        where pt.is_deleted = FALSE and pt.source_type in ('FBA','thirdWarehouse')
         <if test="taskIds!= null and taskIds.size > 0">
             AND pt.id IN
             <foreach collection="taskIds" item="item" open="(" close=")" separator=",">
