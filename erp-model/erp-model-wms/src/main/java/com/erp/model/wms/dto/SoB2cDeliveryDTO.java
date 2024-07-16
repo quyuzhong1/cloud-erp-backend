@@ -609,13 +609,13 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String deliveryId;
         /**
+         * 发货单id集合
+         */
+        private List<String> deliveryIdList;
+        /**
          * 波次号
          */
         private String waveCode;
-        /**
-         *发货单号
-         */
-        private String deliveryCode;
         /**
          * 产品id
          */
@@ -659,12 +659,12 @@ public class SoB2cDeliveryDTO implements Serializable {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             PrintPickingViewDTO that = (PrintPickingViewDTO) o;
-            return Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(productName, that.productName) && Objects.equals(warehouseId, that.warehouseId) && Objects.equals(warehouseName, that.warehouseName) && Objects.equals(warehouseLocation, that.warehouseLocation) ;
+            return Objects.equals(waveCode, that.waveCode) && Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(productName, that.productName) && Objects.equals(warehouseId, that.warehouseId) && Objects.equals(warehouseName, that.warehouseName) && Objects.equals(warehouseLocation, that.warehouseLocation) ;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(skuId, skuNo, productName, warehouseId, warehouseName, warehouseLocation);
+            return Objects.hash(waveCode,skuId, skuNo, productName, warehouseId, warehouseName, warehouseLocation);
         }
     }
 

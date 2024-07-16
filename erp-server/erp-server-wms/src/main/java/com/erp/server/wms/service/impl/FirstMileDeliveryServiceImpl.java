@@ -1363,6 +1363,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         String bomType = BomTypeEnum.COMBINATION.getType();
 
+        Map<String,Integer> qtyMap = new HashMap<>();
        // 属性赋值
         for(FirstMileDeliveryDTO.ListDTO data : list) {
             if (StringUtils.isNotBlank(data.getPackingStatus())) {
@@ -1414,6 +1415,24 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
                 data.setOverseasInboundCode(overseasWarehouseInboundEntity.getCode());
+            }
+
+            //如果装箱数量大于发货数量，拆分处理
+            if(Objects.nonNull(data.getDeliveryQty()) && Objects.nonNull(data.getPackingQty()) && data.getPackingQty() > data.getDeliveryQty()){
+                String key = data.getId() + data.getSkuId();
+                if(qtyMap.containsKey(key)){
+                    Integer reduceQty = qtyMap.get(key);
+                    if(reduceQty > data.getDeliveryQty()){
+                        data.setPackingQty(data.getDeliveryQty());
+                        qtyMap.put(key,reduceQty - data.getDeliveryQty());
+                    }else{
+                        data.setPackingQty(reduceQty);
+                        qtyMap.put(key,0);
+                    }
+                }else{
+                    qtyMap.put(key,data.getPackingQty() - data.getDeliveryQty());
+                    data.setPackingQty(data.getDeliveryQty());
+                }
             }
         }
     }

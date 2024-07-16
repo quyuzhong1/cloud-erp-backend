@@ -145,4 +145,22 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private List<String> supplierIds;
     }
+
+    /**
+     * 装箱完成通知
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FinishPackingNoticeDTO{
+        /**
+         * 岗位id集合,post请求,/api/sys/post/list
+         */
+        private List<String> postIdList;
+
+        /**
+         * 抄送人员id集合,post请求,/api/plm/common/findUserList
+         */
+        private List<String> userIdList;
+    }
+
 }

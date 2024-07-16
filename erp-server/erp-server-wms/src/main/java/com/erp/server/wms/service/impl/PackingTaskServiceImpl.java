@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -26,11 +27,14 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
@@ -41,6 +45,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
+import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.server.wms.convert.CartonConverter;
@@ -53,6 +58,8 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -65,9 +72,13 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -118,8 +129,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
     @Resource
-    private OverseasProviderWarehouseService overseasProviderWarehouseService;
-    @Resource
     private PickingListsService pickingListsService;
 
     @Resource
@@ -131,6 +140,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private MQProducerService mqProducerService;
     @Resource
     private FileTemplateFeign fileTemplateFeign;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
+
+    @Resource
+    private SysPostFeign sysPostFeign;
+
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -398,6 +416,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             dto.setWeightingStatus(PackingWeightStatusEnum.FAIL.getCode());
             dto.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
             dto.setErrorMsg(checkDTO.getMsg());
+            //失败则不更新尺寸和重量
+            dto.setPackageWeight(null);
+            dto.setBoxHeight(null);
+            dto.setBoxLength(null);
+            dto.setBoxWidth(null);
         }
         if (StringUtils.isNotBlank(checkDTO.getMsg())){
             operateLogService.addModuleOperateLog(checkDTO.getMsg(), ModuleTypeEnum.PACKING_TASK.getCode(), dto.getTaskId(), dto.getOperation());
@@ -417,6 +440,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(packingTask.getId(), null);
         //拣货数量
         List<PickingListsDTO.DetailPickDTO> detailPickDTOS = pickingListsService.listDetailBySourceIds(Collections.singletonList(packingTask.getSourceId()));
+        if (CollectionUtils.isNotEmpty(detailPickDTOS)){
+            throw new ServiceException(ApiError.ERROR_92253);
+        }
         detailPickDTOS.forEach(detailPickDTO -> {
             //拣货数量
             Integer pickQty = detailPickDTO.getQty();
@@ -436,10 +462,49 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     public void sendNoticeMsg(String taskId, String operation, String content){
         //检查配置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.FINISH_PACKING_NOTICE.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+            return;
+        }
+        CfgSettingValueDTO.FinishPackingNoticeDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.FinishPackingNoticeDTO.class);
+
+        List<String> noticeUserIdList = new ArrayList<>();
+        //岗位处理
+        if (CollectionUtils.isNotEmpty(dto.getPostIdList())) {
+            List<SysPostUserEntity> sysPostList = sysPostFeign.listPostUserByPostIdList(dto.getPostIdList());
+            //岗位下用户
+            List<String> postUserIdList = sysPostList.stream().map(SysPostUserEntity::getUserId).distinct().collect(Collectors.toList());
+            noticeUserIdList.addAll(postUserIdList);
+        }
+        //抄送人员
+        if (CollectionUtils.isNotEmpty(dto.getUserIdList())) {
+            noticeUserIdList.addAll(dto.getUserIdList());
+            noticeUserIdList = noticeUserIdList.stream().distinct().collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(noticeUserIdList)) {
+            return;
+        }
         //组装数据
+        PackingTaskEntity entity = this.getById(taskId);
+        String titleCode = "";
+        if(entity.getSourceType().equals(PickingSourceTypeEnum.FBA.getCode())){
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getByCode(entity.getSourceCode());
+            if(Objects.nonNull(firstMileDeliveryEntity)){
+                RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(firstMileDeliveryEntity.getSourceId());
+                if(Objects.nonNull(requisitionApplication)){
+                    titleCode = requisitionApplication.getFbaShipmentCode();
+                }
+            }
+        }
         //发送消息
-        NoticeMsgInfoDTO msgInfoDTO = new NoticeMsgInfoDTO();
-//        mqProducerService.sendNoticeMsg(msgInfoDTO);
+        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+        noticeMsgInfoDTO.setReceiverUserIds(noticeUserIdList);
+        String title = StrUtil.format(NoticeMsgConstant.FS_FINISH_PACKING_HEAD,titleCode);
+        noticeMsgInfoDTO.setTitle(title);
+        String msgContent = StrUtil.format(NoticeMsgConstant.FS_FINISH_PACKING_CONTENT,operation+"-"+content,entity.getSourceCode());
+        noticeMsgInfoDTO.setContent(msgContent);
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
+        mqProducerService.sendNoticeMsg(noticeMsgInfoDTO);
     }
     @Override
     public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
@@ -725,9 +790,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<PackingTaskDTO.DetailDTO> detailDTOList = packingTaskDetailService.listDetailByMainIds(Collections.singletonList(id));
         //装箱数
         List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateByPackingTaskId(id);
-        //拣货数量
-        List<PickingListsDTO.DetailPickDTO> pickeDTOList = pickingListsService.listDetailBySourceIds(Collections.singletonList(packingTaskEntity.getSourceId()));
-        List<WmsCartonSpecDTO.NoPackingViewDTO> noPackingViewDTOS = buildNoPackingDetailList(detailDTOList, packDateDTOS, pickeDTOList);
+        List<WmsCartonSpecDTO.NoPackingViewDTO> noPackingViewDTOS = buildNoPackingDetailList(detailDTOList, packDateDTOS, packingTaskEntity);
         view.setDetailList(noPackingViewDTOS);
         view.setPackedTotalQty(noPackingViewDTOS.stream().map(WmsCartonSpecDTO.NoPackingViewDTO::getPackedQty).reduce(MathUtil.ZERO, Integer::sum));
         view.setDeliveryTotalQty(noPackingViewDTOS.stream().map(WmsCartonSpecDTO.NoPackingViewDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum));
@@ -1454,7 +1517,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if(CollectionUtils.isEmpty(packingTaskIds) && CollectionUtils.isEmpty(sourceCodeList)){
             return new ArrayList<>();
         }
-        return baseMapper.selectPackingStatusByIds(packingTaskIds,sourceCodeList);
+        //b2b
+        List<PackingTaskDTO.StatusDTO> statusDTOS = baseMapper.selectB2BPackingStatusByIds(packingTaskIds, sourceCodeList);
+        //头程
+        List<PackingTaskDTO.StatusDTO> statusDTOS1 = baseMapper.selectRequisitionPackingStatusByIds(packingTaskIds, sourceCodeList);
+        return Stream.concat(statusDTOS1.stream(),statusDTOS.stream()).collect(Collectors.toList());
     }
 
     @Override
@@ -1601,15 +1668,16 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      * 构建未装箱明细
      * @param detailDTOList 发货数量
      * @param packDateDTOS 装箱数
-     * @param pickeDTOList 拣货数量
+     * @param packingTaskEntity 装箱任务
      * @return
      */
     private List<WmsCartonSpecDTO.NoPackingViewDTO> buildNoPackingDetailList(List<PackingTaskDTO.DetailDTO> detailDTOList,
                                                                              List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS,
-                                                                             List<PickingListsDTO.DetailPickDTO> pickeDTOList) {
+                                                                             PackingTaskEntity packingTaskEntity) {
         Map<String, List<WmsCartonSpecDTO.PackDateDTO>> packedMap = packDateDTOS.stream().collect(Collectors.groupingBy(WmsCartonSpecDTO.PackDateDTO::getSkuId));
-        Map<String, PickingListsDTO.DetailPickDTO> pickMap = pickeDTOList.stream().collect(Collectors.toMap(PickingListsDTO.DetailPickDTO::getSkuId, Function.identity()));
         List<WmsCartonSpecDTO.NoPackingViewDTO> list = new ArrayList<>();
+        //拣货数量
+        List<PickingListsDTO.DetailPickDTO> pickeDTOList = pickingListsService.listDetailBySourceIds(Collections.singletonList(packingTaskEntity.getSourceId()));
         for (PackingTaskDTO.DetailDTO dto : detailDTOList){
             int deliveryQty = 0;
             if (Objects.nonNull(dto.getDeliveryQty())){
@@ -1621,11 +1689,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if (CollectionUtils.isNotEmpty(packDateDTOList)){
                 packQty = packDateDTOList.stream().map(WmsCartonSpecDTO.PackDateDTO::getPackQty).reduce(MathUtil.ZERO,Integer::sum);
             }
-            int pickQty = 0;
-            PickingListsDTO.DetailPickDTO detailPickDTO = pickMap.get(skuId);
-            if (Objects.nonNull(detailPickDTO)){
-                pickQty = detailPickDTO.getQty();
-            }
+            //拣货数量
+            int pickQty = pickeDTOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(skuId)).map(PickingListsDTO.DetailPickDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //已装=发货 则排除
             if (deliveryQty == packQty){
                 continue;

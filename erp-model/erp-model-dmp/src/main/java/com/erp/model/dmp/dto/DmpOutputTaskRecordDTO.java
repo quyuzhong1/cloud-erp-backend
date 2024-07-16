@@ -105,7 +105,10 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         */
         private String responseData;
 
-
+        /**
+         * 返回信息
+         */
+        private String message;
     }
 
 
