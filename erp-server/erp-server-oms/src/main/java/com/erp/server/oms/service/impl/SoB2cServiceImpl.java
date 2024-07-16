@@ -6477,8 +6477,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cDetailService.updateBatchById(detailEntityList);
         }
 
-        OffsetDateTime earliestDeliveryDateTime = detailList.stream()
-                .map(PlatformSoOutStockDetailDTO::getPlatformDeliveryTime)
+        LocalDateTime earliestDeliveryDateTime = detailList.stream()
+                .map(e -> DateUtil.parseLocalDateTimeWithOffset(e.getPlatformDeliveryTime()))
+                .filter(Objects::nonNull)
                 .min(Comparator.naturalOrder())
                 .orElse(null);
         if (null == earliestDeliveryDateTime) {
@@ -6491,11 +6492,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 对比获取最早时间之前
         if (null != logisticsEntity.getDeliveryTime()) {
             // 取最早的时间
-            if (!earliestDeliveryDateTime.toLocalDateTime().isBefore(logisticsEntity.getDeliveryTime())) {
+            if (!earliestDeliveryDateTime.isBefore(logisticsEntity.getDeliveryTime())) {
                 return true;
             }
         }
-        logisticsEntity.setDeliveryTime(earliestDeliveryDateTime.toLocalDateTime());
+        logisticsEntity.setDeliveryTime(earliestDeliveryDateTime);
         soB2cLogisticsService.updateById(logisticsEntity);
 //        if (!soB2cLogisticsService.updateById(logisticsEntity)){
 //            throw new ServiceException("更新发货时间失败:id=" + logisticsEntity.getId());

@@ -582,4 +582,15 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/listSoB2cData")
     SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO);
 
+
+    /**
+     * 根据id和当前仓库ID获取到需要销售出单的数据
+     *
+     * @param soId 销售订单ID
+     * @param warehouseId 仓库ID(非必传：默认第一个明细记录的仓库)
+     * @return 新增销售出库单DTO
+     */
+    @GetMapping("/getSoOutStockByIdAndWarehouseId")
+    SoOutstockDTO.GenerateB2cDTO getSoOutStockByIdAndWarehouseId(@RequestParam(value = "soId") String soId,
+                                                                 @RequestParam(value = "warehouseId", required = false) String warehouseId);
 }

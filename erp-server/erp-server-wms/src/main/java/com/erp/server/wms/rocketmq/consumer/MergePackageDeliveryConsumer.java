@@ -100,6 +100,12 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
             redisUtil.set(retryCountKey, 1, 86400);
         }
 
+        // 去重判断
+        if(!SoB2cDeliveryStatusEnum.SHIPPED.getCode().equalsIgnoreCase(curDeliveryEntity.getStatus())){
+            //处理其他d单据状态(独立事务)
+            packageForecastService.handleMergePackageDeliveryOther(soId, curDeliveryEntity);
+        }
+
         // 判断当前单据平台标记发货是否有正在处理
         String signDeliveryKey = StrUtil.format(RedisCacheConstants.MERGE_PACKAGE_SIGN_DELIVERY_KEY, curDeliveryEntity.getDictPlatform(), curDeliveryEntity.getShopId());
         Boolean setSignResult = redisTemplate.opsForValue().setIfAbsent(signDeliveryKey, soId, 30, TimeUnit.SECONDS);
@@ -176,9 +182,6 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
             }
         }
         log.debug("【组包预报虚假标记发货】销售单【{}】生成销售出库单结束", curDeliveryEntity.getSoCode());
-
-        //处理其他(独立事务)
-        packageForecastService.handleMergePackageDeliveryOther(soId, curDeliveryEntity);
     }
 
     /**

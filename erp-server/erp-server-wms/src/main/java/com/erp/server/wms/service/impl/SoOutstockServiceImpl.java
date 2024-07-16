@@ -2616,7 +2616,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         // 按来源日期分组
-        Map<LocalDate, List<PlatformSoOutStockDetailDTO>> gourpMap = generateSourceDetailList.stream().collect(Collectors.groupingBy(e -> e.getPlatformDeliveryTime().toLocalDate()));
+        Map<LocalDate, List<PlatformSoOutStockDetailDTO>> gourpMap = generateSourceDetailList.stream()
+                .collect(Collectors.groupingBy(PlatformSoOutStockDetailDTO::convertPlatformDeliveryDateTime));
 
         // 分组后的生成销售出库单DTO
         List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = new LinkedList<>();
@@ -2633,7 +2634,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //运单号
             currentGenerateB2cDTO.setTransportNo(entry.getValue().get(0).getTrackNo());
             // 时间发货时间
-            currentGenerateB2cDTO.setActualDeliveryDate(entry.getValue().get(0).getPlatformDeliveryTime().toLocalDateTime());
+            currentGenerateB2cDTO.setActualDeliveryDate(DateUtil.parseLocalDateTimeWithOffset(entry.getValue().get(0).getPlatformDeliveryTime()));
 
             LinkedList<SoOutstockDetailDTO.AddDTO> currentAddDTOList = new LinkedList<>();
             for (PlatformSoOutStockDetailDTO detailDTO : entry.getValue()) {
