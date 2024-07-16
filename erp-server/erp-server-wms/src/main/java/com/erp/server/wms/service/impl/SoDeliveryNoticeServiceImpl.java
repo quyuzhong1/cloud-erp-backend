@@ -170,6 +170,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        Map<String,Integer> qtyMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
                 if (StringUtils.isNotBlank(obj.getPackingStatus())) {
@@ -193,6 +194,23 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 obj.setUnit(productDetailEntity.getUnitName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
+                //如果装箱数量大于发货数量，拆分处理
+                if(Objects.nonNull(obj.getDeliveryQty()) && Objects.nonNull(obj.getPackingQty()) && obj.getPackingQty() > obj.getDeliveryQty()){
+                    String key = obj.getId() + obj.getSkuId();
+                    if(qtyMap.containsKey(key)){
+                        Integer reduceQty = qtyMap.get(key);
+                        if(reduceQty > obj.getDeliveryQty()){
+                            obj.setPackingQty(obj.getDeliveryQty());
+                            qtyMap.put(key,reduceQty - obj.getDeliveryQty());
+                        }else{
+                            obj.setPackingQty(reduceQty);
+                            qtyMap.put(key,0);
+                        }
+                    }else{
+                        qtyMap.put(key,obj.getPackingQty() - obj.getDeliveryQty());
+                        obj.setPackingQty(obj.getDeliveryQty());
+                    }
+                }
             });
         }
         return new PagingVO(pageData);
