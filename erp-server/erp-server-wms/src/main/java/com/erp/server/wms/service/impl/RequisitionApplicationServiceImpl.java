@@ -35,10 +35,8 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.*;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -137,6 +135,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private FbaShipmentService fbaShipmentService;
+
+    @Resource
+    private FbaShipmentDetailService fbaShipmentDetailService;
     @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
     @Resource
@@ -154,6 +155,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     @Lazy
     private WmsDeliveryPlanService wmsDeliveryPlanService;
+
+    @Resource
+    @Lazy
+    private WmsDeliveryPlanDetailService wmsDeliveryPlanDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -964,23 +969,54 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         Map<String, Set<String>> sourceIdByType = list.stream()
                 .collect(Collectors.groupingBy(RequisitionApplicationDTO.GenerateDeliverViewDTO::getType, Collectors.mapping(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId, Collectors.toSet())));
-        //获取国家信息
-        Map<String, String> countryMap = new HashMap<>();
+        List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = new ArrayList<>();
+        List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailEntities = new ArrayList<>();
+        List<FbaShipmentEntity> fbaShipmentEntities = new ArrayList<>();
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode()))){
             Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
-            List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
-            countryMap.putAll(wmsDeliveryPlanEntities.stream().collect(Collectors.toMap(WmsDeliveryPlanEntity::getId, WmsDeliveryPlanEntity::getCountry)));
-
+            wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
+            wmsDeliveryPlanDetailEntities = wmsDeliveryPlanDetailService.listByMainIds(new ArrayList<>(sourIds));
         }else if (CollectionUtils.isNotEmpty(sourceIdByType.get(RequisitionApplicationTypeEnum.FBA.getCode()))){
             Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.FBA.getCode());
-            List<FbaShipmentEntity> fbaShipmentEntities = fbaShipmentService.listByIds(sourIds);
-            countryMap.putAll(fbaShipmentEntities.stream().collect(Collectors.toMap(FbaShipmentEntity::getId, FbaShipmentEntity::getCountryId)));
+            fbaShipmentEntities = fbaShipmentService.listByIds(sourIds);
+            fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(new ArrayList<>(sourIds));
         }
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : list) {
-            viewDTO.setCountry(countryMap.get(viewDTO.getSourceId()));
+
+            if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType())){
+                FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntities.stream()
+                        .filter(v -> v.getId().equals(viewDTO.getSourceId()))
+                        .findFirst()
+                        .orElse(new FbaShipmentEntity());
+                FbaShipmentDetailEntity fbaShipmentDetailEntity = fbaShipmentDetailEntities.stream()
+                        .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
+                        .findFirst()
+                        .orElse(new FbaShipmentDetailEntity());
+                viewDTO.setShopId(fbaShipmentEntity.getShopId());
+                viewDTO.setShopName(fbaShipmentEntity.getShopName());
+                viewDTO.setCountry(fbaShipmentEntity.getCountryId());
+                viewDTO.setPlatformSpuNo(fbaShipmentDetailEntity.getMsku());
+                viewDTO.setFnSku(fbaShipmentDetailEntity.getFnSku());
+            }else {
+                WmsDeliveryPlanEntity wmsDeliveryPlanEntity = wmsDeliveryPlanEntities.stream()
+                        .filter(v -> v.getId().equals(viewDTO.getSourceId()))
+                        .findFirst()
+                        .orElse(new WmsDeliveryPlanEntity());
+                WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity = wmsDeliveryPlanDetailEntities.stream()
+                        .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
+                        .findFirst()
+                        .orElse(new WmsDeliveryPlanDetailEntity());
+                viewDTO.setShopId(wmsDeliveryPlanEntity.getShopId());
+                viewDTO.setShopName(wmsDeliveryPlanEntity.getShopName());
+                viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
+                viewDTO.setPlatformSpuNo(wmsDeliveryPlanDetailEntity.getPlatformSpu());
+                viewDTO.setFnSku(wmsDeliveryPlanDetailEntity.getPlatformFnSku());
+            }
+
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
