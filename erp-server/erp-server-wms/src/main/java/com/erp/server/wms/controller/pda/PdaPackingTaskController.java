@@ -56,7 +56,7 @@ public class PdaPackingTaskController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:packingTask:paging",
+            menuCode = "wms:pda:packingTask:paging",
             tableAlias = "pt"
     )
     public ApiResult<List<PackingTaskDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
@@ -72,7 +72,7 @@ public class PdaPackingTaskController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:packingTask:paging",
+            menuCode = "wms:pda:packingTask:paging",
             tableAlias = "pt"
     )
     @WebAdvanceQuery(handler = PackingTaskQueryHandler.class)
@@ -93,6 +93,11 @@ public class PdaPackingTaskController extends BaseController {
      * @param id 任务id
      * @return
      */
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "wms:pda:packingTask:paging",
+//            tableAlias = "pt"
+//    )
     @GetMapping("/packedDetailView")
     public ApiResult<WmsCartonSpecDTO.PackedView> packedDetailView(@RequestParam("id") String id){
         return success(packingTaskService.packedDetailView(id));

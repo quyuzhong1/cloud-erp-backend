@@ -29,4 +29,12 @@ public interface WmsCartonDetailMapper extends BaseMapper<WmsCartonDetailEntity>
      * @return
      */
     List<WmsCartonDetailDTO.BoxDTO> listCartonDetailByMainIds(@Param("mainIds") List<String> mainIds);
+
+    /**
+     * 根据任务id获取箱子明细
+     * @param taskIds
+     * @return
+     */
+
+    List<WmsCartonDetailEntity> listByTaskIds(@Param("taskIds") List<String> taskIds);
 }

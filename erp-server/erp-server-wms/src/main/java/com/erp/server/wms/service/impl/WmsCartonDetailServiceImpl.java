@@ -60,6 +60,14 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     }
 
     @Override
+    public List<WmsCartonDetailEntity> listByTaskIds(List<String> taskIds) {
+        if (CollectionUtils.isEmpty(taskIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByTaskIds(taskIds);
+    }
+
+    @Override
     public Boolean deleteByCartonIds(List<String> cartonIds) {
         if (CollectionUtils.isEmpty(cartonIds)) {
             return Boolean.TRUE;

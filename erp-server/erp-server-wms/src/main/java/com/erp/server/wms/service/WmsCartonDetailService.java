@@ -29,6 +29,13 @@ public interface WmsCartonDetailService extends SuperService<WmsCartonDetailEnti
     List<WmsCartonDetailEntity> listByMainIds(List<String> mainIds);
 
     /**
+     * 根据任务idh获取全部装箱数据
+     * @param mainIds
+     * @return
+     */
+    List<WmsCartonDetailEntity> listByTaskIds(List<String> mainIds);
+
+    /**
      * 根据箱规id删除箱子产品信息
      * @Author Luo_WG
      * @Date 2023/11/29 10:35
