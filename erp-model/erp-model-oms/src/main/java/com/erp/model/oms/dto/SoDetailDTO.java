@@ -181,6 +181,11 @@ public class SoDetailDTO implements Serializable {
         private Integer scarceQty;
 
         /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+        /**
          * 虚拟仓缺货数量
          */
         private Integer virtualScarceQty;
