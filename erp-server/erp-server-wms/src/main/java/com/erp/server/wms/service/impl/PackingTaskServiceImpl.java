@@ -388,9 +388,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 .build();
         CfgRuleOutDTO.CheckDTO checkDTO = cfgRuleOutService.handleOverweight(overweightDTO);
         if (checkDTO.getResult()){
-            if (Objects.isNull(dto.getPackageWeight()) || dto.getPackageWeight().compareTo(BigDecimal.ZERO) == 0){
+            if (Objects.nonNull(dto.getPackageWeight()) && dto.getPackageWeight().compareTo(BigDecimal.ZERO) == 0){
                 dto.setWeightingStatus(PackingWeightStatusEnum.UNWEIGHED.getCode());
-            }else {
+            }else if (Objects.nonNull(dto.getPackageWeight())){
                 dto.setWeightingStatus(PackingWeightStatusEnum.SUCCESS.getCode());
             }
             dto.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
@@ -1275,9 +1275,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (checkDTO.getResult()){
             wmsCartonEntity.setErrorMsg("");
             //重置状态
-            if (Objects.isNull(dto.getPackageWeight()) || dto.getPackageWeight().compareTo(BigDecimal.ZERO) == 0){
+            if (Objects.nonNull(dto.getPackageWeight()) && dto.getPackageWeight().compareTo(BigDecimal.ZERO) == 0){
                 wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.UNWEIGHED.getCode());
-            }else {
+            }else if (Objects.nonNull(dto.getPackageWeight())){
                 wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.SUCCESS.getCode());
             }
             dto.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());

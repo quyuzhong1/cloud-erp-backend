@@ -321,8 +321,5 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 wmsCartonSpecEntity.setBoxSpecNo(boxSpecNo + 1);
             }
         }
-        if (Objects.isNull(wmsCartonSpecEntity.getPackageWeight())){
-            wmsCartonSpecEntity.setPackageWeight(BigDecimal.ZERO);
-        }
     }
 }
