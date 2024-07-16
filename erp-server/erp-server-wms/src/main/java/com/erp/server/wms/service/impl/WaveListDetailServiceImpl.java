@@ -216,4 +216,17 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     public void deleteByMainId(String mainId) {
         lambdaUpdate().eq(WaveListDetailEntity::getMainId,mainId).remove();
     }
+
+    /**
+     * 根据发货单ID获取拣货单明细
+     */
+    @Override
+    public List<PickingDetailEntity> getPickingDetail(List<String> deliveryIds){
+        List<PickingListsEntity> pickingList = pickingListsService.list(new LambdaQueryWrapper<PickingListsEntity>().in(PickingListsEntity::getSourceId, deliveryIds));
+        if(pickingList.isEmpty()){
+            return Collections.emptyList();
+        }
+        List<String> pickingIds = pickingList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        return pickingDetailService.list(new LambdaQueryWrapper<PickingDetailEntity>().in(PickingDetailEntity::getMainId, pickingIds));
+    }
 }
