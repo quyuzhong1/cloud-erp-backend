@@ -756,6 +756,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         for (InOutStockDTO member : members) {
             member.setSourceType(inventorySourceTypeEnum);
+            // B2C销售出库单出库等待时间20秒
+            member.setLockWaitTime(20L);
         }
         if (CollectionUtils.isNotEmpty(members)) {
             //无虚拟仓无需扣减库存
@@ -2586,7 +2588,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         // 按来源日期分组
-        Map<LocalDate, List<PlatformSoOutStockDetailDTO>> gourpMap = generateSourceDetailList.stream().collect(Collectors.groupingBy(e -> e.getPlatformDeliveryTime().toLocalDate()));
+        Map<LocalDate, List<PlatformSoOutStockDetailDTO>> gourpMap = generateSourceDetailList.stream()
+                .collect(Collectors.groupingBy(PlatformSoOutStockDetailDTO::convertPlatformDeliveryDateTime));
 
         // 分组后的生成销售出库单DTO
         List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = new LinkedList<>();
@@ -2603,7 +2606,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //运单号
             currentGenerateB2cDTO.setTransportNo(entry.getValue().get(0).getTrackNo());
             // 时间发货时间
-            currentGenerateB2cDTO.setActualDeliveryDate(entry.getValue().get(0).getPlatformDeliveryTime().toLocalDateTime());
+            currentGenerateB2cDTO.setActualDeliveryDate(DateUtil.parseLocalDateTimeWithOffset(entry.getValue().get(0).getPlatformDeliveryTime()));
 
             LinkedList<SoOutstockDetailDTO.AddDTO> currentAddDTOList = new LinkedList<>();
             for (PlatformSoOutStockDetailDTO detailDTO : entry.getValue()) {
@@ -3224,7 +3227,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
     @Override
     public Boolean afreshGenerateB2cOutstock(List<String> ids) {
-        List<SoB2cEntity> soB2cList = soB2cFeign.listWarehouseIsEmpty(ids);
         Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
                 .stream()
                 .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
@@ -3234,7 +3236,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 if (null == currentEntity){
                     throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
                 }
-                PlatformRetryHandler.retrySoOutStock(currentEntity, soB2cList);
+                PlatformRetryHandler.retrySoOutStock(currentEntity, Collections.singletonList(currentEntity));
             } catch (Exception e) {
                 String message = e.getMessage();
                 log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);

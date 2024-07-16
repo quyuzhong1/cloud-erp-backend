@@ -339,7 +339,7 @@ public class PackageServiceImpl implements PackageService {
                 // 异步推送到MQ
                 soIdList.stream().peek(soId ->{
                     SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
-                            soId, StrUtil.uuid().toLowerCase());
+                            soId, soId);
                     if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())){
                         throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
                     }

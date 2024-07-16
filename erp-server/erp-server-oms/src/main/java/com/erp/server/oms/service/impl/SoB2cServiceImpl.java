@@ -3855,8 +3855,30 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void removeSignError(String id, String sign) {
-        this.lambdaUpdate().set(SoB2cEntity::getSignOrderError, "")
-                .eq(SoB2cEntity::getId, id).eq(SoB2cEntity::getSignOrderError, sign).update();
+        SoB2cEntity soB2cEntity = this.getById(id);
+        if (null == soB2cEntity){
+            return;
+        }
+        String signOrderError = soB2cEntity.getSignOrderError();
+        if (!signOrderError.equals(sign)) {
+            return;
+        }
+        // 查询其他历史异常(目前仅支持标记和生成销售出库单)
+        SoB2cErrorEntity historyError = soB2cErrorService.lambdaQuery()
+                .eq(SoB2cErrorEntity::getMainId, id)
+                .in(SoB2cErrorEntity::getType, Arrays.asList(
+                        SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode(),
+                        SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode()
+                ))
+                .last("LIMIT 1")
+                .one();
+        String newSignOrderError = null == historyError ? "" :historyError.getType();
+        this.lambdaUpdate()
+                .set(SoB2cEntity::getSignOrderError, newSignOrderError)
+                .eq(SoB2cEntity::getId, id)
+                .update();
+//        this.lambdaUpdate().set(SoB2cEntity::getSignOrderError, "")
+//                .eq(SoB2cEntity::getId, id).eq(SoB2cEntity::getSignOrderError, sign).update();
 //        SoB2cEntity soB2cEntity = this.getById(id);
 //        if (Objects.nonNull(soB2cEntity)) {
 //            String signOrderError = soB2cEntity.getSignOrderError();
@@ -6453,8 +6475,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cDetailService.updateBatchById(detailEntityList);
         }
 
-        OffsetDateTime earliestDeliveryDateTime = detailList.stream()
-                .map(PlatformSoOutStockDetailDTO::getPlatformDeliveryTime)
+        LocalDateTime earliestDeliveryDateTime = detailList.stream()
+                .map(e -> DateUtil.parseLocalDateTimeWithOffset(e.getPlatformDeliveryTime()))
+                .filter(Objects::nonNull)
                 .min(Comparator.naturalOrder())
                 .orElse(null);
         if (null == earliestDeliveryDateTime) {
@@ -6467,11 +6490,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 对比获取最早时间之前
         if (null != logisticsEntity.getDeliveryTime()) {
             // 取最早的时间
-            if (!earliestDeliveryDateTime.toLocalDateTime().isBefore(logisticsEntity.getDeliveryTime())) {
+            if (!earliestDeliveryDateTime.isBefore(logisticsEntity.getDeliveryTime())) {
                 return true;
             }
         }
-        logisticsEntity.setDeliveryTime(earliestDeliveryDateTime.toLocalDateTime());
+        logisticsEntity.setDeliveryTime(earliestDeliveryDateTime);
         soB2cLogisticsService.updateById(logisticsEntity);
 //        if (!soB2cLogisticsService.updateById(logisticsEntity)){
 //            throw new ServiceException("更新发货时间失败:id=" + logisticsEntity.getId());
