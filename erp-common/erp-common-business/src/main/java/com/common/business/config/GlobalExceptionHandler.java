@@ -40,29 +40,7 @@ import java.util.Objects;
  * @Author: zhangchunlin
  */
 @Slf4j
-@RestControllerAdvice(basePackages = {
-        "com.erp.server.scm.controller.api",
-        "com.erp.server.wms.controller.api",
-        "com.erp.server.workflow.controller.api",
-        "com.erp.server.auth.controller.api",
-        "com.erp.server.bi.controller.api",
-        "com.erp.server.plm.controller.api",
-        "com.erp.server.sys.controller.api",
-        "com.erp.server.oms.controller.api",
-        "com.erp.server.tms.controller.api",
-        "com.erp.server.srm.controller.api",
-        "com.erp.server.dmp.controller.api",
-
-        "com.erp.server.scm.controller.pda",
-        "com.erp.server.wms.controller.pda",
-        "com.erp.server.workflow.controller.pda",
-        "com.erp.server.auth.controller.pda",
-        "com.erp.server.bi.controller.pda",
-        "com.erp.server.plm.controller.pda",
-        "com.erp.server.sys.controller.pda",
-        "com.erp.server.oms.controller.pda"
-
-})
+@RestControllerAdvice()
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({ServiceException.class})
@@ -82,6 +60,25 @@ public class GlobalExceptionHandler {
         }*/
         return result;
     }
+
+    /**
+     * 系统异常 监测
+     * @param e 异常
+     * @return  ApiResult
+     */
+    @ExceptionHandler({Exception.class})
+    public ApiResult resolveException(Exception e) {
+        log.error("系统异常：{}", null == e.getMessage()?e.toString(): e.getMessage());
+        ApiResult result = new ApiResult();
+        result.setCode(1000000);
+        result.setMsg(null==e.getMessage()?e.toString():e.getMessage());
+        // 某些异常需要返回data
+        if (Objects.nonNull(e.getStackTrace())) {
+            result.setData(e.getStackTrace());
+        }
+        return result;
+    }
+
 
 
     @ExceptionHandler(value = FeignServiceException.class)
