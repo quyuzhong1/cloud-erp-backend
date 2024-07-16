@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -12,13 +11,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.PickingStatusEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListDetailMapper;
 import com.erp.server.wms.service.*;
@@ -199,5 +199,10 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         WaveListDetailEntity entity = entityList.stream().findFirst().orElse(new WaveListDetailEntity());
         operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
         return ApiResult.success();
+    }
+
+    @Override
+    public List<WaveListDetailEntity> listCancelByDeliveryIds(List<String> deliveryIds) {
+        return baseMapper.listByWaveListCode(WaveStatusEnum.AWAIT_PICK.getCode(), WaveStatusEnum.FINISH.getCode());
     }
 }
