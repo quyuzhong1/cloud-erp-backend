@@ -18,7 +18,9 @@ public enum ApiError implements Serializable {
     /**
      * 服务调用异常
      */
-    Default(10000000, "操作失败，请稍后再试"),
+    Default(9999, "系统异常，请联系【实施人员】协调开发人员排查"),
+    WARNING(8888, "系统警告..."),
+
     ERROR_5000(5000, "存在越权访问URL"),
     ERROR_5001(5001, "未授权访问!"),
 
