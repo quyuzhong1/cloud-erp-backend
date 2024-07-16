@@ -246,4 +246,16 @@ public class PdaPackingTaskController extends BaseController {
     public ApiResult<List<WmsCartonSpecDTO.SpecDTO>> getCartonSpecByTaskId(@RequestParam("taskId") String taskId){
         return success(packingTaskService.getCartonSpecByTaskId(taskId));
     }
+
+    /**
+     * 调整装箱保存
+     * @Author zdy
+     * @Date 2024/7/8 17:44
+     * @param cartonId
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    @GetMapping("/getPrintBarCode")
+    public ApiResult<String> getPrintBarCode(@RequestParam("cartonId") String cartonId) {
+        return success(packingTaskService.getPrintBarCode(cartonId));
+    }
 }

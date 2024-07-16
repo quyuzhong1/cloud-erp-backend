@@ -260,4 +260,13 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOS, String taskId);
 
     void updateWeightStatus(PackingTaskEntity packingTaskEntity);
+
+    String getOutBoxNoBase64(String outBoxNo);
+
+    /**
+     * 获取打印条码
+     * @param cartonId
+     * @return
+     */
+    String getPrintBarCode(String cartonId);
 }
