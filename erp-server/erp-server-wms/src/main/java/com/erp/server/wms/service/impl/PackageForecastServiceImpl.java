@@ -993,6 +993,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(soId, deliveryEntity.getCode())));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
+        deliveryEntity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
     }
 }
