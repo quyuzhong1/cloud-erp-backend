@@ -1,6 +1,8 @@
 package com.erp.server.wms.controller.feign;
 
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -27,7 +29,12 @@ public class PackingTaskFeignController extends BaseController {
      */
     @PostMapping("/dimensionalWeight")
     public ApiResult<String> dimensionalWeight(@RequestBody @Validated DimensionalWeightDTO dto) {
-        return packingTaskService.dimensionalWeight(dto);
+        try {
+            return packingTaskService.dimensionalWeight(dto);
+        }catch (Exception e){
+            log.error(StrUtil.format("大货称重异常,json:{}", JSONUtil.toJsonStr(dto)),e);
+            return ApiResult.error(StrUtil.format("系统异常:{}", e.getMessage()));
+        }
     }
 
 }
