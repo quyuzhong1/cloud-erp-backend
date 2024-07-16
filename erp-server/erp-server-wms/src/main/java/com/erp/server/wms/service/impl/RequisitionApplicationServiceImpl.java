@@ -961,53 +961,26 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         Map<String, Set<String>> sourceIdByType = list.stream()
                 .collect(Collectors.groupingBy(RequisitionApplicationDTO.GenerateDeliverViewDTO::getType, Collectors.mapping(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId, Collectors.toSet())));
-        List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = new ArrayList<>();
-        List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailEntities = new ArrayList<>();
-        List<FbaShipmentEntity> fbaShipmentEntities = new ArrayList<>();
-        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode()))){
-            Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
-            wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
-            wmsDeliveryPlanDetailEntities = wmsDeliveryPlanDetailService.listByMainIds(new ArrayList<>(sourIds));
-        }else if (CollectionUtils.isNotEmpty(sourceIdByType.get(RequisitionApplicationTypeEnum.FBA.getCode()))){
-            Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.FBA.getCode());
-            fbaShipmentEntities = fbaShipmentService.listByIds(sourIds);
-            fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(new ArrayList<>(sourIds));
-        }
+        Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
+        List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
+        List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailEntities = wmsDeliveryPlanDetailService.listByMainIds(new ArrayList<>(sourIds));
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : list) {
-
-            if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType())){
-                FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntities.stream()
-                        .filter(v -> v.getId().equals(viewDTO.getSourceId()))
-                        .findFirst()
-                        .orElse(new FbaShipmentEntity());
-                FbaShipmentDetailEntity fbaShipmentDetailEntity = fbaShipmentDetailEntities.stream()
-                        .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
-                        .findFirst()
-                        .orElse(new FbaShipmentDetailEntity());
-                viewDTO.setShopId(fbaShipmentEntity.getShopId());
-                viewDTO.setShopName(fbaShipmentEntity.getShopName());
-                viewDTO.setCountry(fbaShipmentEntity.getCountryId());
-                viewDTO.setPlatformSpuNo(fbaShipmentDetailEntity.getMsku());
-                viewDTO.setFnSku(fbaShipmentDetailEntity.getFnSku());
-            }else {
-                WmsDeliveryPlanEntity wmsDeliveryPlanEntity = wmsDeliveryPlanEntities.stream()
-                        .filter(v -> v.getId().equals(viewDTO.getSourceId()))
-                        .findFirst()
-                        .orElse(new WmsDeliveryPlanEntity());
-                WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity = wmsDeliveryPlanDetailEntities.stream()
-                        .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
-                        .findFirst()
-                        .orElse(new WmsDeliveryPlanDetailEntity());
-                viewDTO.setShopId(wmsDeliveryPlanEntity.getShopId());
-                viewDTO.setShopName(wmsDeliveryPlanEntity.getShopName());
-                viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
-                viewDTO.setPlatformSpuNo(wmsDeliveryPlanDetailEntity.getPlatformSpu());
-                viewDTO.setFnSku(wmsDeliveryPlanDetailEntity.getPlatformFnSku());
-            }
+            WmsDeliveryPlanEntity wmsDeliveryPlanEntity = wmsDeliveryPlanEntities.stream()
+                    .filter(v -> v.getId().equals(viewDTO.getSourceId()))
+                    .findFirst()
+                    .orElse(new WmsDeliveryPlanEntity());
+            WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity = wmsDeliveryPlanDetailEntities.stream()
+                    .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
+                    .findFirst()
+                    .orElse(new WmsDeliveryPlanDetailEntity());
+            viewDTO.setShopId(wmsDeliveryPlanEntity.getShopId());
+            viewDTO.setShopName(wmsDeliveryPlanEntity.getShopName());
+            viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
+            viewDTO.setPlatformSpuNo(wmsDeliveryPlanDetailEntity.getPlatformSpu());
+            viewDTO.setFnSku(wmsDeliveryPlanDetailEntity.getPlatformFnSku());
 
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
