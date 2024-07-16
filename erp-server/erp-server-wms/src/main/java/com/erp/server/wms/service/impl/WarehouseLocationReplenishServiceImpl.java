@@ -482,6 +482,13 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         Map<String, String> skuIdMap = list.stream().collect(Collectors.toMap(BaseEntity::getId, WarehouseLocationReplenishEntity::getSkuId));
         Map<String, String> skuNoMap = list.stream().collect(Collectors.toMap(BaseEntity::getId, WarehouseLocationReplenishEntity::getSkuNo));
 
+        for (WarehouseLocationReplenishDTO.HandleDTO handleDTO : dtoList) {
+            String warehouseId = warehouseIdMap.get(handleDTO.getId());
+            String skuId = skuIdMap.get(handleDTO.getId());
+            handleDTO.setWarehouseId(warehouseId);
+            handleDTO.setSkuId(skuId);
+        }
+
         List<BatchResultDTO> verifyList = new ArrayList<>(dtoList.size());
         Map<String, List<WarehouseLocationReplenishDTO.HandleDTO>> collect = dtoList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId() + "#" + item.getFromWarehouseLocation() + "#" + item.getSkuId()));
         int i = 0;
@@ -499,9 +506,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("dict_inventory_status", "usable"));
             if(sum > inventory.getQty()){
                 String format = String.format("仓位可用库存不足，可用数量：%s，总取货数量：%s", inventory.getQty(), sum);
-                verifyList.add(BatchResultDTO.fail(String.valueOf(i), warehouseId + " ：" + warehouseLocation + " ：" + skuId, format));
+                verifyList.add(BatchResultDTO.fail(String.valueOf(i), warehouseId + ":" + warehouseLocation + ":" + skuId, format));
             }else {
-                verifyList.add(BatchResultDTO.success(String.valueOf(i), warehouseId + " ：" + warehouseLocation + " ：" + skuId, "成功"));
+                verifyList.add(BatchResultDTO.success(String.valueOf(i), warehouseId + ":" + warehouseLocation + ":" + skuId, "成功"));
             }
             i++;
         }
@@ -521,9 +528,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("dict_inventory_status", "usable"));
             if(handleDTO.getQty() > inventory.getQty()){
                 String format = String.format("仓位可用库存不足，可用数量：%s，取货数量：%s", inventory.getQty(), handleDTO.getQty());
-                verifyResultList.add(BatchResultDTO.fail(handleDTO.getId(), handleDTO.getFromWarehouseLocation() + " ：" + skuNo, format));
+                verifyResultList.add(BatchResultDTO.fail(handleDTO.getId(), handleDTO.getFromWarehouseLocation() + ":" + skuNo, format));
             }else {
-                verifyResultList.add(BatchResultDTO.success(handleDTO.getId(), handleDTO.getFromWarehouseLocation() + " ：" + skuNo, "成功"));
+                verifyResultList.add(BatchResultDTO.success(handleDTO.getId(), handleDTO.getFromWarehouseLocation() + ":" + skuNo, "成功"));
             }
 
             handleDTO.setWarehouseId(warehouseId);
