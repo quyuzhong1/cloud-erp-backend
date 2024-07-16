@@ -341,6 +341,11 @@ public class CfgRuleOutDTO implements Serializable {
          */
         private boolean sizeNotPassCanOut;
 
+        /**
+         * 单据审核设置校验状态
+         */
+        private boolean checkStatusWhenApprove = true;
+
         public void check(){
             if(Objects.nonNull(maxWeight) && Objects.nonNull(minWeight) && maxWeight.compareTo(minWeight)<0){
                 throw new ServiceException("单箱超重重量不可小于最低重量");
