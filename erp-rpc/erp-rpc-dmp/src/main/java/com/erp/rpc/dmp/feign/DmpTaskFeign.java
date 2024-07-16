@@ -232,7 +232,7 @@ public interface DmpTaskFeign {
      * @return
      */
     @PostMapping("feign/dmp/getWarnPushTaskList")
-    List<DmpPushTaskEntity> getWarnPushTaskList();
+    List<DmpPushTaskEntity> getWarnPushTaskList(@RequestBody List<String> statusList);
 
     /**
      * 获取飞书预警信息需要推送的(PullTask任务记录)
@@ -240,5 +240,5 @@ public interface DmpTaskFeign {
      */
 
     @PostMapping("feign/dmp/getWarnPullTaskList")
-    List<DmpPullTaskEntity> getWarnPullTaskList();
+    List<DmpPullTaskEntity> getWarnPullTaskList(@RequestBody List<String> statusList);
 }

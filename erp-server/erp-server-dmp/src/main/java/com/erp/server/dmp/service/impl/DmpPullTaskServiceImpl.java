@@ -5,17 +5,13 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
-import com.common.business.dto.DmpPullTaskFeignDTO;
-import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
-import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
@@ -23,7 +19,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
-import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -33,17 +28,6 @@ import com.erp.model.dmp.dto.excel.DmpPullTaskExportExcelDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.model.msg.enums.WarnMsgTypeEnum;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cDetailDTO;
-import com.erp.model.oms.entity.*;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -51,12 +35,10 @@ import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.server.dmp.convert.DmpOrderConverter;
 import com.erp.server.dmp.mapper.DmpPullTaskHistoryMapper;
 import com.erp.server.dmp.mapper.DmpPullTaskMapper;
 import com.erp.server.dmp.service.*;
 import com.google.common.collect.Lists;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -68,7 +50,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -476,7 +457,17 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
-    public List<DmpPullTaskEntity> getWarnPullTaskList() {
-        return lambdaQuery().eq(DmpPullTaskEntity::getStatus, 4).eq(DmpPullTaskEntity::getIsDeleted, Boolean.FALSE).list();
+    public List<DmpPullTaskEntity> getWarnPullTaskList(List<String> statusList) {
+        if (CollectionUtils.isEmpty(statusList)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().select(DmpPullTaskEntity::getSourceId,
+                        DmpPullTaskEntity::getSourceType,
+                        DmpPullTaskEntity::getSourceCode,
+                        DmpPullTaskEntity::getSourcePlatformName,
+                        DmpPullTaskEntity::getTargetPlatformName,
+                        DmpPullTaskEntity::getReturnMsg,
+                        DmpPullTaskEntity::getUpdateTime)
+                .in(DmpPullTaskEntity::getStatus, statusList).eq(DmpPullTaskEntity::getIsDeleted, Boolean.FALSE).list();
     }
 }

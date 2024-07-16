@@ -188,5 +188,5 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * 获取飞书预警信息需要推送的(PushTask任务记录)
      * @return
      */
-    List<DmpPushTaskEntity> getWarnPushTaskList();
+    List<DmpPushTaskEntity> getWarnPushTaskList(List<String> statusList);
 }

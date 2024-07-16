@@ -134,5 +134,5 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * 获取飞书预警信息需要推送的(PullTask任务记录)
      * @return
      */
-    List<DmpPullTaskEntity> getWarnPullTaskList();
+    List<DmpPullTaskEntity> getWarnPullTaskList(List<String> statusList);
 }

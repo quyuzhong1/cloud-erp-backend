@@ -3,8 +3,11 @@ package com.erp.server.msg.schedule;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncKingdeeOmsStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -66,7 +69,20 @@ public class FeiShuMsgJob {
 
     @XxlJob("sendFeiShuWarnPushMsg")
     public void sendFeiShuWarnPushMsg(){
-        List<WarnMsgInfoDTO> list = getPushTask();
+        String jobParam = XxlJobHelper.getJobParam();
+        List<String> statusList = new ArrayList<>();
+        if (StringUtils.isBlank(jobParam)){
+            statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
+            statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
+        }else {
+            String[] ids = jobParam.split(",");
+            for (String id : ids) {
+                if (StringUtils.isNotBlank(id)){
+                    statusList.add(id);
+                }
+            }
+        }
+        List<WarnMsgInfoDTO> list = getPushTask(statusList);
         XxlJobHelper.log("待发送Push飞书预警消息数量:{}", list.size());
         //对全量数据进行分区
         if (list.size() > 100){
@@ -80,7 +96,20 @@ public class FeiShuMsgJob {
 
     @XxlJob("sendFeiShuWarnPullMsg")
     public void sendFeiShuWarnPullMsg(){
-        List<WarnMsgInfoDTO> list = getPullTask();
+        String jobParam = XxlJobHelper.getJobParam();
+        List<String> statusList = new ArrayList<>();
+        if (StringUtils.isBlank(jobParam)){
+            statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
+            statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
+        }else {
+            String[] ids = jobParam.split(",");
+            for (String id : ids) {
+                if (StringUtils.isNotBlank(id)){
+                    statusList.add(id);
+                }
+            }
+        }
+        List<WarnMsgInfoDTO> list = getPullTask(statusList);
         XxlJobHelper.log("待发送Pull飞书预警消息数量:{}", list.size());
         //对全量数据进行分区
         if (list.size() > 100){
@@ -134,10 +163,10 @@ public class FeiShuMsgJob {
         }
         XxlJobHelper.log("批量发送飞书预警消息完成:{}", list.size());
     }
-    public  List<WarnMsgInfoDTO> getPushTask(){
-        List<DmpPushTaskEntity> warnPushTaskList = dmpTaskFeign.getWarnPushTaskList();
+    public  List<WarnMsgInfoDTO> getPushTask(List<String> statusList){
+        List<DmpPushTaskEntity> warnPushTaskList = dmpTaskFeign.getWarnPushTaskList(statusList);
         List<WarnMsgInfoDTO> warnMsgInfoDTOS = new ArrayList<>(warnPushTaskList.size());
-        for (DmpPushTaskEntity entity:warnPushTaskList ){
+        for (DmpPushTaskEntity entity: warnPushTaskList ){
             WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
             warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
             warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
@@ -145,14 +174,15 @@ public class FeiShuMsgJob {
             warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
             warnMsgInfo.setTableId(entity.getSourceId());
             warnMsgInfo.setKeyInfo(entity.getReturnMsg());
+            warnMsgInfo.setHappenTime(entity.getUpdateTime());
             warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
             warnMsgInfoDTOS.add(warnMsgInfo);
         }
         return warnMsgInfoDTOS;
     }
 
-    public List<WarnMsgInfoDTO> getPullTask(){
-        List<DmpPullTaskEntity> warnPullTaskList = dmpTaskFeign.getWarnPullTaskList();
+    public List<WarnMsgInfoDTO> getPullTask(List<String> statusList){
+        List<DmpPullTaskEntity> warnPullTaskList = dmpTaskFeign.getWarnPullTaskList(statusList);
         List<WarnMsgInfoDTO> warnMsgInfoDTOS = new ArrayList<>(warnPullTaskList.size());
         for (DmpPullTaskEntity entity : warnPullTaskList){
             WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
@@ -162,6 +192,7 @@ public class FeiShuMsgJob {
             warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
             warnMsgInfo.setTableId(entity.getSourceId());
             warnMsgInfo.setKeyInfo(entity.getReturnMsg());
+            warnMsgInfo.setHappenTime(entity.getUpdateTime());
             warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
             warnMsgInfoDTOS.add(warnMsgInfo);
         }
