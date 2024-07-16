@@ -178,12 +178,10 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      */
     Boolean batchSyncBySourceId(List<String> sourceIds);
 
+    List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
     /**
      * 获取飞书预警信息需要推送的(PushTask任务记录)
      * @return
      */
-    List<DmpPushTaskEntity> getWarnPushTaskList();
-
-    List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
     List<DmpPushTaskEntity> getWarnPushTaskList(List<String> statusList);
 }
