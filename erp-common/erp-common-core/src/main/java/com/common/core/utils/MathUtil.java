@@ -573,6 +573,24 @@ public class MathUtil {
     }
 
     /**
+     * 求多个数中最大值，为空返回0
+     * @param values
+     * @return
+     */
+    public static BigDecimal findMax(BigDecimal... values) {
+        if (values == null || values.length == 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal max = values[0];
+        for (BigDecimal value : values) {
+            if (value.compareTo(max) > 0) {
+                max = value;
+            }
+        }
+        return max;
+    }
+    /**
      * 求最小值，这里的最大MAX值，作为初始条件判断值，如果某些数据范围超过百亿，可以根据需求换成 Long.MAX_VALUE 或者 Double.MAX_VALUE
      *
      * @param mapper
