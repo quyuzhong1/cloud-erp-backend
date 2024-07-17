@@ -1,6 +1,10 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -8,20 +12,20 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.IdUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
@@ -44,9 +48,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
-import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
-import com.erp.model.wms.enums.PickingBillTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
@@ -70,6 +72,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -117,14 +122,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
-    @Resource
-    private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource
     private InventoryService inventoryService;
 
-    @Resource
-    private PickingDetailService pickingDetailService;
 
     @Resource
     private CustomerFeign customerFeign;
@@ -142,6 +143,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+    @Resource
+    private TransferInfoService transferInfoService;
 
 
     @Override
@@ -814,60 +817,129 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     /**
      * 下推销售出库单
      *
-     * @param idList
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-05-23 11:31
+     * @param id id
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean generateSoDeliverySave(List<String> idList) {
-        if (CollectionUtils.isEmpty(idList)) {
-            return Boolean.FALSE;
-        }
-        List<SoDeliveryNoticeEntity> list = this.listByIds(idList);
-        String approve = ApproveStatusEnum.APPROVE.getStatus();
-        long count = list.stream().filter(s -> !s.getApproveStatus().equals(approve)).count();
-        if (count > 0) {
+    public BatchResultDTO generateSoDeliverySave(String id) {
+        SoDeliveryNoticeEntity entity = getById(id);
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
-        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(idList);
-        List<String> pickSourceId = views.stream().map(PickingListsDTO.SourceView::getSourceId).distinct().collect(Collectors.toList());
-        if (pickSourceId.size() != idList.size()){
-            String msg = list.stream().filter(v -> !pickSourceId.contains(v.getId())).map(SoDeliveryNoticeEntity::getCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_99101, msg);
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(id));
+        if (CollectionUtils.isEmpty(views)) {
+            throw new ServiceException(ApiError.ERROR_99101, entity.getCode());
         }
-        List<String> soIds = list.stream().map(SoDeliveryNoticeEntity::getSourceId).collect(Collectors.toList());
-        List<SoInfoEntity> soInfoEntities = soInfoFeign.listSoInfoByIds(soIds);
-        long soCount = soInfoEntities.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approve)).count();
-        if (soCount > 0) {
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(soInfoEntity.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_99105);
         }
-        //获取到销售退货单 下推列表
-        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
-        List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(idList, soDeliveryNotice);
-        long closeCount = resultList.stream().filter(s -> s.getIsClose()).count();
+        List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.listDetailByMainId(id);
+        long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
         if (closeCount > 0) {
             throw new ServiceException(ApiError.ERROR_98068);
         }
+        SoOutstockDTO.AddDTO addDTO = new SoOutstockDTO.AddDTO();
+        String batchNo = IdUtil.getSnowflake().nextIdStr();
+        String warehouseId;
+        //todo 判断是否需要中转
+        Boolean isTransit = Boolean.TRUE;
+        if (isTransit) {
+            warehouseId = generateTransferInfo(id, entity, batchNo, views);
+        }else {
+            warehouseId = entity.getWarehouseId();
+        }
         //详情id s
-        List<String> detailIds = resultList.stream().map(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceDetailId).distinct().collect(Collectors.toList());
-
+        List<String> detailIds = entityList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
         //附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(detailIds);
-
-        for (SoOutstockDTO.GenerateSoOutstockViewDTO item : resultList) {
-            item.setSourceType(soDeliveryNotice);
-            String detailId = item.getSourceDetailId();
+        //获取到销售退货单 下推列表
+        addDTO.buildAddDTO(entity);
+        addDTO.setCustomerOrderNo(soInfoEntity.getCustomerOrderNo());
+        List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>();
+        for (PickingListsDTO.SourceView item : views) {
+            SoDeliveryNoticeDetailEntity detailEntity = entityList.stream()
+                    .filter(v -> v.getId().equals(item.getSourceDetailId()))
+                    .findFirst()
+                    .orElse(new SoDeliveryNoticeDetailEntity());
             //附件信息
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentDbList.stream().filter(a -> a.getBusinessId().equals(detailId)).collect(Collectors.toList());
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentDbList.stream().filter(a -> a.getBusinessId().equals(detailEntity.getId())).collect(Collectors.toList());
             List<String> attachmentNameList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
             List<String> attachmentUrlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-            item.setAttachNameList(attachmentNameList);
-            item.setAttachUrlList(attachmentUrlList);
+            SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
+            detail.setSoDetailId(detailEntity.getSourceDetailId());
+            detail.setSourceDetailId(item.getSourceDetailId());
+            detail.setSkuId(item.getSkuId());
+            detail.setSkuNo(item.getSkuNo());
+            detail.setRemark(detailEntity.getRemark());
+            detail.setWarehouseId(warehouseId);
+            if (isTransit) {
+                detail.setWarehouseLocation("");
+            }else {
+                detail.setWarehouseLocation(item.getWarehouseLocation());
+            }
+            detail.setActualQty(item.getQty());
+            detail.setPlanQty(item.getQty());
+            detail.setAttachNameList(attachmentNameList);
+            detail.setAttachUrlList(attachmentUrlList);
+            detailList.add(detail);
         }
+        addDTO.setBatchNo(batchNo);
+        addDTO.setDetailList(detailList);
         //销售出库单保存下推单据
-        return soOutstockService.addB2bPushDownNo(resultList);
+        String outId = soOutstockService.add(addDTO);
+        return BatchResultDTO.success(outId, "", "下推成功");
+    }
+
+    private String generateTransferInfo(String id, SoDeliveryNoticeEntity entity, String batchNo, List<PickingListsDTO.SourceView> views) {
+        String warehouseId;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                .eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode())
+                .eq(CfgSettingEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException("未配置中转设置仓库");
+        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(list.get(0).getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (CharSequenceUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
+        warehouseId = transitSettingDTO.getWarehouseId();
+        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
+        //获取仓库信息
+        if (ObjectUtil.isEmpty(warehouse)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        TransferInfoDTO.AddDTO transferDto = new TransferInfoDTO.AddDTO();
+        transferDto.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        transferDto.setBillDate(LocalDate.now());
+        transferDto.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        transferDto.setInOrgId(warehouse.getOrgId());
+        transferDto.setOutOrgId(entity.getWarehouseOrgId());
+        transferDto.setSourceId(id);
+        transferDto.setSourceCode(entity.getCode());
+        transferDto.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        transferDto.setBatchNo(batchNo);
+        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(entity, views, warehouseId);
+        transferDto.setDetailList(detailList);
+        transferInfoService.addAndApprove(transferDto);
+        return warehouseId;
+    }
+
+    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoDeliveryNoticeEntity entity, List<PickingListsDTO.SourceView> views, String warehouseId) {
+        List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
+        for (PickingListsDTO.SourceView view : views) {
+            TransferInfoDetailDTO.AddDTO transferInfoDetail = new TransferInfoDetailDTO.AddDTO();
+            transferInfoDetail.setSkuId(view.getSkuId());
+            transferInfoDetail.setSkuNo(view.getSkuNo());
+            transferInfoDetail.setQty(view.getQty());
+            transferInfoDetail.setOutWarehouseLocation(view.getStagingLocation());
+            transferInfoDetail.setOutWarehouseId(entity.getWarehouseId());
+            transferInfoDetail.setInWarehouseId(warehouseId);
+            transferInfoDetail.setSourceDetailId(view.getSourceDetailId());
+            detailList.add(transferInfoDetail);
+        }
+        return detailList;
     }
 
     @Override

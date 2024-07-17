@@ -78,6 +78,7 @@ public enum InventoryBusinessTypeEnum {
     SO_B2C_DELIVERY_SHELVES("so_b2c_delivery_shelves", "37","b2c发货单取消发货(上架)"),
 
     DELIVERY_PUSH_TRANSFER("delivery_push_transfer", "38","直接调拨单（发货单下推）"),
+    DELIVERY_NOTICE_PUSH_TRANSFER("delivery_notice_push_transfer", "39","直接调拨单（发货通知单下推）"),
 
     ;
 
