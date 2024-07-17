@@ -2090,8 +2090,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private String generateTransferToUlanzi(FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailList) {
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(deliveryEntity.getDestWarehouseId(), deliveryEntity.getDeliveryWarehouseId()));
 
-        //todo 查询优蓝子中转仓
-        WarehouseEntity warehouseEntity = new WarehouseEntity();
+        //优蓝子中转仓
+        WarehouseEntity warehouseEntity = warehouseService.getOne(new LambdaQueryWrapper<WarehouseEntity>()
+                .eq(WarehouseEntity::getKingdeeWarehouseCode, "szylzzzc")
+                .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()));
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //来源类型
         addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode());
@@ -2193,8 +2195,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
         addDTO.setInOrgId(destOnWayWarehouse.getOrgId());
-        //todo 查询优蓝子中转仓
-        WarehouseEntity ulanziWarehouse = new WarehouseEntity();
+        //蓝子中转仓
+        WarehouseEntity ulanziWarehouse = warehouseService.getOne(new LambdaQueryWrapper<WarehouseEntity>()
+                .eq(WarehouseEntity::getKingdeeWarehouseCode, "szylzzzc")
+                .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()));
         addDTO.setOutOrgId(ulanziWarehouse.getOrgId());
         //调拨类型
         if (destOnWayWarehouse.getOrgId().equals(ulanziWarehouse.getOrgId()))  {
