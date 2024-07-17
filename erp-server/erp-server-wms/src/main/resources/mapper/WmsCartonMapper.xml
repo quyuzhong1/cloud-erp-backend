@@ -37,6 +37,9 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
+        <if test="params.taskId != null and params.taskId != ''">
+            and wc.packing_task_id = #{params.taskId}
+        </if>
         order by wc.box_no
     </select>
 
