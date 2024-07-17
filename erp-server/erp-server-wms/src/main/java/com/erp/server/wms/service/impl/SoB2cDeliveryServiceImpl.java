@@ -1762,6 +1762,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         soB2cEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        waveListService.cleanException(id);
+        waveListDetailService.moveOut(id);
         soB2cFeign.updateById(soB2cEntity);
         entity.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
         updateById(entity);
@@ -1780,8 +1782,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         operateLogDTO.setBusinessId(soB2cEntity.getId());
         operateLogDTO.setOperation("取消发货");
         soB2cFeign.addModuleOperateLog(operateLogDTO);
-        waveListDetailService.moveOut(id);
-        waveListService.cleanException(id);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消成功");
     }
 
