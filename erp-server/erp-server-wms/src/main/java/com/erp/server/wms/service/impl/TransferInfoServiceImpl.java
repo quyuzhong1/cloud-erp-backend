@@ -877,6 +877,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferDTO>  pushTransferList = new ArrayList<>();
         List<TransferDTO>  deliveryTransferList = new ArrayList<>();
         List<TransferDTO>  deliveryNoticeTransferList = new ArrayList<>();
+        List<TransferDTO>  TransferToUlanziList = new ArrayList<>();
+        List<TransferDTO>  TransferFromUlanziList = new ArrayList<>();
 
         for (TransferInfoDetailEntity detailEntity : detailList) {
 
@@ -905,6 +907,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 deliveryTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(transferInfoEntity.getSourceType())){
                 deliveryNoticeTransferList.add(transferDTO);
+            } else if (SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
+                TransferToUlanziList.add(transferDTO);
+            } else if (SourceTypeEnum.FIRST_MILE_DELIVERY_FROM_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
+                TransferFromUlanziList.add(transferDTO);
             } else {
                 addTransferList.add(transferDTO);
             }
@@ -938,6 +944,22 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
             inventoryTransferDTO.setParamList(deliveryNoticeTransferList);
             inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DELIVERY_NOTICE_PUSH_TRANSFER.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+        //头程发货单生成调拨单（发货仓-优蓝子中转仓）
+        if(CollectionUtils.isNotEmpty(TransferToUlanziList)){
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setParamList(TransferToUlanziList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DELIVERY_PUSH_TRANSFER_TO_ULANZI.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+        //头程发货单生成调拨单（优蓝子中转仓-目的仓在途仓）
+        if(CollectionUtils.isNotEmpty(TransferFromUlanziList)){
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setParamList(TransferFromUlanziList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DELIVERY_PUSH_TRANSFER_FROM_ULANZI.getCode());
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }

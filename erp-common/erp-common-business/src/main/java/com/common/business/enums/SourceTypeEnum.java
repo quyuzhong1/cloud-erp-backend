@@ -53,6 +53,8 @@ public enum SourceTypeEnum {
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单","first_mile_delivery"),
+    FIRST_MILE_DELIVERY_TO_ULANZI("firstMileDeliveryToUlanzi", "头程发货单（发货仓->优蓝子中转仓）","first_mile_delivery_to_ulanzi"),
+    FIRST_MILE_DELIVERY_FROM_ULANZI("firstMileDeliveryFromUlanzi", "头程发货单（优蓝子中转仓->目的在途仓）","first_mile_delivery_from_ulanzi"),
     FBA_INVENTORY("fbaInventory", "FBA仓库","fba_inventory"),
     DELIVERY_PLAN("deliveryPlan", "发货计划","wms_delivery_plan"),
     OVERSEAS_INBOUND("overseasInbound", "海外仓入库单","overseas_warehouse_inbound"),
