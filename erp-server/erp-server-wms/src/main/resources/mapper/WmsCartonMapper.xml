@@ -12,9 +12,14 @@
        <result column="update_user_id" property="updateUserId" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="carton_id" property="cartonId" />
+       <result column="spec_id" property="specId" />
        <result column="box_no" property="boxNo" />
-       <result column="box_desc" property="boxDesc" />
+       <result column="packing_status" property="packingStatus" />
+       <result column="weighting_status" property="weightingStatus" />
+       <result column="packing_user_id" property="packingUserId" />
+       <result column="packing_user_name" property="packingUserName" />
+       <result column="error_msg" property="errorMsg" />
+       <result column="packing_task_id" property="packingTaskId" />
     </resultMap>
     <select id="getBoxNoByTaskId" resultType="java.lang.Integer">
         SELECT
@@ -24,6 +29,15 @@
         WHERE
             wc.is_deleted = FALSE
           AND wc.packing_task_id = #{packingTaskId}
+    </select>
+    <select id="listByTaskIdsAndPermission" resultType="com.erp.model.wms.entity.WmsCartonEntity">
+        select
+            wc.id,wc.spec_id,wc.box_no,wc.packing_status,wc.weighting_status,wc.packing_user_id,wc.packing_user_name,wc.error_msg,wc.packing_task_id
+        from wms_carton wc where wc.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by wc.box_no
     </select>
 
 

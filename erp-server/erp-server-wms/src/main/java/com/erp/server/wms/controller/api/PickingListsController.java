@@ -93,7 +93,7 @@ public class PickingListsController extends BaseController {
     }
 
     /**
-     * 批量打印
+     * 批量导出
      *
      * @param dto dto
      **/
