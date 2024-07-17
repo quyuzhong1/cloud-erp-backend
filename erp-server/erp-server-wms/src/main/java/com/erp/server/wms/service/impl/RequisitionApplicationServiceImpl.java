@@ -959,9 +959,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-        Map<String, Set<String>> sourceIdByType = list.stream()
-                .collect(Collectors.groupingBy(RequisitionApplicationDTO.GenerateDeliverViewDTO::getType, Collectors.mapping(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId, Collectors.toSet())));
-        Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
+        List<String> sourIds = list.stream()
+                .map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId)
+                .collect(Collectors.toList());
         List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
         List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailEntities = wmsDeliveryPlanDetailService.listByMainIds(new ArrayList<>(sourIds));
         //查询skuId产品信息
