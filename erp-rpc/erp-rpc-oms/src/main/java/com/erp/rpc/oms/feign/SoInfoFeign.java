@@ -63,4 +63,11 @@ public interface SoInfoFeign {
 
     @PostMapping("feign/soInfo/listRepairHistoryDb")
     List<SoInfoDTO.ListDTO> listRepairHistoryDb();
+    /**
+     * 更新冻结数量
+     * @author will
+     * @date 2024/7/16 20:07
+     * @param soParamList
+     */
+    void updateFrozenQty(@RequestBody List<SoDetailDTO.UpdateFrozenQtyDTO> soParamList);
 }

@@ -20,6 +20,7 @@ import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.server.oms.query.SoInfoQueryHandler;
 import com.erp.server.oms.service.SoChangeService;
@@ -39,7 +40,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -726,4 +726,75 @@ public class SoInfoController extends BaseController {
         List<BatchResultDTO> resultDTOS = soInfoService.generateSoOut(generateSoOutViewList);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 单个锁定查询
+     * @author will
+     * @date 2024/7/15 11:11
+     * @param id
+     * @return ApiResult<SoInfoDTO.LockVirtualInventoryDTO>
+     */
+    @GetMapping("/viewLockVirtualInventory")
+    public ApiResult<SoInfoDTO.LockVirtualInventoryDTO> viewLockVirtualInventory(@RequestParam(value = "id") String id) {
+        return success(soInfoService.viewLockVirtualInventory(id));
+    }
+
+    /**
+     * 批量锁定查询
+     * @author will
+     * @date 2024/7/15 15:03
+     * @param dto
+     * @return ApiResult<List<SoInfoDTO.BatchLockVirtualInventoryDTO>>
+     */
+    @PostMapping("/viewBatchLockVirtualInventory")
+    public ApiResult<List<SoInfoDTO.BatchLockVirtualInventoryDTO>> viewBatchLockVirtualInventory(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        return success(soInfoService.viewBatchLockVirtualInventory(dto.getDetailIdList()));
+    }
+
+    /**
+     * 锁定库存保存
+     * @author will
+     * @date 2024/7/15 16:00
+     * @param list
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "锁定库存",keyIdName = "detailId")
+    @PostMapping("/saveLockVirtualInventory")
+    public ApiResult<List<BatchResultDTO>> saveLockVirtualInventory(@RequestBody @Validated List<SoInfoDTO.LockVirtualInventorySaveDTO> list) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        for (SoInfoDTO.LockVirtualInventorySaveDTO saveDTO : list) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soDetailService.saveLockVirtualInventory(saveDTO);
+            }catch (Exception e){
+                log.error("销售订单明细释放库存失败",e);
+                SoDetailEntity entity = soDetailService.getById(saveDTO.getDetailId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(saveDTO.getDetailId(), saveDTO.getDetailId(), "销售订单明细不存在, 锁定库存失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 单个释放锁定库存
+     * @author will
+     * @date 2024/7/15 17:24
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "释放库存")
+    @PostMapping("/unLockVirtualInventory")
+    public ApiResult unLockVirtualInventory(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = soInfoService.unLockVirtualInventory(dto.getId());
+        return result ? success():failure();
+    }
+
+
+
 }

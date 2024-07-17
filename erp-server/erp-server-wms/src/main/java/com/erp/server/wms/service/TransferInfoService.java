@@ -124,7 +124,7 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @param isPushKingDee
      * @return Boolean
      */
-    BatchResultDTO disApprove(TransferInfoEntity entity, Boolean isPushKingDee);
+    Boolean disApprove(List<String> ids, Boolean isPushKingDee,Boolean isManual);
     /**
      * @description: 取消流程
      * @author Will
@@ -223,4 +223,12 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return java.lang.Boolean 处理结果
      **/
     Boolean checkHistoryAndDel(String sourceCode,String sourceType, LocalDate billDate);
+    /**
+     * 根据批次号查询直接调拨单
+     * @author will
+     * @date 2024/7/12 10:11
+     * @param batchNoList
+     * @return List<TransferInfoEntity>
+     */
+    List<TransferInfoEntity> listByBatchNoList(List<String> batchNoList);
 }

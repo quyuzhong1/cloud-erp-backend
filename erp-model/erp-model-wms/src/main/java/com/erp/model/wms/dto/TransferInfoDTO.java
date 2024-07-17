@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -304,6 +305,11 @@ public class TransferInfoDTO implements Serializable {
          * 金蝶同步id
          */
         private String syncKingdeeId;
+
+        /**
+         * 批次号，发货单下推时生成
+         */
+        private String batchNo;
     }
 
     @Data

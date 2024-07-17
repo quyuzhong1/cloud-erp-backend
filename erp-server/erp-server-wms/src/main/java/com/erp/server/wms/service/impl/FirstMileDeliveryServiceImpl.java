@@ -565,7 +565,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //直接调拨单已审核先反审核
         if (CollectionUtils.isNotEmpty(transferInfoEntities)) {
             transferInfoEntities.forEach(transferInfoEntity -> {
-                transferInfoService.disApprove(transferInfoEntity, Boolean.FALSE);
+                transferInfoService.disApprove(transferInfoEntity, Boolean.FALSE,Boolean.TRUE);
             });
         }
         //直接调拨单审核中先撤销

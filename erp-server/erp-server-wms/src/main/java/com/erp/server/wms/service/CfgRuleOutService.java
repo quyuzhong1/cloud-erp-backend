@@ -61,4 +61,6 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
      * @return
      */
     List<CfgRuleOutDTO.CfgProductPackingDetail> getCfgProductPackingDetailByType(String type);
+
+    Boolean matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto);
 }

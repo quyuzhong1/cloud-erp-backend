@@ -88,6 +88,11 @@ public class CfgSettingDTO implements Serializable {
          * 装箱完成通知
          */
         private CfgSettingValueDTO.FinishPackingNoticeDTO finishPackingNoticeDTO;
+
+        /**
+         * 中转设置
+         */
+        private CfgSettingValueDTO.TransitSettingDTO transitSettingDTO;
     }
 
 

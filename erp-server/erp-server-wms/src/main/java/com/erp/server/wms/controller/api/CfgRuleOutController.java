@@ -56,7 +56,7 @@ public class CfgRuleOutController extends BaseController {
         return success(cfgRuleOutService.view());
     }
     /**
-     * 获取分拣口
+     * 根据出库配置返回分拣口
      * @author lrp
      * @date:  2024-06-28
      * @return ApiResult<String>

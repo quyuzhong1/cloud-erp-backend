@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
@@ -75,16 +76,15 @@ import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticsChannelWarehouseTypeEnum;
-import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
-import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
-import com.erp.model.wms.entity.*;
 import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -102,8 +102,8 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.*;
-import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.wms.feign.CfgSettingFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
@@ -5384,18 +5384,43 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        if(StringUtils.isBlank(warehouseId)){
-            warehouseId = detailList.get(0).getWarehouseId();
+        //判断是否中转 TODO
+        Boolean isTransit = Boolean.TRUE;
+        if (isTransit) {
+            List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                    .eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode())
+                    .eq(CfgSettingEntity::getDisabled, Boolean.FALSE)
+                    .list();
+            if (CollectionUtil.isEmpty(list)) {
+                throw new ServiceException("未配置中转设置仓库");
+            }
+            CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(list.get(0).getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+            if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+                throw new ServiceException("中转设置仓库不能为空");
+            }
+            warehouseId = transitSettingDTO.getWarehouseId();
+
+        } else {
+            if(StringUtils.isBlank(warehouseId)){
+                warehouseId = detailList.get(0).getWarehouseId();
+            }
         }
+
         //获取仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST_WAREHOUSE);
         }
+        //组织信息
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(warehouseList.get(0).getOrgId()));
+        if (CollectionUtil.isEmpty(accountingCompanyList)) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_EXIST_ORG,warehouseList.get(0).getName());
+        }
+
         dto.setWarehouseId(warehouseId);
-        dto.setWarehouseName(detailList.get(0).getWarehouseName());
-        dto.setWarehouseOrgId(detailList.get(0).getWarehouseOrgId());
-        dto.setWarehouseOrgName(detailList.get(0).getWarehouseOrgName());
+        dto.setWarehouseName(warehouseList.get(0).getName());
+        dto.setWarehouseOrgId(warehouseList.get(0).getOrgId());
+        dto.setWarehouseOrgName(accountingCompanyList.get(0).getName());
         LinkedList<SoOutstockDetailDTO.AddDTO> wantDetailList = new LinkedList<>();
 
         List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).
@@ -5420,7 +5445,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //数量
             Integer qty = detailItem.getQty();
             String detailId = detailItem.getId();
-            String warehouseLocation = detailItem.getWarehouseLocation();
+            //中转无需传仓位
+            String warehouseLocation = isTransit ? "" : detailItem.getWarehouseLocation();
             //查询到对应的数据
             List<SoB2cDeliveryDTO.DeliverySkuDTO> deliveryList = deliverySkuList.stream().filter(d -> skuId.equals(d.getSourceSkuId())).distinct().collect(Collectors.toList());
 

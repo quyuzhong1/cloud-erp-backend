@@ -287,7 +287,7 @@ public class PdaTransferInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(transferInfoService.disApprove(entity,Boolean.TRUE));
+                resultDTOS.add(transferInfoService.disApprove(entity,Boolean.TRUE,,Boolean.TRUE));
             }catch (Exception e){
                 log.error("直接调拨单反审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

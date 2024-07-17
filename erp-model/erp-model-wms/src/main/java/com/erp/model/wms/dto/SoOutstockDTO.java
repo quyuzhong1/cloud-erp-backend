@@ -1395,6 +1395,11 @@ public class SoOutstockDTO implements Serializable {
     public static class GenerateB2cDTO {
 
         /**
+         * 批次号
+         */
+        private String batchNo;
+
+        /**
          * 销售订单id
          */
         private String soId;

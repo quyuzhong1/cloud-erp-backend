@@ -93,7 +93,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
 
             if (ApproveStatusEnum.APPROVE.getStatus().equals(oldTransferInfo.getApproveStatus())) {
                 TransferInfoEntity transferInfoEntity = transferInfoService.getById(oldTransferInfo.getId());
-                transferInfoService.disApprove(transferInfoEntity, Boolean.FALSE);
+                transferInfoService.disApprove(transferInfoEntity, Boolean.FALSE,Boolean.TRUE);
             }
             if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(oldTransferInfo.getApproveStatus())) {
                 transferInfoService.cancelProcess(Arrays.asList(oldTransferInfo.getId()));

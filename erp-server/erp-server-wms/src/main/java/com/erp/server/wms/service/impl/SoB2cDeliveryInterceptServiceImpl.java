@@ -472,7 +472,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
                 soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
             }
-
         }
 
         // 操作日志

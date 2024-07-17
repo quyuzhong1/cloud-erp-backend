@@ -4,6 +4,8 @@ import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.model.wms.enums.PickingSourceTypeEnum;
+import com.common.core.entity.ConditionElement;
+import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import javax.validation.Valid;
 import javax.validation.constraints.DecimalMin;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -434,7 +437,69 @@ public class CfgRuleOutDTO implements Serializable {
          */
         private CfgProductPacking cfgProductPacking = new CfgProductPacking();
 
+
+        /**
+         * 中转配置
+         */
+        private TransferDTO transferDTO = new TransferDTO();
     }
 
+    @Data
+    public static class TransferDTO{
+        /**
+         * 发货类型：/wms/dict/drop/down?type=transferDeliveryType
+         */
+        private String type;
 
+        /**
+         * 发货类型名称
+         */
+        private String typeName;
+
+        /**
+         * 规则列表
+         * 仓库：/wms/warehouse/list
+         * 国家：/sys/dict/country/list
+         * field下拉：/wms/dict/drop/down?type=transferConditionField
+         * field下拉：/wms/common/enumDropDown?type=StockOutTransferType
+         * compare下拉：/wms/common/enumDropDown?type=StockOutTransferCompare
+         */
+        private List<ConditionElement> conditionList;
+    }
+
+    @Data
+    public static class TransferConditionDTO{
+        private String leftBracket;
+        @NotBlank(message = "条件的字段不能为空")
+        private String field;
+        @NotBlank(message = "比较符不能为空")
+        private String compare;
+        private String value;
+        private String rightBracket;
+        private String logic;
+        private String name;
+    }
+
+    /**
+     * 匹配中转规则
+     */
+    @Data
+    public static class MatchTransferRuleDTO{
+        /**
+         * 类型
+         * StockOutTransferTypeEnum
+         */
+        @NotBlank
+        private String type;
+
+        /**
+         * 收货国家ID
+         */
+        private String receiveCountry;
+
+        /**
+         * 目的仓ID
+         */
+        private String targetWarehouse;
+    }
 }

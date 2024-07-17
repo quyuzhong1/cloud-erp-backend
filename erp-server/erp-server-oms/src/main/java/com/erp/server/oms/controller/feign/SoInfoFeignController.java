@@ -178,4 +178,15 @@ public class SoInfoFeignController extends BaseController {
     public List<SoInfoDTO.ListDTO> listRepairHistoryDb(){
         return soInfoService.listRepairHistoryDb();
     }
+
+    /**
+     * 更新冻结数量
+     * @author will
+     * @date 2024/7/16 20:08
+     * @param soParamList
+     */
+    @PostMapping("/updateFrozenQty")
+    public void updateFrozenQty(@RequestBody @Validated List<SoDetailDTO.UpdateFrozenQtyDTO> soParamList){
+         soDetailService.updateFrozenQty(soParamList);
+    }
 }
