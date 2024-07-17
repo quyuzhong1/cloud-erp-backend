@@ -284,6 +284,7 @@ public class CfgRuleOutDTO implements Serializable {
          * 仓库：/wms/warehouse/list
          * 国家：/sys/dict/country/list
          * field下拉：/wms/dict/drop/down?type=transferConditionField
+         * field下拉：/wms/common/enumDropDown?type=StockOutTransferType
          * compare下拉：/wms/common/enumDropDown?type=StockOutTransferCompare
          */
         private List<ConditionElement> conditionList;
@@ -309,17 +310,18 @@ public class CfgRuleOutDTO implements Serializable {
     public static class MatchTransferRuleDTO{
         /**
          * 类型
+         * StockOutTransferTypeEnum
          */
         @NotBlank
         private String type;
 
         /**
-         * 收货国家
+         * 收货国家ID
          */
         private String receiveCountry;
 
         /**
-         * 目的仓
+         * 目的仓ID
          */
         private String targetWarehouse;
     }
