@@ -89,6 +89,19 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
+     * 根据跟踪单号查询订单物流信息
+     * @author will
+     * @date 2024/7/5 10:27
+     * @param logisticsCode
+     * @return SoB2cLogisticsEntity
+     */
+    @PostMapping("/getByTrackNoOrTransportNo")
+    public SoB2cLogisticsEntity getByTrackNoOrTransportNo(@RequestBody String logisticsCode) {
+        SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByTrackNoOrTransportNo(logisticsCode);
+        return soB2cLogistics;
+    }
+
+    /**
      * 根据订单id获取物流费用的参数
      *
      * @param orderId
@@ -736,5 +749,18 @@ public class SoB2cFeignController extends BaseController {
                                                               @RequestParam(value = "warehouseId", required = false) String warehouseId
     ) {
        return soB2cService.getSoOutstockByIdAndWarehouseId(soId, warehouseId);
+    }
+
+
+    /**
+     * 查询b2c销售订单数据
+     * @author will
+     * @date 2024/6/25 20:14
+     * @param paramDTO
+     * @return SoB2cEntity
+     */
+    @PostMapping("/listSoB2cData")
+    public SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO) {
+        return soB2cService.listSoB2cData(paramDTO);
     }
 }

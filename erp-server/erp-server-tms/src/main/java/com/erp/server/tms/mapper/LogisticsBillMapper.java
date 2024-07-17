@@ -117,5 +117,13 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
                                                                              @Param("mainIds") List<String> mainIds,
                                                                              @Param("transportNoList") List<String> transportNoList,
                                                                              @Param("logisticsSupplierIdList") List<String> logisticsSupplierIdList,
-                                                                             LocalDate startDate, LocalDate endDate);
+                                                                              LocalDate startDate, LocalDate endDate);
+    /**
+     * 根据物流跟踪单号或运单号查询物流单详情
+     * @author will
+     * @date 2024/7/3 18:03
+     * @param logisticsCode
+     * @return BaseDTO
+     */
+    LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(@Param("logisticsCode") String logisticsCode);
 }

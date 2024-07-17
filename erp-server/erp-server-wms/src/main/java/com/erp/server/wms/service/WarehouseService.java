@@ -284,4 +284,6 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return PagingVO<ListDTO>
      */
     PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> dto);
+
+
 }

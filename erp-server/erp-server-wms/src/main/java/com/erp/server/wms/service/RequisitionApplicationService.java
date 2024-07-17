@@ -1,9 +1,13 @@
 package com.erp.server.wms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.RequisitionApplicationEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.entity.RequisitionApplicationEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -163,7 +167,31 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      **/
     List<RequisitionApplicationDTO.ChildViewDTO> listChildBySku(RequisitionApplicationDTO.ChildParamDTO dto);
 
+
+    /**
+     * 生成拣货单弹窗
+     * @param id 要货申请id
+     */
+    List<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(String id);
+    /**
+     * 生成拣货单
+     * @param picking 拣货参数
+     */
+    void generatePickingList(RequisitionApplicationDTO.GeneratePickingDTO picking);
+
     List<BatchResultDTO> bindShipment(List<RequisitionApplicationDTO.BindShipment> dto);
 
     PagingVO<RequisitionApplicationDTO.WarehouseListDTO> pagingSelect(PagingDTO<RequisitionApplicationDTO.WarehouseSelectDTO> dto);
+
+    /**
+     * 修改拣货单反写要货申请单
+     * @param sourceDetailIds 明细id
+     */
+    void writeBackData(List<String> sourceDetailIds);
+
+    List<RequisitionApplicationDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids);
+
+    Boolean generateDeliverSave(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list);
+
+    Boolean generateDeliverSaveAndSubmit(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list);
 }

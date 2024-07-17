@@ -3,10 +3,7 @@ package com.erp.model.oms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cFinanceEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
@@ -2736,6 +2733,52 @@ public class SoB2cDTO implements Serializable {
         private List<SoB2cEntity> soB2cEntityList;
         private List<SoB2cDetailEntity> soB2cDetailEntityList;
     }
+
+    /**
+     * 查询b2c销售订单相关信息参数
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SoB2cDataParamDTO {
+
+        /**
+         * 销售订单id集合
+         */
+        private List<String> b2cSoIdList;
+
+        /**
+         * 销售订单编码集合
+         */
+        private List<String> b2cSoCodeList;
+
+
+        /**
+         * 数据类型集合
+         */
+        @NotEmpty(message = "数据类型集合不能为空")
+        private List<String> dataTypeList;
+    }
+
+    /**
+     * b2c销售订单相关信息
+     */
+    @Data
+    public static class SoB2cDataDTO {
+        /**
+         * 主表数据
+         */
+        private List<SoB2cEntity> list;
+        /**
+         * 物流信息
+         */
+        private List<SoB2cLogisticsEntity> logisticsList;
+        /**
+         * 买家信息
+         */
+        private List<SoB2cReceiverEntity> receiverList;
+    }
+
     /**
      * 赠品DTO
      */

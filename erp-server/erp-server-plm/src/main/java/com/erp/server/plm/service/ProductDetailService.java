@@ -13,6 +13,7 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -787,6 +788,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @date 2024-04-25 12:06
      */
     List<SkuVO> listSkuPurchaseByIds(List<String> skuIds);
+
+    ProductDetailEntity getBySkuNoOrEan(String skuCode);
+
+    String dimensionalWeightMeasure(DimensionalWeightDTO dto);
     void initProductToWangDian(List<String> ids);
     PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
 

@@ -20,6 +20,7 @@ import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.WeightingOutboundDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -141,6 +142,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             entity.setWeight(dto.getWeight());
             entity.setWeightUnit(dto.getWeightUnit());
             entity.setWeighingTime(LocalDateTime.now());
+            entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
             entity.setIsWeigh(true);
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
@@ -171,6 +173,10 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         //自动发货
         if (isAutoDelivery && entity.getIsWeigh()) {
 
+            if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
+                    || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
+                throw new ServiceException(ApiError.ERROR_99114);
+            }
             //如果是待上传或上传失败则直接返回
             if (StrUtil.equals(soB2cEntity.getTransferStatus(),TransferStatusEnum.WAIT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
                     StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {

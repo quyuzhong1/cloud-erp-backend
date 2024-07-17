@@ -4,6 +4,7 @@
     <sql id="pageSql">
         SELECT
         sbd.id,
+        sbdd.id as detailId,
         sbd.code,
         sbd.source_id,
         sbd.dict_platform AS dictPlatform,
@@ -32,6 +33,7 @@
         sbd.inspection_time as inspectionTime,
         sbd.weighing_time as weighingTime,
         sbd.platform_code as platformCode,
+        sbd.abnormal_cause as abnormalCause,
         sbl.code as logisticsCode,
         sbl.track_no as trackCode
         FROM so_b2c_delivery sbd
@@ -53,6 +55,26 @@
         </if>
         sbd.create_time desc
     </sql>
+    <select id="cancelShipmentView" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$CancelShipmentDTO">
+        SELECT sbd.id,
+               sbdd.id AS detailId,
+               sbd.code,
+               pd.sku_id,
+               pd.sku_no,
+               sbdd.warehouse_id,
+               pd.warehouse_location,
+               pd.qty as pickingQty
+        FROM so_b2c_delivery sbd
+                 INNER JOIN so_b2c_delivery_detail sbdd ON sbdd.main_id = sbd.id
+            AND sbdd.is_deleted = FALSE
+                 INNER JOIN picking_detail pd ON pd.source_detail_id = sbdd.id
+            AND pd.is_deleted = FALSE
+        where sbd.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
     <!--获取状态统计-->
     <select id="tabList" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$TabListDTO">
         SELECT
@@ -77,5 +99,14 @@
     <!--列表查询-->
     <select id="list" resultType="com.erp.model.wms.dto.SoB2cDeliveryDTO$ListDTO">
         <include refid="pageSql"/>
+    </select>
+    <select id="countShipmentMark" resultType="java.lang.Integer">
+        select count(*) from so_b2c_delivery where
+        is_deleted=FALSE
+        and shipment_mark = 'manual'
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
     </select>
 </mapper>

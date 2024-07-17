@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
@@ -287,7 +286,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return void
      */
     void handleKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId);
-    
+
     /**
      * 金蝶同步到系统，不单独事务
      * @author yl
@@ -578,4 +577,11 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 更新主表和明细
      */
     void updateMainAndDetail(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> list);
+    /**
+     * 根据来源id获取未作废且未删除的数据
+     *
+     * @param id id
+     * @return
+     */
+    int countNotVoided(String id);
 }

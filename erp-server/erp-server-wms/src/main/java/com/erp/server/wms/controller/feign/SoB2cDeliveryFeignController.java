@@ -1,13 +1,17 @@
 package com.erp.server.wms.controller.feign;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +19,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -133,5 +135,32 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/shipOrder")
     public Boolean shipOrder(@RequestBody @Validated PlatformShipOrderDTO platformShipOrderDTO) {
         return soB2cDeliveryService.shipOrder(platformShipOrderDTO);
+    }
+
+    /**
+     * 流水线称重
+     * @author will
+     * @date 2024/6/28 15:48
+     * @param dto
+     * @return String
+     */
+    @PostMapping("/dimensionalWeightPipeline")
+    public ApiResult<String> dimensionalWeightPipeline(@RequestBody @Validated DimensionalWeightDTO dto) {
+        try {
+            return soB2cDeliveryService.dimensionalWeightPipeline(dto);
+        }catch (Exception e){
+            log.error("流水线称重异常",e);
+            return ApiResult.error(StrUtil.format("系统异常:{}",e.getMessage()), CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode());
+        }
+    }
+
+    /**
+     * 修改发货单标发类型
+     * @param ids 发货单id
+     * @param code 类型
+     */
+    @PostMapping("/updateShipmentMark")
+    void updateShipmentMark(List<String> ids, String code) {
+        soB2cDeliveryService.updateShipmentMark(ids, code);
     }
 }

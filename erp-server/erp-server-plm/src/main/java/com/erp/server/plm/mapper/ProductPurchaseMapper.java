@@ -1,6 +1,7 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -26,6 +27,8 @@ public interface ProductPurchaseMapper extends BaseMapper<ProductPurchaseEntity>
     * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
     **/
     List<ProductPurchaseShowDTO> listBySkuId(@Param("skuId") String skuId);
+
+    ProductDetailDTO.ServiceToWavePickingDTO listWavePickingDTOBySkuIds(@Param("skuId") String skuId);
 }
 
 

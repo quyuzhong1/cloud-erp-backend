@@ -45,7 +45,7 @@ public enum LogActionEnum {
     CONFIRM("confirm", "确认",true),
     CANCEL_CONFIRM("cancelConfirm", "取消确认",true),
     RECEIVE("receive", "签收",true),
-
+    EXECUTE("execute", "执行",true),
     ;
 
     @EnumValue

@@ -41,7 +41,6 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
@@ -438,7 +437,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过后生成拣货明细
-            generatePickingDetail(list);
+//            generatePickingDetail(list);
 
             //获取需要自动生成加工单的数据
             /* List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(ids);
@@ -471,7 +470,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.APPROVE.getStatus());
             //审核通过后生成拣货明细
-            generatePickingDetail(Arrays.asList(entity));
+//            generatePickingDetail(Arrays.asList(entity));
 
             //获取需要自动生成加工单的数据
             /*List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(Arrays.asList(id));
@@ -520,10 +519,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //更新单据为待提交
         updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //回扣库存
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_APPLY,ids);
-        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-        //删除拣货明细
-        pickingDetailService.deleteBySourceId(ids);
+//        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_APPLY,ids);
+//        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+//        //删除拣货明细
+//        pickingDetailService.deleteBySourceId(ids);
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个调拨申请单【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "反审核操作");

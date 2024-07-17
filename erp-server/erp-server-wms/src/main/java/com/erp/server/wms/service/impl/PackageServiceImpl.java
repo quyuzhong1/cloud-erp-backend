@@ -277,6 +277,26 @@ public class PackageServiceImpl implements PackageService {
         return resultDTOList;
     }
 
+    @Override
+    public PackageDTO.WeightDTO getOrderWeight(PackageDTO.WeightParamDTO dto) {
+        PackageDTO.WeightDTO weightDTO = new PackageDTO.WeightDTO();
+        //默认重量
+        weightDTO.setWeight(BigDecimal.ZERO);
+        weightDTO.setWeightUnit(UnitEnum.WeightUnitEnum.KG.getCode());
+
+        PackageDTO.ScanResultDTO scanResult = soB2cFeign.packageScanByCode(dto.getCode());
+        if (ObjectUtil.isEmpty(scanResult)) {
+            return weightDTO;
+        }
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listBySourceIds(Arrays.asList(scanResult.getSoId()));
+        if (CollectionUtils.isEmpty(soB2cDeliveryList)) {
+            return  weightDTO;
+        }
+        weightDTO.setWeight(soB2cDeliveryList.get(0).getWeight());
+        weightDTO.setWeightUnit(soB2cDeliveryList.get(0).getWeightUnit());
+        return weightDTO;
+    }
+
     /**
      * 拼装数据
      *
@@ -335,7 +355,16 @@ public class PackageServiceImpl implements PackageService {
 
             //自动发货
             if (isAutoOut) {
-                List<String> soIdList = detailList.stream().map(req -> req.getSoId()).collect(Collectors.toList());
+                List<String> soIdList = detailList.stream().map(PackageDTO.ScanResultDTO::getSoId).collect(Collectors.toList());
+                //待处理和异常单不允许自动出库
+                List<SoB2cDeliveryEntity> entities = soB2cDeliveryService.listBySourceIds(soIdList);
+                String notShipmentSoCodes = entities.stream()
+                        .filter(e -> SoB2cDeliveryStatusEnum.notShipment().contains(e.getStatus()))
+                        .map(SoB2cDeliveryEntity::getSoCode)
+                        .collect(Collectors.joining(","));
+                if (StringUtils.isNotEmpty(notShipmentSoCodes)) {
+                    throw new ServiceException(ApiError.ERROR_99115, notShipmentSoCodes);
+                }
                 // 异步推送到MQ
                 soIdList.stream().peek(soId ->{
                     SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
