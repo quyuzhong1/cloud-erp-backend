@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -108,4 +109,11 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * @return
      */
     WmsCartonEntity getBySpecId(String specId);
+
+    /**
+     * 根据任务id和权限获取装箱列表
+     * @param packedDetailDTO
+     * @return
+     */
+    List<WmsCartonEntity> listByTaskIdsAndPermission(PackingTaskDTO.PackedDetailDTO packedDetailDTO);
 }

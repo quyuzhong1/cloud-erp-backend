@@ -163,10 +163,10 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     /**
      * 已装箱明细
-     * @param id
+     * @param packedDetailDTO
      * @return
      */
-    WmsCartonSpecDTO.PackedView packedDetailView(String id);
+    WmsCartonSpecDTO.PackedView packedDetailView(PackingTaskDTO.PackedDetailDTO packedDetailDTO);
 
     /**
      * 调整装箱-详情

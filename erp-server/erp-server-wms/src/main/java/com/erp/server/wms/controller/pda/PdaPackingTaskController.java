@@ -90,17 +90,17 @@ public class PdaPackingTaskController extends BaseController {
     }
     /**
      * 已装箱明细
-     * @param id 任务id
+     * @param packedDetailDTO
      * @return
      */
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "wms:pda:packingTask:paging",
-//            tableAlias = "pt"
-//    )
-    @GetMapping("/packedDetailView")
-    public ApiResult<WmsCartonSpecDTO.PackedView> packedDetailView(@RequestParam("id") String id){
-        return success(packingTaskService.packedDetailView(id));
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "packing_user_id",
+            menuCode = "wms:pda:packingTask:packedDetailView",
+            tableAlias = "wc"
+    )
+    @PostMapping("/packedDetailView")
+    public ApiResult<WmsCartonSpecDTO.PackedView> packedDetailView(@RequestBody @Validated PackingTaskDTO.PackedDetailDTO packedDetailDTO){
+        return success(packingTaskService.packedDetailView(packedDetailDTO));
     }
 
     /**

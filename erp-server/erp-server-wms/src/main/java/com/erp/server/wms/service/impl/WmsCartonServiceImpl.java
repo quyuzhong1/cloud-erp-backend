@@ -13,10 +13,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.CartonDTO;
-import com.erp.model.wms.dto.PackingTaskDetailDTO;
-import com.erp.model.wms.dto.WmsCartonDetailDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
@@ -211,6 +208,14 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
             return lambdaQuery().eq(WmsCartonEntity::getSpecId, specId).last("limit 1").one();
         }
         return null;
+    }
+
+    @Override
+    public List<WmsCartonEntity> listByTaskIdsAndPermission(PackingTaskDTO.PackedDetailDTO packedDetailDTO) {
+        if (Objects.isNull(packedDetailDTO) || StrUtil.isBlank(packedDetailDTO.getTaskId())){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByTaskIdsAndPermission(packedDetailDTO);
     }
 
     /**

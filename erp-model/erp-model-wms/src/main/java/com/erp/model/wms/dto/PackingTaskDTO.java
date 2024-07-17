@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -398,5 +400,18 @@ public class PackingTaskDTO implements Serializable {
         private String taskId;
         private String sourceId;
         private String sourceCode;
+    }
+
+    /**
+     * 已装箱明细查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackedDetailDTO extends PermissionsDTO {
+        /**
+         * 任务id
+         */
+        @NotBlank(message = "任务id不能为空")
+        private String taskId;
     }
 }
