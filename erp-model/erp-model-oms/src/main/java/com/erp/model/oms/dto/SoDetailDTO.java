@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.validator.AddGroup;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -1395,4 +1396,24 @@ public class SoDetailDTO implements Serializable {
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateFrozenQtyDTO {
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+
+        /**
+         * 冻结数量
+         */
+        @NotBlank(message = "冻结数量不能为空")
+        private Integer frozenQty;
+    }
 }

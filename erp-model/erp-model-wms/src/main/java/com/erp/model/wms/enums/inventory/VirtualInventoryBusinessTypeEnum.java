@@ -29,7 +29,7 @@ public enum VirtualInventoryBusinessTypeEnum {
     SO_B2C_DELIVERY("so_b2c_delivery", "04","b2c发货单"),
 
     /**
-     * 发货通知单，减可用，加冻结
+     * 发货通知单，减可用
      */
     SO_DELIVERY_NOTICE("so_delivery_notice", "05","发货通知单"),
 
