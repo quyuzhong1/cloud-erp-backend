@@ -349,4 +349,21 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 取消发货
      */
     BatchResultDTO cancelShipment(String id, List<SoB2cDeliveryDTO.CancelShipmentDTO> detail);
+    /**
+     * 发货出库
+     * @author will
+     * @date 2024/7/11 10:42
+     * @param entity
+     * @return Boolean
+     */
+    Boolean deliveryOutStock(SoB2cDeliveryEntity entity);
+    /**
+     * 重新出库
+     * @author will
+     * @date 2024/7/12 15:47
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO retryOutstock(String id);
+
 }
