@@ -86,10 +86,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 手动标发
      * @Author Luo_WG
      * @Date 2023/12/13 19:30
-     * @param id
-     * @return com.common.business.dto.base.BatchResultDTO
-     * @Author Luo_WG
-     * @Date 2023/12/13 19:30
      **/
     BatchResultDTO falseDelivery(String id);
 
@@ -269,10 +265,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto);
 
     BatchResultDTO clearException(String id);
-    /**
-     * 取消发货
-     */
-    BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto);
 
     SoB2cDeliveryDTO.CancelShipmentView cancelShipmentView(List<String> ids);
 
@@ -369,4 +361,8 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return BatchResultDTO
      */
     BatchResultDTO retryOutstock(String id);
+    /**
+     * 取消发货
+     */
+    BatchResultDTO cancelShipment(String id, List<SoB2cDeliveryDTO.CancelShipmentDTO> detail);
 }
