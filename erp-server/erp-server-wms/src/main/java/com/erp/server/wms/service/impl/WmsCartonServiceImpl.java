@@ -226,10 +226,10 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         wmsCartonEntity.setId(addDTO.getCartonId());
         if (StrUtil.isBlank(wmsCartonEntity.getPackingStatus())){
             //发货数量
-            int deliveryQty = addDTO.getDetailList().stream().mapToInt(WmsCartonDetailDTO.AddDTO::getDeliveryQty).sum();
+//            int deliveryQty = addDTO.getDetailList().stream().mapToInt(WmsCartonDetailDTO.AddDTO::getDeliveryQty).sum();
             //待装箱数量=发货数量-所有已装箱数量
             int packQtySum = addDTO.getDetailList().stream().mapToInt(WmsCartonDetailDTO.AddDTO::getPackQty).sum();
-            if (packQtySum >= 0 && packQtySum != deliveryQty){
+            if (packQtySum >= 0){
                 wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.INCOMPLETE.getCode());
             }else{
                 wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());

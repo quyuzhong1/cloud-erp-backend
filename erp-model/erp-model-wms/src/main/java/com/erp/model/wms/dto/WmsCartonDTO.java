@@ -85,7 +85,7 @@ public class WmsCartonDTO {
          * 调整装箱详情
          */
         @Valid
-        @Size(min = 1, message = "调整装箱，产品明细不能为空")
+        @Size(min = 1, message = "调整装箱后，装箱数量不能为0")
         private List<AdjustDetailDTO> cartonDetailList;
     }
     @Data
