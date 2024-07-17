@@ -263,7 +263,9 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto);
 
     BatchResultDTO clearException(String id);
-
+    /**
+     * 取消发货
+     */
     BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto);
 
     SoB2cDeliveryDTO.CancelShipmentView cancelShipmentView(List<String> ids);

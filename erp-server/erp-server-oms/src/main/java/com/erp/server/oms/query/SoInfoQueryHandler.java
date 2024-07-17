@@ -62,6 +62,22 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
         if("remark".equals(field)){
             return " (si.remark "+compareCodeSplicingValueSql+" or sod.remark "+ compareCodeSplicingValueSql +") ";
         }
+        /**
+         * 虚拟仓是否缺货
+         */
+        if("isVirtualScarce".equals(field)){
+            String sql = "((select sum(sbdd.delivery_qty) from so_b2c_delivery sbd left join so_b2c_delivery_detail sbdd on sbd.id = sbdd.main_id and sbdd.is_deleted = false  " +
+                    "where sbd.is_deleted = false and sbd.approve_status = 'approve'  and sbdd.source_detail_id = sod.id) " +
+                    "+ (select qty from virtual_inventory vi where vi.is_deleted = false and vi.sku_id = sod.sku_id and si.virtual_warehouse_id = vi.virtual_warehouse_id " +
+                    "and si.warehouse_id = vi.warehouse_id and vi.dict_inventory_status = 'usable'))";
+            if ((Boolean) value) {
+                return sql + "< 0";
+            } else {
+                return sql + ">= 0";
+            }
+        }
+
+
         if("tab".equals(field)){
             switch (value.toString()) {
                 case OmsConstant.WAIT_SUBMIT:
