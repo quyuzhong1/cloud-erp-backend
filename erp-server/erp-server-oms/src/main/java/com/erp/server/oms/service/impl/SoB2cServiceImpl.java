@@ -1485,7 +1485,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
         String logisticsPlatform = auth.getLogisticsPlatform();
         result.setSalesPlatform(logisticsPlatform);
-        Boolean isAliExpress = aliExpress.equals(logisticsPlatform);
+        boolean isAliExpress = aliExpress.equals(logisticsPlatform);
         String shopId = entity.getShopId();
         //扩展字段
         String extendData = entity.getExtendData();
@@ -1494,28 +1494,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             oaid = JSONObject.parseObject(extendData).getOrDefault("oaid", "").toString();
         }
         result.setOaid(oaid);
-        ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
-        if (Objects.isNull(shopInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_92058);
-        }
-
+        ShopInfoEntity shopInfoEntity = null;
         if (isAliExpress) {
             result.setOrderCode(entity.getPlatformCode());
+            //速卖通重置店铺信息id 和 top_user_key
+            shopInfoEntity = shopInfoService.getMainShopByPlatform(aliExpress);
             Map<String, Object> extendDataMap = shopInfoEntity.getExtendData();
             //买家id
             String sellerId = String.valueOf(extendDataMap.get("sellerId"));
             result.setTopUserKey(sellerId);
         } else {
             result.setOrderCode(entity.getCode());
+            shopInfoEntity = shopInfoService.getById(shopId);
+        }
+        if (Objects.isNull(shopInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92058);
         }
         //增加订单类型传递
         result.setOrderType(entity.getSourceType());
-
-        result.setShopId(shopId);
-        result.setShopName(entity.getShopName());
+        result.setShopId(shopInfoEntity.getId());
+        result.setShopName(shopInfoEntity.getName());
         result.setIossTaxNo(shopInfoEntity.getIossTaxNo());
         result.setSalesPlatform(entity.getDictPlatform());
-        ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
+        ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopInfoEntity.getId());
         if (Objects.isNull(shopAuth) && isAliExpress) {
             throw new ServiceException(ApiError.SHOP_NOT_AUTH_ERROR);
         }
