@@ -800,9 +800,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    public WmsCartonSpecDTO.PackedView packedDetailView(String id) {
+    public WmsCartonSpecDTO.PackedView packedDetailView(PackingTaskDTO.PackedDetailDTO packedDetailDTO) {
         WmsCartonSpecDTO.PackedView packedView = new WmsCartonSpecDTO.PackedView();
-        PackingTaskEntity packingTaskEntity = this.getById(id);
+        PackingTaskEntity packingTaskEntity = this.getById(packedDetailDTO.getTaskId());
         if (Objects.isNull(packingTaskEntity)){
             throw new ServiceException(ApiError.ERROR_92141);
         }
@@ -813,13 +813,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         packedView.setDeliveryQty(packingTaskEntity.getDeliveryQty());
         //已装箱数量
         int packedQty = 0;
-        List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(id));
+        List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(packedDetailDTO.getTaskId()));
         packedView.setBoxNum(cartonEntityList.size());
-        if (CollectionUtils.isNotEmpty(cartonEntityList)){
-            List<String> cartonIds = cartonEntityList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
+        //根据权限获取装箱数据
+        List<WmsCartonEntity> cartonList = wmsCartonService.listByTaskIdsAndPermission(packedDetailDTO);
+        if (CollectionUtils.isNotEmpty(cartonList)){
+            List<String> cartonIds = cartonList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
             List<WmsCartonDetailEntity> cartonDetailEntityList = wmsCartonDetailService.listByMainIds(cartonIds);
             packedQty = cartonDetailEntityList.stream().map(WmsCartonDetailEntity::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
-            packedView.setCartonList(buildCartonDTOList(cartonEntityList, cartonDetailEntityList));
+            packedView.setCartonList(buildCartonDTOList(cartonList, cartonDetailEntityList));
         }
         packedView.setPackedQty(packedQty);
         return packedView;
