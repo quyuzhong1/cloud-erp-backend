@@ -85,11 +85,13 @@ public class GetLogisticsTrackNoTaskJob {
                     for (LogisticsOrderResponseVO item : resultList) {
                         String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
                                 map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
+                        Integer version = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
+                                map(SoB2cLogisticsDTO.TrackNoDTO::getVersion).findFirst().orElse(null);
                         if (StringUtils.isNotBlank(b2cLogisticsId)) {
                             List<String> trackNoList = new ArrayList<>(2);
                             SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
                             entity.setId(b2cLogisticsId);
-
+                            entity.setVersion(version);
                             //跟踪单号
                             String trackNo = item.getTrackNo();
                             if (StringUtils.isBlank(trackNo) || "null".equals(trackNo)) {
