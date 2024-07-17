@@ -80,7 +80,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
 
         //删除数据后再保存
         service.remove(new QueryWrapper<>());
-        service.saveBatch(Arrays.asList(equipmentSortingPortEntity, b2cAllowableDeviationsEntity));
+        service.saveBatch(Arrays.asList(equipmentSortingPortEntity, b2cAllowableDeviationsEntity, transferEntity));
         return new BaseResultDTO.AddDTO();
     }
 
