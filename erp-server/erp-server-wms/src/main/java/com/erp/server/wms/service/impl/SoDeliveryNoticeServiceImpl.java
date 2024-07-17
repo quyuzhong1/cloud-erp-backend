@@ -840,12 +840,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException(ApiError.ERROR_98068);
         }
         SoOutstockDTO.AddDTO addDTO = new SoOutstockDTO.AddDTO();
-        String batchNo = IdUtil.getSnowflake().nextIdStr();
+        String batchNo = "";
         String warehouseId;
         //todo 判断是否需要中转
         Boolean isTransit = Boolean.TRUE;
         if (isTransit) {
-            warehouseId = generateTransferInfo(id, entity, batchNo, views);
+            batchNo = IdUtil.getSnowflake().nextIdStr();
+            warehouseId = generateTransferInfo(entity, batchNo, views);
         }else {
             warehouseId = entity.getWarehouseId();
         }
@@ -891,7 +892,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return BatchResultDTO.success(outId, "", "下推成功");
     }
 
-    private String generateTransferInfo(String id, SoDeliveryNoticeEntity entity, String batchNo, List<PickingListsDTO.SourceView> views) {
+    private String generateTransferInfo(SoDeliveryNoticeEntity entity, String batchNo, List<PickingListsDTO.SourceView> views) {
         String warehouseId;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
                 .eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode())
@@ -916,7 +917,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         transferDto.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         transferDto.setInOrgId(warehouse.getOrgId());
         transferDto.setOutOrgId(entity.getWarehouseOrgId());
-        transferDto.setSourceId(id);
+        transferDto.setSourceId(entity.getId());
         transferDto.setSourceCode(entity.getCode());
         transferDto.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         transferDto.setBatchNo(batchNo);
