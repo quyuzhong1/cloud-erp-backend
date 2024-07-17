@@ -10,6 +10,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -84,6 +85,7 @@ public class WmsCartonDTO {
          * 调整装箱详情
          */
         @Valid
+        @Size(min = 1, message = "调整装箱，产品明细不能为空")
         private List<AdjustDetailDTO> cartonDetailList;
     }
     @Data
