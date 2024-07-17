@@ -1389,9 +1389,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //需要同步的数据
         List<SoInfoEntity> syncList = list.stream().filter(obj -> !BillApproveStatusEnum.DRAFT.equals(obj.getApproveStatus())).collect(Collectors.toList());
 
-        Boolean result = this.removeByIds(ids);
+        //删除释放冻结库存
+        ids.stream().forEach(obj -> unLockVirtualInventory(obj));
 
-        List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
+        Boolean result = this.removeByIds(ids);
 
         if (result) {
             //添加日志
@@ -1400,6 +1401,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "删除");
             //删除明细
             soDetailService.removeByMainIdList(ids);
+
             //推送金蝶
             if (CollectionUtils.isNotEmpty(syncList)) {
 
@@ -1443,6 +1445,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92019);
         }
+
+        //作废释放冻结库存
+        ids.stream().forEach(obj -> unLockVirtualInventory(obj));
+
         lambdaUpdate().in(SoInfoEntity::getId, ids).
                 set(SoInfoEntity::getInvalidStatus, Boolean.TRUE).update();
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -2949,6 +2955,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
+        if (soInfoEntity.getInvalidStatus()) {
+            throw new ServiceException(StrUtil.format("销售订单【{}】已作废不支持锁定库存",soInfoEntity.getCode()));
+        }
         SoInfoDTO.LockVirtualInventoryDTO lockVirtualInventoryDTO = handleLockVirtualInventory(soInfoEntity);
         return lockVirtualInventoryDTO;
     }
@@ -2968,6 +2977,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoEntity soInfoEntity = getById(id);
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
+        }
+        if (soInfoEntity.getInvalidStatus()) {
+            throw new ServiceException(StrUtil.format("销售订单【{}】已作废不支持释放库存",soInfoEntity.getCode()));
         }
         List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
         if (CollectionUtils.isEmpty(soDetailList)) {
