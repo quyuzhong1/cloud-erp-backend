@@ -7644,10 +7644,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (entity.hasPlatformWarehouseOrder()) {
             // 平台订单校验
             // 是否已存在销售出库单
-            List<SoOutstockEntity> list = soOutstockFeign.listBySoIds(Collections.singletonList(entity.getId()));
-            if (!CollectionUtils.isEmpty(list)) {
-                throw new ServiceException(ApiError.IS_SO_OUT_STOCK_NOT_UPDATE_MAPPING);
-            }
+//            List<SoOutstockEntity> list = soOutstockFeign.listBySoIds(Collections.singletonList(entity.getId()));
+//            if (!CollectionUtils.isEmpty(list)) {
+//                throw new ServiceException(ApiError.IS_SO_OUT_STOCK_NOT_UPDATE_MAPPING);
+//            }
         } else {
             // 自发货订单校验
 //            List<SoB2cDeliveryEntity> list = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(entity.getId()));
