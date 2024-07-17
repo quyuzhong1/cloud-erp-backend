@@ -47,6 +47,7 @@ import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -190,6 +191,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Resource
     private TransferInfoService transferInfoService;
+
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -1690,8 +1692,17 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Transactional(rollbackFor =  Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean deliveryOutStock(SoB2cDeliveryEntity entity) {
-        //TODO 插入是否中转配置判断是否中转
-        if (true) {
+
+        List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, entity.getSourceId()).list();
+        if (CollectionUtil.isEmpty(receiverList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+        }
+        //是否中转
+        CfgRuleOutDTO.MatchTransferRuleDTO dto = new CfgRuleOutDTO.MatchTransferRuleDTO();
+        dto.setType(StockOutTransferTypeEnum.B2C.getCode());
+        dto.setReceiveCountry(receiverList.get(0).getCountry());
+        Boolean isTransfer = cfgRuleOutService.matchTransferRule(dto);
+        if (isTransfer) {
             //生成直接调拨单
             generateTransferInfo(entity);
         }
