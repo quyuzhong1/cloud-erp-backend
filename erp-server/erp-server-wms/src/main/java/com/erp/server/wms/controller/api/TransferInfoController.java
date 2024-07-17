@@ -13,7 +13,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.TransferInfoDTO;
-import com.erp.model.wms.entity.InitStockEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.wms.query.TransferInfoQueryHandler;
 import com.erp.server.wms.service.TransferInfoService;
@@ -291,7 +290,7 @@ public class TransferInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(transferInfoService.disApprove(entity,Boolean.TRUE));
+                resultDTOS.add(transferInfoService.disApprove(entity,Boolean.TRUE,Boolean.TRUE));
             }catch (Exception e){
                 log.error("直接调拨单反审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

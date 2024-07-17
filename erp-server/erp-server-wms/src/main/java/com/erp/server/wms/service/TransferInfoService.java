@@ -1,6 +1,5 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -124,7 +123,7 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @param isPushKingDee
      * @return Boolean
      */
-    Boolean disApprove(List<String> ids, Boolean isPushKingDee,Boolean isManual);
+    BatchResultDTO disApprove(TransferInfoEntity entity, Boolean isPushKingDee,Boolean isManual);
     /**
      * @description: 取消流程
      * @author Will

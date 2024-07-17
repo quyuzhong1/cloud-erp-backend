@@ -292,10 +292,10 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     /**
      * 根据仓库ids和库位code查询库位列表
      * @param warehouseIds
-     * @param warehouseLocation
+     * @param warehouseLocationList
      * @return
      */
-    List<WarehouseLocationEntity> findByWarehouseIdsAndCode(List<String> warehouseIds, String warehouseLocation);
+    List<WarehouseLocationEntity> listByWarehouseIdsAndCodeList(List<String> warehouseIds, List<String> warehouseLocationList);
 
     /**
      * 查询库区
@@ -333,5 +333,5 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @param type              库位类型(库位/库区)
      * @return                  库位信息
      */
-    List<WarehouseLocationEntity> listByWarehouseIdsAndCodeList(List<String> warehouseIds, List<String> warehouseLocationList, WarehouseLocationTypeEnum type);
+    WarehouseLocationEntity getWarehouseLocation(String warehouseId, String warehouseLocation, WarehouseLocationTypeEnum type);
 }
