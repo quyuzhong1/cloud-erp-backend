@@ -1695,7 +1695,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto) {
         SoB2cDeliveryEntity entity = getById(dto.getId());
-        checkDelivery(entity);
         //修改订单状态
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
@@ -1716,6 +1715,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         operateLogDTO.setBusinessId(soB2cEntity.getId());
         operateLogDTO.setOperation("取消发货");
         soB2cFeign.addModuleOperateLog(operateLogDTO);
+        waveListDetailService.moveOut(dto.getId());
+        waveListService.cleanException(dto.getId());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消成功");
     }
 

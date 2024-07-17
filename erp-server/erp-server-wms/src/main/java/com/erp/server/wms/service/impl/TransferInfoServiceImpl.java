@@ -852,7 +852,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ERROR_99048);
         }
         List<TransferDTO>  addTransferList = new ArrayList<>();
-        List<TransferDTO>  pushTransferList = new ArrayList<>();
 
         for (TransferInfoDetailEntity detailEntity : detailList) {
 
@@ -875,25 +874,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             transferDTO.setSkuId(detailEntity.getSkuId());
             transferDTO.setSkuNo(detailEntity.getSkuNo());
             transferDTO.setQty(detailEntity.getQty());
-            if (SourceTypeEnum.TRANSFER_APPLICATION.getCode().equals(transferInfoEntity.getSourceType())) {
-                pushTransferList.add(transferDTO);
-            } else {
-                addTransferList.add(transferDTO);
-            }
+            addTransferList.add(transferDTO);
         }
         //手动新增数据更新库存
         if (CollectionUtils.isNotEmpty(addTransferList)) {
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
             inventoryTransferDTO.setParamList(addTransferList);
             inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DIRECT_ALLOCATE.getCode());
-            //更新库存
-            inventoryTransCoreService.approveByType(inventoryTransferDTO);
-        }
-        //下推数据更新库存
-        if (CollectionUtils.isNotEmpty(pushTransferList)) {
-            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
-            inventoryTransferDTO.setParamList(pushTransferList);
-            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode());
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }
