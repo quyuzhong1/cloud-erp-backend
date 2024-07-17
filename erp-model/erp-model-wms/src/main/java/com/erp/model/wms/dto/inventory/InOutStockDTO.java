@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.inventory;
 
+import cn.hutool.core.util.StrUtil;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -96,7 +97,7 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
                 stockDTO.setSourceDetailId(outstockDetail.getId());
                 stockDTO.setSkuId(skuId);
                 stockDTO.setSkuNo(skuNo);
-                stockDTO.setWarehouseLocation(warehouseLocation);
+                stockDTO.setWarehouseLocation(StrUtil.isBlank(entity.getBatchNo()) ? "" : warehouseLocation);
                 stockDTO.setQty(qty);
                 stockDTO.setBillDate(entity.getBillDate());
                 return stockDTO;

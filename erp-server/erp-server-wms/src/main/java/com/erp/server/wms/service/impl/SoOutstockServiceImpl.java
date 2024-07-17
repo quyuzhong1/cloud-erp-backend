@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -53,6 +55,8 @@ import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -64,6 +68,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
@@ -868,12 +873,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         String soInfoType = SourceTypeEnum.SO_INFO.getCode();
         List<InOutStockDTO> members = new ArrayList<>();
-        //迭代1.27.5   B2B销售订单下推的销售出库单扣可用库存
-        if (soInfoType.equals(sourceType)) {
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
-            members = baseMapper.listInventoryInOut(allList);
+        if (ObjectUtil.isNotEmpty(entity.getBatchNo())) {
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
         } else {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
+        }
+        //迭代1.27.5   B2B销售订单下推的销售出库单扣可用库存
+        if (soInfoType.equals(sourceType)) {
+            members = baseMapper.listInventoryInOut(allList);
+        } else {
             List<SoOutstockDetailEntity> soOutstockDetails = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             List<PickingListsDTO.SourceView> pickingLists = pickingListsService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
             for (PickingListsDTO.SourceView detail : pickingLists) {
@@ -1657,10 +1665,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDTO.AddDTO> addList = new ArrayList<>(map.size());
         for (Map.Entry<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> entry : map.entrySet()) {
             //来源id
-            String sourceId = entry.getKey();
             List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList = entry.getValue();
             SoOutstockDTO.GenerateSoOutstockViewDTO generateInfo = generateInfoList.stream().filter(g -> StringUtils.isNotBlank(g.getSourceCode())).findFirst().orElse(null);
             if (generateInfo != null) {
+                Boolean isTransit = Boolean.TRUE;
+                String warehouseId;
+                String batchNo = "";
+                if (isTransit) {
+                    batchNo = IdUtil.getSnowflake().nextIdStr();
+                    warehouseId = generateTransferInfo(generateInfo, batchNo, generateInfoList);
+                }else {
+                    warehouseId = generateInfo.getWarehouseId();
+                }
                 SoOutstockDTO.AddDTO add = new SoOutstockDTO.AddDTO();
                 //客户订单号
                 String customerOrderNo = soInfoList.stream().filter(obj -> obj.getId().equals(generateInfo.getSoId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCustomerOrderNo())).orElse("");
@@ -1671,10 +1687,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 add.setSourceType(generateInfo.getSourceType());
                 add.setCarrierId(generateInfo.getCarrierId());
                 add.setPlanDeliveryDate(generateInfo.getPlanDeliveryDate());
-                add.setWarehouseId(generateInfo.getWarehouseId());
+                add.setWarehouseId(warehouseId);
                 add.setTrackNo(generateInfo.getTrackNo());
                 add.setSellerId(generateInfo.getSellerId());
                 add.setCustomerOrderNo(customerOrderNo);
+                add.setBatchNo(batchNo);
                 List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>(generateInfoList.size());
                 for (SoOutstockDTO.GenerateSoOutstockViewDTO item : generateInfoList) {
                     SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
@@ -1684,7 +1701,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     detail.setSkuNo(item.getSkuNo());
                     detail.setRemark(item.getRemark());
                     detail.setWarehouseId(item.getWarehouseId());
-                    detail.setWarehouseLocation(item.getWarehouseLocation());
+                    if (isTransit) {
+                        detail.setWarehouseLocation("");
+                    }else {
+                        detail.setWarehouseLocation(item.getWarehouseLocation());
+                    }
                     detail.setActualQty(item.getQty());
                     detail.setPlanQty(item.getQty());
                     detail.setAttachNameList(item.getAttachNameList());
@@ -1699,6 +1720,57 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return this.batchAdd(addList);
     }
 
+    private String generateTransferInfo(SoOutstockDTO.GenerateSoOutstockViewDTO dto, String batchNo, List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList) {
+        String warehouseId;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                .eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode())
+                .eq(CfgSettingEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException("未配置中转设置仓库");
+        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(list.get(0).getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (CharSequenceUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
+        warehouseId = transitSettingDTO.getWarehouseId();
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(Arrays.asList(dto.getWarehouseId(), transitSettingDTO.getWarehouseId()));
+        //获取仓库信息
+        if (CollectionUtils.isEmpty(warehouseEntities)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        Map<String, String> warehouseOrgMap = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
+        TransferInfoDTO.AddDTO transferDto = new TransferInfoDTO.AddDTO();
+        transferDto.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        transferDto.setBillDate(LocalDate.now());
+        transferDto.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        transferDto.setInOrgId(warehouseOrgMap.get(warehouseId));
+        transferDto.setOutOrgId(warehouseOrgMap.get(dto.getWarehouseId()));
+        transferDto.setSourceId(dto.getSourceId());
+        transferDto.setSourceCode(dto.getSourceCode());
+        transferDto.setSourceType(dto.getSourceType());
+        transferDto.setBatchNo(batchNo);
+        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(generateInfoList, warehouseId);
+        transferDto.setDetailList(detailList);
+        transferInfoService.addAndApprove(transferDto);
+        return warehouseId;
+    }
+
+    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList, String warehouseId) {
+        List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
+        for (SoOutstockDTO.GenerateSoOutstockViewDTO viewDTO : generateInfoList) {
+            TransferInfoDetailDTO.AddDTO transferInfoDetail = new TransferInfoDetailDTO.AddDTO();
+            transferInfoDetail.setSkuId(viewDTO.getSkuId());
+            transferInfoDetail.setSkuNo(viewDTO.getSkuNo());
+            transferInfoDetail.setQty(viewDTO.getQty());
+            transferInfoDetail.setOutWarehouseLocation(viewDTO.getWarehouseLocation());
+            transferInfoDetail.setOutWarehouseId(viewDTO.getWarehouseId());
+            transferInfoDetail.setInWarehouseId(warehouseId);
+            transferInfoDetail.setSourceDetailId(viewDTO.getSourceDetailId());
+            detailList.add(transferInfoDetail);
+        }
+        return detailList;
+    }
 
     /**
      * 销售订单获取销售出库单的数据
@@ -1826,7 +1898,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(addList)) {
             return Boolean.FALSE;
         }
-        addList.forEach(obj -> add(obj));
+        addList.forEach(this::add);
         return Boolean.TRUE;
     }
 

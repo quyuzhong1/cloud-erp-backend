@@ -71,6 +71,13 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return Boolean
      */
     Boolean updateAndSubmit(TransferInfoDTO.UpdateDTO dto);
+
+    /**
+     * 保存并审核
+     * @param dto
+     * @return
+     */
+    String addAndApprove(TransferInfoDTO.AddDTO dto);
     /**
      * @description: 提交
      * @author Will

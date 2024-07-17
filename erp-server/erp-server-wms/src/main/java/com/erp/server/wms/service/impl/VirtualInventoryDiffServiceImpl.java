@@ -111,6 +111,16 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         return baseMapper.diffPagingCount(dto);
     }
 
+    @Override
+    public List<VirtualInventoryDiffDTO.ListDetailQtyDTO> listDiffDetail(VirtualInventoryDiffDTO.SearchParamDetailDTO dto) {
+        PagingDTO<VirtualInventoryDiffDTO.SearchParamDetailDTO> pagingParamDTO = new PagingDTO<>();
+        pagingParamDTO.setParams(dto);
+        pagingParamDTO.setPageSize(-1);
+        PagingVO<VirtualInventoryDiffDTO.ListDetailQtyDTO> resultList = this.diffDetailPaging(pagingParamDTO);
+        List<VirtualInventoryDiffDTO.ListDetailQtyDTO> list = (List<VirtualInventoryDiffDTO.ListDetailQtyDTO>) resultList.getList();
+        return list;
+    }
+
     /**
      * 虚拟库存分页查询数据处理
      * @author will
