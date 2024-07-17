@@ -542,8 +542,7 @@ public class SoB2cController extends BaseController {
                 result = soB2cService.checkLength(id, dto);
             } catch (Exception e) {
                 log.error("B2C销售订单校验物流尺寸失败", e);
-                result = getBatchResultDTOByB2cId(resultDTOS, id, e);
-                if (result == null) continue;
+                result = getBatchResultDTOByB2cId(id, e);
             }
             resultDTOS.add(result);
         }
@@ -552,22 +551,17 @@ public class SoB2cController extends BaseController {
 
     /**
      * 统一异常返回处理
-     * @param resultDTOS
      * @param id
      * @param e
      * @return
      */
-    @Nullable
-    private BatchResultDTO getBatchResultDTOByB2cId(List<BatchResultDTO> resultDTOS, String id, Exception e) {
-        BatchResultDTO result;
+    private BatchResultDTO getBatchResultDTOByB2cId(String id, Exception e) {
         SoB2cEntity entity = soB2cService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 配货失败");
-            resultDTOS.add(result);
-            return null;
+            return BatchResultDTO.fail(id, id, "B2C销售订单不存在, 配货失败");
+        }else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
         }
-        result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-        return result;
     }
 
     /**
@@ -596,8 +590,7 @@ public class SoB2cController extends BaseController {
                 }
             } catch (Exception e) {
                 log.error("B2C销售订单配货失败", e);
-                result = getBatchResultDTOByB2cId(resultDTOS, id, e);
-                if (result == null) continue;
+                result = getBatchResultDTOByB2cId(id, e);
             }
             resultDTOS.add(result);
         }
