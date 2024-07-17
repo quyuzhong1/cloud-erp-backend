@@ -247,6 +247,7 @@ public class SoB2cLogisticsDTO implements Serializable {
 
         private String deliveryNo;
 
+        private Integer version;
     }
 
 

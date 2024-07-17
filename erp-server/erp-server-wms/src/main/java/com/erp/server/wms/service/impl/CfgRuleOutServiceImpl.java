@@ -17,6 +17,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
@@ -286,7 +287,9 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         //校验周长
         if(Objects.nonNull(dto.getScanLength()) && Objects.nonNull(dto.getScanWidth()) && Objects.nonNull(dto.getScanHeight())){
             //计算公式:(宽+高)*2+长(最大尺寸)=周长。
-            BigDecimal circ = dto.getScanWidth().add(dto.getScanHeight()).multiply(new BigDecimal("2")).add(dto.getScanLength());
+            BigDecimal max = MathUtil.findMax(dto.getScanLength(),dto.getScanWidth(),dto.getScanHeight());
+            BigDecimal remain = dto.getScanLength().add(dto.getScanWidth()).add(dto.getScanHeight()).subtract(max);
+            BigDecimal circ = remain.multiply(new BigDecimal("2")).add(max);
             if(Objects.nonNull(cfgOverweightDetailDTO.getMaxCirc()) && circ.compareTo(cfgOverweightDetailDTO.getMaxCirc())>0){
                 if(!cfgOverweightDetailDTO.isSizeNotPassCanOut()){
                     result = false;

@@ -55,6 +55,7 @@
             sb2c.code AS soCode,
             sb2c.shop_id as shopId,
             sb2c.platform_code AS platformCode,
+            sb2cl.version,
             sa.token  AS shopToken
        FROM so_b2c_logistics sb2cl
        LEFT JOIN so_b2c sb2c
