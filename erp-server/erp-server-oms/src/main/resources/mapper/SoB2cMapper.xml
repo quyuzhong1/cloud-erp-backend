@@ -88,6 +88,7 @@
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
         sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
         sb2cl.weight,
+        sb2cl.name as sellerLogisticName,
         sb2cl.code as logisticsCode,
         sb2cl.track_no as trackCode
     </sql>
@@ -106,6 +107,7 @@
              else sb2cl.actual_shipping_currency
         end
         as shippingCostCurrency,
+        sb2c.seller_order_code as sellerOrderCode,
         sb2c.platform_code as platformCode,
         sb2c.approve_status as approveStatus,
         sb2c.bill_status as billStatus,
@@ -636,6 +638,7 @@
         sb.code AS soCode,
         sb.bill_status AS billStatus,
         sb.package_status AS packageStatus,
+        sb.shop_id AS shopId,
         sbl.id AS logisticsId,
         sbl.logistics_channel_id AS logisticsChannelId,
         sbl.code AS transportNo,
@@ -663,6 +666,7 @@
             sb.code AS soCode,
             sb.bill_status AS billStatus,
             sb.package_status AS packageStatus,
+            sb.shop_id AS shopId,
             sbl.logistics_channel_id AS logisticsChannelId,
             sbl.code AS trackNo,
             sbl.track_no AS trackNo,
@@ -718,6 +722,7 @@
         sb.code AS soCode,
         sb.bill_status AS billStatus,
         sb.package_status AS packageStatus,
+        sb.shop_id AS shopId,
         sbl.logistics_channel_id AS logisticsChannelId,
         sbl.code AS transportNo,
         sbl.track_no AS trackNo,
@@ -876,7 +881,6 @@
             sb2c.invalid_status as invalidStatus,
         sb2c.code as erpOrderCode,
         sb2c.platform_code as platformOrderCode,
-        sb2c.seller_order_code as sellerOrderCode,
         sb2c.seller_order_code as sellerOrderCode,
         sb2c.source_type as orderSource,
         sb2c.bill_status as orderStatus,

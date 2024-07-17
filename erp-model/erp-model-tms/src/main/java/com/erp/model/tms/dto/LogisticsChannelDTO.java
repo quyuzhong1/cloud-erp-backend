@@ -233,6 +233,16 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String orderDeliveryMarkType;
 
+        /**
+         * 承运商代号(部分速卖通物流渠道必填)
+         */
+        private String carrierCode;
+
+        /**
+         * 承运商轨迹查询地址(部分速卖通物流渠道必填)
+         */
+        private String logisticsTrackUrl;
+
         public String checkAndGetOrderDeliveryMarkType(){
             if (StringUtils.isBlank(this.getOrderDeliveryMarkType())){
                 throw new ServiceException("操作失败，渠道标发单号配置为空");

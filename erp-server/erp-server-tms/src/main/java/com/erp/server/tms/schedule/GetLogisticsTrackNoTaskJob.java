@@ -84,7 +84,7 @@ public class GetLogisticsTrackNoTaskJob {
                     List<SoB2cLogisticsEntity> updateList = new ArrayList<>(resultList.size());
                     for (LogisticsOrderResponseVO item : resultList) {
                         String deliveryNo = item.getDeliveryNo();
-                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getDeliveryNo().equals(deliveryNo)).
+                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getDeliveryNo().equals(deliveryNo) && f.getTransportNo().equals(item.getTransportNo())).
                                 map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
                         if (StringUtils.isNotBlank(b2cLogisticsId)) {
                             List<String> trackNoList = new ArrayList<>(2);

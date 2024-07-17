@@ -45,9 +45,14 @@ import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
@@ -97,7 +102,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private TransferInfoService transferInfoService;
     @Autowired
     private WarehouseService warehouseService;
-
+    @Autowired
+    private SysUserFeign sysUserFeign;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
@@ -127,6 +133,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private FbaShipmentService fbaShipmentService;
+
+    @Resource
+    private FbaShipmentDetailService fbaShipmentDetailService;
     @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
     @Resource
@@ -144,6 +153,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     @Lazy
     private WmsDeliveryPlanService wmsDeliveryPlanService;
+
+    @Resource
+    @Lazy
+    private WmsDeliveryPlanDetailService wmsDeliveryPlanDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -954,23 +967,27 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         Map<String, Set<String>> sourceIdByType = list.stream()
                 .collect(Collectors.groupingBy(RequisitionApplicationDTO.GenerateDeliverViewDTO::getType, Collectors.mapping(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId, Collectors.toSet())));
-        //获取国家信息
-        Map<String, String> countryMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode()))){
-            Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
-            List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
-            countryMap.putAll(wmsDeliveryPlanEntities.stream().collect(Collectors.toMap(WmsDeliveryPlanEntity::getId, WmsDeliveryPlanEntity::getCountry)));
-
-        }else if (CollectionUtils.isNotEmpty(sourceIdByType.get(RequisitionApplicationTypeEnum.FBA.getCode()))){
-            Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.FBA.getCode());
-            List<FbaShipmentEntity> fbaShipmentEntities = fbaShipmentService.listByIds(sourIds);
-            countryMap.putAll(fbaShipmentEntities.stream().collect(Collectors.toMap(FbaShipmentEntity::getId, FbaShipmentEntity::getCountryId)));
-        }
+        Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
+        List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
+        List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailEntities = wmsDeliveryPlanDetailService.listByMainIds(new ArrayList<>(sourIds));
         //查询skuId产品信息
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : list) {
-            viewDTO.setCountry(countryMap.get(viewDTO.getSourceId()));
+            WmsDeliveryPlanEntity wmsDeliveryPlanEntity = wmsDeliveryPlanEntities.stream()
+                    .filter(v -> v.getId().equals(viewDTO.getSourceId()))
+                    .findFirst()
+                    .orElse(new WmsDeliveryPlanEntity());
+            WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity = wmsDeliveryPlanDetailEntities.stream()
+                    .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
+                    .findFirst()
+                    .orElse(new WmsDeliveryPlanDetailEntity());
+            viewDTO.setShopId(wmsDeliveryPlanEntity.getShopId());
+            viewDTO.setShopName(wmsDeliveryPlanEntity.getShopName());
+            viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
+            viewDTO.setPlatformSpuNo(wmsDeliveryPlanDetailEntity.getPlatformSpu());
+            viewDTO.setFnSku(wmsDeliveryPlanDetailEntity.getPlatformFnSku());
+
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {

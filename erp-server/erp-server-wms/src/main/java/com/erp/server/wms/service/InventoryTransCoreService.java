@@ -8,45 +8,45 @@ import com.erp.model.wms.enums.inventory.InventoryBizTypeEnum;
  * @Description: 库存交易核心服务类【业务调用入口】
  * @CreateTime: 2023-05-06  09:28
  * @Author: zhangchunlin
- * Update by：Edison 2023-09-26
+ * Update by：Edison 2024-06-28
  */
 public interface InventoryTransCoreService {
 
     /**
-     * 入库/出库 审核，按业务类型 自动匹配库存规则
-     * @param dto 出入库业务参数
+     * 按业务类型审核: 入库/出库， 自动匹配库存规则
+     * @param busiParam 出入库业务参数
      */
-    void approveByType(InventoryInOutStockDTO dto);
+    void approveByType(InventoryInOutStockDTO busiParam);
 
     /**
-     * 调拨业务 审核，按业务类型 自动匹配库存规则
-     * @param dto 调拨业务参数
+     * 按业务类型审核: 调拨业务，自动匹配库存规则
+     * @param busiParam 调拨业务参数
      */
-    void approveByType(InventoryTransferDTO dto);
+    void approveByType(InventoryTransferDTO busiParam);
 
     /**
-     * 出入库业务审核，出入库业务参数
-     * @param dto 业务参数与规则参数
+     * 按自定义规则审核: 出入库业务
+     * @param busiParam 业务参数与规则参数
      */
-    void approveByRule(InventoryInOutStockRuleDTO dto);
+    void approveByRule(InventoryInOutStockRuleDTO busiParam);
 
     /**
-     * 调拨业务 审核，自定义库存规则
-     * @param dto 调拨业务与规则参数
+     * 按自定义规则审核: 调拨业务
+     * @param busiParam 调拨业务与规则参数
      */
-    void approveByRule(InventoryTransferRuleDTO dto);
+    void approveByRule(InventoryTransferRuleDTO busiParam);
 
     /**
-     * 单据 反审核
-     * @param dto 业务参数
+     * 反审核：业务单据
+     * @param busiParam 业务参数
      */
-    void unApprove(InventoryUnApproveDTO dto);
+    void unApprove(InventoryUnApproveDTO busiParam);
 
     /**
-     * 批量反审核
-     * @param dto 业务参数
+     * 批量反审核：业务单据
+     * @param busiParam 业务参数
      */
-    void batchUnApprove(InventoryBatchUnApproveDTO dto);
+    void batchUnApprove(InventoryBatchUnApproveDTO busiParam);
 
 
 }

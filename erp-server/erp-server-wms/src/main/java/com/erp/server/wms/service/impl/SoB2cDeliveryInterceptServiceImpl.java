@@ -11,7 +11,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -23,15 +22,12 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
-import com.erp.model.oms.enums.*;
-import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -39,14 +35,9 @@ import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
-import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.*;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptDetailEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -126,6 +117,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Lazy
     @Resource
     private AsyncService asyncService;
+
+    @Resource
+    @Lazy
+    private WaveListDetailService waveListDetailService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -403,6 +398,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
                 List<String> ids = soB2cDeliveryEntities.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
+                List<WaveListDetailEntity> waveLists = waveListDetailService.listCancelByDeliveryIds(ids);
+                String cancelCodes = waveLists.stream().map(WaveListDetailEntity::getDeliveryCode).collect(Collectors.joining(","));
+                if (ObjectUtil.isNotEmpty(cancelCodes)) {
+                    throw new ServiceException(ApiError.ERROR_99123, cancelCodes);
+                }
                 soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
                 // 待处理和异常状态中的生成波次异常无需回滚库存
                 List<String> rollbackInventoryIds = soB2cDeliveryEntities.stream().filter(e -> !SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(e.getStatus()))
@@ -413,11 +413,23 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     //删除拣货单
                     pickingListsService.deleteBySourceId(rollbackInventoryIds);
                 }
+                // 生成波次状态得发货单需要移除波次
+                List<String> removeDeliveryIds = soB2cDeliveryEntities.stream()
+                        .filter(e -> !SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(e.getStatus()))
+                        .map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(rollbackInventoryIds)) {
+                    removeDeliveryIds.forEach(deliveryId -> waveListDetailService.moveOut(deliveryId));
+                }
             }
         } else {
             //拦截失败的订单正常自动出库流程
             SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
             SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getById(entity.getDeliveryId());
+            if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(soB2cDelivery.getStatus())
+                    || (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(soB2cDelivery.getStatus()) &&
+                    AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(soB2cDelivery.getAbnormalCause()))){
+                throw new ServiceException(ApiError.ERROR_99124);
+            }
             if(!SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(soB2cDelivery.getStatus())){
                 soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
                 soB2cDeliveryService.updateById(soB2cDelivery);

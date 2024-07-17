@@ -9,7 +9,6 @@ import com.common.business.dto.WdtReturnOrderDTO;
 import com.common.business.dto.WdtReturnOrderDetailDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractSoOutStockHandler;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.qimencloud.api.scene3ldsmu02o9.request.WdtWmsStockinRefundQuerywithdetailRequest;
 import com.qimencloud.api.scene3ldsmu02o9.response.WdtWmsStockinRefundQuerywithdetailResponse;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -73,13 +73,13 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
         request.setTargetAppKey(qimenService.getTargetAppKey());
         request.setWdtAppkey(qimenService.getWdtAppKey());
         request.setWdtSalt(qimenService.getWdtSalt());
-        request.setDatetime(qimenService.format(new Date()));
         request.putOtherTextParam(qimenService.getCustomerIdKey(), qimenService.getCustomerIdValue());
-        request.setWdtSign(QiMenUtils.getQimenCustomWdtSign(request, qimenService.getWdtSecret()));
 
         List<WdtWmsStockinRefundQuerywithdetailResponse.Order> result = new ArrayList<>();
         boolean hasNext = true;
         while (hasNext) {
+            request.setDatetime(qimenService.format(new Date()));
+            request.setWdtSign(QiMenUtils.getQimenCustomWdtSign(request, qimenService.getWdtSecret()));
             WdtWmsStockinRefundQuerywithdetailResponse response;
             try {
                 response = qimenService.execute(request);
@@ -96,10 +96,11 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
             }
             result.addAll(response.getData().getOrder());
             Long totalCount = response.getData().getTotalCount();
-            pager.setPageNo(pager.getPageNo() + 1);
-            if (totalCount <= (pager.getPageNo() + 1) * pageSize) {
+            if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
+            pager.setPageNo(pager.getPageNo() + 1);
+            request.setPager(pager);
         }
         return result;
     }
@@ -135,7 +136,7 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
             //仓库id
             dto.setWarehouseId(String.valueOf(orderEntity.getWarehouseId()));
             dto.setWarehouseName(orderEntity.getWarehouseName());
-            dto.setSourceType(SourceTypeEnum.QIMEN_RETURN_ORDER.getCode());
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
             dto.setSourceId(orderEntity.getTidList());
             dto.setSourceCode(orderEntity.getTradeNoList());
             List<WdtReturnOrderDetailDTO> detailList = new ArrayList<>();
@@ -158,8 +159,9 @@ public class QiMenReturnOrderHandler extends AbstractSoOutStockHandler<QiMenRetu
     private WdtReturnOrderDetailDTO getDetail(WdtWmsStockinRefundQuerywithdetailResponse.Order orderEntity, WdtWmsStockinRefundQuerywithdetailResponse.DetailsList detailDto) {
         WdtReturnOrderDetailDTO detail = new WdtReturnOrderDetailDTO();
         detail.setSkuNo(detailDto.getSpecNo());
-        detail.setMustQty(Integer.valueOf(detailDto.getExpectNum()));
-        detail.setReceiveQty(Integer.valueOf(detailDto.getNum()));
+        detail.setMustQty(new BigDecimal(detailDto.getExpectNum()).intValue());
+        detail.setReceiveQty(new BigDecimal(detailDto.getNum()).intValue());
+        detail.setRealQty(new BigDecimal(detailDto.getNum()).intValue());
         detail.setReturnReasonDict(orderEntity.getReason());
         detail.setWarehouseLocation(detailDto.getPositionNo());
         detail.setIsSubContract(false);

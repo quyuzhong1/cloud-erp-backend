@@ -88,10 +88,10 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
             }
             result.addAll(response.getOrders());
             Integer totalCount = response.getTotal();
-            pager.setPageNo(pager.getPageNo() + 1);
             if (totalCount <= pager.getPageNo() * pageSize) {
                 hasNext = false;
             }
+            pager.setPageNo(pager.getPageNo() + 1);
         }
         return result;
     }
@@ -109,8 +109,8 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
             LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(orderEntity.getCheckTime())), ZoneId.systemDefault());
             dto.setBillDate(approveTime.toLocalDate());
             dto.setInvalidStatus(false);
-            dto.setApproveUserName("wangdaintong");
-            dto.setCreateUserName("wangdaintong");
+            dto.setApproveUserName("wangdiantong");
+            dto.setCreateUserName("wangdiantong");
             dto.setApproveTime(approveTime);
             //店铺id
             dto.setShopId(orderEntity.getShopId());
@@ -120,7 +120,7 @@ public class WdtReturnOrderHandler  extends AbstractSoOutStockHandler<WangDianRe
             //仓库id
             dto.setWarehouseId(orderEntity.getWarehouseId());
             dto.setWarehouseName(orderEntity.getWarehouseName());
-            dto.setSourceType(SourceTypeEnum.WDT_RETURN_ORDER.getCode());
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
             dto.setSourceId(orderEntity.getTidList());
             dto.setSourceCode(orderEntity.getTradeNoList());
             List<WdtReturnOrderDetailDTO> detailList = new ArrayList<>();

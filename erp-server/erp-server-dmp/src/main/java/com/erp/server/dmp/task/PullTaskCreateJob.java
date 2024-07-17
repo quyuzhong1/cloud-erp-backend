@@ -2,26 +2,23 @@ package com.erp.server.dmp.task;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.annotation.Idempotent;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.JobTaskDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.server.dmp.service.DmpOrderInfoService;
-import com.erp.server.dmp.service.DmpRefundInfoService;
-import com.erp.server.dmp.service.DmpReturnOrderInfoService;
+import com.erp.server.dmp.service.BiOrderInfoService;
+import com.erp.server.dmp.service.BiRefundInfoService;
+import com.erp.server.dmp.service.BiReturnOrderInfoService;
 import com.erp.server.dmp.service.impl.CreateRequestReportTaskService;
 import com.erp.server.dmp.service.impl.TbTaskTypeService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
-import com.xxl.job.core.util.XxlJobRemotingUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,13 +33,13 @@ public class PullTaskCreateJob {
     private CreateRequestReportTaskService reportTaskService;
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    private BiReturnOrderInfoService biReturnOrderInfoService;
 
     @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
+    private BiRefundInfoService biRefundInfoService;
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
@@ -113,7 +110,7 @@ public class PullTaskCreateJob {
         XxlJobHelper.log("cleanOrderTask 任务开始执行");
         String jobParam = XxlJobHelper.getJobParam();
         Integer pageSize = StrUtil.isNotBlank(jobParam) ? Integer.valueOf(jobParam) : 100;
-        dmpOrderInfoService.cleanOrder(pageSize);
+        biOrderInfoService.cleanOrder(pageSize);
         XxlJobHelper.log("cleanOrderTask 任务开始完成");
         return ReturnT.SUCCESS;
     }
@@ -127,7 +124,7 @@ public class PullTaskCreateJob {
     @XxlJob("cleanReturnOrderTask")
     public ReturnT<String> cleanReturnOrderTask() {
         XxlJobHelper.log("cleanReturnOrderTask 任务开始执行");
-        dmpReturnOrderInfoService.cleanReturnOrderTask();
+        biReturnOrderInfoService.cleanReturnOrderTask();
         XxlJobHelper.log("cleanReturnOrderTask 任务开始完成");
         return ReturnT.SUCCESS;
     }
@@ -142,7 +139,7 @@ public class PullTaskCreateJob {
     @XxlJob("cleanRefundTask")
     public ReturnT<String> cleanRefundTask() {
         XxlJobHelper.log("cleanRefundTask 任务开始执行");
-        dmpRefundInfoService.cleanRefundTask();
+        biRefundInfoService.cleanRefundTask();
         XxlJobHelper.log("cleanRefundTask 任务开始完成");
         return ReturnT.SUCCESS;
     }

@@ -1158,7 +1158,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public Boolean approveEnd(BaseApproveParamDTO dto, List<SoInfoEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
@@ -2975,7 +2975,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<CustomerAddressEntity> customerAddressList = customerAddressService.listByMainIdList(customerIdList);
         //sku
         List<String> skuNoList = successList.stream().map(B2BSoImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuNoList);
+        List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
 
         // 供应商id集合
 //        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());

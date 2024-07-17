@@ -13,6 +13,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
+import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
@@ -84,10 +85,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
 
     /**
      * 手动标发
-     * @Author Luo_WG
-     * @Date 2023/12/13 19:30
-     * @param id
-     * @return com.common.business.dto.base.BatchResultDTO
      * @Author Luo_WG
      * @Date 2023/12/13 19:30
      **/
@@ -220,8 +217,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
 
     /**
      * 手动标发(批量)
-     * @Author Luo_WG
-     * @Date 2024/4/22 18:06
      * @param ids
      * @return java.lang.Boolean
      * @Author Luo_WG
@@ -299,7 +294,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @author will
      * @date 2024/6/28 15:48
      */
-    String dimensionalWeightPipeline(DimensionalWeightDTO dto);
+    ApiResult<String> dimensionalWeightPipeline(DimensionalWeightDTO dto);
 
     Boolean updateAbnormal(List<String> ids, AbnormalCauseEnum abnormalCauseEnum);
 
@@ -344,4 +339,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param soB2cDeliveryDetailEntities 发货单明细
      */
     void generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities);
+
+    /**
+     * B2C生成拣货单 (规则前置执行)
+     *
+     * @param soB2cDeliveryEntity         发货单
+     * @param soB2cDeliveryDetailEntities 发货单明细
+     * @param results 前置规则返回的仓位
+     */
+    void generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results);
 }

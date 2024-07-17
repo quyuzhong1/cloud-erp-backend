@@ -89,6 +89,9 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
     @Panno(findType = PannoEnum.EQ,field = "shopId")
     private String shopId;
 
+    @Panno(findType = PannoEnum.EQ,field = "platformWarehouseOrder")
+    private Boolean platformWarehouseOrder;
+
 
     public PlatformAliExpressOrderDTO(JobTaskDTO dto, AliExpressOrder aliExpressOrder, AliExpressShopInfoDTO aliExpressShopInfoDTO) {
         this.aliExpressOrder = aliExpressOrder;

@@ -207,4 +207,22 @@ public interface RedisCacheConstants {
 
     String SNOWFLAKE_KEY = "snowflake_key:{}";
 
+
+    /**
+     * 组包标记发货key:{平台}:{店铺ID}
+     */
+    String MERGE_PACKAGE_SIGN_DELIVERY_KEY = "merge_package_sign_delivery_key:{}:{}";
+
+
+    /**
+     * 组包生成销售出库单扣库存key:{扣库存key}
+     */
+    String MERGE_PACKAGE_INVENTORY_KEY = "merge_package_inventory_key:{}";
+
+
+    /**
+     * 组包消费重试次数:{soId}
+     */
+    String MERGE_PACKAGE_RETRY_COUNT_KEY = "merge_package_retry_count_key:{}";
+
 }

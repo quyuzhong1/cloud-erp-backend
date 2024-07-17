@@ -422,31 +422,46 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<DmpPushTaskEntity> getWarnPushTaskList(List<String> statusList) {
+        if (CollectionUtils.isEmpty(statusList)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().select(DmpPushTaskEntity::getSourceId,
+                        DmpPushTaskEntity::getSourceType,
+                        DmpPushTaskEntity::getSourceCode,
+                        DmpPushTaskEntity::getSourcePlatformName,
+                        DmpPushTaskEntity::getTargetPlatformName,
+                        DmpPushTaskEntity::getReturnMsg,
+                        DmpPushTaskEntity::getUpdateTime)
+                .in(DmpPushTaskEntity::getStatus, statusList).eq(DmpPushTaskEntity::getIsDeleted, Boolean.FALSE).list();
+    }
+
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
-        DmpPushTaskEntity entity = this.getById(syncTaskId);
-        if (ObjectUtil.isEmpty(entity)) {
-            return;
-        }
-        //查询redis,预警8小时发送一次
-        String existKey = StrUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, entity.getId());
-        boolean isHas = redisUtil.hasKey(existKey);
-        if (isHas) {
-            return;
-        } else {
-            //添加缓存
-            redisUtil.set(existKey,entity, RedisService.EIGHT_HOURS_CACHE_TIME);
-        }
-        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-        warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
-        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-        warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
-        warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
-        warnMsgInfo.setTableId(entity.getSourceId());
-        warnMsgInfo.setKeyInfo(entity.getReturnMsg());
-        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-        mqProducerService.sendWarnMsg(warnMsgInfo);
+//        DmpPushTaskEntity entity = this.getById(syncTaskId);
+//        if (ObjectUtil.isEmpty(entity)) {
+//            return;
+//        }
+//        //查询redis,预警8小时发送一次
+//        String existKey = StrUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, entity.getId());
+//        boolean isHas = redisUtil.hasKey(existKey);
+//        if (isHas) {
+//            return;
+//        } else {
+//            //添加缓存
+//            redisUtil.set(existKey,entity, RedisService.EIGHT_HOURS_CACHE_TIME);
+//        }
+//        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+//        warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
+//        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+//        warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
+//        warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
+//        warnMsgInfo.setTableId(entity.getSourceId());
+//        warnMsgInfo.setKeyInfo(entity.getReturnMsg());
+//        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+//        mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 
 

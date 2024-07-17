@@ -861,12 +861,18 @@ public enum ApiError implements Serializable {
 
     ERROR_99114(99114,"待处理，异常单的数据不支持自动发货"),
     ERROR_99115(99115,"销售订单【{}】的发货单存在待处理，异常单的数据不支持自动发货"),
-    ERROR_99116(99116,"非待处理的数据不能操作生成波次"),
+    ERROR_99116(99116,"只有待处理、非拦截中的发货单可以操作生成波次"),
 
     ERROR_99117(99117,"波次号和sku不能为空"),
     ERROR_99118(99118,"波次号和篮号不能为空"),
     ERROR_99119(99119,"波次号不能为空"),
+    ERROR_99120(99120,"波次下不存在此sku"),
+    ERROR_99121(99121,"只允许同一仓库生成波次"),
 
+    ERROR_99122(99122,"单据【{}】处于异常单生成波次缺货自动触发补货中，不允许打印"),
+    ERROR_99123(99123,"单据【{}】所属的波次处于拣货中或挂起状态，不允许拦截"),
+
+    ERROR_99124(99124,"待处理，异常单生成波次缺货的数据不支持拦截失败"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -984,10 +990,10 @@ public enum ApiError implements Serializable {
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！,错误信息【{}】"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
-    SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态虚假发货，已发货，取消发货的数据不允许操作虚假发货"),
-    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许虚假发货"),
-    LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交虚假发货"),
-    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】待处理、已发货和取消发货单状态，不允许打印拣货单"),
+    SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货，取消发货的数据不允许操作手动标发"),
+    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许手动标发"),
+    LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交手动标发"),
+    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】不在拣货中、生成波次、异常单的状态，不允许打印"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
@@ -1041,7 +1047,7 @@ public enum ApiError implements Serializable {
     CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
     RECEIVE_SHOULD_GENERATE_BY_DELIVERY(92130,"【{}】已开启系统收货协同，请从送货单下推收货单"),
     B2C_SO_DELIVERY_FINISH_PRINT(92131,"发货单【{}】非生成波次/拣货中不支持完成打印"),
-    B2C_SO_DELIVERY_NOT_FINISH_PRINT(92132,"发货单【{}】非生成波次/拣货中不支持取消完成拣货"),
+    B2C_SO_DELIVERY_NOT_FINISH_PRINT(92132,"发货单【{}】非生成波次/拣货中不支持取消完成打印"),
     PLEASE_KEEP_LEAST_ONE_DATA(92133,"请至少保留一条明细，或者整单删除！"),
 
     NOT_PACKAGE_NO_APPROVE(92133,"单号{}尚未完成装箱信息，请完成后审核"),

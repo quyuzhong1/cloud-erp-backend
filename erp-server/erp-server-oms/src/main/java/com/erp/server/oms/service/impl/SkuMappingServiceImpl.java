@@ -787,6 +787,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     .filter(obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId())
                             && StringUtils.isEmpty(obj.getWarehouseId())
                             && obj.getDictPlatform().equals(listSkuParamDTO.getDictPlatform())
+                            && (StringUtils.isBlank(listSkuParamDTO.getShopId()) || obj.getShopId().equals(listSkuParamDTO.getShopId()))
                             && !warehouseType.equals(obj.getType())
                     ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformSkuMapping)) {

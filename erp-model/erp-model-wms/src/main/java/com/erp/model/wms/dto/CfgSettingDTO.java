@@ -81,6 +81,10 @@ public class CfgSettingDTO implements Serializable {
          */
         private CfgSettingValueDTO.B2cDeliveryInterceptDTO b2cDeliveryInterceptDTO;
         /**
+         * 组包设置
+         */
+        private CfgSettingValueDTO.PackageSettingDTO packageSettingDTO;
+        /**
          * 装箱完成通知
          */
         private CfgSettingValueDTO.FinishPackingNoticeDTO finishPackingNoticeDTO;

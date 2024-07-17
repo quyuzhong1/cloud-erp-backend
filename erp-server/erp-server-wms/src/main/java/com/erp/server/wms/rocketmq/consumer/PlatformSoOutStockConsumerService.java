@@ -167,7 +167,8 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
                 String msg = StrUtil.format("未找到对应仓库, 仓库【{}】, 仓库中心【{}】", detailDTO.getWarehouseName(), detailDTO.getFulfillmentCenterId());
                 throw new ServiceException(msg);
             }
-            generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cEntity.getId());
+
+            generateB2cDTO = soB2cFeign.getSoOutStockByIdAndWarehouseId(soB2cEntity.getId(), detailDTO.getWarehouseId());
             if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())){
                 if (StringUtils.isBlank(detailDTO.getWarehouseId()) ||
                     StringUtils.isBlank(detailDTO.getWarehouseName()) ||

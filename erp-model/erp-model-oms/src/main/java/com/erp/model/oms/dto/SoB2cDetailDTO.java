@@ -138,6 +138,10 @@ public class SoB2cDetailDTO implements Serializable {
 
 
         /**
+         * 属性对象
+         */
+       private List<PropertyDTO> propertyDTOList;
+        /**
          * 目的国申报价
          */
         private BigDecimal toDeclarePrice;
@@ -182,6 +186,21 @@ public class SoB2cDetailDTO implements Serializable {
          * 当前明细是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PropertyDTO {
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
     }
 
     @Data

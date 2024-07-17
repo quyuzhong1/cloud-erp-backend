@@ -45,7 +45,12 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.DeliveryStatusEnum;
+import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
+import com.erp.model.wms.enums.PickingBillTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -530,7 +535,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //虚拟库存扣减
             handleVirtualInventory(Arrays.asList(entity),detailList);
 
-
         } else {
             //审核不通过
             lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -610,17 +614,16 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .eq(SoDeliveryNoticeEntity::getId, id)
                 .update();
-
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE, Arrays.asList(id));
-
-        //回滚虚拟库存
-        virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-
 //        //回滚库存
 //        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE, ids);
 //        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 //        //删除拣货详情
 //        pickingDetailService.deleteBySourceId(ids);
+
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE, Arrays.asList(id));
+
+        //回滚虚拟库存
+        virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知单");

@@ -128,7 +128,7 @@ public class BiSalesModuleController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
             menuCode = "bi:module:content",
-            tableAlias = "dmp_order_info"
+            tableAlias = "bi_order_info"
     )
     public ApiResult<StatisticalDataVO> byPlatformRatio(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result = salesOrderService.getByPlatformRatio(dto);
@@ -304,7 +304,7 @@ public class BiSalesModuleController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
             menuCode = "bi:module:content",
-            tableAlias = "dmp_order_info"
+            tableAlias = "bi_order_info"
     )
     public ApiResult<StatisticalDataVO> byHomeAndAbroad(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result = salesOrderService.byHomeAndAbroad(dto);

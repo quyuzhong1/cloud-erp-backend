@@ -280,6 +280,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 if (null != entity.getHeight() && entity.getHeight().compareTo(BigDecimal.ZERO) > 0){
                     totalHeight  = entity.getHeight();
                 }
+                if (StringUtils.isNotBlank(entity.getCode())){
+                    entity2.setCode(entity.getCode());
+                }
+                if (StringUtils.isNotBlank(entity.getTrackNo())){
+                    entity2.setTrackNo(entity.getTrackNo());
+                }
 
                 //如果美客多平台订单不是平台仓发货，不更新物流单号
                 if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
@@ -396,6 +402,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
+    public SoB2cLogisticsEntity getByTrackNoOrTransportNo(String logisticsCode) {
+        return baseMapper.getByTrackNoOrTransportNo(logisticsCode);
+    }
+
+    @Override
     public BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList) {
         SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
         if(Objects.isNull(soB2cEntity)){
@@ -435,11 +446,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
         }
 
-    }
-
-    @Override
-    public SoB2cLogisticsEntity getByTrackNoOrTransportNo(String logisticsCode) {
-        return baseMapper.getByTrackNoOrTransportNo(logisticsCode);
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

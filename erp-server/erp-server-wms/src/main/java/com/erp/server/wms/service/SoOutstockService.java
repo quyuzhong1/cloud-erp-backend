@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
+import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -285,6 +286,17 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return void
      */
     void handleKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId);
+
+    /**
+     * 金蝶同步到系统，不单独事务
+     * @author yl
+     * @date 2023-07-21 14:44
+     * @param soOutstock 销售出库单
+     * @param detailList 销售出库详情
+     * @param flagId  已存在的flagId
+     * @return void
+     */
+    void handleNewKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId);
 
     /**
      * PDA:分页列表

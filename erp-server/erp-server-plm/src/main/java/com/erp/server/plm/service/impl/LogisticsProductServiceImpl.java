@@ -489,10 +489,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             item.setWeight(weight);
             String propertyId = item.getProductPropertyId();
             List<BasicDictEntity> dictEntityList = dictList.stream().filter(e -> StringUtils.isNotBlank(propertyId) && propertyId.contains(e.getId())).collect(Collectors.toList());
+            //是否带点
             BasicDictEntity electricDict = dictEntityList.stream().filter(e -> Objects.nonNull(e) && ProductConstant.IS_ELECTRIC.equals(e.getRemark())).findFirst().orElse(null);
             item.setIsElectric(Objects.nonNull(electricDict) ? Boolean.TRUE : Boolean.FALSE);
+            //是否液体
             BasicDictEntity liquidDict = dictEntityList.stream().filter(e -> Objects.nonNull(e) && ProductConstant.IS_LIQUID.equals(e.getRemark())).findFirst().orElse(null);
             item.setIsLiquid(Objects.nonNull(liquidDict) ? Boolean.TRUE : Boolean.FALSE);
+            //是否纯电
+            BasicDictEntity batteryDict = dictEntityList.stream().filter(e -> Objects.nonNull(e) && e.getValue().contains("纯电")).findFirst().orElse(null);
+            item.setOnlyBattery(Objects.nonNull(batteryDict) ? Boolean.TRUE : Boolean.FALSE);
         }
         return list;
     }
@@ -741,8 +746,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     map(SkuVO::getSkuId).orElse("");
             Boolean isError = Boolean.FALSE;
             ProductLogisticsEntity logistics = productLogisticsList.stream().
-                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(new ProductLogisticsEntity());
+                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+
             List<LogisticsProductExcelDTO> value = entry.getValue();
+            if (Objects.isNull(logistics)){
+                value.forEach(logisticsProductExcelDTO -> {
+                    logisticsProductExcelDTO.setErrorMsg("sku不存在或者sku未审核通过");
+                });
+                continue;
+            }
             List<ProductCustomsEntity> customsList = new ArrayList<>(value.size());
 
             for (LogisticsProductExcelDTO item : value) {

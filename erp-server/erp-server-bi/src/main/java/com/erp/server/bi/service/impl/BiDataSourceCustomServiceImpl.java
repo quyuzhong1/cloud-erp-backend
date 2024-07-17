@@ -51,7 +51,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         implements BiDataSourceCustomService {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Resource
     private BiDictService biDictService;
@@ -101,7 +101,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         }
         String dataTypeName = DataTypeEnum.getName(dto.getDataType());
         String head = dataTypeName;
-        String fileName = dmpOrderInfoService.getFileName(dataTypeName)+ ".xlsx";
+        String fileName = biOrderInfoService.getFileName(dataTypeName)+ ".xlsx";
         ExcelUtil.easyUtilStr(headList,head,list,fileName,response);
     }
 
@@ -121,7 +121,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
             }
             List<String> headList = excelListenerUtil.getHead();
             String head = "自助数据表";
-            String fileName = dmpOrderInfoService.getFileName("自助数据表导出")+ ".xlsx";
+            String fileName = biOrderInfoService.getFileName("自助数据表导出")+ ".xlsx";
             ExcelUtil.easyUtil(headList,head,list,fileName, response);
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);

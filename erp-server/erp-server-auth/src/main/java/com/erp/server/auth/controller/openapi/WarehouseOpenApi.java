@@ -40,8 +40,7 @@ public class WarehouseOpenApi {
     @OpenApi("dimensionalWeightPipeline")
     public ApiResult<String> dimensionalWeightPipeline(@Valid DimensionalWeightDTO dto) {
         //设备回传的称重量方信息
-        String pickPort = soB2cDeliveryFeign.dimensionalWeightPipeline(dto);
-        return ApiResult.success(pickPort);
+        return soB2cDeliveryFeign.dimensionalWeightPipeline(dto);
     }
 
     /**

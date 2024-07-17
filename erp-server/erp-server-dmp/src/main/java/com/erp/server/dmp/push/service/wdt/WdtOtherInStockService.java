@@ -1,6 +1,8 @@
 package com.erp.server.dmp.push.service.wdt;
 
+import com.sdk.wangdian.sdk.api.wms.external.in.StockExternalInResponse;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.OtherStockinResponse;
 
 /**
  * 
@@ -17,4 +19,15 @@ public interface WdtOtherInStockService {
      * @author: tanmujin
      */
     void executeConsumer(CreateOtherStockinRequest stockinRequest);
+
+    /**
+     * 自留转仓调用外部出库单创建
+     */
+    void executeSelfConsumer(CreateOtherStockinRequest request);
+
+    OtherStockinResponse.DataInfoDto queryWithDetail(CreateOtherStockinRequest request);
+    /**
+     * 自留转仓调用外部入库单查询
+     */
+    StockExternalInResponse querySelfIn(CreateOtherStockinRequest request);
 }

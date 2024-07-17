@@ -27,7 +27,7 @@ public class QiMenSoOutStockEntity extends CleanBaseDTO {
         this.orderInfoDto = orderInfoDto;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.QI_MEN.getCode());
-        this.setUniqueId(String.valueOf(orderInfoDto.getStockoutId()));
+        this.setUniqueId(orderInfoDto.getOrderNo());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }

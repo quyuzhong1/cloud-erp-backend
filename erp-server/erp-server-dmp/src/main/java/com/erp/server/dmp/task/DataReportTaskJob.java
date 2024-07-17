@@ -2,7 +2,7 @@ package com.erp.server.dmp.task;
 
 import com.common.core.utils.date.DateUtil;
 import com.erp.server.dmp.service.DmpDateDimensionService;
-import com.erp.server.dmp.service.DmpOrderInfoService;
+import com.erp.server.dmp.service.BiOrderInfoService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class DataReportTaskJob {
     @Value("${spring.datasource.password}")
     private String password;
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
     @Resource
     private DmpDateDimensionService dmpDateDimensionService;
     /**

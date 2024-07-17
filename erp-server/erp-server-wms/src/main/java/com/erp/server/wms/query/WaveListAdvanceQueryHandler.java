@@ -19,10 +19,10 @@ public class WaveListAdvanceQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if(field.equals("status")){
+        if(field.equals("wl.status")){
             for (WaveStatusEnum statusEnum : WaveStatusEnum.values()) {
                 if(value.equals(statusEnum.getCode())){
-                    super.buildDefaultDTO("status", value);
+                    super.buildDefaultDTO("wl.status", value);
                     return super.getSplicingSQL();
                 }
             }

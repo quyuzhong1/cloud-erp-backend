@@ -15,14 +15,13 @@ import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
 import com.erp.model.bi.enums.TargetFinishViewTypeEnum;
 import com.erp.model.bi.enums.TargetSearchTypeEnum;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiRefundInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.bi.enums.DateTypeEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
-import com.erp.server.bi.mapper.DmpOrderInfoMapper;
-import com.erp.server.bi.mapper.DmpRefundInfoMapper;
+import com.erp.server.bi.mapper.BiOrderInfoMapper;
+import com.erp.server.bi.mapper.BiRefundInfoMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -60,10 +59,10 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     private BiTargetSkuSettingService biTargetSkuSettingService;
 
     @Resource
-    private DmpRefundInfoMapper dmpRefundInfoMapper;
+    private BiRefundInfoMapper biRefundInfoMapper;
 
     @Resource
-    private DmpOrderInfoMapper dmpOrderInfoMapper;
+    private BiOrderInfoMapper biOrderInfoMapper;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -318,11 +317,11 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         //销售额
         if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
-            resultList = dmpOrderInfoMapper.listSalesBiFilter(dto, "sales");
+            resultList = biOrderInfoMapper.listSalesBiFilter(dto, "sales");
         }
         //销量
         if (MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())) {
-            resultList = dmpOrderInfoMapper.listSalesBiFilter(dto, "qty");
+            resultList = biOrderInfoMapper.listSalesBiFilter(dto, "qty");
         }
         //净销售额
         if (MetricsEnum.NET_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
@@ -335,12 +334,12 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             dto.setSku(null);
             dto.setBrand(null);
             dto.setDepartment(null);
-            resultList = dmpOrderInfoMapper.listSalesBiFilter(dto, "sales");
+            resultList = biOrderInfoMapper.listSalesBiFilter(dto, "sales");
             if (CollectionUtils.isNotEmpty(resultList)) {
 
                 TargetFinishDTO.GroupViewDTO refundGroupViewDTO = handleRefundGroupData(dto);
                 //退款信息
-                List<TargetFinishDTO.ViewDTO> refundList = dmpOrderInfoMapper.listRefundBiFilter(dto, refundGroupViewDTO);
+                List<TargetFinishDTO.ViewDTO> refundList = biOrderInfoMapper.listRefundBiFilter(dto, refundGroupViewDTO);
                 for (TargetFinishDTO.ViewDTO viewDTO : resultList) {
                     //部门和负责人 填充名称
                     if (StringUtils.isNotBlank(viewDTO.getTypeId()) && StringUtils.isBlank(viewDTO.getTypeName())){
@@ -386,16 +385,16 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     * @param mainList
     * @return List<DmpReturnInfoEntity>
     */
-    private List<DmpRefundInfoEntity> listReturnOrderInfo (List<DmpOrderInfoEntity> mainList) {
+    private List<BiRefundInfoEntity> listReturnOrderInfo (List<BiOrderInfoEntity> mainList) {
         if (CollectionUtils.isEmpty(mainList)) {
             return Collections.EMPTY_LIST;
         }
-        List<String> platformOrderIdList = mainList.stream().map(DmpOrderInfoEntity::getPlatformOrderId).collect(Collectors.toList());
+        List<String> platformOrderIdList = mainList.stream().map(BiOrderInfoEntity::getPlatformOrderId).collect(Collectors.toList());
         //根据订单id查询退货数据
-        QueryWrapper<DmpRefundInfoEntity> qw = new QueryWrapper<>();
+        QueryWrapper<BiRefundInfoEntity> qw = new QueryWrapper<>();
         qw.select("platform_order_id","COALESCE(refund_amount, 0) * currency_rate as refund_amount")
           .in("platform_order_id",platformOrderIdList);
-        List<DmpRefundInfoEntity> entityList = dmpRefundInfoMapper.selectList(qw);
+        List<BiRefundInfoEntity> entityList = biRefundInfoMapper.selectList(qw);
         return entityList;
     }
 
