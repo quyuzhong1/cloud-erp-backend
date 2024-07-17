@@ -27,7 +27,7 @@ public class QiMenReturnOrderEntity extends CleanBaseDTO {
         this.orderInfoDto = orderInfoDto;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.WDT.getCode());
-        this.setUniqueId(String.valueOf(orderInfoDto.getStockinId()));
+        this.setUniqueId(String.valueOf(orderInfoDto.getOrderNo()));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }

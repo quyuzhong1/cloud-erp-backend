@@ -62,7 +62,7 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
         }
         RLock lock = redissonClient.getLock(LOCK + pushDTOS.getVirtual_warehouse_no());
         try {
-            boolean locked = lock.tryLock(10, 30, TimeUnit.SECONDS);
+            boolean locked = lock.tryLock(10, TimeUnit.SECONDS);
             if (locked) {
                 VwPushHandleDetailAPI api = wangDianClientService.get(VwPushHandleDetailAPI.class);
                 log.info("旺店通虚拟仓订单创建：消费者接收数据：{}", pushDTOS);

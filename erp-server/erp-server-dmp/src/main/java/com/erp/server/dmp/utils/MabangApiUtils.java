@@ -69,7 +69,6 @@ public class MabangApiUtils {
         while (hasNext || NOT_SHIPPED_STATUS.equals(status)) {
             HashMap<String, Object> params = new HashMap<>(10);
             params.put("status", status);
-            params.put("canSend", "3");
             if (StrUtil.isNotBlank(pageIndex)){
                 params.put("cursor", pageIndex);
             }

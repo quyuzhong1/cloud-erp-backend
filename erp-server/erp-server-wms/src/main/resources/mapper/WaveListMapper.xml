@@ -63,7 +63,8 @@
                 wl.print_status,
                 wl.picking_user_id,
                 wl.picking_user_name,
-                wl.picking_time
+                wl.picking_time,
+                wl.is_out_stock
         from wave_list wl
         where is_deleted = false
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">

@@ -3,8 +3,13 @@ package com.sdk.wangdian.sdk.api.wms.stockin.dto;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
+@Data
 public class OtherStockinResponse {
 	/*
 {
@@ -62,68 +67,28 @@ public class OtherStockinResponse {
 	 */
 	
 	@SerializedName("status")
+	@JSONField(name = "status")
+	@JsonProperty("status")
 	private Integer status;
+
 	@SerializedName("message")
+	@JSONField(name = "message")
+	@JsonProperty("message")
 	private String message;
+
 	@SerializedName("data")
+	@JSONField(name = "data")
+	@JsonProperty( "data")
 	private List<DataInfoDto> data;
 
-	public Integer getStatus()
-	{
-		return status;
-	}
-
-	public void setStatus(Integer status)
-	{
-		this.status = status;
-	}
-
-	public String getMessage()
-	{
-		return message;
-	}
-
-	public void setMessage(String message)
-	{
-		this.message = message;
-	}
-
-	public List<DataInfoDto> getData()
-	{
-		return data;
-	}
-
-	public void setOrders(List<DataInfoDto> data)
-	{
-		this.data = data;
-	}
-
+	@Data
 	public static class DataInfoDto
 	{
 		private List<OrderInfoDto> order;
 		private Integer totalCount;
-
-		public List<OrderInfoDto> getOrder()
-		{
-			return order;
-		}
-
-		public void setOrder(List<OrderInfoDto> order)
-		{
-			this.order = order;
-		}
-
-		public Integer getTotalCount()
-		{
-			return totalCount;
-		}
-
-		public void setTotalCount(Integer totalCount)
-		{
-			this.totalCount = totalCount;
-		}
 	}
 
+	@Data
 	public static class OrderInfoDto
 	{
 
@@ -146,169 +111,9 @@ public class OtherStockinResponse {
 
 		@SerializedName("detail_list")
 		private List<OrderDetailInfoDto> detailList;
-
-		public String getStockinId()
-		{
-			return stockinId;
-		}
-
-		public void setStockinId(String stockinId)
-		{
-			this.stockinId = stockinId;
-		}
-
-		public String getOrderNo()
-		{
-			return orderNo;
-		}
-
-		public void setOrderNo(String orderNo)
-		{
-			this.orderNo = orderNo;
-		}
-
-		public String getWarehouseNo()
-		{
-			return warehouseNo;
-		}
-
-		public void setWarehouseNo(String warehouseNo)
-		{
-			this.warehouseNo = warehouseNo;
-		}
-
-		public Integer getStatus()
-		{
-			return status;
-		}
-
-		public void setStatus(Integer status)
-		{
-			this.status = status;
-		}
-
-		public String getMessage()
-		{
-			return message;
-		}
-
-		public void setMessage(String message)
-		{
-			this.message = message;
-		}
-
-		public String getWarehouseName()
-		{
-			return warehouseName;
-		}
-
-		public void setWarehouseName(String warehouseName)
-		{
-			this.warehouseName = warehouseName;
-		}
-
-		public String getStockinTime()
-		{
-			return stockinTime;
-		}
-
-		public void setStockinTime(String stockinTime)
-		{
-			this.stockinTime = stockinTime;
-		}
-
-		public String getCreatedTime()
-		{
-			return createdTime;
-		}
-
-		public void setCreatedTime(String createdTime)
-		{
-			this.createdTime = createdTime;
-		}
-
-		public String getReason()
-		{
-			return reason;
-		}
-
-		public void setReason(String reason)
-		{
-			this.reason = reason;
-		}
-
-		public String getRemark()
-		{
-			return remark;
-		}
-
-		public void setRemark(String remark)
-		{
-			this.remark = remark;
-		}
-
-		public BigDecimal getGoodsCount()
-		{
-			return goodsCount;
-		}
-
-		public void setGoodsCount(BigDecimal goodsCount)
-		{
-			this.goodsCount = goodsCount;
-		}
-
-		public Integer getLogisticsType()
-		{
-			return logisticsType;
-		}
-
-		public void setLogisticsType(Integer logisticsType)
-		{
-			this.logisticsType = logisticsType;
-		}
-
-		public String getCheckTime()
-		{
-			return checkTime;
-		}
-
-		public void setCheckTime(String checkTime)
-		{
-			this.checkTime = checkTime;
-		}
-
-		public String getSrcOrderNo()
-		{
-			return srcOrderNo;
-		}
-
-		public void setSrcOrderNo(String srcOrderNo)
-		{
-			this.srcOrderNo = srcOrderNo;
-		}
-
-		public String getOperatorName()
-		{
-			return operatorName;
-		}
-
-		public void setOperatorName(String operatorName)
-		{
-			this.operatorName = operatorName;
-		}
-
-		public BigDecimal getTotalPrice()
-		{
-			return totalPrice;
-		}
-
-		public void setTotalPrice(BigDecimal totalPrice)
-		{
-			this.totalPrice = totalPrice;
-		}
-
 	}
 
+	@Data
 	public static class OrderDetailInfoDto
 	{
 		private String stockinId;
@@ -328,166 +133,6 @@ public class OtherStockinResponse {
 		private String specCode;
 		private String brandNo;
 		private String brandName;
-
-		public String getStockinId()
-		{
-			return stockinId;
-		}
-
-		public void setStockinId(String stockinId)
-		{
-			this.stockinId = stockinId;
-		}
-
-		public BigDecimal getGoodsCount()
-		{
-			return goodsCount;
-		}
-
-		public void setGoodsCount(BigDecimal goodsCount)
-		{
-			this.goodsCount = goodsCount;
-		}
-
-		public BigDecimal getTotalCost()
-		{
-			return totalCost;
-		}
-
-		public void setTotalCost(BigDecimal totalCost)
-		{
-			this.totalCost = totalCost;
-		}
-
-		public String getRemark()
-		{
-			return remark;
-		}
-
-		public void setRemark(String remark)
-		{
-			this.remark = remark;
-		}
-
-		public BigDecimal getRightNum()
-		{
-			return rightNum;
-		}
-
-		public void setRightNum(BigDecimal rightNum)
-		{
-			this.rightNum = rightNum;
-		}
-
-		public String getGoodsUnit()
-		{
-			return goodsUnit;
-		}
-
-		public void setGoodsUnit(String goodsUnit)
-		{
-			this.goodsUnit = goodsUnit;
-		}
-
-		public String getBatchNo()
-		{
-			return batchNo;
-		}
-
-		public void setBatchNo(String batchNo)
-		{
-			this.batchNo = batchNo;
-		}
-
-		public Integer getRecId()
-		{
-			return recId;
-		}
-
-		public void setRecId(Integer recId)
-		{
-			this.recId = recId;
-		}
-
-		public String getGoodsName()
-		{
-			return goodsName;
-		}
-
-		public void setGoodsName(String goodsName)
-		{
-			this.goodsName = goodsName;
-		}
-
-		public String getGoodsNo()
-		{
-			return goodsNo;
-		}
-
-		public void setGoodsNo(String goodsNo)
-		{
-			this.goodsNo = goodsNo;
-		}
-
-		public String getProp2()
-		{
-			return prop2;
-		}
-
-		public void setProp2(String prop2)
-		{
-			this.prop2 = prop2;
-		}
-
-		public String getSpecNo()
-		{
-			return specNo;
-		}
-
-		public void setSpecNo(String specNo)
-		{
-			this.specNo = specNo;
-		}
-
-		public String getSpecName()
-		{
-			return specName;
-		}
-
-		public void setSpecName(String specName)
-		{
-			this.specName = specName;
-		}
-
-		public String getSpecCode()
-		{
-			return specCode;
-		}
-
-		public void setSpecCode(String specCode)
-		{
-			this.specCode = specCode;
-		}
-
-		public String getBrandNo()
-		{
-			return brandNo;
-		}
-
-		public void setBrandNo(String brandNo)
-		{
-			this.brandNo = brandNo;
-		}
-
-		public String getBrandName()
-		{
-			return brandName;
-		}
-
-		public void setBrandName(String brandName)
-		{
-			this.brandName = brandName;
-		}
 
 	}
 

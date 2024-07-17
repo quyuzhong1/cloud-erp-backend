@@ -18,4 +18,13 @@ public enum ReplenishTypeEnum implements EnumMessage {
 
     private String code;
     private String name;
+
+    public static String getName(String code) {
+        for (ReplenishTypeEnum e : ReplenishTypeEnum.values()) {
+            if (e.getCode().equals(code)) {
+                return e.name;
+            }
+        }
+        return "";
+    }
 }

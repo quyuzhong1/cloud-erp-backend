@@ -1,6 +1,7 @@
 package com.common.core.utils.date;
 
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.ParseException;
@@ -551,4 +552,49 @@ public class DateUtil {
 
         return endOfMonth;
     }
+
+
+    /**
+     * 解析时区字符串
+     * @param dateTimeStr 格式: 2024-06-18T21:03:31+01:00[Europe/London] 或 2024-06-16T12:26:27+02:00
+     * @return OffsetDateTime
+     */
+    public static OffsetDateTime parseOffsetDateTime(String dateTimeStr) {
+        if (StringUtils.isBlank(dateTimeStr)){
+            return null;
+        }
+        //  兼容地区解析
+        if (dateTimeStr.contains("[") || dateTimeStr.contains("]") ) {
+            // 尝试解析包含时区的字符串
+            ZonedDateTime zdt = ZonedDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+            return zdt.toOffsetDateTime();
+        } else {
+            // 解析不包含时区的字符串
+            return OffsetDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        }
+    }
+
+    /**
+     * 解析时区字符串
+     * @param dateTimeStr 格式: 2024-06-18T21:03:31+01:00[Europe/London] 或 2024-06-16T12:26:27+02:00
+     * @return LocalDateTime
+     */
+    public static LocalDateTime parseLocalDateTimeWithOffset(String dateTimeStr) {
+        if (StringUtils.isBlank(dateTimeStr)){
+            return null;
+        }
+        //  兼容地区解析
+        if (dateTimeStr.contains("[") || dateTimeStr.contains("]") ) {
+            // 尝试解析包含时区的字符串
+            ZonedDateTime zdt = ZonedDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+            return zdt.toOffsetDateTime().toLocalDateTime();
+        }  else if (dateTimeStr.contains("+") || dateTimeStr.contains("-") ) {
+            // 解析不包含时区的字符串
+            return OffsetDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toLocalDateTime();
+        } else {
+            // 解析localDateTime
+            return LocalDateTimeUtil.parse(dateTimeStr);
+        }
+    }
+
 }

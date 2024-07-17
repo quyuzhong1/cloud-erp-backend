@@ -62,8 +62,8 @@ public enum SourceTypeEnum {
     REQUISITION_APPLICATION_FINISH("requisitionApplicationFinish", "要货申请(完成)","requisition_application"),
 
     SUBCONTRACT_ISSUE("subcontractIssue", "委外发料单","subcontract_issue"),
-    VIRTUAL_WAREHOUSE_ALLOCATION("virtualWarehouseAllocation", "分货单","virtual_warehouse_allocation"),
     WAREHOUSE_AREA_INFO("warehouseAreaInfo", "库区","warehouse_area_info"),
+    VIRTUAL_WAREHOUSE_ALLOCATION("virtualWarehouseAllocation", "分货单","virtual_warehouse_allocation"),
 
 
     //OMS

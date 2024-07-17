@@ -562,7 +562,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
             outGoods.setSpecNo(moveDetailEntity.getSkuNo());
             outGoods.setNum(BigDecimal.valueOf(moveDetailEntity.getQty()));
-            outGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)?moveDetailEntity.getOutWarehouseLocation():moveDetailEntity.getInWarehouseLocation());
+            outGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE) ?
+                    (StringUtils.isNotBlank(moveDetailEntity.getOutWarehouseLocation()) ? moveDetailEntity.getOutWarehouseLocation() : "") :
+                    (StringUtils.isNotBlank(moveDetailEntity.getInWarehouseLocation()) ? moveDetailEntity.getInWarehouseLocation() : ""));
 
             String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
             String outWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
@@ -574,7 +576,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
             inGoods.setSpecNo(moveDetailEntity.getSkuNo());
             inGoods.setNum(BigDecimal.valueOf(moveDetailEntity.getQty()));
-            inGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)?moveDetailEntity.getInWarehouseLocation():moveDetailEntity.getOutWarehouseLocation());
+            inGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)?
+                    (ObjectUtils.isEmpty(moveDetailEntity.getInWarehouseLocation()) ? "" : moveDetailEntity.getInWarehouseLocation()) : ObjectUtils.isEmpty(moveDetailEntity.getOutWarehouseLocation()) ? "" : moveDetailEntity.getOutWarehouseLocation());
 
             String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
             String inWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());

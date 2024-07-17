@@ -5,6 +5,7 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -48,4 +49,22 @@ public class DeclareDeliverRequest implements Serializable {
      */
     @NotBlank(message = "物流服务商不能为空")
     private String serviceName;
+
+
+    /**
+     * 实际承运商--物流方案为“卖家自定义-中国”(OTHER)时该字段为必填
+     * （非必须）
+     */
+    private String actualCarrier;
+
+    /**
+     * 运单号轨迹查询地址-物流方案为自定义(OTHER开头)的时候必填
+     * （非必须）
+     */
+    private String trackingWebSite;
+
+    /**
+     * 子订单下标
+     */
+    private List<String> subTradeOrderIndexList;
 }

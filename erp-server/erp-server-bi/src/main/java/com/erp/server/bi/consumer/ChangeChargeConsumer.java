@@ -8,12 +8,12 @@ import com.alibaba.fastjson2.JSONArray;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpRefundInfoService;
-import com.erp.server.bi.service.DmpReturnOrderInfoService;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiRefundInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.server.bi.service.BiOrderInfoService;
+import com.erp.server.bi.service.BiRefundInfoService;
+import com.erp.server.bi.service.BiReturnOrderInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,14 +38,14 @@ import java.util.List;
 public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
+    private BiRefundInfoService biRefundInfoService;
 
 
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    private BiReturnOrderInfoService biReturnOrderInfoService;
 
 
     @Override
@@ -72,9 +72,9 @@ public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
      */
     private void updateSaleCharge(String shopNo, LocalDate enableTime, String userId, String userName, String deptId, String deptName ) {
 
-        List<DmpOrderInfoEntity> list = dmpOrderInfoService.lambdaQuery()
-                .eq(DmpOrderInfoEntity::getShopNo, shopNo)
-                .ge(DmpOrderInfoEntity::getPlatformCreateTime, enableTime)
+        List<BiOrderInfoEntity> list = biOrderInfoService.lambdaQuery()
+                .eq(BiOrderInfoEntity::getShopNo, shopNo)
+                .ge(BiOrderInfoEntity::getPlatformCreateTime, enableTime)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -118,9 +118,9 @@ public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
      * 更新退款单负责人
      */
     private void updateRefundCharge(String shopNo, LocalDate enableTime, String userId, String userName) {
-        List<DmpRefundInfoEntity> list = dmpRefundInfoService.lambdaQuery()
-                .eq(DmpRefundInfoEntity::getShopNo, shopNo)
-                .ge(DmpRefundInfoEntity::getOrderTime, enableTime)
+        List<BiRefundInfoEntity> list = biRefundInfoService.lambdaQuery()
+                .eq(BiRefundInfoEntity::getShopNo, shopNo)
+                .ge(BiRefundInfoEntity::getOrderTime, enableTime)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -137,9 +137,9 @@ public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
      * 更新退货单负责人
      */
     private void updateReturnOrderCharge(String shopNo, LocalDate enableTime, String userId, String userName) {
-        List<DmpReturnOrderInfoEntity> list = dmpReturnOrderInfoService.lambdaQuery()
-                .eq(DmpReturnOrderInfoEntity::getShopNo, shopNo)
-                .ge(DmpReturnOrderInfoEntity::getOrderTime, enableTime)
+        List<BiReturnOrderInfoEntity> list = biReturnOrderInfoService.lambdaQuery()
+                .eq(BiReturnOrderInfoEntity::getShopNo, shopNo)
+                .ge(BiReturnOrderInfoEntity::getOrderTime, enableTime)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -157,16 +157,16 @@ public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
      */
     private void updateList (List<T> collect ,Integer type) {
         if (MathUtil.ONE.equals(type)) {
-            List<DmpOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect),DmpOrderInfoEntity.class);
-            dmpOrderInfoService.updateBatchById(list);
+            List<BiOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect), BiOrderInfoEntity.class);
+            biOrderInfoService.updateBatchById(list);
         }
         if (MathUtil.TWO.equals(type)) {
-            List<DmpRefundInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect),DmpRefundInfoEntity.class);
-            dmpRefundInfoService.updateBatchById(list);
+            List<BiRefundInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect), BiRefundInfoEntity.class);
+            biRefundInfoService.updateBatchById(list);
         }
         if (MathUtil.THREE.equals(type)) {
-            List<DmpReturnOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect),DmpReturnOrderInfoEntity.class);
-            dmpReturnOrderInfoService.updateBatchById(list);
+            List<BiReturnOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect), BiReturnOrderInfoEntity.class);
+            biReturnOrderInfoService.updateBatchById(list);
         }
     }
 

@@ -67,7 +67,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<KingdeeTransferDirectEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -145,7 +145,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(KingdeeTransferDirectEntity mongoDatum) {
         DmpTransferInfoDTO orderInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());

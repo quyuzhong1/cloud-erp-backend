@@ -108,6 +108,9 @@ public class WarehouseLocationReplenishJob {
                     //没有设置补货上限量时：等于安全库存-当前可用库存
                     qty = entity.getSafetyQty() - inventory.getUsableQty();
                 }
+                if(inventory.getUsableQty() >= entity.getSafetyQty()){
+                    continue;
+                }
                 dto.setQty(qty);
                 replenishService.add(dto);
             }

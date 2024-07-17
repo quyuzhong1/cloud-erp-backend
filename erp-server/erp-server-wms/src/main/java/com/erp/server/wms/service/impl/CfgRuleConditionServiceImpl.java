@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
@@ -140,6 +142,12 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
         for (CfgRuleConditionEntity updateItem : updateList) {
             CfgRuleConditionEntity old = oleConditions.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
             if (Objects.nonNull(old)) {
+                old.setFieldName(cfgConditionMap.get(old.getField()));
+                updateItem.setFieldName(cfgConditionMap.get(updateItem.getField()));
+                //值没有的时候名称置空
+                if (StrUtil.isBlank(updateItem.getValue())) {
+                    updateItem.setName("");
+                }
                 operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, CharSequenceUtil.format("修改了第【{}】条订单规则", updateItem.getIndex()));
             }
         }
@@ -159,7 +167,7 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
     private void handleDataList(List<CfgRuleConditionEntity> ruleConditionList) {
         for (CfgRuleConditionEntity item : ruleConditionList) {
             String compare = item.getCompare();
-            if (RuleCompareEnum.IS_NULL.getCode().equals(compare) || RuleCompareEnum.NOT_NULL.getCode().equals(compare)) {
+            if (RuleCompareEnum.IS_NULL.getCode().equals(compare) || RuleCompareEnum.NOT_NULL.getCode().equals(compare) || ObjectUtil.isEmpty(item.getValue())) {
                 item.setValue("");
             }
         }

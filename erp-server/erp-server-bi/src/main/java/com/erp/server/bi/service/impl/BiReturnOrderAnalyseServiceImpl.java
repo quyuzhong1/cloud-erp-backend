@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.ReturnOrderFilterDTO;
 import com.erp.model.bi.vo.*;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.server.bi.mapper.BiReturnOrderAnalyseMapper;
-import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.BiOrderInfoService;
 import com.erp.server.bi.service.BiReturnOrderAnalyseService;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -24,10 +24,10 @@ import java.util.stream.Collectors;
  * @Date 2022/12/16 11:07
  **/
 @Service
-public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAnalyseMapper, DmpOrderInfoEntity> implements BiReturnOrderAnalyseService {
+public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAnalyseMapper, BiOrderInfoEntity> implements BiReturnOrderAnalyseService {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     /**
      * 退货分析-品类

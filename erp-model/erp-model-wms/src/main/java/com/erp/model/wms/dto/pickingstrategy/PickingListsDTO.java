@@ -256,12 +256,17 @@ public class PickingListsDTO {
          * 拣货单号
          */
         private String code;
+        /**
+         * 来源id
+         */
         private String sourceId;
         /**
          * 来源单号
          */
         private String sourceCode;
-
+        /**
+         * 仓库id
+         */
         private String warehouseId;
 
         /**

@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.WdtSoOutStockDTO;
 import com.common.business.dto.WdtSoOutStockDetailDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -110,7 +111,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "entity.fBillNo", leaseTime = 30, waitTime = 20)
     public void syncKingdeeSoOutstock(KingdeeDeliveryDetailEntity entity) {
+        System.out.println("===============开始执行 单号：" + entity.getFBillNo());
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();
         if (CollectionUtils.isEmpty(kingdeeDetailList)) {
             return;
@@ -129,7 +132,11 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             //当是审核通过的时候
             if ("C".equals(entity.getFDocumentStatus())) {
                 //当已存在 就删除以前的  并回滚库存
-                soOutstockService.handleKingdeeToErp(soOutstock, detailList, flagId);
+            	if(entity != null && entity.getIsNew()) {
+            		soOutstockService.handleNewKingdeeToErp(soOutstock, detailList, flagId);
+            	}else {
+            		soOutstockService.handleKingdeeToErp(soOutstock, detailList, flagId);
+            	}
                 InventoryInOutStockRuleDTO inventoryInOutStockDTO = info.getInventoryInOutStockRuleDTO();
                 if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {
                     //无虚拟仓则不扣减虚拟库存
@@ -153,10 +160,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
 
         }
+        System.out.println("===============结束执行 单号：" + entity.getFBillNo());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "entity.code")
     public void syncWdtSoOutStock(WdtSoOutStockDTO entity) {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));
@@ -365,8 +374,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      * @date 2023-07-01 10:56
      */
     private SyncKingdeeDTO.B2CSoOutstockDTO handleWmsSoOutstock(KingdeeDeliveryDetailEntity entity, List<String> noInventorySkuNoList) {
-        String customerNumber = entity.getFCustomerNumber();
-        String customerName = entity.getFCustomerName();
+        String customerNumber = StringUtils.isBlank(entity.getFCustomerNumber())?"1":entity.getFCustomerNumber();
+        String customerName = StringUtils.isBlank(entity.getFCustomerName())?"1":entity.getFCustomerName();
         List<CustomerInfoEntity> customerInfoEntityList = customerFeign.getCustomerByCodeAndName(customerNumber, customerName);
     	if(CollUtil.isEmpty(customerInfoEntityList)) {
     		throw new ServiceException(String.format("通过客户编码：%s，客户名称：%s查询不到客户信息" , customerNumber , customerName));

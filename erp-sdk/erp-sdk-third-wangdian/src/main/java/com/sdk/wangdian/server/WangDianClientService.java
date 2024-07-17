@@ -30,5 +30,9 @@ public class WangDianClientService {
     public <T> T get(Class<T> clazz){
         return ApiFactory.get(this.defaultClient, clazz);
     }
+    
+    public Client getClient() {
+    	return defaultClient;
+    }
 }
 

@@ -21,6 +21,7 @@ import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.dto.request.AddressRequest;
+import com.erp.oms.aliexpress.dto.request.CommonRequest;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.*;
@@ -471,14 +472,28 @@ public class AliExpressOrderService {
                 .logistics_no(declareDeliverRequest.getLogisticsNo())
                 .service_name(declareDeliverRequest.getServiceName())
                 .build();
-        QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
-                .send_type(declareDeliverRequest.getSendType())
-                .sub_trade_order_index("1")
-                .shipment_list(Collections.singletonList(shipment))
-                .build();
+        if (StringUtils.isNotBlank(declareDeliverRequest.getActualCarrier())){
+            shipment.setActual_carrier(declareDeliverRequest.getActualCarrier());
+        }
+        if (StringUtils.isNotBlank(declareDeliverRequest.getTrackingWebSite())){
+            shipment.setTracking_web_site(declareDeliverRequest.getTrackingWebSite());
+        }
+        if (CollectionUtils.isEmpty(declareDeliverRequest.getSubTradeOrderIndexList())){
+            ServiceException.runError("提交的子订单小标不能为空");
+        }
+        List<QueryShipmentOrder.SubTradeOrder> subTradeOrders = new LinkedList<>();
+        for (String subOrderIndex : declareDeliverRequest.getSubTradeOrderIndexList()) {
+            QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
+                    .send_type(declareDeliverRequest.getSendType())
+                    .sub_trade_order_index(subOrderIndex)
+                    .shipment_list(Collections.singletonList(shipment))
+                    .build();
+            subTradeOrders.add(tradeOrder);
+        }
+
         QueryShipmentOrder requestParams = QueryShipmentOrder.builder()
                 .trade_order_id(declareDeliverRequest.getOutRef())
-                .sub_trade_order_list(Collections.singletonList(tradeOrder))
+                .sub_trade_order_list(subTradeOrders)
                 .build();
 
         String appKey = shopInfoDTO.getClientId();
@@ -501,12 +516,45 @@ public class AliExpressOrderService {
         boolean success = resultJson.getBool("success", Boolean.FALSE);
         if (!success){
             String errorMsg = resultJson.getStr("error_msg", "");
+            Integer errorCode = resultJson.getInt("error_code", -1000000);
             if (StringUtils.isNotBlank(errorMsg)){
-                ServiceException.runError(errorMsg);
+                ServiceException.runError(errorCode, errorMsg);
             } else {
-                ServiceException.runError(JSONUtil.toJsonStr(body));
+                ServiceException.runError(errorCode, JSONUtil.toJsonStr(body));
             }
         }
+    }
+
+    public List<JSONObject> carrierQuerylist(CommonRequest commonRequest) {
+        IopClient client = new IopClientImpl(commonRequest.getBaseUrl(), commonRequest.getClientId(), commonRequest.getClientSecret());
+        IopRequest request = new IopRequest();
+        request.setApiName(commonRequest.getApiName());
+        String token = commonRequest.getToken();
+        IopResponse response = null;
+        try {
+            response = client.execute(request, token, Protocol.TOP);
+        } catch (ApiException e) {
+            String jsonStr = JSONUtil.toJsonStr(response);
+            log.error("查询速卖通所有的实际承运商>>>>>>> response={}, error={}", jsonStr, ExceptionUtil.stacktraceToString(e));
+            String msg = StrUtil.format("查询速卖通发货单请求失败>>>>>>>response={}, error={}", jsonStr, ExceptionUtil.stacktraceToString(e));
+            throw new ServiceException(msg);
+        }
+        JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
+        JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_query_response");
+        JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
+        Boolean success = resultJson.getBool("success", Boolean.FALSE);
+        //失败
+        if (!success) {
+            log.error("查询速卖通所有的实际承运商失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
+            return Collections.emptyList();
+        }
+        return null;
+//        AliExpressAscpFfoQueryResponse result = JSONObject.parseObject(response.getBody(), AliExpressAscpFfoQueryResponse.class);
+//        DataListBean dataList = result.getAliexpressAscpFfoQueryResponse().getResult().getDataList();
+//        if (ObjectUtil.isEmpty(dataList) || CollectionUtils.isEmpty(dataList.getErpFulfillmentForwardDto())) {
+//            return Collections.emptyList();
+//        }
+//        return dataList.getErpFulfillmentForwardDto();
     }
 
 
@@ -560,24 +608,23 @@ public class AliExpressOrderService {
         System.out.println("数量" + aliExpressOrders.size());
     }
 
-//    public static void main(String[] args) throws Exception{
-//        String orderId = "8188116597867872";
-//        String oaid = "bmDgBQHJPDmDInmawpwirA";
-//
-//        AddressRequest request=AddressRequest.builder()
-//                .clientId("502978")
-//                .clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY")
-//                .baseUrl("https://api-sg.aliexpress.com")
-//                .token("50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG")
-//                .oaid(oaid).
-//                orderId(orderId).build();
-//
-//        AliExpressOrderService aliExpressOrderService = new AliExpressOrderService();
-//        try {
-//            BuyerTradeAddress address=aliExpressOrderService.getBuyerTradeAddress(request);
-//            System.out.println(JSONUtil.toJsonStr(address));
-//        }catch (Exception e){
-//            throw new ServiceException("查询速卖通订单地址失败"+ JSONUtil.toJsonStr(e));
-//        }
-//    }
+
+    /**
+     * 根据店铺ID和订单ID查询订单详情
+     */
+    public AliExpressOrderDetail getOrderDetailByOrderIdAndShopId(String platformCode, String shopId) {
+        String apiName = AliexpressConstants.LIST_ORDER;
+        AliExpressShopInfoDTO shopInfoDTO = getShopInfoByShopId(shopId);
+        if (null == shopInfoDTO) {
+            log.error("[速卖通订单明细下载]  获取 token 失败: shopId={}", shopId);
+            String msg = StrUtil.format("[速卖通订单下载]  获取 token 失败: shopId={}", shopId);
+            throw new ServiceException(msg);
+        }
+        OrderRequest orderRequest = OrderRequest.builderByShopInfo(apiName, shopInfoDTO);
+        try {
+            return getOrderDetail(platformCode, orderRequest);
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

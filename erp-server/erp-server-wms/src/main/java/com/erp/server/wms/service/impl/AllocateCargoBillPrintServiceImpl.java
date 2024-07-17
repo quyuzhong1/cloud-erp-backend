@@ -55,7 +55,11 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         //根据拣货车编号查询
         List<WaveListEntity> pickingWaveList = waveListService.listByCarCode(businessCode);
         if(CollectionUtil.isEmpty(pickingWaveList)){
-            throw new ServiceException("拣货车编号错误");
+            if(businessCode.contains("JHBC")){
+                throw new ServiceException("拣货波次编号错误");
+            }else{
+                throw new ServiceException("拣货车编号错误");
+            }
         }
         //有拣货中的波次，直接返回
         WaveListEntity waveListEntity = pickingWaveList.stream().filter(v->v.getStatus().equals(WaveStatusEnum.PICK_ING.getCode())).findFirst().orElse(null);

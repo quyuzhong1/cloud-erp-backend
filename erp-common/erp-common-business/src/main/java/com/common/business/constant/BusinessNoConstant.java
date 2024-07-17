@@ -141,7 +141,6 @@ public interface BusinessNoConstant {
     //虚拟仓分货单
     String FH = "FH";
     String ZXRW = "ZXRW";
-
     String JHD = "JHD";
 
     //拣货车

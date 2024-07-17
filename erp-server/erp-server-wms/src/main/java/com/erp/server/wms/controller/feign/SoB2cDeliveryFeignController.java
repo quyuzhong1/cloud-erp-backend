@@ -1,14 +1,17 @@
 package com.erp.server.wms.controller.feign;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
@@ -142,8 +145,13 @@ public class SoB2cDeliveryFeignController extends BaseController {
      * @return String
      */
     @PostMapping("/dimensionalWeightPipeline")
-    public String dimensionalWeightPipeline(@RequestBody @Validated DimensionalWeightDTO dto) {
-        return soB2cDeliveryService.dimensionalWeightPipeline(dto);
+    public ApiResult<String> dimensionalWeightPipeline(@RequestBody @Validated DimensionalWeightDTO dto) {
+        try {
+            return soB2cDeliveryService.dimensionalWeightPipeline(dto);
+        }catch (Exception e){
+            log.error("流水线称重异常",e);
+            return ApiResult.error(StrUtil.format("系统异常:{}",e.getMessage()), CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode());
+        }
     }
 
     /**

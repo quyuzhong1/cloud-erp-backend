@@ -645,6 +645,39 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
+    public List<SoB2cDetailDTO.PropertyDTO> handlePropertyDTOList(SkuVO.PropertyDTO skuPropertyDTO) {
+        if(Objects.isNull(skuPropertyDTO)){
+            return new ArrayList<>();
+        }
+        List<SoB2cDetailDTO.PropertyDTO> list = new ArrayList<>();
+        if(skuPropertyDTO.getIsElectric()){
+            list.add(new SoB2cDetailDTO.PropertyDTO("电",skuPropertyDTO.getElectricName()));
+        }
+        if(skuPropertyDTO.getIsMagnetism()){
+            list.add(new SoB2cDetailDTO.PropertyDTO("磁",skuPropertyDTO.getMagnetismName()));
+        }
+        if(skuPropertyDTO.getIsLiquid()){
+            list.add(new SoB2cDetailDTO.PropertyDTO("液",skuPropertyDTO.getLiquidName()));
+        }
+        if(skuPropertyDTO.getIsWood()){
+            list.add(new SoB2cDetailDTO.PropertyDTO("木",skuPropertyDTO.getWoodName()));
+        }
+        if(skuPropertyDTO.getIsPowder()){
+            list.add(new SoB2cDetailDTO.PropertyDTO("粉",skuPropertyDTO.getPowderName()));
+        }
+        if(skuPropertyDTO.getIsPlaster()){
+            list.add(new SoB2cDetailDTO.PropertyDTO("膏",skuPropertyDTO.getPlasterName()));
+        }
+        if(skuPropertyDTO.getIsCuttingTool()){
+            list.add(new SoB2cDetailDTO.PropertyDTO("刀",skuPropertyDTO.getCuttingToolName()));
+        }
+        if(skuPropertyDTO.getIsOther()){
+            list.add(new SoB2cDetailDTO.PropertyDTO("其他",skuPropertyDTO.getOtherName()));
+        }
+        return list;
+    }
+
+    @Override
     public void updateWarehouse(SoB2cEntity entity, SoB2cDetailEntity detail, String warehouseId) {
         String soId = Objects.nonNull(entity) ? entity.getId() : null;
         String detailId = Objects.nonNull(detail) ? detail.getId() : null;
@@ -834,12 +867,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 //                detailEntity.setPlatformSkuNo("");
 //                detailEntity.setPlatformSpuNo("");
 //            }
-            // 手工单不记录平台SKU和平台SPU
-           if (!SoB2cSourcePlatformEnum.ENUM_THIRD_PLATFORM.getCode().equalsIgnoreCase(detailEntity.getSourcePlatform())) {
-               // 非平台下载的订单不记录SKU
-               detailEntity.setPlatformSkuNo("");
-               detailEntity.setPlatformSpuNo("");
-            }
 
             //操作日志
             if (StringUtils.isNotBlank(detailEntity.getId())) {

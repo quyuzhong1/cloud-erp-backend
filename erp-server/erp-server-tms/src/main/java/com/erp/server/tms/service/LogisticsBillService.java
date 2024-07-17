@@ -234,8 +234,6 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return List<LogisticsBillEntity>
      */
     List<LogisticsBillEntity> listBySoOutStockIdList(List<String> outstockIdList);
-
-    ApiResult<String> updateLogisticWeight(LogisticsBillDTO.UpdateWeight dto);
     /**
      * 根据物流跟踪单号或运单号查询物流单详情
      * @author will
@@ -244,4 +242,6 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return BaseDTO
      */
     LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(String logisticsCode);
+
+    ApiResult<String> updateLogisticWeight(LogisticsBillDTO.UpdateWeight dto);
 }

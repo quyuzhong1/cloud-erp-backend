@@ -80,7 +80,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
      * 拉去数据
      * @param dto
      */
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     @Override
     public void pullDataSave(RequestDTO dto) {
         log.warn("开始拉取马帮FBA发货单数据，拉取的条件：【{}】", JSONObject.toJSONString(dto));
@@ -170,7 +170,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         }
     }
 
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     @Override
     public void updateAndSaveDb(DeliveryEntity mongoDatum) {
         DmpFbaDeliveryEntity dmpDeliveryEntity = initDeliveryEntity(mongoDatum);

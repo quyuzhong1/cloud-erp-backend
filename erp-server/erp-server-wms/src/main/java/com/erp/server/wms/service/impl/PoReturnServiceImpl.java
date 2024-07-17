@@ -839,7 +839,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         });
 
         //发送异步任务
-        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGTH);
+        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
         DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override

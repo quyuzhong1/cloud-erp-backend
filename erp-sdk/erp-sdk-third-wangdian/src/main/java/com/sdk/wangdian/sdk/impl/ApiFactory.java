@@ -40,7 +40,12 @@ public class ApiFactory
 			}
 
 			Type returnType = method.getGenericReturnType();
-
+			if(returnType.getTypeName().equals(String.class.getName())) {
+				Class<?>[] parameterTypes = method.getParameterTypes();
+				if(parameterTypes != null && parameterTypes.length > 1 && parameterTypes[0].getTypeName().equals(String.class.getName())) {
+					return this.client.execute(api.value(), args[0].toString(), pager);
+				}
+			}
 			return this.client.execute(api.value(), args, pager, returnType);
 		}
 	}
@@ -50,4 +55,5 @@ public class ApiFactory
 	{
 		return (T) Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[] { iface }, new DynamicProxy(client));
 	}
+	
 }
