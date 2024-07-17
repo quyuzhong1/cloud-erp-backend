@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -544,6 +545,58 @@ public class SoB2cDeliveryDTO implements Serializable {
         private List<PrintPickingViewDTO> detailList;
     }
 
+
+    /**
+     * 打印配货单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AllocateCargoViewDTO {
+        /**
+         *发货单号
+         */
+        private String deliveryCode;
+        /**
+         *销售订单id
+         */
+        private String soId;
+        /**
+         * 产品id
+         */
+        private String skuId;
+        /**
+         * 产品编码
+         */
+        private String skuNo;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty;
+        /**
+         * 推荐仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            AllocateCargoViewDTO that = (AllocateCargoViewDTO) o;
+            return Objects.equals(deliveryCode, that.deliveryCode) && Objects.equals(soId, that.soId) && Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(warehouseLocation, that.warehouseLocation) && Objects.equals(isOutStock, that.isOutStock);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(deliveryCode, soId, skuId, skuNo, warehouseLocation, isOutStock);
+        }
+    }
+
+
     /**
      * 打印拣货单
      */
@@ -595,6 +648,11 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
+
 
         @Override
         public boolean equals(Object o) {
