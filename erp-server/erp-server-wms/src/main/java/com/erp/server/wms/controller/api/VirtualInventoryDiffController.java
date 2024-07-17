@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 虚拟库存差异表
@@ -86,5 +87,17 @@ public class VirtualInventoryDiffController extends BaseController {
     public ApiResult exportExcel(@RequestBody VirtualInventoryDiffDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = virtualInventoryDiffService.exportExcel(dto, response);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 一键调整查询
+     * @author will
+     * @date 2024/7/17 16:21
+     * @param dto 
+     * @return ApiResult<List<ListDetailQtyDTO>>
+     */
+    @PostMapping("/listDiffDetail")
+    public ApiResult<List<VirtualInventoryDiffDTO.ListDetailQtyDTO>> listDiffDetail(@RequestBody @Validated VirtualInventoryDiffDTO.SearchParamDetailDTO dto) {
+        return success(virtualInventoryDiffService.listDiffDetail(dto));
     }
 }
