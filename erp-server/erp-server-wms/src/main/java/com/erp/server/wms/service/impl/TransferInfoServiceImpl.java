@@ -1210,7 +1210,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //如果是已审核，反审核
             if (ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
                 try {
-                    this.disApprove(Arrays.asList(entity.getId()), Boolean.TRUE,Boolean.TRUE);
+                    this.disApprove(entity, Boolean.TRUE,Boolean.TRUE);
                 } catch (Exception e) {
                     throw new ServiceException(ApiError.TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS, entity.getCode());
                 }

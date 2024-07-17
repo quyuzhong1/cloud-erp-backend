@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -55,7 +56,6 @@ import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
-import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
@@ -65,9 +65,6 @@ import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DictBasicEnum;
-import com.erp.model.wms.enums.PackingTaskStatusEnum;
-import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -1232,11 +1229,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(transferInfoList)) {
             return;
         }
-        List<String> transferIdList = transferInfoList.stream().map(TransferInfoEntity::getId).collect(Collectors.toList());
-        Boolean isDisApprove = transferInfoService.disApprove(transferIdList, Boolean.TRUE,Boolean.FALSE);
-        if (!isDisApprove) {
-            throw new ServiceException("直接调拨单反审核失败");
+        for (TransferInfoEntity transferInfoEntity : transferInfoList) {
+            BatchResultDTO batchResultDTO = transferInfoService.disApprove(transferInfoEntity, Boolean.TRUE,Boolean.FALSE);
+            if (!batchResultDTO.getSuccess()) {
+                throw new ServiceException("直接调拨单反审核失败");
+            }
         }
+        List<String> transferIdList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
         Boolean isDelete = transferInfoService.delete(transferIdList);
         if (!isDelete) {
             throw new ServiceException("直接调拨单删除失败");
