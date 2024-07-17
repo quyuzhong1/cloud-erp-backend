@@ -68,5 +68,6 @@ public interface SoInfoFeign {
      * @date 2024/7/16 20:07
      * @param soParamList
      */
+    @PostMapping("feign/soInfo/updateFrozenQty")
     void updateFrozenQty(@RequestBody List<SoDetailDTO.UpdateFrozenQtyDTO> soParamList);
 }
