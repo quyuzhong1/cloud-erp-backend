@@ -221,7 +221,7 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * 箱规保存
      * @param dto
      */
-    void cartonSpecSave(WmsCartonSpecDTO.SpecSaveDTO dto);
+    ApiResult<String> cartonSpecSave(WmsCartonSpecDTO.SpecSaveDTO dto);
 
     PackingTaskEntity getBySourceCode(String sourceCode);
 

@@ -573,14 +573,6 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2c/updateSignShippedByDetailId")
     void updateSignShippedByDetailId(@RequestBody List<String> detailIds);
-    /**
-     * 根据数据类型集合查询
-     * @author will
-     * @date 2024/6/25 20:06
-     * @return SoB2cDataDTO
-     */
-    @PostMapping("/feign/soB2c/listSoB2cData")
-    SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO);
 
 
     /**
@@ -593,4 +585,13 @@ public interface SoB2cFeign {
     @GetMapping("/getSoOutStockByIdAndWarehouseId")
     SoOutstockDTO.GenerateB2cDTO getSoOutStockByIdAndWarehouseId(@RequestParam(value = "soId") String soId,
                                                                  @RequestParam(value = "warehouseId", required = false) String warehouseId);
+    /**
+     * 根据数据类型集合查询
+     * @author will
+     * @date 2024/6/25 20:06
+     * @return SoB2cDataDTO
+     */
+    @PostMapping("/feign/soB2c/listSoB2cData")
+    SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO);
+
 }

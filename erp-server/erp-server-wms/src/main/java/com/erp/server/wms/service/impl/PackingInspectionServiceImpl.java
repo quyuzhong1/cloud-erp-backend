@@ -324,19 +324,18 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "包装验货", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
 
-        if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-            // 调用第三方平台SDK标记发货(独立事务)
-            String businessDesc = "包装验货";
-            asyncService.asyncShipOrder(soB2cEntity.getId(),
-                    soB2cEntity.getCode(),
-                    soB2cEntity.getDictPlatform(),
-                    soB2cEntity.convertSubmitPlatformUniqueKey(),
-                    JSONUtil.toJsonStr(entity),
-                    businessDesc, false);
-        } else {
-            log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
-        }
-
+            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+                // 调用第三方平台SDK标记发货(独立事务)
+                String businessDesc = "包装验货";
+                asyncService.asyncShipOrder(soB2cEntity.getId(),
+                        soB2cEntity.getCode(),
+                        soB2cEntity.getDictPlatform(),
+                        soB2cEntity.convertSubmitPlatformUniqueKey(),
+                        JSONUtil.toJsonStr(entity),
+                        businessDesc, false);
+            } else {
+                log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+            }
         //将发货状态更新为已发货
         entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
         entity.setDeliveryTime(deliveryTime);

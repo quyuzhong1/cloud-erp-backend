@@ -33,9 +33,9 @@
         sbd.inspection_time as inspectionTime,
         sbd.weighing_time as weighingTime,
         sbd.platform_code as platformCode,
+        sbd.abnormal_cause as abnormalCause,
         sbl.code as logisticsCode,
-        sbl.track_no as trackCode,
-        sbd.abnormal_cause as abnormalCause
+        sbl.track_no as trackCode
         FROM so_b2c_delivery sbd
         LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
         left join so_b2c_logistics sbl on sbl.main_id = sbd.source_id and sbl.is_deleted = false

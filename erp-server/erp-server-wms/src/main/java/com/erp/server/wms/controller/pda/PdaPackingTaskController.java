@@ -225,9 +225,8 @@ public class PdaPackingTaskController extends BaseController {
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
     @PostMapping("/cartonSpecSave")
-    public ApiResult cartonSpecSave(@RequestBody @Validated WmsCartonSpecDTO.SpecSaveDTO dto) {
-        packingTaskService.cartonSpecSave(dto);
-        return success();
+    public ApiResult<String> cartonSpecSave(@RequestBody @Validated WmsCartonSpecDTO.SpecSaveDTO dto) {
+        return packingTaskService.cartonSpecSave(dto);
     }
 
     /**
@@ -253,7 +252,7 @@ public class PdaPackingTaskController extends BaseController {
     }
 
     /**
-     * 调整装箱保存
+     * 打印条码（外箱信息）
      * @Author zdy
      * @Date 2024/7/8 17:44
      * @param cartonId

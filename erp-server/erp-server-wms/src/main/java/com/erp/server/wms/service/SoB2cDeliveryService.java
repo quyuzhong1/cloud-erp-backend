@@ -220,6 +220,8 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
 
     /**
      * 手动标发(批量)
+     * @param ids
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2024/4/22 18:06
      **/
