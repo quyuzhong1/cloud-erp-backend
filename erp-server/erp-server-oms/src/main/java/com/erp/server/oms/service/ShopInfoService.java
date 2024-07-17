@@ -330,5 +330,10 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
 
-
+    /**
+     * 根据平台获取主店铺记录
+     * @param platform
+     * @return
+     */
+    ShopInfoEntity getMainShopByPlatform(String platform);
 }
