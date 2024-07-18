@@ -117,12 +117,6 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 					
 					dmpInputKingdeeApiInitRequest.setFieldKeys(parseObject.getString("fieldKeys"));
 				}
-			}else if(DmpBasicSystemCodeEnum.WDT.getCode().equals(dmpBasicSystemEntity.getCode())){
-				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputApiInitHandler.class);
-				DmpInputWdtApiInitRequest dmpInputWdtApiInitRequest = new DmpInputWdtApiInitRequest();
-				dmpInputApiInitRequest = dmpInputWdtApiInitRequest;
-				dmpInputWdtApiInitRequest.setRequestParam(extendJson);
-				dmpInputWdtApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
 			}else if(DmpBasicSystemCodeEnum.MABANG.getCode().equals(dmpBasicSystemEntity.getCode())){
 				String code = dmpCfgInputEntity.getCode();
 				if ("order".equals(code)) {
@@ -148,6 +142,11 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				dmpInputMabangApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
 
 
+			}else {
+				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputApiInitHandler.class);
+				dmpInputApiInitRequest = new DmpInputApiInitRequest();
+				dmpInputApiInitRequest.setRequestParam(extendJson);
+				dmpInputApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
 			}
 			
 			dmpInputApiInitRequest.setStartTime(startTime);
