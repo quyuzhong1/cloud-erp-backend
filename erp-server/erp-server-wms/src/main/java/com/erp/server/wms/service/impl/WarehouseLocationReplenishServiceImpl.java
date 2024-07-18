@@ -237,6 +237,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("is_deleted", false)
             );
             List<String> pickLocationCodeList = pickLocationList.stream().map(item -> item.getCode()).collect(Collectors.toList());
+            if(pickLocationCodeList.isEmpty()){
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION);
+            }
             List<InventoryEntity> pickInventoryList = inventoryService.list(new QueryWrapper<InventoryEntity>()
                     .eq("warehouse_id", dto.getWarehouseId())
                     .eq("sku_id", dto.getSkuId())

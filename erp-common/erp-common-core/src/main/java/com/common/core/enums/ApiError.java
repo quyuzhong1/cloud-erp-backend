@@ -1115,6 +1115,7 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
     ERROR_VW_INVENTORY_ERROR(92235,"虚拟仓【{}】库存不足"),
     ERROR_NOT_FOUND_WAREHOUSE_AREA(92238, "新增补货单时没有找到有效的库区"),
+    ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
 
 
     /**
