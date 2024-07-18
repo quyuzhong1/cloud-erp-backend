@@ -113,30 +113,46 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         if(CollectionUtils.isEmpty(existChannelList)) {
             return;
         }
-
-        String oldChannelMsg = "";
-        String newChannelMsg = "";
-        //店铺
+        Boolean isChange = Boolean.FALSE;
+        List<String> oldChannelMsg = new ArrayList<>();
+        List<String> newChannelMsg = new ArrayList<>();
+        //修改后数据
         List<ShopInfoEntity> shopList = FeignQuery.list(ShopInfoEntity.class);
         for (VirtualWarehouseChannelDTO.ChannelAddDTO channelAddDT : batchAddDTO.getChannelList()) {
-            String shopName = shopList.stream().filter(obj -> channelAddDT.getRelationList().contains(obj.getId())).map(ShopInfoEntity::getName)
+            String shopName = CollectionUtils.isEmpty(channelAddDT.getRelationList()) ? "" : shopList.stream().filter(obj -> channelAddDT.getRelationList().contains(obj.getId())).map(ShopInfoEntity::getName)
                     .distinct().collect(Collectors.joining(",")) ;
-            String msg = StrUtil.format("{},{};{};", PlatformDictEnum.getNameByCode(channelAddDT.getDictPlatform()), VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()), shopName);
-            oldChannelMsg = oldChannelMsg.concat(msg);
+            String msg;
+            if (StrUtil.isBlank(shopName)) {
+                msg = StrUtil.format("{},{}", PlatformDictEnum.getNameByCode(channelAddDT.getDictPlatform()), "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()));
+            } else {
+                msg = StrUtil.format("{},{}({})", PlatformDictEnum.getNameByCode(channelAddDT.getDictPlatform()), "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()), shopName);
+            }
+            oldChannelMsg.add(msg);
         }
-
+        //修改前数据
         Map<String, List<VirtualWarehouseChannelEntity>> map = existChannelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
         for (Map.Entry<String, List<VirtualWarehouseChannelEntity>> entry : map.entrySet()) {
             List<VirtualWarehouseChannelEntity> value = entry.getValue();
             List<String> relationIdList = value.stream().map(VirtualWarehouseChannelEntity::getRelationId).collect(Collectors.toList());
-            String shopName = shopList.stream().filter(obj -> relationIdList.contains(obj.getId())).map(ShopInfoEntity::getName)
+            String shopName = CollectionUtils.isEmpty(relationIdList) ? "" : shopList.stream().filter(obj -> relationIdList.contains(obj.getId())).map(ShopInfoEntity::getName)
                     .distinct().collect(Collectors.joining(",")) ;
-            String msg = StrUtil.format("{},{};{};", PlatformDictEnum.getNameByCode(value.get(0).getDictPlatform()), VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName);
-            newChannelMsg = newChannelMsg.concat(msg);
+            String msg ;
+            if (StrUtil.isBlank(shopName)) {
+                msg = StrUtil.format("{},{}", PlatformDictEnum.getNameByCode(value.get(0).getDictPlatform()), "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()));
+            } else {
+                msg = StrUtil.format("{},{}({})", PlatformDictEnum.getNameByCode(value.get(0).getDictPlatform()), "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName);
+            }
+            newChannelMsg.add(msg);
+            if (!oldChannelMsg.contains(msg)) {
+                isChange =  Boolean.TRUE;
+            }
         }
-        // 操作日志
-        String msg = StrUtil.format("关联渠道：从【{}】修改为【{}】",oldChannelMsg,newChannelMsg );
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑操作");
+        //size不一致或者有变更
+        if (oldChannelMsg.size() != newChannelMsg.size() || isChange) {
+            // 操作日志
+            String msg = StrUtil.format("关联渠道：从【{}】修改为【{}】",StrUtil.join(";",oldChannelMsg),StrUtil.join(";",newChannelMsg));
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑信息");
+        }
     }
 
     /**
