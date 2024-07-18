@@ -157,6 +157,8 @@
     <!-- 库存差异明细分页查询 -->
     <select id="diffDetailPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDetailQtyDTO">
         select
+            vi.sku_id as skuId,
+            vi.warehouse_id as warehouseId,
             vi.virtual_warehouse_id as virtualWarehouseId,
             COALESCE(sum(vi.qty),0) as virtualQty,
             (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
