@@ -986,9 +986,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             viewDTO.setShopId(wmsDeliveryPlanEntity.getShopId());
             viewDTO.setShopName(wmsDeliveryPlanEntity.getShopName());
             viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
-            viewDTO.setPlatformSpuNo(wmsDeliveryPlanDetailEntity.getPlatformSpu());
-            viewDTO.setFnSku(wmsDeliveryPlanDetailEntity.getPlatformFnSku());
-
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
