@@ -200,6 +200,7 @@ public class PdaPackingTaskController extends BaseController {
      * @param dto
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
+    @DataIdempotent(keyIdName = "dto.cartonId")
     @PostMapping("/adjustPackingSave")
     public ApiResult<String> adjustPackingSave(@RequestBody @Validated WmsCartonDTO.AdjustSaveDTO dto) {
         String code = packingTaskService.adjustPackingSave(dto);
@@ -224,6 +225,7 @@ public class PdaPackingTaskController extends BaseController {
      * @param dto
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
+    @DataIdempotent(keyIdName = "dto.specId")
     @PostMapping("/cartonSpecSave")
     public ApiResult<String> cartonSpecSave(@RequestBody @Validated WmsCartonSpecDTO.SpecSaveDTO dto) {
         return packingTaskService.cartonSpecSave(dto);
