@@ -409,7 +409,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 soB2cDeliveryService.updateStatus(Collections.singletonList(soB2cDelivery.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
                 // 生成波次和拣货中回滚库存
                 if (SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode().equals(soB2cDelivery.getStatus()) ||
-                        SoB2cDeliveryStatusEnum.PICKING.getCode().equals(soB2cDelivery.getStatus())) {
+                        SoB2cDeliveryStatusEnum.PICKING.getCode().equals(soB2cDelivery.getStatus()) ||
+                        SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(soB2cDelivery.getStatus())) {
                     soB2cDeliveryService.rollbackInventory(Collections.singletonList(soB2cDelivery.getId()));
                     //删除拣货单
                     pickingListsService.deleteBySourceId(Collections.singletonList(soB2cDelivery.getId()));
