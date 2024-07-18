@@ -507,9 +507,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         mqProducerService.sendNoticeMsg(noticeMsgInfoDTO);
     }
     @Override
-    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
+    public WmsCartonSpecDTO.ListPackingDTO listPacking(PackingTaskDTO.PackedDetailDTO packedDetailDTO) {
         WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
-        PackingTaskEntity packingTask = this.getById(id);
+        PackingTaskEntity packingTask = this.getById(packedDetailDTO.getTaskId());
         if (Objects.isNull(packingTask)){
             throw new ServiceException(ApiError.ERROR_92141);
         }
@@ -529,12 +529,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             listPackingDTO.setCode(firstMileDelivery.getCode());
         }
         //获取总箱数
-        List<WmsCartonSpecEntity> cartonSpecEntityList = wmsCartonSpecService.listByMainIds(Collections.singletonList(id));
+        List<WmsCartonSpecEntity> cartonSpecEntityList = wmsCartonSpecService.listByMainIds(Collections.singletonList(packedDetailDTO.getTaskId()));
         int boxQty = cartonSpecEntityList.stream().mapToInt(WmsCartonSpecEntity::getBoxQty).sum();
         listPackingDTO.setBoxQty(boxQty);
 
         //箱子明细信息
-        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(Collections.singletonList(id));
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(packedDetailDTO);
         buildPackingDetailTask(detailList);
         listPackingDTO.setDetailList(detailList);
         return listPackingDTO;
@@ -684,7 +684,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtils.isEmpty(dto.getIds())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = baseMapper.listPackingDetailBySkuId(dto.getIds());
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = baseMapper.listPackingDetailBySkuId(dto.getIds(), dto.getPermissionSql());
         if (CollectionUtils.isEmpty(listPackingDetailDTOS)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -1995,6 +1995,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     public PagingVO<PackingTaskDTO.PagingViewDTO> paging(PagingDTO<PackingTaskDTO.PagingParamDTO> dto) {
         Page<PackingTaskDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         PackingTaskDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
         IPage<PackingTaskDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
         //补充数据
         buildPackingTask(pageData.getRecords());

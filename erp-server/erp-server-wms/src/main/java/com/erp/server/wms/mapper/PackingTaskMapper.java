@@ -67,11 +67,11 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
 
     /**
      * 获取装箱清单
-     * @param taskIds
+     * @param params
      * @return
      */
-    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("taskIds") List<String> taskIds);
-    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailBySkuId(@Param("taskIds") List<String> taskIds);
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("params") PackingTaskDTO.PackedDetailDTO packedDetailDTO);
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailBySkuId(@Param("taskIds") List<String> taskIds, @Param("permissionSql") String permissionSql);
 
     /**
      * 从历史装箱数据补充装箱任务和装箱详情
