@@ -322,14 +322,20 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             // 如果字符串为空或只有一个字符，直接返回原字符串
             return str;
         }
-        if (str.length() <= 1){
-            return "*";
-        }
         StringBuilder sb = new StringBuilder();
-        // 添加第一个字符
-        sb.append(str.charAt(0));
+        if (str.length() <= 3){
+            // 添加第一个字符
+            sb.append(str.charAt(0));
+            // 从第二个字符开始，全部替换为'*'
+            for (int i = 1; i < str.length(); i++) {
+                sb.append('*');
+            }
+            return sb.toString();
+        }
+        // 添加前三个字符
+        sb.append(str, 0, 3); // 添加前缀
         // 从第二个字符开始，全部替换为'*'
-        for (int i = 1; i < str.length(); i++) {
+        for (int i = 3; i < str.length(); i++) {
             sb.append('*');
         }
         // 将StringBuilder转换回String
