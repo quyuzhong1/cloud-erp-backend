@@ -13,6 +13,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -221,9 +222,12 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("warehouse_id", dto.getWarehouseId())
                     .eq("type", "area")
                     .eq("area_type", "pickingArea")
-                    .eq("is_deleted", false)
+                    .eq("disabled", false)
             );
             List<String> pickAreaIds = pickAreaList.stream().map(item -> item.getId()).collect(Collectors.toList());
+            if(pickAreaIds.isEmpty()){
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_AREA);
+            }
 
             //推荐补货仓位
             List<WarehouseLocationEntity> pickLocationList = warehouseLocationService.list(new QueryWrapper<WarehouseLocationEntity>()
