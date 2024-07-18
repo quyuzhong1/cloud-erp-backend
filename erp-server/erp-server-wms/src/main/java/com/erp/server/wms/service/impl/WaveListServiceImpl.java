@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -344,6 +345,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Override
     public void cleanException(String deliveryId) {
         WaveListDetailEntity detail = waveListDetailService.getOne(Wrappers.<WaveListDetailEntity>lambdaQuery().eq(WaveListDetailEntity::getDeliveryId, deliveryId));
+        if (ObjectUtil.isEmpty(detail)) {
+            return;
+        }
         List<WaveListDetailEntity> detailList = waveListDetailService.listByMainId(detail.getMainId());
         List<String> deliveryIds = detailList.stream().map(WaveListDetailEntity::getDeliveryId).filter(v -> !deliveryId.equals(v)).collect(Collectors.toList());
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(deliveryIds);

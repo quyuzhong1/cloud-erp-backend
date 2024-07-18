@@ -34,7 +34,7 @@ public class TongYouService {
      */
     public TongYouCreateOrder createOrder(TongYouCreateOrderRequest request,Map<String, String> authMap){
         log.info("==========TongYouService.createOrder==========start");
-        log.info("authMap:{}, orderRequest:{}",authMap, request);
+        log.warn("authMap:{}, orderRequest:{}",authMap, request);
         TongYouSignDTO tongYouSignDTO = TongYouSignDTO.builder()
                 .logisticsId(request.getLogisticsId())
                 .orderNo(request.getOrderNo())
@@ -52,7 +52,7 @@ public class TongYouService {
         String sign = TongYouUtils.getCreateOrderSign(tongYouSignDTO,authMap.get("clientSecret"));
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
         String response = TongYouUtils.sendPost(TongYouConstants.METHOD_CREATE_ORDER,paramsMap,sign,authMap.get("clientSecret"));
-        log.info("下单完成：{}",JSONObject.toJSONString(response));
+        log.warn("下单完成：{}",JSONObject.toJSONString(response));
         return JSONObject.parseObject(response,TongYouCreateOrder.class);
     }
 

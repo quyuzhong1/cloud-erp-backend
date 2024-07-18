@@ -952,16 +952,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         List<FirstMileDeliveryEntity> entities = firstMileDeliveryService.listBySourceIds(ids);
         boolean invalidStatus = entities.stream().anyMatch(FirstMileDeliveryEntity::getInvalidStatus);
-        if (CollectionUtils.isNotEmpty(entities) && Boolean.TRUE.equals(invalidStatus)) {
+        if (CollectionUtils.isNotEmpty(entities) && Boolean.FALSE.equals(invalidStatus)) {
             throw new ServiceException(ApiError.ERROR_99104);
         }
 
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-        Map<String, Set<String>> sourceIdByType = list.stream()
-                .collect(Collectors.groupingBy(RequisitionApplicationDTO.GenerateDeliverViewDTO::getType, Collectors.mapping(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId, Collectors.toSet())));
-        Set<String> sourIds = sourceIdByType.get(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode());
+        List<String> sourIds = list.stream()
+                .map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getDeliveryPlanId)
+                .collect(Collectors.toList());
         List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
         List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailEntities = wmsDeliveryPlanDetailService.listByMainIds(new ArrayList<>(sourIds));
         //查询skuId产品信息
@@ -969,11 +969,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : list) {
             WmsDeliveryPlanEntity wmsDeliveryPlanEntity = wmsDeliveryPlanEntities.stream()
-                    .filter(v -> v.getId().equals(viewDTO.getSourceId()))
+                    .filter(v -> v.getId().equals(viewDTO.getDeliveryPlanId()))
                     .findFirst()
                     .orElse(new WmsDeliveryPlanEntity());
             WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity = wmsDeliveryPlanDetailEntities.stream()
-                    .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
+                    .filter(v -> v.getId().equals(viewDTO.getDeliveryPlanDetailId()))
                     .findFirst()
                     .orElse(new WmsDeliveryPlanDetailEntity());
             viewDTO.setShopId(wmsDeliveryPlanEntity.getShopId());
