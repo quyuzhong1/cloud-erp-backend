@@ -62,19 +62,11 @@ public class WarehouseLocationReplenishJob {
         //即时库存数据
         List<String> warehouseIds = list.stream().map(item -> item.getWarehouseId()).distinct().collect(Collectors.toList());
         List<String> skuIds = list.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
-        List<String> warehouseLocations = list.stream().map(item -> item.getWarehouseLocation()).distinct().collect(Collectors.toList());
-        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
-        searchParamDTO.setWarehouseIdList(warehouseIds);
-        searchParamDTO.setSkuIdList(skuIds);
-        List<InventoryDTO.PagingViewDTO> inventoryList = new ArrayList<>();
-        Long count = inventoryMapper.countByLocation();
-        IPage<InventoryDTO.PagingViewDTO> page1 = inventoryMapper.pageByLocation(new Page(1, count / 3), searchParamDTO, warehouseLocations);
-        IPage<InventoryDTO.PagingViewDTO> page2 = inventoryMapper.pageByLocation(new Page(2, count / 3), searchParamDTO, warehouseLocations);
-        IPage<InventoryDTO.PagingViewDTO> page3 = inventoryMapper.pageByLocation(new Page(3, count / 3), searchParamDTO, warehouseLocations);
-        inventoryList.addAll(page1.getRecords());
-        inventoryList.addAll(page2.getRecords());
-        inventoryList.addAll(page3.getRecords());
-//        List<InventoryDTO.PagingViewDTO> inventoryList = inventoryMapper.exportByLocation(searchParamDTO, warehouseLocations);
+//        List<String> warehouseLocations = list.stream().map(item -> item.getWarehouseLocation()).distinct().collect(Collectors.toList());
+//        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
+//        searchParamDTO.setWarehouseIdList(warehouseIds);
+//        searchParamDTO.setSkuIdList(skuIds);
+        List<InventoryDTO.PagingViewDTO> inventoryList = inventoryMapper.exportByLocation(new InventoryDTO.SearchParamDTO(), null);
 
         Map<String, InventoryDTO.PagingViewDTO> inventoryMap = inventoryList.stream()
                 .collect(Collectors.toMap(item1 -> item1.getWarehouseId() + "#" + item1.getWarehouseLocation() + "#" + item1.getSkuId(), item2 -> item2, (o1, o2) -> o2));
