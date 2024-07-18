@@ -103,4 +103,10 @@ public class PickingListsController extends BaseController {
     public void export(@RequestBody @Validated PickingListsDTO.ExportDTO dto, HttpServletResponse response) {
         pickingListsService.export(dto, response);
     }
+
+
+    @GetMapping("/init")
+    public void initPicking(){
+        pickingListsService.init();
+    }
 }
