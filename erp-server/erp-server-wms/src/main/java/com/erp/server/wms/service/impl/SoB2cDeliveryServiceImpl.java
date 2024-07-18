@@ -1021,7 +1021,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //取消发货虚拟仓库存增加可用
         addUsableVirtualInventory (deliveryEntityList);
-        virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //回滚实体仓库存
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
@@ -1030,12 +1029,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<Pair<String, String>> addPairList = deliveryEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("发货单【%s】取消发货", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), addPairList, "取消发货");
     }
-    
+
     /**
      * 添加可用库存
      * @author will
      * @date 2024/7/17 12:08
-     * @param deliveryEntityList 
+     * @param deliveryEntityList
      */
     private  void addUsableVirtualInventory (List<SoB2cDeliveryEntity> deliveryEntityList) {
         List<String> mainIdList = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
@@ -1043,7 +1042,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
             throw new ServiceException("为找到发货单明细");
         }
-        List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
+        //已发货订单，直接添加可用
+        List<VirtualInventoryStockDTO.OutInStockDTO> shippedParamList = new ArrayList<>();
+        //未发货订单，冻结转可用
+        List<VirtualInventoryStockDTO.OutInStockDTO> unShippedparamList = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
 
             SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
@@ -1065,19 +1067,28 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 continue;
             }
             outInStockDTO.setVirtualWarehouseId(detailEntity.getVirtualWarehouseId());
-            paramList.add(outInStockDTO);
+
+            if (StrUtil.equals(entity.getStatus(),SoB2cDeliveryStatusEnum.SHIPPED.getCode())) {
+                shippedParamList.add(outInStockDTO);
+            } else {
+                unShippedparamList.add(outInStockDTO);
+            }
         }
-        //无虚拟仓库不扣虚拟库存
-        if (CollectionUtils.isEmpty(paramList)) {
-            return;
-        }
-        //减少冻结
         VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
-        dto.setParamList(paramList);
-        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
-        //更新库存
-        virtualInventoryTransCoreService.approve(dto);
-        
+        //已发货货退回库存
+        if (CollectionUtils.isNotEmpty(shippedParamList)) {
+            dto.setParamList(shippedParamList);
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
+            //更新库存
+            virtualInventoryTransCoreService.approve(dto);
+        }
+        //未发货退回库存
+        if (CollectionUtils.isNotEmpty(unShippedparamList)) {
+            dto.setParamList(unShippedparamList);
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY_CANCEL.getCode());
+            //更新库存
+            virtualInventoryTransCoreService.approve(dto);
+        }
     }
 
     @Override
