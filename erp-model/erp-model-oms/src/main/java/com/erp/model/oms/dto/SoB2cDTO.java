@@ -874,6 +874,11 @@ public class SoB2cDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
+         * 付款状态（后台拆单使用）
+         */
+        private String payStatus;
+
+        /**
          * 单据日期
          */
         private LocalDate billDate;
