@@ -173,5 +173,11 @@ public class PackingTaskDetailDTO implements Serializable {
         private BigDecimal grossWeight;
         private String packingUserId;
         private String packingUserName;
+        private LocalDateTime createTime;
+        private LocalDateTime updateTime;
+        private String createUserId;
+        private String createUserName;
+        private String updateUserId;
+        private String updateUserName;
     }
 }
