@@ -140,6 +140,14 @@ public class VirtualInventoryDiffDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDetailQtyDTO {
         /**
+         * SKU【可排序】
+         */
+        private String skuId;
+        /**
+         * 实体仓库【可排序】
+         */
+        private String warehouseId;
+        /**
          * 虚拟仓库【可排序】
          */
         private String virtualWarehouseId;
