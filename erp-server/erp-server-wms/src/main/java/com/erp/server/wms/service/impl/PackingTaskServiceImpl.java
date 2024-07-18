@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -1635,7 +1636,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.firstMileDeliveryDetailToPackingTaskDetail(detailEntityList);
                 taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
                 //新增任务明细
-                packingTaskDetailService.saveBatch(taskDetailList);
+                if(taskDetailList.size() > 5){
+                    List<List<PackingTaskDetailEntity>> partition = ListUtil.partition(taskDetailList, 5);
+                    for (List<PackingTaskDetailEntity> taskDetailEntityList : partition) {
+                        packingTaskDetailService.saveBatch(taskDetailEntityList);
+                    }
+                }else {
+                    packingTaskDetailService.saveBatch(taskDetailList);
+                }
                 //新增装箱详情
                 List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList = sourceMap.get(firstMileDeliveryEntity.getId());
                 if (CollectionUtils.isNotEmpty(cartonDTOList)){
@@ -1664,7 +1672,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.b2bDeliveryDetailToPackingTaskDetail(detailEntityList);
                 taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
                 //新增任务明细
-                packingTaskDetailService.saveBatch(taskDetailList);
+                if (taskDetailList.size() > 5){
+                    List<List<PackingTaskDetailEntity>> partition = ListUtil.partition(taskDetailList, 5);
+                    for (List<PackingTaskDetailEntity> taskDetailEntityList : partition) {
+                        packingTaskDetailService.saveBatch(taskDetailEntityList);
+                    }
+                }else {
+                    packingTaskDetailService.saveBatch(taskDetailList);
+                }
                 //新增装箱详情
                 List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList = sourceMap.get(soDeliveryNoticeEntity.getId());
                 if (CollectionUtils.isNotEmpty(cartonDTOList)){
