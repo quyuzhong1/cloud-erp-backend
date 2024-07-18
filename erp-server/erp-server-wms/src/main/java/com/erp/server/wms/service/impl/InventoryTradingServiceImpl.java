@@ -4,9 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.InventoryClosedRecordEnum;
 import com.common.business.utils.RedisUtil;
@@ -125,8 +123,8 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      */
     private void checkHasApproved(InventoryTransactionDTO transactionDTO) {
         TransactionFlowEntity transactionFlow;
-        QueryWrapper<TransactionFlowEntity> wrapper = new QueryWrapper<>();
-        wrapper.lambda().eq(TransactionFlowEntity::getSourceType, transactionDTO.getSourceType())
+        LambdaQueryWrapper<TransactionFlowEntity> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TransactionFlowEntity::getSourceType, transactionDTO.getSourceType())
                 .eq(TransactionFlowEntity::getSourceId, transactionDTO.getSourceId())
                 .eq(TransactionFlowEntity::getIsUnapproved, false)
                 .select(TransactionFlowEntity::getId)
@@ -389,6 +387,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         if(null == inventoryEntity) {
             inventoryEntity=new InventoryEntity();
             inventoryEntity.setSkuId(transactionDTO.getSkuId());
+            inventoryEntity.setSkuNo(transactionDTO.getSkuNo());
             inventoryEntity.setOrgId(transactionDTO.getOrgId());
             inventoryEntity.setWarehouseId(transactionDTO.getWarehouseId());
             inventoryEntity.setWarehouseLocation(transactionDTO.getWarehouseLocation());
@@ -402,9 +401,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             inventoryEntity.setUpdateUserName(transactionDTO.getUserName());
             inventoryService.save(inventoryEntity);
         }else{
-            UpdateWrapper<InventoryEntity> wrapper = new UpdateWrapper<>();
+            LambdaUpdateWrapper<InventoryEntity> wrapper = new LambdaUpdateWrapper<>();
             wrapper.setSql("qty = qty + " +transactionDTO.getQty())
-                    .lambda()
+                    .set(InventoryEntity::getSkuNo, transactionDTO.getSkuNo())
                     .set(InventoryEntity::getUpdateTime, LocalDateTime.now())
                     .set(InventoryEntity::getUpdateUserId, transactionDTO.getUserId())
                     .set(InventoryEntity::getUpdateUserName, transactionDTO.getUserName())
@@ -467,9 +466,8 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             inventoryHisService.save(inventoryHis);
         }else {
             // 更新当天历史库存
-            UpdateWrapper<InventoryHisEntity> wrapper = new UpdateWrapper<>();
+            LambdaUpdateWrapper<InventoryHisEntity> wrapper = new LambdaUpdateWrapper<>();
             wrapper.setSql("qty = qty + " + transactionDTO.getQty())
-                    .lambda()
                     .set(InventoryHisEntity::getUpdateTime, LocalDateTime.now())
                     .set(InventoryHisEntity::getUpdateUserId, transactionDTO.getUserId())
                     .set(InventoryHisEntity::getUpdateUserName, transactionDTO.getUserName())
