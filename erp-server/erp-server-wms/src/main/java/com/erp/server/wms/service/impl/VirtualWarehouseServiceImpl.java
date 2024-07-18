@@ -16,11 +16,13 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -108,10 +110,50 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         virtualWarehouseChannelService.batchAdd(bindChannel(addDTO.getChannelList(), virtualWarehouseEntity.getId()));
         //新增关联仓库
         virtualWarehouseRelationService.batchAdd(bindRelation(addDTO.getWarehouseIdList(), virtualWarehouseEntity.getId()));
+
+        //外部仓日志
+        addThirdMappingOperateLog(addDTO.getThirdMappingList(),virtualWarehouseEntity);
         //新增关联外部仓
         dmpThirdMappingFeign.add(bindThirdMapping(addDTO.getThirdMappingList(), virtualWarehouseEntity));
 
         return new BaseResultDTO.AddDTO(virtualWarehouseEntity.getId(), code);
+    }
+
+    /**
+     * 关联外部参日志
+     * @author will
+     * @date 2024/7/18 16:43
+     * @param thirdMappingList
+     * @param virtualWarehouseEntity
+     */
+    private void addThirdMappingOperateLog (List<ThirdMappingDTO.AddDTO> thirdMappingList,VirtualWarehouseEntity virtualWarehouseEntity) {
+        //更新数据
+        List<String> thirdIdList = thirdMappingList.stream().map(ThirdMappingDTO.AddDTO::getThirdId).distinct().collect(Collectors.toList());
+        List<ThirdWarehouseEntity> thirdWarehouseList = CollectionUtils.isEmpty(thirdIdList) ?
+                new ArrayList<>() : FeignQuery.create(ThirdWarehouseEntity.class).in(ThirdWarehouseEntity::getWarehouseId).list();
+
+        //虚拟仓关联第三方信息
+        List<ThirdMappingEntity> oldList = dmpThirdMappingFeign.getListBySysIds(Arrays.asList(virtualWarehouseEntity.getId()));
+
+        //修改前信息
+        Boolean isChange = Boolean.FALSE;
+        List<String> oldChannelMsg = oldList.stream().map(obj -> StrUtil.format("{}-{}", ThirdSysTypeEnum.getNameByCode(obj.getThirdSysType()), obj.getThirdName())).collect(Collectors.toList());
+        //修改后信息
+        List<String> newChannelMsg = new ArrayList<>();
+        for (ThirdMappingDTO.AddDTO addDTO : thirdMappingList) {
+            //拼接日志
+            String thirdWarehouseName = thirdWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), addDTO.getThirdId())).map(ThirdWarehouseEntity::getName).findFirst().orElse("");
+            String msg = StrUtil.format("{}-{};",ThirdSysTypeEnum.getNameByCode(addDTO.getThirdSysType()),thirdWarehouseName);
+            newChannelMsg.add(msg);
+            if (!oldChannelMsg.contains(msg)) {
+                isChange =  Boolean.TRUE;
+            }
+        }
+        //size不一致或者有变更
+        if (oldChannelMsg.size() != newChannelMsg.size() || isChange) {
+            String msg = StrUtil.format("关联仓库：从【{}】修改为【{}】",StrUtil.join(";",oldChannelMsg),StrUtil.join(";",newChannelMsg));
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), "编辑信息");
+        }
     }
 
     /**
@@ -226,7 +268,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         }
         // 记录主单操作日志
         log.info("编辑 开始记录虚拟仓日志数据，单号：【{}】", virtualWarehouseEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseEntity.getCode(), "虚拟仓");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "虚拟仓");
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), msg);
         //绑定信息
         //新增关联渠道

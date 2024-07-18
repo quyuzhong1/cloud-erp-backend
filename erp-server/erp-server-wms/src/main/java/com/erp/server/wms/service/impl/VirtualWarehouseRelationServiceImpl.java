@@ -193,9 +193,12 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
 
         String newWarehouseMsg = warehouseList.stream().filter(obj -> warehouseIdList.contains(obj.getId()))
                 .map(WarehouseEntity::getName).distinct().collect(Collectors.joining(","));
+        if (StrUtil.equals(oldWarehouseMsg,newWarehouseMsg)) {
+            return;
+        }
         // 操作日志
         String msg = StrUtil.format("关联仓库：从【{}】修改为【{}】",oldWarehouseMsg,newWarehouseMsg );
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑信息");
     }
 
     @Override
