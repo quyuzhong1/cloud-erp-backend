@@ -15,7 +15,6 @@ import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.ObjectError;
@@ -40,7 +39,29 @@ import java.util.Objects;
  * @Author: zhangchunlin
  */
 @Slf4j
-@RestControllerAdvice()
+@RestControllerAdvice(basePackages = {
+        "com.erp.server.scm.controller.api",
+        "com.erp.server.wms.controller.api",
+        "com.erp.server.workflow.controller.api",
+        "com.erp.server.auth.controller.api",
+        "com.erp.server.bi.controller.api",
+        "com.erp.server.plm.controller.api",
+        "com.erp.server.sys.controller.api",
+        "com.erp.server.oms.controller.api",
+        "com.erp.server.tms.controller.api",
+        "com.erp.server.srm.controller.api",
+        "com.erp.server.dmp.controller.api",
+
+        "com.erp.server.scm.controller.pda",
+        "com.erp.server.wms.controller.pda",
+        "com.erp.server.workflow.controller.pda",
+        "com.erp.server.auth.controller.pda",
+        "com.erp.server.bi.controller.pda",
+        "com.erp.server.plm.controller.pda",
+        "com.erp.server.sys.controller.pda",
+        "com.erp.server.oms.controller.pda"
+
+})
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({ServiceException.class})
