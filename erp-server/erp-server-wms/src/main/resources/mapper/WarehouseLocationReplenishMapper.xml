@@ -27,7 +27,7 @@
     <select id="paging" resultType="com.erp.model.wms.entity.WarehouseLocationReplenishEntity">
         select id,
                sku_id,
-               sku_no,
+               sku_no as skuNo,
                source_id,
                source_code,
                source_type,
@@ -39,8 +39,8 @@
                to_warehouse_area,
                to_warehouse_location,
                suggest_qty,
-               create_user_name,
-               create_time,
+               create_user_name as createUserName,
+               create_time as createTime,
                update_user_name,
                update_time,
                handle_user_id,
@@ -51,7 +51,12 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
-        order by create_time desc
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseLocationReplenishEntity">
         select id,
