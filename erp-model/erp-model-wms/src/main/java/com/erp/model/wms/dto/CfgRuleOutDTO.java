@@ -15,6 +15,7 @@ import org.apache.xpath.operations.Bool;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.validation.Valid;
@@ -447,37 +448,23 @@ public class CfgRuleOutDTO implements Serializable {
     @Data
     public static class TransferDTO{
         /**
-         * 发货类型：/wms/dict/drop/down?type=transferDeliveryType
+         * 类型下拉：/wms/common/enumDropDown?type=StockOutTransferType
          */
         private String type;
 
         /**
          * 发货类型名称
          */
-        private String typeName;
+//        private String typeName = "";
 
         /**
          * 规则列表
          * 仓库：/wms/warehouse/list
          * 国家：/sys/dict/country/list
-         * field下拉：/wms/dict/drop/down?type=transferConditionField
-         * field下拉：/wms/common/enumDropDown?type=StockOutTransferType
+         * field下拉：/wms/common/enumDropDown?type=StockOutTransferField
          * compare下拉：/wms/common/enumDropDown?type=StockOutTransferCompare
          */
         private List<ConditionElement> conditionList;
-    }
-
-    @Data
-    public static class TransferConditionDTO{
-        private String leftBracket;
-        @NotBlank(message = "条件的字段不能为空")
-        private String field;
-        @NotBlank(message = "比较符不能为空")
-        private String compare;
-        private String value;
-        private String rightBracket;
-        private String logic;
-        private String name;
     }
 
     /**

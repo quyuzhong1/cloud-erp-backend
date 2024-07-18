@@ -23,6 +23,7 @@ import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
+import com.erp.model.wms.enums.StockOutTransferTypeEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
 import com.erp.server.wms.service.CfgRuleOutService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -393,20 +394,23 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
 
     @Override
     public Boolean matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto) {
+        Map<String, Object> detailMap = new HashMap<>();
+        detailMap.put("type", dto.getType());
+        detailMap.put("receiveCountry", dto.getReceiveCountry());
+        detailMap.put("targetWarehouse", dto.getTargetWarehouse());
         Map<String, Object> map = new HashMap<>();
+        map.put("detailList", Collections.singletonList(detailMap));
         map.put("type", dto.getType());
-        if(StringUtils.isNotBlank(dto.getReceiveCountry())){
-            map.put("receiveCountry", dto.getReceiveCountry());
-        }
-        if(StringUtils.isNotBlank(dto.getTargetWarehouse())){
-            map.put("targetWarehouse", dto.getTargetWarehouse());
-        }
+        map.put("receiveCountry", dto.getReceiveCountry());
+        map.put("targetWarehouse", dto.getTargetWarehouse());
 
         List<CfgRuleOutEntity> cfgRuleOutList = this.baseMapper.selectList(new LambdaQueryWrapper<CfgRuleOutEntity>().eq(CfgRuleOutEntity::getType, CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode()));
         for (CfgRuleOutEntity entity : cfgRuleOutList) {
             Map<String, Object> ruleContent = entity.getRuleContent();
             CfgRuleOutDTO.TransferDTO transferDTO = BeanUtil.toBean(ruleContent, CfgRuleOutDTO.TransferDTO.class);
             List<ConditionElement> conditionList = transferDTO.getConditionList();
+            ConditionElement typeConditionElement = new ConditionElement("(", "type", "==", transferDTO.getType(), ")", "and", "String");
+            conditionList.add(0, typeConditionElement);
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionList, map);
             if(matchResult){
                 return Boolean.TRUE;
