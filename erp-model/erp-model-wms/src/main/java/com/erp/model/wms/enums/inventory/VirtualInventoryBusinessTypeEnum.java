@@ -53,6 +53,11 @@ public enum VirtualInventoryBusinessTypeEnum {
      */
     SO_INFO_UNLOCK("so_info_unlock", "09","B2B销售订单"),
 
+    /**
+     * b2c发货单取消发货，减冻结，加可用
+     */
+    SO_B2C_DELIVERY_CANCEL("so_b2c_delivery_cancel", "10","b2c发货单"),
+
     ;
 
     private String code;
