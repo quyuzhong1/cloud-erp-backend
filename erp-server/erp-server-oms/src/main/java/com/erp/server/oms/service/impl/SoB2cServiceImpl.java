@@ -331,6 +331,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private VirtualInventoryFeign virtualInventoryFeign;
 
+    @Resource
+    private CfgRuleOutFeign cfgRuleOutFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -5362,8 +5364,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        //判断是否中转 TODO
-        Boolean isTransit = Boolean.TRUE;
+        //是否中转
+        CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
+        ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
+        ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
+        Boolean isTransit = cfgRuleOutFeign.matchTransferRule(ruleDTO);
         if (isTransit) {
             CfgSettingEntity cfgSettingEntity = cfgSettingFeign.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
             if (ObjectUtil.isEmpty(cfgSettingEntity)) {

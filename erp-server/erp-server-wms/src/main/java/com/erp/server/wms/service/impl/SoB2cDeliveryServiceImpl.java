@@ -1765,8 +1765,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         CfgRuleOutDTO.MatchTransferRuleDTO dto = new CfgRuleOutDTO.MatchTransferRuleDTO();
         dto.setType(StockOutTransferTypeEnum.B2C.getCode());
         dto.setReceiveCountry(receiverList.get(0).getCountry());
-        Boolean isTransfer = cfgRuleOutService.matchTransferRule(dto);
-        if (isTransfer) {
+        Boolean isTransit = cfgRuleOutService.matchTransferRule(dto);
+        if (isTransit) {
             //生成直接调拨单
             generateTransferInfo(entity);
         }
