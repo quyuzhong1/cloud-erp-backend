@@ -986,11 +986,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //自动出库
         if (isDeviation && entity.getIsAutoOut()) {
-            try {
-                packingInspectionService.soB2cDeliveryAutoOut(soB2cEntity,entity);
-            } catch (Exception e) {
-                log.error("发货单【{}】自动出库失败",entity.getCode());
-            }
+            asyncService.soB2cDeliveryAutoOut(soB2cEntity,entity);
         }
         //更新图片
         Class<SoB2cDeliveryEntity> aClass = SoB2cDeliveryEntity.class;

@@ -18,12 +18,4 @@ public interface PackingInspectionService {
 
     void reset(String id);
 
-    /**
-     * 自动出库
-     * @author will
-     * @date 2024/6/28 16:40
-     * @param soB2cEntity
-     * @param entity
-     */
-    void soB2cDeliveryAutoOut (SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity);
 }
