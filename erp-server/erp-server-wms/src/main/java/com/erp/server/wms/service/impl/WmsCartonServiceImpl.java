@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
@@ -196,7 +197,15 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
                     detailEntityList.forEach(wmsCartonDetailEntity -> {
                         wmsCartonDetailEntity.setMainId(wmsCartonEntity.getId());
                     });
-                    wmsCartonDetailService.saveBatch(detailEntityList);
+                    if (detailEntityList.size() > 5 ){
+                        List<List<WmsCartonDetailEntity>> partition = ListUtil.partition(detailEntityList, 5);
+                        for (List<WmsCartonDetailEntity> cartonDetailEntityList : partition) {
+                            wmsCartonDetailService.saveBatch(cartonDetailEntityList);
+                        }
+                    }else {
+                        wmsCartonDetailService.saveBatch(detailEntityList);
+                    }
+
                 }
             }
         }
