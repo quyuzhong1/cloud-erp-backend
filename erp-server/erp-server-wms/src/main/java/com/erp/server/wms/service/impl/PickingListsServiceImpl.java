@@ -301,6 +301,25 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         if (sourceCodes.size() > 1){
             throw new ServiceException("来源单号不同不能同时打印");
         }
+        String sourceCode;
+        PickingListsEntity pickingListsEntity = pickingLists.get(0);
+        //重置来源单号
+        if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(pickingListsEntity.getSourceType())){
+            sourceCode = sourceCodes.get(0);
+        }else if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(pickingListsEntity.getSourceType())){
+            //picking_lists.source_id = first_mile_delivery.source_id
+            List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listBySourceIds(Collections.singletonList(pickingListsEntity.getSourceId()));
+            if (!CollectionUtils.isEmpty(firstMileDeliveryEntities)){
+                sourceCode = firstMileDeliveryEntities.get(0).getCode();
+            } else {
+                sourceCode = null;
+            }
+        } else {
+            sourceCode = null;
+        }
+        if (StrUtil.isBlank(sourceCode)){
+            throw new ServiceException("来源单号未找到");
+        }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
@@ -322,7 +341,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     PickingListsDTO.PrintView view = v.get(0);
                     int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintView::getPickingQty).sum();
                     view.setPickingQty(totalQuantity);
-                    view.setSourceCode(sourceCodes.get(0));
+                    view.setSourceCode(sourceCode);
                     return view;
                 }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintView::getWarehouseId)
                 .thenComparing(PickingListsDTO.PrintView::getWarehouseLocation)
