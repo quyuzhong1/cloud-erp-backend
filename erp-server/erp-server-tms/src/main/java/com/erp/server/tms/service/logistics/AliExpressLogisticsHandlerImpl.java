@@ -269,18 +269,61 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //隐藏街道地址从后向前8位字符
         String streetAddress = address.getStreetAddress();
         address.setStreetAddress(maskLastEightChars(streetAddress));
+        //email：隐藏@前的 1/3 字符，至少一个字符
+        String email = address.getEmail();
+        address.setEmail(obfuscateEmail(email));
         return address;
     }
 
+    public static String obfuscateEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return null; // 如果邮箱无效，直接返回原字符串
+        }
+
+        String[] parts = email.split("@", 2); // 分割邮箱为用户名和域名两部分
+        String username = parts[0];
+        String domain = parts[1];
+
+        // 计算要隐藏的字符数，至少隐藏一个字符
+        int lengthToHide = Math.max(1, username.length() / 3);
+
+        // 使用星号(*)隐藏指定数量的字符
+        StringBuilder obfuscatedUsername = new StringBuilder();
+        for (int i = 0; i < lengthToHide; i++) {
+            obfuscatedUsername.append("*");
+        }
+        // 如果用户名还有剩余字符，则追加剩余部分
+        if (username.length() > lengthToHide) {
+            obfuscatedUsername.append(username.substring(lengthToHide));
+        }
+
+        // 拼接隐藏后的用户名和原域名
+        return obfuscatedUsername.toString() + "@" + domain;
+    }
     /**
-     * 除了第一个姓其他的转换成*
+     * 姓名： 按照隐私开头三个字母后的所有字符，如果姓名不足3个字符，则至少隐去1个字符；
+     * 例如 Андрей, Борис->Анд*** Joseph Jacques Césaire Joffre->Jos*** Georges Clemenceau->Geo***
+     *
+     * Name test ==========
+     * 惊允 -> 惊*
+     * 惊允允 -> 惊**
+     * 惊允允允 -> 惊允允*
+     * Mi chael -> Mi c****
+     * Michael -> Mic****
+     * Андрей, Борис -> Анд*********
+     * Joseph Jacques Césaire Joffre -> Jos***********************
+     * Georges Clemenceau -> Geo**************
+     *
      * @param str
      * @return
      */
     public static String maskExceptFirstChar(String str) {
-        if (str == null || str.length() <= 1) {
+        if (StringUtils.isBlank(str)) {
             // 如果字符串为空或只有一个字符，直接返回原字符串
             return str;
+        }
+        if (str.length() <= 1){
+            return "*";
         }
         StringBuilder sb = new StringBuilder();
         // 添加第一个字符
@@ -295,20 +338,67 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     /**
      * 隐藏后四位之前的四位
+     * 电话： 隐去中间一半的字符，例如： 12345678901->123****1901, +12345678-> +12***78
+     *
+     * Phone test ==========
+     * 1 -> *
+     * 12 -> 1*
+     * 123 -> 1*
+     * 1234 -> 1**4
+     * 1234567 -> 12***67
+     * 12345678 -> 12****78
+     * 123456789 -> 12****789
+     * 13339561234 -> 133*****234
+     * 1333956123456 -> 133******3456
+     * 8613339561234 -> 861******1234
+     * 0113339561234 -> 011******1234
+     *
      * @param str
      * @return
      */
     public static String maskLastFourBeforeFour(String str) {
         int length = str.length();
+        if (str.length() <= 1){
+            return "*";
+        }
+        StringBuilder sb = new StringBuilder();
+        if (length < 3) {
+            // 添加第一个字符
+            sb.append(str.charAt(0));
+            for (int i = 1; i < str.length(); i++) {
+                sb.append('*');
+            }
+            return sb.toString();
+        }
         // 如果字符串长度小于8，则无法隐藏后四位之前的四个字符，直接返回原字符串
-        if (length < 8) {
-            return str;
+        if (length < 9) {
+            int start = 2;
+            // 使用StringBuilder来构建结果字符串
+            sb.append(str, 0, start); // 添加前缀
+            if (length - 2 > start) { // 如果还有空间可以隐藏字符
+                for (int i = 0; i < 2; i++) {
+                    sb.append('*'); // 添加四个*
+                }
+            }
+            sb.append(str, length - 2, length); // 添加最后四位
+            return sb.toString();
+        }
+        if (length < 12) {
+            int start = 3;
+            // 使用StringBuilder来构建结果字符串
+            sb.append(str, 0, start); // 添加前缀
+            if (length - 3 > start) { // 如果还有空间可以隐藏字符
+                for (int i = 0; i < 3; i++) {
+                    sb.append('*'); // 添加四个*
+                }
+            }
+            sb.append(str, length - 3, length); // 添加最后四位
+            return sb.toString();
         }
         // 计算需要隐藏字符的起始位置
         // 如果字符串长度减去8小于4，则从字符串开头隐藏到可能的最大位置
         int start = Math.max(0, length - 8);
         // 使用StringBuilder来构建结果字符串
-        StringBuilder sb = new StringBuilder();
         sb.append(str, 0, start); // 添加前缀
         if (length - 4 > start) { // 如果还有空间可以隐藏字符
             for (int i = 0; i < 4; i++) {
