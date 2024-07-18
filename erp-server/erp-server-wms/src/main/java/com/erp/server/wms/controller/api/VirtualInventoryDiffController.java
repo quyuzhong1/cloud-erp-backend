@@ -115,7 +115,7 @@ public class VirtualInventoryDiffController extends BaseController {
     }
 
     /**
-     * 获取推荐仓位
+     * 获取推荐数量
      * @author will
      * @date 2024/7/17 19:00
      * @param list
