@@ -102,7 +102,7 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 								findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
 							}
 							if(findMongoData == null) {
-								return null;
+								return new ArrayList<>();
 							}
 							
 							dmpInputKingdeeApiInitRequest.setFilterStr(parseObject.getString("filterStr")
@@ -146,6 +146,7 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputApiInitHandler.class);
 				dmpInputApiInitRequest = new DmpInputApiInitRequest();
 				dmpInputApiInitRequest.setRequestParam(extendJson);
+				dmpInputApiInitRequest.setNextLevelId(nextLevelId);
 				dmpInputApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
 			}
 			
