@@ -1047,6 +1047,15 @@ public class RequisitionApplicationDTO implements Serializable {
     public static class GenerateDeliverViewDTO {
 
         /**
+         * 发货计划id
+         */
+        private String deliveryPlanId;
+        /**
+         * 发货计划明细id
+         */
+        private String deliveryPlanDetailId;
+
+        /**
          * 主表id
          */
         private String sourceId;
