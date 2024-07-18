@@ -265,7 +265,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 中转配置
          */
-        private TransferDTO transferDTO = new TransferDTO();
+        private List<TransferDTO> transferDTOList = new ArrayList<>();
     }
 
     @Data
@@ -274,11 +274,6 @@ public class CfgRuleOutDTO implements Serializable {
          * 类型下拉：/wms/common/enumDropDown?type=StockOutTransferType
          */
         private String type;
-
-        /**
-         * 发货类型名称
-         */
-//        private String typeName = "";
 
         /**
          * 规则列表

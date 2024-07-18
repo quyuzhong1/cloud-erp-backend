@@ -73,15 +73,24 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         b2cAllowableDeviationsEntity.setRuleContent(b2cAllowableDeviationsMap);
 
         //中转配置
-        CfgRuleOutEntity transferEntity = new CfgRuleOutEntity();
-        transferEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode());
-        Map<String, Object> transferDTOMap = BeanUtil.beanToMap(commonDTO.getTransferDTO());
-        this.checkTransferRule(commonDTO.getTransferDTO());
-        transferEntity.setRuleContent(transferDTOMap);
+        List<CfgRuleOutEntity> transferList = new ArrayList<>();
+        List<CfgRuleOutDTO.TransferDTO> transferDTOList = commonDTO.getTransferDTOList();
+        for (CfgRuleOutDTO.TransferDTO transferDTO : transferDTOList) {
+            CfgRuleOutEntity transferEntity = new CfgRuleOutEntity();
+            transferEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode());
+            Map<String, Object> transferDTOMap = BeanUtil.beanToMap(transferDTO);
+            this.checkTransferRule(transferDTO);
+            transferEntity.setRuleContent(transferDTOMap);
+            transferList.add(transferEntity);
+        }
 
         //删除数据后再保存
         service.remove(new QueryWrapper<>());
-        service.saveBatch(Arrays.asList(equipmentSortingPortEntity, b2cAllowableDeviationsEntity, transferEntity));
+        List<CfgRuleOutEntity> saveList = new ArrayList<>();
+        saveList.add(equipmentSortingPortEntity);
+        saveList.add(b2cAllowableDeviationsEntity);
+        saveList.addAll(transferList);
+        service.saveBatch(saveList);
         return new BaseResultDTO.AddDTO();
     }
 
@@ -143,11 +152,16 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity equipmentSortingPortEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.EQUIPMENT_SORTING_PORT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutEntity b2cAllowableDeviationsEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.B2C_ALLOWABLE_DEVIATIONS.getCode())).findFirst().orElse(new CfgRuleOutEntity()  );
-        CfgRuleOutEntity transferEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode())).findFirst().orElse(new CfgRuleOutEntity()  );
+        List<CfgRuleOutEntity> transferEntityList = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode())).collect(Collectors.toList());
         CfgRuleOutDTO.CommonDTO commonDTO = new CfgRuleOutDTO.CommonDTO();
         commonDTO.setEquipmentSortingPortDTO(BeanUtil.mapToBean(equipmentSortingPortEntity.getRuleContent(), CfgRuleOutDTO.EquipmentSortingPortDTO.class,true));;
         commonDTO.setB2cAllowableDeviations(BeanUtil.mapToBean(b2cAllowableDeviationsEntity.getRuleContent(), CfgRuleOutDTO.B2cAllowableDeviations.class,true));
-        commonDTO.setTransferDTO(BeanUtil.mapToBean(transferEntity.getRuleContent(), CfgRuleOutDTO.TransferDTO.class,true));
+        List<CfgRuleOutDTO.TransferDTO> transferDTOList = new ArrayList<>();
+        for (CfgRuleOutEntity entity : transferEntityList) {
+            CfgRuleOutDTO.TransferDTO transferDTO = BeanUtil.mapToBean(entity.getRuleContent(), CfgRuleOutDTO.TransferDTO.class, true);
+            transferDTOList.add(transferDTO);
+        }
+        commonDTO.setTransferDTOList(transferDTOList);
         return commonDTO;
     }
 
