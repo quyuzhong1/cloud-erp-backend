@@ -41,8 +41,6 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
     @Resource
     private PickingDetailService pickingDetailService;
     @Resource
-    private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
-    @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
@@ -99,6 +97,10 @@ public class SecondarySortingServiceImpl implements SecondarySortingService {
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_99120);
+        }
+        int sum = skuList.stream().mapToInt(WaveListDTO.PickingWaveDetailDTO::getPickedQty).sum();
+        if (sum == 0) {
+            throw new ServiceException(ApiError.ERROR_99126);
         }
         WaveListDTO.PickingWaveDetailDTO detailDTO = skuList.stream()
                 .filter(v -> v.getPickedQty() > v.getAllocatedQty())
