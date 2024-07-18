@@ -109,4 +109,10 @@ public class PickingListsController extends BaseController {
     public void initPicking(){
         pickingListsService.init();
     }
+
+
+    @GetMapping("/initDelivery")
+    public void initDelivery(@RequestBody List<String> codes) {
+
+    }
 }
