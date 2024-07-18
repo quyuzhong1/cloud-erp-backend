@@ -452,66 +452,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     Boolean defaultHandleRetry(SoB2cEntity soB2c, List<SoB2cEntity> instantList);
 
-
-
-//    /**
-//     * 装箱
-//     * @Author Luo_WG
-//     * @Date 2023/11/17 11:52
-//     * @param dto
-//     * @return java.lang.Boolean
-//     **/
-//    String packingSave(WmsCartonSpecDTO.WmsCartonAdd dto);
-
-//    /**
-//     * 装箱详情
-//     * @Author Luo_WG
-//     * @Date 2023/11/28 17:44
-//     * @param id
-//     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
-//     **/
-//    WmsCartonSpecDTO.WmsCartonSpecView packingView(String id);
-
-//    /**
-//     * 装箱清单
-//     * @Author Luo_WG
-//     * @Date 2023/11/17 11:52
-//     * @param id
-//     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
-//     **/
-//    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
-
-//    /**
-//     * 导出装箱清单Excel
-//     * @param dto
-//     * @param response
-//     */
-//    void exportPacking(SoOutstockDTO.ExportDTO dto, HttpServletResponse response);
-
-//    /**
-//     * 下载装箱模板
-//     * @param response
-//     */
-//    void downloadPackingTemplate(HttpServletResponse response);
-
-//    /**
-//     * 导入装箱数据
-//     * @param excelFile
-//     * @param response
-//     * @return
-//     */
-//    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
-
-    /**
-     * 据主表id分组查询发货单已包装发货及待装箱数
-     * @description
-     * @param id
-     * @return
-     * @date 2024-03-26 14:10
-     * @author Lambda
-     */
-//    List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuById(String id);
-
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
@@ -585,11 +525,4 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return
      */
     int countNotVoided(String id);
-
-    /**
-     * 根据记录更新状态
-     * @param id
-     * @param packingStatus
-     */
-    void updatePackingStatus(String id, String packingStatus);
 }
