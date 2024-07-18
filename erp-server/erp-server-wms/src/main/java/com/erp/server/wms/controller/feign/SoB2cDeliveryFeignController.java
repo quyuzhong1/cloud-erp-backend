@@ -147,7 +147,11 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/dimensionalWeightPipeline")
     public ApiResult<String> dimensionalWeightPipeline(@RequestBody @Validated DimensionalWeightDTO dto) {
         try {
-            return soB2cDeliveryService.dimensionalWeightPipeline(dto);
+            long startTime = System.currentTimeMillis();
+            ApiResult<String> result = soB2cDeliveryService.dimensionalWeightPipeline(dto);
+            long endTime = System.currentTimeMillis();
+            log.warn("dimensionalWeightPipeline 流水线称重耗时:{},barcode:{}",endTime - startTime,dto.getBarCode());
+            return result;
         }catch (Exception e){
             log.error("流水线称重异常",e);
             return ApiResult.error(StrUtil.format("系统异常:{}",e.getMessage()), CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode());

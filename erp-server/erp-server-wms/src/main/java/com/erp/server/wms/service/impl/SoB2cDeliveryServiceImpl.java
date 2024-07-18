@@ -512,6 +512,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(req -> req.getId().equals(pickingLists.getSourceId())).findFirst().orElse(new SoB2cDeliveryEntity());
             viewDTO.setRemark(entity.getRemark());
             viewDTO.setDeliveryId(entity.getId());
+            viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
             //波次信息
             WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> StrUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
             viewDTO.setWaveCode(waveDeliveryDTO.getWaveCode());
@@ -1696,21 +1697,24 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto) {
-        SoB2cDeliveryEntity entity = getById(dto.getId());
-        checkDelivery(entity);
+    public BatchResultDTO cancelShipment(String id, List<SoB2cDeliveryDTO.CancelShipmentDTO> detail) {
+        SoB2cDeliveryEntity entity = getById(id);
         //修改订单状态
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         soB2cEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        waveListService.cleanException(id);
+        waveListDetailService.moveOut(id);
         soB2cFeign.updateById(soB2cEntity);
         entity.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
         updateById(entity);
-        //仓位库存由锁定退回
-        changeInventory(dto, dto.getWarehouseLocation(), InventoryBusinessTypeEnum.SO_B2C_DELIVERY_CANCEL.getCode());
-        changeInventory(dto, dto.getReturnWarehouseLocation(), InventoryBusinessTypeEnum.SO_B2C_DELIVERY_SHELVES.getCode());
+        for (SoB2cDeliveryDTO.CancelShipmentDTO dto : detail) {
+            //仓位库存由锁定退回
+            changeInventory(dto, dto.getWarehouseLocation(), InventoryBusinessTypeEnum.SO_B2C_DELIVERY_CANCEL.getCode());
+            changeInventory(dto, dto.getReturnWarehouseLocation(), InventoryBusinessTypeEnum.SO_B2C_DELIVERY_SHELVES.getCode());
+        }
         //删除拣货单
-        pickingListsService.deleteBySourceId(Collections.singletonList(dto.getId()));
+        pickingListsService.deleteBySourceId(Collections.singletonList(id));
         // 操作日志
         operateLogService.addModuleOperateLog("仓库取消发货", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "取消发货");
         OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();

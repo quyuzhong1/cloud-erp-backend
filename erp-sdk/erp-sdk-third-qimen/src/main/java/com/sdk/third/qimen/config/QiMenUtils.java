@@ -2,6 +2,7 @@ package com.sdk.third.qimen.config;
 
 import com.alibaba.fastjson.JSON;
 import com.taobao.api.BaseTaobaoRequest;
+import com.taobao.api.TaobaoRequest;
 import com.taobao.api.TaobaoResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,20 @@ public class QiMenUtils {
      * @return 签名值
      */
     public static <T extends TaobaoResponse> String getQimenCustomWdtSign(BaseTaobaoRequest<T> request, String wdtSecret) {
+        Map<String, String> params = request.getTextParams();
+        params.put("method", request.getApiMethodName());
+        log.debug("{}: ", params);
+
+        StringBuilder toBeSignedStringBuilder = new StringBuilder();
+        getToBeSignedString(toBeSignedStringBuilder, params);
+        toBeSignedStringBuilder.insert(0, wdtSecret).append(wdtSecret);
+        log.debug("toBeSignedString: {}", toBeSignedStringBuilder.toString());
+        log.debug("result: {}", DigestUtils.md5Hex(toBeSignedStringBuilder.toString()));
+
+        return DigestUtils.md5Hex(toBeSignedStringBuilder.toString());
+    }
+    
+    public static String getNewQimenCustomWdtSign(TaobaoRequest request, String wdtSecret) {
         Map<String, String> params = request.getTextParams();
         params.put("method", request.getApiMethodName());
         log.debug("{}: ", params);

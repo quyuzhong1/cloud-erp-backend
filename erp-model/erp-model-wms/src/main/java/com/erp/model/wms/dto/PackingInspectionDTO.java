@@ -74,6 +74,11 @@ public class PackingInspectionDTO implements Serializable {
         private String id;
 
         /**
+         * 纸张大小
+         */
+        private String paperSize;
+
+        /**
          * 验货状态
          */
         private Boolean status;
