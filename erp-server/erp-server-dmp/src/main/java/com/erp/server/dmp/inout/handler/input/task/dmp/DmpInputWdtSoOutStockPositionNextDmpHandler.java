@@ -1,11 +1,14 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+
+import com.common.core.utils.StrUtils;
 
 import cn.hutool.core.collection.CollUtil;
 
@@ -30,4 +33,8 @@ public class DmpInputWdtSoOutStockPositionNextDmpHandler extends DmpInputWdtNext
 		return positionList;
 	}
 	
+	@Override
+	protected List<String> convertKey(String originalKey) {
+		return Collections.singletonList(StrUtils.underlineToCamel(originalKey, true));
+	}
 }
