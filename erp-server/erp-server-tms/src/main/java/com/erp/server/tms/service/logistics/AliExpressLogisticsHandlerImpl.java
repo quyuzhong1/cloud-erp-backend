@@ -214,17 +214,21 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //收寄信息
         AddressDTO addressDTO = new AddressDTO();
         if (Objects.nonNull(logisticsOrderVO.getSenderInfo())){
-            addressDTO.setSender(LogisticsOrderConverter.INSTANCE.orderRequestSendUserByAliExpress(logisticsOrderVO));
+            Address sender = LogisticsOrderConverter.INSTANCE.orderRequestSendUserByAliExpress(logisticsOrderVO);
+            addressDTO.setSender(sender);
         }
         if (Objects.nonNull(logisticsOrderVO.getPickUpInfo())){
-            addressDTO.setPickup(LogisticsOrderConverter.INSTANCE.orderRequestPickUpUserByAliExpress(logisticsOrderVO));
+            Address pickUp = LogisticsOrderConverter.INSTANCE.orderRequestPickUpUserByAliExpress(logisticsOrderVO);
+            addressDTO.setPickup(pickUp);
         }
         if (Objects.nonNull(logisticsOrderVO.getReturnInfo())){
-            addressDTO.setRefund(LogisticsOrderConverter.INSTANCE.orderRequestRefundUserByAliExpress(logisticsOrderVO));
+            Address refund = LogisticsOrderConverter.INSTANCE.orderRequestRefundUserByAliExpress(logisticsOrderVO);
+            addressDTO.setRefund(refund);
         }
 //        addressDTO.setRefund(addressDTO.getSender());
         if (Objects.nonNull(logisticsOrderVO.getReceiverInfoVO())){
-            addressDTO.setReceiver(LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO));
+            Address receiver = LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO);
+            addressDTO.setReceiver(encryptByOrderType(orderType,receiver));
         }
         if(Objects.isNull(addressDTO.getPickup())){
             Address sender = addressDTO.getSender();
