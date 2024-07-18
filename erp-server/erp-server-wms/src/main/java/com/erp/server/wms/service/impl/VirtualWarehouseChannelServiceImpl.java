@@ -5,11 +5,15 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
@@ -92,7 +96,47 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 this.saveBatch(batchSaveDTOList);
             }
         }
+        //添加日志
+        addOperateLog(batchAddDTO,existChannelList);
+
         return new BaseResultDTO.AddDTO();
+    }
+    /**
+     * 添加日志
+     * @author will
+     * @date 2024/7/18 14:49
+     * @param batchAddDTO
+     * @param existChannelList
+     */
+    private void addOperateLog(VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO,List<VirtualWarehouseChannelEntity> existChannelList) {
+
+        if(CollectionUtils.isEmpty(existChannelList)) {
+            return;
+        }
+
+        String oldChannelMsg = "";
+        String newChannelMsg = "";
+        //店铺
+        List<ShopInfoEntity> shopList = FeignQuery.list(ShopInfoEntity.class);
+        for (VirtualWarehouseChannelDTO.ChannelAddDTO channelAddDT : batchAddDTO.getChannelList()) {
+            String shopName = shopList.stream().filter(obj -> channelAddDT.getRelationList().contains(obj.getId())).map(ShopInfoEntity::getName)
+                    .distinct().collect(Collectors.joining(",")) ;
+            String msg = StrUtil.format("{},{};{};", PlatformDictEnum.getNameByCode(channelAddDT.getDictPlatform()), VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()), shopName);
+            oldChannelMsg = oldChannelMsg.concat(msg);
+        }
+
+        Map<String, List<VirtualWarehouseChannelEntity>> map = existChannelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
+        for (Map.Entry<String, List<VirtualWarehouseChannelEntity>> entry : map.entrySet()) {
+            List<VirtualWarehouseChannelEntity> value = entry.getValue();
+            List<String> relationIdList = value.stream().map(VirtualWarehouseChannelEntity::getRelationId).collect(Collectors.toList());
+            String shopName = shopList.stream().filter(obj -> relationIdList.contains(obj.getId())).map(ShopInfoEntity::getName)
+                    .distinct().collect(Collectors.joining(",")) ;
+            String msg = StrUtil.format("{},{};{};", PlatformDictEnum.getNameByCode(value.get(0).getDictPlatform()), VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName);
+            newChannelMsg = newChannelMsg.concat(msg);
+        }
+        // 操作日志
+        String msg = StrUtil.format("关联渠道：从【{}】修改为【{}】",oldChannelMsg,newChannelMsg );
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑操作");
     }
 
     /**

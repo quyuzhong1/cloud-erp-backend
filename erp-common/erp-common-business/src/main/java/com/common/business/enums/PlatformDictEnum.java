@@ -103,6 +103,16 @@ public enum PlatformDictEnum implements EnumMessage {
         return null;
     }
 
+    public static String getNameByCode(String code) {
+        PlatformDictEnum[] values = values();
+        for (PlatformDictEnum value : values) {
+            if (value.code.equals(code) ) {
+                return value.getName();
+            }
+        }
+        return null;
+    }
+
     public static String getNameByName(String name) {
         PlatformDictEnum[] values = values();
         for (PlatformDictEnum value : values) {

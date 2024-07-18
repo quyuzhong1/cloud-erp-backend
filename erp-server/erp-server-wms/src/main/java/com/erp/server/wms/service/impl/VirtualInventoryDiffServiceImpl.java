@@ -150,7 +150,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         addDTO.setType(VirtualWarehouseAllocationTypeEnum.CANCEL.getCode());
         addDTO.setDirection(VwAllocationDirectionEnum.FORWARD.getCode());
         addDTO.setRemark("库存差异一键调整");
-        addDTO.setStatus(VirtualWarehouseAllocationStatusEnum.HANDLE.getCode());
+        addDTO.setStatus(VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode());
         addDTO.setDisabled(Boolean.FALSE);
         List<VirtualWarehouseAllocationDTO.DetailDto> detailList = new ArrayList<>();
         for (VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO updateDTO : list) {
