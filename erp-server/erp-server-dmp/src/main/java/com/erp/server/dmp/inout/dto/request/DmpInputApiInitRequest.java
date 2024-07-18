@@ -22,4 +22,6 @@ public class DmpInputApiInitRequest extends DmpInputInitRequest{
     
     private String apiType;
 	private String requestParam; 
+	
+	private String nextLevelId;
 }
