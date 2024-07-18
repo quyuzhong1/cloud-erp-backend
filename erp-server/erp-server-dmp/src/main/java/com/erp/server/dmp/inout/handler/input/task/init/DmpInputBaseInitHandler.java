@@ -118,7 +118,7 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 					dmpInputKingdeeApiInitRequest.setFieldKeys(parseObject.getString("fieldKeys"));
 				}
 			}else if(DmpBasicSystemCodeEnum.WDT.getCode().equals(dmpBasicSystemEntity.getCode())){
-				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputWdtApiInitHandler.class);
+				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputApiInitHandler.class);
 				DmpInputWdtApiInitRequest dmpInputWdtApiInitRequest = new DmpInputWdtApiInitRequest();
 				dmpInputApiInitRequest = dmpInputWdtApiInitRequest;
 				dmpInputWdtApiInitRequest.setRequestParam(extendJson);
