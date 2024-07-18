@@ -461,6 +461,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
 
         inventoryEntity=new InventoryEntity();
         inventoryEntity.setSkuId(flow.getSkuId());
+        inventoryEntity.setSkuNo(flow.getSkuNo());
         inventoryEntity.setOrgId(flow.getOrgId());
         inventoryEntity.setWarehouseId(flow.getWarehouseId());
         inventoryEntity.setWarehouseLocation(flow.getWarehouseLocation());
