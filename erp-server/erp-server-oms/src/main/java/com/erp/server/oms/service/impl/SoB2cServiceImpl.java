@@ -5365,14 +5365,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //判断是否中转 TODO
         Boolean isTransit = Boolean.TRUE;
         if (isTransit) {
-            List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-                    .eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode())
-                    .eq(CfgSettingEntity::getDisabled, Boolean.FALSE)
-                    .list();
-            if (CollectionUtil.isEmpty(list)) {
+            CfgSettingEntity cfgSettingEntity = cfgSettingFeign.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+            if (ObjectUtil.isEmpty(cfgSettingEntity)) {
                 throw new ServiceException("未配置中转设置仓库");
             }
-            CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(list.get(0).getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+            CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
             if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
                 throw new ServiceException("中转设置仓库不能为空");
             }
