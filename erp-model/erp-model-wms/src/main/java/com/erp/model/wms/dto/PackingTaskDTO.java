@@ -413,5 +413,6 @@ public class PackingTaskDTO implements Serializable {
          */
         @NotBlank(message = "任务id不能为空")
         private String taskId;
+
     }
 }

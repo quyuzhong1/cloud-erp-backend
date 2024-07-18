@@ -112,10 +112,10 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     /**
      * 装箱详情
-     * @param id
+     * @param packedDetailDTO
      * @return
      */
-    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
+    WmsCartonSpecDTO.ListPackingDTO listPacking(PackingTaskDTO.PackedDetailDTO packedDetailDTO);
 
     /**
      * 装箱模板

@@ -169,11 +169,12 @@
         JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = FALSE
         WHERE wc.is_deleted = FALSE
             AND wcd.pack_qty > 0
-            <if test="taskIds != null and taskIds.size > 0">
-            AND wc.packing_task_id IN
-                <foreach collection="taskIds" item="id" open="(" close=")" separator=",">
-                   #{id}
-                </foreach>
+            <if test="params.taskId != null and params.taskId != ''">
+                AND wc.packing_task_id = #{params.taskId}
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         ORDER BY wc.box_no
     </select>
@@ -207,6 +208,9 @@
             <foreach collection="taskIds" item="id" open="(" close=")" separator=",">
                 #{id}
             </foreach>
+        </if>
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
         </if>
         ORDER BY pt.source_code
     </select>

@@ -141,31 +141,36 @@ public class PackingTaskController extends BaseController {
      * 装箱清单-根据装箱任务id获取
      * @Author zdy
      * @Date 2024/7/4 11:21
-     * @param id -装箱任务id
+     * @param packedDetailDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @GetMapping("/listPacking")
-    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
-        WmsCartonSpecDTO.ListPackingDTO result = packingTaskService.listPacking(id);
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:packingTask:listPacking",
+            tableAlias = "pt"
+    )
+    @PostMapping("/listPacking")
+    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestBody @Validated PackingTaskDTO.PackedDetailDTO packedDetailDTO) {
+        WmsCartonSpecDTO.ListPackingDTO result = packingTaskService.listPacking(packedDetailDTO);
         return success(result);
     }
 
-    /**
-     * 装箱清单-通过源订单编码获取
-     * @Author zdy
-     * @Date 2024/7/4 11:21
-     * @param sourceCode -装箱任务源订单Code
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @GetMapping("/listPackingBySourceCode")
-    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPackingBySourceCode(@RequestParam("sourceCode") String sourceCode) {
-        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(sourceCode));
-        if (CollectionUtil.isEmpty(taskEntityList)){
-            throw new ServiceException(ApiError.ERROR_92141);
-        }
-        WmsCartonSpecDTO.ListPackingDTO result = packingTaskService.listPacking(taskEntityList.get(0).getId());
-        return success(result);
-    }
+//    /**
+//     * 装箱清单-通过源订单编码获取
+//     * @Author zdy
+//     * @Date 2024/7/4 11:21
+//     * @param sourceCode -装箱任务源订单Code
+//     * @return com.common.core.controller.vo.ApiResult
+//     **/
+//    @GetMapping("/listPackingBySourceCode")
+//    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPackingBySourceCode(@RequestParam("sourceCode") String sourceCode) {
+//        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(sourceCode));
+//        if (CollectionUtil.isEmpty(taskEntityList)){
+//            throw new ServiceException(ApiError.ERROR_92141);
+//        }
+//        WmsCartonSpecDTO.ListPackingDTO result = packingTaskService.listPacking(taskEntityList.get(0).getId());
+//        return success(result);
+//    }
 
     /**
      * 下载装箱模板
