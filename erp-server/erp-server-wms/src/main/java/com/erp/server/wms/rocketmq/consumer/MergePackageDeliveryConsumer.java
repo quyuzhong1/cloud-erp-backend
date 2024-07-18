@@ -14,16 +14,14 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.PackageForecastService;
-import com.erp.server.wms.service.SoB2cDeliveryDetailService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -66,6 +64,8 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
     private RedisUtil redisUtil;
     @Resource
     private PackageForecastService packageForecastService;
+    @Resource
+    private AsyncService asyncService;
 
     /**
      * 组包处理标记发货和生成销售出库单(勿动)
@@ -188,27 +188,40 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
      * 标记发货处理
      */
     private void handleDelivery(String soId, SoB2cDeliveryEntity curDeliveryEntity) {
-        log.debug("【组包预报虚假标记发货】销售单【{}】标记发货开始", curDeliveryEntity.getSoCode());
+        log.warn("【组包预报虚假标记发货】销售单【{}】标记发货开始", curDeliveryEntity.getSoCode());
         //记录需要手动标发的订单id
-        Boolean flag = soB2cFeign.checkPlatformShipOrder(soId);
-        if (flag) {
-            //调用第三方平台SDK发货
-            BatchResultDTO resultDTO = new BatchResultDTO();
-            try {
-                resultDTO = soB2cDeliveryService.falseDelivery(curDeliveryEntity.getId());
-            } catch (Exception e) {
-                String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(type);
-                addError.setParamJson(soId);
-                addError.setReturnJson(resultDTO.toString());
-                addError.setMainId(soId);
-                addError.setMessage(e.getMessage());
-                soB2cFeign.addSoB2cError(addError);
-                log.error("【组包预报虚假标记发货】销售单【{}】标记发货失败 >>>错误信息{}", curDeliveryEntity.getSoCode(), ExceptionUtil.stacktraceToString(e));
-            }
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(soId);
+        if (soB2cFeign.checkPlatformShipOrder(soId)) {
+            // 调用第三方平台SDK标记发货(独立事务)
+            String businessDesc = "组包标记发货";
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
+                    soB2cEntity.getCode(),
+                    soB2cEntity.getDictPlatform(),
+                    soB2cEntity.convertSubmitPlatformUniqueKey(),
+                    curDeliveryEntity.getId(),
+                    businessDesc, true);
+        } else {
+            log.warn("【组包预报虚假标记发货】【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }
-        log.debug("【组包预报虚假标记发货】销售单【{}】标记发货结束", curDeliveryEntity.getSoCode());
+//        Boolean flag = soB2cFeign.checkPlatformShipOrder(soId);
+//        if (flag) {
+//            //调用第三方平台SDK发货
+//            BatchResultDTO resultDTO = new BatchResultDTO();
+//            try {
+//                resultDTO = soB2cDeliveryService.falseDelivery(curDeliveryEntity.getId());
+//            } catch (Exception e) {
+//                String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
+//                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+//                addError.setType(type);
+//                addError.setParamJson(soId);
+//                addError.setReturnJson(resultDTO.toString());
+//                addError.setMainId(soId);
+//                addError.setMessage(e.getMessage());
+//                soB2cFeign.addSoB2cError(addError);
+//                log.error("【组包预报虚假标记发货】销售单【{}】标记发货失败 >>>错误信息{}", curDeliveryEntity.getSoCode(), ExceptionUtil.stacktraceToString(e));
+//            }
+//        }
+        log.warn("【组包预报虚假标记发货】销售单【{}】标记发货结束", curDeliveryEntity.getSoCode());
     }
 
     /**

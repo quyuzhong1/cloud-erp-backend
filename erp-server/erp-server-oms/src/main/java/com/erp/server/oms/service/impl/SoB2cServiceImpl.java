@@ -3319,9 +3319,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cEntity.setOrgId(shopInfoEntity.getSalesOrgId());
         soB2cEntity.setOrgName(shopInfoEntity.getSalesOrgName());
 
-        //付款时间不为空则已付款
-        if (ObjectUtils.isNotEmpty(soB2cEntity.getPayTime()) && checkPayTime) {
-            soB2cEntity.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+        // 源单付款状态优先
+        if (StringUtils.isBlank(soB2cEntity.getPayStatus())){
+            //付款时间不为空则已付款
+            if (ObjectUtils.isNotEmpty(soB2cEntity.getPayTime()) && checkPayTime) {
+                soB2cEntity.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+            }
         }
 
     }
