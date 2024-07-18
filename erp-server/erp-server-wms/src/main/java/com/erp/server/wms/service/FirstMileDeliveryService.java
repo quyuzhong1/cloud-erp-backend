@@ -116,7 +116,8 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     /**
      * 删除
      *
-     * @param id
+     * @param entity
+     * @param packingTask
      * @return
      * @author Luo_WG
      * @date: 2023-10-30
@@ -243,42 +244,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<FirstMileDeliveryDTO.SonItem> sonItemDetailByVersion(FirstMileDeliveryDTO.SonItemDetailByVersion dto);
 
     /**
-     * 装箱
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:52
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-//    Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto);
-
-//    /**
-//     * 装箱详情
-//     * @Author Luo_WG
-//     * @Date 2023/11/28 17:44
-//     * @param id
-//     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
-//     **/
-//    WmsCartonSpecDTO.WmsCartonSpecView packingView(String id);
-
-//    /**
-//     * 装箱清单
-//     * @Author Luo_WG
-//     * @Date 2023/11/17 11:52
-//     * @param id
-//     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
-//     **/
-//    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
-
-//    /**
-//     * 导出装箱清单Excel
-//     * @author Luo_WG
-//     * @date:  2023-10-30
-//     * @param dto
-//     * @param response
-//     */
-//    void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response);
-
-    /**
      * 下推海外仓入库单单个查询
      * @Author Luo_WG
      * @Date 2023/11/29 17:13
@@ -293,10 +258,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     FirstMileDeliveryEntity findBySourceId(String sourceId);
-
-//    void downloadPackingTemplate(HttpServletResponse response);
-
-//    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 生成状态更新为无需生成

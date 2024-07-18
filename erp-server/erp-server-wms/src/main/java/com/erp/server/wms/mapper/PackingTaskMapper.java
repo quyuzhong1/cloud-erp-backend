@@ -70,7 +70,7 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @param params
      * @return
      */
-    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("params") PackingTaskDTO.PackedDetailDTO packedDetailDTO);
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("params") PackingTaskDTO.PackedDetailDTO params);
     List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailBySkuId(@Param("taskIds") List<String> taskIds, @Param("permissionSql") String permissionSql);
 
     /**
