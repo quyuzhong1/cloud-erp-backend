@@ -36,6 +36,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -334,7 +335,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     .distinct().findFirst().orElse(new SkuVO());
             PickingListsDTO.PrintView view = new PickingListsDTO.PrintView();
             view.getPrintView(entity, detail, skuVO.getSkuName());
-            view.setWarehouseLocation(skuVO.getWarehouseLocation());
+            view.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
             return view;
         }).collect(Collectors.toList());
         return new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
@@ -444,7 +445,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     public List<PickingListsDTO.SourceView> listBySourceIds(List<String> sourceIds) {
-
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
         return baseMapper.listBySourceIds(sourceIds);
     }
 
@@ -537,6 +540,48 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<PickingListsDTO.DetailPickDTO> detailRequitPickDTOS = baseMapper.listRequitDetailBySourceIds(sourceIds);
         //合并集合
         return Stream.concat(detailB2BPickDTOS.stream(), detailRequitPickDTOS.stream()).collect(Collectors.toList());
+    }
+
+    @Override
+    public void init() {
+        List<PickingDetailEntity> list = pickingDetailService.list();
+        Map<String, List<PickingDetailEntity>> sourceIdMap = list.stream()
+                .collect(Collectors.groupingBy(PickingDetailEntity::getSourceId));
+        List<PickingListsEntity> pickLists = new ArrayList<>();
+        List<PickingDetailEntity> updateList = new ArrayList<>();
+        for (Map.Entry<String, List<PickingDetailEntity>> entry : sourceIdMap.entrySet()) {
+            PickingDetailEntity detailEntity = entry.getValue().stream()
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtil.isNotEmpty(detailEntity)) {
+                PickingListsEntity entity = new PickingListsEntity();
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JHD);
+                entity.setId(IdWorker.getIdStr());
+                entity.setCode(code);
+                entity.setSourceType(detailEntity.getSourceType());
+                entity.setSourceId(detailEntity.getSourceId());
+                entity.setSourceCode(detailEntity.getSourceCode());
+                entity.setWarehouseId(detailEntity.getWarehouseId());
+                entity.setWarehouseName(detailEntity.getWarehouseName());
+                entity.setSkuTotal(entry.getValue().size());
+                entity.setLocationTotal(1);
+                pickLists.add(entity);
+                for (PickingDetailEntity detail : entry.getValue()) {
+                    detail.setMainId(entity.getId());
+                }
+                updateList.addAll(entry.getValue());
+            }
+            if (pickLists.size() >= 500) {
+                saveBatch(pickLists);
+                pickingDetailService.updateBatchById(updateList);
+                pickLists.clear();
+                updateList.clear();
+            }
+        }
+        if (!CollectionUtils.isEmpty(pickLists)) {
+            saveBatch(pickLists);
+            pickingDetailService.updateBatchById(updateList);
+        }
     }
 
     /**
