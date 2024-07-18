@@ -100,4 +100,30 @@ public class VirtualInventoryDiffController extends BaseController {
     public ApiResult<List<VirtualInventoryDiffDTO.ListDetailQtyDTO>> listDiffDetail(@RequestBody @Validated VirtualInventoryDiffDTO.SearchParamDetailDTO dto) {
         return success(virtualInventoryDiffService.listDiffDetail(dto));
     }
+
+    /**
+     * 一键调整保存
+     * @author will
+     * @date 2024/7/17 18:17
+     * @param list
+     * @return ApiResult
+     */
+    @PostMapping("/updateVirtualInventory")
+    public ApiResult updateVirtualInventory(@RequestBody @Validated List<VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO> list) {
+        virtualInventoryDiffService.updateVirtualInventory(list);
+        return success();
+    }
+
+    /**
+     * 获取推荐仓位
+     * @author will
+     * @date 2024/7/17 19:00
+     * @param list
+     * @return ApiResult<List<ListSuggestQtyDTO>>
+     */
+    @PostMapping("/updateVirtualInventory")
+    public ApiResult<List<VirtualInventoryDiffDTO.ListSuggestQtyDTO>> listSuggestQty(@RequestBody @Validated List<VirtualInventoryDiffDTO.ListSuggestQtyParamDTO> list) {
+        List<VirtualInventoryDiffDTO.ListSuggestQtyDTO> resultList = virtualInventoryDiffService.listSuggestQty(list);
+        return success(resultList);
+    }
 }

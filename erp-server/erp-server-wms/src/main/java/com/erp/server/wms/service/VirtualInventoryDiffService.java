@@ -59,4 +59,19 @@ public interface VirtualInventoryDiffService extends SuperService<VirtualInvento
      * @return List<ListDetailQtyDTO>
      */
     List<VirtualInventoryDiffDTO.ListDetailQtyDTO> listDiffDetail(VirtualInventoryDiffDTO.SearchParamDetailDTO dto);
+    /**
+     * 一键调整保存
+     * @author will
+     * @date 2024/7/17 18:19
+     * @param list
+     */
+    void updateVirtualInventory(List<VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO> list);
+    /**
+     * 获取推荐仓位
+     * @author will
+     * @date 2024/7/17 19:01
+     * @param list
+     * @return List<ListSuggestQtyDTO>
+     */
+    List<VirtualInventoryDiffDTO.ListSuggestQtyDTO> listSuggestQty(List<VirtualInventoryDiffDTO.ListSuggestQtyParamDTO> list);
 }

@@ -5,7 +5,7 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -235,5 +235,88 @@ public class VirtualInventoryDiffDTO implements Serializable {
     }
 
 
+    /**
+     * 一键调整保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateVirtualInventoryDTO {
 
+        /**
+         * skuId
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        /**
+         * 仓库Id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
+
+        /**
+         * 虚拟仓id
+         */
+        @NotBlank(message = "虚拟仓Id不能为空")
+        private String virtualWarehouseId;
+
+        /**
+         * 数量
+         */
+        @NotNull(message = "数量不能为空")
+        @Min(value = 0, message = "数量不能小于0")
+        @Max(value = 999999999,message = "数量最大值为999999999" )
+        private Integer qty;
+    }
+
+    /**
+     * 查询推荐数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListSuggestQtyParamDTO {
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        /**
+         * 仓库Id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
+
+        /**
+         * 虚拟仓id
+         */
+        @NotBlank(message = "虚拟仓Id不能为空")
+        private String virtualWarehouseId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListSuggestQtyDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+
+        /**
+         * 推荐数量
+         */
+        private Integer qty;
+    }
 }
