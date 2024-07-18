@@ -1499,6 +1499,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             result.setOrderCode(entity.getPlatformCode());
             //速卖通重置店铺信息id 和 top_user_key
             shopInfoEntity = shopInfoService.getMainShopByPlatform(aliExpress);
+            if (Objects.isNull(shopInfoEntity)){
+                //主店铺不存在时，还是走当前店铺下单逻辑
+                shopInfoEntity = shopInfoService.getById(shopId);
+            }
             Map<String, Object> extendDataMap = shopInfoEntity.getExtendData();
             //买家id
             String sellerId = String.valueOf(extendDataMap.get("sellerId"));
