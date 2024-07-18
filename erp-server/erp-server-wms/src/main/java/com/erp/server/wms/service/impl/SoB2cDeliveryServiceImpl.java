@@ -969,14 +969,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
             entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
         }
+        //更新发货单
+        this.updateById(entity);
 
         //自动出库
         if (isDeviation && entity.getIsAutoOut()) {
-            try {
-                packingInspectionService.soB2cDeliveryAutoOut(soB2cEntity,entity);
-            } catch (Exception e) {
-                log.error("发货单【{}】自动出库失败",entity.getCode());
-            }
+            asyncService.soB2cDeliveryAutoOut(soB2cEntity,entity);
         }
         //更新图片
         Class<SoB2cDeliveryEntity> aClass = SoB2cDeliveryEntity.class;
@@ -984,8 +982,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //获取到表名
         String type = tableName.value();
         attachmentService.batchSave(Arrays.asList(dto.getImageUrl()),Arrays.asList(""),type,entity.getId());
-        //更新发货单
-        this.updateById(entity);
 
         //发货单操作日志
         //操作日志

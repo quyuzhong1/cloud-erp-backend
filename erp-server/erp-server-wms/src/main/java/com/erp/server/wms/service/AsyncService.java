@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.annotation.DataIdempotent;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
 import java.util.List;
 
@@ -44,4 +45,12 @@ public interface AsyncService {
      * 提交平台标记发货
      */
     List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey);
+    /**
+     * 自动出库
+     * @author will
+     * @date 2024/6/28 16:40
+     * @param soB2cEntity
+     * @param entity
+     */
+    void soB2cDeliveryAutoOut (SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity);
 }
