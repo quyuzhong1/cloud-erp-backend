@@ -6,7 +6,6 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -34,7 +33,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO.OverseasInboundDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
@@ -133,7 +131,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(addDTO.getSourceId());
         Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
-        if (!PackingStatusEnum.PACKING.getCode().equalsIgnoreCase(deliveryEntity.getPackingStatus())) {
+        if (!PackingTaskStatusEnum.PACKED.getCode().equalsIgnoreCase(deliveryEntity.getPackingStatus())) {
             String msg = StrUtil.format("【{}】发货单未装箱完", deliveryEntity.getCode());
             throw new ServiceException(msg);
         }
@@ -217,7 +215,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
      * 构建请求参数
      */
     private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity,
-                                                                     List<WmsCartonDTO.PackingItemDTO> itemDTOList,
+                                                                     List<WmsCartonSpecDTO.PackingItemDTO> itemDTOList,
                                                                      Map<SettingEnum, String> shipperInfo,
                                                                      String verifyCode,
                                                                      String code,
@@ -242,7 +240,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
-        for (WmsCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
+        for (WmsCartonSpecDTO.PackingItemDTO itemDTO : itemDTOList) {
             FirstMileDeliveryDetailEntity  firstMileDeliveryDetailEntity = deliveryDetailEntityList.stream().filter(v->v.getSkuId().equals(itemDTO.getSkuId())).findFirst().orElse(null);
             if (null == firstMileDeliveryDetailEntity) {
                 String msg = StrUtil.format("海外仓入库单明细中找不到skuId为【{}】的明细", itemDTO.getSkuId());
@@ -988,7 +986,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                                                                      String verityCode
     ) {
         // 查询包装信息
-        List<WmsCartonDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceId(mainEntity.getSourceId());
+        List<WmsCartonSpecDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceId(mainEntity.getSourceId());
         if (CollectionUtils.isEmpty(packingQtyDTOS)) {
             String format = StrUtil.format("【{}】发货单：未找到包装信息", mainEntity.getSourceCode());
             throw new ServiceException(format);

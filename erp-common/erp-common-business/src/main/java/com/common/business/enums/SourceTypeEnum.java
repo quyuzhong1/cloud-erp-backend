@@ -47,6 +47,7 @@ public enum SourceTypeEnum {
     WAREHOUSE("warehouse", "仓库","warehouse"),
     SO_B2C_DELIVERY("soB2cDelivery", "B2C发货单","so_b2c_delivery"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
+    PACKING_TASK("packingTask", "装箱任务",""),
 
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),

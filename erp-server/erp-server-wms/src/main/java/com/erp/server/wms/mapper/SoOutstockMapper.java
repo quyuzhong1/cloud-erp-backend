@@ -104,9 +104,9 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @param dto
      * @return
      */
-    List<WmsCartonDTO.ExportPackingDTO> exportPacking(@Param("params") SoOutstockDTO.ExportDTO dto);
+    List<WmsCartonSpecDTO.ExportPackingDTO> exportPacking(@Param("params") SoOutstockDTO.ExportDTO dto);
 
-    List<WmsCartonDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String id);
+    List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String id);
 
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@Param("params") TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 

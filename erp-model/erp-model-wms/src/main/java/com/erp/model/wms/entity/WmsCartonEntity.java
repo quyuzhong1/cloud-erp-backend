@@ -8,12 +8,11 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 
 
 /**
  * <p>
- * 发货单箱规信息
+ * 发货单箱子信息明细表
  * </p>
  *
  * @author Luo_WG
@@ -24,61 +23,59 @@ import java.math.BigDecimal;
 @Accessors(chain = true)
 @TableName("wms_carton")
 public class WmsCartonEntity extends BaseEntity<WmsCartonEntity> {
+
     /**
-    * 箱规编号
+    * 箱规id
     */
-    @TableField("box_spec_no")
-    private Integer boxSpecNo;
+    @TableField("spec_id")
+    private String specId;
     /**
-    * 包装重量
+    * 箱号
     */
-    @TableField("package_weight")
-    private BigDecimal packageWeight;
+    @TableField("box_no")
+    private Integer boxNo;
     /**
-    * 箱子尺寸（长）
+    * 异常原因
     */
-    @TableField("box_length")
-    private BigDecimal boxLength;
+    @TableField("error_msg")
+    private String errorMsg;
     /**
-    * 箱子尺寸（宽）
-    */
-    @TableField("box_width")
-    private BigDecimal boxWidth;
-    /**
-    * 箱子尺寸（高）
-    */
-    @TableField("box_height")
-    private BigDecimal boxHeight;
-    /**
-    * 箱数
-    */
-    @TableField("box_qty")
-    private Integer boxQty;
-    /**
-     * 来源类型
+     * 任务表id
      */
-    @TableField("source_type")
-    private String sourceType;
+    @TableField("packing_task_id")
+    private String packingTaskId;
     /**
-     * 来源Id
+     * 单箱状态(incomplete 未完成,completed 已完成)
+     * PackingTaskStatusEnum
+     * 字典接口地址  http://172.16.100.11:3002/project/92/interface/api/13147  type = packingStatusSingle 单箱 / packingStatus总
      */
-    @TableField("source_id")
-    private String sourceId;
+    @TableField("packing_status")
+    private String packingStatus;
+    /**
+     * 称重状态-单箱(unweighed 未称重,success 称重成功,fail 称重失败 )
+     * PackingWeightStatusEnum
+     * 字典接口地址  http://172.16.100.11:3002/project/92/interface/api/13147 type= weightingStatusSingle单箱 /  weightingStatus 总
+     */
+    @TableField("weighting_status")
+    private String weightingStatus;
+    /**
+     * 装箱员id
+     */
+    @TableField("packing_user_id")
+    private String packingUserId;
+    /**
+     * 装箱员名称
+     */
+    @TableField("packing_user_name")
+    private String packingUserName;
 
+    public static final String CARTON_ID = "carton_id";
 
-    public static final String MAIN_ID = "main_id";
+    public static final String CARTON_DETAIL_ID = "carton_detail_id";
 
-    public static final String BOX_SPEC_NO = "box_spec_no";
+    public static final String BOX_NO = "box_no";
 
-    public static final String PACKAGE_WEIGHT = "package_weight";
-
-    public static final String BOX_LENGTH = "box_length";
-
-    public static final String BOX_WIDTH = "box_width";
-
-    public static final String BOX_HEIGHT = "box_height";
-
-    public static final String BOX_QTY = "box_qty";
+    public static final String BOX_DESC = "box_desc";
 
     @Override
     public Serializable pkVal() {

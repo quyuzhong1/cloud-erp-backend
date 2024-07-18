@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -47,6 +48,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -88,7 +90,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+    @Resource
+    private PackingTaskService packingTaskService;
 
+    @Resource
+    private WmsCartonService wmsCartonService;
+
+    @Resource
+    private WmsCartonDetailService wmsCartonDetailService;
     @Override
     public PagingVO<PickingListsDTO.PagingView> paging(PagingDTO<PickingListsDTO.PagingParam> dto) {
         IPage<PickingListsDTO.PagingView> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
@@ -288,6 +297,29 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     @Override
     public List<PickingListsDTO.PrintView> print(List<String> ids) {
         List<PickingListsEntity> pickingLists = listByIds(ids);
+        List<String> sourceCodes = pickingLists.stream().map(PickingListsEntity::getSourceCode).distinct().collect(Collectors.toList());
+        if (sourceCodes.size() > 1){
+            throw new ServiceException("来源单号不同不能同时打印");
+        }
+        String sourceCode;
+        PickingListsEntity pickingListsEntity = pickingLists.get(0);
+        //重置来源单号
+        if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(pickingListsEntity.getSourceType())){
+            sourceCode = sourceCodes.get(0);
+        }else if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(pickingListsEntity.getSourceType())){
+            //picking_lists.source_id = first_mile_delivery.source_id
+            List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listBySourceIds(Collections.singletonList(pickingListsEntity.getSourceId()));
+            if (!CollectionUtils.isEmpty(firstMileDeliveryEntities)){
+                sourceCode = firstMileDeliveryEntities.get(0).getCode();
+            } else {
+                sourceCode = null;
+            }
+        } else {
+            sourceCode = null;
+        }
+        if (StrUtil.isBlank(sourceCode)){
+            throw new ServiceException("来源单号未找到");
+        }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
@@ -310,6 +342,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     PickingListsDTO.PrintView view = v.get(0);
                     int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintView::getPickingQty).sum();
                     view.setPickingQty(totalQuantity);
+                    view.setSourceCode(sourceCode);
                     return view;
                 }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintView::getWarehouseId)
                 .thenComparing(PickingListsDTO.PrintView::getWarehouseLocation)
@@ -325,6 +358,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<String> skuIds = dto.getDetails()
                 .stream().map(PickingDetailDTO.View::getSkuId)
                 .distinct().collect(Collectors.toList());
+        this.checkPickingQty(entity,dto.getDetails());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
         WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
         moveDto.setWarehouseId(entity.getWarehouseId());
@@ -354,6 +388,41 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(entity.getSourceId());
         }
+    }
+
+    private void checkPickingQty(PickingListsEntity entity, List<PickingDetailDTO.View> detailList) {
+        PackingTaskEntity packingTaskEntity = null;
+        if(entity.getSourceType().equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())){
+            packingTaskEntity = packingTaskService.getBySourceCode(entity.getSourceCode());
+        }else if (entity.getSourceType().equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode())){
+            List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
+            if(!CollectionUtils.isEmpty(firstMileDeliveryEntityList)){
+                FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.get(0);
+                packingTaskEntity = packingTaskService.getBySourceCode(firstMileDeliveryEntity.getSourceCode());
+            }
+        }else {
+            return;
+        }
+        if(Objects.isNull(packingTaskEntity)){
+            return;
+        }
+        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Arrays.asList(packingTaskEntity.getId()));
+        if(CollectionUtils.isEmpty(wmsCartonEntityList)){
+            return;
+        }
+        List<WmsCartonDetailEntity> wmsCartonDetailEntityList = wmsCartonDetailService.listByMainIds(wmsCartonEntityList.stream().map(v->v.getId()).collect(Collectors.toList()));
+        if(CollectionUtils.isEmpty(wmsCartonDetailEntityList)){
+            return;
+        }
+        Map<String,Integer> packingQtyMap = wmsCartonDetailEntityList.stream().collect(Collectors.toMap(WmsCartonDetailEntity::getSkuNo, WmsCartonDetailEntity::getPackQty, Integer::sum));
+        Map<String,Integer> pickingQtyMap = detailList.stream().collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getQty, Integer::sum));
+
+        pickingQtyMap.forEach((skuNo,qty)->{
+            Integer packingQty = packingQtyMap.get(skuNo);
+            if(Objects.nonNull(packingQty) && qty<packingQty){
+                throw new ServiceException(StrUtil.format("sku【{}】编辑数量校验不可小于装箱数量{}",skuNo,packingQty));
+            }
+        });
     }
 
     @Override
@@ -455,6 +524,19 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             save(entity);
             pickingDetailService.saveBatch(entities);
         }
+    }
+
+    @Override
+    public List<PickingListsDTO.DetailPickDTO> listDetailBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)){
+            return Collections.emptyList();
+        }
+        //B2B
+        List<PickingListsDTO.DetailPickDTO> detailB2BPickDTOS = baseMapper.listB2BDetailBySourceIds(sourceIds);
+        //头程
+        List<PickingListsDTO.DetailPickDTO> detailRequitPickDTOS = baseMapper.listRequitDetailBySourceIds(sourceIds);
+        //合并集合
+        return Stream.concat(detailB2BPickDTOS.stream(), detailRequitPickDTOS.stream()).collect(Collectors.toList());
     }
 
     /**

@@ -42,6 +42,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.dto.inventory.*;
@@ -49,6 +50,8 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
@@ -76,6 +79,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -145,6 +149,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
+    @Resource
+    private PackingTaskService packingTaskService;
+
+    @Resource
+    private CfgRuleOutService cfgRuleOutService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -166,8 +175,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        Map<String,Integer> qtyMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+                if (StringUtils.isNotBlank(obj.getPackingStatus())) {
+                    obj.setPackingStatusName(PackingTaskStatusEnum.getName(obj.getPackingStatus()));
+                }else{
+                    obj.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
+                    obj.setPackingStatusName(PackingTaskStatusEnum.WAIT.getName());
+                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 if (obj.getDeliveryStatus() != null && obj.getDeliveryStatus()) {
@@ -183,6 +199,23 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 obj.setUnit(productDetailEntity.getUnitName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
+                //如果装箱数量大于发货数量，拆分处理
+                if(Objects.nonNull(obj.getDeliveryQty()) && Objects.nonNull(obj.getPackingQty()) && obj.getPackingQty() > obj.getDeliveryQty()){
+                    String key = obj.getId() + obj.getSkuId();
+                    if(qtyMap.containsKey(key)){
+                        Integer reduceQty = qtyMap.get(key);
+                        if(reduceQty > obj.getDeliveryQty()){
+                            obj.setPackingQty(obj.getDeliveryQty());
+                            qtyMap.put(key,reduceQty - obj.getDeliveryQty());
+                        }else{
+                            obj.setPackingQty(reduceQty);
+                            qtyMap.put(key,0);
+                        }
+                    }else{
+                        qtyMap.put(key,obj.getPackingQty() - obj.getDeliveryQty());
+                        obj.setPackingQty(obj.getDeliveryQty());
+                    }
+                }
             });
         }
         return new PagingVO(pageData);
@@ -288,6 +321,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId());
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个发货通知单【%s】", code), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "新增操作");
+        //生成装箱任务
+        packingTaskService.addPackingByB2BDelivery(soDeliveryNoticeEntity);
         return soDeliveryNoticeEntity.getId();
     }
 
@@ -466,8 +501,20 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoDeliveryNoticeEntity entity = this.getById(dto.getId());
         //判断是否是审核中的状态
         if (!Boolean.FALSE.equals(entity.getInvalidStatus()) || !ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException("只有未作废和审核中的数据允许审核");
         }
+        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getCode());
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException("未生成装箱任务，不允许审核");
+        }
+        //检查出库配置，是否需要状态
+        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgRuleOutService.getCfgOverweightDetailDTOByType(taskEntity.getSourceType());
+        if(Objects.nonNull(cfgOverweightDetailDTO) && cfgOverweightDetailDTO.isCheckStatusWhenApprove()){
+            if(!(taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()) && taskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode()))){
+                throw new ServiceException("{已装箱+全部称重}才能审核通过");
+            }
+        }
+
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
             LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -632,6 +679,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException(ApiError.ERROR_98005);
         }
         pickingListsService.exist(ids);
+
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(deliveryNoticeEntityList.stream().map(SoDeliveryNoticeEntity::getCode).collect(Collectors.toList()));
+        deliveryNoticeEntityList.forEach(v->{
+            PackingTaskEntity taskEntity = taskEntityList.stream().filter(t->t.getSourceCode().equals(v.getCode())).findFirst().orElse(null);
+            if(Objects.nonNull(taskEntity) && !taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.UNPACKED.getCode())){
+                throw new ServiceException("装箱中&已装箱不允许作废");
+            }
+        });
+
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.TRUE)
                 .set(SoDeliveryNoticeEntity::getInvalidRemark, remark)
@@ -664,6 +720,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (count != deliveryNoticeEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(deliveryNoticeEntityList.stream().map(SoDeliveryNoticeEntity::getCode).collect(Collectors.toList()));
+        deliveryNoticeEntityList.forEach(v->{
+            PackingTaskEntity taskEntity = taskEntityList.stream().filter(t->t.getSourceCode().equals(v.getCode())).findFirst().orElse(null);
+            if(Objects.nonNull(taskEntity) && !taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.UNPACKED.getCode())){
+                throw new ServiceException("装箱中&已装箱不允许删除");
+            }
+        });
+        //删除装箱任务
+        taskEntityList.forEach(v->packingTaskService.delete(v));
         //删除详情表
         soDeliveryNoticeDetailService.delete(ids);
 
@@ -1113,5 +1178,34 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
         }
         soDeliveryNoticeDetailService.updateBatchById(detailEntities);
+    }
+
+    @Override
+    public void updatePackingStatus(String id, String packingStatus) {
+        lambdaUpdate().set(SoDeliveryNoticeEntity::getPackingStatus, packingStatus)
+                .eq(SoDeliveryNoticeEntity::getId, id)
+                .update();
+    }
+
+    @Override
+    public BatchResultDTO generatePackingTask(SoDeliveryNoticeEntity entity) {
+        packingTaskService.addPackingByB2BDelivery(entity);
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"");
+    }
+
+    @Override
+    public SoDeliveryNoticeEntity getByCode(String code) {
+        if (StringUtils.isBlank(code)){
+            return null;
+        }
+        return this.lambdaQuery().eq(SoDeliveryNoticeEntity::getCode, code).last("limit 1").one();
+    }
+
+    @Override
+    public List<SoDeliveryNoticeEntity> listByCodes(List<String> codes) {
+        if (CollectionUtils.isEmpty(codes)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoDeliveryNoticeEntity::getCode, codes).list();
     }
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.wms.mapper.FirstMileCartonMapper">
+<mapper namespace="com.erp.server.wms.mapper.WmsCartonMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.WmsCartonEntity">
        <result column="id" property="id" />
@@ -12,62 +12,36 @@
        <result column="update_user_id" property="updateUserId" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="source_id" property="sourceId" />
-       <result column="box_spec_no" property="boxSpecNo" />
-       <result column="package_weight" property="packageWeight" />
-       <result column="box_length" property="boxLength" />
-       <result column="box_width" property="boxWidth" />
-       <result column="box_height" property="boxHeight" />
-       <result column="box_qty" property="boxQty" />
+       <result column="spec_id" property="specId" />
+       <result column="box_no" property="boxNo" />
+       <result column="packing_status" property="packingStatus" />
+       <result column="weighting_status" property="weightingStatus" />
+       <result column="packing_user_id" property="packingUserId" />
+       <result column="packing_user_name" property="packingUserName" />
+       <result column="error_msg" property="errorMsg" />
+       <result column="packing_task_id" property="packingTaskId" />
     </resultMap>
-
-    <!--查询已装箱数量-->
-    <select id="listPackingQtyByMainId" resultType="com.erp.model.wms.dto.WmsCartonDTO$PackingQtyDTO">
+    <select id="getBoxNoByTaskId" resultType="java.lang.Integer">
         SELECT
-            fmc.source_id,
-            fmcd.carton_id,
-            SUM(fmc.box_qty) AS boxQty,
-            fmcd.sku_id,
-            fmcd.sku_no,
-            SUM(fmcd.pack_qty) AS packQty,
-            SUM(fmc.box_qty) * SUM(fmcd.pack_qty) AS usePackQty
-        FROM wms_carton fmc
-        INNER JOIN wms_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
-        WHERE fmc.is_deleted = FALSE
-        <if test="sourceId != null and sourceId != ''">
-            AND fmc.source_id = #{sourceId}
+            MAX( wc.box_no )
+        FROM
+            wms_carton wc
+        WHERE
+            wc.is_deleted = FALSE
+          AND wc.packing_task_id = #{packingTaskId}
+    </select>
+    <select id="listByTaskIdsAndPermission" resultType="com.erp.model.wms.entity.WmsCartonEntity">
+        select
+            wc.id,wc.spec_id,wc.box_no,wc.packing_status,wc.weighting_status,wc.packing_user_id,wc.packing_user_name,wc.error_msg,wc.packing_task_id
+        from wms_carton wc where wc.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
-        <if test="boxSpecNo != null and boxSpecNo != ''">
-            AND fmc.box_spec_no = #{boxSpecNo}
+        <if test="params.taskId != null and params.taskId != ''">
+            and wc.packing_task_id = #{params.taskId}
         </if>
-        GROUP BY fmc.source_id,
-        fmcd.carton_id,
-        fmcd.sku_id,
-        fmcd.sku_no
+        order by wc.box_no
     </select>
 
-    <!--根据来源Id查询包装信息-->
-    <select id="listPackDateBySourceId" resultType="com.erp.model.wms.dto.WmsCartonDTO$PackDateDTO">
-        SELECT
-        fmcd.source_id AS id,
-        fmcd.carton_id,
-        fmcd.sku_id,
-        fmcd.sku_no,
-        SUM(fmcd.pack_qty) AS packQty,
-        SUM(fmc.box_qty) AS boxQty,
-        fmc.box_spec_no,
-        fmc.source_type
-        FROM wms_carton fmc
-        INNER JOIN wms_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
-        WHERE fmc.is_deleted = FALSE
-        <if test="sourceId != null and sourceId != ''">
-            AND fmcd.source_id = #{sourceId}
-        </if>
-        GROUP BY fmcd.source_id,
-        fmcd.carton_id,
-        fmcd.sku_id,
-        fmcd.sku_no,
-        fmc.box_spec_no,
-        fmc.source_type
-    </select>
+
 </mapper>

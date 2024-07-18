@@ -81,6 +81,7 @@ public enum BusinessNoTypeEnum {
     CODE_FH(65, "FH","虚拟仓分货单", BusinessNoConstant.FH),
 
     CODE_DQDD(53, "DQDD","多渠道订单(平台)",BusinessNoConstant.DQDD),
+    ZXRW(53, "ZXRW","装箱任务",BusinessNoConstant.ZXRW),
     CODE_JHD(64, "JHD","拣货单",BusinessNoConstant.JHD),
     CODE_JHC(65, "JHC","拣货车管理",BusinessNoConstant.JHC),
     CODE_JHBC(66, "JHBC","拣货波次",BusinessNoConstant.JHBC),

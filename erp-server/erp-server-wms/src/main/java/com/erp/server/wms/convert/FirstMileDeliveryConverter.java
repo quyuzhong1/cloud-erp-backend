@@ -46,6 +46,7 @@ public interface FirstMileDeliveryConverter {
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "sku"),
             @Mapping(target = "packQty", source = "singleBoxQuantity"),
+            @Mapping(target = "deliveryQty", source = "singleBoxQuantity"),
     })
     WmsCartonDetailDTO.AddDTO importToPackingSku(PackingExcelDTO data);
     List<WmsCartonDetailDTO.AddDTO> importToPackingSku(List<PackingExcelDTO> data);

@@ -6,7 +6,9 @@ import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
@@ -173,6 +175,10 @@ public class PickingListsDTO {
          */
         private String skuNo;
         /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
          * 产品名称
          */
         private String productName;
@@ -302,5 +308,22 @@ public class PickingListsDTO {
          */
         private Boolean isOutStock;
     }
-
+    @Data
+    @NoArgsConstructor
+    public static class DetailPickDTO{
+        private String skuId;
+        private String skuNo;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 已拣货数量
+         */
+        private Integer pickedQty;
+        /**
+         * source_id
+         */
+        private String sourceId;
+    }
 }

@@ -18,6 +18,7 @@ import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;

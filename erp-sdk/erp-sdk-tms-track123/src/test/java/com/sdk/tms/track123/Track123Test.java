@@ -31,7 +31,7 @@ class Track123Test {
 	public void getTrack() {
 		String token = authMap.get("clientSecret");
 		TrackRequest trackRequest = TrackRequest.builder()
-				.trackNos(Collections.singletonList("NM308775402BR"))
+				.trackNos(Collections.singletonList("LS961438364NL"))
 				.cursor("")
 				.queryPageSize(100)
 				.build();

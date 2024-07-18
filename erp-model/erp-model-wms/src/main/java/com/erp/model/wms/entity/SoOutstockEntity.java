@@ -261,7 +261,7 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
 
     /**
      * 装箱状态 notPacking：未装箱，packing：已装箱
-     * 枚举：PackingStatusEnum
+     * 枚举：PackingTaskStatusEnum
      */
     @TableField("packing_status")
     private String packingStatus;

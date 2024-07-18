@@ -32,7 +32,7 @@ public class ProductPlanSearchDTO extends SortDTO {
     /**
      * 产品经理ID
      */
-    private List<String> chargeId;
+    private List<String> chargeIds;
 
     /**
      * 产品分类ID

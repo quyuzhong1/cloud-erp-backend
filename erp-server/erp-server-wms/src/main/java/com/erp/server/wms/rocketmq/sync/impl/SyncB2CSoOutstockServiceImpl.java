@@ -35,7 +35,7 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -229,7 +229,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
         soOutstock.setSalesOrgName(shopInfo.getSalesOrgName());
-        soOutstock.setPackingStatus(PackingStatusEnum.NOT_PACKING.getCode());
+        soOutstock.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
         soOutstock.setInvalidStatus(false);
         soOutstock.setApproveStatus(ApproveStatusEnum.APPROVE);
         soOutstock.setApproveTime(soOutstock.getActualDeliveryDate());

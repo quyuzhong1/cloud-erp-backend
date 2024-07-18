@@ -18,7 +18,7 @@
        <result column="pack_qty" property="packQty" />
     </resultMap>
 
-    <select id="boxInfoBySourceId" resultType="com.erp.model.wms.dto.WmsCartonDTO$PackingItemDTO">
+    <select id="boxInfoBySourceId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingItemDTO">
         SELECT
             fmcd.source_Id,
             fmcd.carton_id,
@@ -28,9 +28,41 @@
             fmcd.pack_qty
         FROM
             wms_carton_detail fmcd
-            INNER JOIN wms_carton_bill fmcb ON fmcd.carton_id = fmcb.carton_id
+            INNER JOIN wms_carton fmcb ON fmcd.carton_id = fmcb.carton_id
         WHERE
             fmcd.is_deleted = FALSE AND fmcb.is_deleted = FALSE
           and fmcd.source_Id = #{sourceId};
+    </select>
+    <select id="listCartonDetailByMainIds" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$BoxDTO">
+        SELECT
+            wcd.main_id,
+            wcd.sku_id,
+            wcd.sku_no,
+            wcd.pack_qty,
+            wcd.gross_weight,
+            wcd.weight_unit
+        FROM wms_carton_detail wcd
+        where wcd.is_deleted = FALSE
+        AND wcd.main_id in
+        <foreach collection="mainIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+    <select id="listByTaskIds" resultType="com.erp.model.wms.entity.WmsCartonDetailEntity">
+        SELECT
+        wcd.main_id,
+        wcd.sku_id,
+        wcd.sku_no,
+        wcd.pack_qty,
+        wcd.gross_weight,
+        wcd.weight_unit
+        FROM wms_carton_detail wcd
+        left join wms_carton wc on wc.id = wcd.main_id and wc.is_deleted = FALSE
+        left join packing_task pt on pt.id = wc.packing_task_id and pt.is_deleted = FALSE
+        where wcd.is_deleted = FALSE
+        AND pt.id in
+        <foreach collection="taskIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
     </select>
 </mapper>

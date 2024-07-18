@@ -69,6 +69,10 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
@@ -181,6 +185,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Lazy
     private WarehouseLocationReplenishService warehouseLocationReplenishService;
 
+    @Resource
+    private PackingTaskService packingTaskService;
 
     @Resource
     private CfgRuleOutService cfgRuleOutService;
@@ -381,7 +387,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
         }
 
-        //修改状态为虚假发货
+        //修改状态为手动标发
         update(Wrappers.<SoB2cDeliveryEntity>lambdaUpdate()
                 .set(SoB2cDeliveryEntity::getShipmentMark, ShipmentMarkTypeEnum.MANUAL.getCode())
                 .eq(SoB2cDeliveryEntity::getId, id));
