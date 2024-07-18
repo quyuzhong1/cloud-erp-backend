@@ -876,6 +876,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99124(99124,"待处理，异常单,取消发货的数据不支持拦截失败"),
     ERROR_99125(99125,"异常单,取消发货的数据不支持拦截"),
+    ERROR_99126(99126,"sku未拣货，不能进行分货"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
