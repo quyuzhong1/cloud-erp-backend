@@ -23,7 +23,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputWdtApiInitRequest;
 import com.sdk.third.qimen.QiMenClientService;
 import com.sdk.third.qimen.config.QiMenUtils;
 import com.taobao.api.ApiException;
@@ -45,9 +44,8 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
     private QiMenClientService qimenService;
 	
 	@Override
-	public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
+	public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputWdtApiInitRequest) {
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-		DmpInputWdtApiInitRequest dmpInputWdtApiInitRequest = (DmpInputWdtApiInitRequest) dmpInputApiInitRequest;
         
 		SerializeConfig config = new SerializeConfig();
         config.propertyNamingStrategy = PropertyNamingStrategy.SnakeCase;
