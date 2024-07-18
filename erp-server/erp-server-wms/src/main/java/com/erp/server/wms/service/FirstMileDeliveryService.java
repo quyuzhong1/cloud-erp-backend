@@ -260,23 +260,23 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
 //     **/
 //    WmsCartonSpecDTO.WmsCartonSpecView packingView(String id);
 
-    /**
-     * 装箱清单
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:52
-     * @param id
-     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
-     **/
-    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
+//    /**
+//     * 装箱清单
+//     * @Author Luo_WG
+//     * @Date 2023/11/17 11:52
+//     * @param id
+//     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
+//     **/
+//    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
 
-    /**
-     * 导出装箱清单Excel
-     * @author Luo_WG
-     * @date:  2023-10-30
-     * @param dto
-     * @param response
-     */
-    void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response);
+//    /**
+//     * 导出装箱清单Excel
+//     * @author Luo_WG
+//     * @date:  2023-10-30
+//     * @param dto
+//     * @param response
+//     */
+//    void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * 下推海外仓入库单单个查询
