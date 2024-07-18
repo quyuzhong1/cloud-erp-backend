@@ -172,6 +172,7 @@ public class AsyncServiceImpl implements AsyncService {
         updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
         //出库
@@ -196,5 +197,6 @@ public class AsyncServiceImpl implements AsyncService {
         entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
         entity.setDeliveryTime(deliveryTime);
         entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
+        soB2cDeliveryService.updateById(entity);
     }
 }
