@@ -111,8 +111,8 @@ public class PickingListsController extends BaseController {
     }
 
 
-    @GetMapping("/initDelivery")
+    @PostMapping("/initDelivery")
     public void initDelivery(@RequestBody List<String> codes) {
-
+        pickingListsService.initDelivery(codes);
     }
 }

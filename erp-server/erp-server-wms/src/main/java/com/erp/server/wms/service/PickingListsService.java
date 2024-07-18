@@ -100,4 +100,6 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * @return
      */
     List<PickingListsDTO.DetailPickDTO> listDetailBySourceIds(List<String> sourceIds);
+
+    void initDelivery(List<String> codes);
 }
