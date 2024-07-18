@@ -20,18 +20,19 @@
 
     <select id="boxInfoBySourceId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingItemDTO">
         SELECT
-            fmcd.source_Id,
-            fmcd.carton_id,
-            fmcd.sku_id,
-            fmcd.sku_no,
-            fmcb.box_no,
-            fmcd.pack_qty
+            pt.source_Id,
+            wcd.main_id as cartonId,
+            wcd.sku_id,
+            wcd.sku_no,
+            wc.box_no,
+            wcd.pack_qty
         FROM
-            wms_carton_detail fmcd
-            INNER JOIN wms_carton fmcb ON fmcd.carton_id = fmcb.carton_id
+            wms_carton_detail wcd
+                INNER JOIN wms_carton wc ON wc.id = wcd.main_id and wc.is_deleted = FALSE
+                INNER JOIN packing_task pt ON pt.id = wc.packing_task_id and pt.is_deleted = FALSE
         WHERE
-            fmcd.is_deleted = FALSE AND fmcb.is_deleted = FALSE
-          and fmcd.source_Id = #{sourceId};
+            wcd.is_deleted = FALSE and wcd.sku_id is not null
+          and pt.source_Id =  #{sourceId}
     </select>
     <select id="listCartonDetailByMainIds" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$BoxDTO">
         SELECT
