@@ -121,7 +121,7 @@ public class VirtualInventoryDiffController extends BaseController {
      * @param list
      * @return ApiResult<List<ListSuggestQtyDTO>>
      */
-    @PostMapping("/updateVirtualInventory")
+    @PostMapping("/listSuggestQty")
     public ApiResult<List<VirtualInventoryDiffDTO.ListSuggestQtyDTO>> listSuggestQty(@RequestBody @Validated List<VirtualInventoryDiffDTO.ListSuggestQtyParamDTO> list) {
         List<VirtualInventoryDiffDTO.ListSuggestQtyDTO> resultList = virtualInventoryDiffService.listSuggestQty(list);
         return success(resultList);
