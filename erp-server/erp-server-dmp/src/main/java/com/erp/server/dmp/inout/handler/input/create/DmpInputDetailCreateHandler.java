@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.create;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -63,7 +64,7 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 		Set<String> nextLevelIdSet = dmpInputTaskService.lambdaQuery()
 				.eq(DmpInputTaskEntity::getCfgInputId, cfgInputId)
 				.in(DmpInputTaskEntity::getNextLevelId, dmpCfgInputDetailEntityList.stream().map(DmpCfgInputDetailEntity::getNextLevelId).collect(Collectors.toList()))
-				.eq(DmpInputTaskEntity::getTaskType, taskType.getCode())
+				.in(DmpInputTaskEntity::getTaskType, this.getIngTaskType().stream().map(DmpInputTaskTaskTypeEnum::getCode).collect(Collectors.toSet()))
 				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
 				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
 				.select(DmpInputTaskEntity::getNextLevelId)
@@ -130,4 +131,8 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 	}
 
 	public abstract DmpInputTaskTaskTypeEnum getDmpInputTaskTaskTypeEnum();
+	
+	protected Set<DmpInputTaskTaskTypeEnum> getIngTaskType(){
+		return Collections.singleton(getDmpInputTaskTaskTypeEnum());
+	}
 }

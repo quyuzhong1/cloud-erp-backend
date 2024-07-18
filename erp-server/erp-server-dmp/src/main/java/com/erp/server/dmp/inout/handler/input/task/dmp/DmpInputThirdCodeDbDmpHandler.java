@@ -1,6 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpSoOutstockEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.google.common.collect.Lists;
 
 import cn.hutool.core.collection.CollUtil;
 
@@ -32,17 +33,21 @@ public abstract class DmpInputThirdCodeDbDmpHandler extends DmpInputDbConvertDmp
 	protected Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData(
 			List<Map<String, Object>> dmpInputMongoEntityList) {
 		Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertDataMap = super.convertData(dmpInputMongoEntityList);
-		Set<String> thirdCodeSet = new HashSet<>();
+		List<String> thirdCodeList = new ArrayList<>();
 		String thirdCodeName = StrUtils.underlineToCamel(THIRD_CODE, true);
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData : convertDataMap.entrySet()) {
-			thirdCodeSet.addAll(convertData.getValue().stream().map(c -> c.get(thirdCodeName).toString()).collect(Collectors.toSet()));
+			thirdCodeList.addAll(convertData.getValue().stream().map(c -> c.get(thirdCodeName).toString()).collect(Collectors.toSet()));
 		}
 		
-		QueryWrapper<?> wrapper = new QueryWrapper<>();
-		wrapper.in(THIRD_CODE, thirdCodeSet);
-		wrapper.ne(DmpSoOutstockEntity.SOURCE_SYSTEM, this.getDmpBasicSystemCodeEnum().getCode());
-		wrapper.select(DmpSoOutstockEntity.THIRD_CODE);
-		List<Map<String, Object>> listMaps = dmpEntityServiceImpl.listMaps(wrapper);
+		List<List<String>> partition = Lists.partition(thirdCodeList, 50000);
+		List<Map<String, Object>> listMaps = new ArrayList<>();
+		for(List<String> p : partition) {
+			QueryWrapper<?> wrapper = new QueryWrapper<>();
+			wrapper.in(THIRD_CODE, p);
+			wrapper.ne(DmpSoOutstockEntity.SOURCE_SYSTEM, this.getDmpBasicSystemCodeEnum().getCode());
+			wrapper.select(DmpSoOutstockEntity.THIRD_CODE);
+			listMaps.addAll(dmpEntityServiceImpl.listMaps(wrapper));
+		}
 		if(CollUtil.isNotEmpty(listMaps)) {
 			Set<String> newThirdCodeName = listMaps.stream().map(l -> l.get(THIRD_CODE).toString()).collect(Collectors.toSet());
 			for(List<TreeMap<String, Object>> convertData : convertDataMap.values()) {

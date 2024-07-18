@@ -1,5 +1,8 @@
 package com.erp.server.dmp.inout.handler.input.create;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.springframework.stereotype.Service;
 
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
@@ -16,4 +19,12 @@ public class DmpInputHistoryCreateHandler extends DmpInputDetailCreateHandler{
 		return DmpInputTaskTaskTypeEnum.HISTORY;
 	}
 	
+	@Override
+	public Set<DmpInputTaskTaskTypeEnum> getIngTaskType() {
+		Set<DmpInputTaskTaskTypeEnum> set = new HashSet<>();
+		set.add(DmpInputTaskTaskTypeEnum.NORMAL);
+		set.add(DmpInputTaskTaskTypeEnum.COMPENSATE);
+		set.add(DmpInputTaskTaskTypeEnum.HISTORY);
+		return set;
+	}
 }
