@@ -1542,8 +1542,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, inboundEntity.getCode());
         }
 
+
         //未装箱不能下推入库单
-        if (PackingTaskStatusEnum.WAIT.getCode().equals(entity.getPackingStatus())) {
+        PackingTaskEntity packingTaskEntity = packingTaskService.getBySourceCode(entity.getCode());
+
+        if (Objects.isNull(packingTaskEntity) || !PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.getPackingStatus())) {
             throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND, entity.getCode());
         }
 

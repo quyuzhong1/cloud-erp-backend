@@ -120,6 +120,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Resource
     private SkuMappingFeign skuMappingFeign;
 
+    @Resource
+    private PackingTaskService packingTaskService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -131,9 +134,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(addDTO.getSourceId());
         Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
-        if (!PackingTaskStatusEnum.PACKED.getCode().equalsIgnoreCase(deliveryEntity.getPackingStatus())) {
-            String msg = StrUtil.format("【{}】发货单未装箱完", deliveryEntity.getCode());
-            throw new ServiceException(msg);
+        PackingTaskEntity packingTaskEntity = packingTaskService.getBySourceCode(deliveryEntity.getCode());
+
+        if (Objects.isNull(packingTaskEntity) || !PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.getPackingStatus())) {
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND);
         }
 
         // 发货单明细
