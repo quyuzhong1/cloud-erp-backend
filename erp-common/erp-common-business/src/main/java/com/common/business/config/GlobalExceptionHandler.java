@@ -61,23 +61,23 @@ public class GlobalExceptionHandler {
         return result;
     }
 
-    /**
-     * 系统异常 监测
-     * @param e 异常
-     * @return  ApiResult
-     */
-    @ExceptionHandler({Exception.class})
-    public ApiResult resolveException(Exception e) {
-        log.error("系统异常：{}", null == e.getMessage()?e.toString(): e.getMessage());
-        ApiResult result = new ApiResult();
-        result.setCode(1000000);
-        result.setMsg(null==e.getMessage()?e.toString():e.getMessage());
-        // 某些异常需要返回data
-        if (Objects.nonNull(e.getStackTrace())) {
-            result.setData(e.getStackTrace());
-        }
-        return result;
-    }
+//    /**
+//     * 系统异常 监测
+//     * @param e 异常
+//     * @return  ApiResult
+//     */
+//    @ExceptionHandler({Exception.class})
+//    public ApiResult resolveException(Exception e) {
+//        log.error("系统异常：{}", null == e.getMessage()?e.toString(): e.getMessage());
+//        ApiResult result = new ApiResult();
+//        result.setCode(1000000);
+//        result.setMsg(null==e.getMessage()?e.toString():e.getMessage());
+//        // 某些异常需要返回data
+//        if (Objects.nonNull(e.getStackTrace())) {
+//            result.setData(e.getStackTrace());
+//        }
+//        return result;
+//    }
 
 
 
