@@ -16,6 +16,7 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.PackingInspectionDTO;
@@ -26,6 +27,7 @@ import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.convert.PackingInspectConverter;
 import com.erp.server.wms.service.*;
@@ -33,6 +35,7 @@ import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -77,6 +80,8 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     @Lazy
     @Resource
     private AsyncService asyncService;
+    @Autowired
+    private LogisticsFeign logisticsFeign;
 
 
     @Override
@@ -172,11 +177,15 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             }
             viewDTO = addViewDTO;
             //跟踪号赋值
-            if(viewDTO.getTrackNo() == null){
+            if(viewDTO.getTrackNo() == null || null == viewDTO.getPaperSize()){
                 List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
                 if(CollectionUtils.isNotEmpty(soB2cLogisticsEntityList)){
                     SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.get(0);
                     viewDTO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
+                    LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
+                    if(Objects.nonNull(logisticsChannelEntity)){
+                        viewDTO.setPaperSize(logisticsChannelEntity.getPaperSize());
+                    }
                 }
             }
         }
