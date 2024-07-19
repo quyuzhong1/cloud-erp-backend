@@ -1589,7 +1589,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         //校验冻结数量
         if (MathUtil.compareTo(saveDTO.getFrozenQty(), soDetailEntity.getFrozenQty()) == MathUtil.ZERO) {
-            throw new ServiceException("冻结数量未边无需更新");
+            throw new ServiceException("冻结数量未变无需更新");
         }
 
         //发货通知单
