@@ -190,6 +190,9 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     @TableField("height")
     private BigDecimal height;
 
+    /**
+     * 发货标记类型
+     */
     @TableField("shipment_mark")
     private String shipmentMark;
 
@@ -198,6 +201,13 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
      */
     @TableField(exist = false)
     private String batchNo;
+
+
+    /**
+     * 同类波次标识
+     */
+    @TableField(exist = false)
+    private String sameWaveStr;
 
 
     public static final String CODE = "code";

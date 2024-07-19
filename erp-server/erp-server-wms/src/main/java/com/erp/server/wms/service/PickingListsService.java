@@ -100,4 +100,6 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
 
 
     void init();
+
+    void initDelivery(List<String> codes);
 }

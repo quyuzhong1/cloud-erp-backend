@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -341,12 +342,13 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                     pickedDeliveryIds.add(deliveryId);
                 }
             }
-            //仓位标记缺货，则所有涉及的发货单都置为异常
+            //仓位标记缺货，则所有涉及的发货单都置为异常，但如果发货单状态为已发货，那么跳过
             if(isOutStock){
                 soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
                         .set("status", SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode())
                         .set("abnormal_cause", AbnormalCauseEnum.PICK_MARKINGS.getCode())
-                        .in("id", outStockDeliveryIds));
+                        .in("id", outStockDeliveryIds)
+                        .ne("status", SoB2cDeliveryStatusEnum.SHIPPED.getCode()));
             }
         }
         //将有已拣数量的发货单标记为拣货中
