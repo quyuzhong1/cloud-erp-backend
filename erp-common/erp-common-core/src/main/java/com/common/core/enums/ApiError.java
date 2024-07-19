@@ -1118,6 +1118,9 @@ public enum ApiError implements Serializable {
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
     ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
     ERROR_VW_INVENTORY_ERROR(92235,"虚拟仓【{}】库存不足"),
+    ERROR_EXISTS_TRANSFER_INFO(92236, "存在未删除或未作废的直接调拨单"),
+    ERROR_GENERATE_TRANSFER(92237, "可用库存不足，生成直接调拨单失败"),
+
     ERROR_NOT_FOUND_WAREHOUSE_AREA(92238, "新增补货单时没有找到有效的库区"),
     ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
 
