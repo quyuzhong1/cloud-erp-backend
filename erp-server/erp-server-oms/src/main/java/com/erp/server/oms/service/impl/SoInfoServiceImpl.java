@@ -3570,6 +3570,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         for (SoDetailEntity soDetailEntity : soDetailList) {
             //明细
             SoInfoDTO.LockVirtualInventoryDetailDTO detailDTO = BeanMapperUtils.map(SoInfoDTO.LockVirtualInventoryDetailDTO.class, soDetailEntity);
+            //明细id
+            detailDTO.setDetailId(soDetailEntity.getId());
+
             String productName = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             detailDTO.setProductName(productName);
 

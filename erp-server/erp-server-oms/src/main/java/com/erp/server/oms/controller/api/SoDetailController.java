@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.validator.AddGroup;
@@ -13,7 +14,9 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.server.oms.service.SoDetailService;
+import com.erp.server.oms.service.SoInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +42,8 @@ public class SoDetailController extends BaseController {
     @Resource
     private SoDetailService soDetailService;
 
+    @Resource
+    private SoInfoService soInfoService;
 
     /**
      * 检测 sku 是否缺货
@@ -128,7 +133,13 @@ public class SoDetailController extends BaseController {
                     resultDTOS.add(resultDTO);
                     continue;
                 }
-                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                SoInfoEntity soInfoEntity = soInfoService.getById(entity.getMainId());
+                if (ObjectUtil.isEmpty(soInfoEntity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "销售订单不存在, 锁定库存失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), StrUtil.format("【{}】{}",soInfoEntity.getCode(),entity.getSkuNo()), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }
