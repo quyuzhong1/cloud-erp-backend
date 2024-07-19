@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -1526,6 +1527,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         String sourceCode = barCodeArr[0];
         String boxNo = barCodeArr[1];
+
+        if(sourceCode.contains(BusinessNoConstant.FHTZ)){
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByCode(sourceCode);
+            if(Objects.nonNull(soDeliveryNoticeEntity) && soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+                throw new ServiceException("发货通知单已审核，无法更新");
+            }
+        }else if(sourceCode.contains(BusinessNoConstant.FHD)){
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getByCode(sourceCode);
+            if(Objects.nonNull(firstMileDeliveryEntity) && firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+                throw new ServiceException("发货单已审核，无法更新");
+            }
+        }
 
         PackingTaskEntity packingTaskEntity = Optional.ofNullable(this.getBySourceCode(sourceCode)).orElseThrow(() -> new ServiceException("未生成装箱任务"));
         WmsCartonEntity wmsCartonEntity = Optional.ofNullable(wmsCartonService.getByTaskIdAndBoxNo(packingTaskEntity.getId(),boxNo)).orElseThrow(() -> new ServiceException("未找到该箱号装箱信息"));
