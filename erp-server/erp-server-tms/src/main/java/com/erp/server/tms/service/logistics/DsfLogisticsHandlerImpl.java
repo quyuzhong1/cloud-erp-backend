@@ -7,13 +7,17 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FileUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -37,6 +41,8 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -55,6 +61,8 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private DsfShipperService dsfShipperService;
     @Resource
     private LogisticsOperateService logisticsOperateService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     private List<Parcel> getParcel(LogisticsOrderVO logisticsOrderVO) {
         if (CollectionUtils.isEmpty(logisticsOrderVO.getLogisticsProductVOList())) {
@@ -89,6 +97,24 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             }
             if (StringUtils.isEmpty(productInfo.getCurrency_import())) {
                 productInfo.setCurrency_import(logisticsOrderVO.getParceInfoVO().getCurrency());
+            }
+            //出口国币种处理 人民币转美元（目的国申报价默认美金）
+            BigDecimal declarePrice = logisticsProductVO.getDeclarePrice();
+            if (Objects.nonNull(declarePrice)){
+                String currency = CurrencyEnum.USD.getCurrencyCode();
+                //默认人民币
+                if (!StringUtils.isBlank(logisticsProductVO.getDeclareCurrency()) && !CurrencyEnum.CNY.getCurrencyCode().equals(logisticsProductVO.getDeclareCurrency())) {
+                    currency = logisticsProductVO.getDeclareCurrency();
+                }
+                try {
+                    BigDecimal exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                    BigDecimal divide = MathUtil.divide(declarePrice, exchangeRate).setScale(4, RoundingMode.HALF_UP);
+                    productInfo.setDeclare_unit_price_export(divide);
+                    productInfo.setCurrency_export(currency);
+                }catch (Exception e){
+                    throw new ServiceException("获取币种汇率转换异常");
+                }
+
             }
             declareProductInfos.add(productInfo);
         });
