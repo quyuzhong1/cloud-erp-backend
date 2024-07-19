@@ -27,6 +27,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
@@ -91,6 +92,7 @@ import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
@@ -1560,7 +1562,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
+    public List<BaseResultDTO.AddDTO> generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
         List<SoB2cDeliveryEntity> b2cDelivery = listByIds(dto.getIds());
         boolean match = b2cDelivery.stream().allMatch(v -> SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(v.getStatus()));
         List<String> soIds = b2cDelivery.stream().map(SoB2cDeliveryEntity::getSourceId).distinct().collect(Collectors.toList());
@@ -1586,15 +1588,26 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         if (CollectionUtils.isNotEmpty(dto.getIds())) {
-            WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
-            addDTO.setPickCartTypeIdList(Collections.singletonList(dto.getPickingCartTypeId()));
-            addDTO.setDeliveryIdList(dto.getIds());
-            addDTO.setPickingType(dto.getPickingType());
-            addDTO.setName("手动生成波次");
-            addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
-            return waveListService.add(addDTO);
+            List<BaseResultDTO.AddDTO> addDTOS = new ArrayList<>();
+            List<List<String>> partitions = Lists.partition(dto.getIds(), dto.getNum());
+            for (List<String> partition : partitions) {
+                if (Boolean.FALSE.equals(dto.getAtuoAemainder()) && partition.size() < dto.getNum()) {
+                    ApplicationContextUtils.getBean(SoB2cDeliveryService.class).rollbackInventory(partition);
+                    //回滚拣货相关数据
+                    pickingListsService.deleteBySourceId(partition);
+                    break;
+                }
+                WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
+                addDTO.setPickCartTypeIdList(Collections.singletonList(dto.getPickingCartTypeId()));
+                addDTO.setDeliveryIdList(partition);
+                addDTO.setPickingType(dto.getPickingType());
+                addDTO.setName("手动生成波次");
+                addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
+                addDTOS.add(waveListService.add(addDTO));
+            }
+            return addDTOS;
         }
-        return new BaseResultDTO.AddDTO();
+        return Collections.emptyList();
     }
 
     private void generateReplenish (List<SoB2cDeliveryDetailEntity> detailList,SoB2cDeliveryEntity deliveryEntity) {

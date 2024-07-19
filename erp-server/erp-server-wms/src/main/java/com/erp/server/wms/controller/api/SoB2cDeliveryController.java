@@ -408,8 +408,8 @@ public class SoB2cDeliveryController extends BaseController {
      * @see BaseResultDTO.AddDTO
      */
     @PostMapping("/generationWaves")
-    public ApiResult<BaseResultDTO.AddDTO> generationWaves(@RequestBody @Validated SoB2cDeliveryDTO.GenerationWavesDTO dto){
-        BaseResultDTO.AddDTO result = soB2cDeliveryService.generationWaves(dto);
+    public ApiResult<List<BaseResultDTO.AddDTO>> generationWaves(@RequestBody @Validated SoB2cDeliveryDTO.GenerationWavesDTO dto){
+        List<BaseResultDTO.AddDTO> result = soB2cDeliveryService.generationWaves(dto);
         return ApiResult.success(result);
     }
 
