@@ -110,7 +110,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     BigDecimal exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
                     BigDecimal divide = MathUtil.divide(declarePrice, exchangeRate).setScale(4, RoundingMode.HALF_UP);
                     productInfo.setDeclare_unit_price_export(divide);
-                    productInfo.setCurrency_export(CurrencyEnum.USD.getCurrencyCode());
+                    productInfo.setCurrency_export(currency);
                 }catch (Exception e){
                     throw new ServiceException("获取币种汇率转换异常");
                 }
