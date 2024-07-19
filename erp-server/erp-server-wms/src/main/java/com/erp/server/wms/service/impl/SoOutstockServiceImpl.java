@@ -2568,15 +2568,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     continue;
                 }
                 // 明细已存在
-//                SoOutstockDetailEntity detailEntity = detailEntityListMap.get(detailDTO.getPlatformDetailId());
-//                SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntity.getMainId());
-//                if (Objects.equals(detailEntity.getActualQty(), detailDTO.getQtyShipped()) && soOutstockEntity.getBillDate().isEqual(detailDTO.getPlatformDeliveryTime().toLocalDate())){
-//                    // 3, 明细已存在且信息未变更
-//                    existSourceDetailList.add(detailDTO);
-//                } else {
-//                    // 2，明细存在日期或数量变更
-//                    updateGenerateSourceDetailList.add(detailDTO);
-//                }
+                SoOutstockDetailEntity detailEntity = detailEntityListMap.get(detailDTO.getPlatformDetailId());
+                SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntity.getMainId());
+                if (Objects.equals(detailEntity.getActualQty(), detailDTO.getQtyShipped())
+                        && soOutstockEntity.getBillDate().isEqual(detailDTO.convertPlatformDeliveryDateTime())){
+                    // 3, 明细已存在且信息未变更
+                    existSourceDetailList.add(detailDTO);
+                } else {
+                    // 2，明细存在日期或数量变更
+                    updateGenerateSourceDetailList.add(detailDTO);
+                }
             }
 
         } else {
@@ -3128,19 +3129,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 if (ApproveStatusEnum.APPROVE_ING.equals(soOutstockEntity.getApproveStatus())){
                     soOutstockService.cancelProcess(Collections.singletonList(soOutstockEntity.getId()));
                 }
+                // 删除历史(独立事务)
+                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
 
-                // 修改信息(独立事务)
-                soOutstockEntity.setBillDate(generateB2cDTO.getBillDate());
-                soOutstockEntity.setPlanDeliveryDate(generateB2cDTO.getBillDate());
-                detailEntity.setActualQty(detailDTO.getQtyShipped());
-                detailEntity.setPlanQty(detailDTO.getQtyShipped());
-                soOutstockService.updateMainAndDetail(soOutstockEntity, Collections.singletonList(detailEntity));
-
-                // 提交(独立事务)
-                soOutstockService.submit(Collections.singletonList(soOutstockEntity.getId()));
-
-                // 审核(独立事务)
-                soOutstockService.approve(new ApproveOneDTO(soOutstockEntity.getId(), ApproveTypeEnum.PASS.getStatus(), ""));
+                // 重新新增(独立事务)
+                soOutstockService.generatePlatformB2cOutStock(generateB2cDTO, dto, soB2cEntity, updateGenerateSourceDetailList);
 
                 checkErrorDetailIds.add(detailEntity.getId());
             } catch (Exception e) {
