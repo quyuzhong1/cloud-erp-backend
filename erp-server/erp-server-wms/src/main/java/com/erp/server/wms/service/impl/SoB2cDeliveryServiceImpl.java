@@ -1864,6 +1864,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             detailAddDTO.setInWarehouseId(inWarehouseEntity.getId());
             detailList.add(detailAddDTO);
         }
+        addDTO.setDetailList(detailList);
         String id = transferInfoService.addAndSubmit(addDTO);
         //审核
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
