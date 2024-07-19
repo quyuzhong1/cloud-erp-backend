@@ -400,6 +400,33 @@ public class CfgRuleOutDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CfgPrintDetail {
+        /**
+         * 纸张大小
+         */
+        private String paperSize;
+
+        /**
+         * 打印机名称
+         */
+        private String printerName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CfgPrint {
+        /**
+         * 打印配置详情
+         */
+        private List<CfgPrintDetail> cfgPrintDetails = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
     @Builder
     @AllArgsConstructor
     public static class CheckDTO {
@@ -438,6 +465,12 @@ public class CfgRuleOutDTO implements Serializable {
          * 产品装箱配置
          */
         private CfgProductPacking cfgProductPacking = new CfgProductPacking();
+
+
+        /**
+         * 打印配置
+         */
+        private CfgPrint cfgPrint = new CfgPrint();
 
     }
 
