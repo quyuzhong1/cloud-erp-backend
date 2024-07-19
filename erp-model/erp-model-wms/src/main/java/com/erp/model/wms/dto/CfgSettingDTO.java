@@ -93,6 +93,10 @@ public class CfgSettingDTO implements Serializable {
          * 装箱完成通知
          */
         private CfgSettingValueDTO.FinishPackingNoticeDTO finishPackingNoticeDTO;
+        /**
+         * 打印配置
+         */
+        private CfgSettingValueDTO.CfgPrint cfgPrint = new CfgSettingValueDTO.CfgPrint();
     }
 
 
