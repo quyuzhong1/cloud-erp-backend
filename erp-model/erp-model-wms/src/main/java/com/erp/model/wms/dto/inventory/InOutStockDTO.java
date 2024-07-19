@@ -90,7 +90,7 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
                 stockDTO.setSourceDetailId(sourceDetailId);
                 stockDTO.setSkuId(skuId);
                 stockDTO.setSkuNo(skuNo);
-                stockDTO.setWarehouseLocation(StrUtil.isBlank(entity.getBatchNo()) ? "" : warehouseLocation);
+                stockDTO.setWarehouseLocation(StrUtil.isNotBlank(entity.getBatchNo()) ? "" : warehouseLocation);
                 stockDTO.setQty(qty);
                 stockDTO.setBillDate(entity.getBillDate());
                 return stockDTO;

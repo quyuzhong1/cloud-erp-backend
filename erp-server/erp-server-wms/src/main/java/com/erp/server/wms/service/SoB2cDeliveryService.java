@@ -345,7 +345,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param entity
      * @return Boolean
      */
-    Boolean deliveryOutStock(SoB2cDeliveryEntity entity);
+    Boolean pushTransferInfo(SoB2cDeliveryEntity entity);
     /**
      * 重新出库
      * @author will

@@ -164,10 +164,11 @@ public class SoB2cDeliveryController extends BaseController {
                 result = soB2cDeliveryService.delivery(id, deliveryType);
                 Boolean isSuccess = result.getSuccess();
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
-                if (isManual) {
+                if (isManual && isSuccess) {
                     //生成销售出库单
-                    if(isSuccess){
-                        soB2cDeliveryService.deliveryOutStock(entity);
+                    Boolean isOutStock = soB2cDeliveryService.pushTransferInfo(entity);
+                    if (isOutStock) {
+                        soB2cDeliveryService.generateB2cSoOutstock(entity);
                     }
                 }
             } catch (Exception e) {
@@ -490,6 +491,10 @@ public class SoB2cDeliveryController extends BaseController {
             BatchResultDTO resultDTO;
             try {
                 resultDTO = soB2cDeliveryService.retryOutstock(id);
+                if (resultDTO.getSuccess()) {
+                    SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                    soB2cDeliveryService.generateB2cSoOutstock(entity);
+                }
             }catch (Exception e){
                 log.error("重新出库失败",e);
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
