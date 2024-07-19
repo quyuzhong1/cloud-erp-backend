@@ -6316,17 +6316,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(mainIds) || StringUtil.isEmpty(type)) {
             return;
         }
-        mainIds.forEach(id -> {
-            SoB2cEntity soB2cEntity = this.getById(id);
-            if (Objects.nonNull(soB2cEntity)) {
-                String signOrderError = soB2cEntity.getSignOrderError();
-                if (signOrderError.equals(type)) {
-                    this.lambdaUpdate().set(SoB2cEntity::getSignOrderError, "").
-                            eq(SoB2cEntity::getId, id).update(new SoB2cEntity());
-                }
-            }
-        });
-
+        this.lambdaUpdate().set(SoB2cEntity::getSignOrderError, "").
+                in(SoB2cEntity::getId, mainIds).eq(SoB2cEntity::getSignOrderError,type).update();
     }
 
     @Override
