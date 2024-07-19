@@ -778,7 +778,8 @@
         sbl.weight AS weight,
         sbl.transfer_logistics_supplier_id,
         sbl.transfer_logistics_channel_id,
-        sb.dict_platform
+        sb.dict_platform,
+        sb.is_intercept as isIntercept
         FROM so_b2c sb
         LEFT JOIN so_b2c_logistics sbl
         ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
