@@ -515,7 +515,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
-        return transferInfoService.add(addDTO);
+        return transferInfoService.addAndApprove(addDTO);
     }
 
     /**
@@ -801,14 +801,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             Boolean isMatch = cfgRuleOutService.matchTransferRule(matchRuleDTO);
             if (isMatch){
                 //中转
-                String transferToUlanziId = generateTransferToUlanzi(entity, detailEntityList);
-                submitAndApprove(transferToUlanziId);
-
-                String transferFromUlanziId = generateTransferFromUlanzi(entity, detailEntityList);
-                submitAndApprove(transferFromUlanziId);
+               generateTransferToUlanzi(entity, detailEntityList);
+               generateTransferFromUlanzi(entity, detailEntityList);
             }else {
-                String transferOutId = generateTransferOut(entity, detailEntityList);
-                submitAndApprove(transferOutId);
+                generateTransferOut(entity, detailEntityList);
             }
 
             //走TMS自动生成物流单逻辑
@@ -1955,7 +1951,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
-        return transferInfoService.add(addDTO);
+        return transferInfoService.addAndApprove(addDTO);
     }
 
     /**
@@ -2046,7 +2042,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
-        return transferInfoService.add(addDTO);
+        return transferInfoService.addAndApprove(addDTO);
     }
 
     /**
@@ -2081,22 +2077,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         InventoryEntity inventoryEntity = list.get(0);
         WarehouseLocationEntity locationEntity = locationList.stream().filter(item -> item.getCode().equals(inventoryEntity.getWarehouseLocation())).findFirst().get();
         return locationEntity;
-    }
-
-    /**
-     * 提交并审核直接调拨单
-     */
-    private void submitAndApprove(String transferId) {
-        if (StringUtils.isBlank(transferId)) {
-            throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
-        }
-        //提交
-        transferInfoService.submit(Arrays.asList(transferId));
-        //审核
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setIds(Arrays.asList(transferId));
-        baseApproveParamDTO.setType(ApproveType.PASS);
-        transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
     }
 }
 
