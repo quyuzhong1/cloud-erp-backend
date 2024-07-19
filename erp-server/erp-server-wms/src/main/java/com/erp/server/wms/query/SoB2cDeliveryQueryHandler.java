@@ -100,7 +100,7 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                 addDeliveryInterceptFilter();
             }
             //虚假发货
-            if ("false_shipment".equals(searchType)) {
+            if ("falseShipment".equals(searchType)) {
                 List<String> ids = soB2cDeliveryService.listIdsByShipmentMark(ShipmentMarkTypeEnum.MANUAL);
                 if (CollectionUtils.isEmpty(ids)) {
                     return getQueryEmptySql();
