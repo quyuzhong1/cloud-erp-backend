@@ -1119,7 +1119,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> mainIdList = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(mainIdList);
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
-            throw new ServiceException("为找到发货单明细");
+            throw new ServiceException("未找到发货单明细");
         }
         //已发货订单，直接添加可用
         List<VirtualInventoryStockDTO.OutInStockDTO> shippedParamList = new ArrayList<>();
@@ -1764,7 +1764,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelShipment(String id, List<SoB2cDeliveryDTO.CancelShipmentDTO> detail) {
-        SoB2cDeliveryEntity entity = getById(id);
+        SoB2cDeliveryEntity old = getById(id);
+        SoB2cDeliveryEntity entity = new SoB2cDeliveryEntity();
+        BeanMapperUtils.copy(entity,old);
+        checkDelivery(entity);
         //修改订单状态
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
@@ -1779,6 +1782,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             changeInventory(dto, dto.getWarehouseLocation(), InventoryBusinessTypeEnum.SO_B2C_DELIVERY_CANCEL.getCode());
             changeInventory(dto, dto.getReturnWarehouseLocation(), InventoryBusinessTypeEnum.SO_B2C_DELIVERY_SHELVES.getCode());
         }
+        //虚拟库存回退
+        addUsableVirtualInventory(Arrays.asList(old));
         //删除拣货单
         pickingListsService.deleteBySourceId(Collections.singletonList(id));
         // 操作日志

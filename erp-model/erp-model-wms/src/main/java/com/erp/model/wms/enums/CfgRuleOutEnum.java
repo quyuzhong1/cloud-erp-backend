@@ -133,8 +133,6 @@ public enum CfgRuleOutEnum {
         NQ("!=", "不等于"),
         IN_LIST("inList", "在列表"),
         NOT_IN_LIST("notInList", "不在列表"),
-        CONTAINS("contains", "包含"),
-        NOT_CONTAINS("notContains", "不包含"),
         ;
 
         private String code;

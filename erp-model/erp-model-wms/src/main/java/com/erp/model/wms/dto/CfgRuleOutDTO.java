@@ -459,13 +459,56 @@ public class CfgRuleOutDTO implements Serializable {
          * field下拉：/wms/common/enumDropDown?type=StockOutTransferField
          * compare下拉：/wms/common/enumDropDown?type=StockOutTransferCompare
          */
-        private List<ConditionElement> conditionList;
+        private List<TransferConditionElement> conditionList;
+    }
+
+    @Data
+    public static class TransferConditionElement{
+        /**
+         * 左括号
+         */
+
+        private String leftBracket;
+
+        /**
+         * 对应字段
+         */
+        private String field;
+
+        /**
+         * 选项逻辑关系 大于 等于 等等
+         */
+        private String compare;
+
+        /**
+         * 对应的值
+         */
+        private List<String> valueList;
+
+        private String value;
+
+        /**
+         * 右括号
+         */
+        private String rightBracket;
+
+        /**
+         * 逻辑关系 and 或者or
+         */
+        private String logic;
+
+        /**
+         * 对应的值类型
+         */
+        private String valueType;
     }
 
     /**
      * 匹配中转规则
      */
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class MatchTransferRuleDTO{
         /**
          * 类型
