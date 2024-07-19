@@ -1,6 +1,8 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.anno.ParamData;
@@ -54,9 +56,6 @@ public class TikTokOrderItemDmpHandler extends DmpInputDoChildDmpHandler{
 			String billNo = dmpInputMongoChildEntity.get("fid").toString();
 			String dmpId = billNoIdMap.get(billNo);
 			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
-
-
-
 		}
 	}
 	
