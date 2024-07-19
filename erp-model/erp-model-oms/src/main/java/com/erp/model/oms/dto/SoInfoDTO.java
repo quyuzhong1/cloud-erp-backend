@@ -2461,7 +2461,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 明细id
          */
-        private String id;
+        private String detailId;
         /**
          * SKU
          */

@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -774,7 +775,13 @@ public class SoInfoController extends BaseController {
                     resultDTOS.add(resultDTO);
                     continue;
                 }
-                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                SoInfoEntity soInfoEntity = soInfoService.getById(entity.getMainId());
+                if (ObjectUtil.isEmpty(soInfoEntity)) {
+                    resultDTO = BatchResultDTO.fail(saveDTO.getDetailId(), saveDTO.getDetailId(), "销售订单不存在, 锁定库存失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), StrUtil.format("【{}】{}",soInfoEntity.getCode(),entity.getSkuNo()), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }

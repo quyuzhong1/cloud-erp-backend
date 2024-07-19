@@ -1589,7 +1589,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         //校验冻结数量
         if (MathUtil.compareTo(saveDTO.getFrozenQty(), soDetailEntity.getFrozenQty()) == MathUtil.ZERO) {
-            throw new ServiceException("冻结数量未变无需更新");
+            return new BatchResultDTO(soDetailEntity.getId(),StrUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()) ,"冻结数量未变无需更新",Boolean.TRUE);
         }
 
         //发货通知单
@@ -1615,7 +1615,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         stockParamDTO.setParamList(lockVirtualInventory(soInfoEntity,soDetailEntity,frozenQty - oldFrozenQty));
         stockParamDTO.setBusinessType(frozenQty > oldFrozenQty ? VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getCode() : VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_LESS.getCode());
         virtualInventoryFeign.approveByType(stockParamDTO);
-        return new BatchResultDTO(soDetailEntity.getId(),soInfoEntity.getCode(),"库存锁定成功",Boolean.TRUE);
+        return new BatchResultDTO(soDetailEntity.getId(),StrUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()),"库存锁定成功",Boolean.TRUE);
     }
 
     @Override
@@ -1638,11 +1638,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             return new BatchResultDTO(soDetailEntity.getId(),soInfoEntity.getCode(),"无需要释放的锁定库存",Boolean.TRUE);
         }
 
+        //更新库存锁定数量
+        soDetailEntity.setFrozenQty(MathUtil.ZERO);
+        this.updateById(soDetailEntity);
+
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
         stockParamDTO.setParamList(unLockVirtualInventory(soInfoEntity,soDetailEntity));
         stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_UNLOCK.getCode());
         virtualInventoryFeign.approveByType(stockParamDTO);
-        return new BatchResultDTO(soDetailEntity.getId(),soInfoEntity.getCode(),"释放库存成功",Boolean.TRUE);
+        return new BatchResultDTO(soDetailEntity.getId(),StrUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()),"释放库存成功",Boolean.TRUE);
     }
 
     @Override
