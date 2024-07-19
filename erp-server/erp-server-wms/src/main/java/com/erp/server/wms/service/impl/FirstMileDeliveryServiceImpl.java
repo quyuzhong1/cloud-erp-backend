@@ -1880,7 +1880,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private Boolean validateExistsTransferInfo(String deliveryId) {
         List<TransferInfoEntity> list = transferInfoService.list(new LambdaQueryWrapper<TransferInfoEntity>()
                 .eq(TransferInfoEntity::getSourceId, deliveryId)
-                .eq(TransferInfoEntity::getSourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode()));
+                .eq(TransferInfoEntity::getSourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())
+                .eq(TransferInfoEntity::getInvalidStatus, false));
         return !list.isEmpty();
     }
 
