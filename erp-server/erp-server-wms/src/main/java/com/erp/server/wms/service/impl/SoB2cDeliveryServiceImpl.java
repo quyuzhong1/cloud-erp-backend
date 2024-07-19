@@ -1860,7 +1860,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     @Transactional(rollbackFor =  Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean deliveryOutStock(SoB2cDeliveryEntity entity) {
+    public Boolean pushTransferInfo(SoB2cDeliveryEntity entity) {
 
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, entity.getSourceId()).list();
         if (CollectionUtil.isEmpty(receiverList)) {
@@ -1875,8 +1875,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //生成直接调拨单
             generateTransferInfo(entity);
         }
-        //生成出库单
-        this.generateB2cSoOutstock(entity);
         return Boolean.TRUE;
     }
 
@@ -1895,8 +1893,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isNotEmpty(soOutstockList)) {
             throw new ServiceException(StrUtil.format("发货单【{}】已下推出库单不支持重新出库",entity.getCode()));
         }
-        //生成出库单
-        this.deliveryOutStock(entity);
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
+        if (CollectionUtils.isNotEmpty(transferInfoList)) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "重新出库");
+        }
+        //生成直接调拨单
+        this.pushTransferInfo(entity);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】重新出库单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());

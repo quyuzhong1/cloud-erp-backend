@@ -1327,6 +1327,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         return lambdaQuery().in(TransferInfoEntity::getBatchNo,batchNoList).list();
     }
 
+    @Override
+    public List<TransferInfoEntity> listBySourceId(String sourceId) {
+        return lambdaQuery().eq(TransferInfoEntity::getSourceId,sourceId).list();
+    }
+
     /**
      * @description: 推送金蝶
      * @author Will
