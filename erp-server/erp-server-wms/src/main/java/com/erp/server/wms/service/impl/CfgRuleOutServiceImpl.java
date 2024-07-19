@@ -76,10 +76,12 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         List<CfgRuleOutEntity> transferList = new ArrayList<>();
         List<CfgRuleOutDTO.TransferDTO> transferDTOList = commonDTO.getTransferDTOList();
         for (CfgRuleOutDTO.TransferDTO transferDTO : transferDTOList) {
-            CfgRuleOutEntity transferEntity = new CfgRuleOutEntity();
-            transferEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode());
+            transferDTO.getConditionList().forEach(item -> item.setValue(String.join(",", item.getValueList())));
             Map<String, Object> transferDTOMap = BeanUtil.beanToMap(transferDTO);
             this.checkTransferRule(transferDTO);
+
+            CfgRuleOutEntity transferEntity = new CfgRuleOutEntity();
+            transferEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode());
             transferEntity.setRuleContent(transferDTOMap);
             transferList.add(transferEntity);
         }
@@ -257,7 +259,8 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         for (CfgRuleOutEntity entity : cfgRuleOutList) {
             Map<String, Object> ruleContent = entity.getRuleContent();
             CfgRuleOutDTO.TransferDTO transferDTO = BeanUtil.toBean(ruleContent, CfgRuleOutDTO.TransferDTO.class);
-            List<ConditionElement> conditionList = transferDTO.getConditionList();
+            List<CfgRuleOutDTO.TransferConditionElement> transferElementList = transferDTO.getConditionList();
+            List<ConditionElement> conditionList = BeanMapper.copyList(transferElementList, ConditionElement.class);
             ConditionElement typeConditionElement = new ConditionElement("(", "type", "==", transferDTO.getType(), ")", "and", "String");
             conditionList.add(0, typeConditionElement);
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionList, map);
@@ -276,11 +279,19 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         if(Objects.isNull(transferDTO)){
             return;
         }
-        List<ConditionElement> conditionList = transferDTO.getConditionList();
+        List<CfgRuleOutDTO.TransferConditionElement> conditionList = transferDTO.getConditionList();
         if(CollectionUtil.isEmpty(conditionList)){
             return;
         }
-        SpElExpressionDTO splElDTO = spElServer.getConditionExpression(conditionList, Map.class);
+        List<ConditionElement> conditionElementList = new ArrayList<>(conditionList.size());
+        for (CfgRuleOutDTO.TransferConditionElement element : conditionList) {
+            ConditionElement conditionElement = new ConditionElement();
+            BeanMapper.copy(element, conditionElement);
+            conditionElement.setValue(element.getValue());
+            conditionElementList.add(conditionElement);
+        }
+
+        SpElExpressionDTO splElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = splElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
