@@ -28,8 +28,10 @@ public class ErpObjectHandler implements MetaObjectHandler {
         String userName = loginUser.getUserName();
         LocalDateTime localDateTime = LocalDateTime.now();
         this.setFieldValByName("version", MathUtil.ONE, metaObject);
-        this.setFieldValByName("createTime", localDateTime, metaObject);
-        this.setFieldValByName("updateTime", localDateTime, metaObject);
+//        this.setFieldValByName("createTime", localDateTime, metaObject);
+//        this.setFieldValByName("updateTime", localDateTime, metaObject);
+        this.fillStrategy(metaObject,"createTime", localDateTime);
+        this.fillStrategy(metaObject,"updateTime", localDateTime);
         this.fillStrategy(metaObject,"createUserId", userId);
         this.fillStrategy( metaObject, "updateUserId", userId);
         this.fillStrategy( metaObject, "createUserName", userName);
