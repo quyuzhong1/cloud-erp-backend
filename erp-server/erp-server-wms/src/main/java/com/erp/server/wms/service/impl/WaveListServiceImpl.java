@@ -33,11 +33,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveListEntity> implements WaveListService {
@@ -318,7 +316,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             SoB2cDeliveryDTO.PrintPickingMainViewDTO printPickingMainViewDTO = new SoB2cDeliveryDTO.PrintPickingMainViewDTO();
             printPickingMainViewDTO.setWaveCode(entry.getKey());
             //订单数量
-            long orderCount = entry.getValue().stream().map(SoB2cDeliveryDTO.PrintPickingViewDTO::getDeliveryId).distinct().count();
+            long orderCount = entry.getValue().stream().flatMap(obj -> Stream.of(obj.getDeliveryIdList().stream().toArray(String[]::new))).distinct().count();
             printPickingMainViewDTO.setOrderCount(Math.toIntExact(orderCount));
             printPickingMainViewDTO.setDetailList(entry.getValue());
             resultList.add(printPickingMainViewDTO);
