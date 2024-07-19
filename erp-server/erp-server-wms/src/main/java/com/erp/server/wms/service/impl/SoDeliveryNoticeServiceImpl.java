@@ -149,6 +149,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private CfgRuleOutService cfgRuleOutService;
 
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -903,14 +905,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     private String generateTransferInfo(SoDeliveryNoticeEntity entity, String batchNo, List<PickingListsDTO.SourceView> views) {
         String warehouseId;
-        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-                .eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode())
-                .eq(CfgSettingEntity::getDisabled, Boolean.FALSE)
-                .list();
-        if (CollUtil.isEmpty(list)) {
-            throw new ServiceException("未配置中转设置仓库");
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity)) {
+            throw new ServiceException("未找到中转设置");
         }
-        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(list.get(0).getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
         if (ObjectUtil.isEmpty(transitSettingDTO) || CharSequenceUtil.isBlank(transitSettingDTO.getWarehouseId())) {
             throw new ServiceException("中转设置仓库不能为空");
         }
