@@ -98,23 +98,52 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if (StringUtils.isEmpty(productInfo.getCurrency_import())) {
                 productInfo.setCurrency_import(logisticsOrderVO.getParceInfoVO().getCurrency());
             }
+            //目的国申报币种处理
+            BigDecimal destDeclarePrice = logisticsProductVO.getDestDeclarePrice();
+            //当不是美元时，进行转换
+            if (Objects.nonNull(destDeclarePrice) && !CurrencyEnum.USD.getCurrencyCode().equals(logisticsProductVO.getDestCurrency())){
+                String currency = CurrencyEnum.CNY.getCurrencyCode();
+                //默认出口申报币种为人民币
+                if (!StringUtils.isBlank(logisticsProductVO.getDestCurrency())){
+                    currency = logisticsProductVO.getDestCurrency();
+                }
+                BigDecimal exchangeRate1 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                if (Objects.isNull(exchangeRate1)){
+                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
+                }
+                //先转换成人民币
+                BigDecimal cnyDestDeclarePrice = MathUtil.multiply(destDeclarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
+                //再统一转换成美元
+                BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
+                if (Objects.isNull(exchangeRate2)){
+                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), CurrencyEnum.USD.getCurrencyCode());
+                }
+                BigDecimal usdDestDeclarePrice = MathUtil.divide(cnyDestDeclarePrice, exchangeRate2).setScale(4, RoundingMode.HALF_UP);
+                productInfo.setDeclare_unit_price_import(usdDestDeclarePrice);
+                productInfo.setCurrency_import(CurrencyEnum.USD.getCurrencyCode());
+            }
             //出口国币种处理 人民币转美元（目的国申报价默认美金）
             BigDecimal declarePrice = logisticsProductVO.getDeclarePrice();
             if (Objects.nonNull(declarePrice)){
-                String currency = CurrencyEnum.USD.getCurrencyCode();
-                //默认人民币
-                if (!StringUtils.isBlank(logisticsProductVO.getDeclareCurrency()) && !CurrencyEnum.CNY.getCurrencyCode().equals(logisticsProductVO.getDeclareCurrency())) {
+                String currency = CurrencyEnum.CNY.getCurrencyCode();
+                //默认出口申报币种为人民币
+                if (!StringUtils.isBlank(logisticsProductVO.getDeclareCurrency())){
                     currency = logisticsProductVO.getDeclareCurrency();
                 }
-                try {
-                    BigDecimal exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
-                    BigDecimal divide = MathUtil.divide(declarePrice, exchangeRate).setScale(4, RoundingMode.HALF_UP);
-                    productInfo.setDeclare_unit_price_export(divide);
-                    productInfo.setCurrency_export(currency);
-                }catch (Exception e){
-                    throw new ServiceException("获取币种汇率转换异常");
+                BigDecimal exchangeRate1 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                if (Objects.isNull(exchangeRate1)){
+                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
                 }
-
+                //先转换成人民币
+                BigDecimal cnyDeclarePrice = MathUtil.multiply(declarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
+                //再统一转换成美元
+                BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
+                if (Objects.isNull(exchangeRate2)){
+                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), CurrencyEnum.USD.getCurrencyCode());
+                }
+                BigDecimal usdDeclarePrice = MathUtil.divide(cnyDeclarePrice, exchangeRate2).setScale(4, RoundingMode.HALF_UP);
+                productInfo.setDeclare_unit_price_export(usdDeclarePrice);
+                productInfo.setCurrency_export(CurrencyEnum.USD.getCurrencyCode());
             }
             declareProductInfos.add(productInfo);
         });
