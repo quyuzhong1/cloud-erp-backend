@@ -406,7 +406,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 if (ObjectUtil.isNotEmpty(cancelCodes)) {
                     throw new ServiceException(ApiError.ERROR_99123, cancelCodes);
                 }
-                soB2cDeliveryService.updateStatus(Collections.singletonList(soB2cDelivery.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
                 // 生成波次和拣货中回滚库存
                 if (SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode().equals(soB2cDelivery.getStatus()) ||
                         SoB2cDeliveryStatusEnum.PICKING.getCode().equals(soB2cDelivery.getStatus()) ||
@@ -417,6 +416,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     // 移除波次
                     waveListDetailService.moveOut(soB2cDelivery.getId());
                 }
+                soB2cDeliveryService.updateStatus(Collections.singletonList(soB2cDelivery.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
             }
         } else {
             //拦截失败的订单正常自动出库流程
