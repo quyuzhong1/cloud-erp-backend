@@ -237,6 +237,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private TransferInfoService transferInfoService;
 
+    @Resource
+    private CfgSettingService cfgSettingService;
+
 
 
     @Override
@@ -1719,14 +1722,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     private String generateTransferInfo(SoOutstockDTO.GenerateSoOutstockViewDTO dto, String batchNo, List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList) {
         String warehouseId;
-        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-                .eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode())
-                .eq(CfgSettingEntity::getDisabled, Boolean.FALSE)
-                .list();
-        if (CollUtil.isEmpty(list)) {
-            throw new ServiceException("未配置中转设置仓库");
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity)) {
+            throw new ServiceException("未找到中转设置");
         }
-        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(list.get(0).getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
         if (CharSequenceUtil.isBlank(transitSettingDTO.getWarehouseId())) {
             throw new ServiceException("中转设置仓库不能为空");
         }
