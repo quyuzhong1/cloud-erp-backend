@@ -905,11 +905,17 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (closeCount > 0) {
             throw new ServiceException(ApiError.ERROR_98068);
         }
+        SoInfoEntity info = soInfoFeign.getSoInfoById(entity.getSourceId());
+        List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(entity.getSourceId()));
+        SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getId().equals(info.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
+        //是否中转
+        CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
+        ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
+        ruleDTO.setReceiveCountry(customerDTO.getCustomerId());
+        Boolean isTransit = cfgRuleOutService.matchTransferRule(ruleDTO);
         SoOutstockDTO.AddDTO addDTO = new SoOutstockDTO.AddDTO();
         String batchNo = "";
         String warehouseId;
-        //todo 判断是否需要中转
-        Boolean isTransit = Boolean.TRUE;
         if (isTransit) {
             batchNo = IdUtil.getSnowflake().nextIdStr();
             warehouseId = generateTransferInfo(entity, batchNo, views);
