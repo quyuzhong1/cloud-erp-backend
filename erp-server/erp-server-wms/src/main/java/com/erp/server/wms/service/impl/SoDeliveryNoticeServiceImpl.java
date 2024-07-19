@@ -902,7 +902,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException("未配置中转设置仓库");
         }
         CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(list.get(0).getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
-        if (CharSequenceUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+        if (ObjectUtil.isEmpty(transitSettingDTO) || CharSequenceUtil.isBlank(transitSettingDTO.getWarehouseId())) {
             throw new ServiceException("中转设置仓库不能为空");
         }
         warehouseId = transitSettingDTO.getWarehouseId();
