@@ -195,6 +195,9 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         if(mainIds.size() > 1){
             return ApiResult.error("该发货单关联了多个波次，请检查");
         }
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return ApiResult.success();
+        }
         //删除该明细
         baseMapper.deleteBatchIds(ids);
         //如果波次下明细为空，删除波次

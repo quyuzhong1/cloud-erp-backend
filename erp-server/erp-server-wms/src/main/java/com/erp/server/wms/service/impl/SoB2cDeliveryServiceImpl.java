@@ -247,7 +247,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         list.add(new SoB2cDeliveryDTO.TabListDTO("intercepting", interceptCount));
         // 手动标发
         int falseShipment = baseMapper.countShipmentMark(param);
-        list.add(new SoB2cDeliveryDTO.TabListDTO("false_shipment", falseShipment));
+        list.add(new SoB2cDeliveryDTO.TabListDTO("falseShipment", falseShipment));
         list.add(new SoB2cDeliveryDTO.TabListDTO("all", list.stream().mapToInt(SoB2cDeliveryDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
