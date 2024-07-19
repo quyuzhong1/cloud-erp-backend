@@ -2967,7 +2967,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     LocalDate closedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), deliveryTime.toLocalDate());
                     if (null != closedDate){
                         // 临时跳过生成已关账之前的销售出库单
-                        return false;
+                        return true;
                     }
                 }
             }
