@@ -232,4 +232,12 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return List<TransferInfoEntity>
      */
     List<TransferInfoEntity> listByBatchNoList(List<String> batchNoList);
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2024/7/19 20:04
+     * @param sourceId
+     * @return List<TransferInfoEntity>
+     */
+    List<TransferInfoEntity> listBySourceId(String sourceId);
 }

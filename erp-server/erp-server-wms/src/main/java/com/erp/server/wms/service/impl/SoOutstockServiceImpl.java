@@ -234,6 +234,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
+    @Resource
+    private CfgRuleOutService cfgRuleOutService;
+
 
     @Lazy
     @Resource
@@ -247,6 +250,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private TransferInfoService transferInfoService;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
 
 
 
@@ -1665,6 +1671,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(soInfoList)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
+        List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(soIdList);
         Map<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> map = list.stream().collect(Collectors.groupingBy(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceId));
         List<SoOutstockDTO.AddDTO> addList = new ArrayList<>(map.size());
         for (Map.Entry<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> entry : map.entrySet()) {
@@ -1672,10 +1679,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList = entry.getValue();
             SoOutstockDTO.GenerateSoOutstockViewDTO generateInfo = generateInfoList.stream().filter(g -> StringUtils.isNotBlank(g.getSourceCode())).findFirst().orElse(null);
             if (generateInfo != null) {
-                Boolean isTransit = Boolean.TRUE;
+                SoInfoEntity soInfo = soInfoList.stream().filter(v -> v.getId().equals(generateInfo.getSoId())).findFirst().orElse(new SoInfoEntity());
+                SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getId().equals(soInfo.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
+                //是否中转
+                CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
+                ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
+                ruleDTO.setReceiveCountry(customerDTO.getCustomerId());
+                Boolean isTransit = cfgRuleOutService.matchTransferRule(ruleDTO);
                 String warehouseId;
                 String batchNo = "";
-                if (isTransit) {
+                if (Boolean.TRUE.equals(isTransit)) {
                     batchNo = IdUtil.getSnowflake().nextIdStr();
                     warehouseId = generateTransferInfo(generateInfo, batchNo, generateInfoList);
                 }else {
@@ -1726,14 +1739,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     private String generateTransferInfo(SoOutstockDTO.GenerateSoOutstockViewDTO dto, String batchNo, List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList) {
         String warehouseId;
-        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-                .eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode())
-                .eq(CfgSettingEntity::getDisabled, Boolean.FALSE)
-                .list();
-        if (CollUtil.isEmpty(list)) {
-            throw new ServiceException("未配置中转设置仓库");
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity)) {
+            throw new ServiceException("未找到中转设置");
         }
-        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(list.get(0).getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
         if (CharSequenceUtil.isBlank(transitSettingDTO.getWarehouseId())) {
             throw new ServiceException("中转设置仓库不能为空");
         }
