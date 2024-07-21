@@ -75,6 +75,11 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
      */
     private List<VirtualInventoryStockDTO.OutInStockDTO> splitBom (List<VirtualInventoryStockDTO.OutInStockDTO> paramList) {
         List<VirtualInventoryStockDTO.OutInStockDTO> resultList = new ArrayList<>();
+        for (VirtualInventoryStockDTO.OutInStockDTO outInStockDTO : paramList) {
+
+
+        }
+
         return resultList;
     }
 }

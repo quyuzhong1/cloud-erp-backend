@@ -1897,9 +1897,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (ObjectUtil.isEmpty(inWarehouseEntity)) {
             throw new ServiceException("调入仓库不能为空");
         }
-        List<String> sourceDetailIdList = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getId).collect(Collectors.toList());
-        List<PickingListsDTO.SourceView> pickingList = pickingListsService.listBySourceIds(sourceDetailIdList);
-
+        List<PickingListsDTO.SourceView> pickingList = pickingListsService.listBySourceIds(Arrays.asList(entity.getId()));
+        if (CollectionUtils.isEmpty(pickingList)) {
+            throw new ServiceException("未找到拣货信息");
+        }
         //批次号
         String batchNo = IdUtil.getSnowflake().nextIdStr();
         entity.setBatchNo(batchNo);
