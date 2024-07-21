@@ -12,9 +12,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum StockOutTransferTypeEnum implements EnumMessage {
-    B2B("B2B", "B2B"),
-    B2C("B2C", "B2C"),
-    FIRST_MILE("firstMile", "头程"),
+    B2B("B2B", "B2B发货"),
+    B2C("B2C", "B2C发货"),
+    FIRST_MILE("firstMile", "头程发货"),
     ;
     private String code;
     private String name;
