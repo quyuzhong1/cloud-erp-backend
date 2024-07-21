@@ -985,8 +985,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType())) {
                 ShopInfoEntity shopInfo = shopInfoEntities.stream().filter(v -> v.getId().equals(viewDTO.getToWarehouseId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
-                viewDTO.setDeliveryWarehouseId(shopInfo.getWarehouseId());
-                viewDTO.setDeliveryWarehouseName(shopInfo.getWarehouseName());
+                viewDTO.setToWarehouseId(shopInfo.getWarehouseId());
+                viewDTO.setToWarehouseName(shopInfo.getWarehouseName());
             }
             WmsDeliveryPlanEntity wmsDeliveryPlanEntity = wmsDeliveryPlanEntities.stream()
                     .filter(v -> v.getId().equals(viewDTO.getDeliveryPlanId()))
