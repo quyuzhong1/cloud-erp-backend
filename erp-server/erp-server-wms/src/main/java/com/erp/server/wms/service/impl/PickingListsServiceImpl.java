@@ -200,9 +200,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         save(entity);
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("生成拣货单【{}】", entity.getCode()), ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "新增操作");
         pickingDetailService.saveBatch(entities);
-        if (!SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())){
-            warehouseLocationMoveService.addAndApprove(moveDto);
-        }
+        warehouseLocationMoveService.addAndApprove(moveDto);
     }
 
     @Override
@@ -382,10 +380,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         updateById(entity);
         // 进行对应的仓位移动
         if (!CollectionUtils.isEmpty(addDTOS)) {
-            if (!SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())){
-                moveDto.setDetailList(addDTOS);
-                warehouseLocationMoveService.addAndApprove(moveDto);
-            }
+            moveDto.setDetailList(addDTOS);
+            warehouseLocationMoveService.addAndApprove(moveDto);
         }
         List<String> sourceDetailIds = detailList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {

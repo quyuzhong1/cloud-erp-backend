@@ -1152,8 +1152,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<PickingDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (RequisitionApplicationDetailEntity detailEntity : details) {
             PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();
-            detail.setWarehouseId(detailEntity.getFromWarehouseId());
-            detail.setWarehouseName(detailEntity.getFromWarehouseName());
+            detail.setWarehouseId(detailEntity.getToWarehouseId());
+            detail.setWarehouseName(detailEntity.getToWarehouseName());
             detail.setSkuId(detailEntity.getSkuId());
             detail.setSkuNo(detailEntity.getSkuNo());
             detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
