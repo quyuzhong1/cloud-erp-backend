@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto.inventory;
 
-import com.common.business.validator.ValidGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
@@ -13,7 +12,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import javax.validation.groups.Default;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -139,6 +137,11 @@ public class VirtualInventoryStockDTO implements Serializable {
              */
             @Valid
             private List<VirtualTransRuleDTO.StockParamDTO> rules;
+
+            /**
+             * 是否拆分BOM
+             */
+            private Boolean isSplitBom;
         }
 
 
