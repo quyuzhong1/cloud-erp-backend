@@ -503,7 +503,6 @@ public class SoOutstockDTO implements Serializable {
             this.sourceId = entity.getId();
             this.sourceCode = entity.getCode();
             this.sourceType = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
-            this.warehouseId = entity.getWarehouseId();
             this.planDeliveryDate = entity.getPlanDeliveryDate();
             this.actualDeliveryDate = entity.getActualDeliveryDate();
             this.trackNo = entity.getTrackNo();

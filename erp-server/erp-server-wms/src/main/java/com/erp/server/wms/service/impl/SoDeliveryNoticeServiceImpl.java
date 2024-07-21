@@ -167,6 +167,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private CfgSettingService cfgSettingService;
     @Resource
     private PackingTaskService packingTaskService;
+    @Resource
+    private PickingDetailService pickingDetailService;
 
 
     @Override
@@ -940,6 +942,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(detailIds);
         //获取到销售退货单 下推列表
         addDTO.buildAddDTO(entity);
+        addDTO.setWarehouseId(warehouseId);
         addDTO.setCustomerOrderNo(soInfoEntity.getCustomerOrderNo());
         List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PickingListsDTO.SourceView item : views) {
