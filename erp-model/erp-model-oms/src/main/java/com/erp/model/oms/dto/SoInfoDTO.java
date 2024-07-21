@@ -247,6 +247,16 @@ public class SoInfoDTO implements Serializable {
         private Integer frozenQty;
 
         /**
+         * 缺货数量(虚拟仓)
+         */
+        private Integer virtualScarceQty;
+
+        /**
+         * 是否缺货(虚拟仓)
+         */
+        private Integer isVirtualScarce;
+
+        /**
          * 虚拟仓可用库存
          */
         private Integer virtualUsableQty;

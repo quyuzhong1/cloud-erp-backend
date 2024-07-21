@@ -406,11 +406,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 if (ObjectUtil.isNotEmpty(cancelCodes)) {
                     throw new ServiceException(ApiError.ERROR_99123, cancelCodes);
                 }
+                //取消发货库存回滚
+                soB2cDeliveryService.rollbackInventory(Collections.singletonList(soB2cDelivery.getId()));
+
                 // 生成波次和拣货中回滚库存
                 if (SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode().equals(soB2cDelivery.getStatus()) ||
                         SoB2cDeliveryStatusEnum.PICKING.getCode().equals(soB2cDelivery.getStatus()) ||
                         SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(soB2cDelivery.getStatus())) {
-                    soB2cDeliveryService.rollbackInventory(Collections.singletonList(soB2cDelivery.getId()));
                     //删除拣货单
                     pickingListsService.deleteBySourceId(Collections.singletonList(soB2cDelivery.getId()));
                     // 移除波次
