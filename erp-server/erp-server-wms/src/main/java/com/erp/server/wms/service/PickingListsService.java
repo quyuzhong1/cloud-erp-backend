@@ -90,9 +90,6 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * @param results 前置规则返回的仓位数据
      */
     void generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results);
-
-
-    void init();
     /**
      * 根据来源单id汇总sku拣货数量
      * @param sourceIds
@@ -100,5 +97,4 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      */
     List<PickingListsDTO.DetailPickDTO> listDetailBySourceIds(List<String> sourceIds);
 
-    void initDelivery(List<String> codes);
 }
