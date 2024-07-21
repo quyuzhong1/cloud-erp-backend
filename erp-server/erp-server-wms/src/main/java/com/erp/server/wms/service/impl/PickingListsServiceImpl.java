@@ -35,6 +35,7 @@ import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
@@ -106,6 +107,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     @Resource
     @Lazy
     private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
     @Override
     public PagingVO<PickingListsDTO.PagingView> paging(PagingDTO<PickingListsDTO.PagingParam> dto) {
@@ -115,13 +118,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     public void add(PickingListsDTO.AddDTO dto) {
+        generatePicking(dto);
         List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
         Map<String, String> warehouseMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getWarehouseId, PickingDetailDTO.AddDTO::getWarehouseName, (o1, o2) -> o1));
-        Map<String, String> sourceDetailMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getSkuId, PickingDetailDTO.AddDTO::getSourceDetailId, (o1, o2) -> o1));
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = dto.getDetails().stream()
-                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getQty())).collect(Collectors.toList());
+                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
         executionData.setBillType(dto.getBillType());
         executionData.setCustomerId(dto.getCustomerId());
@@ -162,7 +165,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setQty(resultDTO.getQuantity());
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setWarehouseLocation(resultDTO.getWarehouseLocation());
-                detail.setSourceDetailId(sourceDetailMap.get(resultDTO.getSkuId()));
+                detail.setSourceDetailId(resultDTO.getSourceDetailId());
                 detail.setStagingLocation(pickingStaging.getWarehouseLocation());
                 entities.add(detail);
                 moveDto.setWarehouseId(resultDTO.getWarehouseId());
@@ -174,6 +177,30 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setDetailList(moveDetailList);
             ApplicationContextUtils.getBean(PickingListsServiceImpl.class).saveAddData(entity, entities, moveDto);
         }
+    }
+
+    private void generatePicking(PickingListsDTO.AddDTO dto) {
+        List<PickingDetailDTO.AddDTO> detailList = new ArrayList<>();
+        List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        for (PickingDetailDTO.AddDTO detail : dto.getDetails()) {
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(detail.getSkuId())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(sonSkuList)) {
+                for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
+                    PickingDetailDTO.AddDTO detailAdd = PickingDetailDTO.AddDTO.getAddDTO(detail, bomChildrenSkuDTO.getSkuId(), bomChildrenSkuDTO.getSkuNo(), detail.getQty() * bomChildrenSkuDTO.getQuantity());
+                    detailList.add(detailAdd);
+                }
+            } else {
+                PickingDetailDTO.AddDTO detailAdd = PickingDetailDTO.AddDTO.getAddDTO(detail, detail.getSkuId(), detail.getSkuNo(), detail.getQty());
+                detailList.add(detailAdd);
+            }
+        }
+        dto.setDetails(detailList);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -218,7 +245,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             // 反写要货申请的拣货数量
             requisitionApplicationService.writeBackData(sourceDetailIds);
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
-            soDeliveryNoticeService.writeBackData(entity.getSourceId());
+            soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }
     }
 
@@ -399,7 +426,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             // 反写要货申请的拣货数量
             requisitionApplicationService.writeBackData(sourceDetailIds);
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
-            soDeliveryNoticeService.writeBackData(entity.getSourceId());
+            soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }
     }
 
@@ -480,7 +507,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     }
 
     @Override
-    public void generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, Map<String, String> sourceDetailMap, List<LocationInventoryResultDTO> results) {
+    public void generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results) {
         List<String> skuIdList = executionData.getDetails().stream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isEmpty(results)) {
@@ -514,7 +541,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setQty(result.getQuantity());
                 detail.setWarehouseLocation(result.getWarehouseLocation());
-                detail.setSourceDetailId(sourceDetailMap.get(result.getSkuId()));
+                detail.setSourceDetailId(result.getSourceDetailId());
                 entities.add(detail);
                 InOutStockDTO inOutStockDTO = new InOutStockDTO();
                 inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);

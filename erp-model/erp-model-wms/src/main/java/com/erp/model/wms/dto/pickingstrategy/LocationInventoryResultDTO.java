@@ -34,5 +34,8 @@ public class LocationInventoryResultDTO {
      * 可用库存
      */
     private Integer quantity;
-
+    /**
+     * 来源明细id
+     */
+    private String sourceDetailId;
 }

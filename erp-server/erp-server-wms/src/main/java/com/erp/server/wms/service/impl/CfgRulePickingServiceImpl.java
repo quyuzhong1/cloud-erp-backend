@@ -174,10 +174,10 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         //明细根据sku + 仓库分组 合并数量
         Map<String, CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailDTOMap = new HashMap<>();
         for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : dto.getDetails()) {
-            if (!ObjectUtils.isEmpty(detailDTOMap.get(detail.getSkuId() + ":" + detail.getWarehouseId()))) {
-                detail.setQty(detail.getQty() + detailDTOMap.get(detail.getSkuId() + ":" + detail.getWarehouseId()).getQty());
+            if (!ObjectUtils.isEmpty(detailDTOMap.get(detail.getWarehouseId()))) {
+                detail.setQty(detail.getQty() + detailDTOMap.get(detail.getWarehouseId()).getQty());
             }
-            detailDTOMap.put(detail.getSkuId() + ":" + detail.getWarehouseId(),detail);
+            detailDTOMap.put(detail.getWarehouseId(),detail);
         }
         for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : detailDTOMap.values()) {
             AtomicInteger quantity = new AtomicInteger(detail.getQty());
