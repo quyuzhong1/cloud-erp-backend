@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -420,8 +421,8 @@ public class SoB2cDeliveryController extends BaseController {
      */
     @PostMapping("/batchClearException")
     public ApiResult<List<BatchResultDTO>> batchClearException(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (String id : new HashSet<>(dto.getIds())) {
             BatchResultDTO resultDTO;
             try {
                 resultDTO = soB2cDeliveryService.clearException(id);

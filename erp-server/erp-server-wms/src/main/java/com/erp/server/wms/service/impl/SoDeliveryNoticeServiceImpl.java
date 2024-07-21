@@ -8,14 +8,10 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -35,16 +31,19 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
@@ -118,9 +117,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
-
-    @Resource
-    private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource
     private InventoryService inventoryService;
@@ -1097,19 +1093,32 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public void writeBackData(String sourceId) {
-        List<SoDeliveryNoticeDetailEntity> detailEntities = soDeliveryNoticeDetailService.listDetailByMainId(sourceId);
-        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(sourceId));
-        Map<String, Integer> detailQtyMap = views.stream()
-                .collect(Collectors.toMap(PickingListsDTO.SourceView::getSkuId, PickingListsDTO.SourceView::getQty, Integer::sum));
+    public void writeBackData(List<String> sourceDetailIds) {
+        List<SoDeliveryNoticeDetailEntity> detailEntities = soDeliveryNoticeDetailService.listByIds(sourceDetailIds);
+        List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getSourceDetailId, sourceDetailIds));
+        // 回写数量，处理组合数据
+        List<String> skuIds = detailEntities.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
-            int qty = Optional.ofNullable(detailQtyMap.get(detailEntity.getSkuId())).orElse(0);
-            if (qty > detailEntity.getDeliveryQty()) {
-                detailEntity.setPickingQty(detailEntity.getDeliveryQty());
-                detailQtyMap.put(detailEntity.getSkuId(), qty - detailEntity.getDeliveryQty());
-            } else {
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).findFirst().orElse(null);
+            if (!org.springframework.util.ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                Integer qty = pickingDetailEntities.stream()
+                        .filter(v -> v.getSourceDetailId().equals(detailEntity.getId()))
+                        .filter(v -> v.getSkuId().equals(detailEntity.getSkuId()))
+                        .map(PickingDetailEntity::getQty)
+                        .reduce(0, Math::addExact);
+                detailEntity.setPickingQty(qty / Optional.ofNullable(bomChildrenSkuDTO.getQuantity()).orElse(1));
+            }else {
+                Integer qty = pickingDetailEntities.stream()
+                        .filter(v -> v.getSourceDetailId().equals(detailEntity.getId()))
+                        .filter(v -> v.getSkuId().equals(detailEntity.getSkuId()))
+                        .map(PickingDetailEntity::getQty)
+                        .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty);
-                detailQtyMap.put(detailEntity.getSkuId(), 0);
             }
         }
         soDeliveryNoticeDetailService.updateBatchById(detailEntities);

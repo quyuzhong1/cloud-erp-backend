@@ -87,10 +87,9 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * @param soB2cDeliveryEntity soB2c发货单
      * @param executionData       需要执行拣货规则的数据
      * @param warehouseMap        仓库id和仓库名映射
-     * @param sourceDetailMap     skuId和来源明细id的映射
      * @param results 前置规则返回的仓位数据
      */
-    void generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, Map<String, String> sourceDetailMap, List<LocationInventoryResultDTO> results);
+    void generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results);
 
 
     void init();

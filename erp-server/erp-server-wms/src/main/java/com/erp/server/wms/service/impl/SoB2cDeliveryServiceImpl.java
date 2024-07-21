@@ -1640,10 +1640,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> skuIds = soB2cDeliveryDetailEntities.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
-        List<String> childSkuIds = bomChildrenSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-        skuIds.addAll(childSkuIds);
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = new ArrayList<>();
-        Map<String, String> sourceDetailMap = new HashMap<>();
         Map<String, String> warehouseMap = soB2cDeliveryDetailEntities.stream().collect(Collectors.toMap(SoB2cDeliveryDetailEntity::getWarehouseId, SoB2cDeliveryDetailEntity::getWarehouseName, (o1, o2) -> o1));
         for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailEntities) {
             //查询sku是否存在子SKU
@@ -1654,23 +1651,17 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
                     detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), bomChildrenSkuDTO.getSkuId(), bomChildrenSkuDTO.getSkuNo(),
-                            detailEntity.getDeliveryQty() * bomChildrenSkuDTO.getQuantity()));
-                    if (ObjectUtil.isEmpty(sourceDetailMap.get(bomChildrenSkuDTO.getSkuId()))) {
-                        sourceDetailMap.put(bomChildrenSkuDTO.getSkuId(), detailEntity.getId());
-                    }
+                            detailEntity.getDeliveryQty() * bomChildrenSkuDTO.getQuantity(), detailEntity.getId()));
                 }
             } else {
                 detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), detailEntity.getSkuId(), detailEntity.getSkuNo(),
-                        detailEntity.getDeliveryQty()));
-                if (ObjectUtil.isEmpty(sourceDetailMap.get(detailEntity.getSkuId()))) {
-                    sourceDetailMap.put(detailEntity.getSkuId(), detailEntity.getId());
-                }
+                        detailEntity.getDeliveryQty(), detailEntity.getId()));
             }
         }
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
         executionData.setBillType(PickingBillTypeEnum.B2C.getCode());
         executionData.setDetails(detailList);
-        pickingListsService.generateSoB2cPicking(soB2cDeliveryEntity, executionData, warehouseMap, sourceDetailMap, results);
+        pickingListsService.generateSoB2cPicking(soB2cDeliveryEntity, executionData, warehouseMap, results);
     }
 
     @Override
