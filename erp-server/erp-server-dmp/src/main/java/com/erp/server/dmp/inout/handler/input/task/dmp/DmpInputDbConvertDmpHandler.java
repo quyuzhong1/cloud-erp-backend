@@ -7,8 +7,6 @@ import java.util.Map;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.common.core.utils.StrUtils;
-
 import cn.hutool.core.collection.CollUtil;
 
 /**
@@ -23,7 +21,7 @@ public class DmpInputDbConvertDmpHandler extends DmpInputBaseDmpHandler{
 	@Override
 	protected List<String> convertKey(String originalKey) {
 		Map<String, List<String>> keyMapping = dmpHandlerCache.getDmpCfgInputConvertMapping(convertId);
-		List<String> convertKey = Collections.singletonList(StrUtils.underlineToCamel(originalKey, true));
+		List<String> convertKey = Collections.singletonList(originalKey);
 		if(keyMapping != null) {
 			List<String> dbKeyMapping = keyMapping.get(originalKey);
 			if(CollUtil.isNotEmpty(dbKeyMapping)) {

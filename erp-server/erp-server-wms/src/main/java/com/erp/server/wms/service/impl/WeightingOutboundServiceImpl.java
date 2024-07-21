@@ -201,8 +201,19 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
             soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
+            //扣减冻结库存
+            soB2cDeliveryService.outFreezeVirtualInventory(entity);
+
+            //生成直接调拨单
+            Boolean isPush = soB2cDeliveryService.pushTransferInfo(entity);
+            if (isPush) {
+                //生成出库单
+                soB2cDeliveryService.generateB2cSoOutstock(entity);
+            }
+
             String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "称重出库", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
+
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                 @Override
                 public void afterCommit() {

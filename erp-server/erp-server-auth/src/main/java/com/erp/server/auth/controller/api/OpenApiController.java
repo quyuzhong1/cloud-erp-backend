@@ -104,7 +104,7 @@ public class OpenApiController {
     	if(StringUtils.isBlank(referer)) {
     		return ApiResult.error(500, "请求头referer不能为空");
     	}
-    	log.info("{}平台接口统一请求报文：{}" , referer , JSON.toJSONString(req));
+    	log.warn("{}平台接口统一请求报文：{}" , referer , JSON.toJSONString(req));
     	
     	OpenApiInputDTO openApiInputDTO = new OpenApiInputDTO();
         BeanUtils.copyProperties(req , openApiInputDTO);
@@ -116,7 +116,7 @@ public class OpenApiController {
         openApiInputDTO.setRequestIp(IPUtils.getIpAddr(request));
         
         ApiResult<?> result = openApiService.unitPlatformService(openApiInputDTO);
-        log.info("平台接口统一响应报文：{}" , JSON.toJSONString(result));
+        log.warn("平台接口统一响应报文：{}" , JSON.toJSONString(result));
         return result;
     }
 

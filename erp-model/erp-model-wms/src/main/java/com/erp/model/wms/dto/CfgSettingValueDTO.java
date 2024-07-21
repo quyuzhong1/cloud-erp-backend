@@ -147,6 +147,20 @@ public class CfgSettingValueDTO implements Serializable {
     }
 
     /**
+     * 中转设置DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TransitSettingDTO{
+
+        /**
+         * 中转仓库Id
+         */
+        private String warehouseId;
+    }
+
+
+    /**
      * 装箱完成通知
      */
     @Data
@@ -162,19 +176,4 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private List<String> userIdList;
     }
-
-
-    /**
-     * 中转设置DTO
-     */
-    @Data
-    @NoArgsConstructor
-    public static class TransitSettingDTO{
-
-        /**
-         * 中转仓库Id
-         */
-        private String warehouseId;
-    }
-
 }

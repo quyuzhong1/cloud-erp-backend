@@ -2,7 +2,6 @@ package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import com.common.core.entity.ConditionElement;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
@@ -10,12 +9,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.xpath.operations.Bool;
 
+import javax.validation.Valid;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.validation.Valid;
@@ -501,6 +502,18 @@ public class CfgRuleOutDTO implements Serializable {
          * 对应的值类型
          */
         private String valueType;
+
+        /**
+         * 装箱超重配置
+         */
+        @Valid
+        private CfgOverweightDTO cfgOverweight = new CfgOverweightDTO();
+
+        /**
+         * 产品装箱配置
+         */
+        private CfgProductPacking cfgProductPacking = new CfgProductPacking();
+
     }
 
     /**

@@ -19,4 +19,9 @@ public class DmpInputApiInitRequest extends DmpInputInitRequest{
     * 拉取接口条件的结束时间
     */
     private LocalDateTime endTime;
+    
+    private String apiType;
+	private String requestParam; 
+	
+	private String nextLevelId;
 }

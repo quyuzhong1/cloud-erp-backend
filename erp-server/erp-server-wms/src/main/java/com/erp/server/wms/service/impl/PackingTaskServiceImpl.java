@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -1615,6 +1616,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(sourceIds);
         if (CollectionUtils.isNotEmpty(firstMileDeliveryEntities)){
             for (FirstMileDeliveryEntity firstMileDeliveryEntity : firstMileDeliveryEntities){
+//                PackingTaskDetailDTO.HistoryCartonDTO historyCartonDTO = list.stream().filter(e -> Objects.nonNull(e) && e.getSourceId().equals(firstMileDeliveryEntity.getId())).findFirst().orElse(new PackingTaskDetailDTO.HistoryCartonDTO());
                 //生成装箱任务
                 String demandType = firstMileDeliveryEntity.getDemandType();
                 String sourceType = FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)? PickingSourceTypeEnum.THIRD.getCode(): PickingSourceTypeEnum.FBA.getCode();
@@ -1624,6 +1626,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     continue;
                 }
                 PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.firstMileDeliveryToPackingTask(firstMileDeliveryEntity,sourceType);
+                packingTaskEntity.setCreateTime(firstMileDeliveryEntity.getCreateTime());
+                packingTaskEntity.setCreateUserId(firstMileDeliveryEntity.getCreateUserId());
+                packingTaskEntity.setCreateUserName(firstMileDeliveryEntity.getCreateUserName());
+                packingTaskEntity.setUpdateTime(firstMileDeliveryEntity.getUpdateTime());
+                packingTaskEntity.setUpdateUserId(firstMileDeliveryEntity.getUpdateUserId());
+                packingTaskEntity.setUpdateUserName(firstMileDeliveryEntity.getUpdateUserName());
                 //查询明细
                 List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailEntities.stream().filter(e -> e.getMainId().equals(firstMileDeliveryEntity.getId())).collect(Collectors.toList());
                 packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum));
@@ -1633,9 +1641,24 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱任务单" , packingTaskEntity.getCode());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "新增操作");
                 List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.firstMileDeliveryDetailToPackingTaskDetail(detailEntityList);
-                taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
+                taskDetailList.forEach(packingTaskDetailEntity -> {
+                    packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
+                    packingTaskDetailEntity.setCreateTime(firstMileDeliveryEntity.getCreateTime());
+                    packingTaskDetailEntity.setCreateUserId(firstMileDeliveryEntity.getCreateUserId());
+                    packingTaskDetailEntity.setCreateUserName(firstMileDeliveryEntity.getCreateUserName());
+                    packingTaskDetailEntity.setUpdateTime(firstMileDeliveryEntity.getUpdateTime());
+                    packingTaskDetailEntity.setUpdateUserId(firstMileDeliveryEntity.getUpdateUserId());
+                    packingTaskDetailEntity.setUpdateUserName(firstMileDeliveryEntity.getUpdateUserName());
+                });
                 //新增任务明细
-                packingTaskDetailService.saveBatch(taskDetailList);
+                if(taskDetailList.size() > 5){
+                    List<List<PackingTaskDetailEntity>> partition = ListUtil.partition(taskDetailList, 5);
+                    for (List<PackingTaskDetailEntity> taskDetailEntityList : partition) {
+                        packingTaskDetailService.saveBatch(taskDetailEntityList);
+                    }
+                }else {
+                    packingTaskDetailService.saveBatch(taskDetailList);
+                }
                 //新增装箱详情
                 List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList = sourceMap.get(firstMileDeliveryEntity.getId());
                 if (CollectionUtils.isNotEmpty(cartonDTOList)){
@@ -1647,12 +1670,20 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainIds(sourceIds);
         if (CollectionUtils.isNotEmpty(soDeliveryNoticeEntities)){
             for (SoDeliveryNoticeEntity soDeliveryNoticeEntity : soDeliveryNoticeEntities){
+//                PackingTaskDetailDTO.HistoryCartonDTO historyCartonDTO = list.stream().filter(e -> Objects.nonNull(e) && e.getSourceId().equals(soDeliveryNoticeEntity.getId())).findFirst().orElse(new PackingTaskDetailDTO.HistoryCartonDTO());
+
                 //关联单号是否已存在装箱任务
                 List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(soDeliveryNoticeEntity.getId(), PickingSourceTypeEnum.B2B.getCode());
                 if (CollectionUtils.isNotEmpty(taskEntityList)){
                     continue;
                 }
                 PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.b2bDeliveryToPackingTask(soDeliveryNoticeEntity);
+                packingTaskEntity.setCreateTime(soDeliveryNoticeEntity.getCreateTime());
+                packingTaskEntity.setCreateUserId(soDeliveryNoticeEntity.getCreateUserId());
+                packingTaskEntity.setCreateUserName(soDeliveryNoticeEntity.getCreateUserName());
+                packingTaskEntity.setUpdateTime(soDeliveryNoticeEntity.getUpdateTime());
+                packingTaskEntity.setUpdateUserId(soDeliveryNoticeEntity.getUpdateUserId());
+                packingTaskEntity.setUpdateUserName(soDeliveryNoticeEntity.getUpdateUserName());
                 //查询明细
                 List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailEntities.stream().filter(e -> e.getMainId().equals(soDeliveryNoticeEntity.getId())).collect(Collectors.toList());
                 packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum));
@@ -1662,9 +1693,25 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱任务单" , packingTaskEntity.getCode());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "新增操作");
                 List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.b2bDeliveryDetailToPackingTaskDetail(detailEntityList);
-                taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
+//                taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
+                taskDetailList.forEach(packingTaskDetailEntity -> {
+                    packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
+                    packingTaskDetailEntity.setCreateTime(soDeliveryNoticeEntity.getCreateTime());
+                    packingTaskDetailEntity.setCreateUserId(soDeliveryNoticeEntity.getCreateUserId());
+                    packingTaskDetailEntity.setCreateUserName(soDeliveryNoticeEntity.getCreateUserName());
+                    packingTaskDetailEntity.setUpdateTime(soDeliveryNoticeEntity.getUpdateTime());
+                    packingTaskDetailEntity.setUpdateUserId(soDeliveryNoticeEntity.getUpdateUserId());
+                    packingTaskDetailEntity.setUpdateUserName(soDeliveryNoticeEntity.getUpdateUserName());
+                });
                 //新增任务明细
-                packingTaskDetailService.saveBatch(taskDetailList);
+                if (taskDetailList.size() > 5){
+                    List<List<PackingTaskDetailEntity>> partition = ListUtil.partition(taskDetailList, 5);
+                    for (List<PackingTaskDetailEntity> taskDetailEntityList : partition) {
+                        packingTaskDetailService.saveBatch(taskDetailEntityList);
+                    }
+                }else {
+                    packingTaskDetailService.saveBatch(taskDetailList);
+                }
                 //新增装箱详情
                 List<PackingTaskDetailDTO.HistoryCartonDTO> cartonDTOList = sourceMap.get(soDeliveryNoticeEntity.getId());
                 if (CollectionUtils.isNotEmpty(cartonDTOList)){
@@ -1895,7 +1942,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //更新装箱状态-汇总
         if (packQty == 0){
             packingStatus = PackingTaskStatusEnum.UNPACKED.getCode();
-        }else if (packQty > 0 && !deliveryQty.equals(packQty)){
+        }else if (packQty > 0 && deliveryQty > packQty){
             packingStatus = PackingTaskStatusEnum.PACKING.getCode();
         }else{
             packingStatus = PackingTaskStatusEnum.PACKED.getCode();

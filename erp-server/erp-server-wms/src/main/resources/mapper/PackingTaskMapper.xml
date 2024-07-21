@@ -230,6 +230,12 @@
             wcd.sku_id as skuId,
             wcd.sku_no as skuNo,
             wcd.pack_qty as packQty,
+            wc.create_time as createTime,
+            wc.update_time as updateTime,
+            wc.create_user_id as createUserId,
+            wc.create_user_name as createUserName,
+            wc.update_user_id as updateUserId,
+            wc.update_user_name as updateUserName,
             wcd.update_user_id as packingUserId,
             wcd.update_user_name as packingUserName
         FROM

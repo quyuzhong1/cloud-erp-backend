@@ -10,20 +10,33 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.*;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.excel.VwAllocationAllocationCancelExcelDTO;
+import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
+import com.erp.model.wms.dto.excel.VwAllocationAllocationTransferExcelDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -34,34 +47,29 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.VwAllocationDirectionEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
-import com.erp.server.wms.listener.*;
+import com.erp.server.wms.listener.VirtualWarehouseAllocationCancelExcelListener;
+import com.erp.server.wms.listener.VirtualWarehouseAllocationExcelListener;
+import com.erp.server.wms.listener.VirtualWarehouseAllocationTransferExcelListener;
 import com.erp.server.wms.mapper.VirtualWarehouseAllocationMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -558,7 +566,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                 .eq(VirtualWarehouseAllocationDetailEntity::getMainId, allocationEntity.getId()));
         List<VirtualWarehouseAllocationDTO.DetailDto> detailDtos = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailList);
-        checkInfoAndQty(allocationEntity, detailDtos);
+        checkInfoAndQty(allocationEntity, detailDtos,Boolean.TRUE);
     }
 
     /**
@@ -598,7 +606,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(virtualWarehouseAllocationEntity.getType())) {
             virtualWarehouseAllocationEntity.setDirection(VwAllocationDirectionEnum.REVERSE.getCode());
         }
-        checkInfoAndQty(virtualWarehouseAllocationEntity, detailList);
+        checkInfoAndQty(virtualWarehouseAllocationEntity, detailList,Boolean.FALSE);
     }
 
     /**
@@ -607,7 +615,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      * @param virtualWarehouseAllocationEntity
      * @param detailList
      */
-    private void checkInfoAndQty(VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity, List<VirtualWarehouseAllocationDTO.DetailDto> detailList) {
+    private void checkInfoAndQty(VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity, List<VirtualWarehouseAllocationDTO.DetailDto> detailList
+                                , Boolean isChekInventoryQty) {
         List<String> skuIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> warehouseIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> vmIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getToVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -630,12 +639,15 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         detailList.forEach(detailDto -> {
             //校验sku、仓库、虚拟仓是否存在
             checkInfo(detailDto, skuVOList, warehouseList, virtualWarehouseList, vwRelationList);
-            //校验库存
-            checkQty(detailDto, type, virtualInventoryQtyList);
+            if (isChekInventoryQty) {
+                //校验库存
+                checkQty(detailDto, type, virtualInventoryQtyList);
+            }
         });
-
-        //校验所有的库存总量
-        checkTotalQty(detailList, type, virtualInventoryQtyList);
+        if (isChekInventoryQty) {
+            //校验所有的库存总量
+            checkTotalQty(detailList, type, virtualInventoryQtyList);
+        }
 
         //校验数据唯一
         checkUniqueInfo(type, detailList);

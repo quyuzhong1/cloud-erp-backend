@@ -1296,67 +1296,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public Boolean mergePackageDelivery(List<String> soIdList) {
-
-        //记录需要手动标发的订单id
-        List<String> deliverySoIdList = new ArrayList<>();
-        for (String soId : soIdList) {
-            Boolean flag = soB2cFeign.checkPlatformShipOrder(soId);
-            if (flag) {
-                deliverySoIdList.add(soId);
-            }
-        }
-        //查询发货单
-        List<SoB2cDeliveryEntity> deliveryEntityList = this.listBySourceIds(deliverySoIdList);
-        //过滤掉取消发货
-        deliveryEntityList = deliveryEntityList.stream().filter(v->!SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(v.getStatus())).collect(Collectors.toList());
-
-        List<String> soDeliveryIds = deliveryEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
-        //调用第三方平台SDK发货
-        this.falseDeliveryBatch(soDeliveryIds);
-
-        //查询发货单
-        List<SoB2cDeliveryEntity> deliveryEntities = this.listBySourceIds(soIdList);
-        //过滤掉取消发货
-        deliveryEntities = deliveryEntities.stream().filter(v->!SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(v.getStatus())).collect(Collectors.toList());
-
-        //获取一个当前时间当作发货时间
-        LocalDateTime deliveryTime = LocalDateTime.now();
-
-        //将发货状态更新为已发货
-        for (SoB2cDeliveryEntity deliveryEntity : deliveryEntities) {
-            deliveryEntity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
-            deliveryEntity.setDeliveryTime(deliveryTime);
-        }
-
-        //修改订单状态已发货
-        SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
-        updateDeliveryTimeDTO.setSoB2cIds(soIdList);
-        List<SoB2cDTO.SoDeliveryDTO> soDeliveryDTOList = new ArrayList<>();
-        for (String soId : soIdList) {
-            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityList.stream().filter(v->v.getSourceId().equals(soId)).findFirst().orElse(new SoB2cDeliveryEntity());
-            soDeliveryDTOList.add(new SoB2cDTO.SoDeliveryDTO(soId,soB2cDeliveryEntity.getCode()));
-        }
-        updateDeliveryTimeDTO.setSoDeliveryDTOList(soDeliveryDTOList);
-        updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-        updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
-        soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
-
-        //将发货状态更新为已发货
-        if (!this.updateBatchById(deliveryEntities)) {
-            throw new ServiceException("发货单更新失败");
-        }
-
-        for (SoB2cDeliveryEntity deliveryEntity : deliveryEntities) {
-            //出库
-            this.generateB2cSoOutstock(deliveryEntity);
-            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "组包称重", deliveryEntity.getCode());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), "组包称重");
-        }
-        return Boolean.TRUE;
-    }
-
-    @Override
     public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybillPreview(SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param) {
         List<String> ids = param.getIds();
 
@@ -1867,6 +1806,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean pushTransferInfo(SoB2cDeliveryEntity entity) {
 
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
+        if (CollectionUtils.isNotEmpty(transferInfoList)) {
+            return Boolean.TRUE;
+        }
+
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, entity.getSourceId()).list();
         if (CollectionUtil.isEmpty(receiverList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
@@ -1897,10 +1841,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoOutstockEntity> soOutstockList = soOutstockService.listBySourceId(Arrays.asList(id));
         if (CollectionUtils.isNotEmpty(soOutstockList)) {
             throw new ServiceException(StrUtil.format("发货单【{}】已下推出库单不支持重新出库",entity.getCode()));
-        }
-        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
-        if (CollectionUtils.isNotEmpty(transferInfoList)) {
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "重新出库");
         }
         //生成直接调拨单
         this.pushTransferInfo(entity);
@@ -2316,7 +2256,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @date 2024/7/17 11:06
      * @param entity
      */
-    private void outFreezeVirtualInventory (SoB2cDeliveryEntity entity) {
+    @Override
+    public void outFreezeVirtualInventory (SoB2cDeliveryEntity entity) {
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
             throw new ServiceException("为找到发货单明细");

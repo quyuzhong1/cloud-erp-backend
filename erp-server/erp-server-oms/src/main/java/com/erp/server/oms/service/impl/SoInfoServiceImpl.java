@@ -2971,6 +2971,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean unLockVirtualInventory(String id) {
         SoInfoEntity soInfoEntity = getById(id);
         if (ObjectUtil.isEmpty(soInfoEntity)) {

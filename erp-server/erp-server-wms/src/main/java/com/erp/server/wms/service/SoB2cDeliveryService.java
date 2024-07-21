@@ -184,6 +184,14 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     BatchResultDTO delivery(String id, String deliveryType);
 
     /**
+     * 扣减冻结库存
+     * @author will
+     * @date 2024/7/21 9:47
+     * @param entity
+     */
+    void outFreezeVirtualInventory (SoB2cDeliveryEntity entity);
+
+    /**
      * 生成销售出库单
      *
      * @param entity
@@ -222,16 +230,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @Date 2024/4/22 18:06
      **/
     Boolean falseDeliveryBatch(List<String> ids);
-
-    /**
-     * 合并组包发货
-     *
-     * @param soIdList
-     * @return java.lang.Boolean
-     * @Author Luo_WG
-     * @Date 2024/4/24 19:29
-     **/
-    Boolean mergePackageDelivery(List<String> soIdList);
 
     /**
      * 打印面单预览
