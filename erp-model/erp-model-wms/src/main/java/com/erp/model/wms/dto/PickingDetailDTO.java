@@ -297,5 +297,17 @@ public class PickingDetailDTO implements Serializable {
          * 来源明细id
          */
         private String sourceDetailId;
+
+        public static PickingDetailDTO.AddDTO getAddDTO(PickingDetailDTO.AddDTO detailAdd, String skuId, String skuNo, int qty) {
+            PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();
+            detail.setWarehouseId(detailAdd.getWarehouseId());
+            detail.setWarehouseName(detailAdd.getWarehouseName());
+            detail.setSkuId(skuId);
+            detail.setSkuNo(skuNo);
+            detail.setQty(qty);
+            detail.setSourceDetailId(detailAdd.getSourceDetailId());
+            return detail;
+        }
+
     }
 }

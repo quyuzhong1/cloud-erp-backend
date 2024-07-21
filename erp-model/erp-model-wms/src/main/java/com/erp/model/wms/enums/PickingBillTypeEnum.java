@@ -6,6 +6,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Getter
 @AllArgsConstructor
 public enum PickingBillTypeEnum implements EnumMessage {
@@ -29,5 +32,10 @@ public enum PickingBillTypeEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+
+    public static List<String> firstLegs(){
+        return Arrays.asList(FBA.getCode(), THIRD.getCode());
     }
 }
