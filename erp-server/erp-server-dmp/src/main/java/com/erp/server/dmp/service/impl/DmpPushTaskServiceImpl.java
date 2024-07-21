@@ -17,11 +17,9 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
-import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
@@ -30,19 +28,15 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
-import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
-import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -585,6 +579,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
      * 新增或修改
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String saveOrUpdateDmpSyncTask(DmpPushTaskEntity entity) {
         DmpSyncTaskDTO.OneDTO map = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
         DmpPushTaskEntity found = getByParam(map);
