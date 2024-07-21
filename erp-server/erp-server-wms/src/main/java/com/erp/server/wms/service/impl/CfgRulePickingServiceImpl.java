@@ -171,37 +171,32 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         map.put("billType", dto.getBillType());
         map.put("customerId", dto.getCustomerId());
         map.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
-        //明细根据sku + 仓库分组 合并数量
-        Map<String, CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailDTOMap = new HashMap<>();
-        for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : dto.getDetails()) {
-            if (!ObjectUtils.isEmpty(detailDTOMap.get(detail.getWarehouseId()))) {
-                detail.setQty(detail.getQty() + detailDTOMap.get(detail.getWarehouseId()).getQty());
-            }
-            detailDTOMap.put(detail.getWarehouseId(),detail);
-        }
-        for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : detailDTOMap.values()) {
-            AtomicInteger quantity = new AtomicInteger(detail.getQty());
-            for (CfgRulePickingEntity picking : cfgRulePickings) {
-                List<CfgRuleConditionDTO.ConditionElementDTO> conditionList = conditions.stream().
-                        filter(r -> r.getRuleId().equals(picking.getId())).
-                        sorted(Comparator.comparing(CfgRuleConditionDTO.ConditionElementDTO::getIndex)).collect(Collectors.toList());
-                List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
-                //获取到表达式,判断表达式是否匹配
-                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
-                if (Boolean.TRUE.equals(matchResult)) {
-                    List<CfgRulePackingActionEntity> actionList = actions.stream()
-                            .filter(r -> r.getRuleId().equals(picking.getId()))
-                            .filter(r -> ObjectUtils.isEmpty(detail.getWarehouseId()) || r.getWarehouseId().equals(detail.getWarehouseId()))
-                            .sorted(Comparator.comparing(CfgRulePackingActionEntity::getIndex))
-                            .collect(Collectors.toList());
-                    handlerAction(actionList, result, locationList, detail, quantity);
-                    if (0 == quantity.get()) {
-                        break;
+        Map<String, List<CfgRulePickingDTO.CfgExecutionDataDetailDTO>> warehouseGroupMap = dto.getDetails().stream().collect(Collectors.groupingBy(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getWarehouseId));
+        for (Map.Entry<String, List<CfgRulePickingDTO.CfgExecutionDataDetailDTO>> entry : warehouseGroupMap.entrySet()) {
+            for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : entry.getValue()) {
+                AtomicInteger quantity = new AtomicInteger(detail.getQty());
+                for (CfgRulePickingEntity picking : cfgRulePickings) {
+                    List<CfgRuleConditionDTO.ConditionElementDTO> conditionList = conditions.stream().
+                            filter(r -> r.getRuleId().equals(picking.getId())).
+                            sorted(Comparator.comparing(CfgRuleConditionDTO.ConditionElementDTO::getIndex)).collect(Collectors.toList());
+                    List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
+                    //获取到表达式,判断表达式是否匹配
+                    Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+                    if (Boolean.TRUE.equals(matchResult)) {
+                        List<CfgRulePackingActionEntity> actionList = actions.stream()
+                                .filter(r -> r.getRuleId().equals(picking.getId()))
+                                .filter(r -> ObjectUtils.isEmpty(detail.getWarehouseId()) || r.getWarehouseId().equals(detail.getWarehouseId()))
+                                .sorted(Comparator.comparing(CfgRulePackingActionEntity::getIndex))
+                                .collect(Collectors.toList());
+                        handlerAction(actionList, result, locationList, detail, quantity);
+                        if (0 == quantity.get()) {
+                            break;
+                        }
                     }
                 }
-            }
-            if (0 != quantity.get()) {
-                throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, detail.getSkuNo());
+                if (0 != quantity.get()) {
+                    throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, detail.getSkuNo());
+                }
             }
         }
         return result;
