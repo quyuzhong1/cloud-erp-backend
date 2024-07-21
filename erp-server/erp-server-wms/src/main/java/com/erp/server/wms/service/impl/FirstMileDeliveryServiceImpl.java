@@ -164,9 +164,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private PackingTaskService packingTaskService;
 
-    @Resource
-    private RequisitionApplicationService requisitionApplicationService;
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
