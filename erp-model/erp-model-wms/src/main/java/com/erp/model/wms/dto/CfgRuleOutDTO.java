@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -443,6 +444,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 中转配置
          */
+        @Valid
         private List<TransferDTO> transferDTOList = new ArrayList<>();
     }
 
@@ -460,6 +462,7 @@ public class CfgRuleOutDTO implements Serializable {
          * field下拉：/wms/common/enumDropDown?type=StockOutTransferField
          * compare下拉：/wms/common/enumDropDown?type=StockOutTransferCompare
          */
+        @Valid
         private List<TransferConditionElement> conditionList;
     }
 
@@ -474,16 +477,19 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 对应字段
          */
+        @NotBlank(message = "条件字段不能为空")
         private String field;
 
         /**
          * 选项逻辑关系 大于 等于 等等
          */
+        @NotBlank(message = "比较符号不能为空")
         private String compare;
 
         /**
          * 对应的值
          */
+        @NotEmpty(message = "值字段不能为空")
         private List<String> valueList;
 
         private String value;
@@ -502,18 +508,6 @@ public class CfgRuleOutDTO implements Serializable {
          * 对应的值类型
          */
         private String valueType;
-
-        /**
-         * 装箱超重配置
-         */
-        @Valid
-        private CfgOverweightDTO cfgOverweight = new CfgOverweightDTO();
-
-        /**
-         * 产品装箱配置
-         */
-        private CfgProductPacking cfgProductPacking = new CfgProductPacking();
-
     }
 
     /**
