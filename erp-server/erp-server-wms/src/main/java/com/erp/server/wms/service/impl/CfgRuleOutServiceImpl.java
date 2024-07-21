@@ -7,8 +7,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.dto.SpElExpressionDTO;
@@ -23,7 +21,6 @@ import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
-import com.erp.model.wms.enums.StockOutTransferTypeEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
 import com.erp.server.wms.service.CfgRuleOutService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -107,14 +104,15 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             transferList.add(transferEntity);
         }
 
-        //删除数据后再保存
-        service.remove(new QueryWrapper<>());
         List<CfgRuleOutEntity> saveList = new ArrayList<>();
         saveList.add(equipmentSortingPortEntity);
         saveList.add(b2cAllowableDeviationsEntity);
         saveList.add(cfgOverWeight);
         saveList.add(cfgProductPacking);
         saveList.addAll(transferList);
+
+        //删除数据后再保存
+        service.remove(new QueryWrapper<>());
         service.saveBatch(saveList);
         return new BaseResultDTO.AddDTO();
     }
@@ -194,10 +192,10 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     public CfgRuleOutDTO.CommonDTO view() {
         List<CfgRuleOutEntity> cfgRuleOutEntities = this.list();
         CfgRuleOutEntity equipmentSortingPortEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.EQUIPMENT_SORTING_PORT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
-        CfgRuleOutEntity b2cAllowableDeviationsEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.B2C_ALLOWABLE_DEVIATIONS.getCode())).findFirst().orElse(new CfgRuleOutEntity()  );
-        List<CfgRuleOutEntity> transferEntityList = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode())).collect(Collectors.toList());
+        CfgRuleOutEntity b2cAllowableDeviationsEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.B2C_ALLOWABLE_DEVIATIONS.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutEntity cfgProductPacking = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PRODUCT_PACKING.getCode())).findFirst().orElse(new CfgRuleOutEntity());
+        List<CfgRuleOutEntity> transferEntityList = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode())).collect(Collectors.toList());
         CfgRuleOutDTO.CommonDTO commonDTO = new CfgRuleOutDTO.CommonDTO();
         commonDTO.setEquipmentSortingPortDTO(BeanUtil.mapToBean(equipmentSortingPortEntity.getRuleContent(), CfgRuleOutDTO.EquipmentSortingPortDTO.class,true));;
         commonDTO.setB2cAllowableDeviations(BeanUtil.mapToBean(b2cAllowableDeviationsEntity.getRuleContent(), CfgRuleOutDTO.B2cAllowableDeviations.class,true));
@@ -415,12 +413,12 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         Map<String, Object> detailMap = new HashMap<>();
         detailMap.put("type", dto.getType());
         detailMap.put("receiveCountry", dto.getReceiveCountry());
-        detailMap.put("targetWarehouse", dto.getTargetWarehouse());
+        detailMap.put("destWarehouse", dto.getDestWarehouse());
         Map<String, Object> map = new HashMap<>();
         map.put("detailList", Collections.singletonList(detailMap));
         map.put("type", dto.getType());
         map.put("receiveCountry", dto.getReceiveCountry());
-        map.put("targetWarehouse", dto.getTargetWarehouse());
+        map.put("destWarehouse", dto.getDestWarehouse());
 
         List<CfgRuleOutEntity> cfgRuleOutList = this.baseMapper.selectList(new LambdaQueryWrapper<CfgRuleOutEntity>().eq(CfgRuleOutEntity::getType, CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode()));
         for (CfgRuleOutEntity entity : cfgRuleOutList) {
