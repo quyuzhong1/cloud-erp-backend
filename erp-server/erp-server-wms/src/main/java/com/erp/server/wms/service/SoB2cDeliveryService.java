@@ -18,7 +18,6 @@ import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
-import com.erp.model.wms.enums.CfgRuleOutEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -231,16 +230,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @Date 2024/4/22 18:06
      **/
     Boolean falseDeliveryBatch(List<String> ids);
-
-    /**
-     * 合并组包发货
-     *
-     * @param soIdList
-     * @return java.lang.Boolean
-     * @Author Luo_WG
-     * @Date 2024/4/24 19:29
-     **/
-    Boolean mergePackageDelivery(List<String> soIdList);
 
     /**
      * 打印面单预览

@@ -1,11 +1,9 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.DistributedLockEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.utils.StrUtils;
@@ -13,9 +11,7 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
@@ -174,7 +170,11 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         log.debug("【组包预报】销售单【{}】生成销售出库单开始", curDeliveryEntity.getSoCode());
         //出库
         try {
-            soB2cDeliveryService.generateB2cSoOutstock(curDeliveryEntity);
+            //生成直接调拨单
+            Boolean isPush = soB2cDeliveryService.pushTransferInfo(curDeliveryEntity);
+            if (isPush) {
+                soB2cDeliveryService.generateB2cSoOutstock(curDeliveryEntity);
+            }
         } finally {
             if (CollectionUtils.isNotEmpty(soOutStockKeyList)) {
                 // 释放当前单据所有之前的key

@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
@@ -1587,6 +1588,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
+        if (StrUtil.equals(soInfoEntity.getApproveStatus().getStatus(), BillApproveStatusEnum.DRAFT.getStatus())) {
+            throw new ServiceException("暂存状态不允许锁定");
+        }
+        if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
+            throw new ServiceException(StrUtil.format("单据【{}】无虚拟仓不支持锁定",soInfoEntity.getCode()));
+        }
         //校验冻结数量
         if (MathUtil.compareTo(saveDTO.getFrozenQty(), soDetailEntity.getFrozenQty()) == MathUtil.ZERO) {
             return new BatchResultDTO(soDetailEntity.getId(),StrUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()) ,"冻结数量未变无需更新",Boolean.TRUE);
@@ -1621,11 +1628,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchUnLockVirtualInventory(String detailId) {
-        SoDetailEntity soDetailEntity = this.getById(detailId);
-        if (ObjectUtil.isEmpty(soDetailEntity)) {
+        SoDetailEntity old = this.getById(detailId);
+        if (ObjectUtil.isEmpty(old)) {
             throw new ServiceException(ApiError.ERROR_92015);
         }
-        SoInfoEntity soInfoEntity = soInfoService.getById(soDetailEntity.getMainId());
+        SoInfoEntity soInfoEntity = soInfoService.getById(old.getMainId());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
@@ -1634,16 +1641,18 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             throw new ServiceException("释放库存虚拟仓库不能为空");
         }
         //无锁定库存
-        if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {
-            return new BatchResultDTO(soDetailEntity.getId(),soInfoEntity.getCode(),"无需要释放的锁定库存",Boolean.TRUE);
+        if (MathUtil.compareTo(old.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+            return new BatchResultDTO(old.getId(),soInfoEntity.getCode(),"无需要释放的锁定库存",Boolean.TRUE);
         }
-
+        SoDetailEntity soDetailEntity = new SoDetailEntity();
+        BeanMapperUtils.copy(soDetailEntity,old);
         //更新库存锁定数量
         soDetailEntity.setFrozenQty(MathUtil.ZERO);
         this.updateById(soDetailEntity);
 
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-        stockParamDTO.setParamList(unLockVirtualInventory(soInfoEntity,soDetailEntity));
+
+        stockParamDTO.setParamList(unLockVirtualInventory(soInfoEntity,old));
         stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_UNLOCK.getCode());
         virtualInventoryFeign.approveByType(stockParamDTO);
         return new BatchResultDTO(soDetailEntity.getId(),StrUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()),"释放库存成功",Boolean.TRUE);

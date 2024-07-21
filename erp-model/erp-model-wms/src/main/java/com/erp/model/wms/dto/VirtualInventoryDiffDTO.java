@@ -86,6 +86,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 虚拟仓库存
          */
         private Integer virtualQty;
+        /**
+         * 库存差异，true是，false否
+         */
+        private Boolean isDiff;
     }
 
     /**

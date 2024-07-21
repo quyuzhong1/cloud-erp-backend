@@ -71,15 +71,11 @@ import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
 import com.erp.tms.aliexpress.model.handover.response.HandoverCommitResult;
 import com.erp.tms.aliexpress.model.handover.response.HandoverQueryResponse;
 import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
-import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.model.order.response.ErrorResponse;
-import com.erp.tms.aliexpress.model.order.response.QueryResponse;
-import com.erp.tms.aliexpress.model.order.response.QueryResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
-import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -995,5 +991,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
         deliveryEntity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
+
+        //扣减冻结库存
+        soB2cDeliveryService.outFreezeVirtualInventory(deliveryEntity);
     }
 }
