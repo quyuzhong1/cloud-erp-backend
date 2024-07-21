@@ -129,7 +129,7 @@
         sdnd.sku_id,
         sdnd.is_close,
         sdnd.sku_no,
-        COALESCE(sdnd.picking_qty, 0),
+        COALESCE(sdnd.picking_qty, 0) as qty,
         sdn.seller_id,
         sdn.seller_name,
         sdnd.remark
