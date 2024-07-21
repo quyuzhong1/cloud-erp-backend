@@ -247,6 +247,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                     inventoryResultDTO.setWarehouseAreaId(action.getWarehouseAreaId());
                     inventoryResultDTO.setWarehouseLocationId(entity.getId());
                     inventoryResultDTO.setWarehouseLocation(inventoryEntity.getWarehouseLocation());
+                    inventoryResultDTO.setSourceDetailId(detail.getSourceDetailId());
                     if (inventoryEntity.getQty() >= quantity.get()) {
                         inventoryResultDTO.setQuantity(quantity.get());
                         result.add(inventoryResultDTO);
