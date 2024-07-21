@@ -144,5 +144,9 @@ public class CfgRulePickingDTO {
          * 数量
          */
         private Integer qty;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
     }
 }
