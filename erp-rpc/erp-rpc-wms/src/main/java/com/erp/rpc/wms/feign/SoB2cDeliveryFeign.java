@@ -93,17 +93,6 @@ public interface SoB2cDeliveryFeign {
 
 
     /**
-     * 合并组包发货
-     * @Author Luo_WG
-     * @Date 2023/12/27 16:00
-     * @param soIdList
-     * @return java.lang.Boolean
-     **/
-    @PostMapping("feign/soB2cDelivery/mergePackageDelivery")
-    Boolean mergePackageDelivery(@RequestBody List<String> soIdList);
-
-
-    /**
      * 平台标记发货
      * @param platformShipOrderDTO
      * @return

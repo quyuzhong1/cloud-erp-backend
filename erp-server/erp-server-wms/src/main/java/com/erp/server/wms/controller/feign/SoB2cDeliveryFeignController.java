@@ -116,19 +116,6 @@ public class SoB2cDeliveryFeignController extends BaseController {
         return flag;
     }
 
-
-    /**
-     * 合并组包发货
-     * @Author Luo_WG
-     * @Date 2023/12/27 16:00
-     * @param soIdList
-     * @return java.lang.Boolean
-     **/
-    @PostMapping("/mergePackageDelivery")
-    public Boolean mergePackageDelivery(@RequestBody List<String> soIdList) {
-        return soB2cDeliveryService.mergePackageDelivery(soIdList);
-    }
-
     /**
      * 平台标记发货
      **/
