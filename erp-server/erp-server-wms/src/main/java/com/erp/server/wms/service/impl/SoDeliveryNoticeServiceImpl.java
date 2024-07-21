@@ -92,7 +92,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -162,6 +161,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private CfgRuleOutService cfgRuleOutService;
+    @Resource
+    private CfgRulePickingStagingService  cfgRulePickingStagingService;
 
     @Resource
     private CfgSettingService cfgSettingService;
@@ -945,29 +946,33 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         addDTO.setWarehouseId(warehouseId);
         addDTO.setCustomerOrderNo(soInfoEntity.getCustomerOrderNo());
         List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>();
-        for (PickingListsDTO.SourceView item : views) {
-            SoDeliveryNoticeDetailEntity detailEntity = entityList.stream()
-                    .filter(v -> v.getId().equals(item.getSourceDetailId()))
-                    .findFirst()
-                    .orElse(new SoDeliveryNoticeDetailEntity());
+        addDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
+        for (SoDeliveryNoticeDetailEntity item : entityList) {
+            SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
             //附件信息
             List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentDbList.stream().filter(a -> a.getBusinessId().equals(detailEntity.getId())).collect(Collectors.toList());
             List<String> attachmentNameList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
             List<String> attachmentUrlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-            SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
-            detail.setSoDetailId(detailEntity.getSourceDetailId());
+            detail.setAttachNameList(attachmentNameList);
+            detail.setAttachUrlList(attachmentUrlList);
+            // 获取仓库暂存区默认配置
+            CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                    .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
+                    .filter(staging -> staging.getWarehouseId().equals(detail.getWarehouseId()))
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+            detail.setSoDetailId(item.getSourceDetailId());
             detail.setSourceDetailId(item.getSourceDetailId());
             detail.setSkuId(item.getSkuId());
             detail.setSkuNo(item.getSkuNo());
-            detail.setRemark(detailEntity.getRemark());
             detail.setWarehouseId(warehouseId);
             if (isTransit) {
                 detail.setWarehouseLocation("");
             }else {
-                detail.setWarehouseLocation(item.getWarehouseLocation());
+                detail.setWarehouseLocation(pickingStaging.getWarehouseLocation());
             }
-            detail.setActualQty(item.getQty());
-            detail.setPlanQty(item.getQty());
+            detail.setActualQty(item.getDeliveryQty());
+            detail.setPlanQty(item.getDeliveryQty());
             detail.setAttachNameList(attachmentNameList);
             detail.setAttachUrlList(attachmentUrlList);
             detailList.add(detail);
@@ -1038,16 +1043,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         paramDTO.setSkuIdList(skuIdList);
         paramDTO.setWarehouseIdList(warehouseIdList);
         paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-        //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(paramDTO);
-
         // 产品属性为费用或服务的sku忽略库存计算
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
-            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        }
-
         for (String soId : soIdList) {
             SoDeliveryNoticeDTO.Add add = new SoDeliveryNoticeDTO.Add();
             add.setSourceId(soId);
@@ -1058,16 +1056,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 add.setWarehouseId(view.getWarehouseId());
                 add.setPlanDeliveryDate(view.getPlanDeliveryDate());
                 SoDeliveryNoticeDetailDTO.Add detailAdd = new SoDeliveryNoticeDetailDTO.Add();
-
-                if(ignoreInventorySkuIds.contains(view.getSkuId())) {
-                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", view.getSkuId(), view.getSkuNo());
-                } else {
-                    //即时库存
-                    Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(view.getSkuId()) && s.getWarehouseId().equals(view.getWarehouseId())).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
-                    if (view.getDeliveryQty() > curInventoryQty) {
-                        throw new ServiceException(ApiError.ERROR_99070, view.getSkuNo());
-                    }
-                }
                 detailAdd.setDeliveryQty(view.getDeliveryQty());
                 detailAdd.setRemark(view.getRemark());
                 detailAdd.setSourceDetailId(view.getDetailId());
