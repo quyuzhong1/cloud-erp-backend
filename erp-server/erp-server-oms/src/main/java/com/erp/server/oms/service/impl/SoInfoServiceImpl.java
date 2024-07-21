@@ -3496,7 +3496,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setEffectiveNoticeQty(effectiveNoticeQty);
-            batchLockDTO.setToFrozenQty(soDetailEntity.getQty() - effectiveNoticeQty);
+            //Min 【（销售数量 - 发货通知单审核数量），虚拟仓可用库存】
+            Integer toFrozenQty = soDetailEntity.getQty() - effectiveNoticeQty;
+            batchLockDTO.setToFrozenQty(virtualUsableQty > toFrozenQty ? toFrozenQty : virtualUsableQty);
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
                     && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())

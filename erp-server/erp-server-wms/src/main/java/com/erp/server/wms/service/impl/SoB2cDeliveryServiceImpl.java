@@ -1913,6 +1913,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             detailAddDTO.setSourceDetailId(detailEntity.getId());
             detailAddDTO.setQty(detailEntity.getDeliveryQty());
             detailAddDTO.setOutWarehouseId(outWarehouseEntity.getId());
+            detailAddDTO.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
             detailAddDTO.setInWarehouseId(inWarehouseEntity.getId());
             detailList.add(detailAddDTO);
         }
