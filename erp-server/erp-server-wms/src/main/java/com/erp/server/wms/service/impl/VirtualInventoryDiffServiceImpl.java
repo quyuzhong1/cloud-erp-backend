@@ -257,6 +257,9 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             listDTO.setDistributionQty(listDTO.getVirtualQty());
             //未分配数量
             listDTO.setUnDistributionQty(listDTO.getUsableQty() - listDTO.getDistributionQty());
+            //是否有差异
+            boolean isDiff = listDTO.getVirtualQty() > listDTO.getUsableQty();
+            listDTO.setIsDiff(isDiff);
         }
     }
 
