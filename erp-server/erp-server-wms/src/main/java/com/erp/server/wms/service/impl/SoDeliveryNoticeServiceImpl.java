@@ -41,15 +41,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
-import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
-import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
-import com.erp.model.wms.enums.PickingBillTypeEnum;
-import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -78,7 +73,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -150,6 +144,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private CfgRuleOutService cfgRuleOutService;
+    @Resource
+    private CfgRulePickingStagingService  cfgRulePickingStagingService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -827,7 +823,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         //附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(detailIds);
-
+        List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         for (SoOutstockDTO.GenerateSoOutstockViewDTO item : resultList) {
             item.setSourceType(soDeliveryNotice);
             String detailId = item.getSourceDetailId();
@@ -837,6 +833,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             List<String> attachmentUrlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             item.setAttachNameList(attachmentNameList);
             item.setAttachUrlList(attachmentUrlList);
+            // 获取仓库暂存区默认配置
+            CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                    .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
+                    .filter(staging -> staging.getWarehouseId().equals(item.getWarehouseId()))
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+            item.setWarehouseLocation(pickingStaging.getWarehouseLocation());
         }
         //销售出库单保存下推单据
         return soOutstockService.addB2bPushDownNo(resultList);
@@ -853,16 +855,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         paramDTO.setSkuIdList(skuIdList);
         paramDTO.setWarehouseIdList(warehouseIdList);
         paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-        //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(paramDTO);
-
         // 产品属性为费用或服务的sku忽略库存计算
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
-            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        }
-
         for (String soId : soIdList) {
             SoDeliveryNoticeDTO.Add add = new SoDeliveryNoticeDTO.Add();
             add.setSourceId(soId);
@@ -873,16 +868,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 add.setWarehouseId(view.getWarehouseId());
                 add.setPlanDeliveryDate(view.getPlanDeliveryDate());
                 SoDeliveryNoticeDetailDTO.Add detailAdd = new SoDeliveryNoticeDetailDTO.Add();
-
-                if(ignoreInventorySkuIds.contains(view.getSkuId())) {
-                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", view.getSkuId(), view.getSkuNo());
-                } else {
-                    //即时库存
-                    Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(view.getSkuId()) && s.getWarehouseId().equals(view.getWarehouseId())).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
-                    if (view.getDeliveryQty() > curInventoryQty) {
-                        throw new ServiceException(ApiError.ERROR_99070, view.getSkuNo());
-                    }
-                }
                 detailAdd.setDeliveryQty(view.getDeliveryQty());
                 detailAdd.setRemark(view.getRemark());
                 detailAdd.setSourceDetailId(view.getDetailId());
