@@ -157,7 +157,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private PickingDetailService pickingDetailService;
     @Resource
     private CfgRulePickingStagingService cfgRulePickingStagingService;
-
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
+    @Resource
+    private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Resource
     private PackingTaskService packingTaskService;
 
@@ -1913,6 +1916,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //查询已下推的海外入库单
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(deliveryEntity.getId()));
+        //要货申请单号
+        String sourceCode = deliveryEntity.getSourceCode();
+        RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getOne(new LambdaQueryWrapper<RequisitionApplicationEntity>().eq(RequisitionApplicationEntity::getCode, sourceCode));
+        //要货申请单明细
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetails = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationEntity.getId()));
+        Map<String, String> requisitionApplicationMap = requisitionApplicationDetails.stream().collect(Collectors.toMap(item1 -> item1.getSkuId(), item2 -> item2.getToWarehouseId()));
 
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
@@ -1923,7 +1932,17 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDto.setSkuNo(deliveryDetail.getSkuNo());
             detailAddDto.setQty(deliveryDetail.getDeliveryQty());
             detailAddDto.setOutWarehouseId(deliveryEntity.getDeliveryWarehouseId());
-            detailAddDto.setOutWarehouseLocation("");
+            //调入仓库ID
+            String toWarehouseId = requisitionApplicationMap.get(deliveryDetail.getSkuId());
+            if(requisitionApplicationEntity.getRequisitionWarehouseId().equals(toWarehouseId)){
+                detailAddDto.setOutWarehouseLocation("");
+            }else {
+                List<CfgRulePickingStagingEntity> stagingList = cfgRulePickingStagingService.list(new LambdaQueryWrapper<CfgRulePickingStagingEntity>().eq(CfgRulePickingStagingEntity::getWarehouseId, requisitionApplicationEntity.getRequisitionWarehouseId()));
+                if(stagingList.isEmpty()){
+                    throw new ServiceException("没有找到暂存仓位");
+                }
+                detailAddDto.setOutWarehouseLocation(stagingList.get(0).getWarehouseLocation());
+            }
             detailAddDto.setInWarehouseId(warehouseEntity.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(deliveryDetail.getId());
