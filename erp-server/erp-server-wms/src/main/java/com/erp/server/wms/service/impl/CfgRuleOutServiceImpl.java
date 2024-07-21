@@ -94,7 +94,10 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         List<CfgRuleOutEntity> transferList = new ArrayList<>();
         List<CfgRuleOutDTO.TransferDTO> transferDTOList = commonDTO.getTransferDTOList();
         for (CfgRuleOutDTO.TransferDTO transferDTO : transferDTOList) {
-            transferDTO.getConditionList().forEach(item -> item.setValue(String.join(",", item.getValueList())));
+            transferDTO.getConditionList().forEach(item -> {
+                item.setValue(String.join(",", item.getValueList()));
+                item.setValue("String");
+            });
             Map<String, Object> transferDTOMap = BeanUtil.beanToMap(transferDTO);
             this.checkTransferRule(transferDTO);
 
