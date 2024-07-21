@@ -182,6 +182,14 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     BatchResultDTO delivery(String id, String deliveryType);
 
     /**
+     * 扣减冻结库存
+     * @author will
+     * @date 2024/7/21 9:47
+     * @param entity
+     */
+    void outFreezeVirtualInventory (SoB2cDeliveryEntity entity);
+
+    /**
      * 生成销售出库单
      *
      * @param entity

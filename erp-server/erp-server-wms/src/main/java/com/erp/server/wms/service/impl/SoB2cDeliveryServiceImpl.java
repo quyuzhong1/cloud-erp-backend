@@ -2207,7 +2207,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @date 2024/7/17 11:06
      * @param entity
      */
-    private void outFreezeVirtualInventory (SoB2cDeliveryEntity entity) {
+    @Override
+    public void outFreezeVirtualInventory (SoB2cDeliveryEntity entity) {
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
             throw new ServiceException("为找到发货单明细");

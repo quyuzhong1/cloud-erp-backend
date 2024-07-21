@@ -94,9 +94,14 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
+        //扣减虚拟库存
+        soB2cDeliveryService.outFreezeVirtualInventory(deliveryEntity);
 
-        //出库
-        soB2cDeliveryService.generateB2cSoOutstock(deliveryEntities.get(0));
+        Boolean isOutStock = soB2cDeliveryService.pushTransferInfo(deliveryEntity);
+        if (isOutStock) {
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(deliveryEntities.get(0));
+        }
 
         String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "组包称重", deliveryEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), "组包称重");
