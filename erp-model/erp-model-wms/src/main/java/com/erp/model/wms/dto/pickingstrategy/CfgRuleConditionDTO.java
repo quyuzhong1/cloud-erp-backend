@@ -41,6 +41,10 @@ public class CfgRuleConditionDTO {
         private String rightBracket;
         private String logic;
         private String name;
+        /**
+         * 字段名称
+         */
+        private String fieldName;
     }
 
     @Getter

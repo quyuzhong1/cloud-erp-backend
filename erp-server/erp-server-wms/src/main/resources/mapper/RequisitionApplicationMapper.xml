@@ -223,6 +223,7 @@
         rad.id AS sourceDetailId,
         ra.code AS sourceCode,
         rad.from_warehouse_id AS deliveryWarehouseId,
+        rad.from_warehouse_name AS deliveryWarehouseName,
         ra.requisition_warehouse_id AS toWarehouseId,
         ra.requisition_warehouse_name AS toWarehouseName,
         rad.sku_id,
@@ -232,7 +233,11 @@
         ra.type,
         rad.platform_sku as platformSku,
         rad.platform_sku_name as platformSkuName,
-        ra.status as status
+        ra.status as status,
+        ra.source_id as deliveryPlanId,
+        rad.source_detail_id as deliveryPlanDetailId,
+        rad.platform_fn_sku as fnSku,
+        rad.platform_spu as platformSpuNo
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
         where ra.is_deleted = false

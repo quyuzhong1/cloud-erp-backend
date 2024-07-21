@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.server.wms.query.WarehouseLocationReplenishQueryHandler;
 import com.erp.server.wms.service.WarehouseLocationReplenishService;
 import com.erp.server.wms.service.WarehouseLocationService;
+import com.sdk.wangdian.sdk.impl.Api;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -90,9 +91,14 @@ public class WarehouseLocationReplenishController extends BaseController {
      */
     @PostMapping("/handleBatch")
     public ApiResult<List<BatchResultDTO>> handleBatch(@RequestBody List<WarehouseLocationReplenishDTO.HandleDTO> dtoList){
+        List<BatchResultDTO> verifyResultList = replenishService.verifyReplenishQty(dtoList);
+        boolean verifyAllMatch = verifyResultList.stream().allMatch(BatchResultDTO::getSuccess);
+        if(! verifyAllMatch){
+            return failure(verifyResultList);
+        }
         List<BatchResultDTO> resultList = new ArrayList<>(dtoList.size());
         for (WarehouseLocationReplenishDTO.HandleDTO dto : dtoList) {
-            BatchResultDTO resultDTO = replenishService.handle(dto);
+            BatchResultDTO resultDTO = replenishService.finish(dto);
             resultList.add(resultDTO);
         }
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);

@@ -260,6 +260,16 @@ public class WarehouseLocationReplenishDTO implements Serializable {
          */
         @NotBlank
         private String toWarehouseLocation;
+
+        /**
+         * 仓位id
+         */
+        private String warehouseId;
+
+        /**
+         * sku id
+         */
+        private String skuId;
     }
 
     @Data

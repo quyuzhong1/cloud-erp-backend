@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.PackingTaskMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.PackingTaskEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_name" property="warehouseName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, source_id, source_code, source_type, delivery_qty, warehouse_id, warehouse_name
+    </sql>
+    <sql id="pagingSql">
+        select
+        pt.id,
+        pt.code,
+        pt.source_id as sourceId,
+        pt.source_code as sourceCode,
+        pt.source_type as sourceType,
+        pt.delivery_qty as deliveryQty,
+        pt.warehouse_id as warehouseId,
+        pt.warehouse_name as warehouseName,
+        pt.create_user_name as createUserName,
+        pt.create_time as createTime,
+        pt.packing_status as packingStatus,
+        pt.weighting_status as weightingStatus
+        from packing_task pt
+        where pt.is_deleted = FALSE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.defaultl != ''">
+            and ${params.sqlMap.default}
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pt.create_time DESC
+    </sql>
+    <select id="listTabCount" resultType="com.erp.model.wms.dto.PackingTaskDTO$TypeCountDTO">
+        SELECT
+            packing_status as type,
+            COUNT(*) AS count
+        FROM (
+            SELECT
+                pt.id,
+                pt.packing_status
+            FROM
+                packing_task pt
+            where pt.is_deleted = FALSE
+            <if test="permissionSql!=null and permissionSql!=''">
+                ${permissionSql}
+            </if>
+        ) AS subquery
+        GROUP BY packing_status
+    </select>
+    <select id="paging" resultType="com.erp.model.wms.dto.PackingTaskDTO$PagingViewDTO">
+        <include refid="pagingSql"/>
+    </select>
+    <select id="pagingList" resultType="com.erp.model.wms.dto.PackingTaskDTO$PagingViewDTO">
+        <include refid="pagingSql"/>
+    </select>
+    <select id="selectB2BPackingStatusByIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$StatusDTO">
+        SELECT
+            pt.id,
+            pt.source_code as sourceCode,
+            pt.packing_status as packingStatus,
+            pt.weighting_status as weightingStatus,
+            (SELECT CASE WHEN error_msg is null or error_msg = '' THEN '' ELSE concat('第',wc.box_no,'箱:',wc.error_msg) END AS errorMsg FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE order by wc.create_time DESC limit 1) as errorMsg,
+            (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) as packedQty,
+            (SELECT COALESCE(SUM(wcs.package_weight), 0) FROM wms_carton_spec wcs WHERE wcs.main_id = pt.ID AND wcs.is_deleted = FALSE) as packingWeight,
+            (SELECT COALESCE(SUM(pd.qty), 0) FROM picking_lists pl LEFT JOIN picking_detail pd on pd.main_id = pl.id and pd.is_deleted = FALSE WHERE pl.source_id = pt.source_id AND pl.is_deleted = FALSE) as pickQty
+        FROM
+            packing_task pt
+        where pt.is_deleted = FALSE and pt.source_type in ('B2B')
+        <if test="taskIds!= null and taskIds.size > 0">
+            AND pt.id IN
+            <foreach collection="taskIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="sourceCodes!= null and sourceCodes.size > 0">
+            AND pt.source_code IN
+            <foreach collection="sourceCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        group by pt.id,pt.source_code,pt.packing_status,pt.weighting_status
+    </select>
+    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">
+        SELECT
+            pt.id,
+            ptd.sku_id,
+            ptd.sku_no,
+            SUM(ptd.delivery_qty) AS deliveryQty
+        FROM  packing_task_detail ptd
+                  LEFT JOIN packing_task pt ON pt.id = ptd.main_id AND pt.is_deleted=FALSE
+        WHERE  ptd.is_deleted=FALSE
+          AND ptd.main_id = #{mainId}
+        GROUP BY pt.id,
+            ptd.sku_id,
+            ptd.sku_no
+    </select>
+    <select id="listGroupSkuByMainIds" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">
+        SELECT
+            pt.id,
+            ptd.sku_id,
+            ptd.sku_no,
+            SUM(ptd.delivery_qty) AS deliveryQty
+        FROM  packing_task_detail ptd
+                  LEFT JOIN packing_task pt ON pt.id = ptd.main_id AND pt.is_deleted=FALSE
+        WHERE  ptd.is_deleted=FALSE
+        <if test="mainIds != null and mainIds.size > 0">
+            AND ptd.main_id in
+            <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY pt.id,
+                 ptd.sku_id,
+                 ptd.sku_no
+    </select>
+    <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
+        SELECT
+            DISTINCT wc.id,
+            wc.packing_task_id as taskId,
+            wc.box_no,
+            concat(wcs.box_length, wcs.size_unit,'*', wcs.box_width, wcs.size_unit,'*', wcs.box_height,wcs.size_unit) AS boxSize,
+            wcs.package_weight,
+            wcs.weight_unit,
+            wc.weighting_status,
+            wc.packing_status,
+            wc.packing_user_name,
+            wcs.measure_source,
+            wc.error_msg,
+            wcs.box_length as length,
+            wcs.box_width as width,
+            wcs.box_height as height,
+            (select string_agg(wcd.sku_no|| '*' || wcd.pack_qty, ';') from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku
+        FROM wms_carton wc
+        INNER JOIN wms_carton_spec wcs ON wcs.id = wc.spec_id AND wcs.is_deleted = FALSE
+        JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = FALSE
+        WHERE wc.is_deleted = FALSE
+            AND wcd.pack_qty > 0
+            <if test="params.taskId != null and params.taskId != ''">
+                AND wc.packing_task_id = #{params.taskId}
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        ORDER BY wc.box_no
+    </select>
+    <select id="listPackingDetailBySkuId" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
+        SELECT
+            wc.id,
+            wc.packing_task_id as taskId,
+            wc.box_no,
+            concat(wcs.box_length, wcs.size_unit,'*', wcs.box_width, wcs.size_unit,'*', wcs.box_height,wcs.size_unit) AS boxSize,
+            wcs.package_weight,
+            wcs.weight_unit,
+            wc.weighting_status,
+            wc.packing_status,
+            wc.packing_user_name,
+            wcs.measure_source,
+            wc.error_msg,
+            wcs.box_length as length,
+            wcs.box_width as width,
+            wcs.box_height as height,
+            wcd.sku_id,
+            wcd.sku_no,
+            concat(wcd.sku_no,'*',wcd.pack_qty) AS sku
+        FROM wms_carton_detail wcd
+        INNER JOIN wms_carton wc ON wc.id = wcd.main_id AND wc.is_deleted = FALSE
+        JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
+        JOIN packing_task pt ON wc.packing_task_id = pt.id and pt.is_deleted = FALSE
+        WHERE wcd.is_deleted = FALSE
+            AND wcd.pack_qty > 0
+        <if test="taskIds != null and taskIds.size > 0">
+            AND wc.packing_task_id IN
+            <foreach collection="taskIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        ORDER BY pt.source_code
+    </select>
+    <select id="selectHistoryCartonList"
+            resultType="com.erp.model.wms.dto.PackingTaskDetailDTO$HistoryCartonDTO">
+        SELECT
+            wc.id as taskId,
+            wc.source_id as sourceId,
+--             wc.source_type as sourceType,
+            wc.box_spec_no as boxSpecNo,
+            wc.package_weight as packageWeight,
+            wc.box_length as boxLength,
+            wc.box_width as boxWidth,
+            wc.box_height as boxHeight,
+            wc.box_qty as boxQty,
+            wcb.box_no as boxNo,
+            wcd.sku_id as skuId,
+            wcd.sku_no as skuNo,
+            wcd.pack_qty as packQty,
+            wc.create_time as createTime,
+            wc.update_time as updateTime,
+            wc.create_user_id as createUserId,
+            wc.create_user_name as createUserName,
+            wc.update_user_id as updateUserId,
+            wc.update_user_name as updateUserName,
+            wcd.update_user_id as packingUserId,
+            wcd.update_user_name as packingUserName
+        FROM
+            wms_carton_copy1 wc
+                LEFT JOIN wms_carton_bill_copy1 wcb on wcb.carton_id = wc.id and wcb.is_deleted = FALSE
+                LEFT JOIN wms_carton_detail_copy1 wcd on wcd.carton_id = wc.id and wcd.is_deleted = FALSE
+        where wc.is_deleted = FALSE
+        ORDER BY taskId
+    </select>
+    <select id="selectProductNumByIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$ProductNum">
+        SELECT
+            ptd.main_id AS taskId,
+            COUNT ( DISTINCT ptd.sku_id ) AS productNum
+        FROM
+            packing_task_detail ptd
+        WHERE
+            ptd.is_deleted = FALSE
+        <if test="taskIds != null and taskIds.size > 0">
+            AND ptd.main_id IN
+            <foreach collection="taskIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY
+            ptd.main_id
+    </select>
+    <select id="pagingSelect" resultType="com.erp.model.wms.dto.PackingTaskDTO$PackingTreeDTO">
+        select taskId,sourceId,sourceCode from
+        (
+        select
+        pt.id as taskId,
+        pt.source_id as sourceId,
+        pt.source_code as sourceCode
+        from packing_task pt where pt.is_deleted = false
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and pt.source_code ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            order by
+            case when pt.source_code ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when pt.source_code ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when pt.source_code ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end
+        </if>
+        ) pt2
+    </select>
+    <select id="getCartonSpecByTaskId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$SpecDTO">
+        select
+            wc.id as cartonId,
+            wc.box_no,
+            wcs.id as specId,
+            wcs.box_spec_no,
+            wcs.package_weight,
+            wcs.box_length,
+            wcs.box_width,
+            wcs.box_height,
+            wcs.weight_unit,
+            wcs.size_unit
+        from wms_carton_spec wcs
+        left join wms_carton wc on wc.spec_id = wcs.id and wc.is_deleted = false
+        where wcs.is_deleted =false
+        <if test="taskId != null and taskId != ''">
+            and wcs.main_id = #{taskId}
+        </if>
+    </select>
+    <select id="selectRequisitionPackingStatusByIds"
+            resultType="com.erp.model.wms.dto.PackingTaskDTO$StatusDTO">
+        SELECT
+        pt.id,
+        pt.source_code as sourceCode,
+        pt.packing_status as packingStatus,
+        pt.weighting_status as weightingStatus,
+        (SELECT CASE WHEN error_msg is null or error_msg = '' THEN '' ELSE concat('第',wc.box_no,'箱:',wc.error_msg) END AS errorMsg FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE order by wc.create_time DESC limit 1) as errorMsg,
+        (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) as packedQty,
+        (SELECT COALESCE(SUM(wcs.package_weight), 0) FROM wms_carton_spec wcs WHERE wcs.main_id = pt.ID AND wcs.is_deleted = FALSE) as packingWeight,
+        (SELECT COALESCE(SUM(rad.picking_qty), 0) FROM first_mile_delivery fmd LEFT JOIN requisition_application_detail rad on fmd.source_id = rad.main_id and rad.is_deleted = FALSE WHERE fmd.id = pt.source_id AND fmd.is_deleted = FALSE) as pickQty
+        FROM
+        packing_task pt
+        where pt.is_deleted = FALSE and pt.source_type in ('FBA','thirdWarehouse')
+        <if test="taskIds!= null and taskIds.size > 0">
+            AND pt.id IN
+            <foreach collection="taskIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="sourceCodes!= null and sourceCodes.size > 0">
+            AND pt.source_code IN
+            <foreach collection="sourceCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        group by pt.id,pt.source_code,pt.packing_status,pt.weighting_status
+    </select>
+</mapper>

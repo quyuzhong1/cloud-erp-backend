@@ -252,4 +252,17 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
 
 
     void writeBackData(String sourceId);
+
+    /**
+     * 根据记录更新状态
+     * @param id
+     * @param packingStatus
+     */
+    void updatePackingStatus(String id, String packingStatus);
+
+    BatchResultDTO generatePackingTask(SoDeliveryNoticeEntity entity);
+
+    SoDeliveryNoticeEntity getByCode(String key);
+
+    List<SoDeliveryNoticeEntity> listByCodes(List<String> codes);
 }

@@ -43,15 +43,6 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
     Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response);
 
     /**
-     * 保存补货信息
-     * @param handleDTO
-     * @return
-     * @date: 2024-06-25
-     * @author: tanmujin
-     */
-    BatchResultDTO handle(WarehouseLocationReplenishDTO.HandleDTO handleDTO);
-
-    /**
      * 新增补货单
      * @param addDTO
      * @return
@@ -65,4 +56,6 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
     List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo();
 
     List<WarehouseLocationReplenishDTO.LocationQtyDTO> listLocationQty(List<WarehouseLocationReplenishDTO.LocationQtyDTO> paramlist);
+
+    List<BatchResultDTO> verifyReplenishQty(List<WarehouseLocationReplenishDTO.HandleDTO> dtoList);
 }

@@ -64,6 +64,11 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
          */
         private String virtualWarehouseId;
 
+        /**
+         * 库存锁等待时间  默认： 5s
+         */
+        private Long lockWaitTime;
+
 
         public static InOutStockDTO initByReturnOrder(PoReturnEntity entity, PoReturnDetailEntity detail, InventorySourceTypeEnum sourceType, Integer qty, InventoryStatusEnum inventoryStatus) {
                 InOutStockDTO inOutStockDTO = new InOutStockDTO();

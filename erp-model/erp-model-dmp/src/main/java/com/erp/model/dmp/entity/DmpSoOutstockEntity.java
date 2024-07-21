@@ -30,168 +30,180 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
     /**
     * 平台创建时间
     */
-    @TableField("platform_create_time")
+    @TableField(value = "platform_create_time")
     private LocalDateTime platformCreateTime;
     /**
     * 平台修改时间
     */
-    @TableField("platform_update_time")
+    @TableField(value = "platform_update_time")
     private LocalDateTime platformUpdateTime;
     /**
     * 来源平台：gyy，kingdee，mabang
     */
-    @TableField("source_system")
-    private String sourceSystem;
+    @TableField(value = "source_system")
+    private String sourceSystem = "";
     /**
     * 单据编号（唯一）
     */
-    @TableField("third_code")
+    @TableField(value = "third_code")
     private String thirdCode;
     /**
     * 平台原始单号
     */
-    @TableField("platform_code")
-    private String platformCode;
+    @TableField(value = "platform_code")
+    private String platformCode = "";
     /**
     * 状态 1.已发货 2.已作废
     */
-    @TableField("status")
-    private String status;
+    @TableField(value = "status")
+    private String status = "";
     /**
     * 平台原始状态
     */
-    @TableField("platform_status")
-    private String platformStatus;
+    @TableField(value = "platform_status")
+    private String platformStatus = "";
     /**
     * 发货时间
     */
-    @TableField("delivery_time")
+    @TableField(value = "delivery_time")
     private LocalDateTime deliveryTime;
     /**
     * 物流单号
     */
-    @TableField("logistics_code")
-    private String logisticsCode;
+    @TableField(value = "logistics_code")
+    private String logisticsCode = "";
     /**
     * 店铺编码
     */
-    @TableField("shop_id")
-    private String shopId;
+    @TableField(value = "shop_id")
+    private String shopId = "";
     /**
     * 店铺名称
     */
-    @TableField("shop_name")
-    private String shopName;
+    @TableField(value = "shop_name")
+    private String shopName = "";
     /**
     * 国家二字码
     */
-    @TableField("country")
-    private String country;
+    @TableField(value = "country")
+    private String country = "";
     /**
     * 买家城市
     */
-    @TableField("city")
-    private String city;
+    @TableField(value = "city")
+    private String city = "";
     /**
     * 买家省份
     */
-    @TableField("province")
-    private String province;
+    @TableField(value = "province")
+    private String province = "";
     /**
     * 买家地址1
     */
-    @TableField("man_street")
-    private String manStreet;
+    @TableField(value = "man_street")
+    private String manStreet = "";
     /**
     * 买家地址2
     */
-    @TableField("second_street")
-    private String secondStreet;
+    @TableField(value = "second_street")
+    private String secondStreet = "";
     /**
     * 所属区域
     */
-    @TableField("district")
-    private String district;
+    @TableField(value = "district")
+    private String district = "";
     /**
     * 币种
     */
-    @TableField("currency_code")
-    private String currencyCode;
+    @TableField(value = "currency_code")
+    private String currencyCode = "";
     /**
     * 单据总金额
     */
-    @TableField("all_amount")
+    @TableField(value = "all_amount")
     private BigDecimal allAmount;
     /**
     * 汇率
     */
-    @TableField("exchange_rate")
+    @TableField(value = "exchange_rate")
     private BigDecimal exchangeRate;
     /**
     * 运费
     */
-    @TableField("shipping_cost")
+    @TableField(value = "shipping_cost")
     private BigDecimal shippingCost;
     /**
     * 补贴金额
     */
-    @TableField("subsidy_amount")
+    @TableField(value = "subsidy_amount")
     private BigDecimal subsidyAmount;
     
     /**
      * 第三方单号
      */
-     @TableField("third_bill_no")
-     private String thirdBillNo;
+     @TableField(value = "third_bill_no")
+     private String thirdBillNo = "";
      
      /**
       * 仓管员
       */
-     @TableField("stocker_name")
-     private String stockerName;
+     @TableField(value = "stocker_name")
+     private String stockerName = "";
      
      /**
       * 单据日期
       */
-     @TableField("bill_date")
+     @TableField(value = "bill_date")
      private LocalDateTime billDate;
      
      /**
       * 数据来源
       */
-     @TableField("data_sources")
-     private String dataSources;
+     @TableField(value = "data_sources")
+     private String dataSources = "";
      
      /**
       * 销售组织
       */
-     @TableField("sale_org_id")
-     private String saleOrgId;
+     @TableField(value = "sale_org_id")
+     private String saleOrgId = "";
+     
+     /**
+      * 整单折扣
+      */
+      @TableField(value = "total_discount_amount")
+      private BigDecimal totalDiscountAmount;
+      
+      /**
+       * 来源id
+       */
+       @TableField(value = "source_id")
+       private String sourceId;
     
     /**
      * 唯一字段md5值
      */
-     @TableField("unique_encrypt")
+     @TableField(value = "unique_encrypt")
      private String uniqueEncrypt;
      /**
      * 数据字段md5值
      */
-     @TableField("data_encrypt")
+     @TableField(value = "data_encrypt")
      private String dataEncrypt;
      /**
      * 输入任务id
      */
-     @TableField("input_task_id")
+     @TableField(value = "input_task_id")
      private String inputTaskId;
      /**
      * 转换id
      */
-     @TableField("convert_id")
+     @TableField(value = "convert_id")
      private String convertId;
      /**
      * 下一层级id
      */
-     @TableField("next_level_id")
+     @TableField(value = "next_level_id")
      private String nextLevelId;
 
 

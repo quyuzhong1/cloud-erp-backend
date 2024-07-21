@@ -1,6 +1,8 @@
 package com.erp.server.wms.schedule;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
@@ -60,11 +62,11 @@ public class WarehouseLocationReplenishJob {
         //即时库存数据
         List<String> warehouseIds = list.stream().map(item -> item.getWarehouseId()).distinct().collect(Collectors.toList());
         List<String> skuIds = list.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
-        List<String> warehouseLocations = list.stream().map(item -> item.getWarehouseLocation()).distinct().collect(Collectors.toList());
-        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
-        searchParamDTO.setWarehouseIdList(warehouseIds);
-        searchParamDTO.setSkuIdList(skuIds);
-        List<InventoryDTO.PagingViewDTO> inventoryList = inventoryMapper.exportByLocation(searchParamDTO, warehouseLocations);
+//        List<String> warehouseLocations = list.stream().map(item -> item.getWarehouseLocation()).distinct().collect(Collectors.toList());
+//        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
+//        searchParamDTO.setWarehouseIdList(warehouseIds);
+//        searchParamDTO.setSkuIdList(skuIds);
+        List<InventoryDTO.PagingViewDTO> inventoryList = inventoryMapper.exportByLocation(new InventoryDTO.SearchParamDTO(), null);
 
         Map<String, InventoryDTO.PagingViewDTO> inventoryMap = inventoryList.stream()
                 .collect(Collectors.toMap(item1 -> item1.getWarehouseId() + "#" + item1.getWarehouseLocation() + "#" + item1.getSkuId(), item2 -> item2, (o1, o2) -> o2));
@@ -107,6 +109,9 @@ public class WarehouseLocationReplenishJob {
                 if(entity.getMaxQty() != null && entity.getMaxQty() == 0){
                     //没有设置补货上限量时：等于安全库存-当前可用库存
                     qty = entity.getSafetyQty() - inventory.getUsableQty();
+                }
+                if(inventory.getUsableQty() >= entity.getSafetyQty()){
+                    continue;
                 }
                 dto.setQty(qty);
                 replenishService.add(dto);

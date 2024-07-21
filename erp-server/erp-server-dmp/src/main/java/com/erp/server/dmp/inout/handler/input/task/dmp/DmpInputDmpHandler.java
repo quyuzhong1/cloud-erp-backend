@@ -238,17 +238,17 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 						});
 						waitEntity.put(BaseEntity.CREATE_TIME, findEntity.get(BaseEntity.CREATE_TIME));
 						deleteDmpIdList.add(dmpId);
-						BaseEntity waitBeanEntity = BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass);
+						BaseEntity waitBeanEntity = DmpHandlerUtils.toBeanIgnoreError(waitEntity, dmpEntityClass);
 						updateDmpInputDmpEntityList.add(waitBeanEntity);
 						if(!findEntity.get(DATA_ENCRYPT).toString().equals(waitEntity.get(DATA_ENCRYPT).toString())) {
 							changeConvertInputDmpBaseEntityList.add(waitBeanEntity);
 						}
 					}else {
-						saveDmpInputDmpEntityList.add(BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass));
+						saveDmpInputDmpEntityList.add(DmpHandlerUtils.toBeanIgnoreError(waitEntity, dmpEntityClass));
 					}
 				}
 			}else {
-				saveDmpInputDmpEntityList = beanDmpInputDmpEntityMaps.values().stream().map(waitEntity -> BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass)).collect(Collectors.toList());
+				saveDmpInputDmpEntityList = beanDmpInputDmpEntityMaps.values().stream().map(waitEntity -> DmpHandlerUtils.toBeanIgnoreError(waitEntity, dmpEntityClass)).collect(Collectors.toList());
 			}
 			changeConvertInputDmpBaseEntityList.addAll(saveDmpInputDmpEntityList);
 			
@@ -260,13 +260,16 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 				saveDmpInputDmpEntityList.addAll(updateDmpInputDmpEntityList);
 			}
 			if(CollUtil.isNotEmpty(deleteDmpIdList)) {
-				dmpInputMongoDmpRelationService.lambdaUpdate()
-					.set(DmpInputMongoDmpRelationEntity::getIsDeleted, true)
-	                .set(DmpInputMongoDmpRelationEntity::getUpdateTime, LocalDateTime.now())
-	                .in(DmpInputMongoDmpRelationEntity::getDmpId, deleteDmpIdList)
-	                .eq(DmpInputMongoDmpRelationEntity::getIsDeleted, false)
-	                .eq(DmpInputMongoDmpRelationEntity::getConvertId, convertId)
-	                .update();
+				List<List<String>> deleteDmpIdPartition = Lists.partition(deleteDmpIdList, 50000);
+				for(List<String> p : deleteDmpIdPartition) {
+					dmpInputMongoDmpRelationService.lambdaUpdate()
+						.set(DmpInputMongoDmpRelationEntity::getIsDeleted, true)
+		                .set(DmpInputMongoDmpRelationEntity::getUpdateTime, LocalDateTime.now())
+		                .in(DmpInputMongoDmpRelationEntity::getDmpId, p)
+		                .eq(DmpInputMongoDmpRelationEntity::getIsDeleted, false)
+		                .eq(DmpInputMongoDmpRelationEntity::getConvertId, convertId)
+		                .update();
+				}
 			}
 		}
 		
@@ -298,15 +301,20 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 			keyList.add(dmpInputMongoBaseEntity);
 			ArrayList<TreeMap<String, Object>> valueList = new ArrayList<>();
 			valueList.add(dmpInputDmpBaseEntity);
+			this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
 			dmpInputDataDmpRelationMaps.put(keyList, valueList);
 		}
+		this.afterConvertData(dmpInputDataDmpRelationMaps);
 		return dmpInputDataDmpRelationMaps;
+	}
+	
+	protected void afterConvertData(Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps) {
+		
 	}
 	
 	protected void afterDmpInputDmpEntity(Map<String, Object> beanDmpInputDmpEntity) {
 		beanDmpInputDmpEntity.put(StrUtils.underlineToCamel(CONVERT_ID, true), convertId);
 		beanDmpInputDmpEntity.put(StrUtils.underlineToCamel(INPUT_TASK_ID, true), inputTaskId);
-		this.afterDmpInputMongoEntityFixedValue(beanDmpInputDmpEntity);
 	}
 	
 	protected void afterDmpInputMongoEntityFixedValue(Map<String , Object> beanDmpInputDmpEntity) {
@@ -314,7 +322,15 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		if(StringUtils.isNotBlank(fixedValueJson)) {
 			JSONObject fixedValueStr = JSON.parseObject(fixedValueJson);
 			for(Map.Entry<String, Object> fixedValue : fixedValueStr.entrySet()) {
-				beanDmpInputDmpEntity.put(fixedValue.getKey(), fixedValue.getValue());
+				String key = fixedValue.getKey();
+				Object object = beanDmpInputDmpEntity.get(key);
+				if(object == null) {
+					beanDmpInputDmpEntity.put(key, fixedValue.getValue());
+				}else {
+					if(object instanceof String && StringUtils.isBlank(object.toString())) {
+						beanDmpInputDmpEntity.put(key, fixedValue.getValue());
+					}
+				}
 			}
 		}
 	}

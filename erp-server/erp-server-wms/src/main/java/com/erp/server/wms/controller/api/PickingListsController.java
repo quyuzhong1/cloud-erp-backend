@@ -93,7 +93,7 @@ public class PickingListsController extends BaseController {
     }
 
     /**
-     * 批量打印
+     * 批量导出
      *
      * @param dto dto
      **/
@@ -102,5 +102,17 @@ public class PickingListsController extends BaseController {
     @WebAdvanceQuery
     public void export(@RequestBody @Validated PickingListsDTO.ExportDTO dto, HttpServletResponse response) {
         pickingListsService.export(dto, response);
+    }
+
+
+    @GetMapping("/init")
+    public void initPicking(){
+        pickingListsService.init();
+    }
+
+
+    @PostMapping("/initDelivery")
+    public void initDelivery(@RequestBody List<String> codes) {
+        pickingListsService.initDelivery(codes);
     }
 }

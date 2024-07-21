@@ -75,12 +75,49 @@
                pd.allocated_qty   as allocatedQty,
                pd.is_out_stock   as isOutStock
         from picking_lists as pl
-                 left join public.picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
+                 inner join public.picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
         where pl.is_deleted = false
         and pl.source_id in
         <foreach collection="sourceIds" item="id" open="(" close=")" separator=",">
             #{id}
         </foreach>
+    </select>
+    <select id="listB2BDetailBySourceIds"
+            resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$DetailPickDTO">
+        SELECT
+            pl.source_id,
+            pd.sku_id,
+            pd.sku_no,
+            SUM(pd.qty) as qty,
+            SUM(pd.picked_qty) as pickedQty
+        FROM picking_lists pl
+                 LEFT JOIN picking_detail pd ON pl.id = pd.main_id AND pd.is_deleted = FALSE
+        where pl.is_deleted = false and pd.sku_id is not null
+        and pl.source_id in
+            <foreach collection="sourceIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        GROUP BY pl.source_id,
+                 pd.sku_id,
+                 pd.sku_no
+    </select>
+    <select id="listRequitDetailBySourceIds"
+            resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$DetailPickDTO">
+        SELECT
+            fmd.id as sourceId,
+            rad.sku_id,
+            rad.sku_no,
+            SUM(rad.picking_qty) as qty
+        FROM first_mile_delivery fmd
+        LEFT JOIN requisition_application_detail rad ON fmd.source_id = rad.main_id  AND rad.is_deleted = FALSE
+        where fmd.is_deleted = false and rad.sku_id is not null
+        and fmd.id in
+            <foreach collection="sourceIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        GROUP BY fmd.id,
+        rad.sku_id,
+        rad.sku_no
     </select>
 
 </mapper>

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.server.dmp.inout.dto.request.*;
+import com.erp.server.dmp.inout.handler.input.task.init.api.mabang.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -19,24 +21,19 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
-import com.erp.model.dmp.entity.DmpCfgInputChildEntity;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgInputTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
-import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputKingdeeApiInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputKingdeeApiInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputWdtApiInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpCfgApiService;
-import com.erp.server.dmp.service.DmpCfgInputChildService;
 
-import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -59,32 +56,23 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 		String type = dmpCfgInputEntity.getType();
 		String typeId = dmpCfgInputEntity.getTypeId();
-		if(!typeId.equals(dmpResponse.getDmpCfgInputEntity().getTypeId())) {
-			log.error("{}成员变量对象{}，参数对象{}" , inputTaskId , JSON.toJSONString(dmpCfgInputEntity) , JSON.toJSONString(dmpResponse.getDmpCfgInputEntity()));
-		}
-		if(!dmpCfgInputConvertEntity.getMainId().equals(dmpCfgInputEntity.getId())) {
-			log.error("基础成员变量不一致：{} ，{}" , JSON.toJSONString(dmpCfgInputConvertEntity) , JSON.toJSONString(dmpCfgInputEntity));
-		}
 		if(DmpCfgInputTypeEnum.API.getCode().equals(type)) {
 			DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
 			String apiClass = dmpCfgApiEntity.getApiClass();
 			DmpInputApiInitHandler dmpInputApiInitHandler = null;
-			DmpInputKingdeeApiInitRequest dmpInputApiInitRequest = null;
+			DmpInputApiInitRequest dmpInputApiInitRequest = null;
 			
 			LocalDateTime startTime = dmpInputTaskEntity.getStartTime();
 			LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
 			
 			String parentStorageName = "";
 			
+			String extendJson = dmpCfgInputEntity.getExtendJson();
 			if(DmpBasicSystemCodeEnum.KINGDEE.getCode().equals(dmpBasicSystemEntity.getCode())) {
 				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputKingdeeApiInitHandler.class);
-				dmpInputApiInitRequest = new DmpInputKingdeeApiInitRequest();
-				dmpInputApiInitRequest = (DmpInputKingdeeApiInitRequest) dmpInputApiInitRequest;
-				dmpInputApiInitRequest.setFormId(dmpCfgApiEntity.getApiType());
-				if(dmpCfgInputConvertEntity.getId().equals("1801574477567136974") && !dmpCfgApiEntity.getApiType().equals("STK_TransferDirect")) {
-					log.error("调拨单成员变量不一致：{} ，{}" , JSON.toJSONString(dmpCfgInputConvertEntity) , JSON.toJSONString(dmpCfgApiEntity));
-				}
-				String extendJson = dmpCfgInputEntity.getExtendJson();
+				DmpInputKingdeeApiInitRequest dmpInputKingdeeApiInitRequest = new DmpInputKingdeeApiInitRequest();
+				dmpInputApiInitRequest = dmpInputKingdeeApiInitRequest;
+				dmpInputKingdeeApiInitRequest.setFormId(dmpCfgApiEntity.getApiType());
 				if(StringUtils.isNotBlank(extendJson)) {
 					DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
 					JSONObject parseObject = JSON.parseObject(extendJson);
@@ -102,7 +90,7 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 							if(findMongoDataById == null) {
 								return null;
 							}
-							dmpInputApiInitRequest.setFilterStr(parseObject.getString("filterStr")
+							dmpInputKingdeeApiInitRequest.setFilterStr(parseObject.getString("filterStr")
 									.replace("{FBillNo}", findMongoDataById.get("FBillNo").toString())
 									.replace("{FID}", findMongoDataById.get("FID").toString()));
 						}else {
@@ -114,22 +102,54 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 								findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
 							}
 							if(findMongoData == null) {
-								return null;
+								return new ArrayList<>();
 							}
 							
-							dmpInputApiInitRequest.setFilterStr(parseObject.getString("filterStr")
+							dmpInputKingdeeApiInitRequest.setFilterStr(parseObject.getString("filterStr")
 									.replace("{FBillNo}", findMongoData.stream().map(f -> f.get("FBillNo").toString()).collect(Collectors.joining("','")))
 									.replace("{FID}", findMongoData.stream().map(f -> f.get("FID").toString()).collect(Collectors.joining("','"))));
 						}
 					}else {
-						dmpInputApiInitRequest.setFilterStr(parseObject.getString("filterStr")
+						dmpInputKingdeeApiInitRequest.setFilterStr(parseObject.getString("filterStr")
 								.replace("{startTime}", sdf.format(startTime))
 								.replace("{endTime}", sdf.format(endTime)));
 					}
 					
-					dmpInputApiInitRequest.setFieldKeys(parseObject.getString("fieldKeys"));
+					dmpInputKingdeeApiInitRequest.setFieldKeys(parseObject.getString("fieldKeys"));
 				}
+			}else if(DmpBasicSystemCodeEnum.MABANG.getCode().equals(dmpBasicSystemEntity.getCode())){
+				String code = dmpCfgInputEntity.getCode();
+				if ("order".equals(code)) {
+					//销售订单
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangOrderApiInitHandler.class);
+				} else if ("orderReturn".equals(code)) {
+					//退货单
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangReturnApiInitHandler.class);
+				} else if ("orderRefund".equals(code)) {
+					//退款单
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangRefundApiInitHandler.class);
+				} else if ("shop".equals(code)) {
+					//店铺
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangShopInfoApiInitHandler.class);
+				} else if ("orderHistory".equals(code)) {
+					//店铺
+					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangOrderHistoryApiInitHandler.class);
+				}
+
+				DmpInputMabangApiInitRequest dmpInputMabangApiInitRequest = new DmpInputMabangApiInitRequest();
+				dmpInputApiInitRequest = dmpInputMabangApiInitRequest;
+				dmpInputMabangApiInitRequest.setRequestParam(extendJson);
+				dmpInputMabangApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
+
+
+			}else {
+				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputApiInitHandler.class);
+				dmpInputApiInitRequest = new DmpInputApiInitRequest();
+				dmpInputApiInitRequest.setRequestParam(extendJson);
+				dmpInputApiInitRequest.setNextLevelId(nextLevelId);
+				dmpInputApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
 			}
+			
 			dmpInputApiInitRequest.setStartTime(startTime);
 			dmpInputApiInitRequest.setEndTime(endTime);
 			

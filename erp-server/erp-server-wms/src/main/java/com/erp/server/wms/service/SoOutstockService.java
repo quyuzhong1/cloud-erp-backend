@@ -15,7 +15,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -450,66 +450,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @date 2024-03-07
      */
     Boolean defaultHandleRetry(SoB2cEntity soB2c, List<SoB2cEntity> instantList);
-
-
-
-    /**
-     * 装箱
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:52
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-    String packingSave(WmsCartonDTO.WmsCartonAdd dto);
-
-    /**
-     * 装箱详情
-     * @Author Luo_WG
-     * @Date 2023/11/28 17:44
-     * @param id
-     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
-     **/
-    WmsCartonDTO.WmsCartonView packingView(String id);
-
-    /**
-     * 装箱清单
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:52
-     * @param id
-     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
-     **/
-    WmsCartonDTO.ListPackingDTO listPacking(String id);
-
-    /**
-     * 导出装箱清单Excel
-     * @param dto
-     * @param response
-     */
-    void exportPacking(SoOutstockDTO.ExportDTO dto, HttpServletResponse response);
-
-    /**
-     * 下载装箱模板
-     * @param response
-     */
-    void downloadPackingTemplate(HttpServletResponse response);
-
-    /**
-     * 导入装箱数据
-     * @param excelFile
-     * @param response
-     * @return
-     */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
-
-    /**
-     * 据主表id分组查询发货单已包装发货及待装箱数
-     * @description
-     * @param id
-     * @return
-     * @date 2024-03-26 14:10
-     * @author Lambda
-     */
-    List<WmsCartonDTO.GroupSkuDTO> listGroupSkuById(String id);
 
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 

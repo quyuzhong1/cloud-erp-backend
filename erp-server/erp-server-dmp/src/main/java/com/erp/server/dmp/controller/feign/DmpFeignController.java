@@ -204,28 +204,6 @@ public class DmpFeignController extends BaseController {
 
 
     /**
-     * oms推送订单到中台记录推送记录并生成mq消息
-     *
-     * @param dto 查询过滤条件
-     * @return
-     */
-    @PostMapping("/send/mq/save/task")
-    public Boolean saveTask(@RequestBody @Valid DmpPullTaskFeignDTO dto) {
-        return dmpPullTaskService.sendMqAndSaveTask(dto);
-    }
-
-    /**
-     * oms推送订单到中台记录推送记录并生成mq消息
-     *
-     * @param dto 查询过滤条件
-     * @return
-     */
-    @PostMapping("/save/pull/task")
-    public String savePullTask(@RequestBody @Valid DmpPullTaskFeignDTO dto) {
-        return dmpPullTaskService.savePullTask(dto);
-    }
-
-    /**
      * 记录拉取数据记录
      *
      * @param dmpPullTaskEntity 查询过滤条件
@@ -247,16 +225,6 @@ public class DmpFeignController extends BaseController {
         return dmpPushTaskService.saveOrUpdateDmpSyncTask(dmpPushTaskEntity);
     }
 
-    /**
-     * 根据订单id删除订单
-     *
-     * @param ids
-     * @return
-     */
-    @PostMapping("/remove/orderByIds")
-    Boolean removeDmpOrderByIds(@RequestBody @Valid List<String> ids) {
-        return biOrderInfoService.removeOrderByIds(ids);
-    }
 
     /**
      * @description: 拉取数据预警

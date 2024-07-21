@@ -8,14 +8,17 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
+import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -271,10 +274,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto);
 
     BatchResultDTO clearException(String id);
-    /**
-     * 取消发货
-     */
-    BatchResultDTO cancelShipment(SoB2cDeliveryDTO.CancelShipmentDTO dto);
 
     SoB2cDeliveryDTO.CancelShipmentView cancelShipmentView(List<String> ids);
 
@@ -301,7 +300,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @author will
      * @date 2024/6/28 15:48
      */
-    String dimensionalWeightPipeline(DimensionalWeightDTO dto);
+    ApiResult<String> dimensionalWeightPipeline(DimensionalWeightDTO dto);
 
     Boolean updateAbnormal(List<String> ids, AbnormalCauseEnum abnormalCauseEnum);
 
@@ -346,6 +345,19 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param soB2cDeliveryDetailEntities 发货单明细
      */
     void generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities);
+
+    /**
+     * B2C生成拣货单 (规则前置执行)
+     *
+     * @param soB2cDeliveryEntity         发货单
+     * @param soB2cDeliveryDetailEntities 发货单明细
+     * @param results 前置规则返回的仓位
+     */
+    void generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results);
+    /**
+     * 取消发货
+     */
+    BatchResultDTO cancelShipment(String id, List<SoB2cDeliveryDTO.CancelShipmentDTO> detail);
     /**
      * 发货出库
      * @author will

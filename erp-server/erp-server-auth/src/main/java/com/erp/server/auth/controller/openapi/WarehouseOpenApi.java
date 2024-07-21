@@ -6,6 +6,7 @@ import com.erp.model.sys.openapi.CollectorPacksDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.ReturnTrackingDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.PackingTaskFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.server.auth.config.OpenApi;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +28,9 @@ public class WarehouseOpenApi {
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
 
     @Resource
+    private PackingTaskFeign packingTaskFeign;
+
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     /**
@@ -36,38 +40,17 @@ public class WarehouseOpenApi {
     @OpenApi("dimensionalWeightPipeline")
     public ApiResult<String> dimensionalWeightPipeline(@Valid DimensionalWeightDTO dto) {
         //设备回传的称重量方信息
-        String pickPort = soB2cDeliveryFeign.dimensionalWeightPipeline(dto);
-        return ApiResult.success(pickPort);
+        return soB2cDeliveryFeign.dimensionalWeightPipeline(dto);
     }
 
     /**
-     * 文件上传
-     * @return
-     */
-    @OpenApi("uploadFile")
-    public ApiResult<String> uploadFile(MultipartFile multipartFile) {
-        String url = FastDFSClientUtil.uploadFile(multipartFile);
-        return ApiResult.success(url);
-    }
-
-    /**
-     * B2B称重
+     * 称重
      * @param dto 参数
      */
-    @OpenApi("dimensionalWeightTob")
-    public ApiResult<String> dimensionalWeightTob(@Valid DimensionalWeightDTO dto) {
-
-        return ApiResult.success("");
-    }
-
-    /**
-     * FBA称重
-     * @param dto 参数
-     */
-    @OpenApi("dimensionalWeightFba")
-    public ApiResult<String> dimensionalWeightFba(@Valid DimensionalWeightDTO dto) {
-
-        return ApiResult.success("");
+    @OpenApi("dimensionalWeight")
+    public ApiResult<String> dimensionalWeight(@Valid DimensionalWeightDTO dto) {
+        //设备回传的称重量方信息
+        return packingTaskFeign.dimensionalWeight(dto);
     }
 
     /**

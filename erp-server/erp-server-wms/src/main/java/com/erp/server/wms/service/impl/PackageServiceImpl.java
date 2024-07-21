@@ -4,6 +4,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.UnitEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -260,6 +261,7 @@ public class PackageServiceImpl implements PackageService {
      * @return
      */
     @Override
+    @DataIdempotent(keyIdName = "dto.ids")
     public List<BatchResultDTO> mergePackage(PackageDTO.MergePackageDTO dto) {
         List<PackageForecastDTO.AddDTO> addList = assembleDbBySoIds(dto);
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
@@ -366,7 +368,7 @@ public class PackageServiceImpl implements PackageService {
                 // 异步推送到MQ
                 soIdList.stream().peek(soId ->{
                     SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
-                            soId, StrUtil.uuid().toLowerCase());
+                            soId, soId);
                     if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())){
                         throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
                     }

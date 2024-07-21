@@ -43,6 +43,11 @@ public class WaveListPdaDTO implements Serializable {
         private String statusName;
 
         /**
+         * 拣货车编号
+         */
+        private String pickingCartCode;
+
+        /**
          * 拣货车类型
          */
         private String pickingCartTypeId;

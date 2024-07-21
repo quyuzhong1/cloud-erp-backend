@@ -485,6 +485,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         authMap.put("token", dto.getToken());
         //来源
         String sourceType = dto.getSourceType();
+        //订单类型
+        String orderType = dto.getOrderType();
         //收货人
         LogisticsBillDTO.ReceiverDTO receiverDTO = dto.getReceiver();
         //转化成收货人
@@ -534,6 +536,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         Map<String,Object> map = getRuleOrderHandleMap(dto);
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
+                orderType(orderType).
                 trackNo(dto.getTrackNo()).
                 topUserKey(dto.getTopUserKey()).
                 sourceId(dto.getOrderId()).

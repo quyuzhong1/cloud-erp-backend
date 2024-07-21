@@ -37,10 +37,7 @@ import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptDetailEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -120,6 +117,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Lazy
     @Resource
     private AsyncService asyncService;
+
+    @Resource
+    @Lazy
+    private WaveListDetailService waveListDetailService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -324,7 +325,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
         }
-
         //已处理不可重复操作
         if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
             throw new ServiceException(ApiError.STATUS_IS_HANDLE_NOT_OPERATE);
@@ -394,24 +394,40 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             }
 
             //回滚冻结库存
-            List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
-            if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
-                List<String> ids = soB2cDeliveryEntities.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
-                // 待处理和异常状态中的生成波次异常无需回滚库存
-                List<String> rollbackInventoryIds = soB2cDeliveryEntities.stream().filter(e -> !SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(e.getStatus()))
-                        .filter(e -> !AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(e.getAbnormalCause()))
-                        .map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(rollbackInventoryIds)) {
-                    soB2cDeliveryService.rollbackInventory(rollbackInventoryIds);
-                    //删除拣货单
-                    pickingListsService.deleteBySourceId(rollbackInventoryIds);
+            SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getById(entity.getDeliveryId());
+            if (ObjectUtil.isNotEmpty(soB2cDelivery)) {
+                if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(soB2cDelivery.getStatus()) ||
+                        SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())) {
+                    throw new ServiceException(ApiError.ERROR_99125);
                 }
-                soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+
+                List<WaveListDetailEntity> waveLists = waveListDetailService.listCancelByDeliveryIds(Collections.singletonList(soB2cDelivery.getId()));
+                String cancelCodes = waveLists.stream().map(WaveListDetailEntity::getDeliveryCode).collect(Collectors.joining(","));
+                if (ObjectUtil.isNotEmpty(cancelCodes)) {
+                    throw new ServiceException(ApiError.ERROR_99123, cancelCodes);
+                }
+                soB2cDeliveryService.updateStatus(Collections.singletonList(soB2cDelivery.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                // 生成波次和拣货中回滚库存
+                if (SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode().equals(soB2cDelivery.getStatus()) ||
+                        SoB2cDeliveryStatusEnum.PICKING.getCode().equals(soB2cDelivery.getStatus()) ||
+                        SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(soB2cDelivery.getStatus())) {
+                    soB2cDeliveryService.rollbackInventory(Collections.singletonList(soB2cDelivery.getId()));
+                    //删除拣货单
+                    pickingListsService.deleteBySourceId(Collections.singletonList(soB2cDelivery.getId()));
+                    // 移除波次
+                    waveListDetailService.moveOut(soB2cDelivery.getId());
+                }
+                soB2cDeliveryService.updateStatus(Collections.singletonList(soB2cDelivery.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
             }
         } else {
             //拦截失败的订单正常自动出库流程
             SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
             SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getById(entity.getDeliveryId());
+            if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(soB2cDelivery.getStatus())
+                    || SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(soB2cDelivery.getStatus())||
+                    SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())){
+                throw new ServiceException(ApiError.ERROR_99124);
+            }
             if(!SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(soB2cDelivery.getStatus())){
                 soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
                 soB2cDeliveryService.updateById(soB2cDelivery);

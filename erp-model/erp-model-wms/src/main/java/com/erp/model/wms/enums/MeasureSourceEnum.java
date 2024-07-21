@@ -7,11 +7,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * 装箱任务 测量来源
+ */
 @Getter
 @AllArgsConstructor
-public enum PackingStatusEnum implements EnumMessage {
-    NOT_PACKING("notPacking", "未装箱"),
-    PACKING("packing", "已装箱"),
+public enum MeasureSourceEnum implements EnumMessage {
+    MANUAL("manual", "手动"),
+    DEVICE("device", "设备"),
     ;
 
     /**
@@ -35,7 +38,7 @@ public enum PackingStatusEnum implements EnumMessage {
 
     public static String getName(String code) {
         if (StringUtils.isNotBlank(code)) {
-            for (PackingStatusEnum item : PackingStatusEnum.values()) {
+            for (MeasureSourceEnum item : MeasureSourceEnum.values()) {
                 if (code.equals(item.getCode())) {
                     return item.getName();
                 }
@@ -44,9 +47,9 @@ public enum PackingStatusEnum implements EnumMessage {
         return "";
     }
 
-    public static PackingStatusEnum getByCode(String code) {
-        PackingStatusEnum[] eumnList = PackingStatusEnum.values();
-        for (PackingStatusEnum item : eumnList) {
+    public static MeasureSourceEnum getByCode(String code) {
+        MeasureSourceEnum[] eumnList = MeasureSourceEnum.values();
+        for (MeasureSourceEnum item : eumnList) {
             if (code.equals(item.getCode())) {
                 return item;
             }

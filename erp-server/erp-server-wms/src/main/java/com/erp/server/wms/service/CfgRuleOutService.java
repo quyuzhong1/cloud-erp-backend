@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 出库配置规则 服务类
@@ -38,6 +40,27 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
      * @return Boolean
      */
     Boolean handleB2cAllowableDeviations(CfgRuleOutDTO.B2cAllowableDeviations b2cAllowableDeviations, CfgRuleOutDTO.SortingPortRuleDTO dto);
+
+    /**
+     * 校验装箱超重
+     * @return true可以出库，false 不可以出库
+     */
+    CfgRuleOutDTO.CheckDTO handleOverweight(CfgRuleOutDTO.OverweightDTO dto);
+
+    /**
+     * 获取装箱超重配置
+     * @param type
+     * @return
+     */
+    CfgRuleOutDTO.CfgOverweightDetailDTO getCfgOverweightDetailDTOByType(String type);
+
+    /**
+     * 获取产品装箱配置
+     *
+     * @param type
+     * @return
+     */
+    List<CfgRuleOutDTO.CfgProductPackingDetail> getCfgProductPackingDetailByType(String type);
 
     Boolean matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto);
 }

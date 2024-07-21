@@ -34,27 +34,27 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
     * 来源详情id
     */
     @TableField("third_detail_id")
-    private String thirdDetailId;
+    private String thirdDetailId = "";
     /**
     * 销售平台原始详情id
     */
     @TableField("platform_detail_id")
-    private String platformDetailId;
+    private String platformDetailId = "";
     /**
     * 退货原因
     */
     @TableField("reason")
-    private String reason;
+    private String reason = "";
     /**
     * skuId
     */
     @TableField("sku_id")
-    private String skuId;
+    private String skuId = "";
     /**
     * sku编码
     */
     @TableField("sku_no")
-    private String skuNo;
+    private String skuNo = "";
     /**
     * 数量
     */
@@ -79,33 +79,33 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
     * 仓库id
     */
     @TableField("warehouse_id")
-    private String warehouseId;
+    private String warehouseId = "";
     /**
     * 仓库名称
     */
     @TableField("warehouse_name")
-    private String warehouseName;
+    private String warehouseName = "";
     /**
     * 仓位
     */
     @TableField("warehouse_location")
-    private String warehouseLocation;
+    private String warehouseLocation = "";
     /**
     * 第三方平台订单编号
     */
     @TableField("third_order_code")
-    private String thirdOrderCode;
+    private String thirdOrderCode = "";
     /**
     * 销售平台原始订单编号
     */
     @TableField("platform_order_code")
-    private String platformOrderCode;
+    private String platformOrderCode = "";
     
     /**
      * so明细id
      */
      @TableField("so_entry_id")
-     private String soEntryId;
+     private String soEntryId = "";
     
     /**
     * 输入任务id

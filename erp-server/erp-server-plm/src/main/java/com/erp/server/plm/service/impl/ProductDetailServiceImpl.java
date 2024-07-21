@@ -7,12 +7,6 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
-import com.sdk.wangdian.sdk.api.Result;
-import com.sdk.wangdian.sdk.api.goods.GoodsAPI;
-import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
-import com.sdk.wangdian.server.WangDianClientService;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSONObject;
@@ -252,8 +246,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
-    @Resource
-    private WangDianClientService wangDianClientService;
+
 
 
     //变更财务人员审核
@@ -515,13 +508,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public ProductNoSpecDetailAllDTO getNoSpecDetailBySkuId(String skuId) {
 
+        ProductDetailEntity productDetailEntity = this.getById(skuId);
+        String productId = productDetailEntity.getProductId();
+        ProductInfoEntity infoEntity = productInfoService.getById(productId);
+        if (ObjectUtil.isNotEmpty(infoEntity)) {
+            if (infoEntity.getSpecType() == 2) {
+                return getNoSpecDetailById(productId);
+            }
+        }
+
         ProductNoSpecDetailAllDTO productNoSpecDetailAllDTO = new ProductNoSpecDetailAllDTO();
         //无规格产品信息明细
         ProductNoDetailDTO noSpecDetailById = productDetailMapper.getNoSpecDetailBySkuId(skuId);
+
         if (ObjectUtils.isNotEmpty(noSpecDetailById)) {
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
             noSpecDetailById.setCategoryIdList(categoryIdList);
+
         }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表

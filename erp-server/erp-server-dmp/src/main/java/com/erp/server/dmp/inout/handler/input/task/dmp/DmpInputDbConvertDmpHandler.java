@@ -21,9 +21,12 @@ public class DmpInputDbConvertDmpHandler extends DmpInputBaseDmpHandler{
 	@Override
 	protected List<String> convertKey(String originalKey) {
 		Map<String, List<String>> keyMapping = dmpHandlerCache.getDmpCfgInputConvertMapping(convertId);
-		List<String> convertKey = keyMapping.get(originalKey);
-		if(CollUtil.isEmpty(convertKey)) {
-			convertKey = Collections.singletonList(originalKey);
+		List<String> convertKey = Collections.singletonList(originalKey);
+		if(keyMapping != null) {
+			List<String> dbKeyMapping = keyMapping.get(originalKey);
+			if(CollUtil.isNotEmpty(dbKeyMapping)) {
+				convertKey = dbKeyMapping;
+			}
 		}
 		return convertKey;
 	}

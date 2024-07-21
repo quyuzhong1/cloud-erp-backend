@@ -96,6 +96,10 @@ public enum ModuleTypeEnum {
 
     VIRTUAL_WAREHOUSE("82", "虚拟仓设置"),
     VIRTUAL_WAREHOUSE_ALLOCATION("83", "分货单"),
+    PACKING_TASK("82", "装箱任务"),
+    CARTON_SPC("83", "装箱箱规"),
+    CARTON("84", "装箱信息"),
+    CARTON_DETAIL("85", "装箱明细"),
     PICKING_LISTS("91", "拣货单"),
     CFG_RULE_WAVE("92", "波次规则"),
     WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),

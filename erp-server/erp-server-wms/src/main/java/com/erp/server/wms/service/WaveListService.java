@@ -103,7 +103,7 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * 打印拣货单
      * @param ids 波次号
      */
-    List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingBill(List<String> ids);
+    List<SoB2cDeliveryDTO.PrintPickingMainViewDTO> printPickingBill(List<String> ids);
     /**
      * 更新波次列表状态
      * @author will
@@ -120,4 +120,10 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * @return List<WaveListEntity>
      */
     List<WaveListEntity> listByPickingCartCodeList(List<String> pickingCartCodeList);
+
+    /**
+     * 发货单清除波次主表缺货标识
+     * @param deliveryId 发货单id
+     */
+    void cleanException(String deliveryId);
 }

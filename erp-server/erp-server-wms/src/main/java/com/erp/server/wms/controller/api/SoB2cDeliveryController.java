@@ -29,6 +29,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * b2c发货单
@@ -445,16 +447,17 @@ public class SoB2cDeliveryController extends BaseController {
      */
     @PostMapping("/batchCancelShipment")
     public ApiResult<List<BatchResultDTO>> batchCancelShipment(@RequestBody @Validated SoB2cDeliveryDTO.CancelShipmentView dto){
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getCancelShipments().size());
-        for (SoB2cDeliveryDTO.CancelShipmentDTO shipment : dto.getCancelShipments()) {
+        Map<String, List<SoB2cDeliveryDTO.CancelShipmentDTO>> collect = dto.getCancelShipments().stream().collect(Collectors.groupingBy(SoB2cDeliveryDTO.CancelShipmentDTO::getId));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(collect.keySet().size());
+        for (Map.Entry<String, List<SoB2cDeliveryDTO.CancelShipmentDTO>> entry : collect.entrySet()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = soB2cDeliveryService.cancelShipment(shipment);
+                resultDTO = soB2cDeliveryService.cancelShipment(entry.getKey(), entry.getValue());
             }catch (Exception e){
                 log.error("取消发货失败",e);
-                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(shipment.getId());
+                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(entry.getKey());
                 if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(shipment.getId(), shipment.getCode(), "发货单不存在, 取消发货失败");
+                    resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "发货单不存在, 取消发货失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
