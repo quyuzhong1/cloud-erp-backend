@@ -1628,11 +1628,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchUnLockVirtualInventory(String detailId) {
-        SoDetailEntity soDetailEntity = this.getById(detailId);
-        if (ObjectUtil.isEmpty(soDetailEntity)) {
+        SoDetailEntity old = this.getById(detailId);
+        if (ObjectUtil.isEmpty(old)) {
             throw new ServiceException(ApiError.ERROR_92015);
         }
-        SoInfoEntity soInfoEntity = soInfoService.getById(soDetailEntity.getMainId());
+        SoInfoEntity soInfoEntity = soInfoService.getById(old.getMainId());
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
@@ -1641,16 +1641,18 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             throw new ServiceException("释放库存虚拟仓库不能为空");
         }
         //无锁定库存
-        if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {
-            return new BatchResultDTO(soDetailEntity.getId(),soInfoEntity.getCode(),"无需要释放的锁定库存",Boolean.TRUE);
+        if (MathUtil.compareTo(old.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+            return new BatchResultDTO(old.getId(),soInfoEntity.getCode(),"无需要释放的锁定库存",Boolean.TRUE);
         }
-
+        SoDetailEntity soDetailEntity = new SoDetailEntity();
+        BeanMapperUtils.copy(soDetailEntity,old);
         //更新库存锁定数量
         soDetailEntity.setFrozenQty(MathUtil.ZERO);
         this.updateById(soDetailEntity);
 
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-        stockParamDTO.setParamList(unLockVirtualInventory(soInfoEntity,soDetailEntity));
+
+        stockParamDTO.setParamList(unLockVirtualInventory(soInfoEntity,old));
         stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_UNLOCK.getCode());
         virtualInventoryFeign.approveByType(stockParamDTO);
         return new BatchResultDTO(soDetailEntity.getId(),StrUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()),"释放库存成功",Boolean.TRUE);
