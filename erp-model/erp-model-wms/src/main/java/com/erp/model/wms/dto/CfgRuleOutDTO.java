@@ -531,6 +531,6 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 目的仓ID
          */
-        private String targetWarehouse;
+        private String destWarehouse;
     }
 }
