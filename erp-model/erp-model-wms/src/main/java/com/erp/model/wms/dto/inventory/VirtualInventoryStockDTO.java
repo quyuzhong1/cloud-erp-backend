@@ -141,7 +141,7 @@ public class VirtualInventoryStockDTO implements Serializable {
             /**
              * 是否拆分BOM
              */
-            private Boolean isSplitBom;
+            private Boolean isSplitBom = Boolean.TRUE;
         }
 
 
