@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 虚拟库存交易核心处理类
@@ -64,4 +66,15 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
         });
     }
 
+    /**
+     * 拆分BOM
+     * @author will
+     * @date 2024/7/21 16:02
+     * @param paramList
+     * @return List<OutInStockDTO>
+     */
+    private List<VirtualInventoryStockDTO.OutInStockDTO> splitBom (List<VirtualInventoryStockDTO.OutInStockDTO> paramList) {
+        List<VirtualInventoryStockDTO.OutInStockDTO> resultList = new ArrayList<>();
+        return resultList;
+    }
 }

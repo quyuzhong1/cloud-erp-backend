@@ -37,7 +37,6 @@ import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -139,7 +138,6 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void updateVirtualInventory(List<VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO> list) {
         if (CollectionUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -158,15 +156,26 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             detailDto.setSkuId(updateDTO.getSkuId());
             detailDto.setWarehouseId(updateDTO.getWarehouseId());
             detailDto.setFromVirtualWarehouseId(updateDTO.getVirtualWarehouseId());
+            //数量为0不加入分货单
+            if (MathUtil.compareTo(updateDTO.getQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+                continue;
+            }
             detailDto.setQty(updateDTO.getQty());
             detailList.add(detailDto);
+        }
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
         }
         addDTO.setDetailList(detailList);
         BaseResultDTO.AddDTO add = virtualWarehouseAllocationService.add(addDTO);
         VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity = virtualWarehouseAllocationService.getById(add.getId());
-        BatchResultDTO submit = virtualWarehouseAllocationService.submit(virtualWarehouseAllocationEntity);
-        if (!submit.getSuccess()) {
-            throw new ServiceException("分货单提交失败");
+        try {
+            BatchResultDTO submit = virtualWarehouseAllocationService.submit(virtualWarehouseAllocationEntity);
+            if (!submit.getSuccess()) {
+                throw new ServiceException("分货单提交失败");
+            }
+        } catch (Exception e) {
+            log.error("分货单提交失败，e = {}",e);
         }
     }
 

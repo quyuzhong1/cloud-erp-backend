@@ -1893,6 +1893,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (ObjectUtil.isEmpty(inWarehouseEntity)) {
             throw new ServiceException("调入仓库不能为空");
         }
+        List<String> sourceDetailIdList = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getId).collect(Collectors.toList());
+        List<PickingListsDTO.SourceView> pickingList = pickingListsService.listBySourceIds(sourceDetailIdList);
 
         //批次号
         String batchNo = IdUtil.getSnowflake().nextIdStr();
@@ -1906,14 +1908,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         addDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         addDTO.setSourceCode(entity.getCode());
         List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
-        for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
+        for (PickingListsDTO.SourceView sourceView : pickingList) {
             TransferInfoDetailDTO.AddDTO detailAddDTO = new TransferInfoDetailDTO.AddDTO();
-            detailAddDTO.setSkuId(detailEntity.getSkuId());
-            detailAddDTO.setSkuNo(detailEntity.getSkuNo());
-            detailAddDTO.setSourceDetailId(detailEntity.getId());
-            detailAddDTO.setQty(detailEntity.getDeliveryQty());
-            detailAddDTO.setOutWarehouseId(outWarehouseEntity.getId());
-            detailAddDTO.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
+            detailAddDTO.setSkuId(sourceView.getSkuId());
+            detailAddDTO.setSkuNo(sourceView.getSkuNo());
+            detailAddDTO.setSourceDetailId(sourceView.getId());
+            detailAddDTO.setQty(sourceView.getQty());
+            detailAddDTO.setOutWarehouseId(sourceView.getWarehouseId());
+            detailAddDTO.setOutWarehouseLocation(sourceView.getWarehouseLocation());
             detailAddDTO.setInWarehouseId(inWarehouseEntity.getId());
             detailList.add(detailAddDTO);
         }
