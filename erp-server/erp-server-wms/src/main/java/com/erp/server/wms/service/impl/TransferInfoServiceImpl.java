@@ -884,7 +884,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 pushTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(transferInfoEntity.getSourceType())){
                 deliveryTransferList.add(transferDTO);
-            } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(transferInfoEntity.getSourceType())){
+            } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(transferInfoEntity.getSourceType()) || SourceTypeEnum.SO_INFO.getCode().equals(transferInfoEntity.getSourceType())){
                 deliveryNoticeTransferList.add(transferDTO);
             } else if (SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
                 TransferToUlanziList.add(transferDTO);
