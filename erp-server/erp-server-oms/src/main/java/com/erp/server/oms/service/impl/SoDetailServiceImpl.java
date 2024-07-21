@@ -1645,7 +1645,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             return new BatchResultDTO(old.getId(),soInfoEntity.getCode(),"无需要释放的锁定库存",Boolean.TRUE);
         }
         SoDetailEntity soDetailEntity = new SoDetailEntity();
-        BeanMapperUtils.copy(soDetailEntity,old);
+        BeanMapperUtils.copy(old,soDetailEntity);
         //更新库存锁定数量
         soDetailEntity.setFrozenQty(MathUtil.ZERO);
         this.updateById(soDetailEntity);

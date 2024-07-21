@@ -289,7 +289,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         .filter(v -> v.getSkuNo().equals(dto.getSkuNo()))
                         .mapToInt(SoOutstockDetailEntity::getActualQty)
                         .sum();
-                if (sellQty < actualQty + dto.getPlanQty()) {
+                if (sellQty < actualQty + Optional.ofNullable(dto.getPlanQty()).orElse(0)) {
                     throw new ServiceException(ApiError.ERROR_99103, dto.getSkuNo());
                 }
             }

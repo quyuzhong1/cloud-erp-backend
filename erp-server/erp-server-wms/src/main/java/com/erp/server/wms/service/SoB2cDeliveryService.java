@@ -260,7 +260,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
 
     Boolean shipOrder(PlatformShipOrderDTO platformShipOrderDTO);
 
-    BaseResultDTO.AddDTO generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto);
+    List<BaseResultDTO.AddDTO> generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto);
 
     BatchResultDTO clearException(String id);
 

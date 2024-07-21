@@ -406,12 +406,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 if (ObjectUtil.isNotEmpty(cancelCodes)) {
                     throw new ServiceException(ApiError.ERROR_99123, cancelCodes);
                 }
-                soB2cDeliveryService.updateStatus(Collections.singletonList(soB2cDelivery.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                //取消发货库存回滚
+                soB2cDeliveryService.rollbackInventory(Collections.singletonList(soB2cDelivery.getId()));
+
                 // 生成波次和拣货中回滚库存
                 if (SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode().equals(soB2cDelivery.getStatus()) ||
                         SoB2cDeliveryStatusEnum.PICKING.getCode().equals(soB2cDelivery.getStatus()) ||
                         SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(soB2cDelivery.getStatus())) {
-                    soB2cDeliveryService.rollbackInventory(Collections.singletonList(soB2cDelivery.getId()));
                     //删除拣货单
                     pickingListsService.deleteBySourceId(Collections.singletonList(soB2cDelivery.getId()));
                     // 移除波次
@@ -446,7 +447,15 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
                 interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
                 soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
-                soOutstockService.generateB2cSoOutstock(soB2cEntity.getId());
+
+                //扣减冻结库存
+                soB2cDeliveryService.outFreezeVirtualInventory(soB2cDelivery);
+
+                //生成直接调拨单
+                Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
+                if (isPush) {
+                    soOutstockService.generateB2cSoOutstock(soB2cEntity.getId());
+                }
                 //更新备注
                 soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
 

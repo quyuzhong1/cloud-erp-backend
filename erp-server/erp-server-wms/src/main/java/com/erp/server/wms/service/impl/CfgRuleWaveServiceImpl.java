@@ -319,10 +319,44 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             log.info("未发现需要新增的波次列表数据");
             return Boolean.TRUE;
         }
-        //生成拣货波次列表数据
-        generatePickingWave(compliantList, soB2cDeliveryDetailList, entity);
+        //判断是否是同类波次
+        if (StrUtil.equals(entity.getWaveType(),PickingWaveTypeEnum.SAME_WAVE.getCode())) {
+            //同类波次分组
+            Map<Object, List<SoB2cDeliveryEntity>> sameWaveMap = groupSameWave(compliantList, soB2cDeliveryDetailList);
+            sameWaveMap.entrySet().stream().forEach(obj -> generatePickingWave(obj.getValue(), soB2cDeliveryDetailList, entity));
+        } else {
+            //生成拣货波次列表数据
+            generatePickingWave(compliantList, soB2cDeliveryDetailList, entity);
+        }
 
         return Boolean.TRUE;
+    }
+
+    /**
+     * 同类波次处理
+     * @author will
+     * @date 2024/7/19 11:57
+     * @param compliantList
+     * @param allDetailList
+     * @return Map<Object,List<SoB2cDeliveryEntity>>
+     */
+    private Map<Object,List<SoB2cDeliveryEntity>> groupSameWave (List<SoB2cDeliveryEntity> compliantList,List<SoB2cDeliveryDetailEntity> allDetailList) {
+        //添加波次
+        for (SoB2cDeliveryEntity deliveryEntity :compliantList) {
+            TreeMap<String, Integer> sameMap = new TreeMap<>();
+            //发货明细
+            List<SoB2cDeliveryDetailEntity> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
+                    .collect(Collectors.toList());
+            if (CollectionUtil.isEmpty(detailList)) {
+                log.error("发货单【{}】未找到明细数据",deliveryEntity.getCode());
+                continue;
+            }
+            //添加同类波次Map
+            handleSameMap(detailList,sameMap);
+            String sameWaveStr = JSONUtil.toJsonStr(sameMap);
+            deliveryEntity.setSameWaveStr(sameWaveStr);
+        }
+        return compliantList.stream().collect(Collectors.groupingBy(SoB2cDeliveryEntity::getSameWaveStr));
     }
 
     @Override
@@ -377,7 +411,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         List<SoB2cDeliveryEntity> sortedList = compliantList.stream().sorted(Comparator.comparing(SoB2cDeliveryEntity::getCreateTime)).collect(Collectors.toList());
         Integer totalQty = MathUtil.ZERO;
         Integer orderQty = MathUtil.ONE;
-        HashMap<String, Integer> sameMap = new HashMap<>();
 
         WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
         addDTO.setWaveType(entity.getWaveType());
@@ -409,28 +442,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 log.error("发货单【{}】未找到明细数据",deliveryEntity.getCode());
                 continue;
             }
-            //添加同类波次Map
-            handleSameMap(detailList,sameMap,entity);
-
-            //判断是否是同类波次,同类波次需要保证波次列表中sku一致
-            Boolean isSame = Boolean.TRUE;
-            if (StrUtil.equals(entity.getWaveType(),PickingWaveTypeEnum.SAME_WAVE.getCode())) {
-                Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDetailEntity::getSkuId));
-                for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
-                    String key = entry.getKey();
-                    //相同sku总数
-                    Integer totalDeliveryQty = entry.getValue().stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-                    if (CollectionUtil.isNotEmpty(sameMap)) {
-                        Integer mapQty = sameMap.get(key);
-                        isSame =  (ObjectUtil.isEmpty(mapQty) || MathUtil.compareTo(mapQty,totalDeliveryQty) != MathUtil.ZERO) ? Boolean.FALSE : Boolean.TRUE;
-                    }
-                }
-            }
-            //非同类波次则跳过
-            if (!isSame) {
-                continue;
-            }
-
             try {
                 soB2cDeliveryService.generatePickingDetail(deliveryEntity,detailList);
             } catch (ServiceException e) {
@@ -506,10 +517,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
      * @date 2024/7/12 14:24
      * @param detailList
      * @param sameMap
-     * @param entity
      */
-    private void handleSameMap ( List<SoB2cDeliveryDetailEntity> detailList, HashMap<String, Integer> sameMap, CfgRuleWaveEntity entity) {
-        if (CollectionUtil.isEmpty(detailList) || CollectionUtil.isNotEmpty(sameMap) || !StrUtil.equals(entity.getWaveType(),PickingWaveTypeEnum.SAME_WAVE.getCode())) {
+    private void handleSameMap ( List<SoB2cDeliveryDetailEntity> detailList, TreeMap<String, Integer> sameMap) {
+        if (CollectionUtil.isEmpty(detailList) || CollectionUtil.isNotEmpty(sameMap)) {
             return;
         }
         //标记同类波次

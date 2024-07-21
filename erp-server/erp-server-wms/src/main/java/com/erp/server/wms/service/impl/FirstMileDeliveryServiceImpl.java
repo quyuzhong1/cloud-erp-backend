@@ -164,6 +164,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private PackingTaskService packingTaskService;
 
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -743,20 +745,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (ApproveType.PASS.equals(dto.getType())) {
             //查询发货详情
             List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
-
-            //如果是FBA货件来源，审核通过修改货件发货状态为已发货
-            if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
-                FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
-                if (ObjectUtil.isNotEmpty(shipmentEntity)) {
-                    fbaShipmentService.deliveryStatus(entity);
-                }
-            }
-            //如果是发货计划来源
-            if (SourceTypeEnum.DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
-                //审核通过修改发货状态为已发货
-                WmsDeliveryPlanEntity planEntity = wmsDeliveryPlanService.getById(entity.getSourceId());
-                if (ObjectUtil.isNotEmpty(planEntity)) {
-                    wmsDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
+            RequisitionApplicationEntity application = requisitionApplicationService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(application)) {
+                //如果是FBA货件来源，审核通过修改货件发货状态为已发货
+                if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+                    FbaShipmentEntity shipmentEntity = fbaShipmentService.getOne(Wrappers.<FbaShipmentEntity>lambdaQuery().eq(FbaShipmentEntity::getCode, application.getFbaShipmentCode()));
+                    if (ObjectUtil.isNotEmpty(shipmentEntity)) {
+                        fbaShipmentService.deliveryStatus(entity);
+                    }
+                } else {
+                    //如果是发货计划来源
+                    //审核通过修改发货状态为已发货
+                    wmsDeliveryPlanService.updateDeliveryStatus(Collections.singletonList(application.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
                 }
             }
 

@@ -10,9 +10,7 @@ import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import lombok.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -913,6 +911,11 @@ public class SoB2cDeliveryDTO implements Serializable {
         @Size(min = 1, message = "发货单不能为空")
         private List<String> ids;
 
+        @NotNull(message = "波次订单数量不能为空")
+        @Min(value = 1, message = "波次订单数量最小为1")
+        private Integer num;
+
+        private Boolean atuoAemainder = false;
     }
 
     @Getter
