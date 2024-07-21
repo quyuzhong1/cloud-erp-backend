@@ -1710,7 +1710,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cDeliveryEntity old = getById(id);
         SoB2cDeliveryEntity entity = new SoB2cDeliveryEntity();
         BeanMapperUtils.copy(entity,old);
-        checkDelivery(entity);
+        checkDelivery(old);
         //修改订单状态
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
