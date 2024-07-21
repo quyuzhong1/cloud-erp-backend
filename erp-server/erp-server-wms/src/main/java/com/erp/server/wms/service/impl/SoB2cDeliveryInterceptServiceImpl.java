@@ -445,7 +445,15 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
                 interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
                 soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
-                soOutstockService.generateB2cSoOutstock(soB2cEntity.getId());
+
+                //扣减冻结库存
+                soB2cDeliveryService.outFreezeVirtualInventory(soB2cDelivery);
+
+                //生成直接调拨单
+                Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
+                if (isPush) {
+                    soOutstockService.generateB2cSoOutstock(soB2cEntity.getId());
+                }
                 //更新备注
                 soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
 
