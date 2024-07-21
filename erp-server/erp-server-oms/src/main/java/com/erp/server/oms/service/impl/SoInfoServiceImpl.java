@@ -2857,6 +2857,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     subComponentsDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
                     subComponentsDTO.setWarehouseId(entry.getWarehouseId());
                     subComponentsDTO.setQty(soDetailEntity.getQty() * bomChildrenSkuDTO.getQuantity());
+                    subComponentsDTO.setWarehouseLocation(pickingStaging.getWarehouseLocation());
                     subComponentsList.add(subComponentsDTO);
                 }
                 addDetailDTO.setSubComponentsList(subComponentsList);
