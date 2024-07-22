@@ -1225,7 +1225,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return;
         }
         List<String> transferIdList = transferInfoList.stream().map(TransferInfoEntity::getId).collect(Collectors.toList());
-        Boolean isDisApprove = transferInfoService.disApprove(transferIdList, Boolean.TRUE,Boolean.FALSE);
+        Boolean isDisApprove = transferInfoService.disApprove(transferIdList, Boolean.FALSE,Boolean.FALSE);
         if (!isDisApprove) {
             throw new ServiceException("直接调拨单反审核失败");
         }
