@@ -1943,7 +1943,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //调入仓库ID
             String toWarehouseId = requisitionApplicationMap.get(deliveryDetail.getSkuId());
             if(requisitionApplicationEntity.getRequisitionWarehouseId().equals(toWarehouseId)){
-                List<CfgRulePickingStagingEntity> stagingList = cfgRulePickingStagingService.list(new LambdaQueryWrapper<CfgRulePickingStagingEntity>().eq(CfgRulePickingStagingEntity::getWarehouseId, requisitionApplicationEntity.getRequisitionWarehouseId()));
+                List<CfgRulePickingStagingEntity> stagingList = cfgRulePickingStagingService.list(new LambdaQueryWrapper<CfgRulePickingStagingEntity>().eq(CfgRulePickingStagingEntity::getWarehouseId, requisitionApplicationEntity.getRequisitionWarehouseId()).in(CfgRulePickingStagingEntity::getBillType, PickingBillTypeEnum.firstLegs()));
                 if(stagingList.isEmpty()){
                     throw new ServiceException("没有找到暂存仓位");
                 }
