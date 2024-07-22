@@ -7,13 +7,16 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.inventory.InventoryBizTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.config.VirtualInventoryHelper;
+import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.VirtualInventoryStockService;
 import com.erp.server.wms.service.VirtualInventoryTransCoreService;
 import org.springframework.stereotype.Service;
@@ -38,6 +41,9 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private DictBasicService dictBasicService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -92,6 +98,11 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
     private List<VirtualInventoryStockDTO.OutInStockDTO> splitBom (List<VirtualInventoryStockDTO.OutInStockDTO> paramList,Boolean isSplitBom) {
         List<VirtualInventoryStockDTO.OutInStockDTO> resultList = new ArrayList<>();
         if (ObjectUtil.isNotEmpty(isSplitBom) && !isSplitBom) {
+            return resultList;
+        }
+        //是否拆分bom
+        List<DictBasicDTO.ListDTO> list = dictBasicService.getByKey(DictBasicEnum.VIRTUAL_SPLIT_BOM.getKey());
+        if (CollectionUtil.isEmpty(list) || !Boolean.valueOf(list.get(0).getValue())) {
             return resultList;
         }
 
