@@ -680,7 +680,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                             || StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
                     .map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
             if (StrUtil.isNotBlank(codeList)) {
-                throw new ServiceException(StrUtil.format("直接调拨单【{}】不支持手动反审核"));
+                throw new ServiceException(StrUtil.format("直接调拨单【{}】不支持手动反审核",codeList));
             }
         }
 
