@@ -616,6 +616,11 @@ public class SoInfoDTO implements Serializable {
         private Map<String, String> sqlMap;
 
         /**
+         * 高级查询字段
+         */
+        private List<String> fieldList;
+
+        /**
          * all 全部
          * waitApprove 待审核
          * waitDelivery 待发货
