@@ -2504,7 +2504,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 缺货数量
          */
-        private Integer scarceQty;
+        private Integer virtualScarceQty;
         /**
          * 发货通知数量（总数量）
          */
@@ -2594,7 +2594,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 缺货数量
          */
-        private Integer scarceQty;
+        private Integer virtualScarceQty;
         /**
          * 发货通知数量（总数量）
          */

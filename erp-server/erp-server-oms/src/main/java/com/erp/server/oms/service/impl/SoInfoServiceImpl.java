@@ -1888,10 +1888,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIds) ? customerInfoService.listByIds(customerIds) : Collections.emptyList();
         for (SoInfoDTO.CustomerDTO item : resultList) {
             String customerId = item.getCustomerId();
-            String customerName = customerList.stream().filter(c -> c.getId().equals(customerId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setCustomerName(customerName);
+            CustomerInfoEntity customerInfoEntity = customerList.stream().filter(c -> c.getId().equals(customerId)).findFirst().orElse(new CustomerInfoEntity());
+            item.setCustomerName(Optional.ofNullable(customerInfoEntity.getName()).orElse(""));
             String type = item.getOrderType();
+            item.setCountryId(customerInfoEntity.getCountryId());
             item.setOrderTypeName(BillTypeEnum.getName(type));
         }
         return resultList;
@@ -3574,7 +3574,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的审核通过数量 ]  - 当前虚拟仓可用库存
             Integer qty = soDetailEntity.getQty() - effectiveNoticeQty - virtualUsableQty;
-            batchLockDTO.setScarceQty(qty > MathUtil.ZERO ? qty : MathUtil.ZERO);
+            batchLockDTO.setVirtualScarceQty(qty > MathUtil.ZERO ? qty : MathUtil.ZERO);
 
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
@@ -3664,12 +3664,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             ).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
             detailDTO.setVirtualUsableQty(virtualUsableQty);
             detailDTO.setFrozenQty(soDetailEntity.getFrozenQty());
-            //最大待冻结数量
-            Integer qty = soDetailEntity.getDeliveryQty() - soDetailEntity.getFrozenQty();
-
-            //缺货数量
-            Integer scarceQty = virtualUsableQty > qty ? MathUtil.ZERO : qty;
-            detailDTO.setScarceQty(scarceQty);
 
             //销售通知单
             Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId()))
@@ -3684,6 +3678,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //Min 【（销售数量 - 发货通知单审核数量），虚拟仓可用库存】
             Integer toFrozenQty = soDetailEntity.getQty() - effectiveNoticeQty;
             detailDTO.setToFrozenQty(virtualUsableQty > toFrozenQty ? toFrozenQty : virtualUsableQty);
+
+            //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的审核通过数量 ]  - 当前虚拟仓可用库存
+            Integer qty = soDetailEntity.getQty() - effectiveNoticeQty - virtualUsableQty;
+            detailDTO.setVirtualScarceQty(qty > MathUtil.ZERO ? qty : MathUtil.ZERO);
+
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
                     && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
