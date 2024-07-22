@@ -907,7 +907,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         SoInfoEntity info = soInfoFeign.getSoInfoById(entity.getSourceId());
         List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(entity.getSourceId()));
-        SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getId().equals(info.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
+        SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getCustomerId().equals(info.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
         //是否中转
         CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
         ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
