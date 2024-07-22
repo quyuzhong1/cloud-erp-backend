@@ -1503,7 +1503,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(shopInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
-
         if (isAliExpress) {
             result.setOrderCode(entity.getPlatformCode());
             Map<String, Object> extendDataMap = shopInfoEntity.getExtendData();
@@ -1519,6 +1518,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         result.setShopId(shopId);
         result.setShopName(entity.getShopName());
         result.setIossTaxNo(shopInfoEntity.getIossTaxNo());
+        result.setVoecTaxNo(shopInfoEntity.getVoecTaxNo());
         result.setSalesPlatform(entity.getDictPlatform());
         ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
         if (Objects.isNull(shopAuth) && isAliExpress) {
@@ -1531,6 +1531,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(id);
         if (Objects.nonNull(receiverEntity)) {
             LogisticsBillDTO.ReceiverDTO receiverDTO = B2cOrderConverter.INSTANCE.convertReceiver(receiverEntity);
+            //V1.29.2 物流商对接字段-云途{TaxNumber}且国家是挪威的推送，若没有则不推送 VOEC税号
+            String country = StrUtil.isNotBlank(receiverEntity.getCountry())?receiverEntity.getCountry():"";
+            if (PlatformDictEnum.YUN_TU.getCode().equals(logisticsPlatform) && "NO".equals(country)){
+                receiverDTO.setReceiverTaxNo(shopInfoEntity.getVoecTaxNo());
+            }
             result.setReceiver(receiverDTO);
         }
         //获取申报信息

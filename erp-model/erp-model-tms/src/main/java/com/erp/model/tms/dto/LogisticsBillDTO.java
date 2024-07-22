@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -691,6 +692,11 @@ public class LogisticsBillDTO implements Serializable {
          * IOSS 税号
          */
         private String iossTaxNo;
+
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
 
         /**
          * 币别

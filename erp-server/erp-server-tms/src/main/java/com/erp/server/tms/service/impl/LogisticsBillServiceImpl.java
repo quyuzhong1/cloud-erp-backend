@@ -431,19 +431,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
-//        String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
-//        String salesPlatform = dto.getSalesPlatform();
-//        Boolean isAliExpress = aliExpress.equals(salesPlatform);
-//
         String country = Objects.nonNull(dto.getReceiver())?Objects.nonNull(dto.getReceiver().getCountry())?dto.getReceiver().getCountry():"":"";
-//        LogisticsChannelDTO.LogisticsChannelConstraintDTO channelConstraintDTO = logisticsChannelService.getLogisticsChannelConstraint(channelId,country);
-//        //最高报关金额
-//        BigDecimal maxCustomsAmount = channelConstraintDTO.getMaxCustomsAmount();
-//        //最低报关金额
-//        BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
-
         LogisticsAddressTypeEnum deliverType = LogisticsAddressTypeEnum.DELIVER;
-
         //物流类型是中转发货则使用中转地址类型
         if (StringUtils.isNotBlank(dto.getLogisticType()) && LogisticsAddressTypeEnum.TRANSFER.getCode().equals(dto.getLogisticType())) {
             deliverType = LogisticsAddressTypeEnum.TRANSFER;
@@ -455,16 +444,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (CollectionUtils.isEmpty(deliverList)) {
             throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), deliverType.getName());
         }
-
-
         //发货人信息
-
         LogisticsAddressEntity logisticsAddress = deliverList.get(0);
         SenderInfo senderInfo = LogisticsBillConverter.INSTANCE.convertSender(logisticsAddress);
-//        BeanMapperUtils.copy(logisticsAddress, senderInfo);
-        //地址id
-//        senderInfo.setId(logisticsAddress.getAddressId());
-
         LogisticsAddressTypeEnum refundType = LogisticsAddressTypeEnum.REFUND;
         //退货地址信息
         SenderInfo returnInfo = null;
@@ -522,16 +504,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         BigDecimal totalPrice = productVOS.stream().filter(s -> Objects.nonNull(s.getDestDeclarePrice()) && Objects.nonNull(s.getQuantity()))
                 .map(e -> MathUtil.multiply(e.getDestDeclarePrice(), e.getQuantity())).reduce(BigDecimal.ZERO, BigDecimal::add);
         parceInfo.setTotalPrice(totalPrice);
-        //总重量 取包裹重量
-//        Integer totalWeight = ordersSkuList.stream().filter(s -> Objects.nonNull(s.getWeight())).mapToInt(LogisticsProductDTO.ProductDTO::getWeight).sum();
-//        parceInfo.setTotalWeight(totalWeight);
-
         //根据销售平台和渠道code 获取到原生的渠道
         LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(logisticsPlatform, logisticsChannel.getCode());
         if (Objects.isNull(saleChannel)) {
             throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannel.getName());
         }
-
         //根据订单处理规则，判断是否需要清空国家、省市数据
         Map<String,Object> map = getRuleOrderHandleMap(dto);
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
@@ -567,8 +544,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             String message = sb.toString();
             throw new ServiceException(orderResult.getCode(), message);
         }
-
-
     }
 
     /**
