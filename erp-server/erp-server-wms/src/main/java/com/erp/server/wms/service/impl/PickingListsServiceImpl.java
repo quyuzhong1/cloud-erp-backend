@@ -108,6 +108,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
     @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
+    @Resource
+    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
 
     @Override
     public PagingVO<PickingListsDTO.PagingView> paging(PagingDTO<PickingListsDTO.PagingParam> dto) {
@@ -422,16 +424,16 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //获取子SKU集合
             List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
             for (RequisitionApplicationDetailEntity detailEntity : detailEntities) {
-                checkProportion(dto, detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getSourceDetailId(), bomChildrenSkuList);
+                checkProportion(dto, detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getId(), bomChildrenSkuList);
 
             }
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
-            List<SoB2cDeliveryDetailEntity> detailEntities = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getSourceId()));
-            List<String> skuIds = detailEntities.stream().map(SoB2cDeliveryDetailEntity::getSkuId).collect(Collectors.toList());
+            List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainId(entity.getSourceId());
+            List<String> skuIds = noticeDetailEntities.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
             //获取子SKU集合
             List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
-            for (SoB2cDeliveryDetailEntity detailEntity : detailEntities) {
-                checkProportion(dto, detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getSourceDetailId(), bomChildrenSkuList);
+            for (SoDeliveryNoticeDetailEntity detailEntity : noticeDetailEntities) {
+                checkProportion(dto, detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getId(), bomChildrenSkuList);
             }
         }
 
