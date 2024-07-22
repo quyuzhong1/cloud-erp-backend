@@ -1173,6 +1173,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    public void rollbackPickingInventory(List<String> ids) {
+        List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
+
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_B2C_DELIVERY, ids);
+        //回滚虚拟仓库存
+        virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+        //回滚实体仓库存
+        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+        //新增日志
+        List<Pair<String, String>> addPairList = deliveryEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("发货单【%s】取消发货", ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), addPairList, "取消发货");
+
+    }
+
+    @Override
     public Boolean updateStatus(List<String> ids, String status) {
         if (CollectionUtils.isEmpty(ids)) {
             return Boolean.FALSE;
@@ -1606,7 +1621,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             List<List<String>> partitions = Lists.partition(dto.getIds(), dto.getNum());
             for (List<String> partition : partitions) {
                 if (Boolean.FALSE.equals(dto.getAtuoAemainder()) && partition.size() < dto.getNum()) {
-                    ApplicationContextUtils.getBean(SoB2cDeliveryService.class).rollbackInventory(partition);
+                    ApplicationContextUtils.getBean(SoB2cDeliveryService.class).rollbackPickingInventory(partition);
                     //回滚拣货相关数据
                     pickingListsService.deleteBySourceId(partition);
                     break;

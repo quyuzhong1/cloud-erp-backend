@@ -162,6 +162,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     void rollbackInventory(List<String> ids);
 
     /**
+     * 回滚库存
+     *
+     **/
+    void rollbackPickingInventory(List<String> ids);
+
+    /**
      * 修改发货状态
      *
      * @param ids
