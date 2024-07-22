@@ -913,12 +913,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
         ruleDTO.setReceiveCountry(customerDTO.getCountryId());
         Boolean isTransit = cfgRuleOutService.matchTransferRule(ruleDTO);
+        List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         SoOutstockDTO.AddDTO addDTO = new SoOutstockDTO.AddDTO();
         String batchNo = "";
         String warehouseId;
         if (isTransit) {
             batchNo = IdUtil.getSnowflake().nextIdStr();
-            warehouseId = generateTransferInfo(entity, batchNo, views);
+            warehouseId = generateTransferInfo(entity, batchNo, entityList, warehouseStagingList);
         }else {
             warehouseId = entity.getWarehouseId();
         }
@@ -932,7 +933,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         addDTO.setCustomerOrderNo(soInfoEntity.getCustomerOrderNo());
         List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>();
         addDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
-        List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         for (SoDeliveryNoticeDetailEntity item : entityList) {
             SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
             //附件信息
@@ -969,7 +969,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return BatchResultDTO.success(outId, "", "下推成功");
     }
 
-    private String generateTransferInfo(SoDeliveryNoticeEntity entity, String batchNo, List<PickingListsDTO.SourceView> views) {
+    private String generateTransferInfo(SoDeliveryNoticeEntity entity, String batchNo, List<SoDeliveryNoticeDetailEntity> entityList, List<CfgRulePickingStagingEntity> warehouseStagingList) {
         String warehouseId;
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
         if (ObjectUtil.isEmpty(cfgSettingEntity)) {
@@ -995,20 +995,25 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         transferDto.setSourceCode(entity.getCode());
         transferDto.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         transferDto.setBatchNo(batchNo);
-        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(entity, views, warehouseId);
+        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(entity, entityList, warehouseId, warehouseStagingList);
         transferDto.setDetailList(detailList);
         transferInfoService.addAndApprove(transferDto);
         return warehouseId;
     }
 
-    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoDeliveryNoticeEntity entity, List<PickingListsDTO.SourceView> views, String warehouseId) {
+    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, String warehouseId, List<CfgRulePickingStagingEntity> warehouseStagingList) {
+            // 获取仓库暂存区默认配置
+        CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
+                .filter(staging -> staging.getWarehouseId().equals(warehouseId))
+                .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
         List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
-        for (PickingListsDTO.SourceView view : views) {
+        for (SoDeliveryNoticeDetailEntity view : entityList) {
             TransferInfoDetailDTO.AddDTO transferInfoDetail = new TransferInfoDetailDTO.AddDTO();
             transferInfoDetail.setSkuId(view.getSkuId());
             transferInfoDetail.setSkuNo(view.getSkuNo());
-            transferInfoDetail.setQty(view.getQty());
-            transferInfoDetail.setOutWarehouseLocation(view.getStagingLocation());
+            transferInfoDetail.setQty(view.getPickingQty());
+            transferInfoDetail.setOutWarehouseLocation(pickingStaging.getWarehouseLocation());
             transferInfoDetail.setOutWarehouseId(entity.getWarehouseId());
             transferInfoDetail.setInWarehouseId(warehouseId);
             transferInfoDetail.setSourceDetailId(view.getSourceDetailId());
