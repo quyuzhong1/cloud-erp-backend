@@ -254,7 +254,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 是否缺货(虚拟仓)
          */
-        private Integer isVirtualScarce;
+        private Boolean isVirtualScarce;
 
         /**
          * 虚拟仓可用库存
