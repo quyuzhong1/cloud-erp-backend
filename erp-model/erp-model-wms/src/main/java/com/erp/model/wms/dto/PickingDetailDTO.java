@@ -263,6 +263,10 @@ public class PickingDetailDTO implements Serializable {
          * 暂存库位名称
          */
         private String stagingLocationName;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
     }
 
     @Getter

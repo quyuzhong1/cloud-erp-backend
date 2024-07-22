@@ -911,7 +911,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //是否中转
         CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
         ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
-        ruleDTO.setReceiveCountry(customerDTO.getCustomerId());
+        ruleDTO.setReceiveCountry(customerDTO.getCountryId());
         Boolean isTransit = cfgRuleOutService.matchTransferRule(ruleDTO);
         SoOutstockDTO.AddDTO addDTO = new SoOutstockDTO.AddDTO();
         String batchNo = "";
