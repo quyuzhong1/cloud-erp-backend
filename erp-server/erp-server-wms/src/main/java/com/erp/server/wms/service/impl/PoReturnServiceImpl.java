@@ -808,8 +808,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @author: tanmujin
      */
     private void syncApprovePoReturnToWdt(PoReturnEntity entity, String operateCode) {
-        if(entity.getSourceType().equals(SourceTypeEnum.QC_INFO.getCode())){
-            log.info("质检退货单无需推送旺店通：{}", entity);
+        if(! "other".equals(entity.getSourceType())){
+            log.info("非库存退货单无需推送旺店通：{}", entity);
             return;
         }
         List<PoReturnDetailEntity> detailList = poReturnDetailService.listByMainIds(Collections.singletonList(entity.getId()));
@@ -1013,8 +1013,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @author: tanmujin
      */
     private void syncDisApprovePoReturnToWdt(PoReturnEntity entity, String operateCode) {
-        if(entity.getSourceType().equals(SourceTypeEnum.QC_INFO.getCode())){
-            log.info("质检退货单无需推送旺店通：{}", entity);
+        if(! "other".equals(entity.getSourceType())){
+            log.info("非库存退货单无需推送旺店通：{}", entity);
             return;
         }
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getReturnWarehouseId()), "wdt");
