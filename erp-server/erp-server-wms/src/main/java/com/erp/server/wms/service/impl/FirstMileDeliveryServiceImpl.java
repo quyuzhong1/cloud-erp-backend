@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -163,6 +164,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private RequisitionApplicationService requisitionApplicationService;
     @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1892,8 +1895,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(deliveryEntity.getDestWarehouseId(), deliveryEntity.getDeliveryWarehouseId()));
 
         //优蓝子中转仓
+        CfgSettingEntity cfgSetting = cfgSettingService.getOne(new LambdaQueryWrapper<CfgSettingEntity>().eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode()));
+        if(Objects.isNull(cfgSetting)){
+            throw new ServiceException("没有找到优蓝子中转仓配置");
+        }
+        JSONObject dataJson = cfgSetting.getDataJson();
         WarehouseEntity warehouseEntity = warehouseService.getOne(new LambdaQueryWrapper<WarehouseEntity>()
-                .eq(WarehouseEntity::getKingdeeWarehouseCode, "szylzzzc")
+                .eq(WarehouseEntity::getId, dataJson.getStr("warehouseId"))
                 .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()));
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //来源类型
@@ -2013,8 +2021,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //调入组织
         addDTO.setInOrgId(destOnWayWarehouse.getOrgId());
         //蓝子中转仓
+        CfgSettingEntity cfgSetting = cfgSettingService.getOne(new LambdaQueryWrapper<CfgSettingEntity>().eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode()));
+        if(Objects.isNull(cfgSetting)){
+            throw new ServiceException("没有找到优蓝子中转仓配置");
+        }
+        JSONObject dataJson = cfgSetting.getDataJson();
         WarehouseEntity ulanziWarehouse = warehouseService.getOne(new LambdaQueryWrapper<WarehouseEntity>()
-                .eq(WarehouseEntity::getKingdeeWarehouseCode, "szylzzzc")
+                .eq(WarehouseEntity::getId, dataJson.getStr("warehouseId"))
                 .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()));
         addDTO.setOutOrgId(ulanziWarehouse.getOrgId());
         //调拨类型
