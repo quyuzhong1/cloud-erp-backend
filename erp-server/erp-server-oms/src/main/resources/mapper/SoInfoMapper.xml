@@ -51,7 +51,7 @@
         <if test="params.fieldList != null and params.fieldList.size > 0 and params.fieldList.contains('isVirtualScarce')">
             left join (
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
-            where sdn.is_deleted = false group by sdnd.source_detail_id
+            where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
             ) sdnd on sod.id = sdnd.source_detail_id
             left join (
             select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
@@ -90,7 +90,7 @@
         <if test="params.fieldList != null and params.fieldList.size > 0 and params.fieldList.contains('isVirtualScarce')">
             left join (
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
-            where sdn.is_deleted = false group by sdnd.source_detail_id
+            where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
             ) sdnd on sod.id = sdnd.source_detail_id
             left join (
             select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
@@ -116,7 +116,7 @@
         <if test="params.fieldList != null and params.fieldList.size > 0 and params.fieldList.contains('isVirtualScarce')">
             left join (
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
-            where sdn.is_deleted = false group by sdnd.source_detail_id
+            where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
             ) sdnd on sod.id = sdnd.source_detail_id
             left join (
             select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
@@ -208,7 +208,7 @@
         <if test="params.fieldList != null and params.fieldList.size > 0 and params.fieldList.contains('isVirtualScarce')">
             left join (
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
-            where sdn.is_deleted = false group by sdnd.source_detail_id
+            where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
             ) sdnd on sod.id = sdnd.source_detail_id
             left join (
             select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id

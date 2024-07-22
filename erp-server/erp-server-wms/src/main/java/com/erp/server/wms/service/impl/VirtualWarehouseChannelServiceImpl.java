@@ -5,14 +5,15 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
@@ -20,6 +21,7 @@ import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseChannelMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.VirtualWarehouseChannelService;
@@ -52,6 +54,8 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     @Resource
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
 
+    @Resource
+    private CustomerFeign customerFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -118,14 +122,21 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         List<String> newChannelMsg = new ArrayList<>();
         //修改后数据
         List<ShopInfoEntity> shopList = FeignQuery.list(ShopInfoEntity.class);
+
+        //平台信息
+        List<DictBasicDTO.ViewDTO> platformList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+
         for (VirtualWarehouseChannelDTO.ChannelAddDTO channelAddDT : batchAddDTO.getChannelList()) {
             String shopName = CollectionUtils.isEmpty(channelAddDT.getRelationList()) ? "" : shopList.stream().filter(obj -> channelAddDT.getRelationList().contains(obj.getId())).map(ShopInfoEntity::getName)
                     .distinct().collect(Collectors.joining(",")) ;
             String msg;
+            //平台名称
+            String platformName = platformList.stream().filter(obj -> StrUtil.equals(obj.getValue(), channelAddDT.getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+
             if (StrUtil.isBlank(shopName)) {
-                msg = StrUtil.format("{},{}", PlatformDictEnum.getNameByCode(channelAddDT.getDictPlatform()), "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()));
+                msg = StrUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()));
             } else {
-                msg = StrUtil.format("{},{}({})", PlatformDictEnum.getNameByCode(channelAddDT.getDictPlatform()), "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()), shopName);
+                msg = StrUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()), shopName);
             }
             oldChannelMsg.add(msg);
         }
@@ -137,10 +148,13 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             String shopName = CollectionUtils.isEmpty(relationIdList) ? "" : shopList.stream().filter(obj -> relationIdList.contains(obj.getId())).map(ShopInfoEntity::getName)
                     .distinct().collect(Collectors.joining(",")) ;
             String msg ;
+            //平台名称
+            String platformName = platformList.stream().filter(obj -> StrUtil.equals(obj.getValue(), value.get(0).getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+
             if (StrUtil.isBlank(shopName)) {
-                msg = StrUtil.format("{},{}", PlatformDictEnum.getNameByCode(value.get(0).getDictPlatform()), "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()));
+                msg = StrUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()));
             } else {
-                msg = StrUtil.format("{},{}({})", PlatformDictEnum.getNameByCode(value.get(0).getDictPlatform()), "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName);
+                msg = StrUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName);
             }
             newChannelMsg.add(msg);
             if (!oldChannelMsg.contains(msg)) {

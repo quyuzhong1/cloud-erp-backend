@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -17,12 +18,14 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -79,6 +82,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
+    @Autowired
+    private DictBasicService dictBasicService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -270,6 +275,9 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             if (ignoreInventorySkuIds.contains(skuId)) {
                 continue;
             }
+            //是否拆分bom
+            List<DictBasicDTO.ListDTO> list = dictBasicService.getByKey(DictBasicEnum.VIRTUAL_SPLIT_BOM.getKey());
+
             //冻结数量
             List<String> thisDetailIdList = entry.getValue().stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
             Integer frozenQty = soDetailList.stream().filter(obj -> thisDetailIdList.contains(obj.getId())).map(SoDetailEntity::getFrozenQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -277,7 +285,10 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             Integer deliveryQty = entry.getValue().stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             //bom信息
             List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), skuId) && StrUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(childList)) {
+            /**
+             * 存在BOM、并且需要拆分
+             */
+            if (CollectionUtils.isNotEmpty(childList) && CollectionUtil.isNotEmpty(list) && Boolean.valueOf(list.get(0).getValue())) {
                 for (BomChildrenSkuDTO childrenSkuDTO : childList) {
                     //虚拟库存
                     Integer virtualInventoryQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId()))
