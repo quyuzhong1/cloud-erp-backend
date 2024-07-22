@@ -369,7 +369,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     .distinct().findFirst().orElse(new SkuVO());
             PickingListsDTO.PrintView view = new PickingListsDTO.PrintView();
             view.getPrintView(entity, detail, skuVO.getSkuName());
-            view.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+            if (ObjectUtil.isEmpty(view.getWarehouseLocation())) {
+                view.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+            }
             return view;
         }).collect(Collectors.toList());
         return new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
