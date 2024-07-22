@@ -17,4 +17,6 @@ public class DmpInputTikTokApiInitRequest extends DmpInputApiInitRequest{
 	private List<String> orderIds;
 
 	private String apiType;
+
+	private List<String> productIds;
 }
