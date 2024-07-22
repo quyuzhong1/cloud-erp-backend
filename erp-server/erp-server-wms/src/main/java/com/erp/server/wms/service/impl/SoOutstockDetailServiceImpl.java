@@ -249,7 +249,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-22 15:54
      */
     @Override
-    public void checkOutQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> detailList) {
+    public void checkOutQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> detailList, String batchNo) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
@@ -332,11 +332,13 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     if (outStockQty + planQty > soQty) {
                         throw new ServiceException(ApiError.ERROR_92028);
                     }
-                    //即时库存
-                    Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
-                            equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
-                    if (planQty > inventory) {
-                        throw new ServiceException(ApiError.ERROR_92030);
+                    if (ObjectUtil.isEmpty(batchNo)) {
+                        //即时库存
+                        Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
+                                equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+                        if (planQty > inventory) {
+                            throw new ServiceException(ApiError.ERROR_92030);
+                        }
                     }
                 }
             }
