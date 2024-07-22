@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -7,10 +8,12 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
@@ -20,11 +23,13 @@ import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoDeliveryNoticeDetailMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +72,10 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
     @Autowired
     private VirtualWarehouseService virtualWarehouseService;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -236,15 +245,32 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
            return;
         }
 
+        // 产品属性为费用或服务的sku忽略库存计算
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(ignoreInventorySkuList) ?
+                ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()): Lists.newArrayList();
+
+        //销售订单
+        List<String> sourceDetailIdList = detailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = CollectionUtils.isEmpty(sourceDetailIdList) ? new ArrayList<>() : FeignQuery.create(SoDetailEntity.class).in(SoDetailEntity::getId, sourceDetailIdList).list();
+
+
         Map<String, List<SoDeliveryNoticeDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(SoDeliveryNoticeDetailEntity::getSkuId));
         for (Map.Entry<String,List<SoDeliveryNoticeDetailEntity>> entry : map.entrySet()) {
             String skuId = entry.getKey();
+            if (ignoreInventorySkuIds.contains(skuId)) {
+                continue;
+            }
+            //冻结数量
+            List<String> thisDetailIdList = entry.getValue().stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+            Integer frozenQty = soDetailList.stream().filter(obj -> thisDetailIdList.contains(obj.getId())).map(SoDetailEntity::getFrozenQty).reduce(MathUtil.ZERO, Integer::sum);
+
             Integer deliveryQty = entry.getValue().stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             //虚拟库存
             Integer virtualInventoryQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId)).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
-            if (deliveryQty > virtualInventoryQty) {
-                throw new ServiceException(StrUtil.format("SKU【{}】，实体仓库【{}】，虚拟仓库【{}】库存不足，可用【{}】，发货【{}】",entry.getValue().get(0).getSkuNo()
-                        ,soDeliveryNoticeEntity.getWarehouseName(),virtualWarehouseEntity.getName(),virtualInventoryQty,deliveryQty));
+            if (deliveryQty > virtualInventoryQty + frozenQty) {
+                throw new ServiceException(StrUtil.format("SKU【{}】，实体仓库【{}】，虚拟仓库【{}】库存不足，可用【{}】，发货【{}】，冻结【{}】",entry.getValue().get(0).getSkuNo()
+                        ,soDeliveryNoticeEntity.getWarehouseName(),virtualWarehouseEntity.getName(),virtualInventoryQty,deliveryQty,frozenQty));
             }
         }
     }
