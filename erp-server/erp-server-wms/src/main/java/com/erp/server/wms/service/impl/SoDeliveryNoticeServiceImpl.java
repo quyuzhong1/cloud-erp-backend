@@ -905,6 +905,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoInfoEntity info = soInfoFeign.getSoInfoById(entity.getSourceId());
         List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(entity.getSourceId()));
         SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getCustomerId().equals(info.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         //是否中转
         CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
         ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
@@ -916,7 +918,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         String warehouseId;
         if (isTransit) {
             batchNo = IdUtil.getSnowflake().nextIdStr();
-            warehouseId = generateTransferInfo(entity, batchNo, entityList, warehouseStagingList);
+            warehouseId = generateTransferInfo(entity, batchNo, entityList, warehouseStagingList, noInventorySkuIds);
         }else {
             warehouseId = entity.getWarehouseId();
         }
@@ -953,8 +955,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                         .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
                 detail.setWarehouseLocation(pickingStaging.getWarehouseLocation());
             }
-            detail.setActualQty(item.getDeliveryQty());
-            detail.setPlanQty(item.getDeliveryQty());
+            if (noInventorySkuIds.contains(item.getSkuId())) {
+                detail.setActualQty(item.getDeliveryQty());
+                detail.setPlanQty(item.getDeliveryQty());
+            }else {
+                detail.setActualQty(item.getPickingQty());
+                detail.setPlanQty(item.getPickingQty());
+            }
             detail.setAttachNameList(attachmentNameList);
             detail.setAttachUrlList(attachmentUrlList);
             detailList.add(detail);
@@ -966,7 +973,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return BatchResultDTO.success(outId, "", "下推成功");
     }
 
-    private String generateTransferInfo(SoDeliveryNoticeEntity entity, String batchNo, List<SoDeliveryNoticeDetailEntity> entityList, List<CfgRulePickingStagingEntity> warehouseStagingList) {
+    private String generateTransferInfo(SoDeliveryNoticeEntity entity, String batchNo, List<SoDeliveryNoticeDetailEntity> entityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds) {
         String warehouseId;
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
         if (ObjectUtil.isEmpty(cfgSettingEntity)) {
@@ -992,13 +999,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         transferDto.setSourceCode(entity.getCode());
         transferDto.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         transferDto.setBatchNo(batchNo);
-        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(entity, entityList, warehouseId, warehouseStagingList);
+        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(entity, entityList, warehouseId, warehouseStagingList, noInventorySkuIds);
         transferDto.setDetailList(detailList);
         transferInfoService.addAndApprove(transferDto);
         return warehouseId;
     }
 
-    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, String warehouseId, List<CfgRulePickingStagingEntity> warehouseStagingList) {
+    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, String warehouseId, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds) {
             // 获取仓库暂存区默认配置
         CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                 .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
@@ -1009,7 +1016,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             TransferInfoDetailDTO.AddDTO transferInfoDetail = new TransferInfoDetailDTO.AddDTO();
             transferInfoDetail.setSkuId(view.getSkuId());
             transferInfoDetail.setSkuNo(view.getSkuNo());
-            transferInfoDetail.setQty(view.getPickingQty());
+            if (noInventorySkuIds.contains(view.getSkuId())) {
+                transferInfoDetail.setQty(view.getDeliveryQty());
+            }else {
+                transferInfoDetail.setQty(view.getPickingQty());
+            }
             transferInfoDetail.setOutWarehouseLocation(pickingStaging.getWarehouseLocation());
             transferInfoDetail.setOutWarehouseId(entity.getWarehouseId());
             transferInfoDetail.setInWarehouseId(warehouseId);
