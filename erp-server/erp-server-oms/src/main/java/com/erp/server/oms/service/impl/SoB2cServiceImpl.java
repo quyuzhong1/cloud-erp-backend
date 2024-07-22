@@ -3133,17 +3133,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //缺货订单
                     if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
                             || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))) {
+                        //实体仓缺货
                         Boolean isOutStock = isOutStock(bomChildrenList, inventoryList, detailDTO, ignoreInventorySkuIds);
                         detailLabelDTO.setIsOutStock(isOutStock);
-
-                        //虚拟仓是否缺货
-                        Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailDTO.getSkuId())
-                                        && StrUtil.equals(obj.getVirtualWarehouseId(), detailDTO.getVirtualWarehouseId())
-                                        && StrUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId()))
-                                .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
-                                .findFirst().orElse(MathUtil.ZERO);
-                        //无虚拟仓或者有虚拟库存则显示不缺货
-                        Boolean isVirtualOutStock = (StrUtil.isBlank(detailDTO.getVirtualWarehouseId()) || MathUtil.compareTo(virtualUsableQty, detailDTO.getQty()) >= MathUtil.ZERO)? Boolean.FALSE : Boolean.TRUE;
+                    }
+                }
+                //存在虚拟仓库则判断是否缺货
+                if (StrUtil.isNotBlank(detailDTO.getVirtualWarehouseId())) {
+                    //缺货订单
+                    if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
+                            || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))) {
+                        //实体仓缺货
+                        Boolean isVirtualOutStock = isVirtualOutStock(bomChildrenList, virtualInventoryList, detailDTO);
                         detailLabelDTO.setIsVirtualOutStock(isVirtualOutStock);
                     }
                 }
@@ -3238,6 +3239,52 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         return isOutStock;
     }
+
+    /**
+     * 判断虚拟仓是否缺货
+     * @author will
+     * @date 2024/7/22 10:42
+     * @param bomChildrenList
+     * @param virtualInventoryList
+     * @param detailDTO
+     * @return Boolean
+     */
+    private Boolean isVirtualOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList
+            , SoB2cDetailDTO.ListDTO detailDTO) {
+        //判断是否是组合品
+        Boolean isCombination = Boolean.FALSE;
+        long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(e.getType())).count();
+        if (count > 0) {
+            isCombination = Boolean.TRUE;
+        }
+
+        Boolean isOutStock = Boolean.FALSE;
+        //费销售套装bom判断父级SKU是否够使用
+        if (!isCombination) {
+            return detailDTO.getQty() > detailDTO.getUseableQty();
+        }
+        //销售套装bom需要判断子件库存是否够使用
+        List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())
+                        && BomTypeEnum.COMBINATION.getType().equals(e.getType()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(childList)) {
+            return Boolean.TRUE;
+        }
+        for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+            //虚拟仓是否缺货
+            Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailDTO.getSkuId())
+                            && StrUtil.equals(obj.getVirtualWarehouseId(), detailDTO.getVirtualWarehouseId())
+                            && StrUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId()))
+                    .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
+                    .findFirst().orElse(MathUtil.ZERO);
+            if ((detailDTO.getQty() * childrenSkuDTO.getQuantity() > virtualUsableQty)) {
+                isOutStock = Boolean.TRUE;
+                break;
+            }
+        }
+        return isOutStock;
+    }
+
 
     /**
      * @description: 明细子件是否缺货
