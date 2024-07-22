@@ -30,6 +30,7 @@ import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.service.AsyncService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.SoOutstockService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -67,6 +68,10 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private SoOutstockService soOutstockService;
+
 
     @Async("wmsErpExecutor")
     @Override
@@ -206,4 +211,13 @@ public class AsyncServiceImpl implements AsyncService {
             soB2cDeliveryService.generateB2cSoOutstock(entity);
         }
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Async("wmsErpExecutor")
+    public void asyncGenerateB2cSoOutstock (String b2cSoId) {
+        soOutstockService.generateB2cSoOutstock(b2cSoId);
+    }
+
 }
