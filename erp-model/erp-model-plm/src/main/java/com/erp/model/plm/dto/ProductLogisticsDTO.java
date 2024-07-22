@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -30,11 +31,13 @@ public class ProductLogisticsDTO implements Serializable {
     /**
      * 产品属性
      */
+    @NotBlank(message = "产品属性名称不能为空")
     private String productProperty;
 
     /**
      * 产品属性id
      */
+    @NotBlank(message = "产品属性ID不能为空")
     private String productPropertyId;
 
     /**
