@@ -294,7 +294,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         //检查出库数量
         List<SoOutstockDetailDTO.UpdateDTO> checkList = BeanMapper.copyList(detailList, SoOutstockDetailDTO.UpdateDTO.class);
-        soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, checkList);
+        soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, checkList, dto.getBatchNo());
         //销售订单的含税销售金额折扣前
         BigDecimal soAmount = BigDecimal.ZERO;
         for (SoDetailEntity soDetail : soDetailList) {
@@ -1509,7 +1509,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 throw new ServiceException("销售订单详情不存在");
             }
             //检查出库数量
-            soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
+            soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList, null);
         } else {
             soOutstockDetailService.checkB2cOrderQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
         }
