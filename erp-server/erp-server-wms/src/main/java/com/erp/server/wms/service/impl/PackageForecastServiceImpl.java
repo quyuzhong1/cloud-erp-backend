@@ -401,24 +401,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-//        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
-//        if (CollectionUtils.isEmpty(shopIds)){
-//            throw new ServiceException("销售订单店铺未找到");
-//        }
-        String shopId = null;
-        ShopInfoEntity mainShop = shopInfoFeign.getMainShopByPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-        if (Objects.isNull(mainShop)){
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getShopId())).findFirst().orElse(null);
-            if (Objects.nonNull(soB2cEntity)){
-                shopId = soB2cEntity.getShopId();
-            }
-        }else {
-            shopId = mainShop.getId();
-        }
-        if (StringUtils.isBlank(shopId)){
+        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(shopIds)){
             throw new ServiceException("销售订单店铺未找到");
         }
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = this.getAlExpressHandoverBase(logisticsPlatform, shopId);
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = this.getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
 //        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
         CancelRequest cancelRequest = CancelRequest.builder().
                 userInfo(base.getUserInfo()).client(base.getClient()).
@@ -497,24 +484,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(packageForecastEntity.getId());
             List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
             List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-//            List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
-//            if (CollectionUtils.isEmpty(shopIds)){
-//                throw new ServiceException("销售订单店铺未找到");
-//            }
-            String shopId = null;
-            ShopInfoEntity mainShop = shopInfoFeign.getMainShopByPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-            if (Objects.isNull(mainShop)){
-                SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getShopId())).findFirst().orElse(null);
-                if (Objects.nonNull(soB2cEntity)){
-                    shopId = soB2cEntity.getShopId();
-                }
-            }else {
-                shopId = mainShop.getId();
-            }
-            if (StringUtils.isBlank(shopId)){
+            List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(shopIds)){
                 throw new ServiceException("销售订单店铺未找到");
             }
-            alExpressHandoverBase = this.getAlExpressHandoverBase(LogisticsPlatformEnum.ALI_EXPRESS.getCode(), shopId);
+            alExpressHandoverBase = this.getAlExpressHandoverBase(LogisticsPlatformEnum.ALI_EXPRESS.getCode(), shopIds.get(0));
         }catch (Exception e){
             log.error("syncPackageForecastInfo error : {}", e.getMessage());
         }
@@ -666,24 +640,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-//        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
-//        if (CollectionUtils.isEmpty(shopIds)){
-//            throw new ServiceException("销售订单店铺未找到");
-//        }
-        String shopId = null;
-        ShopInfoEntity mainShop = shopInfoFeign.getMainShopByPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-        if (Objects.isNull(mainShop)){
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getShopId())).findFirst().orElse(null);
-            if (Objects.nonNull(soB2cEntity)){
-                shopId = soB2cEntity.getShopId();
-            }
-        }else {
-            shopId = mainShop.getId();
-        }
-        if (StringUtils.isBlank(shopId)){
+        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(shopIds)){
             throw new ServiceException("销售订单店铺未找到");
         }
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopId);
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
         PdfRequest pdfRequest = PdfRequest.builder()
                 .client(base.getClient())
                 .handoverContentId(Long.valueOf(entity.getPlatformPackageNo()))
@@ -727,20 +688,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 //        if (shopIds.size() > 1){
 //            throw new ServiceException("速卖通不支持多店铺组包预报");
 //        }
-        String shopId = null;
         ShopInfoEntity mainShop = shopInfoFeign.getMainShopByPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-        if (Objects.isNull(mainShop)){
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getShopId())).findFirst().orElse(null);
-            if (Objects.nonNull(soB2cEntity)){
-                shopId = soB2cEntity.getShopId();
-            }
-        }else {
-            shopId = mainShop.getId();
-        }
-        if (StringUtils.isBlank(shopId)){
-            throw new ServiceException("销售订单店铺未找到");
-        }
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopId);
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, mainShop.getId());
 
         List<String> soIdList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
         Map<String, String> authMap = base.getAuthMap();
