@@ -190,11 +190,7 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
     @TableField("type")
     private String type;
-    /**
-     * 是否是主店铺 默认否 false
-     */
-    @TableField("is_main_shop")
-    private Boolean isMainShop;
+
 
     public static final String PLATFORM_DICT = "platform_dict";
 

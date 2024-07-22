@@ -1430,14 +1430,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
-    public ShopInfoEntity getMainShopByPlatform(String platform) {
-        if (StringUtils.isBlank(platform)){
-            return null;
-        }
-        return lambdaQuery().eq(ShopInfoEntity::getDictPlatform, platform).eq(ShopInfoEntity::getIsMainShop, Boolean.TRUE).last("limit 1").one();
-    }
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
