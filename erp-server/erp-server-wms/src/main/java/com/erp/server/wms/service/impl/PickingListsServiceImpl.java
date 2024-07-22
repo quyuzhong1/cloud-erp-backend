@@ -462,7 +462,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             for (BomChildrenSkuDTO bomChild : bomChildren) {
                 int temp = Optional.ofNullable(skuMap.get(bomChild.getSkuId())).orElse(0) / bomChild.getQuantity();
                 if (proportion != temp) {
-                    throw new ServiceException(ApiError.ERROR_99128, skuNo);
+                    throw new ServiceException(ApiError.ERROR_99128, String.join(",", skuMap.keySet()));
                 }
             }
         }
