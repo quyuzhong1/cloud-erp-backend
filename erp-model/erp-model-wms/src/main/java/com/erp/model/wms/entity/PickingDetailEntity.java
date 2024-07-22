@@ -83,53 +83,6 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
      */
     @TableField("is_out_stock")
     private Boolean isOutStock;
-    /**
-     * 收货仓库id
-     */
-    @Deprecated
-    @TableField("warehouse_id")
-    private String warehouseId;
-
-    /**
-     * 收货仓库名称
-     */
-    @Deprecated
-    @TableField("warehouse_name")
-    private String warehouseName;
-    /**
-     * 仓库组织id
-     */
-    @Deprecated
-    @TableField("org_id")
-    private String orgId;
-
-    /**
-     * 仓库组织名称
-     */
-    @Deprecated
-    @TableField("org_name")
-    private String orgName;
-
-    /**
-     * 来源id
-     */
-    @Deprecated
-    @TableField("source_id")
-    private String sourceId;
-
-    /**
-     * 来源类型
-     */
-    @Deprecated
-    @TableField("source_type")
-    private String sourceType;
-
-    /**
-     * 来源单据号
-     */
-    @Deprecated
-    @TableField("source_code")
-    private String sourceCode;
 
 
     public static final String SKU_ID = "sku_id";

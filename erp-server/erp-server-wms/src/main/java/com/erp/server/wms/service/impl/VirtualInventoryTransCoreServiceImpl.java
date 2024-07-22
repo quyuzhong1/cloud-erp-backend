@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -111,10 +112,12 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 continue;
             }
             for (BomChildrenSkuDTO bomChildrenSkuDTO: childList) {
-                outInStockDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
-                outInStockDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                outInStockDTO.setQty(bomChildrenSkuDTO.getQuantity() * outInStockDTO.getQty());
-                resultList.add(outInStockDTO);
+                VirtualInventoryStockDTO.OutInStockDTO newOutInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+                BeanMapperUtils.copy(outInStockDTO,newOutInStockDTO);
+                newOutInStockDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                newOutInStockDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                newOutInStockDTO.setQty(bomChildrenSkuDTO.getQuantity() * outInStockDTO.getQty());
+                resultList.add(newOutInStockDTO);
             }
         }
         return resultList;
