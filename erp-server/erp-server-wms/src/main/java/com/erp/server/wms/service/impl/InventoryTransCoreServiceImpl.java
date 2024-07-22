@@ -84,7 +84,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         //校验规则
         this.checkRule(param.getRules());
         //解析库存交易数据
-        List<InventoryTransactionDTO> transactionDtoList= this.parseTransactionFromTransfer(param.getParamList(),param.getRules());
+        List<InventoryTransactionDTO> transactionDtoList= this.parseTransactionFromTransfer(param.getBusinessType(),param.getParamList(),param.getRules());
         //执行库存交易
         tradingService.doTransactionList(transactionDtoList,InventoryTradingService.APPROVE);
     }
@@ -99,7 +99,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         //校验规则
         this.checkRule(param.getRules());
         //解析库存交易数据
-        List<InventoryTransactionDTO> transactionDtoList=this.parseTranactionFromInOut(param.getParamList(),param.getRules());
+        List<InventoryTransactionDTO> transactionDtoList=this.parseTranactionFromInOut(param.getBusinessType(),param.getParamList(),param.getRules());
         //执行库存交易
         tradingService.doTransactionList(transactionDtoList,InventoryTradingService.APPROVE);
     }
@@ -207,7 +207,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
      * @param rules 交易规则
      * @return  交易数据
      */
-    private List<InventoryTransactionDTO> parseTranactionFromInOut(List<InOutStockDTO> inOutStockList, List<TransactionRuleDTO> rules) {
+    private List<InventoryTransactionDTO> parseTranactionFromInOut(String businessType,List<InOutStockDTO> inOutStockList, List<TransactionRuleDTO> rules) {
         List<InventoryTransactionDTO> result = Lists.newArrayList();
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<WarehouseEntity> warehouseEntityList = warehouseService.listWarehouseWithCaches();
@@ -250,7 +250,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
 
                 // 交易时间 & 单据类型
                 transactionDTO.setBillDate(flow.getBillDate());
-                transactionDTO.setDictBizType(rule.getDictBizType().getCode());
+                transactionDTO.setDictBizType(businessType);
                 transactionDTO.setSourceType(flow.getSourceType().getCode());
                 transactionDTO.setSourceTypeName(flow.getSourceType().getName());
                 transactionDTO.setSourceId(flow.getSourceId());
@@ -280,7 +280,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
      * @param rules         交易规则
      * @return              交易数据
      */
-    private List<InventoryTransactionDTO> parseTransactionFromTransfer(List<TransferDTO> transferList, List<TransactionRuleDTO> rules) {
+    private List<InventoryTransactionDTO> parseTransactionFromTransfer(String businessType,List<TransferDTO> transferList, List<TransactionRuleDTO> rules) {
         List<InventoryTransactionDTO> result = Lists.newArrayList();
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<WarehouseEntity> warehouseEntityList = warehouseService.listWarehouseWithCaches();
@@ -330,7 +330,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
 
                 // 交易时间 & 单据类型
                 transactionDTO.setBillDate(flow.getBillDate());
-                transactionDTO.setDictBizType(rule.getDictBizType().getCode());
+                transactionDTO.setDictBizType(businessType);
                 transactionDTO.setSourceType(flow.getSourceType().getCode());
                 transactionDTO.setSourceTypeName(flow.getSourceType().getName());
                 transactionDTO.setSourceId(flow.getSourceId());
