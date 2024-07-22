@@ -43,20 +43,14 @@ public class DmpMongoHandleTaskServiceImpl extends SuperServiceImpl<DmpMongoHand
     public <T> List<T> findMongoData(String lastId, Integer handleCount, String mongoTableName, Class<T> mongoDTOClass, Boolean queryIsAddOrUpdate) {
         // 查询
         Query query = new Query();
-        Criteria criteria = null;
+        Criteria criteria = new Criteria();
         if (StringUtils.isNotBlank(lastId)) {
             criteria = Criteria.where("_id").gt(new ObjectId(lastId));
         }
         if (null != queryIsAddOrUpdate){
-            if (null != criteria){
-                criteria.and("isAddOrUpdate").is(queryIsAddOrUpdate);
-            } else {
-                Criteria.where("isAddOrUpdate").is(queryIsAddOrUpdate);
-            }
+           criteria.and("isAddOrUpdate").is(queryIsAddOrUpdate);
         }
-        if (null != criteria){
-            query.addCriteria(criteria);
-        }
+        query.addCriteria(criteria);
         query.with(Sort.by(Sort.Direction.ASC, "_id")).limit(handleCount);
         return mongoTemplate.find(query, mongoDTOClass, mongoTableName);
     }
