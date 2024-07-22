@@ -1022,6 +1022,7 @@ public class InventoryDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class UsableInventoryParamDTO {
         /**
          * 组织id

@@ -2,23 +2,22 @@ package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.xpath.operations.Bool;
 
+import javax.validation.Valid;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.validation.Valid;
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -424,6 +423,12 @@ public class CfgRuleOutDTO implements Serializable {
         private B2cAllowableDeviations b2cAllowableDeviations = new B2cAllowableDeviations();
 
         /**
+         * 中转配置
+         */
+        @Valid
+        private List<TransferDTO> transferDTOList = new ArrayList<>();
+
+        /**
          * 装箱超重配置
          */
         @Valid
@@ -436,5 +441,90 @@ public class CfgRuleOutDTO implements Serializable {
 
     }
 
+    @Data
+    public static class TransferDTO{
+        /**
+         * 类型下拉：/wms/common/enumDropDown?type=StockOutTransferType
+         */
+        private String type;
 
+        /**
+         * 规则列表
+         * 仓库：/wms/warehouse/list
+         * 国家：/sys/dict/country/list
+         * field下拉：/wms/common/enumDropDown?type=StockOutTransferField
+         * compare下拉：/wms/common/enumDropDown?type=StockOutTransferCompare
+         */
+        @Valid
+        private List<TransferConditionElement> conditionList;
+    }
+
+    @Data
+    public static class TransferConditionElement{
+        /**
+         * 左括号
+         */
+
+        private String leftBracket;
+
+        /**
+         * 对应字段
+         */
+        @NotBlank(message = "条件字段不能为空")
+        private String field;
+
+        /**
+         * 选项逻辑关系 大于 等于 等等
+         */
+        @NotBlank(message = "比较符号不能为空")
+        private String compare;
+
+        /**
+         * 对应的值
+         */
+        @NotEmpty(message = "值字段不能为空")
+        private List<String> valueList;
+
+        private String value;
+
+        /**
+         * 右括号
+         */
+        private String rightBracket;
+
+        /**
+         * 逻辑关系 and 或者or
+         */
+        private String logic;
+
+        /**
+         * 对应的值类型
+         */
+        private String valueType;
+    }
+
+    /**
+     * 匹配中转规则
+     */
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MatchTransferRuleDTO{
+        /**
+         * 类型
+         * StockOutTransferTypeEnum
+         */
+        @NotBlank
+        private String type;
+
+        /**
+         * 收货国家ID
+         */
+        private String receiveCountry;
+
+        /**
+         * 目的仓ID
+         */
+        private String destWarehouse;
+    }
 }

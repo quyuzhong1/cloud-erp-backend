@@ -10,12 +10,17 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
@@ -28,26 +33,19 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseAllocationDetailMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -208,6 +206,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
                 case ALLOCATION:
                     VirtualInventoryStockDTO.StockParamDTO allocationDto = getAllocationDto(VirtualInventoryBusinessTypeEnum.IN_USABLE, detailList, allocationEntity);
+                    allocationDto.setIsSplitBom(Boolean.FALSE);
                     virtualInventoryTransCoreService.approve(allocationDto);
                     break;
                 case TRANSFER:
@@ -216,6 +215,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                     break;
                 case CANCEL:
                     VirtualInventoryStockDTO.StockParamDTO cancelDto = getCancelDto(VirtualInventoryBusinessTypeEnum.OUT_USABLE, detailList, allocationEntity);
+                    cancelDto.setIsSplitBom(Boolean.FALSE);
                     virtualInventoryTransCoreService.approve(cancelDto);
                     break;
                 default:

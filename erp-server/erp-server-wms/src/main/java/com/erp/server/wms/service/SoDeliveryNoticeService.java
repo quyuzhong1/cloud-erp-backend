@@ -158,12 +158,10 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
 
     /**
      * 下推销售出库单-保存
-     * @Author Luo_WG
-     * @Date 2023/5/11 11:11
-     * @param idList
+     * @param id id
      * @return void
      **/
-    Boolean generateSoDeliverySave(List<String> idList);
+    BatchResultDTO generateSoDeliverySave(String id);
 
     /**
      * 下推发货通知单-保存
@@ -254,7 +252,6 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
 
 
     void writeBackData(List<String> sourceDetailIds);
-
 
     /**
      * 根据记录更新状态

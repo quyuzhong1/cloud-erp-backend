@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 库存差异 服务类
@@ -50,4 +51,27 @@ public interface VirtualInventoryDiffService extends SuperService<VirtualInvento
      * @return Integer
      */
     Integer diffPagingCount(PermissionsDTO dto);
+    /**
+     * 一键调整查询
+     * @author will
+     * @date 2024/7/17 16:22
+     * @param dto
+     * @return List<ListDetailQtyDTO>
+     */
+    List<VirtualInventoryDiffDTO.ListDetailQtyDTO> listDiffDetail(VirtualInventoryDiffDTO.SearchParamDetailDTO dto);
+    /**
+     * 一键调整保存
+     * @author will
+     * @date 2024/7/17 18:19
+     * @param list
+     */
+    void updateVirtualInventory(List<VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO> list);
+    /**
+     * 获取推荐仓位
+     * @author will
+     * @date 2024/7/17 19:01
+     * @param list
+     * @return List<ListSuggestQtyDTO>
+     */
+    List<VirtualInventoryDiffDTO.ListSuggestQtyDTO> listSuggestQty(List<VirtualInventoryDiffDTO.ListSuggestQtyParamDTO> list);
 }

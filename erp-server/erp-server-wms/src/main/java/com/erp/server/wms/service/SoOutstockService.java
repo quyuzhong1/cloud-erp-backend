@@ -9,17 +9,14 @@ import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
-import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
@@ -136,7 +133,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     Boolean delete(List<String> ids);
 
-    
+
     /**
      * 作废
      * @author yl
@@ -524,4 +521,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return
      */
     int countNotVoided(String id);
+
+    /**
+     * 删除直接调拨单
+     * @author will
+     * @date 2024/7/22 11:27
+     * @param list
+     */
+    void deleteTransferInfo(List<SoOutstockEntity> list);
+
 }

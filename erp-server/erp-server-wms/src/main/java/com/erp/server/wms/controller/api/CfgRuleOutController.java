@@ -56,7 +56,7 @@ public class CfgRuleOutController extends BaseController {
         return success(cfgRuleOutService.view());
     }
     /**
-     * 获取分拣口
+     * 根据出库配置返回分拣口
      * @author lrp
      * @date:  2024-06-28
      * @return ApiResult<String>
@@ -64,5 +64,14 @@ public class CfgRuleOutController extends BaseController {
     @PostMapping("/getSortingPort")
     public ApiResult<String> getSortingPort(@RequestBody CfgRuleOutDTO.SortingPortRuleDTO dto) {
         return success(cfgRuleOutService.getSortingPort(dto));
+    }
+
+    /**
+     * 匹配中转仓配置
+     */
+    @PostMapping("/matchTransferRule")
+    public ApiResult<Boolean> matchTransferRule(@RequestBody CfgRuleOutDTO.MatchTransferRuleDTO dto){
+        Boolean matched = cfgRuleOutService.matchTransferRule(dto);
+        return success(matched);
     }
 }

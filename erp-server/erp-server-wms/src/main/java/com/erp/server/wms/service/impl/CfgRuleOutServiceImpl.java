@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -88,9 +89,34 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         this.checkCfgProductPacking(commonDTO.getCfgProductPacking());
         cfgProductPacking.setRuleContent(cfgProductPackingMap);
 
+
+        //中转配置
+        List<CfgRuleOutEntity> transferList = new ArrayList<>();
+        List<CfgRuleOutDTO.TransferDTO> transferDTOList = commonDTO.getTransferDTOList();
+        for (CfgRuleOutDTO.TransferDTO transferDTO : transferDTOList) {
+            transferDTO.getConditionList().forEach(item -> {
+                item.setValue(String.join(",", item.getValueList()));
+                item.setValueType("String");
+            });
+            Map<String, Object> transferDTOMap = BeanUtil.beanToMap(transferDTO);
+            this.checkTransferRule(transferDTO);
+
+            CfgRuleOutEntity transferEntity = new CfgRuleOutEntity();
+            transferEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode());
+            transferEntity.setRuleContent(transferDTOMap);
+            transferList.add(transferEntity);
+        }
+
+        List<CfgRuleOutEntity> saveList = new ArrayList<>();
+        saveList.add(equipmentSortingPortEntity);
+        saveList.add(b2cAllowableDeviationsEntity);
+        saveList.add(cfgOverWeight);
+        saveList.add(cfgProductPacking);
+        saveList.addAll(transferList);
+
         //删除数据后再保存
         service.remove(new QueryWrapper<>());
-        service.saveBatch(Arrays.asList(equipmentSortingPortEntity, b2cAllowableDeviationsEntity,cfgOverWeight,cfgProductPacking));
+        service.saveBatch(saveList);
         return new BaseResultDTO.AddDTO();
     }
 
@@ -172,6 +198,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         CfgRuleOutEntity b2cAllowableDeviationsEntity = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.B2C_ALLOWABLE_DEVIATIONS.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutEntity cfgOverWeight = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PACKING_OVER_WEIGHT.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         CfgRuleOutEntity cfgProductPacking = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PRODUCT_PACKING.getCode())).findFirst().orElse(new CfgRuleOutEntity());
+        List<CfgRuleOutEntity> transferEntityList = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode())).collect(Collectors.toList());
         CfgRuleOutDTO.CommonDTO commonDTO = new CfgRuleOutDTO.CommonDTO();
         if(Objects.nonNull(equipmentSortingPortEntity.getRuleContent())){
             commonDTO.setEquipmentSortingPortDTO(BeanUtil.toBeanIgnoreError(equipmentSortingPortEntity.getRuleContent(), CfgRuleOutDTO.EquipmentSortingPortDTO.class));
@@ -185,6 +212,12 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         if(Objects.nonNull(cfgProductPacking.getRuleContent())){
             commonDTO.setCfgProductPacking(BeanUtil.toBeanIgnoreError(cfgProductPacking.getRuleContent(), CfgRuleOutDTO.CfgProductPacking.class));
         }
+        List<CfgRuleOutDTO.TransferDTO> transferDTOList = new ArrayList<>();
+        for (CfgRuleOutEntity entity : transferEntityList) {
+            CfgRuleOutDTO.TransferDTO transferDTO = BeanUtil.mapToBean(entity.getRuleContent(), CfgRuleOutDTO.TransferDTO.class, true);
+            transferDTOList.add(transferDTO);
+        }
+        commonDTO.setTransferDTOList(transferDTOList);
         return commonDTO;
     }
 
@@ -374,5 +407,61 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             map.put(VOLUME_DIFFERENCE_VALUE_HEIGHT.getCode(),dto.getOrderHeight().subtract(dto.getScanHeight()).abs());
         }
         return map;
+    }
+
+    @Override
+    public Boolean matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto) {
+        Map<String, Object> detailMap = new HashMap<>();
+        detailMap.put("type", dto.getType());
+        detailMap.put("receiveCountry", dto.getReceiveCountry());
+        detailMap.put("destWarehouse", dto.getDestWarehouse());
+        Map<String, Object> map = new HashMap<>();
+        map.put("detailList", Collections.singletonList(detailMap));
+        map.put("type", dto.getType());
+        map.put("receiveCountry", dto.getReceiveCountry());
+        map.put("destWarehouse", dto.getDestWarehouse());
+
+        List<CfgRuleOutEntity> cfgRuleOutList = this.baseMapper.selectList(new LambdaQueryWrapper<CfgRuleOutEntity>().eq(CfgRuleOutEntity::getType, CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode()));
+        for (CfgRuleOutEntity entity : cfgRuleOutList) {
+            Map<String, Object> ruleContent = entity.getRuleContent();
+            CfgRuleOutDTO.TransferDTO transferDTO = BeanUtil.toBean(ruleContent, CfgRuleOutDTO.TransferDTO.class);
+            List<CfgRuleOutDTO.TransferConditionElement> transferElementList = transferDTO.getConditionList();
+            List<ConditionElement> conditionList = BeanMapper.copyList(transferElementList, ConditionElement.class);
+            ConditionElement typeConditionElement = new ConditionElement("(", "type", "==", transferDTO.getType(), ")", "and", "String");
+            conditionList.add(0, typeConditionElement);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionList, map);
+            if(matchResult){
+                return Boolean.TRUE;
+            }
+        }
+
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 校验中转配置表达式是否合法
+     */
+    private void checkTransferRule(CfgRuleOutDTO.TransferDTO transferDTO) {
+        if(Objects.isNull(transferDTO)){
+            return;
+        }
+        List<CfgRuleOutDTO.TransferConditionElement> conditionList = transferDTO.getConditionList();
+        if(CollectionUtil.isEmpty(conditionList)){
+            return;
+        }
+        List<ConditionElement> conditionElementList = new ArrayList<>(conditionList.size());
+        for (CfgRuleOutDTO.TransferConditionElement element : conditionList) {
+            ConditionElement conditionElement = new ConditionElement();
+            BeanMapper.copy(element, conditionElement);
+            conditionElement.setValue(element.getValue());
+            conditionElementList.add(conditionElement);
+        }
+
+        SpElExpressionDTO splElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
+        String expression = splElDTO.getExpression();
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+        }
     }
 }

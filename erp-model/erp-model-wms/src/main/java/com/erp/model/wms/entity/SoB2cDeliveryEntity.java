@@ -203,6 +203,13 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     private String sameWaveStr;
 
 
+    /**
+     * 批次号
+     */
+    @TableField(exist = false)
+    private String batchNo;
+
+
     public static final String CODE = "code";
 
     public static final String STATUS = "status";

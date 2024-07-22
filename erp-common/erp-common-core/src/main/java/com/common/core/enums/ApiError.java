@@ -875,6 +875,9 @@ public enum ApiError implements Serializable {
     ERROR_99124(99124,"待处理，异常单,取消发货的数据不支持拦截失败"),
     ERROR_99125(99125,"异常单,取消发货的数据不支持拦截"),
     ERROR_99126(99126,"sku未拣货，不能进行分货"),
+
+    ERROR_99127(99127,"发货通知单【{}】总数量不能大于销售数量"),
+    ERROR_99128(99128,"组合产品【{}】的拣货数量与bom用量比例不一致，无法修改"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -1114,6 +1117,9 @@ public enum ApiError implements Serializable {
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
     ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
     ERROR_VW_INVENTORY_ERROR(92235,"虚拟仓【{}】库存不足"),
+    ERROR_EXISTS_TRANSFER_INFO(92236, "存在未删除或未作废的直接调拨单"),
+    ERROR_GENERATE_TRANSFER(92237, "可用库存不足，生成直接调拨单失败"),
+
     ERROR_NOT_FOUND_WAREHOUSE_AREA(92238, "新增补货单时没有找到有效的库区"),
     ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
 

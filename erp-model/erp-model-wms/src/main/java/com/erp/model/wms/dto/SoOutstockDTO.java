@@ -1,9 +1,10 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -484,14 +485,30 @@ public class SoOutstockDTO implements Serializable {
          */
         private String customerOrderNo;
 
+
+        /**
+         * 批次号，发货单下推时生成
+         */
+        private String batchNo;
+
         /**
          * 详情
          */
         @Valid
         @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetailDTO.AddDTO> detailList;
-
-
+        public void buildAddDTO(SoDeliveryNoticeEntity entity) {
+            this.soId = entity.getSourceId();
+            this.sourceId = entity.getId();
+            this.sourceCode = entity.getCode();
+            this.sourceType = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+            this.planDeliveryDate = entity.getPlanDeliveryDate();
+            this.actualDeliveryDate = entity.getActualDeliveryDate().atStartOfDay();
+            this.trackNo = entity.getTrackNo();
+            this.carrierId = entity.getCarrierId();
+            this.sellerId = entity.getSellerId();
+            this.customerId = entity.getCustomerId();
+        }
     }
 
 
@@ -1393,6 +1410,11 @@ public class SoOutstockDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class GenerateB2cDTO {
+
+        /**
+         * 批次号
+         */
+        private String batchNo;
 
         /**
          * 销售订单id

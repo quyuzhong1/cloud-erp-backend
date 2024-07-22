@@ -1,6 +1,7 @@
 package com.erp.model.wms.enums;
 
 import com.common.core.constant.EnumMessage;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -13,6 +14,7 @@ public enum CfgRuleOutEnum {
     @Getter
     public enum CfgRuleOutTypeEnum implements EnumMessage  {
         EQUIPMENT_SORTING_PORT("equipmentSortingPort", "设备分拣口"),
+        STOCK_OUT_TRANSFER("stockOutTransfer", "出库中转配置"),
         B2C_ALLOWABLE_DEVIATIONS("b2cAllowableDeviations", "B2C称重量方允许偏差"),
         CFG_PACKING_OVER_WEIGHT("cfgPackingOverWeight", "装箱超重配置"),
         CFG_PRODUCT_PACKING("cfgProductPacking", "产品装箱配置");
@@ -122,5 +124,28 @@ public enum CfgRuleOutEnum {
             this.code = code;
             this.name = name;
         }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum StockOutTransferCompareEnum implements EnumMessage {
+        EQ("==", "等于"),
+        NQ("!=", "不等于"),
+        IN_LIST("inList", "在列表"),
+        NOT_IN_LIST("notInList", "不在列表"),
+        ;
+
+        private String code;
+        private String name;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum StockOutTransferFieldEnum implements EnumMessage{
+        RECEIVE_COUNTRY("receiveCountry", "收货国家"),
+        DEST_WAREHOUSE("destWarehouse", "目的仓库"),
+        ;
+        private String code;
+        private String name;
     }
 }

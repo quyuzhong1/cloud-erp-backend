@@ -3,10 +3,13 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -22,6 +25,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -49,6 +53,7 @@ import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -147,11 +152,20 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private TmsDeclareBillFeign tmsDeclareBillFeign;
     @Resource
     private PackingTaskService packingTaskService;
-
     @Resource
     private CfgRuleOutService cfgRuleOutService;
     @Resource
+    private PickingListsService pickingListsService;
+    @Resource
+    private PickingDetailService pickingDetailService;
+    @Resource
+    private CfgRulePickingStagingService cfgRulePickingStagingService;
+    @Resource
     private RequisitionApplicationService requisitionApplicationService;
+    @Resource
+    private RequisitionApplicationDetailService requisitionApplicationDetailService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -338,6 +352,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
+        }
+
+        //是否存在下游关联的未作废或未删除的直接调拨单
+        Boolean validate = validateExistsTransferInfo(dto.getId());
+        if(validate){
+            throw new ServiceException(ApiError.ERROR_EXISTS_TRANSFER_INFO);
         }
 
         //已装箱才能审核
@@ -567,7 +587,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //直接调拨单已审核先反审核
         List<String> approveTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(approveTransferOutIds)) {
-            transferInfoService.disApprove(approveTransferOutIds, Boolean.FALSE);
+            transferInfoService.disApprove(approveTransferOutIds, Boolean.FALSE,Boolean.TRUE);
         }
         //直接调拨单审核中先撤销
         List<String> approveIngTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
@@ -618,6 +638,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(entity.getId()));
         if (CollectionUtil.isNotEmpty(tmsDeclareBillEntities)) {
             throw new ServiceException(ApiError.TMS_DECLARE_BILL_EXISTS, tmsDeclareBillEntities.get(0).getCode());
+        }
+
+        //是否存在下游关联的未作废或未删除的直接调拨单
+        Boolean validate = validateExistsTransferInfo(entity.getId());
+        if(validate){
+            throw new ServiceException(ApiError.ERROR_EXISTS_TRANSFER_INFO);
         }
 
         return true;
@@ -769,18 +795,22 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 overseasWarehouseInboundService.updateInstockStatus(Arrays.asList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
             }
 
-            //新增直接调拨单
-            String transferOutId = generateTransferOut(entity, detailEntityList);
-            if (StringUtils.isNotBlank(transferOutId)) {
-                //提交
-                transferInfoService.submit(Arrays.asList(transferOutId));
-                //审核
-                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-                baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
-                baseApproveParamDTO.setType(ApproveType.PASS);
-                transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
-            } else {
-                throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
+            //判断是否中转
+            CfgRuleOutDTO.MatchTransferRuleDTO matchRuleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
+            matchRuleDTO.setType(StockOutTransferTypeEnum.FIRST_MILE.getCode());
+            matchRuleDTO.setReceiveCountry(entity.getCountryId());
+            matchRuleDTO.setDestWarehouse(entity.getDestWarehouseId());
+            Boolean isMatch = cfgRuleOutService.matchTransferRule(matchRuleDTO);
+            if (isMatch){
+                //中转
+                String transferToUlanziId = generateTransferToUlanzi(entity, detailEntityList);
+                submitAndApprove(transferToUlanziId);
+
+                String transferFromUlanziId = generateTransferFromUlanzi(entity, detailEntityList);
+                submitAndApprove(transferFromUlanziId);
+            }else {
+                String transferOutId = generateTransferOut(entity, detailEntityList);
+                submitAndApprove(transferOutId);
             }
 
             //走TMS自动生成物流单逻辑
@@ -1836,6 +1866,262 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .eq(FirstMileDeliveryEntity::getSourceId, id)
                 .eq(FirstMileDeliveryEntity::getInvalidStatus, false)
         );
+    }
+
+    /**
+     * 校验是否存在关联的未删除或未作废的直接调拨单
+     * @param deliveryId 发货单ID
+     */
+    private Boolean validateExistsTransferInfo(String deliveryId) {
+        List<TransferInfoEntity> list = transferInfoService.list(new LambdaQueryWrapper<TransferInfoEntity>()
+                .eq(TransferInfoEntity::getSourceId, deliveryId)
+                .eq(TransferInfoEntity::getSourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())
+                .eq(TransferInfoEntity::getInvalidStatus, false));
+        return !list.isEmpty();
+    }
+
+    /**
+     * 生成直接调拨单：发货仓->优蓝子中转仓
+     */
+    private String generateTransferToUlanzi(FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailList) {
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(deliveryEntity.getDestWarehouseId(), deliveryEntity.getDeliveryWarehouseId()));
+
+        //优蓝子中转仓
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+        if(Objects.isNull(cfgSetting)){
+            throw new ServiceException("没有找到优蓝子中转仓配置");
+        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
+        WarehouseEntity warehouseEntity = warehouseService.getOne(new LambdaQueryWrapper<WarehouseEntity>()
+                .eq(WarehouseEntity::getId, transitSettingDTO.getWarehouseId())
+                .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()));
+        TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
+        //来源类型
+        addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode());
+        //默认调出日期：当前日期
+        addDTO.setBillDate(LocalDate.now());
+        //默认调拨方向：普通
+        addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        //调入组织
+        addDTO.setInOrgId(warehouseEntity.getOrgId());
+        //调出组织
+        WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> req.getId().equals(deliveryEntity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        addDTO.setOutOrgId(deliveryWarehouse.getOrgId());
+        //调拨类型
+        if (warehouseEntity.getOrgId().equals(deliveryWarehouse.getOrgId()))  {
+            addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
+        } else {
+            addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        }
+        addDTO.setSourceId(deliveryEntity.getId());
+        String batchNo = IdUtil.getSnowflake().nextIdStr();
+        addDTO.setSourceCode(deliveryEntity.getCode() + "_" + batchNo);
+        addDTO.setBatchNo(batchNo);
+        addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", deliveryEntity.getCode()));
+
+        //查询已下推的海外入库单
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(deliveryEntity.getId()));
+        //要货申请单号
+        String sourceCode = deliveryEntity.getSourceCode();
+        RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getOne(new LambdaQueryWrapper<RequisitionApplicationEntity>().eq(RequisitionApplicationEntity::getCode, sourceCode));
+        //要货申请单明细
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetails = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationEntity.getId()));
+        Map<String, String> requisitionApplicationMap = requisitionApplicationDetails.stream().collect(Collectors.toMap(item1 -> item1.getSkuId(), item2 -> item2.getToWarehouseId(), (item1, item2) -> item1));
+
+        //详情信息
+        List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
+        for (FirstMileDeliveryDetailEntity deliveryDetail : deliveryDetailList) {
+            TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
+            //映射产品信息
+            detailAddDto.setSkuId(deliveryDetail.getSkuId());
+            detailAddDto.setSkuNo(deliveryDetail.getSkuNo());
+            detailAddDto.setQty(deliveryDetail.getDeliveryQty());
+            detailAddDto.setOutWarehouseId(deliveryEntity.getDeliveryWarehouseId());
+            //调入仓库ID
+            String toWarehouseId = requisitionApplicationMap.get(deliveryDetail.getSkuId());
+            if(requisitionApplicationEntity.getRequisitionWarehouseId().equals(toWarehouseId)){
+                detailAddDto.setOutWarehouseLocation("");
+            }else {
+                List<CfgRulePickingStagingEntity> stagingList = cfgRulePickingStagingService.list(new LambdaQueryWrapper<CfgRulePickingStagingEntity>().eq(CfgRulePickingStagingEntity::getWarehouseId, requisitionApplicationEntity.getRequisitionWarehouseId()));
+                if(stagingList.isEmpty()){
+                    throw new ServiceException("没有找到暂存仓位");
+                }
+                detailAddDto.setOutWarehouseLocation(stagingList.get(0).getWarehouseLocation());
+            }
+            detailAddDto.setInWarehouseId(warehouseEntity.getId());
+            detailAddDto.setInWarehouseLocation("");
+            detailAddDto.setSourceDetailId(deliveryDetail.getId());
+            //如果是备货海外仓
+            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(deliveryEntity.getDemandType())) {
+                //查询已下推的入库单获取入库单号
+                OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
+                        .filter(req -> req.getSourceId().equals(deliveryEntity.getId())
+                                && !OverseasInstockStatusEnum.CANCELED.getCode().equals(req.getInstockStatus())
+                        ).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
+                    detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
+                }
+            } else {
+                detailAddDto.setRemark(deliveryEntity.getSourceCode());
+            }
+
+            detailAddDtoList.add(detailAddDto);
+        }
+        addDTO.setDetailList(detailAddDtoList);
+        return transferInfoService.add(addDTO);
+    }
+
+    /**
+     * 生成直接调拨单：优蓝子中转仓->目的仓在途仓
+     */
+    private String generateTransferFromUlanzi(FirstMileDeliveryEntity entity, List<FirstMileDeliveryDetailEntity> detailEntityList) {
+        //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
+        WarehouseEntity destWarehouse = warehouseService.getById(entity.getDestWarehouseId());
+
+        //校验目的仓是否为FBA第三方仓
+        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        //如果是FBA第三方仓
+        if (listDTO.getId().equals(destWarehouse.getTypeId())) {
+
+            //如果配置为空时默认为“FBA在途仓-xgwj-fba”
+            if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
+                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Arrays.asList("xgwj-fba"));
+                if (CollectionUtils.isEmpty(warehouseEntities)) {
+                    throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
+                }
+                destWarehouse.setOnwayWarehouseId(warehouseEntities.get(0).getId());
+                destWarehouse.setOnwayWarehouseName(warehouseEntities.get(0).getName());
+            }
+        }
+
+        //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
+        if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
+            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+        }
+
+        //目的仓在途仓
+        WarehouseEntity destOnWayWarehouse = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
+
+        TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
+        //来源类型：头程发货单
+        addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_FROM_ULANZI.getCode());
+        //默认调出日期：当前日期
+        addDTO.setBillDate(LocalDate.now());
+        //默认调拨方向：普通
+        addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        //调入组织
+        addDTO.setInOrgId(destOnWayWarehouse.getOrgId());
+        //蓝子中转仓
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+        if(Objects.isNull(cfgSetting)){
+            throw new ServiceException("没有找到优蓝子中转仓配置");
+        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
+        JSONObject dataJson = cfgSetting.getDataJson();
+        WarehouseEntity ulanziWarehouse = warehouseService.getOne(new LambdaQueryWrapper<WarehouseEntity>()
+                .eq(WarehouseEntity::getId, transitSettingDTO.getWarehouseId())
+                .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()));
+        addDTO.setOutOrgId(ulanziWarehouse.getOrgId());
+        //调拨类型
+        if (destOnWayWarehouse.getOrgId().equals(ulanziWarehouse.getOrgId()))  {
+            addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
+        } else {
+            addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        }
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", entity.getCode()));
+
+        //查询已下推的海外入库单
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(entity.getId()));
+
+        //详情信息
+        List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
+        for (FirstMileDeliveryDetailEntity detailEntity : detailEntityList) {
+            TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
+            //映射产品信息
+            detailAddDto.setSkuId(detailEntity.getSkuId());
+            detailAddDto.setSkuNo(detailEntity.getSkuNo());
+            detailAddDto.setQty(detailEntity.getDeliveryQty());
+            detailAddDto.setOutWarehouseId(ulanziWarehouse.getId());
+            detailAddDto.setOutWarehouseLocation("");
+            detailAddDto.setInWarehouseId(destOnWayWarehouse.getId());
+            detailAddDto.setInWarehouseLocation("");
+            detailAddDto.setSourceDetailId(detailEntity.getId());
+            //如果是备货海外仓
+            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+                //查询已下推的入库单获取入库单号
+                OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
+                        .filter(req -> req.getSourceId().equals(entity.getId())
+                                && !OverseasInstockStatusEnum.CANCELED.getCode().equals(req.getInstockStatus()))
+                        .findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
+                    detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
+                }
+            } else {
+                detailAddDto.setRemark(entity.getSourceCode());
+            }
+            detailAddDtoList.add(detailAddDto);
+        }
+        addDTO.setDetailList(detailAddDtoList);
+        return transferInfoService.add(addDTO);
+    }
+
+    /**
+     * 查找符合要求的仓位
+     * @param warehouseId 仓库ID
+     * @param skuId skuId
+     * @param deliveryQty 实发数量
+     */
+    private WarehouseLocationEntity searchWarehouseLocation(String warehouseId, String skuId, Integer deliveryQty, String areaType) {
+        List<WarehouseLocationEntity> areaList = warehouseLocationService.list(new LambdaQueryWrapper<WarehouseLocationEntity>()
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
+                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.AREA.getCode())
+                .eq(WarehouseLocationEntity::getAreaType, areaType)
+                .eq(WarehouseLocationEntity::getDisabled, false));
+        List<String> areaIds = areaList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<WarehouseLocationEntity> locationList = warehouseLocationService.list(new LambdaQueryWrapper<WarehouseLocationEntity>()
+                .in(WarehouseLocationEntity::getParentId, areaIds)
+                .eq(WarehouseLocationEntity::getDisabled, false));
+        List<String> locationCodes = locationList.stream().map(WarehouseLocationEntity::getCode).collect(Collectors.toList());
+        if(locationCodes.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER);
+        }
+        List<InventoryEntity> list = inventoryService.list(new LambdaQueryWrapper<InventoryEntity>()
+                .eq(InventoryEntity::getWarehouseId, warehouseId)
+                .eq(InventoryEntity::getSkuId, skuId)
+                .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
+                .ge(InventoryEntity::getQty, deliveryQty)
+                .in(InventoryEntity::getWarehouseLocation, locationCodes));
+        if(list.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER);
+        }
+        InventoryEntity inventoryEntity = list.get(0);
+        WarehouseLocationEntity locationEntity = locationList.stream().filter(item -> item.getCode().equals(inventoryEntity.getWarehouseLocation())).findFirst().get();
+        return locationEntity;
+    }
+
+    /**
+     * 提交并审核直接调拨单
+     */
+    private void submitAndApprove(String transferId) {
+        if (StringUtils.isBlank(transferId)) {
+            throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
+        }
+        //提交
+        transferInfoService.submit(Arrays.asList(transferId));
+        //审核
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(transferId));
+        baseApproveParamDTO.setType(ApproveType.PASS);
+        transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
     }
 }
 

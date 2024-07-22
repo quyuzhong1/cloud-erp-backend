@@ -18,7 +18,6 @@ import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
-import com.erp.model.wms.enums.CfgRuleOutEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -163,6 +162,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     void rollbackInventory(List<String> ids);
 
     /**
+     * 回滚库存
+     *
+     **/
+    void rollbackPickingInventory(List<String> ids);
+
+    /**
      * 修改发货状态
      *
      * @param ids
@@ -183,6 +188,14 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @create 2023-12-29 10:37
      */
     BatchResultDTO delivery(String id, String deliveryType);
+
+    /**
+     * 扣减冻结库存
+     * @author will
+     * @date 2024/7/21 9:47
+     * @param entity
+     */
+    void outFreezeVirtualInventory (SoB2cDeliveryEntity entity);
 
     /**
      * 生成销售出库单
@@ -223,16 +236,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @Date 2024/4/22 18:06
      **/
     Boolean falseDeliveryBatch(List<String> ids);
-
-    /**
-     * 合并组包发货
-     *
-     * @param soIdList
-     * @return java.lang.Boolean
-     * @Author Luo_WG
-     * @Date 2024/4/24 19:29
-     **/
-    Boolean mergePackageDelivery(List<String> soIdList);
 
     /**
      * 打印面单预览
@@ -350,4 +353,20 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 取消发货
      */
     BatchResultDTO cancelShipment(String id, List<SoB2cDeliveryDTO.CancelShipmentDTO> detail);
+    /**
+     * 发货出库
+     * @author will
+     * @date 2024/7/11 10:42
+     * @param entity
+     * @return Boolean
+     */
+    Boolean pushTransferInfo(SoB2cDeliveryEntity entity);
+    /**
+     * 重新出库
+     * @author will
+     * @date 2024/7/12 15:47
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO retryOutstock(String id);
 }

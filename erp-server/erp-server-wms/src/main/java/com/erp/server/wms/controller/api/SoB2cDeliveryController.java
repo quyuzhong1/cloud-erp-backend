@@ -13,7 +13,6 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
@@ -168,9 +167,10 @@ public class SoB2cDeliveryController extends BaseController {
                 result = soB2cDeliveryService.delivery(id, deliveryType);
                 Boolean isSuccess = result.getSuccess();
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
-                if (isManual) {
+                if (isManual && isSuccess) {
                     //生成销售出库单
-                    if(isSuccess){
+                    Boolean isOutStock = soB2cDeliveryService.pushTransferInfo(entity);
+                    if (isOutStock) {
                         soB2cDeliveryService.generateB2cSoOutstock(entity);
                     }
                 }
@@ -478,5 +478,39 @@ public class SoB2cDeliveryController extends BaseController {
     public ApiResult<SoB2cDeliveryDTO.CancelShipmentView> cancelShipmentView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
         SoB2cDeliveryDTO.CancelShipmentView view = soB2cDeliveryService.cancelShipmentView(dto.getIds());
         return success(view);
+    }
+
+
+    /**
+     * 重新出库
+     * @author will
+     * @date 2024/7/12 15:47
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/retryOutstock")
+    public ApiResult<List<BatchResultDTO>> retryOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soB2cDeliveryService.retryOutstock(id);
+                if (resultDTO.getSuccess()) {
+                    SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                    soB2cDeliveryService.generateB2cSoOutstock(entity);
+                }
+            }catch (Exception e){
+                log.error("重新出库失败",e);
+                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 重新出库失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

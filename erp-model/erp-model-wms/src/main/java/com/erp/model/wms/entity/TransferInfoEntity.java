@@ -153,15 +153,7 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
-    
 
-    /**
-    @TableField(exist = false)
-    private String inWarehouseCode;
-
-    @TableField(exist = false)
-    private String outWarehouseCode;
-     */
 
     @TableField(exist = false)
     private List<TransferInfoDetailEntity> detailList;
@@ -172,6 +164,11 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
     @TableField("third_party_system")
     private String thirdPartySystem;
 
+    /**
+     * 批次号，发货单下推时生成
+     */
+    @TableField("batch_no")
+    private String batchNo;
 
     public static final String CODE = "code";
 

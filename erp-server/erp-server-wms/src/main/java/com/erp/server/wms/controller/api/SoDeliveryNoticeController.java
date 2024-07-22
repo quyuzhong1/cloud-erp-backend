@@ -15,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
@@ -357,9 +358,25 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "下推销售出库单")
     @PostMapping(value = "/generateSoDeliverySave")
-    public ApiResult generateSoDeliverySave(@RequestBody BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soDeliveryNoticeService.generateSoDeliverySave(idsDTO.getIds());
-        return flag ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> generateSoDeliverySave(@RequestBody BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(idsDTO.getIds().size());
+        for (String id : idsDTO.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soDeliveryNoticeService.generateSoDeliverySave(id);
+            }catch (Exception e){
+                log.error("发货通知单不存在, 下推销售出库单失败",e);
+                SoDeliveryNoticeEntity entity = soDeliveryNoticeService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货通知单不存在, 下推销售出库单失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

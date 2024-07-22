@@ -37,7 +37,13 @@ public enum PlatformDictEnum implements EnumMessage {
     PDD("PDD", "拼多多", "Temu", "009"),
     TMALL("Tmall", "天猫", "Tmall", "006"),
     SOP("JDZY", "京东自营厂送", "京东自营", "007"),
+
+
     WE_CHAT_VEDIO("WeChatVedio", "微信视频号", "微信视频号", "027"),
+    OFFLINE_STORE_INTERNAL("OFFLINE_STORE_INTERNAL", "线下门店-国内", "线下门店-国内", "029"),
+    ONLINE_STORE_FOREIGN("ONLINE_STORE_FOREIGN", "线下门店-国外", "线下门店-国外", "030"),
+    XIAN_YU("Xianyu", "闲鱼", "闲鱼", "031"),
+
     MERCADOLIBRE("mercadolibre", "美客多", "美客多", "033"),
     TIK_TOK("TikTok", "TikTok", "TikTok", "032"),
     //物流平台
@@ -98,6 +104,16 @@ public enum PlatformDictEnum implements EnumMessage {
         for (PlatformDictEnum value : values) {
             if (value.code.equals(code) ) {
                 return value;
+            }
+        }
+        return null;
+    }
+
+    public static String getNameByCode(String code) {
+        PlatformDictEnum[] values = values();
+        for (PlatformDictEnum value : values) {
+            if (value.code.equals(code) ) {
+                return value.getName();
             }
         }
         return null;

@@ -14,8 +14,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.mapper.VirtualWarehouseRelationMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.VirtualWarehouseRelationService;
@@ -28,10 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -166,7 +165,39 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
                 baseMapper.insert(virtualWarehouseRelationEntity);
             }
         }
+        //添加日志
+        addOperateLog(batchAddDTO,existRelationList);
+
         return new BaseResultDTO.AddDTO();
+    }
+
+    /**
+     * 添加日志
+     * @author will
+     * @date 2024/7/18 14:55
+     * @param batchAddDTO
+     * @param existRelationList
+     */
+    private void addOperateLog(VirtualWarehouseRelationDTO.BatchAddDTO batchAddDTO, List<VirtualWarehouseRelationEntity> existRelationList) {
+        if (CollectionUtils.isEmpty(existRelationList)) {
+            return;
+        }
+        List<String> warehouseIdList = existRelationList.stream().map(VirtualWarehouseRelationEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> allWarehouseIdList = new ArrayList<>();
+        allWarehouseIdList.addAll(warehouseIdList);
+        allWarehouseIdList.addAll(batchAddDTO.getWarehouseIdList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(allWarehouseIdList);
+        String newWarehouseMsg = warehouseList.stream().filter(obj -> batchAddDTO.getWarehouseIdList().contains(obj.getId()))
+                .map(WarehouseEntity::getName).distinct().collect(Collectors.joining(","));
+
+        String oldWarehouseMsg = warehouseList.stream().filter(obj -> warehouseIdList.contains(obj.getId()))
+                .map(WarehouseEntity::getName).distinct().collect(Collectors.joining(","));
+        if (StrUtil.equals(oldWarehouseMsg,newWarehouseMsg)) {
+            return;
+        }
+        // 操作日志
+        String msg = StrUtil.format("关联仓库：从【{}】修改为【{}】",oldWarehouseMsg,newWarehouseMsg );
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑信息");
     }
 
     @Override

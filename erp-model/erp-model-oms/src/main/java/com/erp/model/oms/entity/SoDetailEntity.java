@@ -203,6 +203,12 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField(value = "delivery_qty")
     private Integer deliveryQty;
 
+    /**
+     * 冻结数量
+     */
+    @TableField(value = "frozen_qty")
+    private Integer frozenQty;
+
 
     @TableField(exist = false)
     private String approveStatus;

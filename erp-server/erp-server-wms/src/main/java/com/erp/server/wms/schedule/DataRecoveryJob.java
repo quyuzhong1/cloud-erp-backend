@@ -74,7 +74,7 @@ public class DataRecoveryJob {
                 if(StrUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
                     soReturnInstockService.disApprove(idsDTO.getIds(), isPushKingdee);
                 }else if(StrUtil.isNotBlank(type) && "transferInfoService".equals(type)){
-                    transferInfoService.disApprove(idsDTO.getIds(), isPushKingdee);
+                    transferInfoService.disApprove(idsDTO.getIds(), isPushKingdee,Boolean.TRUE);
                 }else if(StrUtil.isNotBlank(type) && "soOutstockService".equals(type)){
                     soOutstockService.disApprove(idsDTO, isPushKingdee);
                 }

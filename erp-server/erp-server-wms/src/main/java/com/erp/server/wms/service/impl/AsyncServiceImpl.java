@@ -30,6 +30,7 @@ import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.service.AsyncService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.SoOutstockService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -67,6 +68,10 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private SoOutstockService soOutstockService;
+
 
     @Async("wmsErpExecutor")
     @Override
@@ -175,9 +180,6 @@ public class AsyncServiceImpl implements AsyncService {
         updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
-        //出库
-        soB2cDeliveryService.generateB2cSoOutstock(entity);
-
         String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "包装验货", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
 
@@ -198,5 +200,24 @@ public class AsyncServiceImpl implements AsyncService {
         entity.setDeliveryTime(deliveryTime);
         entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
         soB2cDeliveryService.updateById(entity);
+
+        //扣减冻结库存
+        soB2cDeliveryService.outFreezeVirtualInventory(entity);
+
+        //生成直接调拨单
+        Boolean isPush = soB2cDeliveryService.pushTransferInfo(entity);
+        if (isPush) {
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
+        }
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Async("wmsErpExecutor")
+    public void asyncGenerateB2cSoOutstock (String b2cSoId) {
+        soOutstockService.generateB2cSoOutstock(b2cSoId);
+    }
+
 }
