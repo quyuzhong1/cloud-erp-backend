@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpProductInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpProductInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="platform_create_time" property="platformCreateTime" />
+       <result column="platform_update_time" property="platformUpdateTime" />
+       <result column="source_system" property="sourceSystem" />
+       <result column="source_platform" property="sourcePlatform" />
+       <result column="spu_id" property="spuId" />
+       <result column="spu_no" property="spuNo" />
+       <result column="spu_name" property="spuName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        platform_create_time, platform_update_time, source_system, source_platform, spu_id, spu_no, spu_name
+    </sql>
+
+
+</mapper>
