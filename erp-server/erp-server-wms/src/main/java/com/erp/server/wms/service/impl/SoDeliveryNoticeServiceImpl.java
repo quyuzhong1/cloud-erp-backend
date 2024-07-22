@@ -900,6 +900,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(soInfoEntity.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_99105);
         }
+        List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySourceId(Collections.singletonList(id));
+        if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
+            throw new ServiceException(ApiError.ERROR_99129);
+        }
         List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.listDetailByMainId(id);
         long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
         if (closeCount > 0) {

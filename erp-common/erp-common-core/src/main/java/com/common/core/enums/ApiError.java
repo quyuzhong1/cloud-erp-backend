@@ -878,6 +878,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99127(99127,"发货通知单【{}】总数量不能大于销售数量"),
     ERROR_99128(99128,"组合产品【{}】的拣货数量与bom用量比例不一致，无法修改"),
+    ERROR_99129(99129,"已下推销售出库单，不能重复下推"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
