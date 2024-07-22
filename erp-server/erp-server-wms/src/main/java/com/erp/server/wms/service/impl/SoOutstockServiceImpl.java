@@ -864,23 +864,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         soInfoFeign.updateDeliveryStatus(paramList);
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        String soInfoType = SourceTypeEnum.SO_INFO.getCode();
-        List<InOutStockDTO> members = new ArrayList<>();
         if (ObjectUtil.isNotEmpty(entity.getBatchNo())) {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
         } else {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
         }
-        //迭代1.27.5   B2B销售订单下推的销售出库单扣可用库存
-        if (soInfoType.equals(sourceType)) {
-            members = baseMapper.listInventoryInOut(allList);
-        } else {
-            List<PickingListsDTO.SourceView> pickingLists = pickingListsService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
-            for (PickingListsDTO.SourceView detail : pickingLists) {
-                InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity, detail.getSourceDetailId(),detail.getSkuId(), detail.getSkuNo(),detail.getStagingLocation(),detail.getQty());
-                members.add(stockDTO);
-            }
-        }
+        List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
         for (InOutStockDTO member : members) {
             member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
         }
