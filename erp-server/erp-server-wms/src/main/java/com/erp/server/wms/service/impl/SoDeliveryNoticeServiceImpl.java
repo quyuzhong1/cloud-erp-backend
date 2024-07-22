@@ -1005,7 +1005,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             // 获取仓库暂存区默认配置
         CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                 .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
-                .filter(staging -> staging.getWarehouseId().equals(warehouseId))
+                .filter(staging -> staging.getWarehouseId().equals(entity.getWarehouseId()))
                 .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
         List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (SoDeliveryNoticeDetailEntity view : entityList) {
