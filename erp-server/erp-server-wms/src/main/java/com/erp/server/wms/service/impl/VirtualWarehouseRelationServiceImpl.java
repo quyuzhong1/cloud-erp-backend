@@ -30,10 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -186,12 +183,14 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
             return;
         }
         List<String> warehouseIdList = existRelationList.stream().map(VirtualWarehouseRelationEntity::getWarehouseId).distinct().collect(Collectors.toList());
-        warehouseIdList.addAll(batchAddDTO.getWarehouseIdList());
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
-        String oldWarehouseMsg = warehouseList.stream().filter(obj -> batchAddDTO.getWarehouseIdList().contains(obj.getId()))
+        List<String> allWarehouseIdList = new ArrayList<>();
+        allWarehouseIdList.addAll(warehouseIdList);
+        allWarehouseIdList.addAll(batchAddDTO.getWarehouseIdList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(allWarehouseIdList);
+        String newWarehouseMsg = warehouseList.stream().filter(obj -> batchAddDTO.getWarehouseIdList().contains(obj.getId()))
                 .map(WarehouseEntity::getName).distinct().collect(Collectors.joining(","));
 
-        String newWarehouseMsg = warehouseList.stream().filter(obj -> warehouseIdList.contains(obj.getId()))
+        String oldWarehouseMsg = warehouseList.stream().filter(obj -> warehouseIdList.contains(obj.getId()))
                 .map(WarehouseEntity::getName).distinct().collect(Collectors.joining(","));
         if (StrUtil.equals(oldWarehouseMsg,newWarehouseMsg)) {
             return;
