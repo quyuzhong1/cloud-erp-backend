@@ -13,6 +13,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
@@ -39,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -231,6 +234,12 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST);
         }
         List<String> skuIdList = detailList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+
+        //销售套装bom
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<String> allSkuIdList = bomChildrenSkuList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getParentSkuId())).collect(Collectors.toList());
+
+        skuIdList.addAll(allSkuIdList);
         //虚拟库存
         VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
         paramDTO.setSkuIdList(skuIdList);
@@ -266,11 +275,30 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             Integer frozenQty = soDetailList.stream().filter(obj -> thisDetailIdList.contains(obj.getId())).map(SoDetailEntity::getFrozenQty).reduce(MathUtil.ZERO, Integer::sum);
 
             Integer deliveryQty = entry.getValue().stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            //虚拟库存
-            Integer virtualInventoryQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId)).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
-            if (deliveryQty > virtualInventoryQty + frozenQty) {
-                throw new ServiceException(StrUtil.format("SKU【{}】，实体仓库【{}】，虚拟仓库【{}】库存不足，可用【{}】，发货【{}】，冻结【{}】",entry.getValue().get(0).getSkuNo()
-                        ,soDeliveryNoticeEntity.getWarehouseName(),virtualWarehouseEntity.getName(),virtualInventoryQty,deliveryQty,frozenQty));
+            //bom信息
+            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), skuId) && StrUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(childList)) {
+                for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+                    //虚拟库存
+                    Integer virtualInventoryQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId()))
+                            .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
+
+                    //发货数量 > 可用数量 + 冻结数量
+                    if (deliveryQty * childrenSkuDTO.getQuantity() > virtualInventoryQty + frozenQty  * childrenSkuDTO.getQuantity()) {
+                        throw new ServiceException(StrUtil.format("SKU【{}】，实体仓库【{}】，虚拟仓库【{}】库存不足，可用【{}】，发货【{}】，冻结【{}】",childrenSkuDTO.getSkuNo()
+                                ,soDeliveryNoticeEntity.getWarehouseName(),virtualWarehouseEntity.getName(),virtualInventoryQty,deliveryQty,frozenQty));
+                    }
+                }
+            } else {
+                //虚拟库存
+                Integer virtualInventoryQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId))
+                        .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
+
+                //发货数量 > 可用数量 + 冻结数量
+                if (deliveryQty > virtualInventoryQty + frozenQty) {
+                    throw new ServiceException(StrUtil.format("SKU【{}】，实体仓库【{}】，虚拟仓库【{}】库存不足，可用【{}】，发货【{}】，冻结【{}】",entry.getValue().get(0).getSkuNo()
+                            ,soDeliveryNoticeEntity.getWarehouseName(),virtualWarehouseEntity.getName(),virtualInventoryQty,deliveryQty,frozenQty));
+                }
             }
         }
     }
