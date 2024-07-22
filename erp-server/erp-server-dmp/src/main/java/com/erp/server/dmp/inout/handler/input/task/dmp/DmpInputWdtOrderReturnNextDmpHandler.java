@@ -39,7 +39,13 @@ public class DmpInputWdtOrderReturnNextDmpHandler extends DmpInputWdtNextDmpHand
 				Object amount = dmpDataMap.get("amount");
 				Object qty = dmpDataMap.get("qty");
 				if(amount != null && qty != null) {
-					dmpDataMap.put("sellPrice", new BigDecimal(amount.toString()).divide(new BigDecimal(qty.toString()) , 2, RoundingMode.HALF_UP));
+					BigDecimal amountBigDecimal = new BigDecimal(amount.toString());
+					BigDecimal qtyBigDecimal = new BigDecimal(qty.toString());
+					if(qtyBigDecimal.compareTo(BigDecimal.ZERO) != 0) {
+						dmpDataMap.put("sellPrice", amountBigDecimal.divide(qtyBigDecimal , 2, RoundingMode.HALF_UP));
+					}else {
+						dmpDataMap.put("sellPrice", amountBigDecimal);
+					}
 				}
 			}
 		}
