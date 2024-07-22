@@ -143,7 +143,8 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             entity.setWeight(dto.getWeight());
             entity.setWeightUnit(dto.getWeightUnit());
             entity.setWeighingTime(LocalDateTime.now());
-            entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
+            // 不记录(避免后续手动出库无标记发货)
+//            entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
             entity.setIsWeigh(true);
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
