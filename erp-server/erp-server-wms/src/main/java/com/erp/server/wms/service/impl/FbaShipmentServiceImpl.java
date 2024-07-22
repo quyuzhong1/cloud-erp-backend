@@ -1437,9 +1437,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty);
             }
         }
+
         //完结不修改状态
-        if (!FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
-                &&!FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())) {
+        if (ObjectUtils.isNotEmpty(shipmentEntity)
+                && !FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
+                && !FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())) {
             lambdaUpdate().eq(FbaShipmentEntity::getId, deliveryEntity.getSourceId()).set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.SHIPPED.getCode()).update();
         }
         return fbaShipmentDetailService.updateBatchById(fbaShipmentDetailEntities);
@@ -1475,8 +1477,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Arrays.asList(shipmentEntity.getId()));
         long count = deliveryEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         //完结不修改状态
-        if (!FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
-                &&!FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
+        if (ObjectUtils.isNotEmpty(shipmentEntity)
+                && !FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
+                && !FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
                 && count <= 1) {
             lambdaUpdate().eq(FbaShipmentEntity::getId, deliveryEntity.getSourceId()).set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.UN_SHIPPED.getCode()).update();
         }
