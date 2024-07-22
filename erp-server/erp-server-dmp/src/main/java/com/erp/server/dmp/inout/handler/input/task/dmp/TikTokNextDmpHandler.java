@@ -27,11 +27,30 @@ public class TikTokNextDmpHandler extends DmpInputDoNextDmpHandler{
                 Object recipientAddress = detail.get("recipientAddress");
                 if (ObjectUtil.isNotEmpty(recipientAddress)) {
                     Map<String, Object> recipientAddressMap = (Map<String, Object>) recipientAddress;
-                    detail.put("buyerName", recipientAddressMap.get("name"));
+                    detail.put("buyer_name", recipientAddressMap.get("name"));
+                    detail.put("main_street", recipientAddressMap.get("addressLine1"));
+                    detail.put("second_street", recipientAddressMap.get("addressLine2") + " " + recipientAddressMap.get("addressLine3") + " " + recipientAddressMap.get("addressLine4"));
+                    detail.put("main_phone", recipientAddressMap.get("phoneNumber"));
 
                     List<Map<String, Object>> districtInfoList = (List<Map<String, Object>>) recipientAddressMap.get("districtInfo");
 
-
+                    String district = "";
+                    for (Map<String, Object> map : districtInfoList) {
+                        Object addressLevelName = map.get("addressLevelName");
+                        if (String.valueOf(addressLevelName).equalsIgnoreCase("state")) {
+                            detail.put("province", map.get("addressName"));
+                        }
+                        if (String.valueOf(addressLevelName).equalsIgnoreCase("city")) {
+                            detail.put("city", map.get("addressName"));
+                        }
+                        if (String.valueOf(addressLevelName).equalsIgnoreCase("Sub-district")) {
+                            district = district + " " + map.get("addressName");
+                        }
+                        if (String.valueOf(addressLevelName).equalsIgnoreCase("Urban Community")) {
+                            district = district + " " + map.get("addressName");
+                        }
+                    }
+                    detail.put("district", district);
                 }
 
 
