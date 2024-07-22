@@ -97,6 +97,7 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -1722,7 +1723,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public BatchResultDTO cancelShipment(String id, List<SoB2cDeliveryDTO.CancelShipmentDTO> detail) {
         SoB2cDeliveryEntity old = getById(id);
         SoB2cDeliveryEntity entity = new SoB2cDeliveryEntity();
-        BeanMapperUtils.copy(entity,old);
+        BeanUtils.copyProperties(old, entity);
         checkDelivery(old);
         //修改订单状态
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
