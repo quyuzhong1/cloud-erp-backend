@@ -107,7 +107,11 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
      */
     @TableField("shipping_order_no")
     private String shippingOrderNo;
-
+    /**
+     * 组包单号
+     */
+    @TableField(exist = false)
+    private String packageForecastCode;
 
     public static final String MAIN_ID = "main_id";
 
