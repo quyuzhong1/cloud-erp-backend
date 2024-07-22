@@ -206,7 +206,7 @@ public class PickingListsDTO {
             this.pickingQty = detail.getQty();
             this.warehouseId = entity.getWarehouseId();
             this.warehouseName = entity.getWarehouseName();
-//            this.warehouseLocation = detail.getWarehouseLocation();
+            this.warehouseLocation = detail.getWarehouseLocation();
         }
     }
 

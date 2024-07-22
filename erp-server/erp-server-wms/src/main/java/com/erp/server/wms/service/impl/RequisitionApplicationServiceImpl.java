@@ -1115,9 +1115,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             throw new ServiceException(ApiError.ERROR_99110, "头程发货单");
         }
         List<RequisitionApplicationDetailEntity> details = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(id));
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<RequisitionApplicationDTO.PickingViewDTO> result = new ArrayList<>();
         for (RequisitionApplicationDetailEntity detail : details) {
-            if (detail.getApproveQty() - detail.getPickingQty() <= 0){
+            if (ignoreInventorySkus.contains(detail.getSkuId()) || (detail.getApproveQty() - detail.getPickingQty() <= 0)){
                 continue;
             }
             RequisitionApplicationDTO.PickingViewDTO viewDTO = new RequisitionApplicationDTO.PickingViewDTO();

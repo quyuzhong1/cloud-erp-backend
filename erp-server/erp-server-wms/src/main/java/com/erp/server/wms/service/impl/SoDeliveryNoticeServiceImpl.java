@@ -1294,10 +1294,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
             throw new ServiceException(ApiError.ERROR_99110, "销售出库单");
         }
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> details = soDeliveryNoticeDetailService.listDetailByMainId(id);
         List<SoDeliveryNoticeDTO.PickingViewDTO> result = new ArrayList<>();
         for (SoDeliveryNoticeDetailEntity detail : details) {
-            if (detail.getDeliveryQty() - detail.getPickingQty() <= 0){
+            if (ignoreInventorySkus.contains(detail.getSkuId()) || (detail.getDeliveryQty() - detail.getPickingQty() <= 0)){
                 continue;
             }
             SoDeliveryNoticeDTO.PickingViewDTO viewDTO = new SoDeliveryNoticeDTO.PickingViewDTO();
