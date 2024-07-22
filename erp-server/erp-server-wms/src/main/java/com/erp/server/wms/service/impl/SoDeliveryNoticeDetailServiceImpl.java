@@ -285,7 +285,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
                     //发货数量 > 可用数量 + 冻结数量
                     if (deliveryQty * childrenSkuDTO.getQuantity() > virtualInventoryQty + frozenQty  * childrenSkuDTO.getQuantity()) {
-                        throw new ServiceException(StrUtil.format("SKU【{}】，实体仓库【{}】，虚拟仓库【{}】库存不足，可用【{}】，发货【{}】，冻结【{}】",entry.getValue().get(0).getSkuNo()
+                        throw new ServiceException(StrUtil.format("SKU【{}】，实体仓库【{}】，虚拟仓库【{}】库存不足，可用【{}】，发货【{}】，冻结【{}】",childrenSkuDTO.getSkuNo()
                                 ,soDeliveryNoticeEntity.getWarehouseName(),virtualWarehouseEntity.getName(),virtualInventoryQty,deliveryQty,frozenQty));
                     }
                 }
