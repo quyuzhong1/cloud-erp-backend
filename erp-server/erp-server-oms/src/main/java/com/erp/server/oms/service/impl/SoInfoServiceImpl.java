@@ -59,6 +59,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.MachineTypeEnum;
+import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -2837,7 +2838,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //非组合品不能下推加工单
         List<String> skuIds = soDetailEntityList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
-
+        List<CfgRulePickingStagingEntity> warehouseStagingList = FeignQuery.list(CfgRulePickingStagingEntity.class);
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         Boolean isHasAdd = Boolean.FALSE;
         //生成加工单
@@ -2864,7 +2865,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 addDetailDTO.setSkuId(soDetailEntity.getSkuId());
                 addDetailDTO.setSkuNo(soDetailEntity.getSkuNo());
                 addDetailDTO.setQty(soDetailEntity.getQty());
-                addDetailDTO.setWarehouseLocation(soDetailEntity.getWarehouseLocation());
+                // 获取仓库暂存区默认配置
+                CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                        .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
+                        .filter(staging -> staging.getWarehouseId().equals(entry.getWarehouseId()))
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                addDetailDTO.setWarehouseLocation(pickingStaging.getWarehouseLocation());
                 List<BomChildrenSkuDTO> bomList = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(soDetailEntity.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(obj.getType())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(bomList)) {
                     continue;
@@ -2880,6 +2886,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     subComponentsDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
                     subComponentsDTO.setWarehouseId(entry.getWarehouseId());
                     subComponentsDTO.setQty(soDetailEntity.getQty() * bomChildrenSkuDTO.getQuantity());
+                    subComponentsDTO.setWarehouseLocation(pickingStaging.getWarehouseLocation());
                     subComponentsList.add(subComponentsDTO);
                 }
                 addDetailDTO.setSubComponentsList(subComponentsList);

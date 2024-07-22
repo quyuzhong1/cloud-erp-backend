@@ -21,7 +21,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.LengthConverterUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
@@ -1052,7 +1055,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             addDTO.setDemandType(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) ? FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode():FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
             //来源类型
             addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
-
+            List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
             //映射详情信息
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : value) {
@@ -1060,37 +1063,41 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 if (CollectionUtils.isEmpty(pickingDetails)) {
                     continue;
                 }
-                for (PickingDetailEntity pickingDetail : pickingDetails) {
-                    FirstMileDeliveryDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
-                    //查询sku是否存在子SKU
-                    List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
-                    if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                        detailAddDto.setIsCombination(Boolean.TRUE);
-                    } else {
-                        detailAddDto.setIsCombination(Boolean.FALSE);
-                    }
-                    //映射产品信息
-                    SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).distinct().findFirst().orElse(new SkuVO());
-                    if (ObjectUtil.isNotEmpty(skuVO)) {
-                        detailAddDto.setNetWeight(skuVO.getNetWeight());
-                        detailAddDto.setProductSizeLength(LengthConverterUtil.mmToCm(skuVO.getProductLength()));
-                        detailAddDto.setProductSizeWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
-                        detailAddDto.setProductSizeHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
-                    }
-                    detailAddDto.setDeliveryQty(pickingDetail.getQty());
-                    detailAddDto.setPlanQty(pickingDetail.getQty());
-                    RequisitionApplicationDetailEntity detailEntity = detailEntities.stream()
-                            .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
-                            .findFirst()
-                            .orElse(new RequisitionApplicationDetailEntity());
-                    if (viewDTO.getDeliveryWarehouseId().equals(detailEntity.getToWarehouseId())) {
-                        detailAddDto.setWarehouseLocation(pickingDetail.getStagingLocation());
-                    } else {
-                        detailAddDto.setWarehouseLocation("");
-                    }
-                    detailAddList.add(detailAddDto);
+                FirstMileDeliveryDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
+                //查询sku是否存在子SKU
+                List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                    detailAddDto.setIsCombination(Boolean.TRUE);
+                } else {
+                    detailAddDto.setIsCombination(Boolean.FALSE);
                 }
+                //映射产品信息
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).distinct().findFirst().orElse(new SkuVO());
+                if (ObjectUtil.isNotEmpty(skuVO)) {
+                    detailAddDto.setNetWeight(skuVO.getNetWeight());
+                    detailAddDto.setProductSizeLength(LengthConverterUtil.mmToCm(skuVO.getProductLength()));
+                    detailAddDto.setProductSizeWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
+                    detailAddDto.setProductSizeHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
+                }
+                detailAddDto.setDeliveryQty(viewDTO.getDeliveryQty());
+                detailAddDto.setPlanQty(viewDTO.getDeliveryQty());
+                RequisitionApplicationDetailEntity detailEntity = detailEntities.stream()
+                        .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
+                        .findFirst()
+                        .orElse(new RequisitionApplicationDetailEntity());
+                if (viewDTO.getDeliveryWarehouseId().equals(detailEntity.getToWarehouseId())) {
+                    // 获取仓库暂存区默认配置
+                    CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                            .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
+                            .filter(staging -> staging.getWarehouseId().equals(detailEntity.getToWarehouseId()))
+                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                    detailAddDto.setWarehouseLocation(pickingStaging.getWarehouseLocation());
+                } else {
+                    detailAddDto.setWarehouseLocation("");
+                }
+                detailAddList.add(detailAddDto);
             }
+
             addDTO.setDetailList(detailAddList);
             BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
             if (Boolean.TRUE.equals(isSubmit)) {

@@ -880,7 +880,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (soInfoType.equals(sourceType)) {
             members = baseMapper.listInventoryInOut(allList);
         } else {
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
             List<PickingListsDTO.SourceView> pickingLists = pickingListsService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
             for (PickingListsDTO.SourceView detail : pickingLists) {
                 InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity,detail.getSourceDetailId() ,detail.getSkuId(), detail.getSkuNo(),detail.getStagingLocation(),detail.getQty());
