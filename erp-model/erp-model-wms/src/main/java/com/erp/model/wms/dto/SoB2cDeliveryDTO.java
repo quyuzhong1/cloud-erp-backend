@@ -912,7 +912,7 @@ public class SoB2cDeliveryDTO implements Serializable {
 
         @NotNull(message = "波次订单数量不能为空")
         @Min(value = 1, message = "波次订单数量最小为1")
-        @Max(value = 999, message = "波次订单数量最大为999")
+        @Max(value = 9999, message = "波次订单数量最大为9999")
         private Integer num;
 
         private Boolean atuoAemainder = false;
