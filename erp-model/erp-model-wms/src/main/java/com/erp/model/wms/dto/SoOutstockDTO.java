@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -503,7 +504,9 @@ public class SoOutstockDTO implements Serializable {
             this.sourceCode = entity.getCode();
             this.sourceType = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
             this.planDeliveryDate = entity.getPlanDeliveryDate();
-            this.actualDeliveryDate = entity.getActualDeliveryDate().atStartOfDay();
+            if (ObjectUtil.isNotEmpty(entity.getActualDeliveryDate())) {
+                this.actualDeliveryDate = entity.getActualDeliveryDate().atStartOfDay();
+            }
             this.trackNo = entity.getTrackNo();
             this.carrierId = entity.getCarrierId();
             this.sellerId = entity.getSellerId();
