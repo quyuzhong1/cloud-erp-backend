@@ -1890,10 +1890,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIds) ? customerInfoService.listByIds(customerIds) : Collections.emptyList();
         for (SoInfoDTO.CustomerDTO item : resultList) {
             String customerId = item.getCustomerId();
-            String customerName = customerList.stream().filter(c -> c.getId().equals(customerId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setCustomerName(customerName);
+            CustomerInfoEntity customerInfoEntity = customerList.stream().filter(c -> c.getId().equals(customerId)).findFirst().orElse(new CustomerInfoEntity());
+            item.setCustomerName(Optional.ofNullable(customerInfoEntity.getName()).orElse(""));
             String type = item.getOrderType();
+            item.setCountryId(customerInfoEntity.getCountryId());
             item.setOrderTypeName(BillTypeEnum.getName(type));
         }
         return resultList;
