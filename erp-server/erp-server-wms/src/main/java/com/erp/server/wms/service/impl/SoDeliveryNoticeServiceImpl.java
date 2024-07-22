@@ -1361,7 +1361,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             if (!org.springframework.util.ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                 Integer qty = pickingDetailEntities.stream()
                         .filter(v -> v.getSourceDetailId().equals(detailEntity.getId()))
-                        .filter(v -> v.getSkuId().equals(detailEntity.getSkuId()))
+                        .filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId()))
                         .map(PickingDetailEntity::getQty)
                         .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty / Optional.ofNullable(bomChildrenSkuDTO.getQuantity()).orElse(1));

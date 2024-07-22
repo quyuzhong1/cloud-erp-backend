@@ -460,11 +460,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 ).collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(bomChildren)) {
             Map<String, Integer> skuMap = dto.getDetails().stream().filter(v -> v.getSourceDetailId().equals(detailId))
-                    .collect(Collectors.toMap(PickingDetailDTO.View::getSkuId, PickingDetailDTO.View::getQty, Integer::sum));
+                    .collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getQty, Integer::sum));
             //计算比例
-            int proportion = Optional.ofNullable(skuMap.get(bomChildren.get(0).getSkuId())).orElse(0) / bomChildren.get(0).getQuantity();
+            int proportion = Optional.ofNullable(skuMap.get(bomChildren.get(0).getSkuNo())).orElse(0) / bomChildren.get(0).getQuantity();
             for (BomChildrenSkuDTO bomChild : bomChildren) {
-                int temp = Optional.ofNullable(skuMap.get(bomChild.getSkuId())).orElse(0) / bomChild.getQuantity();
+                int temp = Optional.ofNullable(skuMap.get(bomChild.getSkuNo())).orElse(0) / bomChild.getQuantity();
                 if (proportion != temp) {
                     throw new ServiceException(ApiError.ERROR_99128, String.join(",", skuMap.keySet()));
                 }
