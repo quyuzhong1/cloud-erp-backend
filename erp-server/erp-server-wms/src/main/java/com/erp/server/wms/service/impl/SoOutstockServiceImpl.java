@@ -1195,7 +1195,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstockDetailService.removeByMainIdList(ids);
 
             //自动删除同批次的直接调拨单
-            deleteTransferInfo(list);
+            soOutstockService.deleteTransferInfo(list);
 
             //B2B发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
@@ -1209,7 +1209,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2024/7/12 10:05
      * @param list
      */
-    private void deleteTransferInfo (List<SoOutstockEntity> list) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void deleteTransferInfo(List<SoOutstockEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -1279,7 +1282,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "作废");
 
         //自动删除同批次的直接调拨单
-        deleteTransferInfo(list);
+        soOutstockService.deleteTransferInfo(list);
 
         //B2B发送金蝶
         sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());

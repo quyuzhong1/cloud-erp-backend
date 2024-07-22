@@ -1175,7 +1175,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public void rollbackPickingInventory(List<String> ids) {
         List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
-
+        //删除拣货单
+        pickingListsService.deleteBySourceId(ids);
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_B2C_DELIVERY, ids);
         //回滚虚拟仓库存
         virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
@@ -1622,8 +1623,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             for (List<String> partition : partitions) {
                 if (Boolean.FALSE.equals(dto.getAtuoAemainder()) && partition.size() < dto.getNum()) {
                     ApplicationContextUtils.getBean(SoB2cDeliveryService.class).rollbackPickingInventory(partition);
-                    //回滚拣货相关数据
-                    pickingListsService.deleteBySourceId(partition);
                     break;
                 }
                 WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
