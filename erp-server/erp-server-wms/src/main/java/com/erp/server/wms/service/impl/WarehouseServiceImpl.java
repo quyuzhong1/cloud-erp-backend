@@ -673,10 +673,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         //发送金蝶
         String operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
         if (dto.getState()) {
-            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Arrays.asList(dto.getId()));
-            if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
-                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE, shopInfoEntities.get(MathUtil.ZERO).getName());
-            }
+            //Delete by Edison.qu 2024-07-23 去除不必要的限制:仓库绑定店铺，不允许禁用
+//            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Arrays.asList(dto.getId()));
+//            if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
+//                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE, shopInfoEntities.get(MathUtil.ZERO).getName());
+//            }
             operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
         //审核通过后发送金蝶
@@ -767,10 +768,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             }
         }
         //仓库下绑定第三方店铺不能进行反审核
-        //Delete by Edison.qu 2024-07-23 去除不必要的限制
-//        list.forEach(warehouseEntity -> {
-//            checkDmpThirdMapping(warehouseEntity.getId(),warehouseEntity.getName());
-//        });
+        list.forEach(warehouseEntity -> {
+            checkDmpThirdMapping(warehouseEntity.getId(),warehouseEntity.getName());
+        });
 
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
 
