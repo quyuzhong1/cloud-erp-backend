@@ -544,10 +544,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         checkName(warehouseId, name);
         checkKingdeeWarehouseCode(warehouseId, code);
         //仓库下绑定第三方店铺不能修改为禁用状态
-        // Delete by Edison 2024-07-23 被绑定不影响禁用仓库
-//        if (Objects.nonNull(dto.getDisabled()) && !Objects.equals(dto.getDisabled(), warehouse.getDisabled()) && Objects.equals(dto.getDisabled(), true)) {
-//            checkDmpThirdMapping(warehouseId,warehouse.getName());
-//        }
+        if (Objects.nonNull(dto.getDisabled()) && !Objects.equals(dto.getDisabled(), warehouse.getDisabled()) && Objects.equals(dto.getDisabled(), true)) {
+            checkDmpThirdMapping(warehouseId,warehouse.getName());
+        }
         BeanMapper.copy(dto, warehouse);
 
         //如果设置了在途仓，获取匹配在途仓名称
@@ -667,10 +666,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             throw new ServiceException(ApiError.ERROR_99001);
         }
         //仓库下绑定第三方店铺不能修改为禁用状态
-        // Delete by Edison 2024-07-23 被绑定不影响禁用仓库
-//        if (Objects.nonNull(dto.getState()) && !Objects.equals(dto.getState(), warehouse.getDisabled()) && Objects.equals(dto.getState(), true)) {
-//            checkDmpThirdMapping(warehouseId,warehouse.getName());
-//        }
+        if (Objects.nonNull(dto.getState()) && !Objects.equals(dto.getState(), warehouse.getDisabled()) && Objects.equals(dto.getState(), true)) {
+            checkDmpThirdMapping(warehouseId,warehouse.getName());
+        }
         warehouse.setDisabled(dto.getState());
         this.updateById(warehouse);
 
