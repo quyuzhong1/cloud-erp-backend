@@ -1,34 +1,19 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformProductDTO;
-import com.common.business.dto.WdtReturnOrderDTO;
-import com.common.business.dto.WdtReturnOrderDetailDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.OrderTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpSoReturnDetailEntity;
-import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 
 @Service
 @Scope("prototype")
