@@ -1042,6 +1042,8 @@ public enum ApiError implements Serializable {
     ERROR_92253(92253,"装箱中SKU累计装箱数量不可大于拣货数量"),
     ERROR_92254(92254,"本箱已完成称重，不支持调整装箱"),
     ERROR_92255(92255,"调整装箱后，装箱数量不能为0"),
+    ERROR_92256(92256,"来源单号不同不能同时打印"),
+    ERROR_92257(92257,"来源单号未找到"),
 
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
