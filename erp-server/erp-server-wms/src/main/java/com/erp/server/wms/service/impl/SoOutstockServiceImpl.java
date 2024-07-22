@@ -55,7 +55,6 @@ import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
-import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
@@ -65,9 +64,6 @@ import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DictBasicEnum;
-import com.erp.model.wms.enums.PackingTaskStatusEnum;
-import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -879,7 +875,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (soInfoType.equals(sourceType)) {
             members = baseMapper.listInventoryInOut(allList);
         } else {
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
             List<PickingListsDTO.SourceView> pickingLists = pickingListsService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
             for (PickingListsDTO.SourceView detail : pickingLists) {
                 InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity, detail.getSourceDetailId(),detail.getSkuId(), detail.getSkuNo(),detail.getStagingLocation(),detail.getQty());
@@ -2601,6 +2596,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstock.setActualDeliveryDate(dto.getActualDeliveryDate());
         } else {
             soOutstock.setActualDeliveryDate(billDate.atStartOfDay());
+        }
+        //取直接调拨单的流水号
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Arrays.asList(dto.getSourceId()));
+        if (CollectionUtils.isNotEmpty(transferInfoList)) {
+            soOutstock.setBatchNo(transferInfoList.get(0).getBatchNo());
         }
         soOutstock.setPackDate(billDate);
         Boolean addResult = super.save(soOutstock);
