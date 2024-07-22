@@ -333,13 +333,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     public List<PickingListsDTO.PrintView> print(List<String> ids) {
         List<PickingListsEntity> pickingLists = listByIds(ids);
         List<String> sourceCodes = pickingLists.stream().map(PickingListsEntity::getSourceCode).distinct().collect(Collectors.toList());
-        if (sourceCodes.size() > 1) {
-            throw new ServiceException("来源单号不同不能同时打印");
+        if (sourceCodes.size() > 1){
+            throw new ServiceException(ApiError.ERROR_92256);
         }
         PickingListsEntity pickingListsEntity = pickingLists.get(0);
         String sourceCode = pickingListsEntity.getSourceCode();
         if (StrUtil.isBlank(sourceCode)){
-            throw new ServiceException("来源单号未找到");
+            throw new ServiceException(ApiError.ERROR_92257);
         }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
