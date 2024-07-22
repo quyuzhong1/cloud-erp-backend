@@ -125,7 +125,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      */
     private void addThirdMappingOperateLog (List<ThirdMappingDTO.AddDTO> thirdMappingList,VirtualWarehouseEntity virtualWarehouseEntity) {
         //更新数据
-        List<String> thirdIdList = thirdMappingList.stream().map(ThirdMappingDTO.AddDTO::getThirdId).distinct().collect(Collectors.toList());
+        List<String> thirdIdList = thirdMappingList.stream().filter(obj -> StrUtil.isNotBlank(obj.getThirdId())).map(ThirdMappingDTO.AddDTO::getThirdId).distinct().collect(Collectors.toList());
         List<ThirdWarehouseEntity> thirdWarehouseList = CollectionUtils.isEmpty(thirdIdList) ?
                 new ArrayList<>() : FeignQuery.create(ThirdWarehouseEntity.class).in(ThirdWarehouseEntity::getWarehouseId).list();
 
@@ -137,7 +137,9 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         List<String> oldChannelMsg = oldList.stream().map(obj -> StrUtil.format("{}-{}", ThirdSysTypeEnum.getNameByCode(obj.getThirdSysType()), obj.getThirdName())).collect(Collectors.toList());
         //修改后信息
         List<String> newChannelMsg = new ArrayList<>();
-        for (ThirdMappingDTO.AddDTO addDTO : thirdMappingList) {
+        //不处理id为空的数据
+        List<ThirdMappingDTO.AddDTO> thirdMappings = thirdMappingList.stream().filter(obj -> StrUtil.isNotBlank(obj.getThirdId())).collect(Collectors.toList());
+        for (ThirdMappingDTO.AddDTO addDTO : thirdMappings) {
             //拼接日志
             String thirdWarehouseName = thirdWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), addDTO.getThirdId())).map(ThirdWarehouseEntity::getName).findFirst().orElse("");
             String msg = StrUtil.format("{}-{};",ThirdSysTypeEnum.getNameByCode(addDTO.getThirdSysType()),thirdWarehouseName);
@@ -274,7 +276,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         virtualWarehouseRelationService.batchAdd(bindRelation(updateDTO.getWarehouseIdList(), virtualWarehouseEntity.getId()));
 
         //外部仓日志
-        addThirdMappingOperateLog(updateDTO.getThirdMappingList(),virtualWarehouseEntity);
+        addThirdMappingOperateLog(updateDTO.getThirdMappingList(),old);
         //新增关联外部仓
         dmpThirdMappingFeign.add(bindThirdMapping(updateDTO.getThirdMappingList(), virtualWarehouseEntity));
 
@@ -386,6 +388,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         VirtualWarehouseEntity virtualWarehouseEntity = new VirtualWarehouseEntity();
         virtualWarehouseEntity.setId(updateStateDTO.getId());
         virtualWarehouseEntity.setDisabled(updateStateDTO.getDisabled());
+        virtualWarehouseEntity.setName(vwEntity.getName());
         baseMapper.updateById(virtualWarehouseEntity);
 
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), vwEntity.getCode(), "虚拟仓");
