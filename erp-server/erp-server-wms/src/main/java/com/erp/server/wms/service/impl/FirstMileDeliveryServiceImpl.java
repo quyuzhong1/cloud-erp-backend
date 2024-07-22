@@ -151,6 +151,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
     @Resource
+    private PackingTaskService packingTaskService;
+    @Resource
     private CfgRuleOutService cfgRuleOutService;
     @Resource
     private PickingListsService pickingListsService;
@@ -162,8 +164,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private RequisitionApplicationService requisitionApplicationService;
     @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
-    @Resource
-    private PackingTaskService packingTaskService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -1887,13 +1887,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(deliveryEntity.getDestWarehouseId(), deliveryEntity.getDeliveryWarehouseId()));
 
         //优蓝子中转仓
-        CfgSettingEntity cfgSetting = cfgSettingService.getOne(new LambdaQueryWrapper<CfgSettingEntity>().eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode()));
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
         if(Objects.isNull(cfgSetting)){
             throw new ServiceException("没有找到优蓝子中转仓配置");
         }
-        JSONObject dataJson = cfgSetting.getDataJson();
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
         WarehouseEntity warehouseEntity = warehouseService.getOne(new LambdaQueryWrapper<WarehouseEntity>()
-                .eq(WarehouseEntity::getId, dataJson.getStr("warehouseId"))
+                .eq(WarehouseEntity::getId, transitSettingDTO.getWarehouseId())
                 .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()));
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //来源类型
@@ -2013,13 +2016,17 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //调入组织
         addDTO.setInOrgId(destOnWayWarehouse.getOrgId());
         //蓝子中转仓
-        CfgSettingEntity cfgSetting = cfgSettingService.getOne(new LambdaQueryWrapper<CfgSettingEntity>().eq(CfgSettingEntity::getKey, CfgSettingEnum.TRANSIT_SETTING.getCode()));
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
         if(Objects.isNull(cfgSetting)){
             throw new ServiceException("没有找到优蓝子中转仓配置");
         }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
         JSONObject dataJson = cfgSetting.getDataJson();
         WarehouseEntity ulanziWarehouse = warehouseService.getOne(new LambdaQueryWrapper<WarehouseEntity>()
-                .eq(WarehouseEntity::getId, dataJson.getStr("warehouseId"))
+                .eq(WarehouseEntity::getId, transitSettingDTO.getWarehouseId())
                 .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()));
         addDTO.setOutOrgId(ulanziWarehouse.getOrgId());
         //调拨类型
