@@ -454,7 +454,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 //生成直接调拨单
                 Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
                 if (isPush) {
-                    soOutstockService.generateB2cSoOutstock(soB2cEntity.getId());
+                    asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
                 }
                 //更新备注
                 soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");

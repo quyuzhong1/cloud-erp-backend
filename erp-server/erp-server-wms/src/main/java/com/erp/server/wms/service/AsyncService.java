@@ -1,6 +1,5 @@
 package com.erp.server.wms.service;
 
-import com.common.business.annotation.DataIdempotent;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -53,4 +52,12 @@ public interface AsyncService {
      * @param entity
      */
     void soB2cDeliveryAutoOut (SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity);
+
+    /**
+     * 生成销售出库单
+     * @author will
+     * @date 2024/7/21 21:28
+     * @param b2cSoId
+     */
+    void asyncGenerateB2cSoOutstock (String b2cSoId);
 }
