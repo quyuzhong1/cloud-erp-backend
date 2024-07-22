@@ -39,4 +39,15 @@ public interface NoticeMsgConstant {
      * 质检通知消息体
      */
     String FS_QC_SETTING_CONTENT="**通知类型：{}\n**推送时间：{}";
+
+
+    /**
+     * 装箱完成通知消息头
+     */
+    String FS_FINISH_PACKING_HEAD="已完成{}装箱操作，可在装箱任务导出装箱清单，请知悉";
+
+    /**
+     * 装箱完成通知消息体
+     */
+    String FS_FINISH_PACKING_CONTENT=" 通知类型：{}\n 关联单号：{}";
 }

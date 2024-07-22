@@ -21,6 +21,7 @@ import com.erp.server.sys.mapper.SysAccountingCompanyMapper;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -211,6 +212,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:sys:listAccountingCompany",keyGenerator = "myKeyGenerator")
     public List<BaseIdDTO> listAccountingCompany() {
         List<SysAccountingCompanyEntity> list = lambdaQuery().eq(SysAccountingCompanyEntity::getDisabled, Boolean.FALSE).list();
         if (CollectionUtils.isEmpty(list)) {

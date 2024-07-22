@@ -7,12 +7,10 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -38,6 +36,7 @@ import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -53,6 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -68,6 +68,8 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.rtfparserkit.rtf.Command.list;
 
 /**
  * <p>
@@ -406,6 +408,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return new PagingVO<>(pagResult);
     }
 
+    @Override
+    @Cacheable(cacheNames = "cache:wms:listWarehouseWithCaches",keyGenerator = "myKeyGenerator")
+    public List<WarehouseEntity> listWarehouseWithCaches() {
+        return this.list();
+    }
+
     /**
      * @description: 分页下拉处理
      * @author Will
@@ -689,43 +697,29 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO dto) {
-        List<String> warehouseIds = dto.getIds();
+    public BatchResultDTO approve(WarehouseEntity entity, String type, String comment, Boolean isNeedProcess) {
         // 删除缓存
-        removeCache(warehouseIds);
-
-        List<WarehouseEntity> list = this.listByIds(warehouseIds);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+        removeCache(Collections.singletonList(entity.getId()));
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_98006.msg);
         }
-        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
-        }
-        if (dto.getType().equals(WmsConstant.PASS)) {
+        if (WmsConstant.PASS.equals(type)) {
             //审核通过
-            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
-
+            this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.APPROVE);
             //审核通过后发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
-            return result;
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         } else {
             //审核不通过
-            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
-            return result;
+            this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.REJECT);
         }
-
-
+        return BatchResultDTO.success(entity.getId(), entity.getName(), "操作成功");
     }
 
 
     /**
      * 反审核
      *
-     * @param warehouseIds
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-22 11:59
@@ -733,44 +727,29 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> warehouseIds) {
+    public BatchResultDTO disApprove(WarehouseEntity entity) {
         // 删除缓存
-        removeCache(warehouseIds);
-
-        List<WarehouseEntity> list = this.listByIds(warehouseIds);
-
-
-        //审核通过
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-
-        //待提交
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-
-        List<String> statusList = new ArrayList<>(2);
-        statusList.add(approveStatus);
-        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99003);
+        removeCache(Collections.singletonList(entity.getId()));
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_99003.msg);
         }
-
+        List<WarehouseEntity> list = Arrays.asList(entity);
         //仓库已绑定店铺不允许反审核
-        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(warehouseIds);
-        for (WarehouseEntity warehouseEntity : list) {
-            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(warehouseEntity.getId())).distinct().findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE, shopInfoEntity.getName());
-            }
+        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(entity.getId()));
+        ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(entity.getId())).distinct().findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getName(),String.format(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE.msg, shopInfoEntity.getName()));
         }
+        this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //仓库下绑定第三方店铺不能进行反审核
         list.forEach(warehouseEntity -> {
             checkDmpThirdMapping(warehouseEntity.getId(),warehouseEntity.getName());
         });
 
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
-
+        this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         //反审核后发送金蝶
-        sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-        return result;
+        sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        return BatchResultDTO.success(entity.getId(), entity.getName(), "操作成功");
     }
 
     private void checkDmpThirdMapping(String warehouseId,String warehouseName) {
@@ -1154,7 +1133,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
-
+        DictBasicEntity basic = dictBasicService.getOne(Wrappers.<DictBasicEntity>lambdaQuery().eq(DictBasicEntity::getValue, WmsConstant.SUPPLIER));
         // 填充信息
         this.fillListData(resultList, warehouseBindMap);
 
@@ -1162,6 +1141,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 .filter(e -> StringUtils.isBlank(dto.getDictPlatform()) ||
                         (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
                 )
+                .filter(e -> ObjectUtil.isEmpty(dto.getIsSupplier()) || (Boolean.TRUE.equals(dto.getIsSupplier()) && e.getTypeId().equals(basic.getId())))
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
                 .collect(Collectors.toList());
     }
@@ -1231,11 +1211,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:41
      */
     private Boolean updateApproveStatus(List<WarehouseEntity> list, ApproveStatusEnum statusEnum) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            list.forEach(s -> s.setApproveStatus(statusEnum));
-            return this.updateBatchById(list);
+        if (CollectionUtils.isEmpty(list)){
+            return Boolean.TRUE;
         }
-        return true;
+        List<String> ids = list.stream().map(WarehouseEntity::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        return this.lambdaUpdate().in(WarehouseEntity::getId,ids).set(WarehouseEntity::getApproveStatus, statusEnum).update();
     }
 
 

@@ -700,7 +700,9 @@ public class LogisticsBillDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
-
+        /**
+         * 订单来源 取值 so_b2c.source_type
+         */
         private String orderType;
 
         private LocalDateTime orderTime;

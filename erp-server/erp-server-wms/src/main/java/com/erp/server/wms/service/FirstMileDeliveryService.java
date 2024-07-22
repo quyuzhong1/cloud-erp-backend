@@ -5,10 +5,10 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import org.springframework.web.multipart.MultipartFile;
+import com.erp.model.wms.entity.PackingTaskEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -114,22 +114,26 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     BatchResultDTO disApprove(String id);
 
     /**
-    * 删除
-    * @author Luo_WG
-    * @date: 2023-10-30
-    * @param id
-    * @return
-    */
-    BatchResultDTO delete(String id);
+     * 删除
+     *
+     * @param entity
+     * @param packingTask
+     * @return
+     * @author Luo_WG
+     * @date: 2023-10-30
+     */
+    BatchResultDTO delete(FirstMileDeliveryEntity entity, PackingTaskEntity packingTask);
     /**
-    * 作废
-    * @author Luo_WG
-    * @date: 2023-10-30
-    * @param id
-    * @param remark
-    * @return
-    */
-    BatchResultDTO invalid(String id, String remark);
+     * 作废
+     *
+     * @param entity
+     * @param remark
+     * @param packingTask
+     * @return
+     * @author Luo_WG
+     * @date: 2023-10-30
+     */
+    BatchResultDTO invalid(FirstMileDeliveryEntity entity, String remark, PackingTaskEntity packingTask);
 
     /**
     * 撤销
@@ -192,7 +196,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean fbaDeliveryGenerateMachineSubmitAndApprove(List<FirstMileDeliveryDTO.GenerateMachineView> list);
+    List<BatchResultDTO> fbaDeliveryGenerateMachineSubmitAndApprove(List<FirstMileDeliveryDTO.GenerateMachineView> list);
 
     /**
      * 打印子件明细查询
@@ -240,42 +244,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<FirstMileDeliveryDTO.SonItem> sonItemDetailByVersion(FirstMileDeliveryDTO.SonItemDetailByVersion dto);
 
     /**
-     * 装箱
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:52
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-    Boolean packingSave(WmsCartonDTO.WmsCartonAdd dto);
-
-    /**
-     * 装箱详情
-     * @Author Luo_WG
-     * @Date 2023/11/28 17:44
-     * @param id
-     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
-     **/
-    WmsCartonDTO.WmsCartonView packingView(String id);
-
-    /**
-     * 装箱清单
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:52
-     * @param id
-     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
-     **/
-    WmsCartonDTO.ListPackingDTO listPacking(String id);
-
-    /**
-     * 导出装箱清单Excel
-     * @author Luo_WG
-     * @date:  2023-10-30
-     * @param dto
-     * @param response
-     */
-    void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response);
-
-    /**
      * 下推海外仓入库单单个查询
      * @Author Luo_WG
      * @Date 2023/11/29 17:13
@@ -290,10 +258,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     FirstMileDeliveryEntity findBySourceId(String sourceId);
-
-    void downloadPackingTemplate(HttpServletResponse response);
-
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 生成状态更新为无需生成
@@ -311,4 +275,22 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<FirstMileDeliveryEntity> advanceQuery(AdvanceQueryContainer advanceQueryContainer);
 
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO dto);
+
+    int countNotVoided(String id);
+
+    /**
+     * 更新记录状态
+     * @param id
+     * @param packingStatus
+     */
+    void updatePackingStatus(String id, String packingStatus);
+
+    BatchResultDTO generatePackingTask(FirstMileDeliveryEntity firstMileDeliveryEntity);
+
+    /**
+     * 根据编码获取记录
+     * @param key
+     * @return
+     */
+    FirstMileDeliveryEntity getByCode(String key);
 }

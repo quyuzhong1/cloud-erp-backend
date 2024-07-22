@@ -2,6 +2,8 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -91,21 +93,27 @@ public interface SoB2cDeliveryFeign {
 
 
     /**
-     * 合并组包发货
-     * @Author Luo_WG
-     * @Date 2023/12/27 16:00
-     * @param soIdList
-     * @return java.lang.Boolean
-     **/
-    @PostMapping("feign/soB2cDelivery/mergePackageDelivery")
-    Boolean mergePackageDelivery(@RequestBody List<String> soIdList);
-
-
-    /**
      * 平台标记发货
      * @param platformShipOrderDTO
      * @return
      */
     @PostMapping("/feign/soB2cDelivery/shipOrder")
     Boolean shipOrder(@RequestBody PlatformShipOrderDTO platformShipOrderDTO);
+
+    /**
+     * 流水线称重
+     * @author will
+     * @date 2024/6/28 15:20 
+     * @return String
+     */
+    @PostMapping("/feign/soB2cDelivery/dimensionalWeightPipeline")
+    ApiResult<String> dimensionalWeightPipeline(@RequestBody DimensionalWeightDTO dto);
+
+    /**
+     * 修改发货单标发类型
+     * @param ids 发货单id
+     * @param code 类型
+     */
+    @PostMapping("feign/soB2cDelivery/updateShipmentMark")
+    void updateShipmentMark(@RequestParam("ids") List<String> ids,@RequestParam("code") String code);
 }

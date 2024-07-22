@@ -62,6 +62,19 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
         if("remark".equals(field)){
             return " (si.remark "+compareCodeSplicingValueSql+" or sod.remark "+ compareCodeSplicingValueSql +") ";
         }
+        /**
+         * 虚拟仓是否缺货
+         */
+        if("isVirtualScarce".equals(field)){
+            String sql = "COALESCE(sdnd.deliveryQty,0) - COALESCE(vi.virtualQty,0)";
+            if ((Boolean) value) {
+                return sql + "< 0";
+            } else {
+                return sql + ">= 0";
+            }
+        }
+
+
         if("tab".equals(field)){
             switch (value.toString()) {
                 case OmsConstant.WAIT_SUBMIT:

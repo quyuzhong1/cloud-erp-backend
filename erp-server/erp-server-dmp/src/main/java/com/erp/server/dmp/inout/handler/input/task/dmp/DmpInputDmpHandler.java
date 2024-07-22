@@ -238,17 +238,17 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 						});
 						waitEntity.put(BaseEntity.CREATE_TIME, findEntity.get(BaseEntity.CREATE_TIME));
 						deleteDmpIdList.add(dmpId);
-						BaseEntity waitBeanEntity = BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass);
+						BaseEntity waitBeanEntity = DmpHandlerUtils.toBeanIgnoreError(waitEntity, dmpEntityClass);
 						updateDmpInputDmpEntityList.add(waitBeanEntity);
 						if(!findEntity.get(DATA_ENCRYPT).toString().equals(waitEntity.get(DATA_ENCRYPT).toString())) {
 							changeConvertInputDmpBaseEntityList.add(waitBeanEntity);
 						}
 					}else {
-						saveDmpInputDmpEntityList.add(BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass));
+						saveDmpInputDmpEntityList.add(DmpHandlerUtils.toBeanIgnoreError(waitEntity, dmpEntityClass));
 					}
 				}
 			}else {
-				saveDmpInputDmpEntityList = beanDmpInputDmpEntityMaps.values().stream().map(waitEntity -> BeanUtil.toBeanIgnoreError(waitEntity, dmpEntityClass)).collect(Collectors.toList());
+				saveDmpInputDmpEntityList = beanDmpInputDmpEntityMaps.values().stream().map(waitEntity -> DmpHandlerUtils.toBeanIgnoreError(waitEntity, dmpEntityClass)).collect(Collectors.toList());
 			}
 			changeConvertInputDmpBaseEntityList.addAll(saveDmpInputDmpEntityList);
 			
@@ -260,13 +260,16 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 				saveDmpInputDmpEntityList.addAll(updateDmpInputDmpEntityList);
 			}
 			if(CollUtil.isNotEmpty(deleteDmpIdList)) {
-				dmpInputMongoDmpRelationService.lambdaUpdate()
-					.set(DmpInputMongoDmpRelationEntity::getIsDeleted, true)
-	                .set(DmpInputMongoDmpRelationEntity::getUpdateTime, LocalDateTime.now())
-	                .in(DmpInputMongoDmpRelationEntity::getDmpId, deleteDmpIdList)
-	                .eq(DmpInputMongoDmpRelationEntity::getIsDeleted, false)
-	                .eq(DmpInputMongoDmpRelationEntity::getConvertId, convertId)
-	                .update();
+				List<List<String>> deleteDmpIdPartition = Lists.partition(deleteDmpIdList, 50000);
+				for(List<String> p : deleteDmpIdPartition) {
+					dmpInputMongoDmpRelationService.lambdaUpdate()
+						.set(DmpInputMongoDmpRelationEntity::getIsDeleted, true)
+		                .set(DmpInputMongoDmpRelationEntity::getUpdateTime, LocalDateTime.now())
+		                .in(DmpInputMongoDmpRelationEntity::getDmpId, p)
+		                .eq(DmpInputMongoDmpRelationEntity::getIsDeleted, false)
+		                .eq(DmpInputMongoDmpRelationEntity::getConvertId, convertId)
+		                .update();
+				}
 			}
 		}
 		

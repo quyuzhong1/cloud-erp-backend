@@ -17,11 +17,9 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
-import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
@@ -30,19 +28,15 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
-import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
-import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -422,31 +416,46 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<DmpPushTaskEntity> getWarnPushTaskList(List<String> statusList) {
+        if (CollectionUtils.isEmpty(statusList)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().select(DmpPushTaskEntity::getSourceId,
+                        DmpPushTaskEntity::getSourceType,
+                        DmpPushTaskEntity::getSourceCode,
+                        DmpPushTaskEntity::getSourcePlatformName,
+                        DmpPushTaskEntity::getTargetPlatformName,
+                        DmpPushTaskEntity::getReturnMsg,
+                        DmpPushTaskEntity::getUpdateTime)
+                .in(DmpPushTaskEntity::getStatus, statusList).eq(DmpPushTaskEntity::getIsDeleted, Boolean.FALSE).list();
+    }
+
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
-        DmpPushTaskEntity entity = this.getById(syncTaskId);
-        if (ObjectUtil.isEmpty(entity)) {
-            return;
-        }
-        //查询redis,预警8小时发送一次
-        String existKey = StrUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, entity.getId());
-        boolean isHas = redisUtil.hasKey(existKey);
-        if (isHas) {
-            return;
-        } else {
-            //添加缓存
-            redisUtil.set(existKey,entity, RedisService.EIGHT_HOURS_CACHE_TIME);
-        }
-        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-        warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
-        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-        warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
-        warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
-        warnMsgInfo.setTableId(entity.getSourceId());
-        warnMsgInfo.setKeyInfo(entity.getReturnMsg());
-        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-        mqProducerService.sendWarnMsg(warnMsgInfo);
+//        DmpPushTaskEntity entity = this.getById(syncTaskId);
+//        if (ObjectUtil.isEmpty(entity)) {
+//            return;
+//        }
+//        //查询redis,预警8小时发送一次
+//        String existKey = StrUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, entity.getId());
+//        boolean isHas = redisUtil.hasKey(existKey);
+//        if (isHas) {
+//            return;
+//        } else {
+//            //添加缓存
+//            redisUtil.set(existKey,entity, RedisService.EIGHT_HOURS_CACHE_TIME);
+//        }
+//        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+//        warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
+//        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+//        warnMsgInfo.setTitle(StrUtil.format("单据【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
+//        warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
+//        warnMsgInfo.setTableId(entity.getSourceId());
+//        warnMsgInfo.setKeyInfo(entity.getReturnMsg());
+//        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+//        mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 
 
@@ -570,6 +579,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
      * 新增或修改
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String saveOrUpdateDmpSyncTask(DmpPushTaskEntity entity) {
         DmpSyncTaskDTO.OneDTO map = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
         DmpPushTaskEntity found = getByParam(map);

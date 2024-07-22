@@ -1,8 +1,6 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.PackageDTO;
@@ -33,6 +31,20 @@ public class PackageController extends BaseController {
 
     @Resource
     private PackageService packageService;
+
+
+    /**
+     * 查询发货单的称重重量
+     * @author will
+     * @date 2024/7/1 10:35
+     * @param dto
+     * @return ApiResult<WeightDTO>
+     */
+    @PostMapping("/getOrderWeight")
+    public ApiResult<PackageDTO.WeightDTO> getOrderWeight(@RequestBody @Validated PackageDTO.WeightParamDTO dto) {
+        PackageDTO.WeightDTO weightDTO = packageService.getOrderWeight(dto);
+        return success(weightDTO);
+    }
 
 
     /**

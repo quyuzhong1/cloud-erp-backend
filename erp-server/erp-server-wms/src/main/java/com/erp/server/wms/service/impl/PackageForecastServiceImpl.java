@@ -27,10 +27,13 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
@@ -43,6 +46,7 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -57,6 +61,7 @@ import com.erp.server.wms.mapper.PackageForecastMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
+import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.handover.*;
 import com.erp.tms.aliexpress.model.handover.request.CancelRequest;
@@ -67,15 +72,11 @@ import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
 import com.erp.tms.aliexpress.model.handover.response.HandoverCommitResult;
 import com.erp.tms.aliexpress.model.handover.response.HandoverQueryResponse;
 import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
-import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
 import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.model.order.response.ErrorResponse;
-import com.erp.tms.aliexpress.model.order.response.QueryResponse;
-import com.erp.tms.aliexpress.model.order.response.QueryResult;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
-import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -84,6 +85,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -138,6 +140,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Autowired
     private AliExpressShipperService aliExpressShipperService;
+
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -396,11 +401,24 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(shopIds)){
+//        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+//        if (CollectionUtils.isEmpty(shopIds)){
+//            throw new ServiceException("销售订单店铺未找到");
+//        }
+        String shopId = null;
+        ShopInfoEntity mainShop = shopInfoFeign.getMainShopByPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+        if (Objects.isNull(mainShop)){
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getShopId())).findFirst().orElse(null);
+            if (Objects.nonNull(soB2cEntity)){
+                shopId = soB2cEntity.getShopId();
+            }
+        }else {
+            shopId = mainShop.getId();
+        }
+        if (StringUtils.isBlank(shopId)){
             throw new ServiceException("销售订单店铺未找到");
         }
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = this.getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = this.getAlExpressHandoverBase(logisticsPlatform, shopId);
 //        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
         CancelRequest cancelRequest = CancelRequest.builder().
                 userInfo(base.getUserInfo()).client(base.getClient()).
@@ -479,11 +497,24 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(packageForecastEntity.getId());
             List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
             List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-            List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(shopIds)){
+//            List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+//            if (CollectionUtils.isEmpty(shopIds)){
+//                throw new ServiceException("销售订单店铺未找到");
+//            }
+            String shopId = null;
+            ShopInfoEntity mainShop = shopInfoFeign.getMainShopByPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+            if (Objects.isNull(mainShop)){
+                SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getShopId())).findFirst().orElse(null);
+                if (Objects.nonNull(soB2cEntity)){
+                    shopId = soB2cEntity.getShopId();
+                }
+            }else {
+                shopId = mainShop.getId();
+            }
+            if (StringUtils.isBlank(shopId)){
                 throw new ServiceException("销售订单店铺未找到");
             }
-            alExpressHandoverBase = this.getAlExpressHandoverBase(LogisticsPlatformEnum.ALI_EXPRESS.getCode(), shopIds.get(0));
+            alExpressHandoverBase = this.getAlExpressHandoverBase(LogisticsPlatformEnum.ALI_EXPRESS.getCode(), shopId);
         }catch (Exception e){
             log.error("syncPackageForecastInfo error : {}", e.getMessage());
         }
@@ -635,11 +666,24 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(shopIds)){
+//        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+//        if (CollectionUtils.isEmpty(shopIds)){
+//            throw new ServiceException("销售订单店铺未找到");
+//        }
+        String shopId = null;
+        ShopInfoEntity mainShop = shopInfoFeign.getMainShopByPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+        if (Objects.isNull(mainShop)){
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getShopId())).findFirst().orElse(null);
+            if (Objects.nonNull(soB2cEntity)){
+                shopId = soB2cEntity.getShopId();
+            }
+        }else {
+            shopId = mainShop.getId();
+        }
+        if (StringUtils.isBlank(shopId)){
             throw new ServiceException("销售订单店铺未找到");
         }
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopId);
         PdfRequest pdfRequest = PdfRequest.builder()
                 .client(base.getClient())
                 .handoverContentId(Long.valueOf(entity.getPlatformPackageNo()))
@@ -676,14 +720,27 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(shopIds)){
+//        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
+//        if (CollectionUtils.isEmpty(shopIds)){
+//            throw new ServiceException("销售订单店铺未找到");
+//        }
+//        if (shopIds.size() > 1){
+//            throw new ServiceException("速卖通不支持多店铺组包预报");
+//        }
+        String shopId = null;
+        ShopInfoEntity mainShop = shopInfoFeign.getMainShopByPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+        if (Objects.isNull(mainShop)){
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getShopId())).findFirst().orElse(null);
+            if (Objects.nonNull(soB2cEntity)){
+                shopId = soB2cEntity.getShopId();
+            }
+        }else {
+            shopId = mainShop.getId();
+        }
+        if (StringUtils.isBlank(shopId)){
             throw new ServiceException("销售订单店铺未找到");
         }
-        if (shopIds.size() > 1){
-            throw new ServiceException("速卖通不支持多店铺组包预报");
-        }
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopId);
 
         List<String> soIdList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
         Map<String, String> authMap = base.getAuthMap();
@@ -959,5 +1016,36 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         }
         entity.setUploadStatus(uploadStatus);
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void handleMergePackageDeliveryOther(String soId, SoB2cDeliveryEntity deliveryEntity) {
+        //将发货状态更新为已发货
+        deliveryEntity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+        //获取一个当前时间当作发货时间
+        LocalDateTime deliveryTime = LocalDateTime.now();
+        deliveryEntity.setDeliveryTime(deliveryTime);
+
+        //将发货状态更新为已发货
+        if (!soB2cDeliveryService.updateById(deliveryEntity)) {
+            throw new ServiceException("发货单更新失败");
+        }
+
+        String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "组包称重", deliveryEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), "组包称重");
+
+        //修改订单状态已发货
+        SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
+        updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(soId));
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(soId, deliveryEntity.getCode())));
+        updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+        updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
+        deliveryEntity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
+        soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
+
+        //扣减冻结库存
+        soB2cDeliveryService.outFreezeVirtualInventory(deliveryEntity);
     }
 }

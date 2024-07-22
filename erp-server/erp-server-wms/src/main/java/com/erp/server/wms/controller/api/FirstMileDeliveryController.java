@@ -3,11 +3,14 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.PackingTaskDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
+import com.erp.server.wms.service.PackingTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -26,10 +29,12 @@ import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 头程发货单
@@ -48,6 +53,9 @@ public class FirstMileDeliveryController extends BaseController {
 
     @Autowired
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
+
+    @Resource
+    private PackingTaskService packingTaskService;
 
     /**
     * 新增
@@ -260,21 +268,24 @@ public class FirstMileDeliveryController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "头程发货单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(dto.getIds());
+        List<String> sourceCodeList = entityList.stream().map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodeList);
         for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = firstMileDeliveryService.delete(id);
-            }catch (Exception e){
-                log.error("发货单删除失败",e);
-                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "发货单不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
+            BatchResultDTO invalidResult;
+            FirstMileDeliveryEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                invalidResult = BatchResultDTO.fail(id, id, "发货单不存在, 删除失败");
+            }else{
+                try {
+                    PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
+                    invalidResult = firstMileDeliveryService.delete(entity, packingTaskEntity);
+                }catch (Exception e){
+                    log.error("发货单删除失败",e);
+                    invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
-            resultDTOS.add(deleteResult);
+            resultDTOS.add(invalidResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
@@ -294,19 +305,22 @@ public class FirstMileDeliveryController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "头程发货单作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(dto.getIds());
+        List<String> sourceCodeList = entityList.stream().map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodeList);
         for (String id : dto.getIds()) {
             BatchResultDTO invalidResult;
-            try {
-                invalidResult = firstMileDeliveryService.invalid(id,dto.getRemark());
-            }catch (Exception e){
-                log.error("发货单作废失败",e);
-                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    invalidResult = BatchResultDTO.fail(id, id, "发货单不存在, 作废失败");
-                    resultDTOS.add(invalidResult);
-                    continue;
+            FirstMileDeliveryEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                invalidResult = BatchResultDTO.fail(id, id, "发货单不存在, 作废失败");
+            }else{
+                try {
+                    PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
+                    invalidResult = firstMileDeliveryService.invalid(entity,dto.getRemark(), packingTaskEntity);
+                }catch (Exception e){
+                    log.error("发货单作废失败",e);
+                    invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 }
-                invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(invalidResult);
         }
@@ -387,6 +401,36 @@ public class FirstMileDeliveryController extends BaseController {
     }
 
     /**
+     * 下推装箱任务
+     **/
+    @PostMapping("/generatePackingTask")
+    public ApiResult<List<BatchResultDTO>> generatePackingTask(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(dto.getIds());
+        List<String> sourceCodes = entityList.stream().map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodes);
+        List<BatchResultDTO> result = new ArrayList<>();
+        for (String id : dto.getIds()) {
+            FirstMileDeliveryEntity firstMileDeliveryEntity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(firstMileDeliveryEntity)){
+                result.add(BatchResultDTO.fail(id,id,"发货单为空"));
+                continue;
+            }
+            try {
+                PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(firstMileDeliveryEntity.getCode())).findFirst().orElse(null);
+                if(Objects.nonNull(packingTaskEntity)){
+                    result.add(BatchResultDTO.fail(id,firstMileDeliveryEntity.getCode(),"已生成装箱任务不可重复生成"));
+                    continue;
+                }
+                result.add(firstMileDeliveryService.generatePackingTask(firstMileDeliveryEntity));
+            }catch (Exception e){
+                log.error("头程发货单下推装箱任务失败>>>>>", e);
+                result.add(BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),e.getMessage()));
+            }
+        }
+        return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
+    }
+
+    /**
      * 下推加工单列表查询
      * @Author Luo_WG
      * @Date 2023/10/31 9:44
@@ -433,9 +477,9 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/fbaDeliveryGenerateMachineSubmitAndApprove")
-    public ApiResult fbaDeliveryGenerateMachineSubmitAndApprove(@RequestBody @Validated List<FirstMileDeliveryDTO.GenerateMachineView> list) {
-        Boolean flag = firstMileDeliveryService.fbaDeliveryGenerateMachineSubmitAndApprove(list);
-        return flag ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> fbaDeliveryGenerateMachineSubmitAndApprove(@RequestBody @Validated List<FirstMileDeliveryDTO.GenerateMachineView> list) {
+        List<BatchResultDTO> resultDTOS = firstMileDeliveryService.fbaDeliveryGenerateMachineSubmitAndApprove(list);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -465,79 +509,6 @@ public class FirstMileDeliveryController extends BaseController {
     }
 
     /**
-     * 装箱
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:21
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @PostMapping("/packingSave")
-    @LogAction(value = LogActionEnum.INSERT, desc = "头程发货单装箱保存")
-    public ApiResult packingSave(@RequestBody @Validated WmsCartonDTO.WmsCartonAdd dto) {
-        Boolean flag = firstMileDeliveryService.packingSave(dto);
-        return flag ? success() : failure();
-    }
-
-    /**
-     * 装箱详情
-     * @Author Luo_WG
-     * @Date 2023/11/28 17:44
-     * @param id
-     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
-     **/
-    @GetMapping("/packingView")
-    public ApiResult<WmsCartonDTO.WmsCartonView> packingView(@RequestParam("id") String id) {
-        WmsCartonDTO.WmsCartonView wmsCartonView = firstMileDeliveryService.packingView(id);
-        return success(wmsCartonView);
-    }
-
-    /**
-     * 装箱清单
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:21
-     * @param id
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @GetMapping("/listPacking")
-    public ApiResult<WmsCartonDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
-        WmsCartonDTO.ListPackingDTO result = firstMileDeliveryService.listPacking(id);
-        return success(result);
-    }
-
-    /**
-     * 快粘贴查询sku
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:21
-     * @param id 发货单Id
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @GetMapping("/listGroupSkuById")
-    public ApiResult<List<FirstMileDeliveryDTO.GroupSkuDTO>> listGroupSkuByMainId(@RequestParam("id") String id) {
-        List<FirstMileDeliveryDTO.GroupSkuDTO> result = firstMileDeliveryDetailService.listGroupSkuByMainId(id);
-        return success(result);
-    }
-
-    /**
-     * 导出装箱清单Excel
-     * @author Luo_WG
-     * @date 2023-10-30
-     * @param dto
-     * @param response
-     */
-    @PostMapping("/exportPacking")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:fbaDelivery:exportPacking",
-            tableAlias = "fd"
-    )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "头程发货单导出装箱清单Excel")
-    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
-    public ApiResult exportPacking(@RequestBody @Validated FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
-        firstMileDeliveryService.exportPacking(dto, response);
-        return success();
-    }
-
-    /**
      * 下推海外仓入库单单个查询
      * @author Luo_WG
      * @date 2023-10-30
@@ -548,31 +519,6 @@ public class FirstMileDeliveryController extends BaseController {
         OverseasWarehouseInboundDTO.ViewDTO result = firstMileDeliveryService.getGenerateOverseasWarehouseInboundView(id);
         return success(result);
     }
-
-    /**
-     * 下载装箱模板
-     *
-     * @return
-     */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载装箱模板数据")
-    @GetMapping("/downloadPackingTemplate")
-    public ApiResult downloadPackingTemplate(HttpServletResponse response) {
-        firstMileDeliveryService.downloadPackingTemplate(response);
-        return success();
-    }
-
-
-    /**
-     * 导入装箱数据
-     */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱模板数据")
-    @PostMapping("/importPacking")
-    public ApiResult importPacking(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = firstMileDeliveryService.importFile(excelFile, response);
-        return result == true ? success() : failure();
-    }
-
-
     /**
      * 生成状态更新为无需生成
      */

@@ -8,7 +8,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -31,6 +30,18 @@ public class BaseIdsDTO implements Serializable {
          */
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailIdListDTO extends PermissionsDTO {
+
+        /**
+         * 明细表 detailIdList
+         */
+        @NotEmpty(message = "detailIdList不能为空")
+        private List<String> detailIdList;
 
     }
 

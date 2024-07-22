@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -140,4 +141,8 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      */
     void queryAliExpressInfo(PackageForecastEntity packageForecastEntity);
 
+    /**
+     * 组包更新其他信息
+     */
+    void handleMergePackageDeliveryOther(String soId, SoB2cDeliveryEntity curDeliveryEntity);
 }

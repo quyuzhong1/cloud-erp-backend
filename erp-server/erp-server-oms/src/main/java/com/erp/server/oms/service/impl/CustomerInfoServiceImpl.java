@@ -738,29 +738,26 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      * 审核
      *
      * @param dto
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-15 14:17
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
-        List<CustomerInfoEntity> list = this.listByIds(ids);
+    public BatchResultDTO approve(BaseApproveParamDTO dto, CustomerInfoEntity entity) {
+        List<CustomerInfoEntity> list = Arrays.asList(entity);
 
-        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+        if(!ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //调用审核流程
         approveProcess(list, dto);
 
         //添加日志
-        List<Pair<String, String>> pairList = list.stream().
-                map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个客户信息", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.CUSTOMER.getCode(), pairList, "审核操作");
-        return Boolean.TRUE;
+        return BatchResultDTO.success();
     }
 
     /**
@@ -790,7 +787,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         if (dto.getType().equals(ApproveType.PASS)) {
             //批量保存销售员信息
             customerSellerService.batchSellerHistory(list, LocalDate.now());
@@ -805,7 +801,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     /**
      * 反审核
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-15 14:25
@@ -813,8 +809,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        List<CustomerInfoEntity> list = this.listByIds(ids);
+    public BatchResultDTO disApprove(CustomerInfoEntity entity) {
+        List<CustomerInfoEntity> list = Arrays.asList(entity);
         //审核中
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
 
@@ -828,16 +824,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
 
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
-        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         //反审核
         if (result) {
             //添加日志
@@ -847,7 +840,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
-        return result;
+        return BatchResultDTO.success();
     }
 
     /**
@@ -960,7 +953,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(approve);
         queryWrapper.eq(CustomerInfoEntity::getApproveStatus, approveStatusEnum);
-        queryWrapper.orderByDesc(CustomerInfoEntity::getDisabled);
+        queryWrapper.orderByAsc(CustomerInfoEntity::getDisabled);
         List<CustomerInfoEntity> list = this.list(queryWrapper);
         return BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
     }

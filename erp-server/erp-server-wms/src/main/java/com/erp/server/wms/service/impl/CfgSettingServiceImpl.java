@@ -174,6 +174,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case PACKAGE_SETTING:
                 jsonObject = JSONUtil.parseObj(addDTO.getPackageSettingDTO());
                 break;
+            case FINISH_PACKING_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFinishPackingNoticeDTO());
+                break;
             default:
                 break;
         }
@@ -234,6 +237,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case PACKAGE_SETTING:
                 CfgSettingValueDTO.PackageSettingDTO packageSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PackageSettingDTO.class);
                 viewDTO.setPackageSettingDTO(packageSettingDTO);
+                break;
+            case FINISH_PACKING_NOTICE:
+                CfgSettingValueDTO.FinishPackingNoticeDTO finishPackingNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FinishPackingNoticeDTO.class);
+                viewDTO.setFinishPackingNoticeDTO(finishPackingNoticeDTO);
                 break;
             default:
                 break;

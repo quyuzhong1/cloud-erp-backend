@@ -1,12 +1,17 @@
 package com.erp.server.auth.controller.api;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
+import com.alibaba.excel.util.CollectionUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +36,8 @@ import com.erp.server.auth.utils.SignUtil;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @Controller
 @Slf4j
@@ -44,7 +51,49 @@ public class OpenApiController {
 
     @Resource
     private OpenApiService openApiService;
-    
+
+    @PostMapping("/upload")
+    public @ResponseBody ApiResult<?> unitPlatformServiceUpload(@Valid OpenApiReqDTO input, HttpServletRequest request, MultipartFile file){
+        log.info("平台上传接口统一请求报文：{}" , JSON.toJSONString(input));
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
+        String referer = request.getHeader("Referer");
+        if(StringUtils.isBlank(referer)) {
+            referer = request.getHeader("referer");
+        }
+        if(StringUtils.isBlank(referer)) {
+            return ApiResult.error(500, "请求头referer不能为空");
+        }
+        if (CollectionUtils.isEmpty(fileMap) || 1 != fileMap.size()){
+            return ApiResult.error(500, "仅能上传一个文件");
+        }
+        String secretKey = getSecretKey(referer);
+        if(StringUtils.isBlank(secretKey)) {
+            return ApiResult.error(500, "请求头referer="+ referer +"未配置秘钥，请联系实施人员");
+        }
+        String signType = input.getSignType();
+        if (!SignUtil.equalsAny(input.getVersion(), "1.0.0") || !StringUtils.equalsIgnoreCase("UTF-8", input.getCharset())){
+            return ApiResult.error(500, "版本号和编码方式不能为空");
+        }
+
+        String charset = input.getCharset();
+
+        // 校验加密方式
+        if(!SignUtil.checkSign(input,charset, signType, input.getSign(), secretKey)){
+            return  ApiResult.error(500, "验签失败");
+        }
+
+        String fileUrl = "";
+        try {
+            MultipartFile multipartFile = new ArrayList<>(fileMap.values()).get(0);
+            fileUrl = FastDFSClientUtil.uploadFile(multipartFile);
+        } catch (Exception e) {
+            log.error("openApi文件上传失败", e);
+            return ApiResult.error(500, "上传失败，请联系实施人员");
+        }
+        return ApiResult.success(fileUrl);
+    }
+
     @PostMapping("/service")
     @ResponseBody
     public ApiResult<?> service(@Validated @RequestBody OpenApiReqDTO req, HttpServletRequest request){
@@ -55,7 +104,7 @@ public class OpenApiController {
     	if(StringUtils.isBlank(referer)) {
     		return ApiResult.error(500, "请求头referer不能为空");
     	}
-    	log.info("{}平台接口统一请求报文：{}" , referer , JSON.toJSONString(req));
+    	log.warn("{}平台接口统一请求报文：{}" , referer , JSON.toJSONString(req));
     	
     	OpenApiInputDTO openApiInputDTO = new OpenApiInputDTO();
         BeanUtils.copyProperties(req , openApiInputDTO);
@@ -67,7 +116,7 @@ public class OpenApiController {
         openApiInputDTO.setRequestIp(IPUtils.getIpAddr(request));
         
         ApiResult<?> result = openApiService.unitPlatformService(openApiInputDTO);
-        log.info("平台接口统一响应报文：{}" , JSON.toJSONString(result));
+        log.warn("平台接口统一响应报文：{}" , JSON.toJSONString(result));
         return result;
     }
 

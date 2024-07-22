@@ -5,13 +5,12 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
-import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.TransactionFlowService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -245,4 +245,43 @@ public class InventoryController extends BaseController {
     public void exportDailyInventory(@RequestBody InventoryReportDTO.DailyInventoryParamDTO dto, HttpServletResponse response) {
         transactionFlowService.exportDailyInventory(dto, response);
     }
+
+    /**
+     * 通过sku获取库位库存（推荐库位）
+     * @param param param
+     */
+    @PostMapping("/listLocationInventoryBySkus")
+    public ApiResult<List<InventoryDTO.LocationInventoryResult>> listLocationInventoryBySkus(@RequestBody @Validated List<InventoryDTO.LocationInventoryParam> param){
+        List<InventoryDTO.LocationInventoryResult> results = inventoryService.listLocationInventoryBySkus(param);
+        return ApiResult.success(results);
+    }
+
+    /**
+     * 根据仓库id sku 数量获取最优仓位
+     * @param param param
+     */
+    @PostMapping("/recommendedLocation")
+    public ApiResult<InventoryDTO.LocationInventory> recommendedLocation(@RequestBody @Validated InventoryDTO.RecommendedLocationParam param){
+        InventoryDTO.LocationInventory inventory = inventoryService.recommendedLocation(param);
+        return ApiResult.success(inventory);
+    }
+
+    /**
+     * 查询Tab
+     */
+    @GetMapping("/tabList")
+    public ApiResult<List<InventoryDTO.tabDto>> tabList(){
+        List<InventoryDTO.tabDto> list = new ArrayList<>(3);
+
+        long countWarehouse = inventoryService.countByWarehouse();
+        long countArea = inventoryService.countByArea();
+        long countLocation = inventoryService.countByLocation();
+
+        list.add(new InventoryDTO.tabDto("warehouse", countWarehouse));
+        list.add(new InventoryDTO.tabDto("warehouseArea", countArea));
+        list.add(new InventoryDTO.tabDto("warehouseLocation", countLocation));
+
+        return ApiResult.success(list);
+    }
+
 }

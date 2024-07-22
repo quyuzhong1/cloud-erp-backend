@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -13,6 +14,7 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -486,19 +488,22 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/6/14 16:38
-     * @param baseApproveParamDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      **/
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(ProductDetailEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/6/14 17:18
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      **/
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(ProductDetailEntity entity);
 
     /**
      * 取消流程
@@ -790,4 +795,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     void initProductToWangDian(List<String> ids);
     PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
 
+
+    ProductDetailEntity getBySkuNoOrEan(String skuCode);
+
+    String dimensionalWeightMeasure(DimensionalWeightDTO dto);
 }

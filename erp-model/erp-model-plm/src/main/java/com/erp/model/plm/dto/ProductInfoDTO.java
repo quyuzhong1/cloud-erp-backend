@@ -85,6 +85,7 @@ public class ProductInfoDTO {
     /**
      * 分类id
      */
+    @NotBlank(message = "产品分类不能为空")
     private String categoryId;
 
     /**
@@ -140,6 +141,7 @@ public class ProductInfoDTO {
     /**
      * 销售方式
      */
+    @NotBlank(message = "销售方式不能为空")
     private String saleMethod;
 
     private Integer approvalStatus;

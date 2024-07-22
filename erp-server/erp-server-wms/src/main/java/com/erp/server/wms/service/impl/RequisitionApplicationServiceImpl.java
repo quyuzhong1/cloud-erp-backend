@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
@@ -22,6 +23,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -40,10 +42,17 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
@@ -58,6 +67,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -87,14 +97,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private PlmTaskFeign plmTaskFeign;
     @Autowired
     private InventoryService inventoryService;
-    @Resource
-    private VirtualInventoryService virtualInventoryService;
     @Autowired
     private TransferInfoService transferInfoService;
     @Autowired
     private WarehouseService warehouseService;
-    @Autowired
-    private SysUserFeign sysUserFeign;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
@@ -116,9 +122,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private PickingListsService pickingListsService;
+
+    @Resource
+    private PickingDetailService pickingDetailService;
 
     @Resource
     private FbaShipmentService fbaShipmentService;
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
     @Resource
     private VirtualWarehouseService virtualWarehouseService;
     @Resource
@@ -131,6 +144,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     @Lazy
     private RequisitionApplicationServiceImpl service;
+    @Resource
+    @Lazy
+    private WmsDeliveryPlanService wmsDeliveryPlanService;
+    @Resource
+    private CfgRulePickingStagingService cfgRulePickingStagingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -515,6 +533,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishSave(List<RequisitionApplicationDTO.FinishListDTO> list) {
+        long countQty = list.stream().mapToInt(RequisitionApplicationDTO.FinishListDTO::getPickingQty).sum();
+        if (countQty <= 0) {
+            throw new ServiceException(ApiError.ERROR_99106);
+        }
         //根据调出调入仓id查询仓库信息
         List<String> toWarehouseIds = list.stream().map(req -> req.getToWarehouseId()).collect(Collectors.toList());
         List<String> requisitionWarehouseIds = list.stream().map(req -> req.getRequisitionWarehouseId()).collect(Collectors.toList());
@@ -675,6 +697,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (!Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus())) {
             throw new ServiceException(ApiError.WAIT_HANDLE_IS_CANCEL_PROCESS);
         }*/
+        pickingListsService.exist(id);
         //待处理撤销
         if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus())) {
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus());
@@ -807,7 +830,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (!Objects.equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getCode(), entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_1043);
         }
-
+        pickingListsService.exist(id);
         // 删除明细数据
         requisitionApplicationDetailService.removeByMainIds(Arrays.asList(id));
         // 删除主单数据
@@ -903,6 +926,262 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             service.updateBatchById(updateList);
         }
         return resultDTOList;
+    }
+
+    @Override
+    public void writeBackData(List<String> sourceDetailIds) {
+        List<RequisitionApplicationDetailEntity> detailEntities = requisitionApplicationDetailService.listByIds(sourceDetailIds);
+        List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getSourceDetailId, sourceDetailIds));
+        // 回写数量，处理组合数据
+        List<String> skuIds = detailEntities.stream().map(RequisitionApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        for (RequisitionApplicationDetailEntity detailEntity : detailEntities) {
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).findFirst().orElse(null);
+            if (!ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                Integer qty = pickingDetailEntities.stream()
+                        .filter(v -> v.getSourceDetailId().equals(detailEntity.getId()))
+                        .filter(v -> v.getSkuId().equals(detailEntity.getSkuId()))
+                        .map(PickingDetailEntity::getQty)
+                        .reduce(0, Math::addExact);
+                detailEntity.setPickingQty(qty / Optional.ofNullable(bomChildrenSkuDTO.getQuantity()).orElse(1));
+            }else {
+                Integer qty = pickingDetailEntities.stream()
+                        .filter(v -> v.getSourceDetailId().equals(detailEntity.getId()))
+                        .filter(v -> v.getSkuId().equals(detailEntity.getSkuId()))
+                        .map(PickingDetailEntity::getQty)
+                        .reduce(0, Math::addExact);
+                detailEntity.setPickingQty(qty);
+            }
+        }
+        requisitionApplicationDetailService.updateBatchById(detailEntities);
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids) {
+        List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list = baseMapper.generateDeliverView(ids);
+        long count = list.stream().filter(e -> !RequisitionApplicationStatusEnum.HANDLE.getCode().equals(e.getStatus())).count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.ERROR_99104);
+        }
+        List<FirstMileDeliveryEntity> entities = firstMileDeliveryService.listBySourceIds(ids);
+        boolean invalidStatus = entities.stream().anyMatch(FirstMileDeliveryEntity::getInvalidStatus);
+        if (CollectionUtils.isNotEmpty(entities) && Boolean.FALSE.equals(invalidStatus)) {
+            throw new ServiceException(ApiError.ERROR_99104);
+        }
+
+        //根据skuId查询拥有的子sku
+        List<String> skuIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<String> sourIds = list.stream()
+                .map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getDeliveryPlanId)
+                .collect(Collectors.toList());
+        List<WmsDeliveryPlanEntity> wmsDeliveryPlanEntities = wmsDeliveryPlanService.listByIds(sourIds);
+        //查询skuId产品信息
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> shopIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getToWarehouseId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(shopIds);
+        for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : list) {
+
+            if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType())) {
+                ShopInfoEntity shopInfo = shopInfoEntities.stream().filter(v -> v.getId().equals(viewDTO.getToWarehouseId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_92058));
+                viewDTO.setToWarehouseId(shopInfo.getWarehouseId());
+                viewDTO.setToWarehouseName(shopInfo.getWarehouseName());
+            }
+            WmsDeliveryPlanEntity wmsDeliveryPlanEntity = wmsDeliveryPlanEntities.stream()
+                    .filter(v -> v.getId().equals(viewDTO.getDeliveryPlanId()))
+                    .findFirst()
+                    .orElse(new WmsDeliveryPlanEntity());
+            viewDTO.setShopId(wmsDeliveryPlanEntity.getShopId());
+            viewDTO.setShopName(wmsDeliveryPlanEntity.getShopName());
+            viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                viewDTO.setIsCombination(Boolean.TRUE);
+            } else {
+                viewDTO.setIsCombination(Boolean.FALSE);
+            }
+            //设置产品编号
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(new SkuVO());
+            if (ObjectUtil.isNotEmpty(skuVO)) {
+                viewDTO.setProductName(skuVO.getSkuName());
+            }
+        }
+        return list;
+    }
+
+    @Override
+    public Boolean generateDeliverSave(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list) {
+        return generateDeliver(list, Boolean.FALSE);
+    }
+
+    @Override
+    public Boolean generateDeliverSaveAndSubmit(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list) {
+        return generateDeliver(list, Boolean.TRUE);
+    }
+
+    /**
+     * 下推发货单处理
+     * @Author Luo_WG
+     * @Date 2023/11/23 16:33
+     * @param list 数据集
+     * @param isSubmit 是否提交
+     * @return java.lang.Boolean
+     **/
+    private Boolean generateDeliver(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list, Boolean isSubmit) {
+        //一个发货计划单，生成一个要发货单
+        Map<String, List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> map = list.stream().collect(Collectors.groupingBy(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId));
+        List<String> sourceDetailIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<PickingDetailEntity> pickingDetailLists = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getSourceDetailId, sourceDetailIds));
+        Map<String, List<PickingDetailEntity>> pickingDetailListMap = pickingDetailLists.stream().collect(Collectors.groupingBy(PickingDetailEntity::getSourceDetailId));
+        //查询子件信息
+        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
+        //获取sku信息
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
+        List<RequisitionApplicationDetailEntity> detailEntities = requisitionApplicationDetailService.listByIds(sourceDetailIds);
+        for (Map.Entry<String, List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
+            List<RequisitionApplicationDTO.GenerateDeliverViewDTO> value = entry.getValue();
+            RequisitionApplicationDTO.GenerateDeliverViewDTO view = value.get(MathUtil.ZERO);
+            //映射主表信息
+            FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateDeliverFDD(view);
+
+            //备货类型
+            addDTO.setDemandType(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) ? FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode():FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
+            //来源类型
+            addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+            List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
+            //映射详情信息
+            List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+            for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : value) {
+                List<PickingDetailEntity> pickingDetails = pickingDetailListMap.get(viewDTO.getSourceDetailId());
+                if (CollectionUtils.isEmpty(pickingDetails)) {
+                    continue;
+                }
+                FirstMileDeliveryDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
+                //查询sku是否存在子SKU
+                List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                    detailAddDto.setIsCombination(Boolean.TRUE);
+                } else {
+                    detailAddDto.setIsCombination(Boolean.FALSE);
+                }
+                //映射产品信息
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).distinct().findFirst().orElse(new SkuVO());
+                if (ObjectUtil.isNotEmpty(skuVO)) {
+                    detailAddDto.setNetWeight(skuVO.getNetWeight());
+                    detailAddDto.setProductSizeLength(LengthConverterUtil.mmToCm(skuVO.getProductLength()));
+                    detailAddDto.setProductSizeWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
+                    detailAddDto.setProductSizeHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
+                }
+                detailAddDto.setDeliveryQty(viewDTO.getDeliveryQty());
+                detailAddDto.setPlanQty(viewDTO.getDeliveryQty());
+                RequisitionApplicationDetailEntity detailEntity = detailEntities.stream()
+                        .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
+                        .findFirst()
+                        .orElse(new RequisitionApplicationDetailEntity());
+                if (viewDTO.getDeliveryWarehouseId().equals(detailEntity.getToWarehouseId())) {
+                    // 获取仓库暂存区默认配置
+                    CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                            .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
+                            .filter(staging -> staging.getWarehouseId().equals(detailEntity.getToWarehouseId()))
+                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                    detailAddDto.setWarehouseLocation(pickingStaging.getWarehouseLocation());
+                } else {
+                    detailAddDto.setWarehouseLocation("");
+                }
+                detailAddList.add(detailAddDto);
+            }
+
+            addDTO.setDetailList(detailAddList);
+            BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
+            if (Boolean.TRUE.equals(isSubmit)) {
+                firstMileDeliveryService.submit(add.getId());
+            }
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(String id) {
+        //判断是否存在下游单据，已有下游单据就不能再生成拣货单
+        FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(id);
+        if (ObjectUtil.isNotEmpty(firstMileDelivery)) {
+            throw new ServiceException(ApiError.ERROR_99110, "头程发货单");
+        }
+        List<RequisitionApplicationDetailEntity> details = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(id));
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<RequisitionApplicationDTO.PickingViewDTO> result = new ArrayList<>();
+        for (RequisitionApplicationDetailEntity detail : details) {
+            if (ignoreInventorySkus.contains(detail.getSkuId()) || (detail.getApproveQty() - detail.getPickingQty() <= 0)){
+                continue;
+            }
+            RequisitionApplicationDTO.PickingViewDTO viewDTO = new RequisitionApplicationDTO.PickingViewDTO();
+            viewDTO.setDetailId(detail.getId());
+            viewDTO.setSkuId(detail.getSkuId());
+            viewDTO.setSkuNo(detail.getSkuNo());
+            viewDTO.setPlanQty(detail.getApproveQty());
+            viewDTO.setPickedQuantity(detail.getPickingQty());
+            viewDTO.setUnpickedQuantity(detail.getApproveQty() - detail.getPickingQty());
+            result.add(viewDTO);
+        }
+        return result;
+    }
+
+    @Override
+    public void generatePickingList(RequisitionApplicationDTO.GeneratePickingDTO picking) {
+        RequisitionApplicationEntity application = getById(picking.getId());
+        if (ObjectUtil.isEmpty(application)) {
+            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+        }
+        if (!RequisitionApplicationStatusEnum.getPickingList().contains(application.getStatus())) {
+            throw new ServiceException(ApiError.HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING);
+        }
+        List<RequisitionApplicationDetailEntity> details = requisitionApplicationDetailService.list(Wrappers.<RequisitionApplicationDetailEntity>lambdaQuery()
+                .eq(RequisitionApplicationDetailEntity::getMainId, picking.getId())
+                .in(RequisitionApplicationDetailEntity::getId, picking.getDetailIds())
+        );
+        //判断sku是否被他人生成了拣货单
+        boolean checkUnpickedQty = details.stream().allMatch(detail -> (detail.getApproveQty() - detail.getPickingQty()) > 0);
+        if (Boolean.FALSE.equals(checkUnpickedQty)) {
+            throw new ServiceException(ApiError.UNPICKED_QUANTITY_SHORTAGE);
+        }
+        PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
+        addDTO.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
+                PickingBillTypeEnum.FBA.getCode() : PickingBillTypeEnum.THIRD.getCode());
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(application.getChannelId());
+            addDTO.setDeliveryWarehouseId(shopInfo.getWarehouseId());
+        }else {
+            addDTO.setDeliveryWarehouseId(application.getChannelId());
+        }
+        addDTO.setSourceId(application.getId());
+        addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+        addDTO.setSourceCode(application.getCode());
+        List<RequisitionApplicationDetailEntity> updateDetails = new ArrayList<>();
+        List<PickingDetailDTO.AddDTO> detailList = new ArrayList<>();
+        for (RequisitionApplicationDetailEntity detailEntity : details) {
+            PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();
+            detail.setWarehouseId(detailEntity.getToWarehouseId());
+            detail.setWarehouseName(detailEntity.getToWarehouseName());
+            detail.setSkuId(detailEntity.getSkuId());
+            detail.setSkuNo(detailEntity.getSkuNo());
+            detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
+            detail.setSourceDetailId(detailEntity.getId());
+            detailList.add(detail);
+            detailEntity.setPickingQty(detailEntity.getApproveQty());
+            updateDetails.add(detailEntity);
+
+        }
+        addDTO.setDetails(detailList);
+        pickingListsService.add(addDTO);
+        requisitionApplicationDetailService.updateBatchById(updateDetails);
     }
 
     /**
@@ -1023,6 +1302,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
+        //查询第三方SKU信息
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList, "", "","");
+
         for (RequisitionApplicationDTO.ListDTO listDTO : list) {
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
@@ -1072,7 +1354,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      */
     private void validateSubmit(RequisitionApplicationEntity entity) {
         // 待提交允许提交
-        if(!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus()) ) {
+        if (!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus())) {
             throw new ServiceException(ApiError.IS_SUBMIT_IN_SUBMIT);
         }
         return;
@@ -1253,6 +1535,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
+        List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         for (RequisitionApplicationDTO.FinishListDTO detailEntity : detailEntityList) {
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
@@ -1260,7 +1543,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                             && req.getBomVersion().equals(detailEntity.getBomVersion())
                             && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).collect(Collectors.toList());
-
+            // 获取仓库暂存区默认配置
+            CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                    .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
+                    .filter(staging -> staging.getWarehouseId().equals(detailEntity.getToWarehouseId()))
+                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
             // 子件需要拆分
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 for (BomChildrenSkuDTO bomChildrenSku : sonSkuList) {
@@ -1271,7 +1558,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     detailAddDto.setQty(detailEntity.getPickingQty() * bomChildrenSku.getQuantity());
 
                     //虚拟仓暂无仓位
-                    detailAddDto.setOutWarehouseLocation("");
+                    detailAddDto.setOutWarehouseLocation(pickingStaging.getWarehouseLocation());
                     detailAddDtoList.add(detailAddDto);
                 }
             } else {
@@ -1283,7 +1570,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 detailAddDto.setSkuNo(skuVO.getSkuNo());
                 detailAddDto.setQty(detailEntity.getPickingQty());
                 //虚拟仓暂无仓位
-                detailAddDto.setOutWarehouseLocation("");
+                detailAddDto.setOutWarehouseLocation(pickingStaging.getWarehouseLocation());
                 detailAddDtoList.add(detailAddDto);
             }
         }

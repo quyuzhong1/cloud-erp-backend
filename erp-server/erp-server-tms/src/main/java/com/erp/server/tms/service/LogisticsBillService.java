@@ -235,5 +235,14 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      */
     List<LogisticsBillEntity> listBySoOutStockIdList(List<String> outstockIdList);
 
+    /**
+     * 根据物流跟踪单号或运单号查询物流单详情
+     * @author will
+     * @date 2024/7/3 17:39
+     * @param logisticsCode
+     * @return BaseDTO
+     */
+    LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(String logisticsCode);
+
     ApiResult<String> updateLogisticWeight(LogisticsBillDTO.UpdateWeight dto);
 }

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.WarehouseLocationReplenishMapper">
+    <!--<resultMap id="baseResultMap" type="com.erp.model.wms.entity.WarehouseLocationReplenishEntity">
+        <id column="id" property="id" />
+        <result column="sku_id" property="skuId" />
+        <result column="sku_no" property="skuNo" />
+        <result column="source_id" property="sourceId" />
+        <result column="source_code" property="sourceCode" />
+        <result column="source_type" property="sourceType" />
+        <result column="warehouse_id" property="warehouseId" />
+        <result column="qty" property="qty" />
+        <result column="status" property="status" />
+        <result column="from_warehouse_area" property="fromWarehouseArea" />
+        <result column="from_warehouse_location" property="fromWarehouseLocation" />
+        <result column="to_warehouse_area" property="toWarehouseArea" />
+        <result column="to_warehouse_location" property="toWarehouseLocation" />
+        <result column="suggest_qty" property="suggestQty" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>-->
+
+    <select id="paging" resultType="com.erp.model.wms.entity.WarehouseLocationReplenishEntity">
+        select id,
+               sku_id,
+               sku_no as skuNo,
+               source_id,
+               source_code,
+               source_type,
+               warehouse_id,
+               qty,
+               status,
+               from_warehouse_area,
+               from_warehouse_location,
+               to_warehouse_area,
+               to_warehouse_location,
+               suggest_qty,
+               create_user_name as createUserName,
+               create_time as createTime,
+               update_user_name,
+               update_time,
+               handle_user_id,
+               handle_user_name,
+               handle_time
+        from warehouse_location_replenish
+        where is_deleted = false
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time desc
+    </select>
+    <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseLocationReplenishEntity">
+        select id,
+               sku_id,
+               sku_no,
+               source_id,
+               source_code,
+               source_type,
+               warehouse_id,
+               qty,
+               status,
+               from_warehouse_area,
+               from_warehouse_location,
+               to_warehouse_area,
+               to_warehouse_location,
+               suggest_qty,
+               create_user_name,
+               create_time,
+               update_user_name,
+               update_time
+        from warehouse_location_replenish
+        where is_deleted = false
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
+        </if>
+    </select>
+    <select id="listTabInfo" resultType="com.erp.model.wms.dto.WarehouseLocationReplenishDTO$TabDTO">
+        select status as tabFlag,
+               count(1) as count
+        from warehouse_location_replenish
+        where is_deleted = false
+        group by status
+    </select>
+</mapper>

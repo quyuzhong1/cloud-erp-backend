@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -121,11 +122,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 审核
      *
      * @param dto
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 16:46
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity);
 
     /**
      * 结束审核
@@ -141,11 +143,13 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 反审核
      *
      * @param dto
+     * @param entity
+     * @param soChangeEntityList
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 16:48
      */
-    Boolean disApprove(BaseIdsDTO.IdsDTO dto);
+    BatchResultDTO disApprove(BaseIdsDTO.IdsDTO dto, SoInfoEntity entity, List<SoChangeEntity> soChangeEntityList);
 
     /**
      * 撤销流程
@@ -435,4 +439,29 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     List<SoInfoDTO.GenerateSoOutView> generateSoOutView(List<String> ids);
 
     List<BatchResultDTO> generateSoOut(List<SoInfoDTO.GenerateSoOutView> generateSoOutViewList);
+    /**
+     * 查询单个锁定的数据
+     * @author will
+     * @date 2024/7/15 11:20
+     * @param id
+     * @return SoInfoDTO.LockVirtualInventoryDTO
+     */
+    SoInfoDTO.LockVirtualInventoryDTO viewLockVirtualInventory(String id);
+    /**
+     * 批量锁定查询
+     * @author will
+     * @date 2024/7/15 15:08
+     * @param detailIdList
+     * @return List<BatchLockVirtualInventoryDTO>
+     */
+    List<SoInfoDTO.BatchLockVirtualInventoryDTO> viewBatchLockVirtualInventory(List<String> detailIdList);
+
+    /**
+     * 单个释放
+     * @author will
+     * @date 2024/7/16 8:57
+     * @param id
+     * @return Boolean
+     */
+    Boolean unLockVirtualInventory(String id);
 }

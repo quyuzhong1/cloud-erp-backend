@@ -1,15 +1,19 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.PickingDetailEntity;
+import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingDetailMapper;
 import com.erp.server.wms.service.PickingDetailService;
+import com.erp.server.wms.service.PickingListsService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +36,10 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    @Lazy
+    private PickingListsService pickingListsService;
+
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -45,14 +53,12 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
     }
 
     @Override
-    public Boolean deleteBySourceId(List<String> ids) {
-        return this.lambdaUpdate().set(PickingDetailEntity::getIsDeleted, Boolean.TRUE).in(PickingDetailEntity::getSourceId, ids).update();
-    }
-
-    @Override
     public List<PickingDetailDTO.ListDTO> listPickingDetailBySourceId(PickingDetailDTO.SearchParamDTO dto) {
+
+        List<PickingListsEntity> pickingLists = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().eq(PickingListsEntity::getSourceId, dto.getSourceId()));
+        List<String> ids = pickingLists.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
         List<PickingDetailEntity> list = lambdaQuery()
-                .eq(PickingDetailEntity::getSourceId, dto.getSourceId())
+                .eq(PickingDetailEntity::getMainId, ids)
                 .in(CollectionUtils.isNotEmpty(dto.getSkuNoList()), PickingDetailEntity::getSkuNo, dto.getSkuNoList())
                 .list();
         if (CollectionUtils.isEmpty(list)) {
@@ -87,5 +93,16 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(PickingDetailEntity::getSourceDetailId,detailIds).list();
+    }
+
+    @Override
+    public void cleanException(String deliveryId) {
+        List<PickingListsEntity> pickingLists = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().eq(PickingListsEntity::getSourceId, deliveryId));
+        if (CollectionUtils.isEmpty(pickingLists)) {
+            return;
+        }
+        List<String> ids = pickingLists.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
+        update(Wrappers.<PickingDetailEntity>lambdaUpdate().set(PickingDetailEntity::getIsOutStock, false)
+                .in(PickingDetailEntity::getMainId, ids));
     }
 }

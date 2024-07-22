@@ -1,16 +1,15 @@
 package com.erp.server.wms.service;
 
 import com.erp.model.wms.dto.inventory.*;
-import com.erp.model.wms.enums.inventory.InventoryBizTypeEnum;
 
 /**
- * @Classname: InventoryCoreService
- * @Description: 库存交易核心服务类【业务调用入口】
- * @CreateTime: 2023-05-06  09:28
- * @Author: zhangchunlin
+ * 库存交易核心服务类【业务调用入口】
+ * @since 2023-05-06  09:28
+ * @author zhangchunlin
  * Update by：Edison 2024-06-28
  */
 public interface InventoryTransCoreService {
+    String BUSINESS_TYPE = "INVENTORY_TRANS_CORE_SERVICE";
 
     /**
      * 按业务类型审核: 入库/出库， 自动匹配库存规则

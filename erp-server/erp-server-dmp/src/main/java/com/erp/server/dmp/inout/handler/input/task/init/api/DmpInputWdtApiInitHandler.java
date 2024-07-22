@@ -17,7 +17,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputWdtApiInitRequest;
 import com.sdk.wangdian.sdk.Client;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
@@ -38,9 +37,8 @@ public class DmpInputWdtApiInitHandler implements DmpInputApiInitHandler{
     private WangDianClientService wangDianClientService;
 	
 	@Override
-	public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
+	public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputWdtApiInitRequest) {
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-		DmpInputWdtApiInitRequest dmpInputWdtApiInitRequest = (DmpInputWdtApiInitRequest) dmpInputApiInitRequest;
         
 		String requestParam = dmpInputWdtApiInitRequest.getRequestParam();
 		JSONObject parseObject = JSON.parseObject(requestParam);

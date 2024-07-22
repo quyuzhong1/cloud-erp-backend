@@ -18,7 +18,9 @@ public enum ApiError implements Serializable {
     /**
      * 服务调用异常
      */
-    Default(10000000, "操作失败，请稍后再试"),
+    Default(9999, "系统异常，请联系【实施人员】协调开发人员排查"),
+    WARNING(8888, "系统警告..."),
+
     ERROR_5000(5000, "存在越权访问URL"),
     ERROR_5001(5001, "未授权访问!"),
 
@@ -837,6 +839,47 @@ public enum ApiError implements Serializable {
     ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
     ERROR_99083(99083,"退货入库单不存在"),
     ERROR_99084(99084,"采购订单的执行状态是待确认，不允许新增收货单"),
+    ERROR_99085(99085,"只允许审核通过的销售订单下推销售出库单"),
+
+    ERROR_99086(99086,"要货申请下推发货单后，拣货单不允许修改和删除"),
+
+    ERROR_99087(99087,"销售通知单下推销售出库单后，拣货单不允许修改和删除"),
+    ERROR_99088(99088,"仓库对应默认暂存库位不存在，请联系管理员添加"),
+    ERROR_99100(99100,"暂无可用仓位"),
+
+    ERROR_99101(99101,"{}未生成拣货单，不允许下推销售出库单"),
+    ERROR_99102(99102,"存在拣货单，不允许作废、删除和撤销"),
+    ERROR_99103(99103,"sku【{}】的出库数量不能大于销售订单的销售数量"),
+    ERROR_99104(99104,"只有已处理的要货申请可以下推发货单，且只能下推一次"),
+    ERROR_99105(99105,"销售订单未审核不能下推出库"),
+    ERROR_99110(99110,"已有{},不能再生成拣货单"),
+
+    ERROR_99106(99106,"拣货数量总数不能为0"),
+    ERROR_99107(99107,"未找到销售订单【{}】对应明细"),
+
+    ERROR_99111(99111,"sku【{}】已分完货"),
+    ERROR_99112(99112,"生成波次缺货,无需手动处理"),
+    ERROR_99113(99113,"只有异常单状态才能异常单处理"),
+
+    ERROR_99114(99114,"待处理，异常单的数据不支持自动发货"),
+    ERROR_99115(99115,"销售订单【{}】的发货单存在待处理，异常单的数据不支持自动发货"),
+    ERROR_99116(99116,"只有待处理、非拦截中的发货单可以操作生成波次"),
+
+    ERROR_99117(99117,"波次号和sku不能为空"),
+    ERROR_99118(99118,"波次号和篮号不能为空"),
+    ERROR_99119(99119,"波次号不能为空"),
+    ERROR_99120(99120,"波次下不存在此sku"),
+    ERROR_99121(99121,"只允许同一仓库生成波次"),
+
+    ERROR_99122(99122,"单据【{}】处于异常单生成波次缺货自动触发补货中，不允许打印"),
+    ERROR_99123(99123,"单据【{}】所属的波次处于拣货中或挂起状态，不允许拦截"),
+
+    ERROR_99124(99124,"待处理，异常单,取消发货的数据不支持拦截失败"),
+    ERROR_99125(99125,"异常单,取消发货的数据不支持拦截"),
+    ERROR_99126(99126,"sku未拣货，不能进行分货"),
+
+    ERROR_99127(99127,"发货通知单【{}】总数量不能大于销售数量"),
+    ERROR_99128(99128,"组合产品【{}】的拣货数量与bom用量比例不一致，无法修改"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -940,13 +983,13 @@ public enum ApiError implements Serializable {
     NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE(99145,"没有找到海外仓入库单，请先下推海外仓入库单再审核"),
     DEST_WAREHOUSE_BINDING_PLATFORM_WAREHOUSE(99146,"目的仓未绑定第三方仓，请在【海外仓设置】绑定"),
     OVERSEAS_PROVIDE_NOT_SERVICE(99147,"服务商服务未开发"),
-    NOT_PACKING_NOT_GENERATE_INBOUND(99148,"装箱状态未装箱，不能下推入库单"),
+    NOT_PACKING_NOT_GENERATE_INBOUND(99148,"装箱未完成，不能下推入库单"),
     WAREHOUSE_REPEAT_BINDING(99149,"仓库【{}】绑定了多个第三方仓，一个仓库只能绑定一个第三方仓"),
     GENERATE_INBOUND_NOT_DIS_APPROVE(99150,"已下推海外仓入库单【{}】不能反审核"),
     GENERATE_INBOUND_NOT_UPDATE_PACKING(99150,"已下推海外仓入库单【{}】不能修改装箱信息"),
     IS_NOT_FALSE_SHIPMENT(99151,"手动标发，已发货，取消发货的数据不允许操作手动标发"),
     B2C_SO_DELIVERY_NOT_EXISTS(99152,"b2c发货单不存在"),
-    IS_NOT_MANUAL_DELIVERY(99152,"已发货、取消发货的数据不允许手动发货"),
+    IS_NOT_MANUAL_DELIVERY(99152,"待处理、已发货、异常单、取消发货的数据不允许手动发货"),
     WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
@@ -957,7 +1000,7 @@ public enum ApiError implements Serializable {
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货，取消发货的数据不允许操作手动标发"),
     APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许手动标发"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交手动标发"),
-    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】已发货和取消发货单状态，不允许再打印拣货单"),
+    STATUS_NOT_PRINT_PICKING(92122,"单据【{}】未生成波次，不允许操作"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
@@ -983,6 +1026,22 @@ public enum ApiError implements Serializable {
 
     ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 自发货费用单据已确认状态下,不允许反审核"),
     ERROR_DELIVERY_INTERCEPT_READY_PACKAGED(92139,"销售订单号【{}】已组包不支持拦截操作"),
+    ERROR_92140(92140,"关联单号【{}】已审核不能修改装箱"),
+    ERROR_92141(92141,"装箱任务记录不存在"),
+    ERROR_92142(92142,"头程发货单【{}】记录不存在"),
+    ERROR_92143(92143,"销售订单出库单记录不存在"),
+    ERROR_92144(92144,"发货通知到记录不存在"),
+    ERROR_92145(92145,"箱规记录不存在"),
+    ERROR_92146(92146,"装箱记录不存在"),
+    ERROR_92147(92147,"SKU【{}】不可超过未装箱数量【{}】"),
+    ERROR_92148(92148,"SKU【{}】不可超过本箱已装箱数量【{}】"),
+    ERROR_92149(92149,"SKU【{}】在关联单中没有记录"),
+    ERROR_92150(92150,"SKU【{}】在装箱中没有记录不能移出"),
+    ERROR_92251(92251,"关联单号已审核，不支持编辑修改删除"),
+    ERROR_92252(92252,"装箱中SKU【{}】累计装箱数量【{}】不可大于发货数量【{}】"),
+    ERROR_92253(92253,"装箱中SKU累计装箱数量不可大于拣货数量"),
+    ERROR_92254(92254,"本箱已完成称重，不支持调整装箱"),
+    ERROR_92255(92255,"调整装箱后，装箱数量不能为0"),
 
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
@@ -994,8 +1053,8 @@ public enum ApiError implements Serializable {
     PO_RETURN_NOT_EXISTS(92129,"未找到采购退货单"),
     CFG_SETTING_NOT_EXISTS(92129,"退货配置不存在，请先配置异常处理人"),
     RECEIVE_SHOULD_GENERATE_BY_DELIVERY(92130,"【{}】已开启系统收货协同，请从送货单下推收货单"),
-    B2C_SO_DELIVERY_FINISH_PRINT(92131,"发货单【{}】非待处理不支持完成打印"),
-    B2C_SO_DELIVERY_NOT_FINISH_PRINT(92132,"发货单【{}】非拣货中不支持取消完成拣货"),
+    B2C_SO_DELIVERY_FINISH_PRINT(92131,"发货单【{}】非生成波次/拣货中不支持完成打印"),
+    B2C_SO_DELIVERY_NOT_FINISH_PRINT(92132,"发货单【{}】非生成波次/拣货中不支持取消完成打印"),
     PLEASE_KEEP_LEAST_ONE_DATA(92133,"请至少保留一条明细，或者整单删除！"),
 
     NOT_PACKAGE_NO_APPROVE(92133,"单号{}尚未完成装箱信息，请完成后审核"),
@@ -1047,10 +1106,26 @@ public enum ApiError implements Serializable {
     ERROR_THIRD_VIRTUAL_WAREHOUSE_BINDED(92232,"旺店通【{}】已与仓库【{}】关联"),
     ERROR_NO_SYNC(92232,"没有同步信息"),
     ERROR_CHECK_OUT_VIRTUAL_INVENTORY(92233,"虚拟仓库存已分配【{}】，出库数量不能超过【{}】"),
+    WAREHOUSE_AREA_EXIST(92142,"库区{}【{}】已存在"),
+    POSITION_BINDING_EXIST(92143,"库区{}存在仓位绑定,无法删除或禁用"),
+    WAREHOUSE_LOCATION_EXIST(92144, "仓位{}已存在"),
+
+    SKU_INVENTORY_SHORTAGE(92150, "【{}】仓位库存不足，无法生成拣货单"),
+
+    UNPICKED_QUANTITY_SHORTAGE(92151, "未拣货数量不足，无法生成拣货单，请重新操作"),
+    CFG_RULE_WAVE_ORDER_QTY_COMPARE(92152, "最小单数不能大于最大单数"),
+    CFG_RULE_WAVE_QTY_COMPARE(92153, "最少商品数量不能大于最大商品数量"),
+
+
     ERROR_VW_CHANNEL_ERROR(92234,"当前{}【{}】已经被虚拟仓【{}】绑定\n"),
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
     ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
     ERROR_VW_INVENTORY_ERROR(92235,"虚拟仓【{}】库存不足"),
+    ERROR_EXISTS_TRANSFER_INFO(92236, "存在未删除或未作废的直接调拨单"),
+    ERROR_GENERATE_TRANSFER(92237, "可用库存不足，生成直接调拨单失败"),
+
+    ERROR_NOT_FOUND_WAREHOUSE_AREA(92238, "新增补货单时没有找到有效的库区"),
+    ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
 
 
     /**
@@ -1105,7 +1180,7 @@ public enum ApiError implements Serializable {
     ERROR_92044(92044,"存在已使用的的客户不能进行停用"),
     ERROR_92045(92045,"sku【{}】实退总数量不能大于签收单的签收数量"),
     ERROR_92046(92046,"存在被销售订单引用的地址不能删除"),
-    ERROR_92047(92047,"存在销售订单处于变更中,无法反审核"),
+    ERROR_92047(92047,"销售订单处于变更中,无法反审核"),
     ERROR_92048(92048,"开始日期需要按升序"),
     ERROR_92049(92049,"销售订单变更数量不能小于下推的发货通知单的发货数量"),
     ERROR_92050(92050,"销售订单变更数量不能小于发货通知单实发数量"),

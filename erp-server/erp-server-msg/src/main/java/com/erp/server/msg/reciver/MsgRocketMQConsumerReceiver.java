@@ -60,18 +60,18 @@ public class MsgRocketMQConsumerReceiver {
         public void onMessage(WarnMsgInfoDTO warnMsgInfo) {
             log.info("监听到消息发送预警消息通知，请求内容：{}", JSONObject.toJSONString(warnMsgInfo));
             //判断是否开启消息异步管理
-            if (Objects.isNull(useJob) || !useJob){
+//            if (Objects.isNull(useJob) || !useJob){
                 msgContext.routeSendWarnMsg(warnMsgInfo);
-            }else {
-                //记录异常消息 然后使用定时任务进行推送
-                if (StringUtils.isBlank(warnMsgInfo.getMsgId())){
-                    warnMsgInfo.setMsgId(IdUtils.fastUUID());
-                }
-                if (Objects.isNull(warnMsgInfo.getIsSend())){
-                    warnMsgInfo.setIsSend(MathUtil.ZERO);
-                }
-                mongoTemplate.insert(warnMsgInfo, MongoTableConstant.FEISHU_WARN_MSG);
-            }
+//            }else {
+//                //记录异常消息 然后使用定时任务进行推送
+//                if (StringUtils.isBlank(warnMsgInfo.getMsgId())){
+//                    warnMsgInfo.setMsgId(IdUtils.fastUUID());
+//                }
+//                if (Objects.isNull(warnMsgInfo.getIsSend())){
+//                    warnMsgInfo.setIsSend(MathUtil.ZERO);
+//                }
+//                mongoTemplate.insert(warnMsgInfo, MongoTableConstant.FEISHU_WARN_MSG);
+//            }
         }
     }
 

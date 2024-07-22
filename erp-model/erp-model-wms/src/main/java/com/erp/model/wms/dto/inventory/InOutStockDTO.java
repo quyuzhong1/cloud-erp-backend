@@ -1,7 +1,10 @@
 package com.erp.model.wms.dto.inventory;
 
+import cn.hutool.core.util.StrUtil;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
@@ -62,6 +65,11 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
          */
         private String virtualWarehouseId;
 
+        /**
+         * 库存锁等待时间  默认： 5s
+         */
+        private Long lockWaitTime;
+
 
         public static InOutStockDTO initByReturnOrder(PoReturnEntity entity, PoReturnDetailEntity detail, InventorySourceTypeEnum sourceType, Integer qty, InventoryStatusEnum inventoryStatus) {
                 InOutStockDTO inOutStockDTO = new InOutStockDTO();
@@ -78,5 +86,19 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
                 inOutStockDTO.setQty(qty);
                 inOutStockDTO.setInventoryStatus(inventoryStatus);
                 return inOutStockDTO;
+        }
+
+        public static InOutStockDTO getInOutStockDTO(SoOutstockEntity entity, String sourceDetailId, String skuId, String skuNo, String warehouseLocation, Integer qty){
+                InOutStockDTO stockDTO = new InOutStockDTO();
+                stockDTO.setWarehouseId(entity.getWarehouseId());
+                stockDTO.setSourceId(entity.getId());
+                stockDTO.setSourceCode(entity.getCode());
+                stockDTO.setSourceDetailId(sourceDetailId);
+                stockDTO.setSkuId(skuId);
+                stockDTO.setSkuNo(skuNo);
+                stockDTO.setWarehouseLocation(StrUtil.isNotBlank(entity.getBatchNo()) ? "" : warehouseLocation);
+                stockDTO.setQty(qty);
+                stockDTO.setBillDate(entity.getBillDate());
+                return stockDTO;
         }
 }

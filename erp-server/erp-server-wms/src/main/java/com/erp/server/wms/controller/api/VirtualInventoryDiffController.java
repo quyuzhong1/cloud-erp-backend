@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 虚拟库存差异表
@@ -86,5 +87,43 @@ public class VirtualInventoryDiffController extends BaseController {
     public ApiResult exportExcel(@RequestBody VirtualInventoryDiffDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = virtualInventoryDiffService.exportExcel(dto, response);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 一键调整查询
+     * @author will
+     * @date 2024/7/17 16:21
+     * @param dto 
+     * @return ApiResult<List<ListDetailQtyDTO>>
+     */
+    @PostMapping("/listDiffDetail")
+    public ApiResult<List<VirtualInventoryDiffDTO.ListDetailQtyDTO>> listDiffDetail(@RequestBody @Validated VirtualInventoryDiffDTO.SearchParamDetailDTO dto) {
+        return success(virtualInventoryDiffService.listDiffDetail(dto));
+    }
+
+    /**
+     * 一键调整保存
+     * @author will
+     * @date 2024/7/17 18:17
+     * @param list
+     * @return ApiResult
+     */
+    @PostMapping("/updateVirtualInventory")
+    public ApiResult updateVirtualInventory(@RequestBody @Validated List<VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO> list) {
+        virtualInventoryDiffService.updateVirtualInventory(list);
+        return success();
+    }
+
+    /**
+     * 获取推荐数量
+     * @author will
+     * @date 2024/7/17 19:00
+     * @param list
+     * @return ApiResult<List<ListSuggestQtyDTO>>
+     */
+    @PostMapping("/listSuggestQty")
+    public ApiResult<List<VirtualInventoryDiffDTO.ListSuggestQtyDTO>> listSuggestQty(@RequestBody @Validated List<VirtualInventoryDiffDTO.ListSuggestQtyParamDTO> list) {
+        List<VirtualInventoryDiffDTO.ListSuggestQtyDTO> resultList = virtualInventoryDiffService.listSuggestQty(list);
+        return success(resultList);
     }
 }

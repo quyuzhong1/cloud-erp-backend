@@ -1,6 +1,8 @@
 package com.common.core.utils.date;
 
 
+import cn.hutool.core.date.LocalDateTimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.ParseException;
@@ -8,7 +10,6 @@ import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.time.format.DateTimeParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -21,6 +22,7 @@ import java.util.regex.Pattern;
  * @Date 2022-08-02 16:10
  * @Created by yl
  */
+@Slf4j
 public class DateUtil {
 
     private DateUtil() {
@@ -551,4 +553,71 @@ public class DateUtil {
 
         return endOfMonth;
     }
+
+
+    /**
+     * 解析时区字符串
+     * @param dateTimeStr 格式: 2024-06-18T21:03:31+01:00[Europe/London] 或 2024-06-16T12:26:27+02:00
+     * @return OffsetDateTime
+     */
+    public static OffsetDateTime parseOffsetDateTime(String dateTimeStr) {
+        if (StringUtils.isBlank(dateTimeStr)){
+            return null;
+        }
+        //  兼容地区解析
+        if (dateTimeStr.contains("[") || dateTimeStr.contains("]") ) {
+            // 尝试解析包含时区的字符串
+            ZonedDateTime zdt = ZonedDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+            return zdt.toOffsetDateTime();
+        } else {
+            // 解析不包含时区的字符串
+            return OffsetDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        }
+    }
+
+    /**
+     * 解析时区字符串
+     * @param dateTimeStr 格式: 2024-06-18T21:03:31+01:00[Europe/London] 或 2024-06-16T12:26:27+02:00
+     * @return LocalDateTime
+     */
+    public static LocalDateTime parseLocalDateTimeWithOffset(String dateTimeStr) {
+        if (StringUtils.isBlank(dateTimeStr)){
+            return null;
+        }
+        //  兼容地区解析
+        if (dateTimeStr.contains("[") || dateTimeStr.contains("]") ) {
+            // 尝试解析包含时区的字符串
+            ZonedDateTime zdt = ZonedDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+            return zdt.toOffsetDateTime().toLocalDateTime();
+        }  else if (dateTimeStr.contains("+") || dateTimeStr.contains("-") ) {
+            // 解析不包含时区的字符串
+            return OffsetDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toLocalDateTime();
+        } else {
+            // 解析localDateTime
+            return LocalDateTimeUtil.parse(dateTimeStr);
+        }
+    }
+
+    /**
+     * 指定localDateTime时区转为目标时区
+     * @param localDateTime 来源localDateTime
+     * @param sourceZoneId 来源时区
+     * @param targetZoneId 目标时区
+     * @return 转化后的localDateTime
+     */
+    public static LocalDateTime convertZoneTime(LocalDateTime localDateTime, ZoneId sourceZoneId, ZoneId targetZoneId) {
+        // 将 LocalDateTime 转换为来源时区的 ZonedDateTime
+        ZonedDateTime pacificZonedDateTime = localDateTime.atZone(sourceZoneId);
+        // 将来源时区的 ZonedDateTime 转换为目标时区的 ZonedDateTime
+        ZonedDateTime systemZonedDateTime = pacificZonedDateTime.withZoneSameInstant(targetZoneId);
+        // 如果需要，可以将 ZonedDateTime 转换回 LocalDateTime
+        LocalDateTime systemLocalDateTime = systemZonedDateTime.toLocalDateTime();
+        // 打印结果
+        log.debug("原始时间（时区）: " + pacificZonedDateTime);
+        log.debug("转换后的时间（系统时区）: " + systemZonedDateTime);
+        log.debug("转换后的 LocalDateTime（系统时区）: " + systemLocalDateTime);
+        return systemLocalDateTime;
+    }
+
+
 }

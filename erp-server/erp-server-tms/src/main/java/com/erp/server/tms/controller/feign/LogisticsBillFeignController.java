@@ -172,6 +172,19 @@ public class LogisticsBillFeignController {
     }
 
     /**
+     * 根据物流跟踪单号或运单号查询物流单详情
+     * @author will
+     * @date 2024/7/3 17:39
+     * @param logisticsCode
+     * @return BaseDTO
+     */
+    @GetMapping("/getByTrackNoOrTransportNo")
+    public LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(@RequestParam(value = "logisticsCode") String logisticsCode) {
+        LogisticsBillDTO.BaseDTO entity = logisticsBillService.getByTrackNoOrTransportNo(logisticsCode);
+        return entity;
+    }
+
+    /**
      * 根据物流跟踪单号查询物流单详情
      * @Author Luo_WG
      * @Date 2023/12/14 15:45

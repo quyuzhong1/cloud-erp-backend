@@ -7,6 +7,7 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -103,11 +104,13 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @param dto
      * @return
      */
-    List<WmsCartonDTO.ExportPackingDTO> exportPacking(@Param("params") SoOutstockDTO.ExportDTO dto);
+    List<WmsCartonSpecDTO.ExportPackingDTO> exportPacking(@Param("params") SoOutstockDTO.ExportDTO dto);
 
-    List<WmsCartonDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String id);
+    List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String id);
 
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@Param("params") TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics( FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
+
+    List<SoOutstockDetailEntity> listApproveBySourceDetailIds(@Param("ids") List<String> ids);
 }

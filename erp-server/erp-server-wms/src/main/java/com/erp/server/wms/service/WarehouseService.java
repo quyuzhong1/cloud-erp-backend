@@ -2,10 +2,12 @@ package com.erp.server.wms.service;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -103,20 +105,23 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * 审核仓库
      * @author yl
      * @date 2023-03-22 11:45
-     * @param dto
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(WarehouseEntity entity, String type, String comment, Boolean isNeedProcess);
 
     
     /**
      * 反审核
      * @author yl
      * @date 2023-03-22 11:59
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(WarehouseEntity entity);
 
     /**
      * 批量删除
@@ -284,4 +289,12 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return PagingVO<ListDTO>
      */
     PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> dto);
+
+    /**
+     * 查询所有仓库信息(不带权限控制) 不带权限控制的查询所有仓库信息
+     * @return List<WarehouseEntity>    仓库信息
+     */
+    List<WarehouseEntity> listWarehouseWithCaches();
+
+
 }

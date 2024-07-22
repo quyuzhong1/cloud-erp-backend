@@ -6,6 +6,7 @@
             sdn.id,
             sdnd.id as detailId,
             sdn.source_id AS sourceId,
+            sdn.source_type AS sourceType,
             sdnd.source_detail_id AS sourceDetailId,
             sdn.code,
             sdn.source_code AS sourceCode,
@@ -26,9 +27,13 @@
             sdn.pack_date AS packDate,
             sdn.approve_user_name AS approveUserName,
             sdn.create_user_name AS createUserName,
+        (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
+        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = sdnd.sku_id) as packingQty,
+        pt.packing_status as packingStatus,
             sdn.create_time AS createTime
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        LEFT JOIN packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and    sdnd.is_deleted = FALSE
@@ -124,16 +129,13 @@
         sdnd.sku_id,
         sdnd.is_close,
         sdnd.sku_no,
-        pd.qty,
-        pd.warehouse_location,
+        COALESCE(sdnd.picking_qty, 0) as qty,
         sdn.seller_id,
         sdn.seller_name,
         sdnd.remark
       FROM so_delivery_notice  sdn
       INNER JOIN so_delivery_notice_detail sdnd
       ON  sdn.id=sdnd.main_id AND  sdnd.is_deleted=FALSE
-      INNER JOIN picking_detail pd
-      ON  pd.source_detail_id=sdnd.id AND  pd.is_deleted=FALSE AND pd.source_type=#{sourceType}
      WHERE sdn.is_deleted=FALSE
       <if test="idList !=null and idList.size>0">
           and sdn.id in

@@ -7,9 +7,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-
 import java.util.List;
-
 /**
  * <p>
  * 店铺表 Mapper 接口

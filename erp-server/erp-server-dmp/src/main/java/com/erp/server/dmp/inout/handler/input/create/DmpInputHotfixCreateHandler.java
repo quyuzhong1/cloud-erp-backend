@@ -48,6 +48,7 @@ public class DmpInputHotfixCreateHandler extends DmpInputBaseCreateHandler{
 		List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityList = dmpCfgInputDetailService.lambdaQuery()
 				.eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
 				.eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
+				.eq(DmpCfgInputDetailEntity::getTaskType, DmpInputTaskTaskTypeEnum.NORMAL.getCode())
 				.in(CollUtil.isNotEmpty(cfgInputDetailIdList) , DmpCfgInputDetailEntity::getId, cfgInputDetailIdList)
 				.list();
 		String msg = "";

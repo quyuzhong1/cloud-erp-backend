@@ -22,6 +22,7 @@ import org.springframework.cglib.beans.BeanMap;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AttachDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -134,6 +135,19 @@ public class DictCore {
                     items.add(record);
                 }
                 ((PagingVO) result).setList(items);
+        	}
+            return result;
+
+        }else if (result instanceof IPage<?>) {
+        	List<?> list = ((IPage<?>)result).getRecords();
+        	if(CollUtil.isNotEmpty(list)) {
+        		addDictCache(list.stream().filter(Objects::nonNull).findAny().orElse(null), isFirst);
+        		List<Object> items = new ArrayList<>();
+                for (Object record : list) {
+                	record = this.dealRecord(record, lang);
+                    items.add(record);
+                }
+                ((IPage) result).setRecords(items);
         	}
             return result;
 
@@ -383,6 +397,7 @@ public class DictCore {
                 table = convertTable(serviceCode, table);
                 String type = dictAnnotation.queryTypeField();
                 String extendQuerySql = dictAnnotation.extendQuerySql();
+                String dictFieldName = dictAnnotation.dictFieldName();
 
                 field.setAccessible(true);
 
@@ -459,7 +474,14 @@ public class DictCore {
                 	if(dictDefaultOriginalValue && StringUtils.isBlank(textValue)) {
                     	textValue = keyObject.toString();
                     }
-                	fieldValueMap.put(field.getName() + "Name", textValue);
+                	if(StringUtils.isBlank(dictFieldName)) {
+                		String fieldName = field.getName();
+                		if(fieldName.endsWith("Id")) {
+                			fieldName = fieldName.substring(0, fieldName.length() - 2);
+                		}
+                		dictFieldName = fieldName + "Name";
+                	}
+                	fieldValueMap.put(dictFieldName, textValue);
 				}
                 
             }

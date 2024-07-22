@@ -63,7 +63,7 @@ public class AliExpressLogisticsHandlerImplTest {
     public AliExpressLogisticsHandlerImplTest(){
         String CLIENT_CODE = "502978";
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000200918tiFq5iBtYmQcdaF1Gox1875decdETPc8fCQAtRXFGFPo1Fy1cLR4iEp3v";
+        String token = "50000700423zHPZZqMly9iku4MQdb7h0hqR18ff9902ExugZffT7nzxEiFwFyWHdZKNC";
 //        String token = "50000100620rOCpJesBimsVqwhdznwFL19448dbexeSxecBcvdotvGJILKkYWzw0qLEq";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);

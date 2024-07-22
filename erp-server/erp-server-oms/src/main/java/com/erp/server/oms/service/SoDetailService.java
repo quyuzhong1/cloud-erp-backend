@@ -1,13 +1,15 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -273,6 +275,16 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
     void updateRemarkByIds(List<String> ids, String remark);
 
     /**
+     * 查询虚拟库存
+     * @author will
+     * @date 2024/7/15 12:18
+     * @param soInfoEntity
+     * @param skuIdList
+     * @return List<VirtualInventoryQtyDTO>
+     */
+     List<VirtualInventoryDTO.VirtualInventoryQtyDTO> handleVirtualInventory(SoInfoEntity soInfoEntity, List<String> skuIdList);
+
+    /**
      * 获取集合
      * @author yl
      * @date 2023-08-02 10:53
@@ -300,4 +312,27 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return void
      */
     void closeSoDetailByIds(List<String> closeSoDetailIdList);
+    /**
+     * 锁定库存
+     * @author will
+     * @date 2024/7/16 9:57
+     * @param saveDTO
+     * @return BatchResultDTO
+     */
+    BatchResultDTO saveLockVirtualInventory(SoInfoDTO.LockVirtualInventorySaveDTO saveDTO);
+    /**
+     * 批量释放库存
+     * @author will
+     * @date 2024/7/15 17:32
+     * @param detailId
+     * @return BatchResultDTO
+     */
+    BatchResultDTO batchUnLockVirtualInventory(String detailId);
+    /**
+     * 扣减冻结数量
+     * @author will
+     * @date 2024/7/16 20:08
+     * @param soParamList
+     */
+    void updateFrozenQty(List<SoDetailDTO.UpdateFrozenQtyDTO> soParamList);
 }

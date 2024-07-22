@@ -1,6 +1,7 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -58,8 +59,16 @@ public interface SoInfoFeign {
      * @Date 2023/7/4 12:28
      **/
     @PostMapping("feign/soInfo/approve")
-    Boolean approve(@RequestBody BaseApproveParamDTO dto);
+    List<BatchResultDTO> approve(@RequestBody BaseApproveParamDTO dto);
 
     @PostMapping("feign/soInfo/listRepairHistoryDb")
     List<SoInfoDTO.ListDTO> listRepairHistoryDb();
+    /**
+     * 更新冻结数量
+     * @author will
+     * @date 2024/7/16 20:07
+     * @param soParamList
+     */
+    @PostMapping("feign/soInfo/updateFrozenQty")
+    void updateFrozenQty(@RequestBody List<SoDetailDTO.UpdateFrozenQtyDTO> soParamList);
 }
