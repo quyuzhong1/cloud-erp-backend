@@ -110,9 +110,6 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         virtualWarehouseChannelService.batchAdd(bindChannel(addDTO.getChannelList(), virtualWarehouseEntity.getId()));
         //新增关联仓库
         virtualWarehouseRelationService.batchAdd(bindRelation(addDTO.getWarehouseIdList(), virtualWarehouseEntity.getId()));
-
-        //外部仓日志
-        addThirdMappingOperateLog(addDTO.getThirdMappingList(),virtualWarehouseEntity);
         //新增关联外部仓
         dmpThirdMappingFeign.add(bindThirdMapping(addDTO.getThirdMappingList(), virtualWarehouseEntity));
 
@@ -275,6 +272,9 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         virtualWarehouseChannelService.batchAdd(bindChannel(updateDTO.getChannelList(), virtualWarehouseEntity.getId()));
         //新增关联仓库
         virtualWarehouseRelationService.batchAdd(bindRelation(updateDTO.getWarehouseIdList(), virtualWarehouseEntity.getId()));
+
+        //外部仓日志
+        addThirdMappingOperateLog(updateDTO.getThirdMappingList(),virtualWarehouseEntity);
         //新增关联外部仓
         dmpThirdMappingFeign.add(bindThirdMapping(updateDTO.getThirdMappingList(), virtualWarehouseEntity));
 
@@ -387,6 +387,9 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         virtualWarehouseEntity.setId(updateStateDTO.getId());
         virtualWarehouseEntity.setDisabled(updateStateDTO.getDisabled());
         baseMapper.updateById(virtualWarehouseEntity);
+
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), vwEntity.getCode(), "虚拟仓");
+        operateLogService.addModuleOperateLogByObj(vwEntity, virtualWarehouseEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
