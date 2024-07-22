@@ -493,8 +493,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             resultList.add(addDTO);
         } else {
             if (CollectionUtil.isNotEmpty(deliveryIdList)) {
-                //删除拣货单
-                pickingListsService.deleteBySourceId(deliveryIdList);
                 //回滚库存
                 soB2cDeliveryService.rollbackPickingInventory(deliveryIdList);
             }
