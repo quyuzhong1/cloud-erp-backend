@@ -1677,7 +1677,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     detail.setSkuId(item.getSkuId());
                     detail.setSkuNo(item.getSkuNo());
                     detail.setRemark(item.getRemark());
-                    detail.setWarehouseId(item.getWarehouseId());
+                    detail.setWarehouseId(warehouseId);
                     if (isTransit) {
                         detail.setWarehouseLocation("");
                     }else {
