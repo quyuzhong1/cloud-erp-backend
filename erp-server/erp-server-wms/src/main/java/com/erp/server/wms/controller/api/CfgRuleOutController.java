@@ -65,4 +65,13 @@ public class CfgRuleOutController extends BaseController {
     public ApiResult<String> getSortingPort(@RequestBody CfgRuleOutDTO.SortingPortRuleDTO dto) {
         return success(cfgRuleOutService.getSortingPort(dto));
     }
+
+    /**
+     * 匹配中转仓配置
+     */
+    @PostMapping("/matchTransferRule")
+    public ApiResult<Boolean> matchTransferRule(@RequestBody CfgRuleOutDTO.MatchTransferRuleDTO dto){
+        Boolean matched = cfgRuleOutService.matchTransferRule(dto);
+        return success(matched);
+    }
 }

@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -461,7 +460,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 实际发货日期
          */
-        private LocalDate actualDeliveryDate;
+        private LocalDateTime actualDeliveryDate;
 
         /**
          * 运输单号
@@ -504,7 +503,7 @@ public class SoOutstockDTO implements Serializable {
             this.sourceCode = entity.getCode();
             this.sourceType = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
             this.planDeliveryDate = entity.getPlanDeliveryDate();
-            this.actualDeliveryDate = entity.getActualDeliveryDate();
+            this.actualDeliveryDate = entity.getActualDeliveryDate().atStartOfDay();
             this.trackNo = entity.getTrackNo();
             this.carrierId = entity.getCarrierId();
             this.sellerId = entity.getSellerId();
