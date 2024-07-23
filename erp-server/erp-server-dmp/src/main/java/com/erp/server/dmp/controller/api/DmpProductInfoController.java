@@ -24,7 +24,7 @@ import com.erp.model.dmp.dto.DmpProductInfoDTO;
  * 产品spu信息
  *
  * @author shukai
- * @since 2024-07-22
+ * @since 2024-07-23
  */
 @Slf4j
 @RestController
@@ -38,7 +38,7 @@ public class DmpProductInfoController extends BaseController {
     /**
     * 新增
     * @author shukai
-    * @date:  2024-07-22
+    * @date:  2024-07-23
     * @param dto
     * @return ApiResult<String>
     */
@@ -51,7 +51,7 @@ public class DmpProductInfoController extends BaseController {
     /**
     * 修改
     * @author shukai
-    * @date:  2024-07-22
+    * @date:  2024-07-23
     * @param dto
     * @return ApiResult
     */

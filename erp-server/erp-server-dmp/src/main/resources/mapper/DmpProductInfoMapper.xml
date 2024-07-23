@@ -6,6 +6,12 @@
        <result column="id" property="id" />
        <result column="create_time" property="createTime" />
        <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
        <result column="platform_create_time" property="platformCreateTime" />
        <result column="platform_update_time" property="platformUpdateTime" />
        <result column="source_system" property="sourceSystem" />
@@ -13,6 +19,11 @@
        <result column="spu_id" property="spuId" />
        <result column="spu_no" property="spuNo" />
        <result column="spu_name" property="spuName" />
+       <result column="input_task_id" property="inputTaskId" />
+       <result column="convert_id" property="convertId" />
+       <result column="next_level_id" property="nextLevelId" />
+       <result column="unique_encrypt" property="uniqueEncrypt" />
+       <result column="data_encrypt" property="dataEncrypt" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -20,7 +31,13 @@
         id,
         create_time,
         update_time,
-        platform_create_time, platform_update_time, source_system, source_platform, spu_id, spu_no, spu_name
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        platform_create_time, platform_update_time, source_system, source_platform, spu_id, spu_no, spu_name, input_task_id, convert_id, next_level_id, unique_encrypt, data_encrypt
     </sql>
 
 

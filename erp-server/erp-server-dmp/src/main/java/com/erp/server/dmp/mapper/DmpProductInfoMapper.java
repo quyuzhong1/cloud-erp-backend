@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
  * </p>
  *
  * @author shukai
- * @since 2024-07-22
+ * @since 2024-07-23
  */
 @Mapper
 public interface DmpProductInfoMapper extends BaseMapper<DmpProductInfoEntity> {

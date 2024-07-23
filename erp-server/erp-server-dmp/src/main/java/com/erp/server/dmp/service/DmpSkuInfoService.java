@@ -10,14 +10,14 @@ import com.erp.model.dmp.dto.DmpSkuInfoDTO;
  * </p>
  *
  * @author shukai
- * @since 2024-07-22
+ * @since 2024-07-23
  */
 public interface DmpSkuInfoService extends SuperService<DmpSkuInfoEntity> {
 
     /**
     * 新增
     * @author shukai
-    * @date: 2024-07-22
+    * @date: 2024-07-23
     * @param dto
     * @return
     */
@@ -26,7 +26,7 @@ public interface DmpSkuInfoService extends SuperService<DmpSkuInfoEntity> {
     /**
     * 修改
     * @author shukai
-    * @date: 2024-07-22
+    * @date: 2024-07-23
     * @param dto
     * @return
     */

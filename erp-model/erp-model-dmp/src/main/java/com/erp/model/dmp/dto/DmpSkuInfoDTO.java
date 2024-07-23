@@ -18,7 +18,7 @@ import javax.validation.constraints.Digits;
  * </p>
  *
  * @author shukai
- * @since 2024-07-22
+ * @since 2024-07-23
 */
 @Data
 @NoArgsConstructor
@@ -158,6 +158,31 @@ public class DmpSkuInfoDTO implements Serializable {
         * 图片url
         */
         private String imageUrls;
+
+        /**
+        * 输入任务id
+        */
+        private String inputTaskId;
+
+        /**
+        * 转换id
+        */
+        private String convertId;
+
+        /**
+        * 下一层级id
+        */
+        private String nextLevelId;
+
+        /**
+        * 唯一字段md5值
+        */
+        private String uniqueEncrypt;
+
+        /**
+        * 数据字段md5值
+        */
+        private String dataEncrypt;
 
 
     }
@@ -347,6 +372,37 @@ public class DmpSkuInfoDTO implements Serializable {
         @NotBlank(message = "图片url不能为空")
         @Size(max = 500,message = "图片url最大长度不能超过500位")
         private String imageUrls;
+
+        /**
+        * 输入任务id
+        */
+        @NotBlank(message = "输入任务id不能为空")
+        @Size(max = 19,message = "输入任务id最大长度不能超过19位")
+        private String inputTaskId;
+
+        /**
+        * 转换id
+        */
+        @NotBlank(message = "转换id不能为空")
+        @Size(max = 19,message = "转换id最大长度不能超过19位")
+        private String convertId;
+
+        /**
+        * 下一层级id
+        */
+        @NotBlank(message = "下一层级id不能为空")
+        @Size(max = 19,message = "下一层级id最大长度不能超过19位")
+        private String nextLevelId;
+
+        /**
+        * 唯一字段md5值
+        */
+        private String uniqueEncrypt;
+
+        /**
+        * 数据字段md5值
+        */
+        private String dataEncrypt;
 
 
     }
