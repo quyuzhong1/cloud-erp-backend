@@ -50,6 +50,8 @@ public class DmpInputAliExpressSkuDmpHandler extends DmpInputDoChildDmpHandler{
 						l.put("packageWidth", dmpInputMongoChild.get("package_width"));
 						l.put("packageHeight", dmpInputMongoChild.get("package_height"));
 						l.put("grossWeight", dmpInputMongoChild.get("gross_weight"));
+						l.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
+						l.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
 					});
 					dmpInputMongoChildEntityList.addAll(aeop_ae_product_sku_list);
 				}
@@ -69,11 +71,11 @@ public class DmpInputAliExpressSkuDmpHandler extends DmpInputDoChildDmpHandler{
 		Map<String, String> billNoIdMap = new HashMap<>();
 		if(CollUtil.isNotEmpty(listMaps)) {
 			for(Map<String, Object> listMap : listMaps) {
-				billNoIdMap.put(listMap.get("supId").toString(), listMap.get(BaseEntity.ID).toString());
+				billNoIdMap.put(listMap.get("spu_id").toString(), listMap.get(BaseEntity.ID).toString());
 			}
 		}
 		for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
-			String billNo = dmpInputMongoChildEntity.get("product_id").toString();
+			String billNo = dmpInputMongoChildEntity.get("spuId").toString();
 			String dmpId = billNoIdMap.get(billNo);
 			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
 		}

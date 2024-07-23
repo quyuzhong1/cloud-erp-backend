@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +94,6 @@ public class DmpInputAliExpressProductDetailInitHandler extends DmpInputInitHand
         	}
             
             JSONObject result = data.getJSONObject("result");
-            result.put("product_id", product_id);
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
     		dmpInputTaskInitDTO.setMsg(result.toJSONString());
     		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
@@ -108,7 +108,7 @@ public class DmpInputAliExpressProductDetailInitHandler extends DmpInputInitHand
 			response = client.execute(request, token, Protocol.TOP);
 		} catch (ApiException e) {
 			Throwable cause = e.getCause();
-			if(cause instanceof SSLHandshakeException) {
+			if(cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {
 				return null;
 			}
 			throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
