@@ -844,6 +844,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadOrderStatus()));
                 //入库预报状态
                 listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(listDTO.getInstockForecastStatus()));
+                //组包单号
+            PackageForecastDetailEntity mainPackageForecastDetailEntity = packageForecastDetailEntityList.stream().filter(v -> v.getSoCode().equals(listDTO.getSoCode())).findFirst().orElse(new PackageForecastDetailEntity());
+            PackageForecastEntity mainPackageForecastEntity = packageForecastEntityList.stream().filter(v -> v.getId().equals(mainPackageForecastDetailEntity.getMainId())).findFirst().orElse(new PackageForecastEntity());
+            listDTO.setPackageForecastCode(mainPackageForecastEntity.getCode());
             detailEntityList.forEach(transferDeclareDetailEntity -> {
                 SoB2cEntity detailSoB2cEntity = soB2cEntityList.stream()
                         .filter(req -> req.getId().equals(transferDeclareDetailEntity.getSoId())
