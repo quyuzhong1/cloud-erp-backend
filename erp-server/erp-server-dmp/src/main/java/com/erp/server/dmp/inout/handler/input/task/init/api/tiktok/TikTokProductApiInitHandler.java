@@ -47,16 +47,11 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
         DmpInputTikTokApiInitRequest dmpInputTikTokApiInitRequest = (DmpInputTikTokApiInitRequest) dmpInputApiInitRequest;
 
         String nextLevelId = dmpInputTikTokApiInitRequest.getNextLevelId();
-        List<String> orderIds = dmpInputTikTokApiInitRequest.getOrderIds();
 
         TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(nextLevelId);
         if (ObjectUtil.isEmpty(shopInfoDTO)) {
             throw new ServiceException("TikTok店铺id：" + nextLevelId + "未找到对应的店铺信息");
         }
-
-
-
-        List<ListingViewDTO> resultsBeanList = new ArrayList<>();
 
         //每次最多获取200条
         Integer pageSize = 100;
@@ -71,7 +66,7 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
         StringBuffer sb = new StringBuffer();
         while (true) {
             //组装授权url
-            String path = "/product/" + TikTokConstant.VERSION + "/products/search";
+            String path = dmpInputTikTokApiInitRequest.getApiType().replace("{version}", TikTokConstant.VERSION);
 
             // 定义查询参数
             Map<String, Object> params = new HashMap<>();
@@ -121,7 +116,6 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
                         sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
-
             //解析数据
             ObjectMapper objectMapper = new ObjectMapper();
             ListingDTO listingDTO = null;
@@ -133,28 +127,19 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
-
             pageToken = listingDTO.getData().getNextPageToken();
-            //获取到所有客户的产品id
-            List<String> productIds = listingDTO.getData().getProducts().stream().map(req -> req.getFid()).distinct().collect(Collectors.toList());
 
-            //根据产品id查询产品详情信息
-            List<ListingViewDTO> listingViewDTOS = this.listItemView(productIds, shopInfoDTO);
-            resultsBeanList.addAll(listingViewDTOS);
+            DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+            dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(listingDTO.getData().getProducts()));
+            dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 
             if (StringUtil.isBlank(listingDTO.getData().getNextPageToken())) {
                 break;
             }
+
         }
 
-        if (CollectionUtils.isEmpty(resultsBeanList)) {
-            return Collections.emptyList();
-        }
-
-        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-            dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(orderViewDTO.getData().getOrders()));
-            dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-        }
         return dmpInputTaskInitDTOList;
+
     }
 }
