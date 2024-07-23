@@ -5440,17 +5440,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
         ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
         ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
-        Boolean isTransit = cfgRuleOutFeign.matchTransferRule(ruleDTO);
-        if (isTransit) {
-            CfgSettingEntity cfgSettingEntity = cfgSettingFeign.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
-            if (ObjectUtil.isEmpty(cfgSettingEntity)) {
-                throw new ServiceException("未配置中转设置仓库");
-            }
-            CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
-            if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
-                throw new ServiceException("中转设置仓库不能为空");
-            }
-            warehouseId = transitSettingDTO.getWarehouseId();
+        String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
+        CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferAndWarehouse(new CfgRuleOutDTO.MatchTransferDTO(deliveryWarehouseId,ruleDTO));
+        if (resultDTO.getIsTransit()) {
+            warehouseId = resultDTO.getTransitWarehouseId();
 
         } else {
             if(StringUtils.isBlank(warehouseId)){
@@ -5498,7 +5491,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Integer qty = detailItem.getQty();
             String detailId = detailItem.getId();
             //中转无需传仓位
-            String warehouseLocation = isTransit ? "" : detailItem.getWarehouseLocation();
+            String warehouseLocation = resultDTO.getIsTransit() ? "" : detailItem.getWarehouseLocation();
             //查询到对应的数据
             List<SoB2cDeliveryDTO.DeliverySkuDTO> deliveryList = deliverySkuList.stream().filter(d -> skuId.equals(d.getSourceSkuId())).distinct().collect(Collectors.toList());
 

@@ -2,7 +2,6 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
-import com.erp.model.wms.entity.CfgSettingEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,5 +24,13 @@ public interface CfgRuleOutFeign {
     @PostMapping("feign/cfgRuleOut/matchTransferRule")
     Boolean matchTransferRule(@RequestBody CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO);
 
-
+    /**
+     * 是否匹配中转规则
+     * @author will
+     * @date 2024/7/18 21:17
+     * @param ruleDTO
+     * @return CfgRuleOutDTO.MatchTransferResultDTO
+     */
+    @PostMapping("feign/cfgRuleOut/matchTransferAndWarehouse")
+    CfgRuleOutDTO.MatchTransferResultDTO matchTransferAndWarehouse(@RequestBody CfgRuleOutDTO.MatchTransferDTO ruleDTO);
 }
