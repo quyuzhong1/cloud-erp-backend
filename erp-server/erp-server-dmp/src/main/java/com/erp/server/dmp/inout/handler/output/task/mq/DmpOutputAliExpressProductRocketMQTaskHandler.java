@@ -1,19 +1,27 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformProductDTO;
+import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpProductInfoEntity;
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 
 @Service
 @Scope("prototype")
@@ -21,18 +29,60 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
 
 	@Override
 	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-		Map<DmpCfgInputConvertEntity, List<Map<String, Object>>> changeConvertInputMongoEntityListMaps = dmpRequest.getChangeConvertInputMongoEntityListMaps();
-		List<Map<String, Object>> changeProductDetailList = null;
-		for(Map.Entry<DmpCfgInputConvertEntity, List<Map<String, Object>>> changeConvertInputMongoEntityListMap : changeConvertInputMongoEntityListMaps.entrySet()) {
-			changeProductDetailList = changeConvertInputMongoEntityListMap.getValue();
+		Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
+		Map<String , DmpProductInfoEntity> dmpProductInfoEntityMap = new HashMap<>();
+		Map<String, List<DmpSkuInfoEntity>> dmpSkuInfoEntityMap = new HashMap<>();
+		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
+			List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
+			if(CollUtil.isNotEmpty(value)) {
+				String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
+				if("dmp_product_info".equals(storageName)) {
+					for(BaseEntity v : value) {
+						DmpProductInfoEntity dmpProductInfoEntity = (DmpProductInfoEntity) v;
+						dmpProductInfoEntityMap.put(dmpProductInfoEntity.getId(), dmpProductInfoEntity);
+					}
+				}else if("dmp_sku_info".equals(storageName)) {
+					for(BaseEntity v : value) {
+						DmpSkuInfoEntity dmpSoReturnDetailEntity = (DmpSkuInfoEntity) v;
+						String mainId = dmpSoReturnDetailEntity.getMainId();
+						List<DmpSkuInfoEntity> list = dmpSkuInfoEntityMap.get(mainId);
+						if(CollUtil.isEmpty(list)) {
+							list = new ArrayList<>();
+						}
+						list.add(dmpSoReturnDetailEntity);
+						dmpSkuInfoEntityMap.put(mainId, list);
+					}
+				}
+			}
+		}
+		
+		Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
+		Set<String> changeIds = new HashSet<>(); 
+		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
+			List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
+			if(CollUtil.isNotEmpty(value)) {
+				String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
+				if("dmp_product_info".equals(storageName)) {
+					for(BaseEntity v : value) {
+						changeIds.add(v.getId());
+					}
+				}else if("dmp_sku_info".equals(storageName)) {
+					for(BaseEntity v : value) {
+						DmpSkuInfoEntity dmpSoReturnDetailEntity = (DmpSkuInfoEntity) v;
+						changeIds.add(dmpSoReturnDetailEntity.getMainId());
+					}
+				}
+			}
 		}
 		Map<String, String> map = new HashMap<>();
-		if(CollUtil.isNotEmpty(changeProductDetailList)) {
-			String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
-			for(Map<String, Object> changeProductDetail : changeProductDetailList) {
-				PlatformProductDTO product = this.convert(changeProductDetail, cfgOutputId);
+		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
+		for(String changId : changeIds) {
+			DmpProductInfoEntity dmpProductInfoEntity = dmpProductInfoEntityMap.get(changId);
+			List<DmpSkuInfoEntity> dmpSkuInfoEntityList = dmpSkuInfoEntityMap.get(changId);
+			for(DmpSkuInfoEntity dmpSkuInfoEntity : dmpSkuInfoEntityList) {
+				PlatformProductDTO product = this.convert(dmpProductInfoEntity, dmpSkuInfoEntity, cfgOutputId);
 				if(product != null) {
-					map.put(changeProductDetail.get("product_id").toString(), JSON.toJSONString(product));
+					map.put(dmpSkuInfoEntity.getId(), JSON.toJSONString(product));
 				}
 			}
 		}
@@ -42,40 +92,41 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
 	/**
      * 解析订单数据
      **/
-    public PlatformProductDTO convert(Map<String, Object> changeProductDetail , String cfgOutputId) {
-    	if(this.validateDataBlack(changeProductDetail, cfgOutputId)) {
+    public PlatformProductDTO convert(DmpProductInfoEntity dmpProductInfoEntity , DmpSkuInfoEntity dmpSkuInfoEntity , String cfgOutputId) {
+    	if(this.validateDataBlack(dmpSkuInfoEntity, cfgOutputId)) {
     		return null;
     	}
     	PlatformProductDTO product = new PlatformProductDTO();
     	
-//    	product.setPlatform(dto.getPlatform());
-//        // 平台sku no
-//        product.setPlatformProductNo(changeProductDetail.get("product_id").toString());
-//        // 平台sku 名
-//        product.setPlatformProductName(sourceProduct.getSubject());
-//        product.setPlatformSkuNo(StringUtils.isBlank(item.getSkuCode())? "" : item.getSkuCode());
-//
-//        product.setPlatformSkuName(sourceProduct.getSubject());
-//        // 类型 platform 平台  warehouse 仓库
-//        product.setPlatformType("platform");
-//        String imageUrls = sourceProduct.getImageUrls();
-//        if (StringUtils.isBlank(imageUrls)) {
-//            product.setProductImageUrl("");
-//        } else {
-//            String imageUrl = imageUrls.split(";")[0];
-//            product.setProductImageUrl(imageUrl);
-//        }
-//        product.setShopId(dto.getShopId());
-//        // 包装信息
-//        String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", sourceProduct.getPackageLength(), sourceProduct.getPackageWidth(), sourceProduct.getPackageHeight(), sourceProduct.getGrossWeight());
-//        product.setProductPacking(packing);
-//        String gmtModified = sourceProduct.getGmtModified();
-//        product.setPlatformUpdateTime(LocalDateUtil.parseStrToLocalTime(gmtModified));
-//        product.setPlatformSkuId(item.getSkuId());
-//
-//        // 平台唯一标识=平台skuId + 店铺ID
-//        String uniqueId = StrUtil.format("{}_{}", item.getSkuId(), dto.getShopId());
-//        product.setUniqueId(uniqueId);
+    	product.setPlatform(dmpProductInfoEntity.getSourcePlatform());
+        // 平台sku no
+        product.setPlatformProductNo(dmpSkuInfoEntity.getSpuId());
+        // 平台sku 名
+        String spuName = dmpProductInfoEntity.getSpuName();
+		product.setPlatformProductName(spuName);
+        String skuNo = dmpSkuInfoEntity.getSkuNo();
+		product.setPlatformSkuNo(StringUtils.isBlank(skuNo)? "" : skuNo);
+
+        product.setPlatformSkuName(spuName);
+        // 类型 platform 平台  warehouse 仓库
+        product.setPlatformType("platform");
+        String imageUrls = dmpSkuInfoEntity.getImageUrls();
+        if (StringUtils.isBlank(imageUrls)) {
+            product.setProductImageUrl("");
+        } else {
+            String imageUrl = imageUrls.split(";")[0];
+            product.setProductImageUrl(imageUrl);
+        }
+        product.setShopId(dmpProductInfoEntity.getNextLevelId());
+        // 包装信息
+        String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", dmpSkuInfoEntity.getPackageLength(), dmpSkuInfoEntity.getPackageWidth(), dmpSkuInfoEntity.getPackageHeight(), dmpSkuInfoEntity.getGrossWeight());
+        product.setProductPacking(packing);
+        product.setPlatformUpdateTime(dmpSkuInfoEntity.getPlatformUpdateTime());
+        product.setPlatformSkuId(dmpSkuInfoEntity.getSkuId());
+
+        // 平台唯一标识=平台skuId + 店铺ID
+        String uniqueId = StrUtil.format("{}_{}", dmpSkuInfoEntity.getSkuId(), dmpProductInfoEntity.getNextLevelId());
+        product.setUniqueId(uniqueId);
     	
         return product;
     }
