@@ -23,8 +23,7 @@ import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.OutStockModeEnum;
-import com.erp.model.wms.enums.RuleTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.mapper.CfgRulePickingMapper;
 import com.erp.server.wms.service.*;
@@ -150,6 +149,12 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
      */
     @Override
     public List<LocationInventoryResultDTO> getRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto) {
+        Pair<List<LocationInventoryResultDTO>, List<String>> result = getSoB2CRuleOrderMatchResult(dto);
+        return result.getFirst();
+    }
+
+    @Override
+    public Pair<List<LocationInventoryResultDTO>, List<String>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto) {
         // 获取所有已启用规则
         List<CfgRulePickingEntity> cfgRulePickings = this.listOrderByPriority();
         if (CollectionUtils.isEmpty(cfgRulePickings)) {
@@ -161,6 +166,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         // 查询所有规则对应的规则动作
         List<CfgRulePackingActionEntity> actions = cfgRulePackingActionService.listByRuleIds(cfgRuleIds);
         List<LocationInventoryResultDTO> result = new ArrayList<>();
+        List<String> stockSku = new ArrayList<>();
         List<WarehouseLocationEntity> locationList = warehouseLocationService.list();
         Map<String, Object> detailMap = new HashMap<>();
         detailMap.put("billType", dto.getBillType());
@@ -195,11 +201,17 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                     }
                 }
                 if (0 != quantity.get()) {
-                    throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, detail.getSkuNo());
-                }
+                    if (PickingBillTypeEnum.B2C.getCode().equals(dto.getBillType())) {
+                        stockSku.add(detail.getSkuNo());
+                        result = result.stream().filter(v -> !v.getSkuNo().equals(detail.getSkuNo())).collect(Collectors.toList());
+                    }else {
+                        throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, detail.getSkuNo());
+                    }                }
             }
+
         }
-        return result;
+
+        return Pair.create(result, stockSku);
     }
 
 

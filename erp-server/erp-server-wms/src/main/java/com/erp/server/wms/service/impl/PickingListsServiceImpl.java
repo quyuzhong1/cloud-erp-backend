@@ -39,6 +39,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -549,11 +550,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     }
 
     @Override
-    public void generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results) {
+    public List<String> generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results) {
         List<String> skuIdList = executionData.getDetails().stream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        Pair<List<LocationInventoryResultDTO>, List<String>> resultData = Pair.create(Collections.emptyList(), Collections.emptyList());
         if (CollectionUtils.isEmpty(results)) {
-            results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+            resultData = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData);
+            results = resultData.getFirst();
         }
         Map<String, List<LocationInventoryResultDTO>> resultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
         for (Map.Entry<String, List<LocationInventoryResultDTO>> entry : resultMap.entrySet()) {
@@ -608,6 +611,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             save(entity);
             pickingDetailService.saveBatch(entities);
         }
+        return resultData.getSecond();
     }
 
     @Override
