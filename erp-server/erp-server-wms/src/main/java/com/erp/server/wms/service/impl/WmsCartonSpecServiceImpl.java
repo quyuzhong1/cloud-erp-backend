@@ -302,6 +302,19 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         return lambdaQuery().eq(WmsCartonSpecEntity::getMainId,packingTaskId).eq(WmsCartonSpecEntity::getBoxSpecNo,boxNo).last("limit 1").one();
     }
 
+    @Override
+    public void updateSizeDataEmpty(WmsCartonSpecEntity cartonSpecEntity) {
+        if (Objects.isNull(cartonSpecEntity) || StrUtil.isBlank(cartonSpecEntity.getId())){
+            return;
+        }
+        this.lambdaUpdate().eq(WmsCartonSpecEntity::getId, cartonSpecEntity.getId())
+                .set(WmsCartonSpecEntity::getBoxLength, BigDecimal.ZERO)
+                .set(WmsCartonSpecEntity::getBoxHeight, BigDecimal.ZERO)
+                .set(WmsCartonSpecEntity::getBoxWidth, BigDecimal.ZERO)
+                .set(WmsCartonSpecEntity::getPackageWeight, BigDecimal.ZERO)
+                .update();
+    }
+
     /**
     * 新增修改处理数据
     */

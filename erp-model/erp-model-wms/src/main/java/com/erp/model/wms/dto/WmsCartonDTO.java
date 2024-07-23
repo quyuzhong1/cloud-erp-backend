@@ -56,6 +56,11 @@ public class WmsCartonDTO {
          */
         @StateEnumValue(strValues = {"load","pretend","repacking"},message = "调整装箱类型有误")
         private String adjustType;
+
+        /**
+         * 调整装箱详情
+         */
+        private List<AdjustDetailDTO> cartonDetailList;
     }
 
     @Data
