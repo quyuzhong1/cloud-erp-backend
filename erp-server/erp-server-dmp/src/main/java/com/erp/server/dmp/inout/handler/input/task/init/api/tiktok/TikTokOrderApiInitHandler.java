@@ -55,10 +55,9 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-        DmpInputTikTokApiInitRequest dmpInputTikTokApiInitRequest = (DmpInputTikTokApiInitRequest) dmpInputApiInitRequest;
 
 
-        String nextLevelId = dmpInputTikTokApiInitRequest.getNextLevelId();
+        String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
 
         TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(nextLevelId);
@@ -81,7 +80,7 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
         StringBuffer sb = new StringBuffer();
         while (true) {
             //组装授权url
-            String path = dmpInputTikTokApiInitRequest.getApiType().replace("{version}", TikTokConstant.VERSION);
+            String path = dmpInputApiInitRequest.getApiType().replace("{version}", TikTokConstant.VERSION);
 
             // 定义查询参数
             Map<String, Object> params = new HashMap<>();
@@ -103,8 +102,8 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
 
             //请求body，平台用于计算签名
             Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("update_time_ge", dmpInputTikTokApiInitRequest.getStartTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
-            bodyMap.put("update_time_lt", dmpInputTikTokApiInitRequest.getEndTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
+            bodyMap.put("update_time_ge", dmpInputApiInitRequest.getStartTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
+            bodyMap.put("update_time_lt", dmpInputApiInitRequest.getEndTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
 
             String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名

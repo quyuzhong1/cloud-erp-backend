@@ -44,9 +44,8 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-        DmpInputTikTokApiInitRequest dmpInputTikTokApiInitRequest = (DmpInputTikTokApiInitRequest) dmpInputApiInitRequest;
 
-        String nextLevelId = dmpInputTikTokApiInitRequest.getNextLevelId();
+        String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
         TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(nextLevelId);
         if (ObjectUtil.isEmpty(shopInfoDTO)) {
@@ -66,7 +65,7 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
         StringBuffer sb = new StringBuffer();
         while (true) {
             //组装授权url
-            String path = dmpInputTikTokApiInitRequest.getApiType().replace("{version}", TikTokConstant.VERSION);
+            String path = dmpInputApiInitRequest.getApiType().replace("{version}", TikTokConstant.VERSION);
 
             // 定义查询参数
             Map<String, Object> params = new HashMap<>();
