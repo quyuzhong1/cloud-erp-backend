@@ -74,6 +74,8 @@ public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
                                 l.put("category_name", categoryChainsList.get(1).get("localName"));
                             }
                         }
+                        l.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
+                        l.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
                     });
                     dmpInputMongoChildEntityList.addAll(skuList);
                 }
