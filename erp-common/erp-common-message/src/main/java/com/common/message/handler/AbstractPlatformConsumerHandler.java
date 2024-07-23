@@ -68,11 +68,16 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
             updateMongodbData(platform, uniqueId, 2);
         }catch (Exception e) {
-            updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC,  ExceptionUtil.stacktraceToString(e, 2000));
-            log.error("平台数据消费异常", e);
-            //异常预警
-            sendWarnMsg(dmpSyncTaskId, e.getMessage());
-            updateMongodbData(platform, uniqueId, 0);
+            try {
+                updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC,  ExceptionUtil.stacktraceToString(e, 2000));
+                log.error("平台数据消费异常", e);
+                //异常预警
+                sendWarnMsg(dmpSyncTaskId, e.getMessage());
+                updateMongodbData(platform, uniqueId, 0);
+            } catch (Exception ex) {
+                // 终止异常停止当前MQ重试，由重试任务处理重试
+                log.error("处理平台数据消费异常:{}", ExceptionUtil.stacktraceToString(ex));
+            }
         }finally {
         	redisTemplate.delete(redisKey);
 		}
