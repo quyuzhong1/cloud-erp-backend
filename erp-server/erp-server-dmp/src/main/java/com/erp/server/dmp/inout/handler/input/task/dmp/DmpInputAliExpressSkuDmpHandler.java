@@ -46,6 +46,10 @@ public class DmpInputAliExpressSkuDmpHandler extends DmpInputDoChildDmpHandler{
 						l.put("platformUpdateTime", dmpInputMongoChild.get("gmt_modified"));
 						l.put("spuId", dmpInputMongoChild.get("product_id"));
 						l.put("imageUrls", dmpInputMongoChild.get("image_u_r_ls"));
+						l.put("packageLength", dmpInputMongoChild.get("package_length"));
+						l.put("packageWidth", dmpInputMongoChild.get("package_width"));
+						l.put("packageHeight", dmpInputMongoChild.get("package_height"));
+						l.put("grossWeight", dmpInputMongoChild.get("gross_weight"));
 					});
 					dmpInputMongoChildEntityList.addAll(aeop_ae_product_sku_list);
 				}
