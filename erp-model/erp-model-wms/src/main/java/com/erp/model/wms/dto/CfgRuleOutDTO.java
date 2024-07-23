@@ -527,4 +527,39 @@ public class CfgRuleOutDTO implements Serializable {
          */
         private String destWarehouse;
     }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MatchTransferDTO{
+        /**
+         * 需要中转的仓库（发货仓库）
+         */
+        @NotBlank(message = "发货仓库Id")
+        private String warehouseId;
+
+        /**
+         * 中转规则不能为空
+         */
+        @NotEmpty(message = "匹配中转规则不能为空")
+        private MatchTransferRuleDTO matchTransferRuleDTO;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MatchTransferResultDTO{
+
+        /**
+         * 是否中转
+         */
+        private Boolean isTransit;
+
+        /**
+         * 中转仓库
+         */
+        private String transitWarehouseId;
+
+    }
+
 }
