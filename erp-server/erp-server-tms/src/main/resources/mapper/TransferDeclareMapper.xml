@@ -67,6 +67,9 @@
             <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
                 and ${params.sqlMap.detail}
             </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -106,7 +109,7 @@
     </select>
 
     <!--导出excel查询-->
-    <select id="listExportExcel" resultType="com.erp.model.tms.dto.TransferDeclareDTO$ListDTO">
+    <select id="listExportExcel" resultType="com.erp.model.tms.dto.TransferDeclareDTO$ExportListDTO">
         SELECT
             td.id,
             tdd.id AS detailId,
@@ -138,6 +141,9 @@
         </if>
         <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
             and ${params.sqlMap.detail}
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

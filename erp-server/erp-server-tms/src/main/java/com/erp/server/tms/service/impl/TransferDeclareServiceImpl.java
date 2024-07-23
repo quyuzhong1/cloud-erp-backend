@@ -335,11 +335,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Override
     public Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<TransferDeclareDTO.ListDTO> list = baseMapper.listExportExcel(dto);
+        List<TransferDeclareDTO.ExportListDTO> list = baseMapper.listExportExcel(dto);
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
-        fillList(list, dto);
+        //数据转换
+        fileExportList(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/transferDeclare.xlsx";
         String name = "中转报关单导出";
@@ -352,6 +353,19 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
+    }
+
+    private void fileExportList(List<TransferDeclareDTO.ExportListDTO> list) {
+        if (CollectionUtil.isEmpty(list)){
+            return;
+        }
+        list.forEach(exportListDTO -> {
+            exportListDTO.setUploadBatchStatusName(TransferDeclareUploadStatusEnum.getName(exportListDTO.getUploadBatchStatus()));
+            exportListDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(exportListDTO.getInstockForecastStatus()));
+            exportListDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(exportListDTO.getUploadOrderStatus()));
+            exportListDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(exportListDTO.getOutstockStatus()));
+            exportListDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(exportListDTO.getTransferStatus()));
+        });
     }
 
     @Override
