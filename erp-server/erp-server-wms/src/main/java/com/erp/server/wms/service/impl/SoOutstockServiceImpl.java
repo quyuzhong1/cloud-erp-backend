@@ -369,13 +369,21 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param soOutstock
      */
     private void handleSaveOrUpdateDbByB2b(SoOutstockEntity soOutstock, SoInfoDTO.CustomerDTO soCustomer ) {
+        WarehouseEntity warehouse = warehouseService.getById(soOutstock.getWarehouseId());
+        if (Objects.isNull(warehouse)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        soOutstock.setWarehouseName(warehouse.getName());
         soOutstock.setSoCode(soCustomer.getCode());
         soOutstock.setCustomerId(soCustomer.getCustomerId());
         soOutstock.setCustomerName(soCustomer.getCustomerName());
         soOutstock.setOrderType(soCustomer.getOrderType());
         soOutstock.setSalesDeptId(soCustomer.getSalesDeptId());
-        soOutstock.setWarehouseOrgId(soCustomer.getWarehouseOrgId());
-        soOutstock.setWarehouseOrgName(soCustomer.getWarehouseOrgName());
+        soOutstock.setWarehouseOrgId(warehouse.getOrgId());
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(warehouse.getOrgId()));
+        if (CollectionUtils.isNotEmpty(orgList)) {
+            soOutstock.setWarehouseOrgName(orgList.get(0).getName());
+        }
         soOutstock.setSalesOrgId(soCustomer.getSalesOrgId());
         soOutstock.setSalesOrgName(soCustomer.getSalesOrgName());
         soOutstock.setSellerId(soCustomer.getSellerId());
@@ -384,7 +392,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstock.setDeclareStatus(WmsDeclareStatusEnum.WAIT.getCode());
         }
         //仓库id
-        String warehouseId = soCustomer.getWarehouseId();
         String warehouseKeeperId = soOutstock.getWarehouseKeeperId();
         String sellerId = soOutstock.getSellerId();
         //用户信息
@@ -400,11 +407,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstock.setSellerName(sellerName);
             }
         }
-        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
-        if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_99002);
-        }
-        soOutstock.setWarehouseName(warehouse.getName());
 
     }
 
