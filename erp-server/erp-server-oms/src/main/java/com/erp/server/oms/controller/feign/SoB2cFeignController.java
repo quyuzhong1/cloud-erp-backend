@@ -607,6 +607,17 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
+     * 根据销售订单更新跟踪单号
+     * @param soId
+     * @param trackNo
+     * @return
+     */
+    @PostMapping("/updateLogisticsBySoId")
+    public void updateLogisticsBySoId(@RequestParam("soId") String soId, @RequestParam("trackNo") String trackNo) {
+        soB2cLogisticsService.updateLogisticsBySoId(soId, trackNo);
+    }
+
+    /**
      * 根据平台单号和平台查询B2C销售订单
      *
      * @date 2024-03-07

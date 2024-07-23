@@ -449,6 +449,13 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     }
 
+    @Override
+    public void updateLogisticsBySoId(String soId, String trackNo) {
+        if (StrUtil.isNotBlank(soId)){
+            this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, soId).set(SoB2cLogisticsEntity::getTrackNo, trackNo).update();
+        }
+    }
+
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
         addDTO.setShopId(mainEntity.getShopId());
