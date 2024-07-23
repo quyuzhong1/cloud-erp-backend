@@ -4,8 +4,10 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.converters.ConverterKeyBuild;
+import com.alibaba.excel.converters.bytearray.ByteArrayImageConverter;
 import com.alibaba.excel.metadata.CellExtra;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
@@ -16,6 +18,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.*;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
@@ -51,8 +54,9 @@ public class ExcelUtil {
      * @param dataResult 集合内的bean对象类型要与clazz参数一致
      * @param clazz      集合内的bean对象类型要与clazz参数一致
      * @param response   HttpServlet响应对象
+     * @param excludeFields  排除不导出的字段
      */
-    public static void export(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response) {
+    public static void export(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response,List<String> excludeFields) {
         response.setStatus(200);
         OutputStream outputStream = null;
         ExcelWriter excelWriter = null;
@@ -64,8 +68,31 @@ public class ExcelUtil {
             response.setCharacterEncoding("utf-8");
             response.setContentType("application/octet-stream");
             response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+
+            List<Integer> excludeIndexes = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(excludeFields)) {
+                // 反射获取字段属性
+                Field[] declaredFields = clazz.getDeclaredFields();
+                //过滤掉ExcelIgnore 注解
+                List<Field> filteredFields = new ArrayList<>();
+                for (Field field : declaredFields) {
+                    // 如果字段不包含 @ExcelIgnore 注解，添加到 filteredFields 列表中
+                    if (!field.isAnnotationPresent(ExcelIgnore.class)) {
+                        filteredFields.add(field);
+                    }
+                }
+                // 遍历过滤后的字段，匹配需要忽略的字段
+                for (int i = 0; i < filteredFields.size(); i++) {
+                    Field field = filteredFields.get(i);
+                    if (excludeFields.contains(field.getName())) {
+                        excludeIndexes.add(i);
+                    }
+                }
+            }
+
             outputStream = response.getOutputStream();
-            excelWriter = getExportExcelWriter(outputStream);
+            excelWriter = getExportExcelWriter(outputStream,excludeIndexes);
+
             WriteTable writeTable = EasyExcel.writerTable(0).head(clazz).needHead(true).build();
             WriteSheet writeSheet = EasyExcel.writerSheet(sheetName).build();
 
@@ -81,6 +108,11 @@ public class ExcelUtil {
             LocalDateTimeConverter localDateTimeConverter = new LocalDateTimeConverter();
             excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeConverter.supportJavaTypeKey()), localDateTimeConverter);
             excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeConverter.supportJavaTypeKey(), localDateTimeConverter.supportExcelTypeKey()), localDateTimeConverter);
+            // 图片转换器
+            ByteArrayImageConverter byteArrayImageConverter = new ByteArrayImageConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(byteArrayImageConverter.supportJavaTypeKey()), byteArrayImageConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(byteArrayImageConverter.supportJavaTypeKey(), byteArrayImageConverter.supportExcelTypeKey()), byteArrayImageConverter);
+
             // 写出数据
             excelWriter.write(dataResult, writeSheet, writeTable);
 
@@ -100,6 +132,19 @@ public class ExcelUtil {
                 }
             }
         }
+
+    }
+    /**
+     * 导出数据为excel文件
+     *
+     * @param filename   文件名称
+     * @param sheetName sheet name
+     * @param dataResult 集合内的bean对象类型要与clazz参数一致
+     * @param clazz      集合内的bean对象类型要与clazz参数一致
+     * @param response   HttpServlet响应对象
+     */
+    public static void export(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response) {
+        ExcelUtil.export(filename,sheetName,dataResult,clazz,response,null);
     }
 
 
@@ -110,9 +155,10 @@ public class ExcelUtil {
      * @param outputStream  数据输出流
      * @return  数据导出ExcelWriter对象
      */
-    private static ExcelWriter getExportExcelWriter(OutputStream outputStream){
+    private static ExcelWriter getExportExcelWriter(OutputStream outputStream,List<Integer> excludeIndexes){
         return EasyExcel.write(outputStream)
                 .registerWriteHandler(getStyleStrategy())   //字体居中策略
+                .excludeColumnIndexes(excludeIndexes)
                 .build();
     }
 

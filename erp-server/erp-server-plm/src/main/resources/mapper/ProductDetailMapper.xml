@@ -442,8 +442,9 @@
           AND pi.id = #{productId}
     </select>
 
-    <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ProductDetailExcelDTO">
+    <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ProductDetailExcelExportDTO">
         SELECT
+        pd.images_url as imageUrl,
         pi.spu_no as spuNo,
         pd.sku_no as skuNo,
         pi.category_id AS categoryId,
