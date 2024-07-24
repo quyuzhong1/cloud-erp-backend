@@ -723,11 +723,11 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
      * @author: tanmujin
      */
     private void updateWarehouseLocationStatus(String warehouseId, String warehouseLocationCode) {
-        if(StringUtils.isEmpty(warehouseId)) {
+        /*if(StringUtils.isEmpty(warehouseId)) {
             return;
         }
         Integer qty = inventoryService.getQtyByLocation(warehouseId, warehouseLocationCode);
         String statusCode = (qty == 0) ? WarehouseLocationStatusEnum.RECYCLABLE.getCode() : WarehouseLocationStatusEnum.OCCUPIED.getCode();
-        warehouseLocationService.updateLocationStatus(warehouseId, warehouseLocationCode, statusCode);
+        warehouseLocationService.updateLocationStatus(warehouseId, warehouseLocationCode, statusCode);*/
     }
 }
