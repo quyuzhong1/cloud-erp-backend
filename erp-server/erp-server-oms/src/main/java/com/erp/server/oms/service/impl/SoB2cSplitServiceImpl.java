@@ -108,15 +108,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if(CollectionUtils.isEmpty(detailEntityList)){
             throw new ServiceException("明细为空");
         }
-        SoB2cEntity soB2cEntity = soB2cService.getById(detailEntityList.get(0).getMainId());
         List<String> skuIds = detailEntityList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
         List<SoB2cDetailDTO.ViewDTO> resultList = new ArrayList<>();
         //根据SKU查询BOM判断是否是组合SKU
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
-        List<SkuMappingDTO.ListSkuParamDTO> listParamList = bomChildrenList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), "",soB2cEntity.getDictPlatform(),soB2cEntity.getShopId())).collect(Collectors.toList());
-        ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
-        listSkuParamList.setList(listParamList);
-        List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
         for (SoB2cDetailEntity detailEntity : detailEntityList) {
             String combination = BomTypeEnum.COMBINATION.getType();
             bomChildrenList = bomChildrenList.stream().filter(b -> combination.equals(b.getType())).collect(Collectors.toList());
@@ -151,11 +146,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 viewDTO.setTaxCost(costPrice);
                 totalCostPrice = totalCostPrice.add(costPrice);
                 //平台SKU
-                SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(bomChildrenSkuDTO.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
-                    viewDTO.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
-                    viewDTO.setPlatformSpuNo(platformListSkuDTO.getPlatformSpuNo());
-                }
+                viewDTO.setPlatformSkuNo(detailEntity.getPlatformSkuNo());
+                viewDTO.setPlatformSpuNo(detailEntity.getPlatformSpuNo());
                 resultList.add(viewDTO);
             }
             for (int i = 0; i < resultList.size(); i++) {
@@ -279,15 +271,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     } else {
                         soB2cDetailEntity.setWarehouseSkuNo("");
                     }
-                    //平台SKU
-                    SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(soB2cDetailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
-                    if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
-                        soB2cDetailEntity.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
-                        soB2cDetailEntity.setPlatformSpuNo(platformListSkuDTO.getPlatformSpuNo());
-                    } else {
-                        soB2cDetailEntity.setPlatformSkuNo("");
-                        soB2cDetailEntity.setPlatformSpuNo("");
-                    }
+
+                    soB2cDetailEntity.setPlatformSkuNo(detailEntity.getPlatformSkuNo());
+                    soB2cDetailEntity.setPlatformSpuNo(detailEntity.getPlatformSpuNo());
                 }
                 addAllDetailList.addAll(addDetailList);
             }
