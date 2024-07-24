@@ -31,7 +31,6 @@ public class ProductLogisticsDTO implements Serializable {
     /**
      * 产品属性
      */
-    @NotBlank(message = "产品属性名称不能为空")
     private String productProperty;
 
     /**

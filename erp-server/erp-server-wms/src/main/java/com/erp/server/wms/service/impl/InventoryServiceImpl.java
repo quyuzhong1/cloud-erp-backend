@@ -1363,6 +1363,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
+    public List<InventoryEntity> listInventoryBySkuIds(InventoryQtyDTO.InventoryBySkuDTO dto) {
+        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuIdList())){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().select(InventoryEntity::getId,InventoryEntity::getSkuId,InventoryEntity::getSkuNo, InventoryEntity::getQty,
+                        InventoryEntity::getWarehouseId,InventoryEntity::getDictInventoryStatus, InventoryEntity::getWarehouseLocation)
+                .in(InventoryEntity::getSkuId, dto.getSkuIdList()).list();
+    }
+
+    @Override
     public Integer getQtyByLocation(String warehouseId, String warehouseLocation) {
         return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation == null ? "" : warehouseLocation);
     }

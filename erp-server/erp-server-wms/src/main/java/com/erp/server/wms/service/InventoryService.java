@@ -331,4 +331,10 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      */
     List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(InventoryDTO.ParamDTO paramDTO);
 
+    /**
+     * 根据sku获取库存列表
+     * @param dto
+     * @return
+     */
+    List<InventoryEntity> listInventoryBySkuIds(InventoryQtyDTO.InventoryBySkuDTO dto);
 }

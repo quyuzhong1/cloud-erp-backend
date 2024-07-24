@@ -799,4 +799,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     void initProductToWangDian(List<String> ids);
     PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
 
+    /**
+     * 添加已有sku到现有spu
+     * @param changeSkuToSpuDTO
+     * @return
+     */
+    List<ProductDetailEntity> changeSkuBySpu(ChangeSkuToSpuDTO changeSkuToSpuDTO);
 }

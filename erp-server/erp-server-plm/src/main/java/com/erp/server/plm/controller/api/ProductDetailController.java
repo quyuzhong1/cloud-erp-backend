@@ -337,6 +337,17 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 添加已有sku到现有spu
+     * @param changeSkuToSpuDTO
+     * @return
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品信息-多规格-添加sku关联")
+    @PostMapping("/changeSkuBySpu")
+    public ApiResult<List<ProductDetailEntity>> changeSkuBySpu(@RequestBody @Validated ChangeSkuToSpuDTO changeSkuToSpuDTO) {
+        List<ProductDetailEntity> list = productDetailService.changeSkuBySpu(changeSkuToSpuDTO);
+        return this.success(list);
+    }
+    /**
      * 产品信息-多规格sku-删除
      *
      * @param skuId sku表id
