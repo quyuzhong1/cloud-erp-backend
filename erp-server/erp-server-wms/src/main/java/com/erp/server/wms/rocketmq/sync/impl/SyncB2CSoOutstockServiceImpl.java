@@ -262,7 +262,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 boolean isDeduction = !noInventorySkuNoList.contains(detailEntity.getSkuNo());
                 if (Boolean.TRUE.equals(isDeduction)) {
                     //并且扣库存 才执行
-                    buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList,"");
+                    buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList);
                 }
             } else {
                 for (WdtSoOutStockDetailDTO.PositionDetailsList detail : detailDTO.getPositionDetailsList()) {
@@ -291,7 +291,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     //是否扣减库存 true 就要
                     boolean isDeduction = !noInventorySkuNoList.contains(detailEntity.getSkuNo());
                     if (Boolean.TRUE.equals(isDeduction)) {
-                        buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList,detail.getPositionNo());
+                        buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList);
                     }
                 }
             }
@@ -319,7 +319,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         sendPushTask(soOutstock);
     }
 
-    private static void buildInOutStock(String id, SoOutstockDetailEntity detailEntity, SoOutstockEntity soOutstock, String virtualWarehouseId, List<InOutStockDTO> inOutStockList, String warehouseLocation) {
+    private static void buildInOutStock(String id, SoOutstockDetailEntity detailEntity, SoOutstockEntity soOutstock, String virtualWarehouseId, List<InOutStockDTO> inOutStockList) {
         InOutStockDTO inOutStock = new InOutStockDTO();
         inOutStock.setSourceId(id);
         inOutStock.setSourceDetailId(detailEntity.getId());
@@ -330,7 +330,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         inOutStock.setSkuNo(detailEntity.getSkuNo());
         inOutStock.setSourceCode(soOutstock.getCode());
         inOutStock.setWarehouseId(soOutstock.getWarehouseId());
-        inOutStock.setWarehouseLocation(warehouseLocation);
+        inOutStock.setWarehouseLocation(detailEntity.getWarehouseLocation());
         inOutStock.setVirtualWarehouseId(virtualWarehouseId);
         inOutStockList.add(inOutStock);
     }
