@@ -10,8 +10,6 @@ import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
-import com.common.business.enums.*;
-import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.controller.vo.ApiResult;
@@ -26,7 +24,6 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -389,12 +386,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
+    public Boolean updateWeight(String soId, String id, BigDecimal weightByG, String operation) {
         String msg = StrUtil.format("用户【{}】更新重量为{} ", UserContext.getDefaultLoginUser().getUserName(),weightByG+"g");
         if(!MathUtil.isValidNumber(weightByG,12)){
             throw new ServiceException("重量过大，整数最大值不能超过12位");
         }
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "【组包称重】");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, operation);
         return lambdaUpdate()
                 .set(SoB2cLogisticsEntity::getWeight, weightByG)
                 .eq(SoB2cLogisticsEntity::getMainId, soId)

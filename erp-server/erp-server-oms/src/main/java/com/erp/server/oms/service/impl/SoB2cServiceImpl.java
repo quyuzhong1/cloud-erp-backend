@@ -7882,7 +7882,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             handleDeclareMatchJson(entity, detailList, map, logisticsPlatform);
         }
         //规则结果
-        cfgRuleDeclareService.getRuleDeclareMatchResult(map, maxCustomsAmount, minCustomsAmount, isUpdate,declareProductList);
+        cfgRuleDeclareService.getRuleDeclareMatchResult(map, maxCustomsAmount, minCustomsAmount, isUpdate,declareProductList,id ,logisticsEntity.getId() );
         return BatchResultDTO.success(id, entity.getCode(), OperationTypeEnum.DECLARE_RULE);
     }
 

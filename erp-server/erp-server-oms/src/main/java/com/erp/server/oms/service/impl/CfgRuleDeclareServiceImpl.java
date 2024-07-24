@@ -9,15 +9,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
@@ -68,6 +64,8 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     private RuleConditionService ruleConditionService;
     @Resource
     private SoB2cDeclareProductService soB2cDeclareProductService;
+    @Autowired
+    private SoB2cLogisticsService soB2cLogisticsService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -201,10 +199,12 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
      * @param minCustomsAmount
      * @param isUpdate
      * @param declareProductList
+     * @param soId
+     * @param soLogisticId
      * @return
      */
     @Override
-    public void getRuleDeclareMatchResult(HashMap<String, Object> map, BigDecimal maxCustomsAmount, BigDecimal minCustomsAmount, Boolean isUpdate, List<SoB2cDeclareProductEntity> declareProductList) {
+    public void getRuleDeclareMatchResult(HashMap<String, Object> map, BigDecimal maxCustomsAmount, BigDecimal minCustomsAmount, Boolean isUpdate, List<SoB2cDeclareProductEntity> declareProductList, String soId, String soLogisticId) {
         if (Objects.isNull(map)) {
             return;
         }
@@ -239,6 +239,9 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
                 String msg = StrUtil.format("自动生成报关信息");
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), String.valueOf(map.get("id")), "报关信息生成");
             }
+            //更新包装重量
+            BigDecimal packWeight = addList.stream().map(SoB2cDeclareProductEntity::getWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            soB2cLogisticsService.updateWeight(soId,soLogisticId,packWeight,"更新报关信息同步重量");
         }
     }
 

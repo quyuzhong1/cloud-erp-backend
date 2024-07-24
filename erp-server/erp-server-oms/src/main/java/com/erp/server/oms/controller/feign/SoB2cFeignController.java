@@ -720,7 +720,7 @@ public class SoB2cFeignController extends BaseController {
     public Boolean updateWeight(@RequestParam("soId") String soId,
                                 @RequestParam("id") String id,
                                 @RequestParam("weightByG") BigDecimal weightByG) {
-        return soB2cLogisticsService.updateWeight(soId, id, weightByG);
+        return soB2cLogisticsService.updateWeight(soId, id, weightByG, "组包称重");
     }
 
     /**
