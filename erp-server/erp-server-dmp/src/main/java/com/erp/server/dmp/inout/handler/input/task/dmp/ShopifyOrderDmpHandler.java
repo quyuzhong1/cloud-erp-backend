@@ -32,19 +32,19 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                 if (financialStatusObj != null) {
                     String financialStatus = String.valueOf(financialStatusObj);
                     if ("fulfilled".equalsIgnoreCase(financialStatus)) {
-                        dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
+                        dmpDataMap.put("order_status", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
                     } else if ("refunded".equalsIgnoreCase(financialStatus)) {
-                        dmpDataMap.put("orderStatus", ApproveStatusEnum.REJECT.getCode());
+                        dmpDataMap.put("order_status", ApproveStatusEnum.REJECT.getCode());
                         dmpDataMap.put("returnStatus", DmpOrderReturnStatusEnum.ORDER_RETURN.getCode());
                     } else if ("partially_refunded".equalsIgnoreCase(financialStatus)) {
-                        dmpDataMap.put("orderStatus", ApproveStatusEnum.REJECT.getCode());
+                        dmpDataMap.put("order_status", ApproveStatusEnum.REJECT.getCode());
                         dmpDataMap.put("returnStatus", DmpOrderReturnStatusEnum.PARTIAL_RETURN.getCode());
                     } else if ("voided".equalsIgnoreCase(financialStatus)) {
-                        dmpDataMap.put("orderStatus", ApproveStatusEnum.REJECT.getCode());
+                        dmpDataMap.put("order_status", ApproveStatusEnum.REJECT.getCode());
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
                     } else {
-                        dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
+                        dmpDataMap.put("order_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                     }
                 }
                 //买家备注

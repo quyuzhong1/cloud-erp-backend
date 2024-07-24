@@ -34,6 +34,7 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
                     detail.put("secondStreet", shippingAddressMap.get("address2"));
                     detail.put("mainPhone", shippingAddressMap.get("phone"));
                     detail.put("secondPhone", shippingAddressMap.get("second_phone"));
+                    detail.put("country", shippingAddressMap.get("countryCode"));
                 }
 
                 //买家电话2
