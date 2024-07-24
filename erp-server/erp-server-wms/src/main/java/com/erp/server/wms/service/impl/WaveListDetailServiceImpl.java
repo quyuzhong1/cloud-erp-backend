@@ -16,10 +16,12 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WaveListDetailDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PickingStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.wms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListDetailMapper;
 import com.erp.server.wms.service.*;
@@ -55,6 +57,8 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
     private SoB2cDeliveryService deliveryService;
     @Resource
     private PickingCartTypeService pickingCartTypeService;
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
 
     @Override
     public List<WaveListDetailEntity> listByMainId(String mainId) {
@@ -163,7 +167,8 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
             waveListService.getBaseMapper().deleteById(waveId);
         }
         //释放冻结库存
-        deliveryService.rollbackInventory(Collections.singletonList(deliveryId));
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_B2C_DELIVERY, Collections.singletonList(deliveryId));
+        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //修改发货单状态：待处理
         deliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>().set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode()).eq("id", deliveryId));
         //删除拣货单
