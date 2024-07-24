@@ -1179,8 +1179,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //删除拣货单
         pickingListsService.deleteBySourceId(ids);
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_B2C_DELIVERY, ids);
-        //回滚虚拟仓库存
-        virtualInventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+        //取消发货虚拟仓库存增加可用
+        addUsableVirtualInventory (deliveryEntityList);
         //回滚实体仓库存
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //新增日志
