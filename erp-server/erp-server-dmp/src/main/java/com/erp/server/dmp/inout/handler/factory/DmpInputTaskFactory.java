@@ -77,7 +77,7 @@ public class DmpInputTaskFactory{
 		if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), execTimeout, TimeUnit.SECONDS)) {
 			try {
 				for(DmpInputTaskStatusEnum value : values) {
-					if(value != DmpInputTaskStatusEnum.INIT && value != DmpInputTaskStatusEnum.ERROR) {
+					if(value != DmpInputTaskStatusEnum.INIT && value != DmpInputTaskStatusEnum.ERROR && dmpResponse.isDoNextStatus()) {
 						dmpInputTaskFactory.innerDealInputTask(value, dmpInputFinishRequest, dmpResponse);
 					}
 				}
