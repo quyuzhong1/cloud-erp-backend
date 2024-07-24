@@ -146,7 +146,7 @@ public class PackageServiceImpl implements PackageService {
         String billStatus = scanResult.getBillStatus();
         //待发货
         String waitShipped = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
-        if (!waitShipped.equals(billStatus) && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(billStatus)) {
+        if (!waitShipped.equals(billStatus) && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(billStatus)) {
             throw new ServiceException("仅待发货和已发货的可操作组包");
         }
 
