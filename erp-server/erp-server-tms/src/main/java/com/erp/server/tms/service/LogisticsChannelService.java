@@ -210,4 +210,10 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      */
     PagingVO<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsChannelDTO.SelectDTO> dto);
 
+    /**
+     * 根据主表id，更新启用状态
+     * @param channelIds
+     * @param status
+     */
+    void updateStatusByIds(List<String> channelIds, Boolean status);
 }

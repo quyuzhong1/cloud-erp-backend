@@ -697,4 +697,16 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
 //        pagResult.setRecords(list);
         return new PagingVO<>(pagResult);
     }
+    /**
+     * 根据主表id，更新启用状态
+     * @param channelIds
+     * @param status
+     */
+    @Override
+    public void updateStatusByIds(List<String> channelIds, Boolean status) {
+        if (CollectionUtils.isEmpty(channelIds)){
+            return;
+        }
+        this.lambdaUpdate().in(LogisticsChannelEntity::getId, channelIds).set(LogisticsChannelEntity::getDisabled, status).update();
+    }
 }
