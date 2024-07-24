@@ -101,6 +101,21 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+
+    private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
+
+    static {
+        WDT_NULL_LOCATION.add("直发暂存");
+        WDT_NULL_LOCATION.add("发货暂存待放回");
+        WDT_NULL_LOCATION.add("下架暂存");
+        WDT_NULL_LOCATION.add("销退质检");
+        WDT_NULL_LOCATION.add("补货暂存");
+        WDT_NULL_LOCATION.add("其它未上架");
+        WDT_NULL_LOCATION.add("销退暂存");
+        WDT_NULL_LOCATION.add("盘亏暂存");
+        WDT_NULL_LOCATION.add("发货暂存");
+        WDT_NULL_LOCATION.add("采购未上架");
+    }
     /**
      * 同步金蝶的销售出库单
      *
@@ -283,7 +298,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     //仓库
                     detailEntity.setWarehouseId(warehouse.getId());
                     detailEntity.setWarehouseName(warehouse.getName());
-                    detailEntity.setWarehouseLocation("其它未上架".equals(detail.getPositionNo()) ? "" : detail.getPositionNo());
+                    detailEntity.setWarehouseLocation(WDT_NULL_LOCATION.contains(detail.getPositionNo()) ? "" : detail.getPositionNo());
                     detailEntity.setVirtualWarehouseId(virtualWarehouseId);
                     detailEntity.setPlanQty(detail.getPositionGoodsCount());
                     detailEntity.setActualQty(detail.getPositionGoodsCount());
