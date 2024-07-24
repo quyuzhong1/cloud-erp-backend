@@ -143,6 +143,13 @@ public class PackageServiceImpl implements PackageService {
             throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
         }
 
+        String billStatus = scanResult.getBillStatus();
+        //待发货
+        String waitShipped = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+        if (!waitShipped.equals(billStatus) && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(billStatus)) {
+            throw new ServiceException("仅待发货和已发货的可操作组包");
+        }
+
         if(Objects.nonNull(scanDTO.getWeight())){
             if(scanDTO.getWeight().compareTo(BigDecimal.ZERO) <= 0){
                 throw new ServiceException("重量必须大于0");
