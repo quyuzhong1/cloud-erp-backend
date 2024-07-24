@@ -887,6 +887,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO generateSoDeliverySave(String id) {
         SoDeliveryNoticeEntity entity = getById(id);
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
