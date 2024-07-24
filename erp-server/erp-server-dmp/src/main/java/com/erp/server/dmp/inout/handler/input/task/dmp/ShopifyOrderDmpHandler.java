@@ -31,6 +31,7 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 //状态
                 Object financialStatusObj = dmpDataMap.get("financialStatus");
+                log.info("2Shopify状态转换：{}" , dmpDataMap);
                 log.info("1Shopify状态转换：{}" , financialStatusObj);
                 if (financialStatusObj != null) {
                     String financialStatus = String.valueOf(financialStatusObj);
