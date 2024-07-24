@@ -31,27 +31,27 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 //状态
                 Object financialStatusObj = dmpDataMap.get("financialStatus");
-                log.warn("1Shopify状态转换：{}" , financialStatusObj);
+                log.info("1Shopify状态转换：{}" , financialStatusObj);
                 if (financialStatusObj != null) {
                     String financialStatus = String.valueOf(financialStatusObj);
                     if ("fulfilled".equalsIgnoreCase(financialStatus)) {
-                        log.warn("Shopify2状态转换：{}" , financialStatus);
+                        log.info("Shopify2状态转换：{}" , financialStatus);
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
                     } else if ("refunded".equalsIgnoreCase(financialStatus)) {
-                        log.warn("Shopify3状态转换：{}" , financialStatus);
+                        log.info("Shopify3状态转换：{}" , financialStatus);
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.REJECT.getCode());
                         dmpDataMap.put("returnStatus", DmpOrderReturnStatusEnum.ORDER_RETURN.getCode());
                     } else if ("partially_refunded".equalsIgnoreCase(financialStatus)) {
-                        log.warn("Shopify4状态转换：{}" , financialStatus);
+                        log.info("Shopify4状态转换：{}" , financialStatus);
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.REJECT.getCode());
                         dmpDataMap.put("returnStatus", DmpOrderReturnStatusEnum.PARTIAL_RETURN.getCode());
                     } else if ("voided".equalsIgnoreCase(financialStatus)) {
-                        log.warn("Shopify5状态转换：{}" , financialStatus);
+                        log.info("Shopify5状态转换：{}" , financialStatus);
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.REJECT.getCode());
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
                     } else {
-                        log.warn("Shopify6状态转换：{}" , financialStatus);
+                        log.info("Shopify6状态转换：{}" , financialStatus);
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                     }
                 }
