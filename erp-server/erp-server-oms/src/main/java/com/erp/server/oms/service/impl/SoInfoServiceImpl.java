@@ -3057,7 +3057,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(soDetailList)) {
             throw new ServiceException(ApiError.ERROR_92015);
         }
-        List<SoInfoDTO.BatchLockVirtualInventoryDTO> resuleList = handleBatchLockVirtualInventory(soDetailList);
+        List<SoInfoDTO.BatchLockVirtualInventoryDTO> resuleList = handleBatchLockVirtualInventory(detailIdList,soDetailList);
         return resuleList;
     }
 
@@ -3491,7 +3491,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @param soDetailList
      * @return List<BatchLockVirtualInventoryDTO>
      */
-    private List<SoInfoDTO.BatchLockVirtualInventoryDTO> handleBatchLockVirtualInventory (List<SoDetailEntity> soDetailList) {
+    private List<SoInfoDTO.BatchLockVirtualInventoryDTO> handleBatchLockVirtualInventory (List<String> detailIdList,List<SoDetailEntity> soDetailList) {
         List<SoInfoDTO.BatchLockVirtualInventoryDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isEmpty(soDetailList)) {
             return resultList;
@@ -3533,7 +3533,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoOutstockDetailDTO.DeliveryQtyDTO> deliveryQtyList = soOutstockFeign.listDetailBySoDetailIds(soDetailIdList);
 
 
-        for (SoDetailEntity soDetailEntity :soDetailList) {
+        for (String soDetailId :detailIdList) {
+            //销售订单明细
+            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailId)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_92016);
+            }
+
             SoInfoDTO.BatchLockVirtualInventoryDTO batchLockDTO = new SoInfoDTO.BatchLockVirtualInventoryDTO();
             //主表信息
             SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
