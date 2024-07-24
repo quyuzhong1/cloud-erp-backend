@@ -2,6 +2,7 @@ package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -27,4 +28,18 @@ public interface VirtualWarehouseMapper extends BaseMapper<VirtualWarehouseEntit
     IPage<VirtualWarehouseDTO.ListDTO> paging(Page query, @Param("params") VirtualWarehouseDTO.PagingParamDTO params);
 
     List<VirtualWarehouseDTO.VwDTO> getByNames(@Param("nameList")List<String> nameList);
+
+    /**
+     * 虚拟仓高级搜索
+     * @param params
+     * @return
+     */
+    IPage<VirtualWarehouseDTO.SelectDTO> warehousePagingSelect(@Param("params") PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> params);
+
+    /**
+     * 虚拟仓列表
+     * @param dto
+     * @return
+     */
+    List<VirtualWarehouseDTO.SelectDTO> warehouseSelectList(PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto);
 }

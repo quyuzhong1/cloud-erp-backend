@@ -31,6 +31,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
@@ -335,11 +336,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Override
     public Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<TransferDeclareDTO.ListDTO> list = baseMapper.listExportExcel(dto);
+        List<TransferDeclareDTO.ExportListDTO> list = baseMapper.listExportExcel(dto);
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
-        fillList(list, dto);
+        //数据转换
+        fileExportList(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/transferDeclare.xlsx";
         String name = "中转报关单导出";
@@ -354,144 +356,17 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         return Boolean.TRUE;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> orderForecast(BaseDTO.QtyDTO qtyDTO) {
-        String id = qtyDTO.getId();
-        List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        if (Objects.isNull(id)){
-            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_ID_NOT_EXIST);
+    private void fileExportList(List<TransferDeclareDTO.ExportListDTO> list) {
+        if (CollectionUtil.isEmpty(list)){
+            return;
         }
-
-        TransferDeclareEntity transferDeclareEntity = this.getById(id);
-        if (Objects.isNull(transferDeclareEntity)){
-            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_NOT_EXIST);
-        }
-        if (!TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(transferDeclareEntity.getUploadStatus())
-                || InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode().equals(transferDeclareEntity.getInstockForecastStatus())) {
-            throw new ServiceException(ApiError.ERROR_UPLOAD_SUCCES_CAN_INSTOCK_FORCAST);
-        }
-        //仅支持【订单预报(批次)】上传成功时且入库预报为【待上传/上传失败】，可操作【入库预报】
-        List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByMainIds(Arrays.asList(id));
-        List<TransferDeclareDetailEntity> transferDeclareDetailList = transferDeclareDetailEntities.stream()
-                .filter(req -> TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(req.getOrderUploadStatus()))
-                .collect(Collectors.toList());
-
-        //新增校验推送订单是否全部出库，未成功提示：{销售订单号}未完成出库无法执行入库预报
-        List<TransferDeclareDetailEntity> detailEntityList = transferDeclareDetailService.listByMainIds(Arrays.asList(id));
-        List<String> soIds = detailEntityList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIds);
-        for (TransferDeclareDetailEntity transferDeclareDetailEntity : detailEntityList) {
-            List<SoOutstockEntity> outstockEntities = soOutstockEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getSoId())
-                    && ApproveStatusEnum.APPROVE.getCode().equals(req.getApproveStatus())
-            ).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(outstockEntities)) {
-                resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "【"+transferDeclareDetailEntity.getSoCode()+"】未完成出库无法执行入库预报"));
-                return resultDTOList;
-            }
-        }
-
-
-        List<TransferLogisticsCreateInboundReq.ReceiveItem> receiveItemList = new ArrayList<>(transferDeclareDetailList.size());
-        //查询报关单包含的订单信息
-        List<String> soIdList = transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
-        //下单
-        for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
-            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(null);
-            if (Objects.nonNull(soB2cEntity) && StringUtils.isNotEmpty(soB2cEntity.getShippingOrderNo())){
-                TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
-                        .orderCode(soB2cEntity.getShippingOrderNo())
-                        .grossWeight(transferDeclareDetailEntity.getPackageWeight())
-                        .build();
-                receiveItemList.add(receiveItem);
-            }
-        }
-        if(CollectionUtils.isEmpty(receiveItemList)){
-            throw new ServiceException(ApiError.ERROR_TRANSFER_DECLARE_DETAIL_NOT_EXIST);
-        }
-        //查询授权信息
-        TransferLogisticsAuthEntity authEntity = transferLogisticsAuthService.getByMainId("", transferDeclareEntity.getTransferLogisticsSupplierId());
-        if (ObjectUtil.isEmpty(authEntity)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST);
-        }
-        TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
-        if (Objects.isNull(service)){
-            resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能"));
-            return resultDTOList;
-        }
-        //计算入库预报客户单号
-        String referenceCode = getReferenceCode();
-        TransferLogisticsCreateInboundReq request = TransferLogisticsCreateInboundReq.builder()
-                .referenceCode(referenceCode)
-                .isDelivery(true)
-                .packQty(qtyDTO.getQty())
-                .grossWeight(receiveItemList.stream().map(TransferLogisticsCreateInboundReq.ReceiveItem::getGrossWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO))
-                .receivingStatus("3")
-                .receiveItemList(receiveItemList)
-                .build();
-        try {
-            //下单
-            ApiResult<String> result = service.createInbound(request, authEntity.getId());
-            transferDeclareEntity.setInstockRefCode(referenceCode);
-            transferDeclareEntity.setInstockForecastAsnCode(result.getData());
-            transferDeclareEntity.setTotalQty(qtyDTO.getQty());
-            if (result.getCode() == 200) {
-                //拿到第三方订单号，用于给订单赋值第三方平台发货单号
-                transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode());
-                transferDeclareEntity.setInstockForecastRemark("");
-                transferDeclareEntity.setInstockForecastDate(LocalDate.now());
-                //上传成功
-                baseMapper.updateById(transferDeclareEntity);
-                //删除订单异常记录
-                SoB2cErrorDTO.BatchDeleteDTO deleteDTO = new SoB2cErrorDTO.BatchDeleteDTO();
-                deleteDTO.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
-                deleteDTO.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-                soB2cFeign.deleteErrorByMainIds(deleteDTO);
-
-                //入库预报成功添加报关对账明细
-                addDeclareReconciliation(transferDeclareDetailEntities);
-
-                resultDTOList.add(BatchResultDTO.success(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "入库预报成功"));
-            } else {
-                String msg = String.format("入库预报失败：%s", result.getMsg());
-                //上传失败
-                transferDeclareEntity.setInstockForecastRemark(result.getMsg());
-                transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
-                baseMapper.updateById(transferDeclareEntity);
-                //记录订单预报异常
-                SoB2cErrorDTO.BatchAdd batchAdd = new SoB2cErrorDTO.BatchAdd();
-                batchAdd.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
-                batchAdd.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-                batchAdd.setMessage(msg);
-                batchAdd.setParamJson(JSONObject.toJSONString(qtyDTO));
-                soB2cFeign.batchAddSoB2cError(batchAdd);
-
-                resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), msg));
-            }
-        }catch (Exception e){
-            transferDeclareEntity.setInstockRefCode(referenceCode);
-            transferDeclareEntity.setInstockForecastAsnCode("");
-            transferDeclareEntity.setTotalQty(qtyDTO.getQty());
-            String msg = String.format("入库预报失败：%s", e.getMessage());
-            //上传失败
-            transferDeclareEntity.setInstockForecastRemark(e.getMessage());
-            transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
-            baseMapper.updateById(transferDeclareEntity);
-
-            //记录订单预报异常
-            SoB2cErrorDTO.BatchAdd batchAdd = new SoB2cErrorDTO.BatchAdd();
-            batchAdd.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
-            batchAdd.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-            batchAdd.setMessage(e.getMessage());
-            batchAdd.setParamJson(JSONObject.toJSONString(qtyDTO));
-            soB2cFeign.batchAddSoB2cError(batchAdd);
-            resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), e.getMessage()));
-        }
-
-
-        return resultDTOList;
+        list.forEach(exportListDTO -> {
+            exportListDTO.setUploadBatchStatusName(TransferDeclareUploadStatusEnum.getName(exportListDTO.getUploadBatchStatus()));
+            exportListDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(exportListDTO.getInstockForecastStatus()));
+            exportListDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(exportListDTO.getUploadOrderStatus()));
+            exportListDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(exportListDTO.getOutstockStatus()));
+            exportListDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(exportListDTO.getTransferStatus()));
+        });
     }
 
     @Override
@@ -510,12 +385,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //新增校验推送订单是否全部出库，未成功提示：{销售订单号}未完成出库无法执行入库预报
         List<TransferDeclareDetailEntity> detailEntityList = transferDeclareDetailService.listByMainIds(Arrays.asList(qtyDTO.getId()));
         List<String> soIds = detailEntityList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIds);
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : detailEntityList) {
-            List<SoOutstockEntity> outstockEntities = soOutstockEntities.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getSoId())
-                    && ApproveStatusEnum.APPROVE.getCode().equals(req.getApproveStatus().getStatus())
+            List<SoB2cEntity> soB2cEntities = soB2cEntityList.stream().filter(req -> transferDeclareDetailEntity.getSoId().equals(req.getId())
+                    && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus())
             ).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(outstockEntities)) {
+            if (CollectionUtils.isEmpty(soB2cEntities)) {
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "【"+transferDeclareDetailEntity.getSoCode()+"】未完成出库无法执行入库预报"));
                 return resultDTOList;
             }
@@ -926,8 +801,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         //主表记录ids
         List<String> declareIds = dateList.stream().map(TransferDeclareDTO.ListDTO::getId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByCondition(declareIds,params);
-        List<String> soIdList = dateList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIdList);
+        List<String> soIdList = dateList.stream().map(TransferDeclareDTO.ListDTO::getSoId).distinct().collect(Collectors.toList());
+        soIdList.addAll(transferDeclareDetailEntities.stream().map(TransferDeclareDetailEntity::getSoId).collect(Collectors.toList()));
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
         for (TransferDeclareDTO.ListDTO listDTO : dateList){
             List<TransferDeclareDetailEntity> detailEntityList = transferDeclareDetailEntities.stream().filter(e -> e.getMainId().equals(listDTO.getId())).collect(Collectors.toList());
 
@@ -951,11 +827,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 }
 
                 //出库状态中文
-                SoOutstockEntity soOutstockEntity = soOutstockEntities.stream()
-                        .filter(req -> req.getSoId().equals(listDTO.getSoId())
-                                && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus().getStatus()))
+                SoB2cEntity soB2cEntity = soB2cEntityList.stream()
+                        .filter(req -> req.getId().equals(listDTO.getSoId())
+                                && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
                         .findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+                if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                     listDTO.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
                 } else {
                     listDTO.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());
@@ -969,8 +845,16 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 //入库预报状态
                 listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(listDTO.getInstockForecastStatus()));
             detailEntityList.forEach(transferDeclareDetailEntity -> {
+                SoB2cEntity detailSoB2cEntity = soB2cEntityList.stream()
+                        .filter(req -> req.getId().equals(transferDeclareDetailEntity.getSoId())
+                                && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
+                        .findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(detailSoB2cEntity)) {
+                    transferDeclareDetailEntity.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
+                } else {
+                    transferDeclareDetailEntity.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());
+                }
                 transferDeclareDetailEntity.setOrderUploadStatusName(TransferDeclareUploadStatusEnum.getName(transferDeclareDetailEntity.getOrderUploadStatus()));
-                transferDeclareDetailEntity.setOutstockStatusName(TransferOutstockStatusEnum.getName(transferDeclareDetailEntity.getOutstockStatus()));
                 transferDeclareDetailEntity.setTransferStatusName(TransferLogisticsStatusEnum.getName(transferDeclareDetailEntity.getTransferStatus()));
             });
             listDTO.setDetailEntityList(detailEntityList);

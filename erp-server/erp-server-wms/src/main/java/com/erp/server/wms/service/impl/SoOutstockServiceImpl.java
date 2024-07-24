@@ -701,11 +701,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 handleSoB2cData(entity);
             }
 
-            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
-            statusDTO.setSoIds(Arrays.asList(entity.getSoId()));
-            statusDTO.setStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
-            //修改中转报关单订单出库状态
-            transferDeclareFeign.updateOutstockStatus(statusDTO);
+//            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
+//            statusDTO.setSoIds(Arrays.asList(entity.getSoId()));
+//            statusDTO.setStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
+//            //修改中转报关单订单出库状态
+//            transferDeclareFeign.updateOutstockStatus(statusDTO);
 
             //走TMS自动生成报关单逻辑
             if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
@@ -1106,11 +1106,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             });
 
-            //修改中转报关单订单出库状态
-            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
-            statusDTO.setSoIds(soIds);
-            statusDTO.setStatus(TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
-            transferDeclareFeign.updateOutstockStatus(statusDTO);
+//            //修改中转报关单订单出库状态
+//            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
+//            statusDTO.setSoIds(soIds);
+//            statusDTO.setStatus(TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
+//            transferDeclareFeign.updateOutstockStatus(statusDTO);
         }
         return result;
     }

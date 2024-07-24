@@ -2728,7 +2728,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             viewDTO.setProductName(null == skuVO ? "" : skuVO.getSkuName());
             //组合品的话根据子件计算长宽高重量
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOList = allBomChildrenSkuDTOList.stream().filter(v->v.getParentSkuId().equals(skuVO.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOList = allBomChildrenSkuDTOList.stream().filter(v->skuVO != null && v.getParentSkuId().equals(skuVO.getSkuId())).collect(Collectors.toList());
 
             if(CollectionUtils.isEmpty(bomChildrenSkuDTOList)){
 

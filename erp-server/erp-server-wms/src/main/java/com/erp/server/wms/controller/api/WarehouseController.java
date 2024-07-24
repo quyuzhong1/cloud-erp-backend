@@ -301,7 +301,7 @@ public class WarehouseController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/selectPaging")
-    public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody @Validated PagingDTO<WarehouseDTO.SelectDTO> dto) {
+    public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody PagingDTO<WarehouseDTO.SelectDTO> dto) {
         PagingVO<WarehouseDTO.ListDTO> pagingVO = warehouseService.selectPaging(dto);
         return success(pagingVO);
     }

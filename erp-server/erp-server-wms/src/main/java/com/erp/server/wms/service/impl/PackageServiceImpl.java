@@ -143,12 +143,11 @@ public class PackageServiceImpl implements PackageService {
             throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
         }
 
-
         String billStatus = scanResult.getBillStatus();
         //待发货
         String waitShipped = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
-        if (!waitShipped.equals(billStatus)) {
-            throw new ServiceException("仅待发货的可操作组包");
+        if (!waitShipped.equals(billStatus) && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(billStatus)) {
+            throw new ServiceException("仅待发货和已发货的可操作组包");
         }
 
         if(Objects.nonNull(scanDTO.getWeight())){
@@ -283,7 +282,7 @@ public class PackageServiceImpl implements PackageService {
                 packageForecastService.add(item);
                 //自动发货
                 if (dto.getIsAutoOut()) {
-                    List<String> soIdList = item.getDetailList().stream().map(PackageForecastDetailDTO.AddDTO::getSoId).collect(Collectors.toList());
+                    List<String> soIdList = item.getDetailList().stream().filter(v->!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus())).map(PackageForecastDetailDTO.AddDTO::getSoId).collect(Collectors.toList());
                     // 异步推送到MQ
                     soIdList.stream().peek(soId ->{
                         SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),

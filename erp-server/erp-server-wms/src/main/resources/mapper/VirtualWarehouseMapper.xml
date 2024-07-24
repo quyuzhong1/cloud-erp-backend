@@ -72,6 +72,42 @@
             </foreach>
         </if>
     </select>
+    <select id="warehousePagingSelect" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$SelectDTO">
+        SELECT id,name,code,disabled FROM (
+            SELECT
+            vw.id,vw.name,vw.code,vw.disabled
+            from virtual_warehouse vw
+            where vw.is_deleted = FALSE
+            <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
+                and ((vw.code ilike concat('%', #{params.searchKeyword}::text ,'%') or vw.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            </if>
+            order by
+            <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
+                case when vw.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when vw.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when vw.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , vw.name,
+            </if>
+            vw.disabled
+        ) warehouse
+    </select>
+    <select id="warehouseSelectList" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$SelectDTO">
+        SELECT
+        vw.id,vw.name,vw.code,vw.disabled
+        from virtual_warehouse vw
+        where vw.is_deleted = FALSE
+        <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
+            and ((vw.code ilike concat('%', #{params.searchKeyword}::text ,'%') or vw.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        order by
+        <if test="params != null and params.searchKeyword != null and params.searchKeyword != ''">
+            case when vw.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when vw.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when vw.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , vw.name,
+        </if>
+        vw.disabled
+    </select>
 
 
 </mapper>
