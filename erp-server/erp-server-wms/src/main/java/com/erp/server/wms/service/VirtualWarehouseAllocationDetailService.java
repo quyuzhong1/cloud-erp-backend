@@ -79,4 +79,9 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @author hyj
      */
     VirtualWarehouseAllocationDTO.ManualFinishViewDTO viewManualFinish(String id);
+
+    /**
+     * 更新备注
+     */
+    Boolean updateRemark(VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO);
 }

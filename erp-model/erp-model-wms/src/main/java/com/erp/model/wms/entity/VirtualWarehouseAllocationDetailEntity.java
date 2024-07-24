@@ -115,6 +115,12 @@ public class VirtualWarehouseAllocationDetailEntity extends BaseEntity<VirtualWa
     @TableField("sys_type_name")
     private String sysTypeName;
 
+    /**
+     * 备注
+     */
+    @TableField("detail_remark")
+    private String detailRemark;
+
     public static final String DISABLED = "disabled";
 
     public static final String MAIN_ID = "main_id";

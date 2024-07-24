@@ -292,6 +292,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private String remark;
 
         /**
+         * 明细备注
+         */
+        private String detailRemark;
+
+        /**
          * skuId
          */
         private String skuId;
@@ -561,6 +566,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String syncStatusName;
 
+        /**
+         * 备注
+         */
+        private String detailRemark;
+
         public String getSyncStatusName() {
             return VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(syncStatus);
         }
@@ -675,5 +685,16 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 作废说明
          */
         private String invalidDescription;
+    }
+
+    @Data
+    public static class UpdateRemarkDTO{
+        @NotBlank(message = "ID不能为空")
+        private String id;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 }

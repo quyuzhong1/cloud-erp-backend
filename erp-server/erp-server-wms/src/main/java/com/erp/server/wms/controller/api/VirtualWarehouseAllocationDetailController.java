@@ -228,4 +228,12 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
        return success(virtualWarehouseAllocationDetailService.viewManualFinish(detailId));
     }
 
+    /**
+     * 更新备注
+     */
+    @PostMapping("/updateRemark")
+    public ApiResult<Boolean> updateRemark(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO){
+        return success(virtualWarehouseAllocationDetailService.updateRemark(updateRemarkDTO));
+    }
+
 }

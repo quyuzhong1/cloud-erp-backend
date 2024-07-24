@@ -116,4 +116,13 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      * @return
      */
     VirtualWarehouseAllocationDTO.ManualFinishViewDTO viewInvalid(String id);
+
+    /**
+     * 更新主表备注
+     * @param updateRemarkDTO
+     * @return
+     * @date: 2024-07-24
+     * @author: tanmujin
+     */
+    Boolean updateRemark(VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO);
 }
