@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -309,5 +310,13 @@ public class VirtualWarehouseAllocationController extends BaseController {
     )
     public ApiResult<VirtualWarehouseAllocationDTO.ManualFinishViewDTO> viewInvalid(@RequestParam(value = "id") String id) {
         return success(virtualWarehouseAllocationService.viewInvalid(id));
+    }
+
+    /**
+     * 更新备注
+     */
+    @PostMapping("/updateRemark")
+    public ApiResult<Boolean> updateRemark(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO){
+        return success(virtualWarehouseAllocationService.updateRemark(updateRemarkDTO));
     }
 }

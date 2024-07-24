@@ -853,4 +853,12 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
     }
 
+    @Override
+    public Boolean updateRemark(VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO) {
+        return lambdaUpdate()
+                .set(VirtualWarehouseAllocationEntity::getRemark, updateRemarkDTO.getRemark())
+                .eq(VirtualWarehouseAllocationEntity::getId, updateRemarkDTO.getId())
+                .update();
+    }
+
 }

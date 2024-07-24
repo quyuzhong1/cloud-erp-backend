@@ -475,4 +475,15 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         return manualFinishViewDTO;
     }
 
+    /**
+     * 更新备注
+     */
+    @Override
+    public Boolean updateRemark(VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO) {
+        return lambdaUpdate()
+                .set(VirtualWarehouseAllocationDetailEntity::getDetailRemark, updateRemarkDTO.getRemark())
+                .eq(VirtualWarehouseAllocationDetailEntity::getId, updateRemarkDTO.getId())
+                .update();
+    }
+
 }
