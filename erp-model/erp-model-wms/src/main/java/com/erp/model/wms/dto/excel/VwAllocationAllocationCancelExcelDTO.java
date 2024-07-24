@@ -47,12 +47,18 @@ public class VwAllocationAllocationCancelExcelDTO extends VwAllocationExcelDTO i
     @FieldValid(fieldName = "取消分配数量", isNotBlank = true)
     private String qty;
 
-
+    /**
+     * 备注
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "备注", index = 4)
+    @FieldValid(fieldName = "备注")
+    private String detailRemark;
 
     /**
      * 错误信息
      */
     @ColumnWidth(50)
-    @ExcelProperty(value = "导入错误说明", index = 4)
+    @ExcelProperty(value = "导入错误说明", index = 5)
     private String errorMsg;
 }

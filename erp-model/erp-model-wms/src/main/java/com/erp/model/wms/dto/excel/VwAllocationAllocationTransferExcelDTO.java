@@ -56,9 +56,17 @@ public class VwAllocationAllocationTransferExcelDTO extends VwAllocationExcelDTO
     private String toVirtualWarehouseName;
 
     /**
+     * 备注
+     */
+    @ColumnWidth(50)
+    @ExcelProperty(value = "备注", index = 5)
+    @FieldValid(fieldName = "备注")
+    private String detailRemark;
+
+    /**
      * 错误信息
      */
     @ColumnWidth(50)
-    @ExcelProperty(value = "导入错误说明", index = 5)
+    @ExcelProperty(value = "导入错误说明", index = 6)
     private String errorMsg;
 }
