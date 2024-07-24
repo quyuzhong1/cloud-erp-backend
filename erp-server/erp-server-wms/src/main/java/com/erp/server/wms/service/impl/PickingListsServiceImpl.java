@@ -12,7 +12,9 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -48,6 +50,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -333,45 +336,55 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     public List<PickingListsDTO.PrintView> print(List<String> ids) {
+        LoginUser user = UserContext.getDefaultLoginUser();
         List<PickingListsEntity> pickingLists = listByIds(ids);
-        List<String> sourceCodes = pickingLists.stream().map(PickingListsEntity::getSourceCode).distinct().collect(Collectors.toList());
-        if (sourceCodes.size() > 1){
-            throw new ServiceException(ApiError.ERROR_92256);
-        }
-        PickingListsEntity pickingListsEntity = pickingLists.get(0);
-        String sourceCode = pickingListsEntity.getSourceCode();
-        if (StrUtil.isBlank(sourceCode)){
-            throw new ServiceException(ApiError.ERROR_92257);
-        }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
-        List<PickingListsDTO.PrintView> views = detailList.stream().map(detail -> {
-            PickingListsEntity entity = pickingLists.stream()
-                    .filter(picking -> picking.getId().equals(detail.getMainId()))
-                    .findFirst()
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
-            //匹配sku信息
-            SkuVO skuVO = skuVOList.stream()
-                    .filter(req -> req.getSkuId().equals(detail.getSkuId()))
-                    .distinct().findFirst().orElse(new SkuVO());
-            PickingListsDTO.PrintView view = new PickingListsDTO.PrintView();
-            view.getPrintView(entity, detail, skuVO.getSkuName());
-            if (ObjectUtil.isEmpty(view.getWarehouseLocation())) {
-                view.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+        List<PickingListsDTO.PrintView> printViews = new ArrayList<>();
+        for (PickingListsEntity picking : pickingLists) {
+            PickingListsDTO.PrintView printView = new PickingListsDTO.PrintView();
+            printView.setPrintTime(LocalDateTime.now());
+            printView.setPrintUserName(user.getUserName());
+            if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
+                RequisitionApplicationEntity application = requisitionApplicationService.getById(picking.getSourceId());
+                printView.setCode(application.getCode());
+                printView.setChannelName(application.getChannelName());
+            } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(picking.getSourceType())) {
+                SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getById(picking.getSourceId());
+                printView.setCode(soDeliveryNotice.getSourceCode());
+                printView.setChannelName(soDeliveryNotice.getCustomerName());
             }
-            return view;
-        }).collect(Collectors.toList());
-        return new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
-                Collectors.collectingAndThen(Collectors.toList(), v -> {
-                    PickingListsDTO.PrintView view = v.get(0);
-                    int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintView::getPickingQty).sum();
-                    view.setPickingQty(totalQuantity);
-                    view.setSourceCode(sourceCode);
-                    return view;
-                }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintView::getWarehouseId)
-                .thenComparing(PickingListsDTO.PrintView::getWarehouseLocation)
-                .thenComparing(PickingListsDTO.PrintView::getSkuNo)).collect(Collectors.toList());
+            List<PickingListsDTO.PrintDetailView> views = detailList.stream().map(detail -> {
+                PickingListsEntity entity = pickingLists.stream()
+                        .filter(p -> p.getId().equals(detail.getMainId()))
+                        .findFirst()
+                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
+                //匹配sku信息
+                SkuVO skuVO = skuVOList.stream()
+                        .filter(req -> req.getSkuId().equals(detail.getSkuId()))
+                        .distinct().findFirst().orElse(new SkuVO());
+                PickingListsDTO.PrintDetailView view = new PickingListsDTO.PrintDetailView();
+                view.getPrintView(entity, detail, skuVO.getSkuName());
+                if (ObjectUtil.isEmpty(view.getWarehouseLocation())) {
+                    view.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+                }
+                return view;
+            }).collect(Collectors.toList());
+            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
+                    Collectors.collectingAndThen(Collectors.toList(), v -> {
+                        PickingListsDTO.PrintDetailView view = v.get(0);
+                        int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintDetailView::getPickingQty).sum();
+                        view.setPickingQty(totalQuantity);
+                        return view;
+                    }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getWarehouseId)
+                    .thenComparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)
+                    .thenComparing(PickingListsDTO.PrintDetailView::getSkuNo)).collect(Collectors.toList());
+
+            printView.setPrintDetailViews(viewList);
+            printViews.add(printView);
+        }
+        return printViews;
     }
 
     @Override
