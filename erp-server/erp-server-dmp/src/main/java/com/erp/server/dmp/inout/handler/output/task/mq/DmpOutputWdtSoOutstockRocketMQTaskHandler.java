@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -204,7 +205,8 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
         	
             List<DmpSoOutstockPositionEntity> positionList = recIdMaps.get(item.getThirdDetailId());
             if(CollUtil.isNotEmpty(positionList)) {
-            	positionList.removeIf(p -> StringUtils.isNotBlank(p.getPositionNo()) && p.getPositionNo().equals("其它未上架"));
+            	List<String> nullPositionNo = Arrays.asList("直发暂存" , "发货暂存待放回" , "下架暂存" , "销退质检" , "补货暂存" , "其它未上架" , "销退暂存" , "盘亏暂存" , "发货暂存" , "采购未上架");
+            	positionList.removeIf(p -> StringUtils.isNotBlank(p.getPositionNo()) && nullPositionNo.contains(p.getPositionNo()));
             	if(CollUtil.isNotEmpty(positionList)) {
             		itemEntity.setPositionDetailsList(BeanUtil.copyToList(positionList, PositionDetailsList.class));
             	}
