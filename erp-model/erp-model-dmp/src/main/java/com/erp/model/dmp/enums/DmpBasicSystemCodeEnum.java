@@ -17,8 +17,9 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
 	KINGDEE("kingdee", "金蝶"),
 	WDT("wdt", "旺店通"),
 	MABANG("mabang", "马帮"),
+    TIKTOK("TikTok", "TikTok"),
 	ALI_EXPRESS("AliExpress", "速卖通"),
-    TikTok("TikTok", "TikTok"),
+	SHOPIFY("Shopify", "Shopify"),
     ;
     /**
      * 类型

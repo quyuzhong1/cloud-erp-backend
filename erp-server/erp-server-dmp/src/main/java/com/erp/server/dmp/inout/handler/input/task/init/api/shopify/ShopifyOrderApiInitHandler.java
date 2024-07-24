@@ -14,6 +14,10 @@ import com.erp.server.dmp.inout.dto.request.DmpInputTikTokApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
+import com.sdk.oms.shopify.api.rest.model.ShopifyOrder;
+import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
+import com.sdk.oms.shopify.service.ShopSdkServer;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.OrderDTO;
@@ -24,9 +28,12 @@ import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,121 +44,45 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class ShopifyOrderApiInitHandler implements DmpInputApiInitHandler {
     @Resource
-    private TikTokSdkClientService tikTokSdkClientService;
+    private ShopifyRestClientService shopifyRestClientService;
 
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-        DmpInputTikTokApiInitRequest dmpInputTikTokApiInitRequest = (DmpInputTikTokApiInitRequest) dmpInputApiInitRequest;
 
+        String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
-        String nextLevelId = dmpInputTikTokApiInitRequest.getNextLevelId();
+        // Shopify订单下载
+        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(nextLevelId);
+        if (null == shopInfoDTO) {
+            log.error("[Shopify订单下载]从缓存中获取shopify token 失败: shopId={}", nextLevelId);
+            return Collections.emptyList();
+        }
+        String shopifyShopDomain = shopInfoDTO.getShopDomain();
+        String accessToken = shopInfoDTO.getAccessToken();
 
+        ZoneOffset zoneOffset = ZoneOffset.systemDefault().getRules().getOffset(Instant.now());
+        // 上次执行时间
+        OffsetDateTime lastOffSetTime = dmpInputApiInitRequest.getStartTime().atOffset(zoneOffset);
+        // 下次执行时间
+        OffsetDateTime nextOffSetTime = dmpInputApiInitRequest.getEndTime().atOffset(zoneOffset);
+        // 当前时间
+//        OffsetDateTime nowOffSetTime = OffsetDateTime.now(ZoneId.systemDefault());
+//        OffsetDateTime nowOffSetTime = null;
 
-        TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(nextLevelId);
-        if (ObjectUtil.isEmpty(shopInfoDTO)) {
-            throw new ServiceException("TikTok店铺id：" + nextLevelId + "未找到对应的店铺信息");
+        // Shopify产品下载所有(SDK已分页查询所有)
+        List<ShopifyOrder> orders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
+                .getAllUpdatedOrdersCreatedBefore(lastOffSetTime, nextOffSetTime, null);
+
+        if (CollectionUtils.isEmpty(orders)) {
+            return Collections.emptyList();
         }
 
-
-        List<OrdersBean> resultsBeanList = new ArrayList<>();
-
-        //每次最多获取200条
-        Integer pageSize = 100;
-        //分页token
-        String pageToken = "";
-        //平台接口地址
-        String url = TikTokConstant.URL;
-        //服务密钥
-        String secret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
-
-        StringBuffer sb = new StringBuffer();
-        while (true) {
-            //组装授权url
-            String path = dmpInputTikTokApiInitRequest.getApiType().replace("{version}", TikTokConstant.VERSION);
-
-            // 定义查询参数
-            Map<String, Object> params = new HashMap<>();
-            params.put("access_token", shopInfoDTO.getAccessToken());
-            params.put("app_key", "6buinkjt3hmld");
-            params.put("page_size", pageSize);
-            params.put("page_token", pageToken);
-            params.put("shop_cipher", shopInfoDTO.getShopCipher());
-            params.put("shop_id", "");
-            params.put("sign", "");
-            String timestamp = System.currentTimeMillis() / 1000 + "";
-            params.put("timestamp", timestamp);
-            params.put("version", TikTokConstant.VERSION);
-
-            //设置请求头
-            Map<String, String> headerMap = new HashMap<>();
-            headerMap.put("content-type", "application/json");
-            headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
-
-            //请求body，平台用于计算签名
-            Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("update_time_ge", dmpInputTikTokApiInitRequest.getStartTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
-            bodyMap.put("update_time_lt", dmpInputTikTokApiInitRequest.getEndTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
-
-            String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
-            // 追加请求路径获取签名
-            String sign = EncryptionUtils.generateSHA256(input, secret);
-            //加入sign签名入参
-            params.put("sign", sign);
-
-            //组装url
-            sb.append(url);
-            sb.append(path);
-            sb.append("?access_token=" + shopInfoDTO.getAccessToken() + "");
-            sb.append("&app_key=" + "6buinkjt3hmld" + "");
-            sb.append("&page_size=" + pageSize + "");
-            sb.append("&page_token=" + pageToken + "");
-            sb.append("&shop_cipher=" + shopInfoDTO.getShopCipher() + "");
-            sb.append("&shop_id=");
-            sb.append("&sign=" + sign + "");
-            sb.append("&timestamp=" + timestamp + "");
-            sb.append("&version=" + TikTokConstant.VERSION + "");
-
-            //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
-            if (!Objects.equals(apiResult.getCode(), 200)) {
-                log.error("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}",
-                        sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
-            }
-
-            //解析数据
-            ObjectMapper objectMapper = new ObjectMapper();
-            OrderDTO orderDTO = null;
-            try {
-                orderDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
-            } catch (JsonProcessingException e) {
-                log.error("调用url={},入参params={}, 查询订单数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 查询订单数据解析失败，返回值 responseMap={}",
-                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
-            }
-
-            if (CollectionUtil.isEmpty(orderDTO.getData().getOrders())) {
-                continue;
-            }
-
-            //获取到所有客户的产品id
-            List<com.sdk.oms.tiktok.dto.tiktok.order.OrdersBean> ordersBeans = orderDTO.getData().getOrders().stream()
-                    .filter(req -> !"UNPAID".equalsIgnoreCase(req.getStatus())
-                            && !"ON_HOLD".equalsIgnoreCase(req.getStatus())
-                    ).distinct().collect(Collectors.toList());
-
-
-            DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-            dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(ordersBeans));
-            dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-
-            if (StringUtil.isBlank(orderDTO.getData().getNextPageToken())) {
-                break;
-            }
-        }
+        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+        dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(orders));
+        dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         return dmpInputTaskInitDTOList;
     }
 }

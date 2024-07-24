@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Scope("prototype")
-public class TikTokDmpHandler extends DmpInputThirdCodeDbDmpHandler{
+public class ShopifyDmpHandler extends DmpInputThirdCodeDbDmpHandler{
 
 	@Override
 	protected DmpBasicSystemCodeEnum getDmpBasicSystemCodeEnum() {
-		return DmpBasicSystemCodeEnum.TIKTOK;
+		return DmpBasicSystemCodeEnum.SHOPIFY;
 	}
 	
 }

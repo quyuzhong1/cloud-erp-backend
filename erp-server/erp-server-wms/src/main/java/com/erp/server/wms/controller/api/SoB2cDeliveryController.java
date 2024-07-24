@@ -321,7 +321,7 @@ public class SoB2cDeliveryController extends BaseController {
      * @Date 2023/12/13 20:13
      **/
 
-    @PostMapping("/printLogisticsBillConfirm")
+    @PostMapping("6")
     @Idempotent
     public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
         soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
