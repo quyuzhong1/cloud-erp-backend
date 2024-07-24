@@ -624,6 +624,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 WarehouseLocationEntity oldParentArea = warehouseLocationMapper.selectOne(new LambdaQueryWrapper<WarehouseLocationEntity>().eq(WarehouseLocationEntity::getId, locationEntity.getParentId()));
                 operateLogService.addModuleOperateLog(String.format("更新仓位名称【%s】，【%s】->【%s】", locationEntity.getCode(), locationEntity.getName(), updateEntity.getName()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), locationEntity.getId(), "编辑操作", user.getUid(), user.getUserName());
                 operateLogService.addModuleOperateLog(String.format("更新仓位所属库区【%s】，【%s】->【%s】", locationEntity.getCode(), oldParentArea.getName(), areaEntity.getName()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), locationEntity.getId(), "编辑操作", user.getUid(), user.getUserName());
+                continue;
             }
 
             //仓位重复
