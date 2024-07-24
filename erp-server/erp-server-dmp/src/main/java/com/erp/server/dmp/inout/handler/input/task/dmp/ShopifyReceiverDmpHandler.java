@@ -27,20 +27,20 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
                 Object shippingAddressObj = detail.get("shippingAddress");
                 if (ObjectUtil.isNotEmpty(shippingAddressObj)) {
                     Map<String, Object> shippingAddressMap = (Map<String, Object>) shippingAddressObj;
-                    detail.put("buyer_name", shippingAddressMap.get("name"));
+                    detail.put("buyerName", shippingAddressMap.get("name"));
                     detail.put("province", shippingAddressMap.get("province"));
                     detail.put("city", shippingAddressMap.get("city"));
-                    detail.put("main_street", shippingAddressMap.get("address1"));
-                    detail.put("second_street", shippingAddressMap.get("address2"));
-                    detail.put("main_phone", shippingAddressMap.get("phone"));
-                    detail.put("second_phone", shippingAddressMap.get("second_phone"));
+                    detail.put("mainStreet", shippingAddressMap.get("address1"));
+                    detail.put("secondStreet", shippingAddressMap.get("address2"));
+                    detail.put("mainPhone", shippingAddressMap.get("phone"));
+                    detail.put("secondPhone", shippingAddressMap.get("second_phone"));
                 }
 
                 //买家电话2
                 Object customerObj = detail.get("customer");
                 if (ObjectUtil.isNotEmpty(customerObj)) {
                     Map<String, Object> customerMap = (Map<String, Object>) customerObj;
-                    detail.put("second_phone", customerMap.get("phone"));
+                    detail.put("secondPhone", customerMap.get("phone"));
                 }
 
             }
