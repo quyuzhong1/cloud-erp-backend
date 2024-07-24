@@ -98,7 +98,7 @@
         vmad.sys_type,
         vmad.sys_type_name,
         vma.remark,
-        vmad.detailRemark
+        vmad.detail_remark detailRemark
         FROM virtual_warehouse_allocation_detail vmad
         inner JOIN virtual_warehouse_allocation vma
         on vma.id = vmad.main_id and vma.is_deleted = false
