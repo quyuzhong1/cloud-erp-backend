@@ -9,10 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -541,7 +538,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 中转规则不能为空
          */
-        @NotEmpty(message = "匹配中转规则不能为空")
+        @NotNull(message = "匹配中转规则不能为空")
         private MatchTransferRuleDTO matchTransferRuleDTO;
     }
 
