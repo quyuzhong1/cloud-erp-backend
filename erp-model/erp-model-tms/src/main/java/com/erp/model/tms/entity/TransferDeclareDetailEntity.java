@@ -69,8 +69,8 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
     /**
     * 出库状态 dict_basic：type=transferOutstockStatus
     */
-    @TableField("outstock_status")
-    private String outstockStatus;
+//    @TableField("outstock_status")
+//    private String outstockStatus;
     /**
      * 出库状态名称
      */

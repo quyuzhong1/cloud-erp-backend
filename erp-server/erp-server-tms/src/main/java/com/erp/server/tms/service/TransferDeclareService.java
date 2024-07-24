@@ -140,15 +140,6 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
     Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
-     * 上传报关
-     * @Author Luo_WG
-     * @Date 2024/1/26 15:03
-     * @param id
-     * @return java.util.List<BatchResultDTO>
-     **/
-    List<BatchResultDTO> orderForecast(BaseDTO.QtyDTO qtyDTO);
-
-    /**
      * 入库预报
      * @param qtyDTO
      * @return

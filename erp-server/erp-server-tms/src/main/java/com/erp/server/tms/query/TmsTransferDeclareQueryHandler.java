@@ -3,6 +3,7 @@ package com.erp.server.tms.query;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,14 @@ public class TmsTransferDeclareQueryHandler extends AbstractQueryHandler {
                 transferStatusList.add(TransferLogisticsStatusEnum.OUTSTOCK.getCode());
                 transferStatusList.add(TransferLogisticsStatusEnum.SIGNED.getCode());
                 this.buildSplicingSQLDTO("tdd.transfer_status", QueryConditionEnum.IN_LIST,transferStatusList, QueryDataTypeEnum.STRING);
+            }
+        }
+
+        if(field.equals("tdd.outstockStatus")){
+            if((Boolean)value){
+                this.buildDefaultDTO("sb.bill_status", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            }else{
+                this.buildSplicingSQLDTO("sb.bill_status", QueryConditionEnum.NE,SoB2cBillStatusEnum.ENUM_SHIPPED.getCode(), QueryDataTypeEnum.STRING);
             }
         }
         return null;
