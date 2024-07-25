@@ -1182,9 +1182,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 }
             }
             if(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(requisitionApplicationEntity.getType())){
-                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(requisitionApplicationEntity.getChannelId());
-                if(Objects.nonNull(overseasProviderWarehouseEntity)){
-                    channelName =  overseasProviderWarehouseEntity.getWarehouseName();
+                WarehouseEntity warehouseEntity = warehouseService.getById(requisitionApplicationEntity.getChannelId());
+                if(Objects.nonNull(warehouseEntity)){
+                    channelName =  warehouseEntity.getName();
                 }
             }
             requisitionApplicationEntity.setChannelName(channelName);
