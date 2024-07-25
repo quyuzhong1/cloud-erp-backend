@@ -380,11 +380,13 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * @param transactionDTO    库存交易信息
      */
     private void updateInventory(InventoryTransactionDTO transactionDTO) {
-        if(null == transactionDTO.getInventoryId()) {
-            ServiceException.runError("inventory_id为空：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],请让【实施工程师】协调开发人员处理",
-                    transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),transactionDTO.getWarehouseLocationName(),transactionDTO.getInventoryStatusName());
+        InventoryEntity inventoryEntity = null;
+        if(null != transactionDTO.getInventoryId()) {
+            inventoryEntity = inventoryService.getById(transactionDTO.getInventoryId());
+        }else{
+            inventoryEntity = inventoryService.getInventory(transactionDTO.getSkuId(), transactionDTO.getWarehouseId(), transactionDTO.getWarehouseLocation(), transactionDTO.getInventoryStatus());
         }
-        InventoryEntity inventoryEntity = inventoryService.getById(transactionDTO.getInventoryId());
+
         log.debug("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
         if(null == inventoryEntity) {
             inventoryEntity=new InventoryEntity();
@@ -414,6 +416,12 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
 
             inventoryService.update(wrapper);
         }
+
+        if(null == transactionDTO.getInventoryId()) {
+            //方面后续记录流水与历史库存
+            transactionDTO.setInventoryId(inventoryEntity.getId());
+        }
+
     }
 
     /**

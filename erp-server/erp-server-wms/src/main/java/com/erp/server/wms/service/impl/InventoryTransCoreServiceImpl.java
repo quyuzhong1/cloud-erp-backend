@@ -2,9 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
-import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidGroup;
@@ -25,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -235,7 +232,10 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 stockBaseDTO.setWarehouseId(flow.getWarehouseId());
                 stockBaseDTO.setWarehouseLocation(flow.getWarehouseLocation());
                 stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
-                transactionDTO.setInventoryId(getSavedInventoryId(stockBaseDTO));
+                InventoryEntity inventoryEntity=inventoryService.getInventory(
+                        flow.getSkuId(),flow.getWarehouseId(),
+                        flow.getWarehouseLocation(),rule.getInventoryStatus().getCode());
+                transactionDTO.setInventoryId(null==inventoryEntity?null:inventoryEntity.getId());
 
                 // 交易明细信息
                 transactionDTO.setSkuId(stockBaseDTO.getSkuId());
@@ -315,7 +315,10 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                     stockBaseDTO.setWarehouseLocation(flow.getTargetWarehouseLocation());
                     stockBaseDTO.setInventoryStatus(rule.getInventoryStatus()); // 调入仓的库存状态
                 }
-                transactionDTO.setInventoryId(getSavedInventoryId(stockBaseDTO));
+                InventoryEntity inventoryEntity=inventoryService.getInventory(
+                        flow.getSkuId(),flow.getWarehouseId(),
+                        flow.getWarehouseLocation(),rule.getInventoryStatus().getCode());
+                transactionDTO.setInventoryId(null==inventoryEntity?null:inventoryEntity.getId());
 
                 // 交易明细信息
                 transactionDTO.setSkuId(stockBaseDTO.getSkuId());
@@ -441,46 +444,6 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         });
     }
 
-    /**
-     * 获取库存id,如果不存在则创建
-     * @param flow  交易流水
-     * @return  库存id
-     */
-
-    private String getSavedInventoryId(InventoryStockBaseDTO flow) {
-        QueryWrapper<InventoryEntity> wrapper = new QueryWrapper<>();
-        wrapper.lambda().eq(InventoryEntity::getSkuId, flow.getSkuId())
-                .eq(InventoryEntity::getWarehouseId, flow.getWarehouseId())
-                .eq(InventoryEntity::getWarehouseLocation, flow.getWarehouseLocation())
-                .eq(InventoryEntity::getDictInventoryStatus, flow.getInventoryStatus())
-                .last("limit 1");
-        InventoryEntity inventoryEntity = inventoryService.getOne(wrapper);
-
-        log.debug("####InventoryTransCoreServiceImpl===>getSavedInventory====>IdinventoryEntity = {}  flow={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(flow));
-        if(inventoryEntity != null) {
-            return inventoryEntity.getId();
-        }
-
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-
-        inventoryEntity=new InventoryEntity();
-        inventoryEntity.setSkuId(flow.getSkuId());
-        inventoryEntity.setSkuNo(flow.getSkuNo());
-        inventoryEntity.setOrgId(flow.getOrgId());
-        inventoryEntity.setWarehouseId(flow.getWarehouseId());
-        inventoryEntity.setWarehouseLocation(flow.getWarehouseLocation());
-        inventoryEntity.setDictInventoryStatus(flow.getInventoryStatus().getCode());
-        inventoryEntity.setQty(0);
-        inventoryEntity.setCreateTime(LocalDateTime.now());
-        inventoryEntity.setCreateUserId(userInfo.getUid());
-        inventoryEntity.setCreateUserName(userInfo.getUserName());
-        inventoryEntity.setUpdateTime(LocalDateTime.now());
-        inventoryEntity.setUpdateUserId(userInfo.getUid());
-        inventoryEntity.setUpdateUserName(userInfo.getUserName());
-
-        inventoryService.save(inventoryEntity);
-        return inventoryEntity.getId();
-    }
 
     /**
      * 获取核算公司名称
