@@ -57,6 +57,7 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 			String value = pushJsonData.getValue();
 			JSONObject parseObject = JSON.parseObject(value);
 			parseObject.put("dmpOutputTaskRecordId", id);
+			parseObject.put("dmpOutputTaskRecordDataId", key);
 			dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(parseObject));
 			dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
 			dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
