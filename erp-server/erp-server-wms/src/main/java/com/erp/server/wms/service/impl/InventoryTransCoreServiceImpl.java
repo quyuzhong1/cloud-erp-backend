@@ -2,11 +2,13 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidGroup;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
@@ -330,7 +332,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 // 设置冗余信息部分
                 transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
-                transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),flow.getWarehouseLocation()));
+                transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),stockBaseDTO.getWarehouseLocation()));
                 transactionDTO.setInventoryStatusName(stockBaseDTO.getInventoryStatus().getName());
 
                 // 交易时间 & 单据类型
@@ -504,7 +506,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     private String getWarehouseLocationName(String warehouseId, String warehouseLocation) {
         QueryWrapper<WarehouseLocationEntity> wrapper = new QueryWrapper<>();
         wrapper.lambda().eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
-                .eq(WarehouseLocationEntity::getId, warehouseLocation)
+                .eq(WarehouseLocationEntity::getCode, warehouseLocation)
                 .eq(WarehouseLocationEntity::getType,"location")
                 .select(WarehouseLocationEntity::getName)
                 .last("limit 1");
@@ -512,8 +514,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         if(locationEntity != null) {
             return locationEntity.getName();
         }
-
-        return null;
+        throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_FOUND,warehouseLocation);
     }
 
 }
