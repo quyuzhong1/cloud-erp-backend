@@ -582,7 +582,7 @@ public interface SoB2cFeign {
      * @param warehouseId 仓库ID(非必传：默认第一个明细记录的仓库)
      * @return 新增销售出库单DTO
      */
-    @GetMapping("/getSoOutStockByIdAndWarehouseId")
+    @GetMapping("/feign/soB2c/getSoOutStockByIdAndWarehouseId")
     SoOutstockDTO.GenerateB2cDTO getSoOutStockByIdAndWarehouseId(@RequestParam(value = "soId") String soId,
                                                                  @RequestParam(value = "warehouseId", required = false) String warehouseId);
     /**

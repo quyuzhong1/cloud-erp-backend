@@ -50,6 +50,10 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
 
     @Override
     public LocalDate checkClosed(String inventoryOrgId, LocalDate billDate) {
+        if (null == billDate){
+            // 兼容无对比时间
+            return null;
+        }
         // 查询最新库存关账记录
         Map<String, LocalDate> closedDateMap = this.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
         LocalDate closeDate = closedDateMap.get(inventoryOrgId);
