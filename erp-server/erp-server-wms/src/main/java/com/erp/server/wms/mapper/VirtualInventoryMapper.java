@@ -123,4 +123,11 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
     Integer getInventoryQtyByWarehouseId(@Param("warehouseId") String warehouseId,@Param("skuId")String skuId);
 
     List<VirtualInventoryDTO.CommonDTO> getBySkuIdAndVwId(@Param("skuId")String skuId, @Param("virtualWarehouseId")String virtualWarehouseId);
+    /**
+     * 查询仓库统计数据
+     * @author will
+     * @date 2024/7/24 17:59
+     * @return List<WarehouseStatisticsExcelDTO>
+     */
+    List<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> listWarehouseStatistics(@Param("params") VirtualInventoryDiffDTO.SearchParamDTO params);
 }

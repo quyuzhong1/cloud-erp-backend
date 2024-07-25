@@ -310,4 +310,32 @@
         where sku_id=#{skuId} and virtual_warehouse_id=#{virtualWarehouseId}
     </select>
 
+    <!-- 查询仓库统计数据 -->
+    <select id="listWarehouseStatistics"
+            resultType="com.erp.model.wms.dto.VirtualInventoryDTO$WarehouseStatisticsExcelDTO">
+        select inv.sku_id,pd.sku_no as skuNo,inv.warehouse_id,wh.name as warehouseName,wh.kingdee_warehouse_code as warehouseCode,inv.usableQty,COALESCE(vi.usableQty,0) as distributionQty,(inv.usableQty - COALESCE(vi.usableQty,0)) as unDistributionQty from
+          (select
+               inv.sku_id,
+               inv.warehouse_id,
+               sum(inv.qty) as usableQty
+           from inventory inv
+           where inv.is_deleted = false and inv.dict_inventory_status = 'usable'
+           group by inv.sku_id , inv.warehouse_id) inv
+           left join (
+            select vi.sku_id , vi.warehouse_id ,sum(vi.qty) as usableQty from virtual_inventory vi
+            where vi.is_deleted = false group by vi.sku_id , vi.warehouse_id
+        ) vi on inv.sku_id = vi.sku_id and inv.warehouse_id = vi.warehouse_id
+        left join product_detail pd on inv.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on inv.warehouse_id = wh.id and wh.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            <if test="params.isDiff != null and params.isDiff == true">
+                and  COALESCE(vi.usableQty,0) > inv.usableQty and inv.usableQty > 0
+            </if>
+            <if test="params.isDiff != null and params.isDiff == false">
+                and  inv.usableQty >= COALESCE(vi.usableQty,0)
+            </if>
+        </where>
+    </select>
+
 </mapper>
