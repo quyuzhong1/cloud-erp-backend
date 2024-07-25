@@ -18,4 +18,5 @@ public interface CfgSettingService extends SuperService<PlmCfgSettingEntity> {
     Boolean addOrUpdate(PlmCfgSettingDTO.CommonDTO dto);
 
     PlmCfgSettingDTO.CommonDTO view();
+
 }
