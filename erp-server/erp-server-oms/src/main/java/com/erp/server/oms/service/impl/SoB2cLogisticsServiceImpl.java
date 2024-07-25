@@ -397,6 +397,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "【组包称重】");
         return lambdaUpdate()
                 .set(SoB2cLogisticsEntity::getWeight, weightByG)
+                .eq(SoB2cLogisticsEntity::getMainId, soId)
                 .eq(SoB2cLogisticsEntity::getId, id)
                 .update();
     }

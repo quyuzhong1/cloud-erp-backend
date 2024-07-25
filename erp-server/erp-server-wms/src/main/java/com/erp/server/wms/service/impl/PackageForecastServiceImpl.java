@@ -35,12 +35,10 @@ import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
-import com.erp.model.tms.dto.SettingForecastDTO;
-import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.dto.TransferDeclareDetailDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
@@ -994,5 +992,36 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
         //扣减冻结库存
         soB2cDeliveryService.outFreezeVirtualInventory(deliveryEntity);
+    }
+
+    /**
+     * 根据组包id获取揽收地址
+     * @param ids
+     * @return
+     */
+    @Override
+    public List<LogisticsAddressDTO.ListDTO> listAddressByForecastIds(List<String> ids) {
+        List<PackageForecastEntity> packageForecastEntityList = this.getBaseMapper().selectBatchIds(ids);
+        if (CollectionUtils.isEmpty(packageForecastEntityList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+        }
+        List<PackageForecastDetailEntity> forecastDetailEntityList = packageForecastDetailService.listDbByMainIds(ids);
+        if (CollectionUtils.isEmpty(forecastDetailEntityList)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单明细");
+        }
+        List<String> soIds = forecastDetailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        if (CollectionUtils.isEmpty(soB2cEntityList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(shopIds)){
+            throw new ServiceException("销售订单店铺未找到");
+        }
+        LogisticsAddressDTO.AddressByTypeDTO dto = LogisticsAddressDTO.AddressByTypeDTO.builder()
+                .type(LogisticsAddressTypeEnum.COLLECT.getCode())
+                .shopIds(shopIds)
+                .build();
+        return logisticsFeign.listAddressByType(dto);
     }
 }

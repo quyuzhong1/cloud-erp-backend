@@ -7,6 +7,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -145,4 +146,11 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * 组包更新其他信息
      */
     void handleMergePackageDeliveryOther(String soId, SoB2cDeliveryEntity curDeliveryEntity);
+
+    /**
+     * 根据组包id获取揽收地址
+     * @param ids
+     * @return
+     */
+    List<LogisticsAddressDTO.ListDTO> listAddressByForecastIds(List<String> ids);
 }

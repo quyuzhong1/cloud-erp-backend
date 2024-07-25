@@ -4,6 +4,8 @@ import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.RegularValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -353,5 +355,19 @@ public class LogisticsAddressDTO implements Serializable {
 
     }
 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddressByTypeDTO{
 
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "地址类型不能为空")
+        private String type;
+
+        @NotNull(message = "店铺id不能为空")
+        private List<String> shopIds;
+    }
 }

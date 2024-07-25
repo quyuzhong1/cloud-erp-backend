@@ -39,10 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -223,6 +220,19 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
                 }
             });
         }
+    }
+
+    @Override
+    public List<LogisticsAddressDTO.ListDTO> listAddressByType(LogisticsAddressDTO.AddressByTypeDTO dto) {
+        if (StringUtils.isBlank(dto.getType()) || CollectionUtils.isEmpty(dto.getShopIds())){
+            return Collections.emptyList();
+        }
+        List<LogisticsAddressEntity> addressList =
+                this.lambdaQuery().select(LogisticsAddressEntity::getId,LogisticsAddressEntity::getName)
+                .eq(LogisticsAddressEntity::getType,dto.getType())
+                .in(LogisticsAddressEntity::getShopId, dto.getShopIds())
+                .list();
+        return BeanMapperUtils.copyList(LogisticsAddressDTO.ListDTO.class,addressList);
     }
 
     private LogisticsAddressEntity getLogisticsServiceAddress(String addressId,String shopId){
