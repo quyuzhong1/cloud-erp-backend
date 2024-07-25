@@ -2,7 +2,9 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidGroup;
@@ -444,6 +446,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
      * @param flow  交易流水
      * @return  库存id
      */
+
     private String getSavedInventoryId(InventoryStockBaseDTO flow) {
         QueryWrapper<InventoryEntity> wrapper = new QueryWrapper<>();
         wrapper.lambda().eq(InventoryEntity::getSkuId, flow.getSkuId())
@@ -453,6 +456,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 .last("limit 1");
         InventoryEntity inventoryEntity = inventoryService.getOne(wrapper);
 
+        log.debug("####InventoryTransCoreServiceImpl===>getSavedInventory====>IdinventoryEntity = {}  flow={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(flow));
         if(inventoryEntity != null) {
             return inventoryEntity.getId();
         }

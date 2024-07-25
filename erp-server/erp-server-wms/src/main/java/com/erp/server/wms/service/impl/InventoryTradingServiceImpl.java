@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.annotation.DistributeLocker;
@@ -384,6 +385,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                     transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),transactionDTO.getWarehouseLocationName(),transactionDTO.getInventoryStatusName());
         }
         InventoryEntity inventoryEntity = inventoryService.getById(transactionDTO.getInventoryId());
+        log.debug("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
         if(null == inventoryEntity) {
             inventoryEntity=new InventoryEntity();
             inventoryEntity.setSkuId(transactionDTO.getSkuId());
