@@ -14,6 +14,8 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.entity.BaseEntity;
@@ -76,10 +78,21 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 				convertOrgMaps.put(v, dmpCfgInputConvert.getKey());
 			}
 		}
+		
+		JSONObject fixedValue = new JSONObject();
+		String fixedValueJson = parentDmpCfgInputConvertEntity.getFixedValueJson();
+		if(StringUtils.isNotBlank(fixedValueJson)) {
+			fixedValue = JSON.parseObject(fixedValueJson);
+		}
 		for(Map<String, Object> dmpInputMongoEntity : dmpInputMongoEntityList) {
 			StringBuilder keySb = new StringBuilder();
 			for(String parentUniqueField : parentUniqueFieldList) {
-				keySb.append(dmpInputMongoEntity.get(convertOrgMaps.get(parentUniqueField)).toString());
+				String convertOrg = convertOrgMaps.get(parentUniqueField);
+				if(StringUtils.isNotBlank(convertOrg)) {
+					keySb.append(dmpInputMongoEntity.get(convertOrg));
+				}else {
+					keySb.append(fixedValue.get(parentUniqueField));
+				}
 				keySb.append("_");
 			}
 			String mainIdValue = uniqueFieldIdMap.get(keySb.toString());
