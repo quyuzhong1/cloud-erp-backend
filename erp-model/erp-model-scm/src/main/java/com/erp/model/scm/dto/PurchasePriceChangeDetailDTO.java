@@ -87,6 +87,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * 含税单价
          */
         @NotNull(message = "含税单价不能为空")
+        @DecimalMin(value = "0",message ="含税单价必须大于0",inclusive = false )
         private BigDecimal taxPrice;
 
         /**
@@ -185,6 +186,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * 含税单价
          */
         @NotNull(message = "含税单价不能为空")
+        @DecimalMin(value = "0",message ="含税单价必须大于0",inclusive = false )
         private BigDecimal taxPrice;
 
         /**

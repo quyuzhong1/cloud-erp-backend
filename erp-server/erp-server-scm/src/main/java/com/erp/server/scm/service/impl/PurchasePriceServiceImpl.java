@@ -1037,7 +1037,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (200 != code) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        this.approveEnd(entity,type,comment,isNeedProcess);
     }
 
     /**
