@@ -27,10 +27,10 @@ public class TikTokNextDmpHandler extends DmpInputDoNextDmpHandler{
                 Object recipientAddress = detail.get("recipientAddress");
                 if (ObjectUtil.isNotEmpty(recipientAddress)) {
                     Map<String, Object> recipientAddressMap = (Map<String, Object>) recipientAddress;
-                    detail.put("buyer_name", recipientAddressMap.get("name"));
-                    detail.put("main_street", recipientAddressMap.get("addressLine1"));
-                    detail.put("second_street", recipientAddressMap.get("addressLine2") + " " + recipientAddressMap.get("addressLine3") + " " + recipientAddressMap.get("addressLine4"));
-                    detail.put("main_phone", recipientAddressMap.get("phoneNumber"));
+                    detail.put("buyerName", recipientAddressMap.get("name"));
+                    detail.put("mainStreet", recipientAddressMap.get("addressLine1"));
+                    detail.put("secondStreet", recipientAddressMap.get("addressLine2") + " " + recipientAddressMap.get("addressLine3") + " " + recipientAddressMap.get("addressLine4"));
+                    detail.put("mainPhone", recipientAddressMap.get("phoneNumber"));
 
                     List<Map<String, Object>> districtInfoList = (List<Map<String, Object>>) recipientAddressMap.get("districtInfo");
 

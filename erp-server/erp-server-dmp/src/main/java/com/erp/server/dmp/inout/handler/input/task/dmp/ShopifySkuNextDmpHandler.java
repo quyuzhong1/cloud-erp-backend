@@ -48,9 +48,10 @@ public class ShopifySkuNextDmpHandler extends ShopifySkuGetDetailDmpHandler {
 					dmpDataMap.put("afterAmount", price.multiply(quantity));
 				}
 
-				dmpDataMap.put("sku_no", dmpDataMap.get("sku"));
+				dmpDataMap.put("skuNo", dmpDataMap.get("sku"));
+				dmpDataMap.put("spuId", dmpDataMap.get("productId"));
 				dmpDataMap.put("name", dmpDataMap.get("title"));
-				dmpDataMap.put("sell_price", dmpDataMap.get("price"));
+				dmpDataMap.put("sellPrice", dmpDataMap.get("price"));
 
 				//图片
 				List<Map<String, Object>> imagesObj = (List<Map<String, Object>>) dmpDataMap.get("images");
