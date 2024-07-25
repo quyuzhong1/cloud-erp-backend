@@ -216,4 +216,10 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @param status
      */
     void updateStatusByIds(List<String> channelIds, Boolean status);
+
+    /**
+     * 发货配置
+     * @param dto
+     */
+    void deliverySetting(LogisticsChannelDTO.DeliveryDTO dto);
 }

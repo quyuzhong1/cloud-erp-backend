@@ -709,4 +709,13 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         this.lambdaUpdate().in(LogisticsChannelEntity::getId, channelIds).set(LogisticsChannelEntity::getDisabled, status).update();
     }
+
+    /**
+     * 发货配置
+     * @param dto
+     */
+    @Override
+    public void deliverySetting(LogisticsChannelDTO.DeliveryDTO dto) {
+
+    }
 }

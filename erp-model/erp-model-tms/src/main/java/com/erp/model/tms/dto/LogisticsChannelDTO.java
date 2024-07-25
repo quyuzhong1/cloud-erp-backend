@@ -798,4 +798,13 @@ public class LogisticsChannelDTO implements Serializable {
         private Boolean showSupplier=false;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryDTO{
+        /**
+         * 渠道id
+         */
+        @NotBlank(message = "渠道id不能为空")
+        private String id;
+    }
 }

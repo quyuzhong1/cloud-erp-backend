@@ -186,10 +186,17 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     private String declareCodeType;
 
     /**
-     * 配送方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
+     * 配送方式/发货方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
+     * DeliveryTypeEnum
+     * 字典接口地址
      */
     @TableField("delivery_type")
     private String deliveryType;
+    /**
+     * 不可达处理 退回:0/销毁:1 默认 1销毁
+     */
+    @TableField("undeliverable_decision")
+    private Integer undeliverableDecision;
 
     public static final String MAIN_ID = "main_id";
 

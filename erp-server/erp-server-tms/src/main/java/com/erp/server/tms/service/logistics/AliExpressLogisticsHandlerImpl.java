@@ -241,6 +241,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return OrderRequest.builder()
                 .oaid(oaid)
                 .pickup_type(logisticsOrderVO.getLogisticsChannelEntity().getDeliveryType())
+                .undeliverable_decision(Objects.isNull(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision()) ? "1": String.valueOf(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision()))
                 .declareProducts(declareProducts)
                 .domestic_logistics_company("自送")
                 .domestic_logistics_company_id(-1L)
