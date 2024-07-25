@@ -318,8 +318,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                     stockBaseDTO.setInventoryStatus(rule.getInventoryStatus()); // 调入仓的库存状态
                 }
                 InventoryEntity inventoryEntity=inventoryService.getInventory(
-                        flow.getSkuId(),flow.getWarehouseId(),
-                        flow.getWarehouseLocation(),rule.getInventoryStatus().getCode());
+                        flow.getSkuId(),stockBaseDTO.getWarehouseId(),
+                        stockBaseDTO.getWarehouseLocation(),rule.getInventoryStatus().getCode());
                 transactionDTO.setInventoryId(null==inventoryEntity?null:inventoryEntity.getId());
 
                 // 交易明细信息
