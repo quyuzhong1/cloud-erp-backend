@@ -619,19 +619,19 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         List<String> sourceIdList = dtoList.stream().map(item -> item.getSourceId()).collect(Collectors.toList());
         List<DmpPushTaskEntity> list = lambdaQuery()
                 .in(DmpPushTaskEntity::getSourceId, sourceIdList)
-                .eq(DmpPushTaskEntity::getSourceType, SourceTypeEnum.OTHER_OUTSTOCK.getCode())
+//                .eq(DmpPushTaskEntity::getSourceType, SourceTypeEnum.OTHER_OUTSTOCK.getCode())
                 .eq(DmpPushTaskEntity::getSourcePlatformName, PlatformEnum.ERP.getDesc())
                 .eq(DmpPushTaskEntity::getTargetPlatformName, PlatformEnum.WANGDIAN.getDesc())
                 .eq(DmpPushTaskEntity::getMqTopic, RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC)
-                .eq(DmpPushTaskEntity::getMqTag, RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName())
+//                .eq(DmpPushTaskEntity::getMqTag, RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName())
                 .list();
-        Map<String, DmpPushTaskEntity> sourceIdEntityMap = list.stream().collect(Collectors.toMap(item1 -> item1.getSourceId(), item1 -> item1));
+        Map<String, DmpPushTaskEntity> sourceIdEntityMap = list.stream().collect(Collectors.toMap(item1 -> item1.getSourceId() + "#" + item1.getSourceType(), item1 -> item1));
 
         List<DmpPushTaskEntity> entityList = new ArrayList<>();
         for (DmpPushTaskFeignDTO dto : dtoList) {
             DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
             DmpSyncTaskDTO.OneDTO oneDTO = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
-            DmpPushTaskEntity found = sourceIdEntityMap.get(oneDTO.getSourceId());
+            DmpPushTaskEntity found = sourceIdEntityMap.get(oneDTO.getSourceId() + "#" + oneDTO.getSourceType());
             //存在则修改
             if (ObjectUtil.isNotEmpty(found)) {
                 entity.setId(found.getId());
