@@ -52,7 +52,7 @@ public class VwAllocationAllocationCancelExcelDTO extends VwAllocationExcelDTO i
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "备注", index = 4)
-    @FieldValid(fieldName = "备注")
+    @FieldValid(fieldName = "备注", maxLength = 100)
     private String detailRemark;
 
     /**
