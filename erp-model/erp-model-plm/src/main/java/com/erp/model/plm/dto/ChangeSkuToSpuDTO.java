@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -25,6 +26,7 @@ public class ChangeSkuToSpuDTO {
      * sku信息
      */
     @Valid
-    private List<ProductDetailShowDTO> productDetailShowDTOList;
+    @NotNull(message = "skuId不能为空")
+    private List<String> skuIds;
 
 }
