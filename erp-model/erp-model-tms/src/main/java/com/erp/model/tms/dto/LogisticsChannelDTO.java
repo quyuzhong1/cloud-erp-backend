@@ -104,11 +104,11 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String deliveryType;
         /**
-         * 不可达处理 退回:0/销毁:1 默认 1销毁
+         * 不可达处理 退回:return/销毁:return 默认 return销毁
          * UnDeliverableDecisionEnum
          * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
          */
-        private Integer undeliverableDecision;
+        private String undeliverableDecision;
     }
 
 
@@ -827,10 +827,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String deliveryType;
         /**
-         * 不可达处理 退回:0/销毁:1 默认 1销毁
+         * 不可达处理 退回:return/销毁:return 默认 return销毁
          * UnDeliverableDecisionEnum
          * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
          */
-        private Integer undeliverableDecision;
+        private String undeliverableDecision;
     }
 }

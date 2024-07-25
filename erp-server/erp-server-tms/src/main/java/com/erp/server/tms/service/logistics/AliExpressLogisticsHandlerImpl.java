@@ -17,6 +17,7 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
+import com.erp.model.tms.enums.UnDeliverableDecisionEnum;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
@@ -238,10 +239,16 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             addressDTO.setPickup(sender);
             addressDTO.getPickup().setMemberType("pickup");
         }
+        String undeliverableDecision = "1";
+        if (!StringUtils.isBlank(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision())){
+            if (UnDeliverableDecisionEnum.RETURN.getCode().equals(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision())){
+                undeliverableDecision = "0";
+            }
+        }
         return OrderRequest.builder()
                 .oaid(oaid)
                 .pickup_type(logisticsOrderVO.getLogisticsChannelEntity().getDeliveryType())
-                .undeliverable_decision(Objects.isNull(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision()) ? "1": String.valueOf(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision()))
+                .undeliverable_decision(undeliverableDecision)
                 .declareProducts(declareProducts)
                 .domestic_logistics_company("自送")
                 .domestic_logistics_company_id(-1L)
