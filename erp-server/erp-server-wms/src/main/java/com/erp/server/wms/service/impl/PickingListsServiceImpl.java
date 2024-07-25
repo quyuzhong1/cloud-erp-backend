@@ -48,6 +48,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -463,10 +465,10 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             Map<String, Integer> skuMap = dto.getDetails().stream().filter(v -> v.getSourceDetailId().equals(detailId))
                     .collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getQty, Integer::sum));
             //计算比例
-            int proportion = Optional.ofNullable(skuMap.get(bomChildren.get(0).getSkuNo())).orElse(0) / bomChildren.get(0).getQuantity();
+            BigDecimal proportion = new BigDecimal(Optional.ofNullable(skuMap.get(bomChildren.get(0).getSkuNo())).orElse(0)).divide(new BigDecimal(bomChildren.get(0).getQuantity()), 6, RoundingMode.HALF_UP);
             for (BomChildrenSkuDTO bomChild : bomChildren) {
-                int temp = Optional.ofNullable(skuMap.get(bomChild.getSkuNo())).orElse(0) / bomChild.getQuantity();
-                if (proportion != temp) {
+                BigDecimal temp = new BigDecimal(Optional.ofNullable(skuMap.get(bomChild.getSkuNo())).orElse(0)).divide(new BigDecimal(bomChild.getQuantity()), 6, RoundingMode.HALF_UP);
+                if (proportion.compareTo(temp) != 0) {
                     throw new ServiceException(ApiError.ERROR_99128, String.join(",", skuMap.keySet()));
                 }
             }
