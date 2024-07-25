@@ -42,6 +42,7 @@ import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,7 +66,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Resource
     private OperateLogService operateLogService;
-
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
 
