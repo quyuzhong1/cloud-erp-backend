@@ -23,7 +23,9 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
+import com.erp.model.tms.enums.UnDeliverableDecisionEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
@@ -716,6 +718,19 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
      */
     @Override
     public void deliverySetting(LogisticsChannelDTO.DeliveryDTO dto) {
-
+        LogisticsChannelEntity old = this.getById(dto.getId());
+        if (null == old){
+            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道");
+        }
+        //更新配置
+        this.lambdaUpdate().eq(LogisticsChannelEntity::getId, dto.getId())
+                .set(LogisticsChannelEntity::getDeliveryType, dto.getDeliveryType())
+                .set(LogisticsChannelEntity::getUndeliverableDecision, dto.getUndeliverableDecision()).update();
+        String msgFormat = "由【%s】改为【%s】";
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】修改渠道【{}】发货方式【{}】不可达处理【{}】", UserContext.getDefaultLoginUser().getUserName(),old.getCode(),
+                String.format(msgFormat,DeliveryTypeEnum.getName(old.getDeliveryType()), DeliveryTypeEnum.getName(dto.getDeliveryType())),
+                String.format(msgFormat, UnDeliverableDecisionEnum.getName(old.getUndeliverableDecision()), UnDeliverableDecisionEnum.getName(dto.getUndeliverableDecision())));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), old.getId(), "发货配置");
     }
 }

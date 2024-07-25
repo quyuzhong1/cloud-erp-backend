@@ -188,12 +188,14 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     /**
      * 配送方式/发货方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
      * DeliveryTypeEnum
-     * 字典接口地址
+     * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = deliveryType
      */
     @TableField("delivery_type")
     private String deliveryType;
     /**
      * 不可达处理 退回:0/销毁:1 默认 1销毁
+     * UnDeliverableDecisionEnum
+     * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
      */
     @TableField("undeliverable_decision")
     private Integer undeliverableDecision;
