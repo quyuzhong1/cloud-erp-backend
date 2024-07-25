@@ -42,7 +42,8 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
 		JSONObject jsonObject = JSON.parseObject(data);
         String dmpOutputTaskRecordId = jsonObject.getString("dmpOutputTaskRecordId");
         MDC.put("traceId", dmpOutputTaskRecordId);
-        log.warn("接收到输出id={} ，数据：{}" , dmpOutputTaskRecordId , ext);
+        String bizName = this.getBizName();
+        log.warn("{}接收到输出id={} ，数据：{}" , bizName , dmpOutputTaskRecordId , ext);
         String dmpOutputTaskRecordDataId = jsonObject.getString("dmpOutputTaskRecordDataId");
         DmpOutputTaskRecordDTO.UpdateDTO updateDTO = new DmpOutputTaskRecordDTO.UpdateDTO();
         updateDTO.setId(dmpOutputTaskRecordId);
@@ -64,10 +65,10 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
         try {
         	 this.handle(data);
         } catch (Throwable e) {
-            log.error("同步输出任务失败，msg = {}",e.getMessage());
+            log.error("{}同步输出任务失败，msg = {}",bizName ,e.getMessage());
             updateDTO.setStatus(DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode());
-            updateDTO.setResponseData("旺店通销售出库单消费数据失败：" + ExceptionUtil.stacktraceToOneLineString(e));
-            updateDTO.setMessage(e.getMessage());
+            updateDTO.setResponseData(bizName + "消费数据失败：" + ExceptionUtil.stacktraceToOneLineString(e));
+            updateDTO.setMessage(bizName + "【" + e.getMessage() + "】");
         }
         
         count = 1;
@@ -86,6 +87,12 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
         }
     }
 
+    /**
+     * 获取业务类型
+     * @return
+     */
+    public abstract String getBizName();
+    
     /**
      * 处理平台数据
      * @param ext

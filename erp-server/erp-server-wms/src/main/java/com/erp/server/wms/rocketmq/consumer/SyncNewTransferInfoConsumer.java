@@ -13,8 +13,6 @@ import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.server.wms.rocketmq.sync.SyncTransferInfoService;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * @author Will
  * @version 1.0
@@ -22,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
  * @date 2023/4/20 11:12
  */
 @Service
-@Slf4j
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_KINGDEE_DIRECT_TRANSFER_TO_WMS_TOPIC, 
 selectorExpression = RocketMqNewTag.DMP_KINGDEE_DIRECT_TRANSFER_TO_WMS_TAG, 
 consumerGroup = RocketMqNewConsumerGroup.DMP_KINGDEE_DIRECT_TRANSFER_TO_WMS_GROUP)
@@ -31,9 +28,13 @@ public class SyncNewTransferInfoConsumer extends AbstractNewPlatformConsumerHand
 	@Resource
     private SyncTransferInfoService syncTransferInfoService;
 
+	@Override
+	public String getBizName() {
+		return "金蝶调拨";
+	}
+	
     @Override
 	public void handle(String data) {
-		log.warn("新中台处理金蝶调拨数据：{}" , data);
 		DmpTransferInfoDTO dmpTransferInfoDTO = JSON.parseObject(data,  DmpTransferInfoDTO.class);
 		syncTransferInfoService.syncKingdeeTransferInfo(dmpTransferInfoDTO);
 	}

@@ -10,15 +10,12 @@ import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * 下载平台商品消费服务
  *
  * @author Jim
  */
 @Service
-@Slf4j
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_PLATFORM_PRODUCT_TO_OMS_TOPIC,
         selectorExpression = RocketMqNewTag.DMP_PLATFORM_PRODUCT_TO_OMS_TAG,
         consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_PRODUCT_TO_OMS_GROUP)
@@ -26,10 +23,14 @@ public class NewPlatformListingConsumerService extends AbstractNewPlatformConsum
 	@Resource
 	private PlatformListingConsumerService platformListingConsumerService;
 
+	@Override
+	public String getBizName() {
+		return "销售平台产品";
+	}
+	
     @Override
 	public void handle(String data) {
-		log.warn("新中台处理销售平台商品数据：{}" , data);
 		platformListingConsumerService.handle(data);
 	}
-    
+
 }

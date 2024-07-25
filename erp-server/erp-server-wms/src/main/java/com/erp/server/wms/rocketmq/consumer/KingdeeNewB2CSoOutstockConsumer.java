@@ -15,8 +15,6 @@ import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * B2C 销售出库 金蝶同步到WMS
  *
@@ -26,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
  * @Created by yl
  */
 @Service
-@Slf4j
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_KINGDEE_SO_OUTSTOCK_TO_WMS_TOPIC, 
 selectorExpression = RocketMqNewTag.DMP_KINGDEE_SO_OUTSTOCK_TO_WMS_TAG, 
 consumerGroup = RocketMqNewConsumerGroup.DMP_KINGDEE_SO_OUTSTOCK_TO_WMS_GROUP)
@@ -36,8 +33,12 @@ public class KingdeeNewB2CSoOutstockConsumer extends AbstractNewPlatformConsumer
     private SyncB2CSoOutstockService syncB2CSoOutstockService;
 
     @Override
+	public String getBizName() {
+		return "金蝶出库";
+	}
+    
+    @Override
 	public void handle(String data) {
-		log.warn("新中台处理金蝶出库数据：{}" , data);
 		KingdeeDeliveryDetailEntity entity = JSON.parseObject(data,  KingdeeDeliveryDetailEntity.class);
 		syncB2CSoOutstockService.syncKingdeeSoOutstock(entity);
 	}
