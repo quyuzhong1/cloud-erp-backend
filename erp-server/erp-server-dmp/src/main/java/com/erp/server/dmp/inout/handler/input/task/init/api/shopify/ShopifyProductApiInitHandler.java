@@ -1,10 +1,14 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.shopify;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
+import com.sdk.oms.shopee.dto.global.response.GlobalItem;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
+import com.sdk.oms.shopify.api.rest.model.ShopifyProduct;
 import com.sdk.oms.shopify.api.rest.model.ShopifyProducts;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
@@ -32,24 +36,27 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
 
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
-        //  根据店铺ID获取授权
+//  根据店铺ID获取授权
         ShopifyShopInfoDTO tokenDTO = ShopSdkServer.getTokenAndDomainByShopId(nextLevelId);
-        if (null == tokenDTO){
+        if (null == tokenDTO) {
             log.error("[Shopify产品下载]从缓存中获取shopify token 失败: shopId={}", nextLevelId);
             return Collections.emptyList();
         }
         String shopifyShopDomain = tokenDTO.getShopDomain();
         String accessToken = tokenDTO.getAccessToken();
 
-        // Shopify产品下载所有(SDK已分页查询所有)
+// Shopify产品下载所有(SDK已分页查询所有)
         ShopifyProducts products = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getProducts();
         if (CollectionUtils.isEmpty(products.values())) {
             return Collections.emptyList();
         }
+
+
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-        dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(products));
+        dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(products.values()));
         dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         return dmpInputTaskInitDTOList;
     }
+
 
 }
