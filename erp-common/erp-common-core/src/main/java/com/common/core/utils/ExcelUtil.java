@@ -54,9 +54,9 @@ public class ExcelUtil {
      * @param dataResult 集合内的bean对象类型要与clazz参数一致
      * @param clazz      集合内的bean对象类型要与clazz参数一致
      * @param response   HttpServlet响应对象
-     * @param excludeFields  排除不导出的字段
+     * @param exportFields  导出的字段
      */
-    public static void export(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response,List<String> excludeFields) {
+    public static void export(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response,List<String> exportFields) {
         response.setStatus(200);
         OutputStream outputStream = null;
         ExcelWriter excelWriter = null;
@@ -70,7 +70,7 @@ public class ExcelUtil {
             response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
 
             List<Integer> excludeIndexes = new ArrayList<>();
-            if (CollectionUtils.isNotEmpty(excludeFields)) {
+            if (CollectionUtils.isNotEmpty(exportFields)) {
                 // 反射获取字段属性
                 Field[] declaredFields = clazz.getDeclaredFields();
                 //过滤掉ExcelIgnore 注解
@@ -84,7 +84,7 @@ public class ExcelUtil {
                 // 遍历过滤后的字段，匹配需要忽略的字段
                 for (int i = 0; i < filteredFields.size(); i++) {
                     Field field = filteredFields.get(i);
-                    if (excludeFields.contains(field.getName())) {
+                    if (!exportFields.contains(field.getName())) {
                         excludeIndexes.add(i);
                     }
                 }

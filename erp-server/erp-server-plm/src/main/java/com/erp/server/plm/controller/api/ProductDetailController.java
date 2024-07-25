@@ -24,8 +24,6 @@ import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -98,25 +96,10 @@ public class ProductDetailController extends BaseController {
     private ProductUnitService productUnitService;
 
     @Resource
-    private BasicCategoryService basicCategoryService;
-
-    @Resource
-    private BasicDictService basicDictService;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
-
-    @Resource
-    private ScmTaskFeign scmTaskFeign;
-
-    @Resource
     private ProductDetailApproverService productDetailApproverService;
 
     @Resource
     private ProductCustomsService productCustomsService;
-
-    @Resource
-    private BomSkuService bomSkuService;
 
     /**
      * 临时接口-添加产品国外海关编码

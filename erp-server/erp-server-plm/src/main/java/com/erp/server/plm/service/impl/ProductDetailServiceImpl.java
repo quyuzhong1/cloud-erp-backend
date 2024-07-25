@@ -2064,13 +2064,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             });
     	}
-
-        StringBuffer sb = new StringBuffer();
-        String name = "产品sku明细表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        ExcelUtil.export("产品sku明细表", "产品sku明细表", list, ProductDetailExcelExportDTO.class, response);
+        ExcelUtil.export("产品sku明细表", "产品sku明细表", list, ProductDetailExcelExportDTO.class, response,productSkuExcelDTO.getExportFields());
     }
 
     private void getParentBasicCategory(String pid , Map<String, BasicCategoryEntity> idBasicCategoryMaps , List<BasicCategoryEntity> resultList){
