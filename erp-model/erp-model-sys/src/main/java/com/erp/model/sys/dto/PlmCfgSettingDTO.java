@@ -20,7 +20,8 @@ public class PlmCfgSettingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class MaterialAttributeControl {
+    public static class MaterialAttributeControlDetail {
+
 
         /**
          * 物料属性
@@ -57,6 +58,14 @@ public class PlmCfgSettingDTO implements Serializable {
          */
         private boolean allowTransferAssets;
     }
+    @Data
+    @NoArgsConstructor
+    public static class MaterialAttributeControl {
+        /**
+         * 明细
+         */
+        private List<PlmCfgSettingDTO.MaterialAttributeControlDetail> detailList = new ArrayList<>();
+    }
 
 
     @Data
@@ -67,7 +76,7 @@ public class PlmCfgSettingDTO implements Serializable {
          * 金蝶推送物料属性控制
          */
         @Valid
-        private List<PlmCfgSettingDTO.MaterialAttributeControl> materialAttributeControl = new ArrayList<>();
+        private PlmCfgSettingDTO.MaterialAttributeControl materialAttributeControl = new MaterialAttributeControl();
 
     }
 
