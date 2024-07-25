@@ -607,12 +607,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return Collections.emptyList();
         }
         List<SplitSkuDTO> transferDeclareProductDTOS = new ArrayList<>();
-        for (String soId: soIds) {
-            SoB2cEntity soB2cEntity = this.getById(soId);
-            if (ObjectUtils.isEmpty(soB2cEntity)){
-                continue;
-            }
-            List<SoB2cDetailEntity> soB2cDetailEntities = soB2cDetailService.listByMainId(soId);
+        List<SoB2cEntity> soB2cEntityList = this.listByIds(soIds);
+        List<SoB2cDetailEntity> allSoB2cDetailEntities = soB2cDetailService.listByMainIds(soIds);
+        for (SoB2cEntity soB2cEntity: soB2cEntityList) {
+            List<SoB2cDetailEntity> soB2cDetailEntities = allSoB2cDetailEntities.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
                 continue;
             }
