@@ -59,6 +59,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     @Override
     @DistributeLocker(businessType = InventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.warehouseLocation,transactionList.inventoryStatus")
     public void doTransactionList(List<InventoryTransactionDTO> transactionList, String approveType) {
+        // 2-移除忽略的sku 先移除避免只存在忽略的sku的单据导致错误
+        transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
+
         if(CollectionUtils.isEmpty(transactionList)) {
             log.warn("库存交易列表为空！");
             return;
@@ -71,7 +74,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                 this.checkHasApproved(transactionList.get(0));
             }
             // 2-移除忽略的sku
-            transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
+//            transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
             // 排序
             transactionList = this.sortInventoryTransactionList(transactionList);
             // 3-检查业务是否允许交易
