@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -103,22 +102,11 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
     public Boolean exportExcel(VirtualInventoryDiffDTO.SearchParamDTO dto, HttpServletResponse response) {
 
         List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> list = baseMapper.listDiffExportData(dto);
-        //统计数据
-        Object isDiff = dto.getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
-        if (ObjectUtil.isNotNull(isDiff)) {
-            dto.setIsDiff(Boolean.valueOf(isDiff.toString()));
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        List<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> warehouseStatisticsList = baseMapper.listWarehouseStatistics(dto);
-
         //数据赋值处理
         fillExportData(list);
-
-        List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
-        //主表数据
-        pairList.add(new Pair<>(MathUtil.ZERO, list));
-        //明细数据
-        pairList.add(new Pair<>(MathUtil.ONE, warehouseStatisticsList));
-
         String name = "库存差异列表信息";
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -126,9 +114,9 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         sb.append(name);
         String excelPath = "excel/virtualInventoryDiff.xlsx";
         try {
-            new ExcelPrintUtils().sheetPatchExport(pairList, response, sb.toString(), excelPath);
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            log.error("虚拟仓库库存信息导出出错 >>>>>{}", e);
+            log.error("库存差异列表信息导出出错 >>>>>{}", e);
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
@@ -322,7 +310,6 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
 
         //实体仓库
         List<String> warehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDiffExportDataDTO::getWarehouseId).distinct().collect(Collectors.toList());
-
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
 
         //虚拟仓库
@@ -357,6 +344,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             listDTO.setDistributionQty(listDTO.getTotalVirtualQty());
             //未分配数量
             listDTO.setUnDistributionQty(listDTO.getUsableQty() - listDTO.getDistributionQty());
+
         }
     }
 }
