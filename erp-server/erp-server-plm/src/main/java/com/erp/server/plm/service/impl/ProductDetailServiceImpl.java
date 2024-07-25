@@ -2112,7 +2112,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    @CacheEvict(cacheNames = RedisKeyConstant.CACHE_SKU_NO_INVENTORY)
+    @CacheEvict(cacheNames = RedisKeyConstant.CACHE_SKU_NO_INVENTORY, allEntries = true)
     public Boolean approvalPass(ProductDetailOperateDTO dto, Boolean isCheck) {
         ProductDetailEntity entity = this.getById(dto.getId());
 
