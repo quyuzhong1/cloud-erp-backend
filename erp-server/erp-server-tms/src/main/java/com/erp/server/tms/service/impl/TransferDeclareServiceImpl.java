@@ -360,7 +360,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         if (CollectionUtil.isEmpty(list)){
             return;
         }
+        List<String> soIdList = list.stream().map(TransferDeclareDTO.ExportListDTO::getSoId).distinct().collect(Collectors.toList());
+        List<PackageForecastDetailEntity> packageForecastDetailEntityList = CollectionUtils.isNotEmpty(soIdList)?FeignQuery.create(PackageForecastDetailEntity.class).in(PackageForecastDetailEntity::getSoId,soIdList).list():new ArrayList<>();
+        List<String> packageForecastIds = packageForecastDetailEntityList.stream().map(PackageForecastDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<PackageForecastEntity> packageForecastEntityList = CollectionUtils.isNotEmpty(packageForecastIds)?FeignQuery.create(PackageForecastEntity.class).in(PackageForecastEntity::getId,packageForecastIds).list():new ArrayList<>();
         list.forEach(exportListDTO -> {
+            PackageForecastDetailEntity mainPackageForecastDetailEntity = packageForecastDetailEntityList.stream().filter(v -> v.getSoCode().equals(exportListDTO.getSoCode())).findFirst().orElse(new PackageForecastDetailEntity());
+            PackageForecastEntity mainPackageForecastEntity = packageForecastEntityList.stream().filter(v -> v.getId().equals(mainPackageForecastDetailEntity.getMainId())).findFirst().orElse(new PackageForecastEntity());
+            exportListDTO.setPackageForecastCode(mainPackageForecastEntity.getCode());
             exportListDTO.setUploadBatchStatusName(TransferDeclareUploadStatusEnum.getName(exportListDTO.getUploadBatchStatus()));
             exportListDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(exportListDTO.getInstockForecastStatus()));
             exportListDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(exportListDTO.getUploadOrderStatus()));

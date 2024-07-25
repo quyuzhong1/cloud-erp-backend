@@ -757,5 +757,10 @@ public class TransferDeclareDTO implements Serializable {
          * 创建时间[可排序]
          */
         private LocalDateTime createTime;
+
+        /**
+         * 组包单号
+         */
+        private String packageForecastCode;
     }
 }
