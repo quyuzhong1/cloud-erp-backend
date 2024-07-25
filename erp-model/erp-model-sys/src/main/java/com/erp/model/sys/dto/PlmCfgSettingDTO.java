@@ -67,7 +67,7 @@ public class PlmCfgSettingDTO implements Serializable {
          * 金蝶推送物料属性控制
          */
         @Valid
-        private PlmCfgSettingDTO.MaterialAttributeControl materialAttributeControl = new MaterialAttributeControl();
+        private List<PlmCfgSettingDTO.MaterialAttributeControl> materialAttributeControl = new ArrayList<>();
 
     }
 
