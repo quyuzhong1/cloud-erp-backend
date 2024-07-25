@@ -29,7 +29,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
@@ -625,7 +624,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 .eq(DmpPushTaskEntity::getMqTopic, RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC)
 //                .eq(DmpPushTaskEntity::getMqTag, RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName())
                 .list();
-        Map<String, DmpPushTaskEntity> sourceIdEntityMap = list.stream().collect(Collectors.toMap(item1 -> item1.getSourceId() + "#" + item1.getSourceType(), item1 -> item1));
+        Map<String, DmpPushTaskEntity> sourceIdEntityMap = list.stream().collect(Collectors.toMap(item1 -> item1.getSourceId() + "#" + item1.getSourceType(), item1 -> item1, (o1,o2) -> o1));
 
         List<DmpPushTaskEntity> entityList = new ArrayList<>();
         for (DmpPushTaskFeignDTO dto : dtoList) {
