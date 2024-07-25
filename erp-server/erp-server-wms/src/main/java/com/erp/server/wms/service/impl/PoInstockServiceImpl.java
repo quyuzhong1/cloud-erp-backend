@@ -5,7 +5,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.erp.model.dmp.dto.DmpPushWdtDTO;
+import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -16,6 +19,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
@@ -157,6 +161,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private DmpPushWdtFeign dmpPushWdtFeign;
 
 
     @Override
@@ -672,7 +678,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
             //填入产品首批量产入库时间
             setFirstMassInstock(ids);
-            
+
             //更新采购入库单明细对应采购订单明细的执行状态
             updatePodArrivalState(ids);
             //修改采购收货单入库状态
@@ -743,6 +749,19 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
             }
         });
+
+        //保存中间表
+        DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setThirdCode(inCode);
+        addDTO.setThirdType(SourceTypeEnum.OTHER_INSTOCK.getCode());
+        addDTO.setWarehouseId(entity.getDeliveryWarehouseId());
+        addDTO.setThirdWarehouseCode(thirdWarehouseCode);
+        addDTO.setOperateType(operateCode);
+        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(goodsList, DmpPushWdtDetailDTO.class);
+        addDTO.setDetailDTOList(detailDTOList);
+        dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
     }
 
     private void setFirstMassInstock(List<String> ids) {
@@ -859,6 +878,20 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //发送异步任务
         String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
         DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
+
+        //保存中间表数据
+        DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setThirdCode(outerCode);
+        addDTO.setThirdType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
+        addDTO.setWarehouseId(entity.getDeliveryWarehouseId());
+        addDTO.setThirdWarehouseCode(thirdWarehouseCode);
+        addDTO.setOperateType(operateCode);
+        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(goodsList, DmpPushWdtDetailDTO.class);
+        addDTO.setDetailDTOList(detailDTOList);
+        dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
+
         if(dmpPushTaskEntity != null){
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                 @Override

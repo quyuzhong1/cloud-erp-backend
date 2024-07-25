@@ -3,7 +3,10 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.erp.model.dmp.dto.DmpPushWdtDTO;
+import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.alibaba.excel.EasyExcel;
@@ -169,6 +172,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     private SysDictFeign sysDictFeign;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private DmpPushWdtFeign dmpPushWdtFeign;
 
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
@@ -1263,6 +1268,13 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         });
     }
 
+    /**
+     * 同步审核操作到旺店通
+     * @param entity 其他出库单
+     * @param operateCode 操作代码：approve/disApprove
+     * @return
+     * @author: tanmujin
+     */
     private void syncApproveInfoToWdt(OtherOutstockEntity entity, String operateCode) {
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getWarehouseId()), "wdt");
         if(mappingList.isEmpty()){
@@ -1297,6 +1309,19 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
             }
         });
+
+        //保存中间表数据
+        DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setThirdCode(entity.getCode());
+        addDTO.setThirdType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
+        addDTO.setWarehouseId(entity.getWarehouseId());
+        addDTO.setThirdWarehouseCode(thirdWarehouseCode);
+        addDTO.setOperateType(operateCode);
+        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(goodsList, DmpPushWdtDetailDTO.class);
+        addDTO.setDetailDTOList(detailDTOList);
+        dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
     }
 
     /**
@@ -1340,6 +1365,19 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
             }
         });
+
+        //保存中间表数据
+        DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setThirdCode(inCode);
+        addDTO.setThirdType(SourceTypeEnum.OTHER_INSTOCK.getCode());
+        addDTO.setWarehouseId(entity.getWarehouseId());
+        addDTO.setThirdWarehouseCode(thirdWarehouseCode);
+        addDTO.setOperateType(operateCode);
+        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(goodsList, DmpPushWdtDetailDTO.class);
+        addDTO.setDetailDTOList(detailDTOList);
+        dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
     }
     @Override
     @Transactional(rollbackFor = Exception.class)

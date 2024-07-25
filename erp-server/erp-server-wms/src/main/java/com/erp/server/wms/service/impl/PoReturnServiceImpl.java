@@ -4,7 +4,10 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.dmp.dto.DmpPushWdtDTO;
+import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -21,7 +24,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -186,6 +188,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     private SyncWdtOtherInStockService syncWdtOtherInStockService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private DmpPushWdtFeign dmpPushWdtFeign;
 
     /**
      * 主页分页查询
@@ -851,6 +855,19 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
             }
         });
+
+        //保存中间表数据
+        DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setThirdCode(outerCode);
+        addDTO.setThirdType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
+        addDTO.setWarehouseId(entity.getReturnWarehouseId());
+        addDTO.setThirdWarehouseCode(thirdWarehouseCode);
+        addDTO.setOperateType(operateCode);
+        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(goodsList, DmpPushWdtDetailDTO.class);
+        addDTO.setDetailDTOList(detailDTOList);
+        dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
     }
 
     /**
@@ -1054,6 +1071,19 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
             }
         });
+
+        //保存中间表
+        DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setThirdCode(outerCode);
+        addDTO.setThirdType(SourceTypeEnum.OTHER_INSTOCK.getCode());
+        addDTO.setWarehouseId(entity.getReturnWarehouseId());
+        addDTO.setThirdWarehouseCode(thirdWarehouseCode);
+        addDTO.setOperateType(operateCode);
+        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(goodsList, DmpPushWdtDetailDTO.class);
+        addDTO.setDetailDTOList(detailDTOList);
+        dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
     }
 
     /**

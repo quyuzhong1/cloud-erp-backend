@@ -82,6 +82,7 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operateCode);
+        dmpSyncTaskDTO.setThirdCode(outerCode);
         return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 
@@ -131,6 +132,7 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operateCode);
+        dmpSyncTaskDTO.setThirdCode(outerCode);
         return dmpSyncTaskDTO;
     }
 }
