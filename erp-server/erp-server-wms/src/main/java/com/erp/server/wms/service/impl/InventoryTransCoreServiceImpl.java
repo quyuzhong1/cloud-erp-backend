@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
@@ -232,11 +233,11 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 stockBaseDTO.setSkuNo(flow.getSkuNo());
                 stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getWarehouseId()));
                 stockBaseDTO.setWarehouseId(flow.getWarehouseId());
-                stockBaseDTO.setWarehouseLocation(flow.getWarehouseLocation());
+                stockBaseDTO.setWarehouseLocation(ObjectUtil.isNull(flow.getWarehouseLocation()) ? "" : flow.getWarehouseLocation());
                 stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
                 InventoryEntity inventoryEntity=inventoryService.getInventory(
                         flow.getSkuId(),flow.getWarehouseId(),
-                        flow.getWarehouseLocation(),rule.getInventoryStatus().getCode());
+                        stockBaseDTO.getWarehouseLocation(),rule.getInventoryStatus().getCode());
                 transactionDTO.setInventoryId(null==inventoryEntity?null:inventoryEntity.getId());
 
                 // 交易明细信息
