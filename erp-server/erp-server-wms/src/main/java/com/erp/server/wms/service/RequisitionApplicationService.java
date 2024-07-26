@@ -187,7 +187,7 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * 修改拣货单反写要货申请单
      * @param sourceDetailIds 明细id
      */
-    void writeBackData(List<String> sourceDetailIds);
+    void writeBackData(List<String> sourceDetailIds,Boolean isCheck);
 
     List<RequisitionApplicationDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids);
 

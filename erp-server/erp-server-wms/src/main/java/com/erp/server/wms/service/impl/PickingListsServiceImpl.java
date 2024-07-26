@@ -247,7 +247,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<String> sourceDetailIds = entityList.stream().map(PickingDetailEntity::getSourceDetailId).collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量
-            requisitionApplicationService.writeBackData(sourceDetailIds);
+            requisitionApplicationService.writeBackData(sourceDetailIds,Boolean.FALSE);
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }
@@ -452,7 +452,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<String> sourceDetailIds = detailList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量
-            requisitionApplicationService.writeBackData(sourceDetailIds);
+            requisitionApplicationService.writeBackData(sourceDetailIds,Boolean.TRUE);
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }
