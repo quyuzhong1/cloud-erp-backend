@@ -35,7 +35,6 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
@@ -822,8 +821,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = getOutInStockDTOS(entity, detailEntityList);
             //执行虚拟仓入库
             if (CollectionUtils.isNotEmpty(allocationParamList)) {
-                InventoryUnApproveDTO unApproveDTO = new InventoryUnApproveDTO(InventorySourceTypeEnum.REQUISITION_APPLICATION,id);
-                virtualInventoryTransCoreService.unApprove(unApproveDTO);
+                VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
+                allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_RETURN_HANDLE.getCode());
+                allocationDto.setParamList(allocationParamList);
+                virtualInventoryTransCoreService.approve(allocationDto);
                 List<RequisitionApplicationDetailEntity> haveFromVwList = detailEntityList.stream().filter(item -> StringUtils.isNotBlank(item.getFromVirtualWarehouseId())).collect(Collectors.toList());
                 Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap = haveFromVwList.stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId));
                 List<String> fromVmIds = haveFromVwList.stream().map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
