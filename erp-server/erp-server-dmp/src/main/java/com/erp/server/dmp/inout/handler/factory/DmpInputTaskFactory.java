@@ -20,7 +20,6 @@ import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChainImpl;
 import com.erp.server.dmp.inout.handler.input.all.DmpInputTaskStatusHandler;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputBaseTaskHandler;
-import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -111,12 +110,15 @@ public class DmpInputTaskFactory{
 				maxRetryCount = dmpCfgInputDetailEntity.getMaxRetryCount();
 			}
 			List<DmpInputTaskEntity> beforeDmpInputTaskEntityList = dmpResponse.getBeforeDmpInputTaskEntityList();
+			DmpInputTaskEntity dmpInputTaskEntity = null;
 			if(CollUtil.isNotEmpty(beforeDmpInputTaskEntityList)) {
-				DmpInputTaskEntity dmpInputTaskEntity = beforeDmpInputTaskEntityList.get(0);
-				Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
-				boolean errorFlag = errorCount == maxRetryCount;
-				dmpInputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
+				dmpInputTaskEntity = beforeDmpInputTaskEntityList.get(0);
+			}else {
+				dmpInputTaskEntity = dmpInputTaskService.getById(inputTaskId);
 			}
+			Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
+			boolean errorFlag = errorCount == maxRetryCount;
+			dmpInputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
 			throw e;
 		}
 		log.info("{}任务结束执行，执行状态{}" , inputTaskId , code);
