@@ -14,10 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.query.SoDeliveryNoticeQueryHandler;
@@ -422,7 +419,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @param page 要货单id
      */
     @PostMapping("/generatePickingView")
-    public ApiResult<PagingVO<SoDeliveryNoticeDTO.PickingViewDTO>> generatePickingView(@RequestBody PagingDTO<String> page) {
+    public ApiResult<PagingVO<SoDeliveryNoticeDTO.PickingViewDTO>> generatePickingView(@RequestBody @Validated PagingDTO<String> page) {
         PagingVO<SoDeliveryNoticeDTO.PickingViewDTO> result = soDeliveryNoticeService.generatePickingView(page);
         return success(result);
     }

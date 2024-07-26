@@ -341,7 +341,7 @@ public class RequisitionApplicationController extends BaseController {
      * @param page 要货单id
      */
     @PostMapping("/generatePickingView")
-    public ApiResult<PagingVO<RequisitionApplicationDTO.PickingViewDTO>> generatePickingView(@RequestBody PagingDTO<String> page) {
+    public ApiResult<PagingVO<RequisitionApplicationDTO.PickingViewDTO>> generatePickingView(@RequestBody @Validated PagingDTO<String> page) {
         PagingVO<RequisitionApplicationDTO.PickingViewDTO> result = requisitionApplicationService.generatePickingView(page);
         return success(result);
     }
