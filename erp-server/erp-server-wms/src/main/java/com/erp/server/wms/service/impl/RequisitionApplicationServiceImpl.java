@@ -595,9 +595,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (CollectionUtils.isEmpty(applicationDetailList)) {
             throw new ServiceException("拣货单关联的要货申请明细未找到");
         }
-        List<String> applicationDetailIdList = applicationDetailList.stream().map(RequisitionApplicationDetailEntity::getId).collect(Collectors.toList());
-        List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(applicationDetailIdList);
-
         //查询bom信息
         List<String> skuIdList = applicationDetailList.stream().map(RequisitionApplicationDetailEntity::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
@@ -614,10 +611,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             if (ObjectUtil.isEmpty(finishListDTO)) {
                 continue;
             }
-            //拣货数据
-            List<PickingDetailEntity> pickingDetailList = pickingDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), applicationDetailEntity.getId())).collect(Collectors.toList());
-
-            for (PickingDetailEntity pickingDetailEntity : pickingDetailList) {
+            //用量，没有默认1
+            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), applicationDetailEntity.getSkuId())
+                            && StrUtil.equals(applicationDetailEntity.getBomVersion(), obj.getBomVersion()))
+                    .collect(Collectors.toList());
+            for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
                 VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
                 outInStockDTO.setBillDate(LocalDate.now());
                 outInStockDTO.setSourceId(finishListDTO.getSourceId());
@@ -625,29 +623,24 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
                 outInStockDTO.setSourceDetailId(applicationDetailEntity.getId());
                 outInStockDTO.setBillDate(LocalDate.now());
-                outInStockDTO.setSkuId(pickingDetailEntity.getSkuId());
-                outInStockDTO.setSkuNo(pickingDetailEntity.getSkuNo());
+                outInStockDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                outInStockDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
                 outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
                 outInStockDTO.setBomVersion(applicationDetailEntity.getBomVersion());
                 if (StrUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
                     continue;
                 }
                 outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
-                //用量，没有默认1
-                Integer quantity = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), applicationDetailEntity.getSkuId())
-                                && StrUtil.equals(obj.getSkuId(), pickingDetailEntity.getSkuId())
-                                && StrUtil.equals(applicationDetailEntity.getBomVersion(), obj.getBomVersion()))
-                        .findFirst().map(BomChildrenSkuDTO::getQuantity).orElse(MathUtil.ONE);
 
-                Integer approveQty = applicationDetailEntity.getApproveQty() * quantity;
-                Integer qty = pickingDetailEntity.getQty();
+                Integer approveQty = applicationDetailEntity.getApproveQty();
+                Integer qty = applicationDetailEntity.getPickingQty();
 
-                if (MathUtil.compareTo(qty,approveQty) > MathUtil.ZERO) {
-                    outInStockDTO.setQty(qty - approveQty);
-                    addList.add(outInStockDTO);
-                } else if (MathUtil.compareTo(approveQty,qty) > MathUtil.ZERO) {
-                    outInStockDTO.setQty(approveQty - qty);
+                if (MathUtil.compareTo(qty, approveQty) > MathUtil.ZERO) {
+                    outInStockDTO.setQty((qty - approveQty) * bomChildrenSkuDTO.getQuantity());
                     subList.add(outInStockDTO);
+                } else if (MathUtil.compareTo(approveQty, qty) > MathUtil.ZERO) {
+                    outInStockDTO.setQty((approveQty - qty) * bomChildrenSkuDTO.getQuantity());
+                    addList.add(outInStockDTO);
                 } else {
                     log.info("无需要多退少补的库存需要变更");
                 }
