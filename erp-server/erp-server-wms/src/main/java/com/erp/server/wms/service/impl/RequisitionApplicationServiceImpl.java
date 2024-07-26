@@ -611,6 +611,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             if (ObjectUtil.isEmpty(finishListDTO)) {
                 continue;
             }
+            //调入仓不等于调入仓则无需库存扣减
+            if (!StrUtil.equals(applicationDetailEntity.getFromWarehouseId(),applicationDetailEntity.getToWarehouseId())) {
+                continue;
+            }
             //用量，没有默认1
             List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), applicationDetailEntity.getSkuId())
                             && StrUtil.equals(applicationDetailEntity.getBomVersion(), obj.getBomVersion()))
