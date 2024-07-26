@@ -1024,13 +1024,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      * @return java.lang.Boolean
      **/
     private Boolean generateDeliver(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list, Boolean isSubmit) {
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        list = list.stream().filter(v -> noInventorySkuIds.contains(v.getSkuId()) || v.getDeliveryQty() > 0).collect(Collectors.toList());
         //一个发货计划单，生成一个要发货单
         Map<String, List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> map = list.stream().collect(Collectors.groupingBy(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId));
         List<String> sourceDetailIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceDetailId).distinct().collect(Collectors.toList());
-        List<PickingDetailEntity> pickingDetailLists = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getSourceDetailId, sourceDetailIds));
-        Map<String, List<PickingDetailEntity>> pickingDetailListMap = pickingDetailLists.stream().collect(Collectors.groupingBy(PickingDetailEntity::getSourceDetailId));
         //查询子件信息
-        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
         //获取sku信息
@@ -1050,10 +1051,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //映射详情信息
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (RequisitionApplicationDTO.GenerateDeliverViewDTO viewDTO : value) {
-                List<PickingDetailEntity> pickingDetails = pickingDetailListMap.get(viewDTO.getSourceDetailId());
-                if (CollectionUtils.isEmpty(pickingDetails)) {
-                    continue;
-                }
                 FirstMileDeliveryDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.generateDeliverDetailFDD(viewDTO);
                 //查询sku是否存在子SKU
                 List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
@@ -1070,8 +1067,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     detailAddDto.setProductSizeWidth(LengthConverterUtil.mmToCm(skuVO.getProductWidth()));
                     detailAddDto.setProductSizeHeight(LengthConverterUtil.mmToCm(skuVO.getProductHeight()));
                 }
-                detailAddDto.setDeliveryQty(viewDTO.getDeliveryQty());
-                detailAddDto.setPlanQty(viewDTO.getDeliveryQty());
+                if (noInventorySkuIds.contains(viewDTO.getSkuId())) {
+                    detailAddDto.setDeliveryQty(viewDTO.getPlanQty());
+                    detailAddDto.setPlanQty(viewDTO.getPlanQty());
+                }else {
+                    detailAddDto.setDeliveryQty(viewDTO.getDeliveryQty());
+                    detailAddDto.setPlanQty(viewDTO.getDeliveryQty());
+                }
                 RequisitionApplicationDetailEntity detailEntity = detailEntities.stream()
                         .filter(v -> v.getId().equals(viewDTO.getSourceDetailId()))
                         .findFirst()

@@ -415,5 +415,12 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         return baseMapper.listBySourceIdList(sourceIdList,approveStatus);
     }
 
+    @Override
+    public List<SoDeliveryNoticeDetailEntity> listNoInventoryOrPicking(String id, List<String> noInventorySku) {
+
+        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = listDetailByMainId(id);
+        return noticeDetailEntities.stream().filter(v -> noInventorySku.contains(v.getSkuId()) || v.getPickingQty() > 0).collect(Collectors.toList());
+    }
+
 
 }
