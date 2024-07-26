@@ -67,6 +67,12 @@
     <!-- 虚拟库存流水分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDTO$ListDTO">
         select
+            vtf.create_time as createTime,
+            vtf.update_time as updateTime,
+            vtf.create_user_name as createUserName,
+            vtf.create_user_id as createUserId,
+            vtf.update_user_name as updateUserName,
+            vtf.update_user_id as updateUserId,
             vtf.transaction_no as transactionNo,
             vtf.bill_date as billDate,
             vtf.trade_time as tradeTime,
