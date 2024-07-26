@@ -8,6 +8,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -56,8 +57,23 @@ public class DmpInputAliExpressOrderApiInitHandler implements DmpInputApiInitHan
 		int pageNo = 1;
 		Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("page_size", 50);
-        paramMap.put("modified_date_start", dmpInputApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        paramMap.put("modified_date_end", dmpInputApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        
+        String requestParam = dmpInputApiInitRequest.getRequestParam();
+        JSONObject parseObject = JSON.parseObject(requestParam);
+        String taskType = parseObject.getString("taskType");
+        String orderStatus = parseObject.getString("orderStatus");
+        String startTime = dmpInputApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String endTime = dmpInputApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        if("create".equals(taskType)) {
+        	paramMap.put("create_date_start", startTime);
+    		paramMap.put("create_date_end", endTime);
+        }else {
+        	paramMap.put("modified_date_start", startTime);
+    		paramMap.put("modified_date_end", endTime);
+        }
+        if(StringUtils.isNotBlank(orderStatus)) {
+        	paramMap.put("order_status", orderStatus);
+        }
         
         JSONArray order = new JSONArray();
         boolean firstFlag = true;

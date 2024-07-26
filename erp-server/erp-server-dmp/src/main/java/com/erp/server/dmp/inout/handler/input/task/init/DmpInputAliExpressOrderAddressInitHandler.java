@@ -90,6 +90,7 @@ public class DmpInputAliExpressOrderAddressInitHandler extends DmpInputInitHandl
 		request.setApiName(apiType);
 		request.addApiParameter("simplify", "true");
 		
+		List<JSONObject> dataList = new ArrayList<>();
         for(Map<String, Object> findMongo : findMongoData) {
         	String order_id = findMongo.get("order_id").toString();
         	String oaid = findMongo.get("oaid").toString();
@@ -108,10 +109,12 @@ public class DmpInputAliExpressOrderAddressInitHandler extends DmpInputInitHandl
         		}
         	}
         	data.put("order_id", order_id);
-            DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-    		dmpInputTaskInitDTO.setMsg(data.toJSONString());
-    		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
+        	dataList.add(data);
         }
+        
+        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+		dmpInputTaskInitDTO.setMsg(JSON.toJSONString(dataList));
+		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         
 		return dmpInputTaskInitDTOList;
 	}

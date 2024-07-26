@@ -22,7 +22,6 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
-import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpCfgMqEntity;
@@ -143,7 +142,7 @@ public class DmpOutputRocketMQPushUtils{
 			if(!responseData.contains("数据已被他人锁住，为避免数据错误，请稍后再试")) {
 				errorCount = dmpOutputTaskRecordEntity.getErrorCount() + 1;
 			}
-			if(errorCount == 3) {
+			if(errorCount >= 3 && errorCount%3 == 0) {
 				status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
 			}
 		}

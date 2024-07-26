@@ -118,6 +118,7 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 					}
 				}
 				dmpInputDmpBaseEntity.put(mainId, mainIdValue);
+				this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
 				valueList.add(dmpInputDmpBaseEntity);
 				
 			}

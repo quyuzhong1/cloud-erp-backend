@@ -83,10 +83,11 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
         		break;
         	}else {
         		count = count + 1;
+        		for(int i=0;i < 1000;i++);//相当于休眠，执行时间约3700纳秒，1毫秒等于10^6纳秒
         	}
         }
     }
-
+    
     /**
      * 获取业务类型
      * @return
