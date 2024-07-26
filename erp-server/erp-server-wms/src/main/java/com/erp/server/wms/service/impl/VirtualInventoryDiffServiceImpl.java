@@ -14,18 +14,15 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -256,24 +253,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
-        //产品信息
-        List<String> skuIdList = list.stream().map(VirtualInventoryDiffDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailEntityList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
-
-        //实际仓库
-        List<String> warehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
-
         for (VirtualInventoryDiffDTO.ListDTO listDTO : list) {
-            //产品信息
-            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
-            listDTO.setSkuNo(productDetailEntity.getSkuNo());
-            listDTO.setProductName(productDetailEntity.getName());
-            //实体仓库名称
-            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getWarehouseId()))
-                    .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
-            listDTO.setWarehouseName(warehouseName);
             //已分配数量
             listDTO.setDistributionQty(listDTO.getVirtualQty());
             //未分配数量
@@ -316,15 +296,6 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
-        //sku
-        List<String> skuIdList = list.stream().map(VirtualInventoryDiffDTO.ListDiffExportDataDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailEntityList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
-
-        //实体仓库
-        List<String> warehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDiffExportDataDTO::getWarehouseId).distinct().collect(Collectors.toList());
-
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
-
         //虚拟仓库
         List<String> virtualWarehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDiffExportDataDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
@@ -345,15 +316,6 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             }
             flagList.add(flag);
 
-            //产品信息
-            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
-            listDTO.setSkuNo(productDetailEntity.getSkuNo());
-            listDTO.setProductName(productDetailEntity.getName());
-            //实体仓库名称
-            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getWarehouseId()))
-                    .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
-            listDTO.setWarehouseName(warehouseName);
             listDTO.setDistributionQty(listDTO.getTotalVirtualQty());
             //未分配数量
             listDTO.setUnDistributionQty(listDTO.getUsableQty() - listDTO.getDistributionQty());
