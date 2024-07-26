@@ -516,7 +516,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 continue;
             }
         }
-        if (CollectionUtils.isEmpty(addList)) {
+        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isNotEmpty(addList)) {
             VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
             stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
             stockParamDTO.setParamList(addList);

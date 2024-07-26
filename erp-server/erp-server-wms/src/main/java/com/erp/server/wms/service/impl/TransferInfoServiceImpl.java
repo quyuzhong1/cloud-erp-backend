@@ -1215,6 +1215,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 throw new ServiceException(ApiError.ERROR_95084);
             }
             obj.setProductName(productName);
+            //来源类型名称
+            obj.setSourceTypeName(SourceTypeEnum.getName(obj.getSourceType()));
 
             //调拨方向名称
             String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
