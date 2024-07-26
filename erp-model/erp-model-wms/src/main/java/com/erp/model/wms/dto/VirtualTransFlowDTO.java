@@ -51,6 +51,7 @@ public class VirtualTransFlowDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+
         /**
          * 流水号【可排序】
          */
@@ -139,6 +140,22 @@ public class VirtualTransFlowDTO implements Serializable {
          * 操作后数量【可排序】
          */
         private Integer curInventoryQty;
+        /**
+         * 创建人【可排序】
+         */
+        private String createUserName;
+        /**
+         * 更新人【可排序】
+         */
+        private String updateUserName;
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
+        /**
+         * 更新时间【可排序】
+         */
+        private LocalDateTime updateTime;
     }
 
     @Data
