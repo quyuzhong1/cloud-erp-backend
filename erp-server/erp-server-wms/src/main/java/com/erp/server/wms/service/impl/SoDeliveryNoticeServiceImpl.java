@@ -331,6 +331,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoDeliveryNoticeDTO.Update dto) {
+        // 判断是否已生成拣货单
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(dto.getId()));
+        if (CollectionUtils.isNotEmpty(views)) {
+            throw new ServiceException(ApiError.ERROR_99130);
+        }
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
