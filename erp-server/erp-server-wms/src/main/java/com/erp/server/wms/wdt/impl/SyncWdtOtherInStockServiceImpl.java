@@ -13,6 +13,7 @@ import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.server.wms.service.impl.AbstractWdtService;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Service
-public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockService {
+public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implements SyncWdtOtherInStockService {
 
     @Resource
     private DmpMqFeign dmpMqFeign;

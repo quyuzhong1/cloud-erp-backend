@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -26,6 +27,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -45,6 +47,7 @@ import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -55,6 +58,10 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -126,6 +133,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private WorkflowFeign workflowFeign;
 
     @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
+
+    @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource
@@ -152,6 +162,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
+
+    @Resource
+    private SyncWdtOtherInStockService syncWdtOtherInStockService;
+
+    @Resource
+    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -565,12 +581,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             //发送金蝶
             sendPushTask(entityList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            entityList.forEach(entity-> this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE));
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
                     .in(SoReturnInstockEntity::getId, ids)
                     .update();
         }
+
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售退货通知单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "审核操作");
@@ -588,7 +606,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //已审核支持反审核
 
         if (!isPushKingDee) {
-            entityList = entityList.stream().filter(x -> ApproveStatusEnum.APPROVE.equals(x.getApproveStatus())).collect(Collectors.toList());
+            entityList = entityList.stream().filter(x -> ApproveStatusEnum.APPROVE.getStatus().equals(x.getApproveStatus())).collect(Collectors.toList());
         } else {
             //已审核支持反审核
             long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
@@ -614,6 +632,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             //发送金蝶
             sendPushTask(entityList,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
+        entityList.forEach(entity-> this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE));
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
@@ -1564,4 +1583,51 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         });
     }
 
+    private void syncToWdt(SoReturnInstockEntity entity,SyncOperateEnum operateEnum) {
+
+        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+
+        Set<String> warehouseIdSet = detailEntityList.stream().map(SoReturnInstockDetailEntity::getWarehouseId).collect(Collectors.toSet());
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(warehouseIdSet), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId, ThirdMappingDTO.WarehouseMappingDTO::getThirdWarehouseCode));
+        //过滤掉没有第三方仓库映射的明细
+        detailEntityList = detailEntityList.stream().filter(v->thirdWarehouseMap.containsKey(v.getWarehouseId())).collect(Collectors.toList());
+        List<DmpPushTaskFeignDTO> unSaveTaskList = new ArrayList<>();
+        for (SoReturnInstockDetailEntity detailEntity : detailEntityList) {
+            if(SyncOperateEnum.OPERATE_APPROVE.equals(operateEnum)){
+                CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+                outGoods.setSpecNo(detailEntity.getSkuNo());
+                outGoods.setNum(BigDecimal.valueOf(detailEntity.getRealQty()));
+                outGoods.setPositionNo(detailEntity.getWarehouseLocation());
+
+                String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+                String outWarehouseId = thirdWarehouseMap.get(detailEntity.getWarehouseId());
+                DmpPushTaskFeignDTO dmpPushTaskFeignDTO = syncWdtOtherOutStockService.generateTask(Collections.singletonList(outGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), detailEntity.getId(), outCode, outWarehouseId, false);
+                unSaveTaskList.add(dmpPushTaskFeignDTO);
+            }else if (SyncOperateEnum.OPERATE_DISAPPROVE.equals(operateEnum)){
+                CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+                inGoods.setSpecNo(detailEntity.getSkuNo());
+                inGoods.setNum(BigDecimal.valueOf(detailEntity.getRealQty()));
+                inGoods.setPositionNo(detailEntity.getWarehouseLocation());
+
+                String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+                String inWarehouseId = thirdWarehouseMap.get(detailEntity.getWarehouseId());
+                DmpPushTaskFeignDTO taskFeignDTO = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), detailEntity.getId(), inCode, inWarehouseId, false);
+                unSaveTaskList.add(taskFeignDTO);
+            }
+        }
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(unSaveTaskList);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
+            }
+        });
+    }
 }
