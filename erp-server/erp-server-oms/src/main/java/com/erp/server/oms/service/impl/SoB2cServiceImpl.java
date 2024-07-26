@@ -5443,14 +5443,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
         //是否中转
-        CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
-        ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
-        ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
-        String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
-        CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferAndWarehouse(new CfgRuleOutDTO.MatchTransferDTO(deliveryWarehouseId,ruleDTO));
-        if (resultDTO.getIsTransit()) {
-            warehouseId = resultDTO.getTransitWarehouseId();
-
+        Boolean isTransit = false;
+        String transitWarehouseId = "";
+        // 平台仓/海外仓出库单不中转
+        if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equalsIgnoreCase(sourceType)){
+            // B2C订单根据中转规则判断是否中转
+            CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
+            ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
+            ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
+            String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
+            CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferAndWarehouse(new CfgRuleOutDTO.MatchTransferDTO(deliveryWarehouseId,ruleDTO));
+            isTransit = resultDTO.getIsTransit();
+            transitWarehouseId = resultDTO.getTransitWarehouseId();
+        }
+        if (isTransit) {
+            warehouseId = transitWarehouseId;
         } else {
             if(StringUtils.isBlank(warehouseId)){
                 warehouseId = detailList.get(0).getWarehouseId();
@@ -5497,7 +5504,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Integer qty = detailItem.getQty();
             String detailId = detailItem.getId();
             //中转无需传仓位
-            String warehouseLocation = resultDTO.getIsTransit() ? "" : detailItem.getWarehouseLocation();
+            String warehouseLocation = isTransit ? "" : detailItem.getWarehouseLocation();
             //查询到对应的数据
             List<SoB2cDeliveryDTO.DeliverySkuDTO> deliveryList = deliverySkuList.stream().filter(d -> skuId.equals(d.getSourceSkuId())).distinct().collect(Collectors.toList());
 
