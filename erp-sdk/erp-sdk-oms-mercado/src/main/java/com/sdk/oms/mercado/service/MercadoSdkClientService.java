@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShipOrderDTO;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.PlatformMercadoRefreshTokenDTO;
@@ -315,8 +316,8 @@ public class MercadoSdkClientService {
      * @return
      */
     public List<OrderViewDTO> sendMercadoGetOrder(MercadoShopInfoDTO shopInfoDTO, JobTaskDTO task) {
-
-        String baseUrl = "https://api.mercadolibre.com/marketplace/orders/search";
+        String url = MercadoConstant.URL;
+        String path = "/marketplace/orders/search";
         //每次最多获取200条
         Integer pageSize = 200;
         //当前页数
@@ -342,11 +343,11 @@ public class MercadoSdkClientService {
             headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 
             //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
             if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-                log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
+                log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                        baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
             ObjectMapper objectMapper = new ObjectMapper();
             OrderDTO orderDTO = null;
@@ -355,7 +356,7 @@ public class MercadoSdkClientService {
             } catch (JsonProcessingException e) {
                 log.error("美客多orders/search接口数据解析错误，数据={}", apiResult.getData());
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                        baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
             //解析数据
 //            OrderDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);

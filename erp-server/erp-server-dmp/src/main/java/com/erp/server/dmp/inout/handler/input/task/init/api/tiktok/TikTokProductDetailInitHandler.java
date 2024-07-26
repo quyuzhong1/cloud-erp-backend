@@ -1,4 +1,4 @@
-package com.erp.server.dmp.inout.handler.input.task.init;
+package com.erp.server.dmp.inout.handler.input.task.init.api.tiktok;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -15,6 +15,7 @@ import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +45,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Scope("prototype")
-public class TikTokProductDetailInitHandler extends DmpInputInitHandler{
+public class TikTokProductDetailInitHandler extends DmpInputInitHandler {
 	@Resource
     private TikTokSdkClientService tikTokSdkClientService;
 	

@@ -20,6 +20,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
     TIKTOK("TikTok", "TikTok"),
 	ALI_EXPRESS("AliExpress", "速卖通"),
 	SHOPIFY("Shopify", "Shopify"),
+    MERCADOLIBRE("mercadolibre", "美客多"),
     ;
     /**
      * 类型
