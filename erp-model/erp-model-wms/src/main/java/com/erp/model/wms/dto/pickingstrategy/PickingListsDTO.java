@@ -185,6 +185,10 @@ public class PickingListsDTO {
          */
         private String printUserName;
         /**
+         * 经办人
+         */
+        private String handlingUserName;
+        /**
          * 打印明细
          */
         private List<PrintDetailView> printDetailViews;
@@ -201,6 +205,10 @@ public class PickingListsDTO {
          * 产品编码
          */
         private String skuNo;
+        /**
+         * 三方sku
+         */
+        private String thirdSku;
         /**
          * 来源单号
          */

@@ -338,11 +338,11 @@ public class RequisitionApplicationController extends BaseController {
 
     /**
      * 生成拣货单的弹窗
-     * @param id 要货单id
+     * @param page 要货单id
      */
-    @GetMapping("/generatePickingView")
-    public ApiResult<List<RequisitionApplicationDTO.PickingViewDTO>> generatePickingView(@RequestParam("id") String id) {
-        List<RequisitionApplicationDTO.PickingViewDTO> result = requisitionApplicationService.generatePickingView(id);
+    @PostMapping("/generatePickingView")
+    public ApiResult<PagingVO<RequisitionApplicationDTO.PickingViewDTO>> generatePickingView(@RequestBody PagingDTO<String> page) {
+        PagingVO<RequisitionApplicationDTO.PickingViewDTO> result = requisitionApplicationService.generatePickingView(page);
         return success(result);
     }
 

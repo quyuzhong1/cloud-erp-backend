@@ -22,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -37,9 +38,11 @@ import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
@@ -107,18 +110,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
     @Resource
-    @Lazy
-    private SoB2cDeliveryService soB2cDeliveryService;
-    @Resource
-    @Lazy
-    private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
-    @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Resource
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
     @Override
     public PagingVO<PickingListsDTO.PagingView> paging(PagingDTO<PickingListsDTO.PagingParam> dto) {
@@ -344,22 +343,40 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     public List<PickingListsDTO.PrintView> print(List<String> ids) {
         LoginUser user = UserContext.getDefaultLoginUser();
         List<PickingListsEntity> pickingLists = listByIds(ids);
+        if (CollectionUtils.isEmpty(pickingLists)) {
+            throw new ServiceException(ApiError.ERROR_92258);
+        }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<PickingListsDTO.PrintView> printViews = new ArrayList<>();
+        List<String> sourceIds = pickingLists.stream().map(PickingListsEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationEntity> applicationEntities = requisitionApplicationService.listByIds(sourceIds);
+        List<RequisitionApplicationDetailEntity> applicationDetails = requisitionApplicationDetailService.listByMainIds(sourceIds);
+        List<SoDeliveryNoticeEntity> noticeEntities = soDeliveryNoticeService.listByIds(sourceIds);
+        List<String> soIds = noticeEntities.stream().map(SoDeliveryNoticeEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfos = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(soIds)) {
+            soInfos = soInfoFeign.listSoInfoByIds(soIds);
+        }
         for (PickingListsEntity picking : pickingLists) {
             PickingListsDTO.PrintView printView = new PickingListsDTO.PrintView();
             printView.setPrintTime(LocalDateTime.now());
             printView.setPrintUserName(user.getUserName());
             if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
-                RequisitionApplicationEntity application = requisitionApplicationService.getById(picking.getSourceId());
+                RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
                 printView.setCode(application.getCode());
                 printView.setChannelName(application.getChannelName());
+                printView.setHandlingUserName(application.getCreateUserName());
             } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(picking.getSourceType())) {
-                SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getById(picking.getSourceId());
+                SoDeliveryNoticeEntity soDeliveryNotice = noticeEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST));
+                SoInfoEntity soInfo = soInfos.stream().filter(v -> v.getId().equals(soDeliveryNotice.getSourceId()))
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_92016));
                 printView.setCode(soDeliveryNotice.getSourceCode());
                 printView.setChannelName(soDeliveryNotice.getCustomerName());
+                printView.setHandlingUserName(soInfo.getCreateUserName());
             }
             List<PickingListsDTO.PrintDetailView> views = detailList.stream().map(detail -> {
                 PickingListsEntity entity = pickingLists.stream()
@@ -374,6 +391,15 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 view.getPrintView(entity, detail, skuVO.getSkuName());
                 if (ObjectUtil.isEmpty(view.getWarehouseLocation())) {
                     view.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+                }
+                if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
+                    RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
+                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
+                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+                        RequisitionApplicationDetailEntity applicationDetail = applicationDetails.stream().filter(v -> v.getId().equals(detail.getSourceDetailId()))
+                                .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
+                        view.setThirdSku(applicationDetail.getPlatformFnSku());
+                    }
                 }
                 return view;
             }).collect(Collectors.toList());
