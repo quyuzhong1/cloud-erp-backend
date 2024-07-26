@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -527,6 +528,11 @@ public class RequisitionApplicationDTO implements Serializable {
          * 拣货数量
          */
         private Integer pickingQty;
+
+        /**
+         * 虚拟仓冻结数量
+         */
+        private Integer virtualFrozenQty;
 
         /**
          * 要货仓库id

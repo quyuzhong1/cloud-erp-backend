@@ -71,6 +71,7 @@
             rad.requisition_qty AS requisitionQty,
             rad.approve_qty AS approveQty,
             rad.picking_qty AS pickingQty,
+            rad.virtual_frozen_qty AS virtualFrozenQty,
             ra.requisition_warehouse_id AS requisitionWarehouseId,
             ra.requisition_warehouse_name AS requisitionWarehouseName,
             rad.from_warehouse_id AS fromWarehouseId,
