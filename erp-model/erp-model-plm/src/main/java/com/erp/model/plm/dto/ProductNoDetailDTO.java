@@ -20,6 +20,10 @@ public class ProductNoDetailDTO {
      * 产品信息列表id
      */
     private String id;
+    /**
+     * spu
+     */
+    private String spuNo;
 
     /**
      * 产品图片

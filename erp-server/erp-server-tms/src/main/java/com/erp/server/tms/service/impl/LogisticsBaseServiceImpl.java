@@ -277,10 +277,10 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             List<String> detailIds = records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getId).distinct().collect(Collectors.toList());
             List<LogisticsBillDetailEntity> detailList = logisticsBillDetailService.listByIds(detailIds);
             data.forEach(registerResponseVO -> {
-                //根据配置进行过滤符合条件的记录
+                //根据配置进行过滤符合条件的记录 增加渠道为空的情况处理
                 List<LogisticsTrackDTO.UpdateTrackDTO> updateTrackDTOList = records.stream().filter(e -> Objects.nonNull(e)
                                 && ((TrackQueryTypeEnum.TRACK_NO.getCode().equals(e.getTrackQueryType()) && registerResponseVO.getTrackNo().equals(e.getTrackNo()))
-                                || (TrackQueryTypeEnum.TRANSPORT_NO.getCode().equals(e.getTrackQueryType()) && registerResponseVO.getTrackNo().equals(e.getTransportNo()))))
+                                || (registerResponseVO.getTrackNo().equals(e.getTransportNo()))))
                         .collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(updateTrackDTOList)){
                     updateTrackDTOList.forEach(updateTrackDTO -> {
