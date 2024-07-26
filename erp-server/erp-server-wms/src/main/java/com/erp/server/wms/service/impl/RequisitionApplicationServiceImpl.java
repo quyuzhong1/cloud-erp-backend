@@ -615,7 +615,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), applicationDetailEntity.getSkuId())
                             && StrUtil.equals(applicationDetailEntity.getBomVersion(), obj.getBomVersion()))
                     .collect(Collectors.toList());
-            for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
+            if (CollectionUtils.isEmpty(childList)) {
                 VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
                 outInStockDTO.setBillDate(LocalDate.now());
                 outInStockDTO.setSourceId(finishListDTO.getSourceId());
@@ -623,26 +623,56 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
                 outInStockDTO.setSourceDetailId(applicationDetailEntity.getId());
                 outInStockDTO.setBillDate(LocalDate.now());
-                outInStockDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
-                outInStockDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                outInStockDTO.setSkuId(applicationDetailEntity.getSkuId());
+                outInStockDTO.setSkuNo(applicationDetailEntity.getSkuNo());
                 outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
                 outInStockDTO.setBomVersion(applicationDetailEntity.getBomVersion());
                 if (StrUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
                     continue;
                 }
                 outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
-
                 Integer approveQty = applicationDetailEntity.getApproveQty();
                 Integer qty = applicationDetailEntity.getPickingQty();
-
                 if (MathUtil.compareTo(qty, approveQty) > MathUtil.ZERO) {
-                    outInStockDTO.setQty((qty - approveQty) * bomChildrenSkuDTO.getQuantity());
+                    outInStockDTO.setQty((qty - approveQty) );
                     addList.add(outInStockDTO);
                 } else if (MathUtil.compareTo(approveQty, qty) > MathUtil.ZERO) {
-                    outInStockDTO.setQty((approveQty - qty) * bomChildrenSkuDTO.getQuantity());
+                    outInStockDTO.setQty((approveQty - qty) );
                     subList.add(outInStockDTO);
                 } else {
                     log.info("无需要多退少补的库存需要变更");
+                }
+
+            } else {
+                for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
+                    VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+                    outInStockDTO.setBillDate(LocalDate.now());
+                    outInStockDTO.setSourceId(finishListDTO.getSourceId());
+                    outInStockDTO.setSourceCode(finishListDTO.getSourceCode());
+                    outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
+                    outInStockDTO.setSourceDetailId(applicationDetailEntity.getId());
+                    outInStockDTO.setBillDate(LocalDate.now());
+                    outInStockDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                    outInStockDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                    outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
+                    outInStockDTO.setBomVersion(applicationDetailEntity.getBomVersion());
+                    if (StrUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
+                        continue;
+                    }
+                    outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
+
+                    Integer approveQty = applicationDetailEntity.getApproveQty();
+                    Integer qty = applicationDetailEntity.getPickingQty();
+
+                    if (MathUtil.compareTo(qty, approveQty) > MathUtil.ZERO) {
+                        outInStockDTO.setQty((qty - approveQty) * bomChildrenSkuDTO.getQuantity());
+                        addList.add(outInStockDTO);
+                    } else if (MathUtil.compareTo(approveQty, qty) > MathUtil.ZERO) {
+                        outInStockDTO.setQty((approveQty - qty) * bomChildrenSkuDTO.getQuantity());
+                        subList.add(outInStockDTO);
+                    } else {
+                        log.info("无需要多退少补的库存需要变更");
+                    }
                 }
             }
         }
