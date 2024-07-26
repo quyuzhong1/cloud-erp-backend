@@ -715,6 +715,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 service.cancelWdtOrder(fromVmIds, entity, haveFromVwMap);
             }
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
+            //清空明细中的虚拟仓
+            requisitionApplicationDetailService.cleanVirtualWarehouseIdByMianId(id);
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE.getStatus())) {
             //已处理
             transferInfoService.requisitionApplicationCancelProcess(entity.getCode(), SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode());
@@ -723,9 +725,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             throw new ServiceException(ApiError.WAIT_HANDLE_IS_CANCEL_PROCESS);
         }
         log.info("撤销 开始修改要货申请状态，id：【{}】", id);
-
-        //清空明细中的虚拟仓
-        requisitionApplicationDetailService.cleanVirtualWarehouseIdByMianId(id);
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
