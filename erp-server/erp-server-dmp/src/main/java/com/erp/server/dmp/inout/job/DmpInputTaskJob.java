@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.job;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -50,6 +51,10 @@ public class DmpInputTaskJob {
 		String size = "1000";
 		List<String> cfgInputIds = null;
 		List<String> ids = null;
+		
+		List<String> execStatusList = Arrays.asList(DmpInputTaskStatusEnum.INIT.getCode() 
+				, DmpInputTaskStatusEnum.FDS.getCode() , DmpInputTaskStatusEnum.MONGO.getCode()
+				, DmpInputTaskStatusEnum.DMP.getCode());
 		if(StringUtils.isNotBlank(jobParam)) {
 			JSONObject parseObject = JSON.parseObject(jobParam);
 			String sizeParam = parseObject.getString("size");
@@ -63,12 +68,37 @@ public class DmpInputTaskJob {
 			String idsParam = parseObject.getString("ids");
 			if(StringUtils.isNotBlank(idsParam)) {
 				ids = Arrays.asList(idsParam.split(","));
+				if(CollUtil.isNotEmpty(ids)) {
+					List<DmpInputTaskEntity> errorList = dmpInputTaskService.lambdaQuery()
+							.in(DmpInputTaskEntity::getId, ids)
+							.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
+							.eq(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
+							.list();
+					List<DmpInputTaskEntity> updateList = new ArrayList<>();
+					if(CollUtil.isNotEmpty(errorList)) {
+						for(DmpInputTaskEntity e : errorList) {
+							String errorMessage = e.getErrorMessage();
+							if(StringUtils.isNotBlank(errorMessage)) {
+								String[] split = errorMessage.split("@@");
+								if(split.length > 1) {
+									String status = split[0];
+									if(execStatusList.contains(status)) {
+										e.setErrorCount(0);
+										e.setStatus(status);
+										updateList.add(e);
+									}
+								}
+							}
+						}
+					}
+					if(CollUtil.isNotEmpty(updateList)) {
+						dmpInputTaskService.updateBatchById(updateList);
+					}
+				}
 			}
 		}
 		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery()
-				.in(DmpInputTaskEntity::getStatus, Arrays.asList(DmpInputTaskStatusEnum.INIT.getCode() 
-						, DmpInputTaskStatusEnum.FDS.getCode() , DmpInputTaskStatusEnum.MONGO.getCode()
-						, DmpInputTaskStatusEnum.DMP.getCode()))
+				.in(DmpInputTaskEntity::getStatus, execStatusList)
 				.in(CollUtil.isNotEmpty(ids) ,DmpInputTaskEntity::getId, ids)
 				.in(CollUtil.isNotEmpty(cfgInputIds) ,DmpInputTaskEntity::getCfgInputId, cfgInputIds)
 				.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())

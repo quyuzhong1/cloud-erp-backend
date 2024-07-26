@@ -114,6 +114,7 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 			dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
 			dmpInputTaskEntity.setTaskType(taskType.getCode());
 			dmpInputTaskEntity.setExecTimeout(dmpCfgInputDetailEntity.getExecTimeout());
+			dmpInputTaskEntity.setExtendJson(dmpCfgInputDetailEntity.getExtendJson());
 			
 			dmpInputTaskEntityList.add(dmpInputTaskEntity);
 			
