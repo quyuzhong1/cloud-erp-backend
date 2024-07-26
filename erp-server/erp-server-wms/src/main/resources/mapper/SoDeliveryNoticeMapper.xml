@@ -213,7 +213,7 @@
         from so_delivery_notice sdn
         inner join so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdnd.is_deleted = FALSE
         where sdn.is_deleted = false
-        and sdn.id = #{id}
+        and sdn.id = #{id} and sdnd.delivery_qty > sdnd.picking_qty
         <if test="ignoreInventorySkus != null and ignoreInventorySkus.size > 0">
             and sdnd.sku_no not in
             <foreach collection="ignoreInventorySkus" item="sku" open="(" separator="," close=")">
