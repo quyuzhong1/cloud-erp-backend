@@ -637,10 +637,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
                 if (MathUtil.compareTo(qty, approveQty) > MathUtil.ZERO) {
                     outInStockDTO.setQty((qty - approveQty) * bomChildrenSkuDTO.getQuantity());
-                    subList.add(outInStockDTO);
+                    addList.add(outInStockDTO);
                 } else if (MathUtil.compareTo(approveQty, qty) > MathUtil.ZERO) {
                     outInStockDTO.setQty((approveQty - qty) * bomChildrenSkuDTO.getQuantity());
-                    addList.add(outInStockDTO);
+                    subList.add(outInStockDTO);
                 } else {
                     log.info("无需要多退少补的库存需要变更");
                 }
