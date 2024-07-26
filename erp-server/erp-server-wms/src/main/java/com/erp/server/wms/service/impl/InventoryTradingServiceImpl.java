@@ -415,7 +415,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                     .set(InventoryEntity::getUpdateUserId, transactionDTO.getUserId())
                     .set(InventoryEntity::getUpdateUserName, transactionDTO.getUserName())
                     //条件
-                    .eq(InventoryEntity::getId, transactionDTO.getInventoryId());
+                    .eq(InventoryEntity::getId, inventoryEntity.getId());
 
             inventoryService.update(wrapper);
         }
