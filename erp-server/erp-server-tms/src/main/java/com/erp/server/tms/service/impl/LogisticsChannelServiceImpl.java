@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -645,6 +646,15 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             if (Objects.isNull(saleChannel)) {
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
+        }
+        //设置默认值
+        String trackQueryType = logisticsChannelEntity.getTrackQueryType();
+        if (StringUtils.isBlank(trackQueryType)){
+            logisticsChannelEntity.setTrackQueryType(TrackQueryTypeEnum.TRANSPORT_NO.getCode());
+        }
+        String undeliverableDecision = logisticsChannelEntity.getUndeliverableDecision();
+        if (StringUtils.isBlank(undeliverableDecision)){
+            logisticsChannelEntity.setUndeliverableDecision(UnDeliverableDecisionEnum.DESTROY.getCode());
         }
     }
 

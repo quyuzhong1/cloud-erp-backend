@@ -362,19 +362,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     public PagingVO<LogisticsBillDTO.PagingVO> paging(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
         LogisticsBillDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        String statusType = DictBasicEnum.LOGISTIC_TRACK_STATUS.getType();
-        List<DictBasicDTO.ViewDTO> trackStatusList = dictBasicService.getByKey(statusType);
-        String allFlag = TmsConstant.ALL;
-        String group = params.getType();
-        List<String> statusList;
-        if (group.equals(allFlag)) {
-            statusList = Collections.emptyList();
-        } else {
-            statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
-                    map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
-        }
-        IPage pageData = baseMapper.paging(query, params, statusList);
+        Page<LogisticsBillDTO.PagingVO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<LogisticsBillDTO.PagingVO> pageData = baseMapper.paging(query, params);
         List<LogisticsBillDTO.PagingVO> list = pageData.getRecords();
         fillPagingDb(list);
         return new PagingVO<>(pageData);
@@ -383,19 +372,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
 
     @Override
-    public Boolean exportExcel(LogisticsBillDTO.ExportDTO params, HttpServletResponse response) {
-        String statusType = DictBasicEnum.LOGISTIC_TRACK_STATUS.getType();
-        List<DictBasicDTO.ViewDTO> trackStatusList = dictBasicService.getByKey(statusType);
-        String allFlag = TmsConstant.ALL;
-        String group = params.getType();
-        List<String> statusList;
-        if (group.equals(allFlag)) {
-            statusList = Collections.emptyList();
-        } else {
-            statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
-                    map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
-        }
-        List<LogisticsBillDTO.PagingVO> list = baseMapper.listExport(params, statusList);
+    public Boolean exportExcel(LogisticsBillDTO.PagingParamDTO params, HttpServletResponse response) {
+        List<LogisticsBillDTO.PagingVO> list = baseMapper.listExport(params);
         fillPagingDb(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/logisticsBill.xlsx";
@@ -860,8 +838,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             return;
         }
         LocalDateTime now = LocalDateTime.now();
-        List<String> trackNoList = list.stream().map(LogisticsBillDTO.PagingVO::getTrackNo).distinct().collect(Collectors.toList());
-        List<LogisticsTrackEntity> trackList = logisticsTrackService.listByTrackNoList(trackNoList);
+        List<String> trackNoList = list.stream().filter(e -> TrackQueryTypeEnum.TRACK_NO.getCode().equals(e.getTrackQueryType()))
+                .map(LogisticsBillDTO.PagingVO::getTrackNo).distinct().collect(Collectors.toList());
+        List<String> transportNoList = list.stream().filter(e -> TrackQueryTypeEnum.TRANSPORT_NO.getCode().equals(e.getTrackQueryType()))
+                .map(LogisticsBillDTO.PagingVO::getTransportNo).distinct().collect(Collectors.toList());
+        //合并查询单号 track123不区分订单是运单还是跟踪单号
+        List<String> logisticsNoList = Stream.concat(transportNoList.stream(), trackNoList.stream()).distinct().collect(Collectors.toList());
+        List<LogisticsTrackEntity> trackList = logisticsTrackService.listByTrackNoList(logisticsNoList);
         String signCode = LogisticTrackStatusEnum.SIGN.getCode();
         for (LogisticsBillDTO.PagingVO item : list) {
             //是否签收
@@ -893,11 +876,19 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             String trackStatusName = LogisticTrackStatusEnum.getName(trackStatus);
             item.setTrackStatusName(trackStatusName);
             String trackNo = item.getTrackNo();
-            LogisticsTrackEntity trackEntity = trackList.stream().filter(t -> t.getTrackNo().equals(trackNo)).
-                    sorted(Comparator.comparing(LogisticsTrackEntity::getCreateTime).reversed()).findFirst().orElse(null);
+            String transportNo = item.getTransportNo();
+            String trackQueryType = item.getTrackQueryType();
+            String logisticsNo;
+            if (TrackQueryTypeEnum.TRACK_NO.getCode().equals(trackQueryType)){
+                logisticsNo = trackNo;
+            } else {
+                logisticsNo = transportNo;
+            }
+            LogisticsTrackEntity trackEntity = trackList.stream().filter(t -> t.getTrackNo().equals(logisticsNo)).max(Comparator.comparing(LogisticsTrackEntity::getTrackTime)).orElse(null);
             if (Objects.nonNull(trackEntity)) {
                 item.setTrackContent(trackEntity.getContent());
                 item.setUpdateTime(trackEntity.getUpdateTime());
+                item.setTrackTime(trackEntity.getTrackTime());
             }
             String orderType = item.getOrderType();
             String orderTypeName = OrderTypeEnum.getName(orderType);

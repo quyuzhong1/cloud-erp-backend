@@ -684,6 +684,18 @@ public class LogisticsChannelDTO implements Serializable {
          * 配送方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
          */
         private String deliveryType;
+        /**
+         * 不可达处理 退回:return/销毁:return 默认 return销毁
+         * UnDeliverableDecisionEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
+         */
+        private String undeliverableDecision;
+        /**
+         * 轨迹查询单号（运单号transportNo跟踪号trackNo）
+         * TrackQueryTypeEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = trackQueryType
+         */
+        private String trackQueryType;
     }
 
     @Data

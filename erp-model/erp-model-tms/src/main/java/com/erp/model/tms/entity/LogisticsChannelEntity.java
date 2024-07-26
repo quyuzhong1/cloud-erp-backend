@@ -199,6 +199,13 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
      */
     @TableField("undeliverable_decision")
     private String undeliverableDecision;
+    /**
+     * 轨迹查询单号（运单号transportNo跟踪号trackNo）
+     * TrackQueryTypeEnum
+     * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = trackQueryType
+     */
+    @TableField("track_query_type")
+    private String trackQueryType;
 
     public static final String MAIN_ID = "main_id";
 

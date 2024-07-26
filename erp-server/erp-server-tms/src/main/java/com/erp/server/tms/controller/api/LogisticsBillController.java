@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -14,10 +15,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.server.tms.query.LogisticsBillQueryHandler;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -80,6 +83,7 @@ public class LogisticsBillController extends BaseController {
             menuCode = "tms:logisticsBill:paging",
             tableAlias = "lb"
     )
+    @WebAdvanceQuery(handler = LogisticsBillQueryHandler.class)
     public ApiResult<PagingVO<LogisticsBillDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsBillDTO.PagingVO> pagingVO = logisticsBillService.paging(dto);
         return success(pagingVO);
@@ -98,7 +102,8 @@ public class LogisticsBillController extends BaseController {
             menuCode = "tms:logisticsBill:paging",
             tableAlias = "lb"
     )
-    public ApiResult exportExcel(@RequestBody @Valid LogisticsBillDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = LogisticsBillQueryHandler.class)
+    public ApiResult exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean result = logisticsBillService.exportExcel(dto, response);
         return result ? success() : failure();
     }
@@ -109,7 +114,13 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @GetMapping("/getTrackInfo")
-    public ApiResult<LogisticsTrackDTO.ViewDTO> listTrack(@RequestParam(value = "trackNo") String trackNo) {
+    public ApiResult<LogisticsTrackDTO.ViewDTO> listTrack(@RequestParam(value = "trackNo",required = false) String trackNo,@RequestParam(value = "transportNo",required = false) String transportNo) {
+        if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(transportNo)){
+            return failure("运单号和跟踪号不能同时为空");
+        }
+        if (StringUtils.isBlank(trackNo)){
+            trackNo = transportNo;
+        }
         LogisticsTrackDTO.ViewDTO list = logisticsTrackService.listByTrackNo(trackNo);
         return success(list);
 

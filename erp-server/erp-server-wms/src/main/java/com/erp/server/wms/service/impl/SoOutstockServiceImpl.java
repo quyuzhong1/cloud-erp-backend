@@ -967,9 +967,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //发货时间
             addDTO.setDeliveryTime(actualDeliveryDate);
             //轨迹单号
-            LogisticsBillDetailDTO.AddDTO addDetailDTO = new LogisticsBillDetailDTO.AddDTO();
-            addDetailDTO.setTrackNo(entity.getTrackNo());
-            addDTO.setDetailList(Arrays.asList(addDetailDTO));
+            List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>();
+            String trackNo = entity.getTrackNo();
+            if (StringUtils.isNotBlank(trackNo)){
+                for (String s : trackNo.split(",")) {
+                    LogisticsBillDetailDTO.AddDTO addDetailDTO = new LogisticsBillDetailDTO.AddDTO();
+                    addDetailDTO.setTrackNo(s);
+                    detailList.add(addDetailDTO);
+                }
+            }
+            addDTO.setDetailList(detailList);
             logisticsBillFeign.addLogisticsBill(addDTO);
 
 
