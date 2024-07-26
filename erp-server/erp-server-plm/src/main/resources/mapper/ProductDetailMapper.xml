@@ -320,6 +320,7 @@
     <select id="getNoSpecDetailById" resultType="com.erp.model.plm.dto.ProductNoDetailDTO">
         SELECT pi."id",
                pd.images_url,
+               pd.id as skuId,
                pd.sku_no,
                pd.product_state,
                pd.name,
