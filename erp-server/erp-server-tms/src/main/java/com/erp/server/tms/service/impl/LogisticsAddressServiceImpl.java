@@ -18,11 +18,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.LogisticsAddressMapper;
 import com.erp.server.tms.service.LogisticsAddressService;
@@ -37,6 +40,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
@@ -59,7 +63,8 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
 
     @Autowired
     private SysUserFeign sysUserFeign;
-
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     @Autowired
     @Lazy
@@ -228,10 +233,22 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
             return Collections.emptyList();
         }
         List<LogisticsAddressEntity> addressList =
-                this.lambdaQuery().select(LogisticsAddressEntity::getId,LogisticsAddressEntity::getName)
+                this.lambdaQuery().select(LogisticsAddressEntity::getId,LogisticsAddressEntity::getName,LogisticsAddressEntity::getShopId)
                 .eq(LogisticsAddressEntity::getType,dto.getType())
                 .in(LogisticsAddressEntity::getShopId, dto.getShopIds())
                 .list();
+        //填充店铺名称
+        List<String> shopIds = addressList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getShopId())).map(LogisticsAddressEntity::getShopId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(shopIds)){
+            List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
+            addressList.forEach(logisticsAddressEntity -> {
+                ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(logisticsAddressEntity.getShopId())).findFirst().orElse(null);
+                if (Objects.nonNull(shopInfoEntity)){
+                    String name = logisticsAddressEntity.getName();
+                    logisticsAddressEntity.setName(name +"【" + shopInfoEntity.getName() +"】");
+                }
+            });
+        }
         return BeanMapperUtils.copyList(LogisticsAddressDTO.ListDTO.class,addressList);
     }
 
