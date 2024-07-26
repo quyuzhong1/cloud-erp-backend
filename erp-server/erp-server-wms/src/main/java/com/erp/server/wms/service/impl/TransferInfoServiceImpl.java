@@ -225,6 +225,17 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public String add(TransferInfoDTO.AddDTO dto) {
+        List<TransferInfoDetailDTO.AddDTO> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            log.warn("调拨单的明细条数为0 dto={}", JSONUtil.toJsonStr(dto));
+            throw new ServiceException(ApiError.ERROR_DETAIL_IS_ZERO, "调拨单");
+        }
+        List<TransferInfoDetailDTO.AddDTO> addDetailList = detailList.stream().filter(item -> item.getQty() > 0).collect(Collectors.toList());
+        if(CollUtil.isEmpty(addDetailList)){
+            log.warn("调拨单大于0的明细条数为0 dto={}", JSONUtil.toJsonStr(dto));
+            throw new ServiceException(ApiError.ERROR_DETAIL_IS_ZERO, "调拨单数量大于0");
+        }
+        dto.setDetailList(addDetailList);
         TransferInfoEntity entity = new TransferInfoEntity();
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
