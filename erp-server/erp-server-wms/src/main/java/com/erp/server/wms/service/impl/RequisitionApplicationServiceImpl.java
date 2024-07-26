@@ -1022,7 +1022,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             throw new ServiceException("未找到要货申请主表数据");
         }
         String codes = requisitionApplicationList.stream().filter(obj -> StrUtil.equals(obj.getStatus(), RequisitionApplicationStatusEnum.HANDLE.getStatus())).map(RequisitionApplicationEntity::getCode).collect(Collectors.joining(","));
-        if (StrUtil.isNotBlank(codes) || isCheck) {
+        if (StrUtil.isNotBlank(codes) && isCheck) {
             throw new ServiceException(StrUtil.format("要货申请【{}】已处理不支持修改或删除拣货单",codes));
         }
 
