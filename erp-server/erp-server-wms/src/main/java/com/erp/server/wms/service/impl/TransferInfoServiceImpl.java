@@ -574,7 +574,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
      */
     private void updateVirtualInventoryTransCore (List<TransferInfoEntity> list,List<TransferInfoDetailEntity> detailList) {
 
-        List<TransferInfoEntity> pushList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode(), obj.getSourceType()))
+        List<TransferInfoEntity> pushList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode(), obj.getSourceType())
+                        || StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
         //要货申请来源扣减冻结库存
         updateRequistionApplicationInventory(pushList,detailList);
@@ -701,6 +702,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                     .filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(applicationDetailEntity)) {
                 throw new ServiceException("要货申请不能为空");
+            }
+            //虚拟仓库存随调出仓出
+            if (!StrUtil.equals(applicationDetailEntity.getFromWarehouseId(),detailEntity.getOutWarehouseId())) {
+                continue;
             }
             //调拨操作请求实体
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
