@@ -905,7 +905,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
             throw new ServiceException(ApiError.ERROR_99129);
         }
-        List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.listDetailByMainId(id);
+        List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.list(Wrappers.<SoDeliveryNoticeDetailEntity>lambdaQuery()
+                .eq(SoDeliveryNoticeDetailEntity::getMainId, id)
+                .gt(SoDeliveryNoticeDetailEntity::getPickingQty, 0));
         long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
         if (closeCount > 0) {
             throw new ServiceException(ApiError.ERROR_98068);
