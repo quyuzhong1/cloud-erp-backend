@@ -147,4 +147,11 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @return SoB2cLogisticsEntity
      */
     SoB2cLogisticsEntity getByTrackNoOrTransportNo(String logisticsCode);
+
+    /**
+     * 根据销售订单更新跟踪单号
+     * @param soId
+     * @param trackNo
+     */
+    void updateLogisticsBySoId(String soId, String trackNo);
 }
