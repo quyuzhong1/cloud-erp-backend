@@ -334,7 +334,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         // 判断是否已生成拣货单
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(dto.getId()));
         if (CollectionUtils.isNotEmpty(views)) {
-            throw new ServiceException(ApiError.ERROR_99130);
+            throw new ServiceException(ApiError.ERROR_99140);
         }
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
