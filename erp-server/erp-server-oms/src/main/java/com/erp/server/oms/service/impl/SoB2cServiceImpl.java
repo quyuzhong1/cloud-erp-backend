@@ -5444,10 +5444,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
         //是否中转
-        CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
-        ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
-        ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
-        Boolean isTransit = cfgRuleOutFeign.matchTransferRule(ruleDTO);
+        Boolean isTransit = false;
+        // 平台仓/海外仓出库单不中转
+        if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equalsIgnoreCase(sourceType)){
+            // B2C订单根据中转规则判断是否中转
+            CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
+            ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
+            ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
+            isTransit = cfgRuleOutFeign.matchTransferRule(ruleDTO);
+        }
         if (isTransit) {
             CfgSettingEntity cfgSettingEntity = cfgSettingFeign.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
             if (ObjectUtil.isEmpty(cfgSettingEntity)) {
