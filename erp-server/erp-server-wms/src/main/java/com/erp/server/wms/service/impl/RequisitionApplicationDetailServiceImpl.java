@@ -107,6 +107,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 .set(RequisitionApplicationDetailEntity::getToWarehouseId, toWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseName, toWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)
+                .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
                 .eq(RequisitionApplicationDetailEntity::getId, id);
         if (StringUtils.isNotBlank(fromVirtualWarehouseId)) {
             eq.set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId, fromVirtualWarehouseId)
