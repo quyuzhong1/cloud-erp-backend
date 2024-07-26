@@ -1129,6 +1129,8 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_WAREHOUSE_AREA(92238, "新增补货单时没有找到有效的库区"),
     ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
 
+    ERROR_DETAIL_IS_ZERO(92240, "【{}】的明细条数为0"),
+
 
     /**
      * OMS 错误
