@@ -215,7 +215,7 @@
         where sdn.is_deleted = false
         and sdn.id = #{id} and sdnd.delivery_qty > sdnd.picking_qty
         <if test="ignoreInventorySkus != null and ignoreInventorySkus.size > 0">
-            and sdnd.sku_no not in
+            and sdnd.sku_id not in
             <foreach collection="ignoreInventorySkus" item="sku" open="(" separator="," close=")">
                 #{sku}
             </foreach>
