@@ -20,7 +20,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -33,7 +32,6 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
@@ -41,7 +39,6 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
-import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -453,10 +450,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setDetailList(addDTOS);
             warehouseLocationMoveService.addAndApprove(moveDto);
         }
-
-        //判断虚拟库存是否足够,多添少不补(出库时统一扣减多余冻结)
-        handleVirtualInventoryQty(entity);
-
         List<String> sourceDetailIds = detailList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量
@@ -466,64 +459,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         }
     }
 
-    /**
-     * 处理虚拟仓数量
-     * @author will
-     * @date 2024/7/25 21:38
-     * @param entity
-     */
-    private void handleVirtualInventoryQty (PickingListsEntity entity) {
-        if (ObjectUtil.isEmpty(entity) || !StrUtil.equals(entity.getSourceType(),SourceTypeEnum.REQUISITION_APPLICATION.getCode())) {
-           return;
-        }
-
-        //关联要货申请
-        RequisitionApplicationEntity applicationEntity = requisitionApplicationService.getById(entity.getSourceId());
-        if (ObjectUtil.isEmpty(applicationEntity)) {
-            throw new ServiceException(StrUtil.format("拣货单【{}】关联的要货申请未找到",entity.getCode()));
-        }
-        List<RequisitionApplicationDetailEntity> applicationDetailList = requisitionApplicationDetailService.listByMainIds(Arrays.asList(applicationEntity.getId()));
-        if (ObjectUtil.isEmpty(applicationEntity)) {
-            throw new ServiceException(StrUtil.format("拣货单【{}】关联的要货申请明细未找到",entity.getCode()));
-        }
-        List<String> applicationDetailIdList = applicationDetailList.stream().map(RequisitionApplicationDetailEntity::getId).collect(Collectors.toList());
-        List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(applicationDetailIdList);
-        //添加
-        List<VirtualInventoryStockDTO.OutInStockDTO> addList = new ArrayList<>();
-
-        for (RequisitionApplicationDetailEntity applicationDetailEntity : applicationDetailList) {
-
-            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-            outInStockDTO.setBillDate(LocalDate.now());
-            outInStockDTO.setSourceId(applicationEntity.getId());
-            outInStockDTO.setSourceCode(applicationEntity.getCode());
-            outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
-            outInStockDTO.setSourceDetailId(applicationDetailEntity.getId());
-            outInStockDTO.setBillDate(LocalDate.now());
-            outInStockDTO.setSkuId(applicationDetailEntity.getSkuId());
-            outInStockDTO.setSkuNo(applicationDetailEntity.getSkuNo());
-            outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
-            if (StrUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
-                continue;
-            }
-            outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
-            //拣货数据
-            List<PickingDetailEntity> pickingDetailList = pickingDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), applicationDetailEntity.getId())).collect(Collectors.toList());
-            Integer totalQty = pickingDetailList.stream().map(PickingDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            Integer pickingQty = applicationDetailEntity.getPickingQty();
-            if (MathUtil.compareTo(totalQty,pickingQty) > MathUtil.ZERO) {
-                outInStockDTO.setQty(totalQty - pickingQty);
-                addList.add(outInStockDTO);
-                continue;
-            }
-        }
-        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isNotEmpty(addList)) {
-            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
-            stockParamDTO.setParamList(addList);
-            virtualInventoryTransCoreService.approve(stockParamDTO);
-        }
-    }
 
     private void checkCombination(PickingListsEntity entity, PickingListsDTO.UpdateDTO dto) {
 

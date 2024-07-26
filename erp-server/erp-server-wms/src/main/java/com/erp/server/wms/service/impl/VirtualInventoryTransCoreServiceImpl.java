@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -107,7 +109,7 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
         }
 
         List<String> skuIdList = paramList.stream().map(VirtualInventoryStockDTO.OutInStockDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
         if (CollectionUtil.isEmpty(bomChildrenSkuList)) {
             return resultList;
         }
@@ -121,6 +123,15 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
             if (CollectionUtil.isEmpty(childList)) {
                 resultList.add(outInStockDTO);
                 continue;
+            }
+            //优先取录入的bom版本，没有则取最新bom版本
+            if (StrUtil.isNotBlank(outInStockDTO.getBomVersion())) {
+                childList = childList.stream().filter(obj -> StrUtil.equals(obj.getBomVersion(),outInStockDTO.getBomVersion())).collect(Collectors.toList());
+            } else {
+                childList.stream().max(Comparator.comparing(obj -> obj.getBomVersion())).orElse(null);
+            }
+            if (CollectionUtil.isEmpty(childList)) {
+                throw new ServiceException(StrUtil.format("SKU【】未找到版本为【{}】的BOM",outInStockDTO.getSkuId(),outInStockDTO.getBomVersion()));
             }
             for (BomChildrenSkuDTO bomChildrenSkuDTO: childList) {
                 VirtualInventoryStockDTO.OutInStockDTO newOutInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
