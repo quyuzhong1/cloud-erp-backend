@@ -333,7 +333,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //执行虚拟仓出库
         if (CollectionUtils.isNotEmpty(allocationParamList)) {
             VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
-            allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
+            allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
             allocationDto.setParamList(allocationParamList);
             virtualInventoryTransCoreService.approve(allocationDto);
 
