@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -129,7 +128,8 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
             if (StrUtil.isNotBlank(outInStockDTO.getBomVersion())) {
                 childList = childList.stream().filter(obj -> StrUtil.equals(obj.getBomVersion(),outInStockDTO.getBomVersion())).collect(Collectors.toList());
             } else {
-                childList = Collections.singletonList(childList.stream().max(Comparator.comparing(obj -> obj.getBomVersion())).orElse(null));
+                String bomVersion = childList.stream().max(Comparator.comparing(BomChildrenSkuDTO::getBomVersion)).map(BomChildrenSkuDTO::getBomVersion).get();
+                childList = childList.stream().filter(obj -> StrUtil.equals(obj.getBomVersion(),bomVersion)).collect(Collectors.toList());
             }
             if (CollectionUtil.isEmpty(childList)) {
                 throw new ServiceException(StrUtil.format("SKU【】未找到版本为【{}】的BOM",outInStockDTO.getSkuId(),outInStockDTO.getBomVersion()));
