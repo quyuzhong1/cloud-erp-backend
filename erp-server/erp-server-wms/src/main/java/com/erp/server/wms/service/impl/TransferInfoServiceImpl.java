@@ -669,13 +669,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 }
             }
         }
-        if (CollectionUtils.isEmpty(outList)) {
+        if (CollectionUtils.isNotEmpty(outList)) {
             VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
             stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
             stockParamDTO.setParamList(outList);
             virtualInventoryTransCoreService.approve(stockParamDTO);
         }
-        if (CollectionUtils.isEmpty(subList)) {
+        if (CollectionUtils.isNotEmpty(subList)) {
             VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
             stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_RETURN_HANDLE.getCode());
             stockParamDTO.setParamList(subList);
