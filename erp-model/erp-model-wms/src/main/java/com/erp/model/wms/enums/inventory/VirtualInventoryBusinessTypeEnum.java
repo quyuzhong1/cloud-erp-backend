@@ -58,20 +58,6 @@ public enum VirtualInventoryBusinessTypeEnum {
      */
     SO_B2C_DELIVERY_CANCEL("so_b2c_delivery_cancel", "10","b2c发货单"),
 
-    /**
-     * 要货申请处理，减可用，加冻结
-     */
-    REQUISITION_APPLICATION_HANDLE("requisition_application_handle", "11","要货申请处理"),
-
-    /**
-     * 要货申请回退处理，减冻结，加可用
-     */
-    REQUISITION_APPLICATION_RETURN_HANDLE("requisition_application_return_handle", "12","要货申请回退处理"),
-
-    /**
-     * 直接调拨单审核，减冻结
-     */
-    TRANSFER_INFO_APPROVE("transfer_info_approve", "13","直接调波单审核"),
     ;
 
     private String code;
