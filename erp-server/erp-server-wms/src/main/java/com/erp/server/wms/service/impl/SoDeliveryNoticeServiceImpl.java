@@ -1312,30 +1312,16 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public List<SoDeliveryNoticeDTO.PickingViewDTO> generatePickingView(String id) {
+    public PagingVO<SoDeliveryNoticeDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page) {
         //判断是否存在下游单据，已有下游单据就不能再生成拣货单
-        List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySourceId(Collections.singletonList(id));
+        List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySourceId(Collections.singletonList(page.getParams()));
         if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
             throw new ServiceException(ApiError.ERROR_99110, "销售出库单");
         }
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> details = soDeliveryNoticeDetailService.listDetailByMainId(id);
-        List<SoDeliveryNoticeDTO.PickingViewDTO> result = new ArrayList<>();
-        for (SoDeliveryNoticeDetailEntity detail : details) {
-            if (ignoreInventorySkus.contains(detail.getSkuId()) || (detail.getDeliveryQty() - detail.getPickingQty() <= 0)){
-                continue;
-            }
-            SoDeliveryNoticeDTO.PickingViewDTO viewDTO = new SoDeliveryNoticeDTO.PickingViewDTO();
-            viewDTO.setDetailId(detail.getId());
-            viewDTO.setSkuId(detail.getSkuId());
-            viewDTO.setSkuNo(detail.getSkuNo());
-            viewDTO.setPlanQty(detail.getDeliveryQty());
-            viewDTO.setPickedQuantity(detail.getPickingQty());
-            viewDTO.setUnpickedQuantity(detail.getDeliveryQty() - detail.getPickingQty());
-            result.add(viewDTO);
-        }
-        return result;
+        IPage<SoDeliveryNoticeDTO.PickingViewDTO> picking = baseMapper.pagingPicking(new Page<>(page.getCurrPage(), page.getPageSize()), page.getParams(), ignoreInventorySkus);
+        return new PagingVO<>(picking);
     }
 
     @Override

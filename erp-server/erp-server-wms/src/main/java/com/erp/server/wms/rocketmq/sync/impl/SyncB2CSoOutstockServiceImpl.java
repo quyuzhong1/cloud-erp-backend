@@ -102,6 +102,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
+
     private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
 
     static {
@@ -116,6 +117,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         WDT_NULL_LOCATION.add("发货暂存");
         WDT_NULL_LOCATION.add("采购未上架");
     }
+
     /**
      * 同步金蝶的销售出库单
      *

@@ -170,9 +170,9 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
 
     /**
      * 生成拣货单弹窗
-     * @param id 要货申请id
+     * @param page 要货申请id
      */
-    List<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(String id);
+    PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page);
     /**
      * 生成拣货单
      * @param picking 拣货参数

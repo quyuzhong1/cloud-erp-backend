@@ -333,7 +333,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //执行虚拟仓出库
         if (CollectionUtils.isNotEmpty(allocationParamList)) {
             VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
-            allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
+            allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
             allocationDto.setParamList(allocationParamList);
             virtualInventoryTransCoreService.approve(allocationDto);
 
@@ -704,7 +704,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //执行虚拟仓入库
             if (CollectionUtils.isNotEmpty(allocationParamList)) {
                 VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
-                allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
+                allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_RETURN_HANDLE.getCode());
                 allocationDto.setParamList(allocationParamList);
                 virtualInventoryTransCoreService.approve(allocationDto);
                 List<RequisitionApplicationDetailEntity> haveFromVwList = detailEntityList.stream().filter(item -> StringUtils.isNotBlank(item.getFromVirtualWarehouseId())).collect(Collectors.toList());
@@ -1101,30 +1101,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
-    public List<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(String id) {
+    public PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page) {
         //判断是否存在下游单据，已有下游单据就不能再生成拣货单
-        FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(id);
+        FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(page.getParams());
         if (ObjectUtil.isNotEmpty(firstMileDelivery)) {
             throw new ServiceException(ApiError.ERROR_99110, "头程发货单");
         }
-        List<RequisitionApplicationDetailEntity> details = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(id));
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
-        List<RequisitionApplicationDTO.PickingViewDTO> result = new ArrayList<>();
-        for (RequisitionApplicationDetailEntity detail : details) {
-            if (ignoreInventorySkus.contains(detail.getSkuId()) || (detail.getApproveQty() - detail.getPickingQty() <= 0)){
-                continue;
-            }
-            RequisitionApplicationDTO.PickingViewDTO viewDTO = new RequisitionApplicationDTO.PickingViewDTO();
-            viewDTO.setDetailId(detail.getId());
-            viewDTO.setSkuId(detail.getSkuId());
-            viewDTO.setSkuNo(detail.getSkuNo());
-            viewDTO.setPlanQty(detail.getApproveQty());
-            viewDTO.setPickedQuantity(detail.getPickingQty());
-            viewDTO.setUnpickedQuantity(detail.getApproveQty() - detail.getPickingQty());
-            result.add(viewDTO);
-        }
-        return result;
+        IPage<RequisitionApplicationDTO.PickingViewDTO> picking = baseMapper.pagingPicking(new Page<>(page.getCurrPage(), page.getPageSize()), page.getParams(), ignoreInventorySkus);
+        return new PagingVO<>(picking);
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -167,6 +168,36 @@ public class PickingListsDTO {
     public static class PrintView {
 
         /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 客户/渠道名
+         */
+        private String channelName;
+        /**
+         * 打印时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime printTime;
+        /**
+         * 打印人
+         */
+        private String printUserName;
+        /**
+         * 经办人
+         */
+        private String handlingUserName;
+        /**
+         * 打印明细
+         */
+        private List<PrintDetailView> printDetailViews;
+    }
+
+    @Getter
+    @Setter
+    public static class PrintDetailView {
+        /**
          * 产品id
          */
         private String skuId;
@@ -174,6 +205,10 @@ public class PickingListsDTO {
          * 产品编码
          */
         private String skuNo;
+        /**
+         * 三方sku
+         */
+        private String thirdSku;
         /**
          * 来源单号
          */
@@ -203,6 +238,7 @@ public class PickingListsDTO {
             this.skuId = detail.getSkuId();
             this.skuNo = detail.getSkuNo();
             this.productName = productName;
+            this.sourceCode = entity.getSourceCode();
             this.pickingQty = detail.getQty();
             this.warehouseId = entity.getWarehouseId();
             this.warehouseName = entity.getWarehouseName();
