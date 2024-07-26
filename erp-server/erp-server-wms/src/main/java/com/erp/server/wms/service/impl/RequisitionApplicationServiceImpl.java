@@ -902,8 +902,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(detailEntityList)) {
             detailEntityList.forEach(detailEntity -> {
-                if (StringUtils.isNotBlank(detailEntity.getFromVirtualWarehouseId())) {
-                    RequisitionApplicationDTO.HandleListDTO handleListDTO = new RequisitionApplicationDTO.HandleListDTO();
+                if (StringUtils.isNotBlank(detailEntity.getFromVirtualWarehouseId()) && MathUtil.compareTo(detailEntity.getVirtualFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {                    RequisitionApplicationDTO.HandleListDTO handleListDTO = new RequisitionApplicationDTO.HandleListDTO();
                     BeanUtils.copyProperties(detailEntity, handleListDTO);
                     handleListDTO.setSourceDetailId(detailEntity.getId());
                     handleListDTO.setSourceId(entity.getId());
