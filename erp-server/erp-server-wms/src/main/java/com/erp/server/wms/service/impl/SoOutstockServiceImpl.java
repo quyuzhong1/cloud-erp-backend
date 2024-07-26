@@ -1114,7 +1114,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             });
             list.forEach(entity -> {
                 //推送旺店通
-                this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
+                this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
             });
 //            //修改中转报关单订单出库状态
 //            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
