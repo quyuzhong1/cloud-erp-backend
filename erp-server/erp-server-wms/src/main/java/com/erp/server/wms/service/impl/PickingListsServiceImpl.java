@@ -452,6 +452,10 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setDetailList(addDTOS);
             warehouseLocationMoveService.addAndApprove(moveDto);
         }
+
+        //判断虚拟库存是否足够,多添少不补(出库时统一扣减多余冻结)
+        handleVirtualInventoryQty(entity);
+
         List<String> sourceDetailIds = detailList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量
@@ -459,9 +463,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }
-
-        //判断虚拟库存是否足够,多添少不补(出库时统一扣减多余冻结)
-        handleVirtualInventoryQty(entity);
     }
 
     /**
