@@ -318,27 +318,27 @@
     <!-- 查询仓库统计数据 -->
     <select id="listWarehouseStatistics"
             resultType="com.erp.model.wms.dto.VirtualInventoryDTO$WarehouseStatisticsExcelDTO">
-        select vi.sku_id,pd.sku_no as skuNo,pd.name as productName,vi.warehouse_id,wh.name as warehouseName,wh.kingdee_warehouse_code as warehouseCode,vi.usableQty,COALESCE(inv.usableQty,0) as distributionQty,(vi.usableQty - COALESCE(inv.usableQty,0)) as unDistributionQty from
+        select diff.sku_id,pd.sku_no as skuNo,pd.name as productName,diff.warehouse_id,wh.name as warehouseName,wh.kingdee_warehouse_code as warehouseCode,diff.usableQty,COALESCE(inv.usableQty,0) as distributionQty,(diff.usableQty - COALESCE(inv.usableQty,0)) as unDistributionQty from
           (select
                vi.sku_id,
                vi.warehouse_id,
                sum(vi.qty) as usableQty
            from inventory vi
            where vi.is_deleted = false and vi.dict_inventory_status = 'usable'
-           group by vi.sku_id , vi.warehouse_id) vi
+           group by vi.sku_id , vi.warehouse_id) diff
            left join (
            select inv.sku_id , inv.warehouse_id ,sum(inv.qty) as usableQty from virtual_inventory inv
            where inv.is_deleted = false group by inv.sku_id , inv.warehouse_id
-        ) inv on inv.sku_id = vi.sku_id and inv.warehouse_id = vi.warehouse_id
-        left join product_detail pd on vi.sku_id = pd.id and pd.is_deleted = false
-        left join warehouse wh on vi.warehouse_id = wh.id and wh.is_deleted = false
+        ) inv on inv.sku_id = diff.sku_id and inv.warehouse_id = diff.warehouse_id
+        left join product_detail pd on diff.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on diff.warehouse_id = wh.id and wh.is_deleted = false
         <where>
             ${params.sqlMap.default}
             <if test="params.isDiff != null and params.isDiff == true">
-                and  COALESCE(inv.usableQty,0) > vi.usableQty
+                and  COALESCE(inv.usableQty,0) > diff.usableQty
             </if>
             <if test="params.isDiff != null and params.isDiff == false">
-                and  vi.usableQty >= COALESCE(inv.usableQty,0)
+                and  diff.usableQty >= COALESCE(inv.usableQty,0)
             </if>
         </where>
     </select>
