@@ -109,4 +109,9 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO.ListDTO>
      */
     List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceIdList(List<String> sourceIdList);
+
+    /**
+     * 获取无需库存或已拣货数量大于0得
+     */
+    List<SoDeliveryNoticeDetailEntity> listNoInventoryOrPicking(String id, List<String> noInventorySku);
 }

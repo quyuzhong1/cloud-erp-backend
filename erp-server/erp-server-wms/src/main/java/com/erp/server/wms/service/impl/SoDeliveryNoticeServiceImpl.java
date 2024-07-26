@@ -905,9 +905,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
             throw new ServiceException(ApiError.ERROR_99129);
         }
-        List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.list(Wrappers.<SoDeliveryNoticeDetailEntity>lambdaQuery()
-                .eq(SoDeliveryNoticeDetailEntity::getMainId, id)
-                .gt(SoDeliveryNoticeDetailEntity::getPickingQty, 0));
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.listNoInventoryOrPicking(id, noInventorySkuIds);
         long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
         if (closeCount > 0) {
             throw new ServiceException(ApiError.ERROR_98068);
@@ -915,8 +915,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoInfoEntity info = soInfoFeign.getSoInfoById(entity.getSourceId());
         List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(entity.getSourceId()));
         SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getCustomerId().equals(info.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
-        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
-        List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+
         //是否中转
         CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
         ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
