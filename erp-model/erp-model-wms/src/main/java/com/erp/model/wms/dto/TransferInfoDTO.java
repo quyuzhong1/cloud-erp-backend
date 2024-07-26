@@ -49,7 +49,7 @@ public class TransferInfoDTO implements Serializable {
         private String  code;
 
         /**
-         * 来源类型【可排序】(REQUISITION_APPLICATION_HANDLE、REQUISITION_APPLICATION_FINISH、FIRST_MILE_DELIVERY、FIRST_MILE_DELIVERY_TO_ULANZI、FIRST_MILE_DELIVERY_FROM_ULANZI)来源不支持修改
+         * 来源类型【可排序】(firstMileDelivery、firstMileDeliveryToUlanzi、firstMileDeliveryFromUlanzi、requisitionApplicationHandle、requisitionApplicationFinish)来源不支持修改
          */
         private String sourceType;
         /**
