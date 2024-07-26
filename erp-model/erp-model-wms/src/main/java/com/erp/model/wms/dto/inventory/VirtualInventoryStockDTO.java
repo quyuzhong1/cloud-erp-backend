@@ -188,6 +188,10 @@ public class VirtualInventoryStockDTO implements Serializable {
             @NotNull(message = "库存变更数量不能为空")
             private Integer qty;
 
+            /**
+             * bom版本
+             */
+            private String bomVersion;
 
             public static InOutStockDTO initByReturnOrder(PoReturnEntity entity, PoReturnDetailEntity detail, InventorySourceTypeEnum sourceType, Integer qty, InventoryStatusEnum inventoryStatus) {
                 InOutStockDTO inOutStockDTO = new InOutStockDTO();
