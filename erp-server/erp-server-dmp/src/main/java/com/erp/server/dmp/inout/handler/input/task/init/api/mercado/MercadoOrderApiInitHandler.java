@@ -8,6 +8,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
+import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTikTokApiInitRequest;
@@ -15,8 +16,10 @@ import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandl
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.mercado.constant.MercadoConstant;
+import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
@@ -40,7 +43,7 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
     @Resource
-    private TikTokSdkClientService tikTokSdkClientService;
+    private MercadoSdkClientService mercadoSdkClientService;
 
 
     @Override
@@ -51,7 +54,7 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
 
-        TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(nextLevelId);
+        MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(nextLevelId);
         if (ObjectUtil.isEmpty(shopInfoDTO)) {
             throw new ServiceException("TikTok店铺id：" + nextLevelId + "未找到对应的店铺信息");
         }
@@ -59,7 +62,8 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
 
         List<OrdersBean> resultsBeanList = new ArrayList<>();
         String url = MercadoConstant.URL;
-        String path = "/marketplace/orders/search";
+        String path = dmpInputApiInitRequest.getApiType();
+
         //每次最多获取200条
         Integer pageSize = 200;
         //当前页数

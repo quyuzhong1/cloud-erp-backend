@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.mercado;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -10,6 +11,7 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -18,8 +20,11 @@ import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sdk.oms.mercado.constant.MercadoConstant;
+import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.cost.CostDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
@@ -42,11 +47,19 @@ import java.util.*;
 @Scope("prototype")
 public class MercadoOrdeCostInitHandler extends DmpInputInitHandler {
 	@Resource
-    private TikTokSdkClientService tikTokSdkClientService;
-	
+    private MercadoSdkClientService mercadoSdkClientService;
+
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getParentTaskId()).list();
 
+		if (CollectionUtil.isEmpty(list)) {
+			return new ArrayList<>();
+		}
+		List<DmpInputTaskEntity> parentTaskEntityList = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, list.get(0).getParentTaskId()).list();
+		if (CollectionUtil.isEmpty(parentTaskEntityList)) {
+			return new ArrayList<>();
+		}
 		List<Map<String, Object>> findMongoData = null;
 		String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
 		if (StringUtils.isNotBlank(parentStorageName)) {
@@ -57,16 +70,15 @@ public class MercadoOrdeCostInitHandler extends DmpInputInitHandler {
 		if (findMongoData == null) {
 			return new ArrayList<>();
 		}
-
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-		TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
+		MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(parentTaskEntityList.get(0).getNextLevelId());
 		if (ObjectUtil.isEmpty(shopInfoDTO)) {
-			throw new ServiceException("TikTok店铺id：" + nextLevelId + "未找到对应的店铺信息");
+			throw new ServiceException("TikTok店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
 		}
 
 		//平台接口地址
-		String url = TikTokConstant.URL;
+		String url = MercadoConstant.URL;
 		String typeId = dmpCfgInputEntity.getTypeId();
 		DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
 

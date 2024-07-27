@@ -20,9 +20,12 @@ import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import com.sdk.oms.mercado.constant.MercadoConstant;
+import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.cost.CostDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
@@ -48,7 +51,7 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 	@Resource
-    private TikTokSdkClientService tikTokSdkClientService;
+	private MercadoSdkClientService mercadoSdkClientService;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -68,13 +71,13 @@ public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 
 		List<String> orderIds = findMongoData.stream().map(req -> req.get("fid").toString()).distinct().collect(Collectors.toList());
 
-		TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
+		MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
 		if (ObjectUtil.isEmpty(shopInfoDTO)) {
-			throw new ServiceException("TikTok店铺id：" + nextLevelId + "未找到对应的店铺信息");
+			throw new ServiceException("TikTok店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
 		}
 
 		//平台接口地址
-		String url = TikTokConstant.URL;
+		String url = MercadoConstant.URL;
 		String typeId = dmpCfgInputEntity.getTypeId();
 		DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
 
@@ -88,13 +91,11 @@ public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 			//设置请求头
 			Map<String, String> orderHeaderMap = new HashMap<>(1);
 			orderHeaderMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
-
+//			https://api.mercadolibre.com/marketplace/orders/2000007633674134
 			//拉取数据
 			ApiResult orderResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
 			if (!Objects.equals(orderResult.getCode(), 200) && !Objects.equals(orderResult.getCode(), 201)) {
-				log.error("调用url={},入参params={}, 美客多marketplace/orders数据失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(orderResult));
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-						url + path, orderParams.toString(), JSONUtil.toJsonStr(orderResult)));
+				continue;
 			}
 
 			//解析数据
