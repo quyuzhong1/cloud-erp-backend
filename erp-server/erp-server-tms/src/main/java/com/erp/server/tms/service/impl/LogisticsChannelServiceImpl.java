@@ -649,11 +649,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         //设置默认值
         String trackQueryType = logisticsChannelEntity.getTrackQueryType();
-        if (StringUtils.isBlank(trackQueryType)){
+        if (StringUtils.isBlank(trackQueryType) && StringUtils.isBlank(logisticsChannelEntity.getId())){
             logisticsChannelEntity.setTrackQueryType(TrackQueryTypeEnum.TRANSPORT_NO.getCode());
         }
         String undeliverableDecision = logisticsChannelEntity.getUndeliverableDecision();
-        if (StringUtils.isBlank(undeliverableDecision)){
+        if (StringUtils.isBlank(undeliverableDecision) && StringUtils.isBlank(logisticsChannelEntity.getId())){
             logisticsChannelEntity.setUndeliverableDecision(UnDeliverableDecisionEnum.DESTROY.getCode());
         }
     }
