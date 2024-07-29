@@ -236,7 +236,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         //获取系统配置的物料属性控制
         List<PlmCfgSettingDTO.MaterialAttributeControlDetail> materialAttributeControlDetailList = cfgSettingService.view().getMaterialAttributeControl().getDetailList();
         if(CollectionUtils.isNotEmpty(materialAttributeControlDetailList)){
-            PlmCfgSettingDTO.MaterialAttributeControlDetail materialAttributeControlDetail = materialAttributeControlDetailList.stream().filter(v->v.getMaterialAttributeList().contains(productInfoEntity.getProperty())).findFirst().orElse(null);
+            PlmCfgSettingDTO.MaterialAttributeControlDetail materialAttributeControlDetail = materialAttributeControlDetailList.stream().filter(v->v.getMaterialAttributeList().contains(productInfoEntity.getPropertyId())).findFirst().orElse(null);
             if(Objects.nonNull(materialAttributeControlDetail)) {
                 resultMap.put("allowProduction", materialAttributeControlDetail.isAllowProduction());
                 resultMap.put("allowInventory", materialAttributeControlDetail.isAllowInventory());
