@@ -118,7 +118,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             this.saveCurrTransactionFlow(transactionDTO);
         }
         // 更新库存交易记录 剩余库存
-        this.updateInventoryTransaction(transactionDTO);
+        this.updateInventoryTransaction(transactionDTO,isApprove);
     }
 
     /**
@@ -383,7 +383,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * @param transactionDTO    库存交易信息
      */
     private void updateInventory(InventoryTransactionDTO transactionDTO) {
-        InventoryEntity inventoryEntity = null;
+        InventoryEntity inventoryEntity;
         if(null != transactionDTO.getInventoryId()) {
             inventoryEntity = inventoryService.getById(transactionDTO.getInventoryId());
         }else{
@@ -517,8 +517,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     /**
      * 更新库存交易 的库存数量
      * @param transactionDTO    库存交易信息
+     * @param isApprove     是否审批
      */
-    private void updateInventoryTransaction(InventoryTransactionDTO transactionDTO) {
+    private void updateInventoryTransaction(InventoryTransactionDTO transactionDTO,boolean isApprove) {
         if(null == transactionDTO.getInventoryId()) {
             ServiceException.runError("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}],inventory_id为空,请让【实施工程师】协调开发人员处理",
                     transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),transactionDTO.getWarehouseLocationName(),transactionDTO.getInventoryStatusName());
@@ -527,11 +528,17 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         LambdaUpdateWrapper<TransactionFlowEntity> wrapper = new LambdaUpdateWrapper<>();
         wrapper.setSql("cur_inventory_qty = cur_inventory_qty + " + transactionDTO.getQty())
                 .set(TransactionFlowEntity::getUpdateTime, LocalDateTime.now())
-                .set(TransactionFlowEntity::getUpdateUserId, transactionDTO.getUserId())
-                .set(TransactionFlowEntity::getUpdateUserName, transactionDTO.getUserName())
                 //条件
-                .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId())
-                .gt(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate());
+                .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId());
+
+        if(isApprove) {
+            // 审批时，只更新单据日期之后的交易记录
+            wrapper.gt(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate());
+        } else {
+            // 反审批时，只更新单据日期及之后的交易记录
+            wrapper.ge(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate());
+            wrapper.gt(TransactionFlowEntity::getId, transactionDTO.getId());
+        }
 
         transactionFlowService.update(wrapper);
 
