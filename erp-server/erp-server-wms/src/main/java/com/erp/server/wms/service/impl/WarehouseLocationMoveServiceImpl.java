@@ -43,6 +43,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -124,6 +125,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private SyncWdtOtherInStockService wdtOtherInStockService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+
+    @Resource
+    private DmpPushWdtFeign dmpPushWdtFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -597,7 +601,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             unSaveTaskList.add(taskFeignDTO);
             if(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)){
                 //其他入库单的中间表数据
-                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), moveDetailEntity.getWarehouseId(), inCode, inWarehouseId, inGoods);
+                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), moveDetailEntity.getWarehouseId(), outCode, outWarehouseId, outGoods);
                 wdtDtoList.add(addDTO);
             }else {
                 //其他出库单的中间表数据
@@ -614,6 +618,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 }
             }
         });
+
+        //批量保存中间表数据
+        dmpPushWdtFeign.addBatch(wdtDtoList);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
