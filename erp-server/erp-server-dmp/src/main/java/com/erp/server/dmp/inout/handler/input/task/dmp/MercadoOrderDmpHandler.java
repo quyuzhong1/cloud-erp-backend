@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
@@ -46,18 +47,14 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                 if (shipmentId != null) {
                     Map<String, Object> shipmentMap = dmpInputMongoChildList.stream().filter(req -> req.get("fid").equals(shipmentId)).findFirst().orElse(null);
 
-
-
-
+                    dmpDataMap.put("logisticsCode", shipmentMap.get("trackingNumber"));
 
                     //物流状态
                     Map<String, Object> logisticMap = (Map<String, Object>) shipmentMap.get("logistic");
                     String logisticType = "";
-                    Object modeObj = shipmentMap.get("mode");
-                    Object typeObj = shipmentMap.get("type");
                     if (shipmentId != null) {
-                        String mode = shipmentMap.get("mode").toString();
-                        String type = shipmentMap.get("typeObj").toString();
+                        String mode = String.valueOf(logisticMap.get("mode"));
+                        String type = String.valueOf(logisticMap.get("type"));
 
                         if ("me2".equalsIgnoreCase(mode) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(type)) {
                             //如果是平台仓，状态审核通过
@@ -112,6 +109,7 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     Object orderStatusObj = dmpDataMap.get("status");
                     if (orderStatusObj != null) {
                         String orderStatus = String.valueOf(statusObj);
+                        dmpDataMap.put("platformOriginalStatus", orderStatus);
                         if ("invalid".equalsIgnoreCase(orderStatus)) {
                             dmpDataMap.put("invalidStatus", Boolean.TRUE);
                         } else if ("cancelled".equalsIgnoreCase(orderStatus)) {
@@ -119,17 +117,49 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                         }
                     }
 
+                    //买家备注
+                    Object feedbackObj = dmpDataMap.get("feedback");
+                    if (feedbackObj != null) {
+                        Map<String, Object> feedbackMap = (Map<String, Object>) feedbackObj;
+                        dmpDataMap.put("buyerRemark", feedbackMap.get("purchase"));
 
+                    }
+
+                    //支付时间
+                    Object paymentsObj = dmpDataMap.get("payments");
+                    if (paymentsObj != null) {
+                        List<Map<String, Object>> feedbackList = (List<Map<String, Object>>) paymentsObj;
+                        if (CollectionUtil.isNotEmpty(feedbackList)) {
+                            dmpDataMap.put("payTime", feedbackList.get(0).get("dateCreated"));
+                            dmpDataMap.put("currencyCode", feedbackList.get(0).get("currencyId"));
+                            dmpDataMap.put("payAmount", feedbackList.get(0).get("totalPaidAmount"));
+                            dmpDataMap.put("allAmount", feedbackList.get(0).get("transactionAmount"));
+                            dmpDataMap.put("shippingCost", feedbackList.get(0).get("shippingAmount"));
+                        }
+                    }
+
+                    //基本汇率
+                    Object orderItemsObj = dmpDataMap.get("orderItems");
+                    if (orderItemsObj != null) {
+                        List<Map<String, Object>> orderItemsList = (List<Map<String, Object>>) orderItemsObj;
+                        if (CollectionUtil.isNotEmpty(orderItemsList)) {
+                            dmpDataMap.put("exchangeRate", orderItemsList.get(0).get("baseExchangeRate"));
+                        }
+                    }
+
+                    //基本汇率
+                    Object leadTimeObj = shipmentMap.get("leadTime");
+                    if (leadTimeObj != null) {
+                        Map<String, Object> leadTimeMap = (Map<String, Object>) leadTimeObj;
+                        if (ObjectUtils.isNotEmpty(leadTimeMap)) {
+                            Object shippingMethodObj = leadTimeMap.get("shippingMethod");
+                            if (shippingMethodObj != null) {
+                                Map<String, Object> shippingMethodMap = (Map<String, Object>) shippingMethodObj;
+                                dmpDataMap.put("logisticsName", shippingMethodMap.get("name"));
+                            }
+                        }
+                    }
                 }
-
-
-
-
-
-                //物流信息
-//                dmpInputMongoChildList.stream().filter(req -> req.get(""))
-                dmpDataMap.get("");
-
             }
         }
     }
