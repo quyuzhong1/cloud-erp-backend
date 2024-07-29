@@ -306,7 +306,7 @@ public interface LogisticsOrderConverter {
 
 
     @Mappings({
-            @Mapping(target = "taxNumber" ,source = "receiverInfoVO.receiverTaxNo"),
+//            @Mapping(target = "taxNumber" ,source = "receiverInfoVO.receiverTaxNo"),
             @Mapping(target = "customerOrderNumber" ,source = "deliveryNo"),
             @Mapping(target = "shippingMethodCode" ,source = "logisticsSaleChannel.code"),
             @Mapping(target = "length" ,source = "parceInfoVO.length"),
