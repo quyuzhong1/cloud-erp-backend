@@ -123,10 +123,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     @Override
     public void add(PickingListsDTO.AddDTO dto) {
         generatePicking(dto);
+        // 获取所有拣货暂存配置
         List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
         Map<String, String> warehouseMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getWarehouseId, PickingDetailDTO.AddDTO::getWarehouseName, (o1, o2) -> o1));
+        // 拣货明细转换为规则执行数据明细
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = dto.getDetails().stream()
                 .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
@@ -134,7 +136,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         executionData.setCustomerId(dto.getCustomerId());
         executionData.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());
         executionData.setDetails(details);
+        // 执行拣货规则
         List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+        // 根据仓库分组，生成不同的拣货单
         Map<String, List<LocationInventoryResultDTO>> warehouseResultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
         for (Map.Entry<String, List<LocationInventoryResultDTO>> result : warehouseResultMap.entrySet()) {
             // 生成拣货单主表数据
@@ -203,8 +207,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     detailList.add(detailAdd);
                 }
             } else {
-                PickingDetailDTO.AddDTO detailAdd = PickingDetailDTO.AddDTO.getAddDTO(detail, detail.getSkuId(), detail.getSkuNo(), detail.getQty());
-                detailList.add(detailAdd);
+                detailList.add(detail);
             }
         }
         dto.setDetails(detailList);
