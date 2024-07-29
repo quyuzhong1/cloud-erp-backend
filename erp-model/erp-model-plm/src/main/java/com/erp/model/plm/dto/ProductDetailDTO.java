@@ -54,7 +54,7 @@ public class ProductDetailDTO implements Serializable {
     /**
      * 计划上市时间
      */
-    @NotNull(message = "预计上市时间不能为空")
+//    @NotNull(message = "预计上市时间不能为空")
     private LocalDate planListingTime;
 
     /**

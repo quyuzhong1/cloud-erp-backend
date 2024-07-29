@@ -113,7 +113,7 @@ public class ProductInfoDTO {
     /**
      * 产品功能描述
      */
-    @NotBlank(message = "产品功能描述不能为空")
+//    @NotBlank(message = "产品功能描述不能为空")
     @Size(max = 500, message = "产品功能描述最大500字符")
     private String functionDesc;
 
@@ -131,7 +131,7 @@ public class ProductInfoDTO {
     /**
      * 主要材质
      */
-    @NotBlank(message = "主要材质不能为空")
+//    @NotBlank(message = "主要材质不能为空")
     @Size(max = 500, message = "主要材质最大500字符")
     private String materials;
 
