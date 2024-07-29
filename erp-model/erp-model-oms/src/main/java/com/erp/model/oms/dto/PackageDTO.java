@@ -163,7 +163,7 @@ public class PackageDTO implements Serializable {
         /**
          * 预报状态
          */
-        private String forcastStatus;
+        private String transferStatus;
 
         /**
          * 中转商渠道id
