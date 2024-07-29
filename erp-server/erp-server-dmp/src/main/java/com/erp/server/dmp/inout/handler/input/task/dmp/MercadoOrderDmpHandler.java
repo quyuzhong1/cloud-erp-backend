@@ -30,37 +30,59 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
-        DmpInputTaskEntity dmpInputTaskEntity = list.get(0);
-        List<DmpInputTaskEntity> inputTaskEntityList = dmpInputTaskService.lambdaQuery()
-                .eq(DmpInputTaskEntity::getParentTaskId, dmpInputTaskEntity.getId())
-                .eq(DmpInputTaskEntity::getCfgInputId, "1816384798088779541")
-                .list();
+        DmpInputTaskEntity dmpInputTaskEntity = list.stream().filter(req -> "1816384798088779541".equals(req.getCfgInputId())).findFirst().orElse(null);
 
-        List<String> taskIds = inputTaskEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, taskIds.get(0)));
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getId()));
         List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibre_shipment_data");
-
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-                Map<String, Object> shipmentIdMap = (Map<String, Object>) dmpDataMap.get("shipment");
+                Map<String, Object> shipmentIdMap = (Map<String, Object>) dmpDataMap.get("shipping");
                 Object shipmentId = shipmentIdMap.get("fid");
                 if (shipmentId != null) {
                     Map<String, Object> shipmentMap = dmpInputMongoChildList.stream().filter(req -> req.get("fid").equals(shipmentId)).findFirst().orElse(null);
+                    "mode" -> "me2"
+                    "type" -> "drop_off"
+                    "direction" -> "forward"
+
+                    shipmentMap.get("mode");
+
+
+                    //物流状态
+                    Map<String, Object> logisticMap = (Map<String, Object>) shipmentMap.get("logistic");
+
                     //作废状态
                     Object statusObj = shipmentMap.get("status");
                     if (statusObj != null) {
                         String status = String.valueOf(statusObj);
-                        if ("invalid".equalsIgnoreCase(status)) {
+                        if ("cancelled".equalsIgnoreCase(status)) {
                             dmpDataMap.put("invalidStatus", Boolean.TRUE);
-
-                        } else if ("cancelled".equalsIgnoreCase(status)) {
-                            dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                            dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
+                            dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                        } else if ("shipped".equalsIgnoreCase(status)) {
+                            dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
+                            dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+                        } else if ("delivered".equalsIgnoreCase(status)) {
+                            dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
+                            dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+                        } else if ("not_delivered".equalsIgnoreCase(status)) {
+                            dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
+                            dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
                         }
                     }
 
+                    //订单状态
+                    Object orderStatusObj = dmpDataMap.get("status");
+                    if (orderStatusObj != null) {
+                        String orderStatus = String.valueOf(statusObj);
+                        if ("invalid".equalsIgnoreCase(orderStatus)) {
+                            dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                        } else if ("cancelled".equalsIgnoreCase(orderStatus)) {
+                            dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                        }
+                    }
                 }
 
 
