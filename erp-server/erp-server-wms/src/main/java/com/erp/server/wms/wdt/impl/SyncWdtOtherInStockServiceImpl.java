@@ -35,30 +35,27 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
     @Resource
     private DmpMqFeign dmpMqFeign;
 
-    public DmpPushTaskFeignDTO generateTask(List<CreateOtherStockinRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode){
+    public DmpPushTaskFeignDTO generateTask(List<CreateOtherStockinRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode){
         CreateOtherStockinRequest request = new CreateOtherStockinRequest();
         request.setOuterNo(outerCode);
 
         //查询推送任务表，如果有了相同的来源单据号，则序号累加
-        if(checkOuterCode){
-            DmpSyncTaskDTO.ListCodeDTO param = new DmpSyncTaskDTO.ListCodeDTO(Collections.singletonList(outerCode), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc());
-            List<DmpPushTaskEntity> taskList = dmpMqFeign.listByCodeParam(param);
-            Optional<CreateOtherStockinRequest> optional = taskList.stream()
-                    .filter(task -> task.getSyncOperate().equalsIgnoreCase(operateCode))
-                    .map(task -> JSON.parseObject(task.getMqData(), CreateOtherStockinRequest.class))
-                    .max((o1, o2) -> ObjectUtil.compare(o1.getOuterNo(), o2.getOuterNo()));
-            if(optional.isPresent()){
-                String maxOuterNo = optional.get().getOuterNo();
-                if(maxOuterNo.contains("_")){
-                    String[] split = maxOuterNo.split("_");
-                    Integer seq = Integer.parseInt(split[1]) + 1;
-                    request.setOuterNo(split[0] + "_" + String.format("%03d", seq));
-                }else {
-                    request.setOuterNo(outerCode + "_001");
-                }
+        DmpSyncTaskDTO.ListCodeDTO param = new DmpSyncTaskDTO.ListCodeDTO(Collections.singletonList(outerCode), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc());
+        List<DmpPushTaskEntity> taskList = dmpMqFeign.listByCodeParam(param);
+        Optional<CreateOtherStockinRequest> optional = taskList.stream()
+                .filter(task -> task.getSyncOperate().equalsIgnoreCase(operateCode))
+                .map(task -> JSON.parseObject(task.getMqData(), CreateOtherStockinRequest.class))
+                .max((o1, o2) -> ObjectUtil.compare(o1.getOuterNo(), o2.getOuterNo()));
+        if(optional.isPresent()){
+            String maxOuterNo = optional.get().getOuterNo();
+            if(maxOuterNo.contains("_")){
+                String[] split = maxOuterNo.split("_");
+                Integer seq = Integer.parseInt(split[1]) + 1;
+                request.setOuterNo(split[0] + "_" + String.format("%03d", seq));
+            }else {
+                request.setOuterNo(outerCode + "_001");
             }
         }
-
 
         request.setWarehouseNo(thirdWarehouseCode);
         request.setisCheck(Boolean.TRUE);

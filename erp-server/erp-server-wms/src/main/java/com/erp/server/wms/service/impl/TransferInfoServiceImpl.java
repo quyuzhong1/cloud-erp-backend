@@ -589,7 +589,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
                 String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
                 String thirdWarehouseCode = thirdWarehouseMap.get(dto.getInWarehouseId());
-                DmpPushTaskFeignDTO inUnSaveTask = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), operateCode, entity.getCode(), dto.getId(), inCode, thirdWarehouseCode, false);
+                DmpPushTaskFeignDTO inUnSaveTask = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), operateCode, entity.getCode(), dto.getId(), inCode, thirdWarehouseCode);
                 unSaveTaskList.add(inUnSaveTask);
 
                 DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity, operateCode, dto.getInWarehouseId(), inCode, thirdWarehouseCode, inGoods);
@@ -664,7 +664,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
                 String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
                 String thirdWarehouseCode = thirdWarehouseMap.get(dto.getOutWarehouseId());
-                DmpPushTaskFeignDTO inDmpPushTaskFeignDTO = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), operateCode, entity.getCode(), dto.getId(), inCode, thirdWarehouseCode, false);
+                DmpPushTaskFeignDTO inDmpPushTaskFeignDTO = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), operateCode, entity.getCode(), dto.getId(), inCode, thirdWarehouseCode);
                 unSaveTaskList.add(inDmpPushTaskFeignDTO);
 
                 DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity, operateCode, dto.getOutWarehouseId(), inCode, thirdWarehouseCode, inGoods);

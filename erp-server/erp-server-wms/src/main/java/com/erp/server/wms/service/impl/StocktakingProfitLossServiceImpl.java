@@ -648,7 +648,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
             String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
             String thirdWarehouseCode = thirdWarehouseMap.get(dto.getWarehouseId());
-            DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherInStockService.generateTask(Collections.singletonList(goods), operateCode, entity.getCode(), dto.getId(), outerCode, thirdWarehouseCode, false);
+            DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherInStockService.generateTask(Collections.singletonList(goods), operateCode, entity.getCode(), dto.getId(), outerCode, thirdWarehouseCode);
             unSaveTaskList.add(outUnSaveTask);
 
             //生成中间表数据
