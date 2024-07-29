@@ -194,4 +194,12 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     Boolean generateDeliverSave(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list);
 
     Boolean generateDeliverSaveAndSubmit(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list);
+    /**
+     * 处理数据
+     * @author will
+     * @date 2024/7/29 9:33
+     * @param id
+     * @return Boolean
+     */
+    BatchResultDTO handleData(String id);
 }

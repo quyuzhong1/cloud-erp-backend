@@ -417,4 +417,34 @@ public class RequisitionApplicationController extends BaseController {
         Boolean flag = requisitionApplicationService.generateDeliverSaveAndSubmit(dto.getList());
         return Boolean.TRUE.equals(flag) ? success() : failure();
     }
+
+    /**
+     * 要货申请处理数据
+     * @author will
+     * @date 2024/7/29 9:32
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/handleData")
+    public ApiResult<List<BatchResultDTO>> handleData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = requisitionApplicationService.handleData(id);
+            }catch (Exception e){
+                log.error("要货申处理数据",e);
+                RequisitionApplicationEntity entity = requisitionApplicationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "要货申处理数据, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
+    }
 }
