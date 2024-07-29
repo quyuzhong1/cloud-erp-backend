@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
@@ -1064,14 +1065,16 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //发送异步任务
         String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
+        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherInStockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, false);
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
             }
         });
-
         //保存中间表
         DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
         addDTO.setSourceId(entity.getId());

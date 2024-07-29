@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
@@ -1358,14 +1359,17 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         });
 
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), inCode, thirdWarehouseCode, false);
+
+        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherInStockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, false);
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
             }
         });
-
         //保存中间表数据
         DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
         addDTO.setSourceId(entity.getId());

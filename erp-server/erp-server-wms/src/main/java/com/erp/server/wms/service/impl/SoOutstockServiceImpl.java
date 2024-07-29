@@ -3349,7 +3349,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
                 String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
                 String outWarehouseId = thirdWarehouseMap.get(detailEntity.getWarehouseId());
-                DmpPushTaskFeignDTO dmpPushTaskFeignDTO = syncWdtOtherOutStockService.generateTask(Collections.singletonList(outGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), detailEntity.getId(), outCode, outWarehouseId, false);
+                DmpPushTaskFeignDTO dmpPushTaskFeignDTO = syncWdtOtherOutStockService.generateTask(Collections.singletonList(outGoods), operateEnum.getCode(), entity.getCode(), detailEntity.getId(), outCode, outWarehouseId, false);
                 unSaveTaskList.add(dmpPushTaskFeignDTO);
             }else if (SyncOperateEnum.OPERATE_DISAPPROVE.equals(operateEnum)){
                 CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
@@ -3359,7 +3359,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
                 String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
                 String inWarehouseId = thirdWarehouseMap.get(detailEntity.getWarehouseId());
-                DmpPushTaskFeignDTO taskFeignDTO = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), detailEntity.getId(), inCode, inWarehouseId, false);
+                DmpPushTaskFeignDTO taskFeignDTO = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), operateEnum.getCode(), entity.getCode(), detailEntity.getId(), inCode, inWarehouseId, false);
                 unSaveTaskList.add(taskFeignDTO);
             }
         }
