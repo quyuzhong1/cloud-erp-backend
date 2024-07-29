@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.threadlocal.UserContext;
@@ -236,8 +235,10 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 stockBaseDTO.setWarehouseLocation(ObjectUtil.isNull(flow.getWarehouseLocation()) ? "" : flow.getWarehouseLocation());
                 stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
                 InventoryEntity inventoryEntity=inventoryService.getInventory(
-                        flow.getSkuId(),flow.getWarehouseId(),
-                        stockBaseDTO.getWarehouseLocation(),rule.getInventoryStatus().getCode());
+                        stockBaseDTO.getSkuId(),
+                        stockBaseDTO.getWarehouseId(),
+                        stockBaseDTO.getWarehouseLocation(),
+                        stockBaseDTO.getInventoryStatus().getCode());
                 transactionDTO.setInventoryId(null==inventoryEntity?null:inventoryEntity.getId());
 
                 // 交易明细信息
@@ -319,8 +320,10 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                     stockBaseDTO.setInventoryStatus(rule.getInventoryStatus()); // 调入仓的库存状态
                 }
                 InventoryEntity inventoryEntity=inventoryService.getInventory(
-                        flow.getSkuId(),stockBaseDTO.getWarehouseId(),
-                        stockBaseDTO.getWarehouseLocation(),rule.getInventoryStatus().getCode());
+                        stockBaseDTO.getSkuId(),
+                        stockBaseDTO.getWarehouseId(),
+                        stockBaseDTO.getWarehouseLocation(),
+                        stockBaseDTO.getInventoryStatus().getCode());
                 transactionDTO.setInventoryId(null==inventoryEntity?null:inventoryEntity.getId());
 
                 // 交易明细信息
