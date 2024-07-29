@@ -92,6 +92,7 @@
         tdd.order_upload_status,tdd.failure_reason,tdd.shipping_order_no
         FROM  transfer_declare_detail tdd
         INNER JOIN transfer_declare td ON tdd.main_id = td.id AND td.is_deleted = FALSE
+        LEFT JOIN so_b2c sb on sb.id = tdd.so_id and sb.is_deleted = false
         WHERE tdd.is_deleted = FALSE
         <if test="params.sqlMap != null and params.sqlMap.detail != null and params.sqlMap.detail != ''">
             and ${params.sqlMap.detail}

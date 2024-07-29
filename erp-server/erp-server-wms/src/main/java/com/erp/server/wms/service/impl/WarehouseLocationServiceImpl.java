@@ -611,32 +611,19 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 continue;
             }
 
-            //库区下没有该仓位，直接新增
-            /*WarehouseLocationEntity locationEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().in("parent_id", areaEntity.getId()).eq("type", "location").eq("code", row.getWarehouseLocationCode()).eq("is_deleted", false));
-            if (locationEntity == null) {
-                WarehouseLocationEntity addEntity = buildAddEntity(row, areaEntity, warehouseId);
-                baseMapper.insert(addEntity);
-                WarehouseLocationEntity one = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", warehouseId).eq("code", row.getWarehouseLocationCode())
-                        .eq("type", "location").eq("is_deleted", false).eq("disabled", false));
-
-                WarehouseLocationEntity updateArea = new WarehouseLocationEntity();
-                updateArea.setId(one.getId());
-                updateArea.setOccupyStatus(true);
-                baseMapper.updateById(updateArea);
-                operateLogService.addModuleOperateLog(String.format("新增仓位【%s】", row.getWarehouseLocationCode()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), one.getId(), "新增", user.getUid(), user.getUserName());
-                continue;
-            }*/
-
-            //库区下已经有该仓位
-            // 1、比较仓位名称是否一致，不一致则更新仓位名称
-            // 2、比较库区是否一致，不一致则更新库区
-            if(! locationEntity.getName().equals(row.getWarehouseLocationName().trim())){
+            //比较仓位名称是否一致，不一致则更新仓位名称
+            //比较所属库区是否一致，不一致则更新库区
+            boolean equalLocation = locationEntity.getName().equals(row.getWarehouseLocationName().trim());
+            boolean equalArea = areaEntity.getId().equals(locationEntity.getParentId());
+            if(!equalLocation || !equalArea){
                 WarehouseLocationEntity updateEntity = new WarehouseLocationEntity();
                 updateEntity.setId(locationEntity.getId());
                 updateEntity.setName(row.getWarehouseLocationName());
                 updateEntity.setParentId(areaEntity.getId());
                 baseMapper.updateById(updateEntity);
+                WarehouseLocationEntity oldParentArea = warehouseLocationMapper.selectOne(new LambdaQueryWrapper<WarehouseLocationEntity>().eq(WarehouseLocationEntity::getId, locationEntity.getParentId()));
                 operateLogService.addModuleOperateLog(String.format("更新仓位名称【%s】，【%s】->【%s】", locationEntity.getCode(), locationEntity.getName(), updateEntity.getName()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), locationEntity.getId(), "编辑操作", user.getUid(), user.getUserName());
+                operateLogService.addModuleOperateLog(String.format("更新仓位所属库区【%s】，【%s】->【%s】", locationEntity.getCode(), oldParentArea.getName(), areaEntity.getName()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), locationEntity.getId(), "编辑操作", user.getUid(), user.getUserName());
                 continue;
             }
 

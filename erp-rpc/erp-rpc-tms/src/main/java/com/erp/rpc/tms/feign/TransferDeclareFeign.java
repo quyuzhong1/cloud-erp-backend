@@ -45,8 +45,8 @@ public interface TransferDeclareFeign {
      * @param dto
      * @return java.lang.Boolean
      **/
-    @PostMapping("/feign/transferDeclare/updateOutstockStatus")
-    Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto);
+//    @PostMapping("/feign/transferDeclare/updateOutstockStatus")
+//    Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto);
 
 
     /**

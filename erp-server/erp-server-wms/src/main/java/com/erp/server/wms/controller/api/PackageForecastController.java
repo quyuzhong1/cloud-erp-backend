@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
@@ -269,6 +270,15 @@ public class PackageForecastController extends BaseController {
         return success(list);
     }
 
-
+    /**
+     * 根据组包id获取揽收地址列表
+     *
+     * @return
+     */
+    @PostMapping("/listAddressByForecastIds")
+    public ApiResult<List<LogisticsAddressDTO.ListDTO>> listAddressByForecastIds(@RequestBody List<String> ids) {
+        List<LogisticsAddressDTO.ListDTO> list = packageForecastService.listAddressByForecastIds(ids);
+        return success(list);
+    }
 
 }

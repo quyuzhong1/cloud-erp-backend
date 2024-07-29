@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -48,6 +47,15 @@ public class TransferInfoDTO implements Serializable {
          * 调拨单号
          */
         private String  code;
+
+        /**
+         * 来源类型【可排序】(firstMileDelivery、firstMileDeliveryToUlanzi、firstMileDeliveryFromUlanzi、requisitionApplicationHandle、requisitionApplicationFinish)来源不支持修改
+         */
+        private String sourceType;
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
 
         /**
          * 来源单据【可排序】

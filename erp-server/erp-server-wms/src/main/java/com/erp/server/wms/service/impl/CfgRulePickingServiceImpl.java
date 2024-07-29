@@ -179,6 +179,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         map.put("billType", dto.getBillType());
         map.put("customerId", dto.getCustomerId());
         map.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
+        // 获取所有符合条件的规则
         List<CfgRulePickingEntity> rules = cfgRulePickings.stream()
                 .filter(v -> {
                     List<CfgRuleConditionDTO.ConditionElementDTO> conditionList = conditions.stream().
@@ -190,15 +191,15 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 }).collect(Collectors.toList());
         Map<String, List<CfgRulePickingDTO.CfgExecutionDataDetailDTO>> warehouseGroupMap = dto.getDetails().stream().collect(Collectors.groupingBy(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getWarehouseId));
         List<String> warehouseIds = actions.parallelStream().map(CfgRulePackingActionEntity::getWarehouseId).distinct().collect(Collectors.toList());
-        List<String> locationCodes = locationList.stream().map(WarehouseLocationEntity::getCode).collect(Collectors.toList());
         List<String> skuIds = dto.getDetails().parallelStream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+        // 获取所有符合规则动作对应仓库，来源数据sku的可用库存不等于0的数据
         List<InventoryEntity> inventoryList = inventoryService.list(Wrappers.<InventoryEntity>lambdaQuery()
                 .in(InventoryEntity::getSkuId, skuIds)
                 .in(InventoryEntity::getWarehouseId, warehouseIds)
-                .in(InventoryEntity::getWarehouseLocation, locationCodes)
                 .ne(InventoryEntity::getQty, 0)
                 .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
                 .orderByDesc(InventoryEntity::getQty));
+        // 循环不同仓库 -》循环sku明细 -》循环规则-》循环规则动作-》循环规则动作配置的仓位
         for (Map.Entry<String, List<CfgRulePickingDTO.CfgExecutionDataDetailDTO>> entry : warehouseGroupMap.entrySet()) {
             for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : entry.getValue()) {
                 AtomicInteger quantity = new AtomicInteger(detail.getQty());

@@ -246,9 +246,9 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
 
     /**
      * 生成拣货单的弹窗
-     * @param id 要货单id
+     * @param page 要货单id
      */
-    List<SoDeliveryNoticeDTO.PickingViewDTO> generatePickingView(String id);
+    PagingVO<SoDeliveryNoticeDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page);
 
 
     void writeBackData(List<String> sourceDetailIds);

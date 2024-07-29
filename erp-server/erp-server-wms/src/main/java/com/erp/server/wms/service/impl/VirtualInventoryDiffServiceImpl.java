@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -13,18 +14,15 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -102,11 +100,22 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
     public Boolean exportExcel(VirtualInventoryDiffDTO.SearchParamDTO dto, HttpServletResponse response) {
 
         List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> list = baseMapper.listDiffExportData(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        //统计数据
+        Object isDiff = dto.getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
+        if (ObjectUtil.isNotNull(isDiff)) {
+            dto.setIsDiff(Boolean.valueOf(isDiff.toString()));
         }
+        List<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> warehouseStatisticsList = baseMapper.listWarehouseStatistics(dto);
+
         //数据赋值处理
         fillExportData(list);
+
+        List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
+        //主表数据
+        pairList.add(new Pair<>(MathUtil.ZERO, list));
+        //明细数据
+        pairList.add(new Pair<>(MathUtil.ONE, warehouseStatisticsList));
+
         String name = "库存差异列表信息";
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -114,9 +123,9 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         sb.append(name);
         String excelPath = "excel/virtualInventoryDiff.xlsx";
         try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            new ExcelPrintUtils().sheetPatchExport(pairList, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            log.error("库存差异列表信息导出出错 >>>>>{}", e);
+            log.error("虚拟仓库库存信息导出出错 >>>>>{}", e);
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
@@ -244,24 +253,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
-        //产品信息
-        List<String> skuIdList = list.stream().map(VirtualInventoryDiffDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailEntityList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
-
-        //实际仓库
-        List<String> warehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
-
         for (VirtualInventoryDiffDTO.ListDTO listDTO : list) {
-            //产品信息
-            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
-            listDTO.setSkuNo(productDetailEntity.getSkuNo());
-            listDTO.setProductName(productDetailEntity.getName());
-            //实体仓库名称
-            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getWarehouseId()))
-                    .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
-            listDTO.setWarehouseName(warehouseName);
             //已分配数量
             listDTO.setDistributionQty(listDTO.getVirtualQty());
             //未分配数量
@@ -304,14 +296,6 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
-        //sku
-        List<String> skuIdList = list.stream().map(VirtualInventoryDiffDTO.ListDiffExportDataDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailEntityList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
-
-        //实体仓库
-        List<String> warehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDiffExportDataDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
-
         //虚拟仓库
         List<String> virtualWarehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDiffExportDataDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
@@ -332,19 +316,9 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             }
             flagList.add(flag);
 
-            //产品信息
-            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> obj.getId().equals(listDTO.getSkuId()))
-                    .findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品信息"));
-            listDTO.setSkuNo(productDetailEntity.getSkuNo());
-            listDTO.setProductName(productDetailEntity.getName());
-            //实体仓库名称
-            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getWarehouseId()))
-                    .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
-            listDTO.setWarehouseName(warehouseName);
             listDTO.setDistributionQty(listDTO.getTotalVirtualQty());
             //未分配数量
             listDTO.setUnDistributionQty(listDTO.getUsableQty() - listDTO.getDistributionQty());
-
         }
     }
 }

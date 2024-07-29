@@ -29,6 +29,7 @@ import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DmpMongoHandleTaskService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -276,9 +277,11 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
 
         // 设置仓库中心对应仓库
         if (null != centerEntity && !curMap.isEmpty()){
-            ShopInfoEntity shopInfo = curMap.get(centerEntity.getCountry());
-            // 补充仓库信息
-            fillWarehouseInfo(e, warehouseMap, shopInfo);
+            if (StringUtils.isNotBlank(centerEntity.getCountry())){
+                ShopInfoEntity shopInfo = curMap.get(centerEntity.getCountry());
+                // 补充仓库信息
+                fillWarehouseInfo(e, warehouseMap, shopInfo);
+            }
         }
         if (e.hasMultiChannel()) {
             // 多渠道订单
@@ -310,6 +313,12 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
                 if (null == centerEntity){
                     // 补充仓库信息
                     fillWarehouseInfo(e, warehouseMap, shopInfo);
+                } else {
+                    // 仓储中心配置为空
+                    if (StringUtils.isBlank(centerEntity.getCountry())){
+                        // 补充仓库信息
+                        fillWarehouseInfo(e, warehouseMap, shopInfo);
+                    }
                 }
             }
         }

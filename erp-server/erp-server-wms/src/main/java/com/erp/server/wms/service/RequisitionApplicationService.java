@@ -170,9 +170,9 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
 
     /**
      * 生成拣货单弹窗
-     * @param id 要货申请id
+     * @param page 要货申请id
      */
-    List<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(String id);
+    PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page);
     /**
      * 生成拣货单
      * @param picking 拣货参数
@@ -187,11 +187,19 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * 修改拣货单反写要货申请单
      * @param sourceDetailIds 明细id
      */
-    void writeBackData(List<String> sourceDetailIds);
+    void writeBackData(List<String> sourceDetailIds,Boolean isCheck);
 
     List<RequisitionApplicationDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids);
 
     Boolean generateDeliverSave(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list);
 
     Boolean generateDeliverSaveAndSubmit(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list);
+    /**
+     * 处理数据
+     * @author will
+     * @date 2024/7/29 9:33
+     * @param id
+     * @return Boolean
+     */
+    BatchResultDTO handleData(String id);
 }

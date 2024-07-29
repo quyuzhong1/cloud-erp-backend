@@ -72,4 +72,17 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
 
     List<VirtualWarehouseDTO.VwDTO> getByNames(List<String> list);
 
+    /**
+     * 虚拟仓高级搜索
+     * @param dto
+     * @return
+     */
+    PagingVO<VirtualWarehouseDTO.SelectDTO> warehousePagingSelect(PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto);
+
+    /**
+     * 获取虚拟仓库列表
+     * @param dto
+     * @return
+     */
+    List<VirtualWarehouseDTO.SelectDTO> warehouseSelectList(PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto);
 }

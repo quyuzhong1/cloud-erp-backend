@@ -108,6 +108,11 @@ public class PackageForecastDetailDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
 
+        /**
+         * 销售订单单据状态
+         */
+        private String billStatus;
+
     }
 
     /**

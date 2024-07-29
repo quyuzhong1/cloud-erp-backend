@@ -264,6 +264,15 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String id;
     }
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseSelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+    }
 
     @Data
     @NoArgsConstructor
@@ -320,5 +329,13 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String relationId;
 
+    }
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        private String id;
+        private String name;
+        private String code;
+        private Boolean disabled;
     }
 }

@@ -329,6 +329,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoDeliveryNoticeDTO.Update dto) {
+        // 判断是否已生成拣货单
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(dto.getId()));
+        if (CollectionUtils.isNotEmpty(views)) {
+            throw new ServiceException(ApiError.ERROR_99140);
+        }
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
@@ -885,6 +890,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO generateSoDeliverySave(String id) {
         SoDeliveryNoticeEntity entity = getById(id);
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
@@ -898,7 +904,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(soInfoEntity.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_99105);
         }
-        List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.listDetailByMainId(id);
+        List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySourceId(Collections.singletonList(id));
+        if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
+            throw new ServiceException(ApiError.ERROR_99129);
+        }
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.listNoInventoryOrPicking(id, noInventorySkuIds);
         long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
         if (closeCount > 0) {
             throw new ServiceException(ApiError.ERROR_98068);
@@ -906,8 +918,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoInfoEntity info = soInfoFeign.getSoInfoById(entity.getSourceId());
         List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(entity.getSourceId()));
         SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getCustomerId().equals(info.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
-        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
-        List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+
         //是否中转
         CfgRuleOutDTO.MatchTransferDTO transferDTO = new CfgRuleOutDTO.MatchTransferDTO();
         CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
@@ -1298,30 +1309,16 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public List<SoDeliveryNoticeDTO.PickingViewDTO> generatePickingView(String id) {
+    public PagingVO<SoDeliveryNoticeDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page) {
         //判断是否存在下游单据，已有下游单据就不能再生成拣货单
-        List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySourceId(Collections.singletonList(id));
+        List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySourceId(Collections.singletonList(page.getParams()));
         if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
             throw new ServiceException(ApiError.ERROR_99110, "销售出库单");
         }
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> details = soDeliveryNoticeDetailService.listDetailByMainId(id);
-        List<SoDeliveryNoticeDTO.PickingViewDTO> result = new ArrayList<>();
-        for (SoDeliveryNoticeDetailEntity detail : details) {
-            if (ignoreInventorySkus.contains(detail.getSkuId()) || (detail.getDeliveryQty() - detail.getPickingQty() <= 0)){
-                continue;
-            }
-            SoDeliveryNoticeDTO.PickingViewDTO viewDTO = new SoDeliveryNoticeDTO.PickingViewDTO();
-            viewDTO.setDetailId(detail.getId());
-            viewDTO.setSkuId(detail.getSkuId());
-            viewDTO.setSkuNo(detail.getSkuNo());
-            viewDTO.setPlanQty(detail.getDeliveryQty());
-            viewDTO.setPickedQuantity(detail.getPickingQty());
-            viewDTO.setUnpickedQuantity(detail.getDeliveryQty() - detail.getPickingQty());
-            result.add(viewDTO);
-        }
-        return result;
+        IPage<SoDeliveryNoticeDTO.PickingViewDTO> picking = baseMapper.pagingPicking(new Page<>(page.getCurrPage(), page.getPageSize()), page.getParams(), ignoreInventorySkus);
+        return new PagingVO<>(picking);
     }
 
     @Override

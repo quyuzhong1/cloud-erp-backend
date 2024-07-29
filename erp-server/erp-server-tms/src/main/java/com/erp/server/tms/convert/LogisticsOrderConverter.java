@@ -118,6 +118,7 @@ public interface LogisticsOrderConverter {
      */
     @Mappings({
             @Mapping(target = "declare_product_code", source = "skuNo"),
+            @Mapping(target = "hscode_import", source = "customsCode"),
             @Mapping(target = "declare_product_name_cn", source = "declareChineseName"),
             @Mapping(target = "declare_product_name_en", source = "declareEnglishName"),
             @Mapping(target = "declare_product_code_qty", source = "quantity"),
