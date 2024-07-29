@@ -47,80 +47,67 @@ public class FeiShuMsgJob {
     /**
      * 发送飞书预警消息
      */
-    @XxlJob("sendFeiShuWarnMsg")
-    public void sendFeiShuWarnMsg() {
-        XxlJobHelper.log("发送飞书预警消息:start");
-        //获取mongo中未发送的飞书消息
-        Query query = new Query();
-        query.addCriteria(
-                Criteria.where("isSend").in(MathUtil.ZERO)
-        );
-        List<WarnMsgInfoDTO> list = mongoTemplate.find(query, WarnMsgInfoDTO.class, MongoTableConstant.FEISHU_WARN_MSG);
-        XxlJobHelper.log("待发送飞书预警消息数量:{}", list.size());
-        //对全量数据进行分区
-        if (list.size() > 100){
-            List<List<WarnMsgInfoDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
-            partition.forEach(this::sendWarnMsg);
-        }else {
-            sendWarnMsg(list);
-        }
-        XxlJobHelper.log("发送飞书预警消息:end");
-    }
+//    @XxlJob("sendFeiShuWarnMsg")
+//    public void sendFeiShuWarnMsg() {
+//        XxlJobHelper.log("发送飞书预警消息:start");
+//        //获取mongo中未发送的飞书消息
+//        Query query = new Query();
+//        query.addCriteria(
+//                Criteria.where("isSend").in(MathUtil.ZERO)
+//        );
+//        List<WarnMsgInfoDTO> list = mongoTemplate.find(query, WarnMsgInfoDTO.class, MongoTableConstant.FEISHU_WARN_MSG);
+//        XxlJobHelper.log("待发送飞书预警消息数量:{}", list.size());
+//        //对全量数据进行分区
+//        if (list.size() > 100){
+//            List<List<WarnMsgInfoDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+//            partition.forEach(this::sendWarnMsg);
+//        }else {
+//            sendWarnMsg(list);
+//        }
+//        XxlJobHelper.log("发送飞书预警消息:end");
+//    }
 
     @XxlJob("sendFeiShuWarnPushMsg")
     public void sendFeiShuWarnPushMsg(){
         String jobParam = XxlJobHelper.getJobParam();
+        String[] params = jobParam.split(",");
         List<String> statusList = new ArrayList<>();
-        if (StringUtils.isBlank(jobParam)){
-            statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
-            statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
-        }else {
-            String[] ids = jobParam.split(",");
-            for (String id : ids) {
-                if (StringUtils.isNotBlank(id)){
-                    statusList.add(id);
-                }
-            }
-        }
+        statusList.add(params[0]);
+        statusList.add(params[1]);
+        int size = Integer.parseInt(params[2]);
+        int waitMillis = Integer.parseInt(params[3]);
         List<WarnMsgInfoDTO> list = getPushTask(statusList);
         XxlJobHelper.log("待发送Push飞书预警消息数量:{}", list.size());
         //对全量数据进行分区
-        if (list.size() > 100){
-            List<List<WarnMsgInfoDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
-            partition.forEach(this::sendWarnMsgByTask);
-        }else {
-            sendWarnMsgByTask(list);
-        }
-        XxlJobHelper.log("发送飞书预警消息:end");
+        sendMsg(size, waitMillis, list);
     }
 
     @XxlJob("sendFeiShuWarnPullMsg")
     public void sendFeiShuWarnPullMsg(){
         String jobParam = XxlJobHelper.getJobParam();
+        String[] params = jobParam.split(",");
         List<String> statusList = new ArrayList<>();
-        if (StringUtils.isBlank(jobParam)){
-            statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
-            statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
-        }else {
-            String[] ids = jobParam.split(",");
-            for (String id : ids) {
-                if (StringUtils.isNotBlank(id)){
-                    statusList.add(id);
-                }
-            }
-        }
+        statusList.add(params[0]);
+        statusList.add(params[1]);
+        int size = Integer.parseInt(params[2]);
+        int waitMillis = Integer.parseInt(params[3]);
         List<WarnMsgInfoDTO> list = getPullTask(statusList);
         XxlJobHelper.log("待发送Pull飞书预警消息数量:{}", list.size());
         //对全量数据进行分区
-        if (list.size() > 100){
+        sendMsg(size, waitMillis, list);
+    }
+
+    private void sendMsg(int size, int waitMillis, List<WarnMsgInfoDTO> list) {
+        if (list.size() > size){
             List<List<WarnMsgInfoDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
-            partition.forEach(this::sendWarnMsgByTask);
+            partition.forEach(e -> sendWarnMsgByTask(e, waitMillis));
         }else {
-            sendWarnMsgByTask(list);
+            sendWarnMsgByTask(list,waitMillis);
         }
         XxlJobHelper.log("发送飞书预警消息:end");
     }
-    private void sendWarnMsgByTask(List<WarnMsgInfoDTO> list){
+
+    private void sendWarnMsgByTask(List<WarnMsgInfoDTO> list, int waitMillis){
         XxlJobHelper.log("批量发送飞书预警消息数量:{}", list.size());
         if (CollectionUtil.isEmpty(list)){
             return;
@@ -130,7 +117,7 @@ public class FeiShuMsgJob {
         try {
             XxlJobHelper.log("发送飞书预警消息休眠 start:{}", System.currentTimeMillis());
             //增加休眠，避免飞书请求限制
-            Thread.sleep(60000);
+            Thread.sleep(waitMillis);
             XxlJobHelper.log("发送飞书预警消息休眠 end:{}", System.currentTimeMillis());
         } catch (InterruptedException e) {
             log.error("FeiShuMsgJob.sendWarnMsg：休眠异常");
@@ -138,7 +125,7 @@ public class FeiShuMsgJob {
         XxlJobHelper.log("批量发送飞书预警消息完成:{}", list.size());
     }
 
-    private void sendWarnMsg(List<WarnMsgInfoDTO> list){
+    private void sendWarnMsg(List<WarnMsgInfoDTO> list, int waitMillis){
         XxlJobHelper.log("批量发送飞书预警消息数量:{}", list.size());
         if (CollectionUtil.isEmpty(list)){
             return;
@@ -156,7 +143,7 @@ public class FeiShuMsgJob {
         try {
             XxlJobHelper.log("发送飞书预警消息休眠 start:{}", System.currentTimeMillis());
             //增加休眠，避免飞书请求限制
-            Thread.sleep(60000);
+            Thread.sleep(waitMillis);
             XxlJobHelper.log("发送飞书预警消息休眠 end:{}", System.currentTimeMillis());
         } catch (InterruptedException e) {
             log.error("FeiShuMsgJob.sendWarnMsg：休眠异常");
