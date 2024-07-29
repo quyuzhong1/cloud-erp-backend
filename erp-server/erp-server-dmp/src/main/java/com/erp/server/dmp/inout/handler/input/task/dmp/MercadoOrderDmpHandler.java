@@ -38,23 +38,32 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
 
         List<String> taskIds = inputTaskEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, taskIds));
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, taskIds.get(0)));
         List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibre_shipment_data");
 
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-                //作废状态
-                Object statusObj = dmpDataMap.get("status");
-                if (statusObj != null) {
-                    String status = String.valueOf(statusObj);
-                    if ("invalid".equalsIgnoreCase(status)) {
-                        dmpDataMap.put("invalidStatus", Boolean.TRUE);
-                    } else if ("cancelled".equalsIgnoreCase(status)) {
-                        dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                Map<String, Object> shipmentIdMap = (Map<String, Object>) dmpDataMap.get("shipment");
+                Object shipmentId = shipmentIdMap.get("fid");
+                if (shipmentId != null) {
+                    Map<String, Object> shipmentMap = dmpInputMongoChildList.stream().filter(req -> req.get("fid").equals(shipmentId)).findFirst().orElse(null);
+                    //作废状态
+                    Object statusObj = shipmentMap.get("status");
+                    if (statusObj != null) {
+                        String status = String.valueOf(statusObj);
+                        if ("invalid".equalsIgnoreCase(status)) {
+                            dmpDataMap.put("invalidStatus", Boolean.TRUE);
+
+                        } else if ("cancelled".equalsIgnoreCase(status)) {
+                            dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                        }
                     }
+
                 }
+
+
 
 
 
