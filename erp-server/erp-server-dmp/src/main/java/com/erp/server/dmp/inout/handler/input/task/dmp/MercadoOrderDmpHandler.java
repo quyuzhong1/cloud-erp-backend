@@ -5,6 +5,8 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
+import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import org.springframework.context.annotation.Scope;
@@ -43,15 +45,32 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                 Object shipmentId = shipmentIdMap.get("fid");
                 if (shipmentId != null) {
                     Map<String, Object> shipmentMap = dmpInputMongoChildList.stream().filter(req -> req.get("fid").equals(shipmentId)).findFirst().orElse(null);
-                    "mode" -> "me2"
-                    "type" -> "drop_off"
-                    "direction" -> "forward"
 
-                    shipmentMap.get("mode");
+
+
 
 
                     //物流状态
                     Map<String, Object> logisticMap = (Map<String, Object>) shipmentMap.get("logistic");
+                    String logisticType = "";
+                    Object modeObj = shipmentMap.get("mode");
+                    Object typeObj = shipmentMap.get("type");
+                    if (shipmentId != null) {
+                        String mode = shipmentMap.get("mode").toString();
+                        String type = shipmentMap.get("typeObj").toString();
+
+                        if ("me2".equalsIgnoreCase(mode) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(type)) {
+                            //如果是平台仓，状态审核通过
+                            logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+                        } else if ("me2".equalsIgnoreCase(mode)
+                                && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(type) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(type))
+                        ){
+                            logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
+                        } else if ("me1".equalsIgnoreCase(mode)) {
+                            //自发货
+                            logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
+                        }
+                    }
 
                     //作废状态
                     Object statusObj = shipmentMap.get("status");
@@ -70,6 +89,22 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                         } else if ("not_delivered".equalsIgnoreCase(status)) {
                             dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                             dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+                        } else if ("handling".equalsIgnoreCase(status)) {
+                            dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
+                            if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+                                dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
+                                dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+                            } else {
+                                dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                            }
+                        } else if ("ready_to_ship".equalsIgnoreCase(status)) {
+                            dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
+                            if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+                                dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
+                                dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+                            } else {
+                                dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                            }
                         }
                     }
 
@@ -83,6 +118,8 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                             dmpDataMap.put("invalidStatus", Boolean.TRUE);
                         }
                     }
+
+
                 }
 
 
