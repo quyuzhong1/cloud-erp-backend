@@ -878,6 +878,9 @@ public enum ApiError implements Serializable {
 
     ERROR_99127(99127,"发货通知单【{}】总数量不能大于销售数量"),
     ERROR_99128(99128,"组合产品【{}】的拣货数量与bom用量比例不一致，无法修改"),
+    ERROR_99129(99129,"已下推销售出库单，不能重复下推"),
+
+    ERROR_99140(99140,"已生成拣货单，不能修改发货通知单"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -1040,6 +1043,9 @@ public enum ApiError implements Serializable {
     ERROR_92253(92253,"装箱中SKU累计装箱数量不可大于拣货数量"),
     ERROR_92254(92254,"本箱已完成称重，不支持调整装箱"),
     ERROR_92255(92255,"调整装箱后，装箱数量不能为0"),
+    ERROR_92256(92256,"来源单号不同不能同时打印"),
+    ERROR_92257(92257,"来源单号未找到"),
+    ERROR_92258(92258,"请选择拣货单"),
 
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
@@ -1122,6 +1128,8 @@ public enum ApiError implements Serializable {
 
     ERROR_NOT_FOUND_WAREHOUSE_AREA(92238, "新增补货单时没有找到有效的库区"),
     ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
+
+    ERROR_DETAIL_IS_ZERO(92240, "【{}】的明细条数为0"),
 
 
     /**

@@ -338,11 +338,11 @@ public class RequisitionApplicationController extends BaseController {
 
     /**
      * 生成拣货单的弹窗
-     * @param id 要货单id
+     * @param page 要货单id
      */
-    @GetMapping("/generatePickingView")
-    public ApiResult<List<RequisitionApplicationDTO.PickingViewDTO>> generatePickingView(@RequestParam("id") String id) {
-        List<RequisitionApplicationDTO.PickingViewDTO> result = requisitionApplicationService.generatePickingView(id);
+    @PostMapping("/generatePickingView")
+    public ApiResult<PagingVO<RequisitionApplicationDTO.PickingViewDTO>> generatePickingView(@RequestBody @Validated PagingDTO<String> page) {
+        PagingVO<RequisitionApplicationDTO.PickingViewDTO> result = requisitionApplicationService.generatePickingView(page);
         return success(result);
     }
 
@@ -416,5 +416,35 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult<String> generateDeliverSaveAndSubmit(@RequestBody @Validated ValidList<RequisitionApplicationDTO.GenerateDeliverViewDTO> dto) {
         Boolean flag = requisitionApplicationService.generateDeliverSaveAndSubmit(dto.getList());
         return Boolean.TRUE.equals(flag) ? success() : failure();
+    }
+
+    /**
+     * 要货申请处理数据
+     * @author will
+     * @date 2024/7/29 9:32
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/handleData")
+    public ApiResult<List<BatchResultDTO>> handleData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = requisitionApplicationService.handleData(id);
+            }catch (Exception e){
+                log.error("要货申处理数据",e);
+                RequisitionApplicationEntity entity = requisitionApplicationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "要货申处理数据, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
     }
 }

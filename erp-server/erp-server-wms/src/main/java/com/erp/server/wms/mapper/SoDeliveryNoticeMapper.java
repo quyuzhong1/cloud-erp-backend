@@ -55,4 +55,13 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
      * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PdaSoDeliveryNotice>
      **/
     List<SoDeliveryNoticeDTO.PdaSoDeliveryNotice> pdaList(SoDeliveryNoticeDTO.PdaSoDeliveryNoticeParam dto);
+
+    /**
+     *
+     * @param page 分页参数
+     * @param id id
+     * @param ignoreInventorySkus 忽略得sku
+     */
+    IPage<SoDeliveryNoticeDTO.PickingViewDTO> pagingPicking(@Param("page") Page<SoDeliveryNoticeDTO.PickingViewDTO> page,@Param("id") String id,@Param("ignoreInventorySkus") List<String> ignoreInventorySkus);
+
 }

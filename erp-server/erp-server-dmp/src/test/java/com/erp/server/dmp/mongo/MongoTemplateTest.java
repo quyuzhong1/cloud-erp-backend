@@ -15,16 +15,21 @@ package com.erp.server.dmp.mongo;
 import cn.hutool.json.JSONNull;
 import cn.hutool.json.JSONUtil;
 import com.amazonaws.util.json.Jackson;
+import com.common.business.constant.MongoTableNameContant;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFulfilledShipmentsMongoDTO;
 import com.erp.server.dmp.ErpServerDmpApplication;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.bson.types.ObjectId;
 
@@ -46,6 +51,27 @@ public class MongoTemplateTest {
     public void joinQuery() {
         List<ReportFulfilledShipmentsMongoDTO> resultData = performJoinAndFilter2("6659e3971b4f5d1b16a27fe8", 10);
         System.out.println(JSONUtil.toJsonStr(resultData));
+    }
+
+    @Test
+    public void findData(){
+        String lastId = "667963a2db10a77113b4b7ea";
+        boolean queryIsAddOrUpdate = true;
+        String mongoTableName = MongoTableNameContant.DATA_REPORT_AMZ_FULFILLED_SHIPMENTS;
+        Class<ReportFulfilledShipmentsMongoDTO> mongoDTOClass = ReportFulfilledShipmentsMongoDTO.class;
+        int handleCount = 100;
+
+        // 查询
+        Query query = new Query();
+        Criteria criteria = new Criteria();
+        if (StringUtils.isNotBlank(lastId)) {
+            criteria = Criteria.where("_id").gt(new ObjectId(lastId));
+        }
+        criteria.and("isAddOrUpdate").is(queryIsAddOrUpdate);
+        query.addCriteria(criteria);
+        query.with(Sort.by(Sort.Direction.ASC, "_id")).limit(handleCount);
+        List<ReportFulfilledShipmentsMongoDTO> list = mongoTemplate.find(query, mongoDTOClass, mongoTableName);
+        System.out.println(list);
     }
 
     public List<ReportFulfilledShipmentsMongoDTO> performJoinAndFilter2(String specifiedId, int size) {

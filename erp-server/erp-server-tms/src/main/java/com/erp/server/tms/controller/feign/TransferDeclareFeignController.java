@@ -60,10 +60,10 @@ public class TransferDeclareFeignController {
      * @param dto
      * @return java.lang.Boolean
      **/
-    @PostMapping("/updateOutstockStatus")
-    public Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto) {
-        return transferDeclareDetailService.updateOutstockStatus(dto);
-    }
+//    @PostMapping("/updateOutstockStatus")
+//    public Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto) {
+//        return transferDeclareDetailService.updateOutstockStatus(dto);
+//    }
 
     /**
      * 根据物流渠道id集合查询

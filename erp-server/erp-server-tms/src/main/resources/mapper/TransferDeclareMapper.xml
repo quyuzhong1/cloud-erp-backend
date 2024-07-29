@@ -60,12 +60,16 @@
             td.create_time AS createTime
         FROM transfer_declare td
         LEFT JOIN transfer_declare_detail tdd ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
+        LEFT JOIN so_b2c sb on sb.id = tdd.so_id and sb.is_deleted = false
         WHERE td.is_deleted = FALSE
             <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
                 and ${params.sqlMap.default}
             </if>
             <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
                 and ${params.sqlMap.detail}
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -106,7 +110,7 @@
     </select>
 
     <!--导出excel查询-->
-    <select id="listExportExcel" resultType="com.erp.model.tms.dto.TransferDeclareDTO$ListDTO">
+    <select id="listExportExcel" resultType="com.erp.model.tms.dto.TransferDeclareDTO$ExportListDTO">
         SELECT
             td.id,
             tdd.id AS detailId,
@@ -132,12 +136,16 @@
             td.create_time AS createTime
         FROM transfer_declare_detail tdd
         INNER JOIN transfer_declare td ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
+        LEFT JOIN so_b2c sb on sb.id = tdd.so_id and sb.is_deleted = false
         WHERE td.is_deleted = FALSE
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
         <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
             and ${params.sqlMap.detail}
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

@@ -1,6 +1,7 @@
 package com.common.business.aspect;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ReflectUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -172,14 +173,7 @@ public class DataIdempotentAspect {
         String[] fieldNames = fieldName.split("\\.");
         try {
             Object value = "";
-            Field field = obj.getClass().getDeclaredField(fieldNames[1]);
-            field.setAccessible(true);
-            value = field.get(obj);
-            for (int i = 2; i < fieldNames.length; i++) {
-                field = value.getClass().getDeclaredField(fieldNames[i]);
-                field.setAccessible(true);
-                value = field.get(value);
-            }
+            value = ReflectUtil.getFieldValue(obj,fieldNames[1]);
             return value;
         } catch (Exception e) {
             return "";

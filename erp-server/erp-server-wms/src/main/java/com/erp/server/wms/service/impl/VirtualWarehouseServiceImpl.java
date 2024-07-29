@@ -634,4 +634,19 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     public List<VirtualWarehouseDTO.VwDTO> getByNames(List<String> nameList) {
         return baseMapper.getByNames(nameList);
     }
+
+    @Override
+    public PagingVO<VirtualWarehouseDTO.SelectDTO> warehousePagingSelect(PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto) {
+        IPage<VirtualWarehouseDTO.SelectDTO> pageData = this.baseMapper.warehousePagingSelect(dto);
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<VirtualWarehouseDTO.SelectDTO> warehouseSelectList(PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto) {
+        return baseMapper.warehouseSelectList(dto);
+    }
 }

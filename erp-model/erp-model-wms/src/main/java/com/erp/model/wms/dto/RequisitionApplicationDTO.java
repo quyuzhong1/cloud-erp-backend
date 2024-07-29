@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -529,6 +530,11 @@ public class RequisitionApplicationDTO implements Serializable {
         private Integer pickingQty;
 
         /**
+         * 虚拟仓冻结数量
+         */
+        private Integer virtualFrozenQty;
+
+        /**
          * 要货仓库id
          */
         private String requisitionWarehouseId;
@@ -1035,7 +1041,7 @@ public class RequisitionApplicationDTO implements Serializable {
         @NotBlank(message = "要货申请不能为空")
         private String id;
 
-        @Size(min = 1, message = "至少存在一条明细才可生成拣货单")
+        @Size(min = 1,max = 100,message = "至少存在一条明细,且明细条数不可大于100条,才可生成拣货单")
         private List<String> detailIds;
     }
 

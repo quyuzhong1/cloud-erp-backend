@@ -22,11 +22,13 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.server.wms.service.InventoryClosedRecordService;
 import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +73,7 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
     @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
-    private WarehouseService warehouseService;
+    private InventoryClosedRecordService inventoryClosedRecordService;
 
 
     @Override
@@ -208,9 +210,17 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         // 检查允许生成销售出库单的日期
         LocalDate stopDate = soOutstockService.getStopSoOutStockDate();
         if (null != stopDate && !generateB2cDTO.getBillDate().isAfter(stopDate)){
-            log.warn("[销售出库销售消费服务]:当前销售出库单日期【{}】停止生成：单号={}", generateB2cDTO.getBillDate(), dto.getPlatformCode());
+            log.warn("[销售出库销售消费服务]:当前销售出库单日期【{}】因配置日期【{}】停止生成：单号={}", generateB2cDTO.getBillDate(),stopDate, dto.getPlatformCode());
             return ApiResult.success();
         }
+        // 关账时间
+        LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(generateB2cDTO.getWarehouseOrgId(), generateB2cDTO.getBillDate());
+        if (null != closedLocalDate){
+            // 已关账
+            log.warn("[销售出库销售消费服务]:当前销售出库单日期【{}】因关账【{}】停止生成：单号={}", generateB2cDTO.getBillDate(), stopDate, dto.getPlatformCode());
+            return ApiResult.success();
+        }
+
 
         // 校验sku映射关系
         if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){

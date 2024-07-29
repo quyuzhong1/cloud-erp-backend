@@ -228,16 +228,19 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         List<SoB2cDeliveryEntity> deliveryList = deliveryService.listByIds(deliveryIds);
         List<String> collect = deliveryList.stream()
                 .filter(item -> !StringUtils.equals(item.getStatus(), SoB2cDeliveryStatusEnum.SHIPPED.getCode()))
+                .filter(item -> !StringUtils.equals(item.getStatus(), SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode()))
                 .map(BaseEntity::getId)
                 .collect(Collectors.toList());
 
         //删除波次
         this.baseMapper.deleteById(entity);
         waveListDetailService.deleteByMainId(entity.getId());
-        //释放冻结库存
-        deliveryService.rollbackPickingInventory(collect);
-        //修改发货单状态
-        deliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>().in("id", collect).set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode()));
+        if(! collect.isEmpty()){
+            //释放冻结库存
+            deliveryService.rollbackPickingInventory(collect);
+            //修改发货单状态
+            deliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>().in("id", collect).set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode()));
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "成功");
     }
 

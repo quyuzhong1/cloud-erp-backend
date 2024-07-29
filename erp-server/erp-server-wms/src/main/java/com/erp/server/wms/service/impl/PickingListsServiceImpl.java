@@ -12,13 +12,16 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -33,8 +36,11 @@ import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
@@ -51,6 +57,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -104,15 +111,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
     @Resource
-    @Lazy
-    private SoB2cDeliveryService soB2cDeliveryService;
-    @Resource
-    @Lazy
-    private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
-    @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Resource
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
     @Override
     public PagingVO<PickingListsDTO.PagingView> paging(PagingDTO<PickingListsDTO.PagingParam> dto) {
@@ -251,7 +257,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<String> sourceDetailIds = entityList.stream().map(PickingDetailEntity::getSourceDetailId).collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量
-            requisitionApplicationService.writeBackData(sourceDetailIds);
+            requisitionApplicationService.writeBackData(sourceDetailIds,Boolean.FALSE);
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }
@@ -285,7 +291,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         Map<String, String> areaMap = locationAndAreaList.stream()
                 .collect(Collectors.toMap(WarehouseLocationEntity::getId, WarehouseLocationEntity::getName, (o1, o2) -> o1));
         PickingListsDTO.View view = BeanMapperUtils.map(PickingListsDTO.View.class, entity);
-        List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, id));
+        List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, id).orderByDesc(PickingDetailEntity::getCreateTime));
         List<PickingDetailDTO.View> detailList = pickingDetails.stream()
                 .map(detail -> {
                     WarehouseLocationEntity location = locationAndAreaList.stream()
@@ -342,59 +348,82 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     public List<PickingListsDTO.PrintView> print(List<String> ids) {
+        LoginUser user = UserContext.getDefaultLoginUser();
         List<PickingListsEntity> pickingLists = listByIds(ids);
-        List<String> sourceCodes = pickingLists.stream().map(PickingListsEntity::getSourceCode).distinct().collect(Collectors.toList());
-        if (sourceCodes.size() > 1) {
-            throw new ServiceException("来源单号不同不能同时打印");
-        }
-        String sourceCode;
-        PickingListsEntity pickingListsEntity = pickingLists.get(0);
-        //重置来源单号
-        if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(pickingListsEntity.getSourceType())) {
-            sourceCode = sourceCodes.get(0);
-        } else if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(pickingListsEntity.getSourceType())) {
-            //picking_lists.source_id = first_mile_delivery.source_id
-            List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listBySourceIds(Collections.singletonList(pickingListsEntity.getSourceId()));
-            if (!CollectionUtils.isEmpty(firstMileDeliveryEntities)) {
-                sourceCode = firstMileDeliveryEntities.get(0).getCode();
-            } else {
-                sourceCode = null;
-            }
-        } else {
-            sourceCode = null;
-        }
-        if (StrUtil.isBlank(sourceCode)) {
-            throw new ServiceException("来源单号未找到");
+        if (CollectionUtils.isEmpty(pickingLists)) {
+            throw new ServiceException(ApiError.ERROR_92258);
         }
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
         List<String> skuIds = detailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
-        List<PickingListsDTO.PrintView> views = detailList.stream().map(detail -> {
-            PickingListsEntity entity = pickingLists.stream()
-                    .filter(picking -> picking.getId().equals(detail.getMainId()))
-                    .findFirst()
-                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
-            //匹配sku信息
-            SkuVO skuVO = skuVOList.stream()
-                    .filter(req -> req.getSkuId().equals(detail.getSkuId()))
-                    .distinct().findFirst().orElse(new SkuVO());
-            PickingListsDTO.PrintView view = new PickingListsDTO.PrintView();
-            view.getPrintView(entity, detail, skuVO.getSkuName());
-            if (ObjectUtil.isEmpty(view.getWarehouseLocation())) {
-                view.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+        List<PickingListsDTO.PrintView> printViews = new ArrayList<>();
+        List<String> sourceIds = pickingLists.stream().map(PickingListsEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationEntity> applicationEntities = requisitionApplicationService.listByIds(sourceIds);
+        List<RequisitionApplicationDetailEntity> applicationDetails = requisitionApplicationDetailService.listByMainIds(sourceIds);
+        List<SoDeliveryNoticeEntity> noticeEntities = soDeliveryNoticeService.listByIds(sourceIds);
+        List<String> soIds = noticeEntities.stream().map(SoDeliveryNoticeEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfos = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(soIds)) {
+            soInfos = soInfoFeign.listSoInfoByIds(soIds);
+        }
+        for (PickingListsEntity picking : pickingLists) {
+            PickingListsDTO.PrintView printView = new PickingListsDTO.PrintView();
+            printView.setPrintTime(LocalDateTime.now());
+            printView.setPrintUserName(user.getUserName());
+            if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
+                RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
+                printView.setCode(application.getCode());
+                printView.setChannelName(application.getChannelName());
+                printView.setHandlingUserName(application.getCreateUserName());
+            } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(picking.getSourceType())) {
+                SoDeliveryNoticeEntity soDeliveryNotice = noticeEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST));
+                SoInfoEntity soInfo = soInfos.stream().filter(v -> v.getId().equals(soDeliveryNotice.getSourceId()))
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_92016));
+                printView.setCode(soDeliveryNotice.getSourceCode());
+                printView.setChannelName(soDeliveryNotice.getCustomerName());
+                printView.setHandlingUserName(soInfo.getCreateUserName());
             }
-            return view;
-        }).collect(Collectors.toList());
-        return new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
-                Collectors.collectingAndThen(Collectors.toList(), v -> {
-                    PickingListsDTO.PrintView view = v.get(0);
-                    int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintView::getPickingQty).sum();
-                    view.setPickingQty(totalQuantity);
-                    view.setSourceCode(sourceCode);
-                    return view;
-                }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintView::getWarehouseId)
-                .thenComparing(PickingListsDTO.PrintView::getWarehouseLocation)
-                .thenComparing(PickingListsDTO.PrintView::getSkuNo)).collect(Collectors.toList());
+            List<PickingListsDTO.PrintDetailView> views = detailList.stream().map(detail -> {
+                PickingListsEntity entity = pickingLists.stream()
+                        .filter(p -> p.getId().equals(detail.getMainId()))
+                        .findFirst()
+                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
+                //匹配sku信息
+                SkuVO skuVO = skuVOList.stream()
+                        .filter(req -> req.getSkuId().equals(detail.getSkuId()))
+                        .distinct().findFirst().orElse(new SkuVO());
+                PickingListsDTO.PrintDetailView view = new PickingListsDTO.PrintDetailView();
+                view.getPrintView(entity, detail, skuVO.getSkuName());
+                if (ObjectUtil.isEmpty(view.getWarehouseLocation())) {
+                    view.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+                }
+                if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
+                    RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
+                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
+                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+                        RequisitionApplicationDetailEntity applicationDetail = applicationDetails.stream().filter(v -> v.getId().equals(detail.getSourceDetailId()))
+                                .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
+                        view.setThirdSku(applicationDetail.getPlatformFnSku());
+                    }
+                }
+                return view;
+            }).collect(Collectors.toList());
+            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
+                    Collectors.collectingAndThen(Collectors.toList(), v -> {
+                        PickingListsDTO.PrintDetailView view = v.get(0);
+                        int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintDetailView::getPickingQty).sum();
+                        view.setPickingQty(totalQuantity);
+                        return view;
+                    }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getWarehouseId)
+                    .thenComparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)
+                    .thenComparing(PickingListsDTO.PrintDetailView::getSkuNo)).collect(Collectors.toList());
+
+            printView.setPrintDetailViews(viewList);
+            printViews.add(printView);
+        }
+        return printViews;
     }
 
     @Override
@@ -433,11 +462,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<String> sourceDetailIds = detailList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量
-            requisitionApplicationService.writeBackData(sourceDetailIds);
+            requisitionApplicationService.writeBackData(sourceDetailIds,Boolean.TRUE);
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }
     }
+
 
     private void checkCombination(PickingListsEntity entity, PickingListsDTO.UpdateDTO dto) {
 

@@ -104,5 +104,10 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
      */
     void batchSaveOrUpdateLogisticsAddress(List<LogisticsAddressEntity> list);
 
-
+    /**
+     * 根据类型和店铺获取地址列表
+     * @param dto
+     * @return
+     */
+    List<LogisticsAddressDTO.ListDTO> listAddressByType(LogisticsAddressDTO.AddressByTypeDTO dto);
 }

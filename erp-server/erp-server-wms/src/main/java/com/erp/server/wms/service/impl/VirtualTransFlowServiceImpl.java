@@ -118,8 +118,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
                 .eq(VirtualTransFlowEntity::getSourceId, sourceId)
                 .eq(VirtualTransFlowEntity::getOperationMode, InventoryOperationModeEnum.APPROVE.getCode())
                 .eq(VirtualTransFlowEntity::getIsUnapproved, Boolean.FALSE)
-                .orderByAsc(VirtualTransFlowEntity::getTradeTime)
-                .orderByAsc(VirtualTransFlowEntity::getId)
+                .orderByDesc(VirtualTransFlowEntity::getId)
                 .list();
 
         return txnFlows;

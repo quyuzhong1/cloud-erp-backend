@@ -203,4 +203,22 @@
         </if>
         ORDER BY sdn.create_time
     </select>
+    <select id="pagingPicking" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PickingViewDTO">
+        select sdnd.id AS detailId,
+        sdnd.sku_no AS skuNo,
+        sdnd.sku_id AS skuId,
+        sdnd.delivery_qty AS planQty,
+        sdnd.picking_qty AS pickedQuantity,
+        sdnd.delivery_qty - sdnd.picking_qty AS unpickedQuantity
+        from so_delivery_notice sdn
+        inner join so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdnd.is_deleted = FALSE
+        where sdn.is_deleted = false
+        and sdn.id = #{id} and sdnd.delivery_qty > sdnd.picking_qty
+        <if test="ignoreInventorySkus != null and ignoreInventorySkus.size > 0">
+            and sdnd.sku_id not in
+            <foreach collection="ignoreInventorySkus" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+    </select>
 </mapper>
