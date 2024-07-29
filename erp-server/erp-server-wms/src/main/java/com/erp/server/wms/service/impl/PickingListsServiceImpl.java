@@ -183,6 +183,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         }
     }
 
+    /**
+     * 处理组合sku
+     */
     private void generatePicking(PickingListsDTO.AddDTO dto) {
         List<PickingDetailDTO.AddDTO> detailList = new ArrayList<>();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
