@@ -524,24 +524,26 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             ServiceException.runError("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}],inventory_id为空,请让【实施工程师】协调开发人员处理",
                     transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),transactionDTO.getWarehouseLocationName(),transactionDTO.getInventoryStatusName());
         }
-
+        // 日期大于当前单据日期的流水更新
         LambdaUpdateWrapper<TransactionFlowEntity> wrapper = new LambdaUpdateWrapper<>();
         wrapper.setSql("cur_inventory_qty = cur_inventory_qty + " + transactionDTO.getQty())
                 .set(TransactionFlowEntity::getUpdateTime, LocalDateTime.now())
                 //条件
-                .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId());
-
-        if(isApprove) {
-            // 审批时，只更新单据日期之后的交易记录
-            wrapper.gt(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate());
-        } else {
-            // 反审批时，只更新单据日期及之后的交易记录
-            wrapper.ge(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate());
-            wrapper.gt(TransactionFlowEntity::getId, transactionDTO.getId());
-        }
-
+                .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId())
+                .gt(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate());
         transactionFlowService.update(wrapper);
 
+        if(!isApprove) {
+            // 反审核如果当天存在晚于当前流水创建的流水,需要进行流水重算
+            LambdaUpdateWrapper<TransactionFlowEntity> wrapperToday = new LambdaUpdateWrapper<>();
+            wrapperToday.setSql("cur_inventory_qty = cur_inventory_qty + " + transactionDTO.getQty())
+                    .set(TransactionFlowEntity::getUpdateTime, LocalDateTime.now())
+                    //条件
+                    .eq(TransactionFlowEntity::getInventoryId, transactionDTO.getInventoryId())
+                    .eq(TransactionFlowEntity::getBillDate, transactionDTO.getBillDate())
+                    .gt(TransactionFlowEntity::getId, transactionDTO.getId());
+            transactionFlowService.update(wrapperToday);
+        }
     }
 
     /**
