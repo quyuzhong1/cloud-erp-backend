@@ -8,6 +8,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.dto.DmpTaskMsgDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -189,4 +190,11 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @return
      */
     List<DmpPushTaskEntity> getWarnPushTaskList(List<String> statusList);
+
+    /**
+     * 获取飞书预警信息需要推送的(Task汇总报告)
+     * @param statusList
+     * @return
+     */
+    List<DmpTaskMsgDTO> getWarnTaskReport(List<String> statusList);
 }

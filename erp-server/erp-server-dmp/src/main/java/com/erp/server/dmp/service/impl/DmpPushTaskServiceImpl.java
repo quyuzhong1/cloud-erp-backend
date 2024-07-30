@@ -32,6 +32,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.dto.DmpTaskMsgDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
@@ -428,6 +429,19 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                         DmpPushTaskEntity::getReturnMsg,
                         DmpPushTaskEntity::getUpdateTime)
                 .in(DmpPushTaskEntity::getStatus, statusList).eq(DmpPushTaskEntity::getIsDeleted, Boolean.FALSE).list();
+    }
+
+    /**
+     * 获取飞书预警信息需要推送的(Task汇总报告)
+     * @param statusList
+     * @return
+     */
+    @Override
+    public List<DmpTaskMsgDTO> getWarnTaskReport(List<String> statusList) {
+        if (CollectionUtils.isEmpty(statusList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getWarnTaskReport(statusList);
     }
 
 
