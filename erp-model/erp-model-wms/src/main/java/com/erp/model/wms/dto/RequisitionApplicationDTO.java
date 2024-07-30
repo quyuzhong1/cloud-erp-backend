@@ -1155,6 +1155,11 @@ public class RequisitionApplicationDTO implements Serializable {
          * 店铺名称
          */
         private String shopName;
+
+        /**
+         * FBA货件编码
+         */
+        private String fbaShipmentCode;
     }
 
 }
