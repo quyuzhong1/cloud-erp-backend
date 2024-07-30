@@ -104,13 +104,13 @@ public class MercadoProductDetailInitHandler extends DmpInputInitHandler {
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多Listing数据失败，返回值 responseMap={}",
 						url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
-
+/*
 			JSONObject jsonObject = JSON.parseObject((String) apiResult.getData());
 
 
 			DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 			dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(Arrays.asList(orderViewDTO)));
-			dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
+			dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);*/
 		}
 
 		return dmpInputTaskInitDTOList;
