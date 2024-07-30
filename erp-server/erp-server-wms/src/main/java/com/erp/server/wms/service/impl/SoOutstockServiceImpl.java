@@ -1212,10 +1212,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return;
         }
         List<String> transferIdList = transferInfoList.stream().map(TransferInfoEntity::getId).collect(Collectors.toList());
-        Boolean isDisApprove = transferInfoService.disApprove(transferIdList, Boolean.FALSE,Boolean.FALSE);
-        if (!isDisApprove) {
-            throw new ServiceException("直接调拨单反审核失败");
-        }
+        transferInfoList.forEach(transferInfoEntity -> {
+            BatchResultDTO resultDTO = transferInfoService.disApprove(transferInfoEntity, Boolean.FALSE, Boolean.FALSE);
+            if (!resultDTO.getSuccess()){
+                throw new ServiceException("直接调拨单反审核失败");
+            }
+        });
         Boolean isDelete = transferInfoService.delete(transferIdList);
         if (!isDelete) {
             throw new ServiceException("直接调拨单删除失败");

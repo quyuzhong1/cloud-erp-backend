@@ -1965,7 +1965,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setIds(Arrays.asList(id));
         baseApproveParamDTO.setType(ApproveType.PASS);
-        transferInfoService.approve(baseApproveParamDTO,Boolean.TRUE);
+        TransferInfoEntity transferInfoEntity = transferInfoService.getById(id);
+        transferInfoService.approve(transferInfoEntity,ApproveType.PASS,"", null,Boolean.TRUE);
     }
 
     /**
