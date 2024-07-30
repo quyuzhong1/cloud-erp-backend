@@ -134,7 +134,11 @@ public class DmpSoReceiverEntity extends BaseEntity<DmpSoReceiverEntity> {
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
-
+    /**
+    * 收货人税号
+    */
+    @TableField("receiver_tax_no")
+    private String receiverTaxNo;
 
     public static final String MAIN_ID = "main_id";
 
@@ -175,6 +179,8 @@ public class DmpSoReceiverEntity extends BaseEntity<DmpSoReceiverEntity> {
     public static final String UNIQUE_ENCRYPT = "unique_encrypt";
 
     public static final String DATA_ENCRYPT = "data_encrypt";
+
+    public static final String RECEIVER_TAX_NO = "receiver_tax_no";
 
     @Override
     public Serializable pkVal() {
