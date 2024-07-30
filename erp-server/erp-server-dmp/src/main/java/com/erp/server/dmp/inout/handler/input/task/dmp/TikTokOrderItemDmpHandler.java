@@ -35,6 +35,23 @@ public class TikTokOrderItemDmpHandler extends DmpInputDoChildDmpHandler{
 		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).list();
 		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
 		List<Map<String, Object>> dmpInputMongoChildEntityList = mongoService.findMongoData(paramDataList, childMongoStorageName);
+		if (CollUtil.isNotEmpty(dmpInputMongoChildEntityList)) {
+			Map<String, Object> data = new HashMap<>();
+			for (Map<String, Object> dmpInputMongoChild : dmpInputMongoChildEntityList) {
+				Object lineItemsObj = dmpInputMongoChild.get("lineItems");
+				if (lineItemsObj != null) {
+					List<Map<String, Object>> skuList = (List<Map<String, Object>>) lineItemsObj;
+					skuList.forEach(l -> {
+						Object itemTaxObj = l.get("itemTax");
+						if (itemTaxObj != null) {
+							List<Map<String, Object>> itemTaxMap = (List<Map<String, Object>>) itemTaxObj;
+							data.put("itemTax", itemTaxMap);
+							l.put("extendData", JSON.toJSONString(data));
+						}
+					});
+				}
+			}
+		}
 		return dmpInputMongoChildEntityList;
 	}
 	
