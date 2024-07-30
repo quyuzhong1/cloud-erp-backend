@@ -880,8 +880,17 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //发送异步任务
         String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
 
+        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherOutStockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
+            }
+        });
         //保存中间表数据
         DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
         addDTO.setSourceId(entity.getId());
@@ -895,14 +904,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         addDTO.setDetailDTOList(detailDTOList);
         dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
 
-        if(dmpPushTaskEntity != null){
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-                }
-            });
-        }
     }
 
     @Override

@@ -1303,14 +1303,16 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             goodsList.add(goods);
         });
 
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, true);
+        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherOutStockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, false);
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
             }
         });
-
         //保存中间表数据
         DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
         addDTO.setSourceId(entity.getId());

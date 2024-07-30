@@ -1242,14 +1242,16 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
         //保存任务
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outCode, thirdWarehouseCode, false);
+        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherOutStockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, true);
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
             }
         });
-
         //保存中间表
         DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
         addDTO.setSourceId(entity.getId());
