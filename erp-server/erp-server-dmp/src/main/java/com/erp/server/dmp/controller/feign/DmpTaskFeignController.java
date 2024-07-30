@@ -1,5 +1,6 @@
 package com.erp.server.dmp.controller.feign;
 
+import com.erp.model.dmp.dto.DmpTaskMsgDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
@@ -85,5 +86,13 @@ public class DmpTaskFeignController {
     @PostMapping("/getWarnPullTaskList")
     public List<DmpPullTaskEntity> getWarnPullTaskList(@RequestBody List<String> statusList){
         return dmpPullTaskService.getWarnPullTaskList(statusList);
+    }
+    /**
+     * 获取飞书预警信息需要推送的(Task汇总报告)
+     * @return
+     */
+    @PostMapping("/getWarnTaskReport")
+    public List<DmpTaskMsgDTO> getWarnTaskReport(@RequestBody List<String> statusList){
+        return dmpPushTaskService.getWarnTaskReport(statusList);
     }
 }

@@ -129,4 +129,34 @@
         </where>
         limit 1
     </select>
+    <select id="getWarnTaskReport" resultType="com.erp.model.dmp.dto.DmpTaskMsgDTO">
+        select
+            target_platform_name as targetPlatformName,
+            source_platform_name as sourcePlatformName,
+            source_type as sourceType,
+            "count"(id) as total
+        from dmp_pull_task where is_deleted = false
+        <if test="statusList != null and statusList.size > 0 ">
+            and status in
+            <foreach collection="statusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY target_platform_name,source_platform_name,source_type
+        union all
+        select
+            target_platform_name as targetPlatformName,
+            source_platform_name as sourcePlatformName,
+            source_type as sourceType,
+            "count"(id) as total
+        from dmp_push_task where is_deleted = false
+        <if test="statusList != null and statusList.size > 0 ">
+            and status in
+            <foreach collection="statusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY target_platform_name,source_platform_name,source_type
+        ORDER BY total desc
+    </select>
 </mapper>
