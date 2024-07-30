@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.utils.CollectionUtils;
@@ -12,6 +13,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import jodd.util.StringUtil;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -73,6 +75,36 @@ public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
                                 l.put("parent_category_name", categoryChainsList.get(0).get("localName"));
                                 l.put("category_name", categoryChainsList.get(1).get("localName"));
                             }
+                        }
+
+
+                        //规格属性
+                        List<Map<String, Object>> salesAttributes = (List<Map<String, Object>>) l.get("salesAttributes");
+                        if (CollectionUtil.isNotEmpty(salesAttributes)) {
+                            String specifics = "";
+                            for (Map<String, Object> salesAttribute : salesAttributes) {
+                                specifics = specifics + salesAttribute.get("name") + ":" + salesAttribute.get("valueName") +" ";
+                            }
+                            specifics = specifics.trim();
+                            l.put("specifics", specifics);
+                        }
+
+                        //包装信息
+                        Object packageDimensionsObj = dmpInputMongoChild.get("packageDimensions");
+                        if (packageDimensionsObj != null) {
+                            Map<String, String> packageDimensionsMap = (Map<String, String>) packageDimensionsObj;
+                            l.put("packageLength", packageDimensionsMap.get("length"));
+                            l.put("packageWidth", packageDimensionsMap.get("width"));
+                            l.put("packageHeight", packageDimensionsMap.get("height"));
+                            l.put("packageUnit", packageDimensionsMap.get("unit"));
+                        }
+
+                        //产品重量
+                        Object packageWeightObj = dmpInputMongoChild.get("packageWeight");
+                        if (packageWeightObj != null) {
+                            Map<String, String> packageWeightMap = (Map<String, String>) packageWeightObj;
+                            l.put("grossWeight", packageWeightMap.get("value"));
+                            l.put("packageUnit", packageWeightMap.get("unit"));
                         }
                         l.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
                         l.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
