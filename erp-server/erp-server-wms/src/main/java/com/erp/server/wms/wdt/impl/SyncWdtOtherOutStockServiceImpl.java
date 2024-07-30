@@ -62,6 +62,13 @@ public class SyncWdtOtherOutStockServiceImpl implements SyncWdtOtherOutStockServ
             }
         }
 
+        //临时转换仓位
+        for (CreateOtherStockoutRequest.GoodsList goods : goodsList) {
+            if(goods.getPositionNo().equals("头程拣货暂存仓位") || goods.getPositionNo().equals("B2B拣货暂存仓位")){
+                goods.setPositionNo("发货暂存");
+            }
+        }
+
         request.setWarehouseNo(thirdWarehouseCode);
         request.setisCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
@@ -107,6 +114,13 @@ public class SyncWdtOtherOutStockServiceImpl implements SyncWdtOtherOutStockServ
                 }else {
                     request.setOuterNo(outerCode + "_001");
                 }
+            }
+        }
+
+        //临时转换仓位
+        for (CreateOtherStockoutRequest.GoodsList goods : goodsList) {
+            if(goods.getPositionNo().equals("头程拣货暂存仓位") || goods.getPositionNo().equals("B2B拣货暂存仓位")){
+                goods.setPositionNo("发货暂存");
             }
         }
 

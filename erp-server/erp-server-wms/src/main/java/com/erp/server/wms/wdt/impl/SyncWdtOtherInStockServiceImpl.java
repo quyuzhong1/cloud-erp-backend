@@ -15,6 +15,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -60,6 +61,12 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
             }
         }
 
+        //临时转换仓位
+        for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
+            if(goods.getPositionNo().equals("头程拣货暂存仓位") || goods.getPositionNo().equals("B2B拣货暂存仓位")){
+                goods.setPositionNo("发货暂存");
+            }
+        }
 
         request.setWarehouseNo(thirdWarehouseCode);
         request.setisCheck(Boolean.TRUE);
@@ -109,6 +116,12 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
             }
         }
 
+        //临时转换仓位
+        for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
+            if(goods.getPositionNo().equals("头程拣货暂存仓位") || goods.getPositionNo().equals("B2B拣货暂存仓位")){
+                goods.setPositionNo("发货暂存");
+            }
+        }
 
         request.setWarehouseNo(thirdWarehouseCode);
         request.setisCheck(Boolean.TRUE);
