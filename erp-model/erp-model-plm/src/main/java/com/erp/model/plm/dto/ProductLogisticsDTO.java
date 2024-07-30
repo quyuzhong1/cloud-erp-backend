@@ -36,7 +36,7 @@ public class ProductLogisticsDTO implements Serializable {
     /**
      * 产品属性id
      */
-    @NotBlank(message = "产品属性ID不能为空")
+//    @NotBlank(message = "产品物流属性ID不能为空")
     private String productPropertyId;
 
     /**
