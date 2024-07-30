@@ -12,6 +12,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.service.impl.AbstractWdtService;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import lombok.extern.slf4j.Slf4j;
@@ -60,9 +61,10 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
             }
         }
 
+        List<CreateOtherStockoutRequest.GoodsList> handlerGoodsList = super.handleGoodsList(goodsList);
         request.setWarehouseNo(thirdWarehouseCode);
         request.setisCheck(Boolean.TRUE);
-        request.setGoodsList(goodsList);
+        request.setGoodsList(handlerGoodsList);
         request.setSourceId(outerCode);
         request.setOperateCode(operateCode);
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
