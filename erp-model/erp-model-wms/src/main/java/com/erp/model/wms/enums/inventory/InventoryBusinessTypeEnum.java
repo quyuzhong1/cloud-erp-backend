@@ -79,11 +79,12 @@ public enum InventoryBusinessTypeEnum {
     SO_B2C_DELIVERY_SHELVES("so_b2c_delivery_shelves", "37", "b2c发货单取消发货(上架)"),
 
     DELIVERY_PUSH_TRANSFER("delivery_push_transfer", "38", "直接调拨单（发货单下推）"),
-    DELIVERY_NOTICE_PUSH_TRANSFER("delivery_notice_push_transfer", "39", "直接调拨单（发货通知单/销售订单下推）"),
+    DELIVERY_NOTICE_PUSH_TRANSFER("delivery_notice_push_transfer", "39", "直接调拨单（发货通知单下推）"),
     DELIVERY_PUSH_TRANSFER_TO_ULANZI("delivery_push_transfer_to_ulanzi", "40", "直接调拨单（头程发货单自动生成：发货仓->优蓝子中转仓）"),
     DELIVERY_PUSH_TRANSFER_FROM_ULANZI("delivery_push_transfer_from_ulanzi", "41", "直接调拨单（头程发货单自动生成：优蓝子中转仓->目的在途仓）"),
     WAREHOUSE_LOCATION_MOVE_INFO_ADD("warehouse_location_move_info_add", "42", "仓位移动（拣货单新增）"),
     WAREHOUSE_LOCATION_MOVE_INFO_SUBTRACT("warehouse_location_move_info_subtract", "43", "仓位移动（拣货单减少）"),
+    SO_INFO_PUSH_TRANSFER("so_info_push_transfer", "44", "直接调拨单（销售订单下推）")
     ;
 
     private String code;
