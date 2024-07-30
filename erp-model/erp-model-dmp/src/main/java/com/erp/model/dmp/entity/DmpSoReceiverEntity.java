@@ -134,11 +134,6 @@ public class DmpSoReceiverEntity extends BaseEntity<DmpSoReceiverEntity> {
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
-    /**
-    * 收货人税号
-    */
-    @TableField("receiver_tax_no")
-    private String receiverTaxNo;
 
     public static final String MAIN_ID = "main_id";
 
