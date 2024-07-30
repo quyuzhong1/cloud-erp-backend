@@ -46,6 +46,7 @@ public class DmpInputAliExpressOrderLogisticNextDmpHandler extends DmpInputDoNex
 				Map<String, Map<String, Object>> orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
 				Map<String, String> maidIdThirdCodeMaps = dmpSoInfoService.lambdaQuery()
 					.in(DmpSoInfoEntity::getThirdCode, orderIdDetailMaps.keySet())
+					.eq(DmpSoInfoEntity::getInputTaskId, inputTaskId)
 					.select(DmpSoInfoEntity::getId , DmpSoInfoEntity::getThirdCode)
 					.list().stream().collect(Collectors.toMap(DmpSoInfoEntity::getThirdCode, DmpSoInfoEntity::getId));
 				for(Map.Entry<String, Map<String, Object>> orderIdDetailMap : orderIdDetailMaps.entrySet()) {
