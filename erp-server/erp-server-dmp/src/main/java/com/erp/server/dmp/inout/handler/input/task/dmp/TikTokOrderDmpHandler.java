@@ -90,7 +90,7 @@ public class TikTokOrderDmpHandler extends TikTokDmpHandler {
 
                     //渠道Id
                     Object shippingProviderIdObj = dmpDataMap.get("shippingProviderId");
-                    if (shippingTypeObj != null) {
+                    if (shippingProviderIdObj != null) {
                         String shippingProviderId = String.valueOf(shippingProviderIdObj);
                         dmpDataMap.put("logisticsChannelId", "SELLER".equalsIgnoreCase(shippingType) ? "" : shippingProviderId);
                     }
@@ -106,7 +106,7 @@ public class TikTokOrderDmpHandler extends TikTokDmpHandler {
 
                 //支付时间
                 Object paidTimeObj = dmpDataMap.get("paidTime");
-                if (statusObj != null) {
+                if (paidTimeObj != null) {
                     // 使用Instant类将Unix时间戳转换为LocalDateTime对象
                     LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(paidTimeObj+"")), ZoneId.systemDefault());
                     dmpDataMap.put("payTime", payTime);
@@ -114,7 +114,7 @@ public class TikTokOrderDmpHandler extends TikTokDmpHandler {
 
                 //创建时间
                 Object createTimeObj = dmpDataMap.get("createTime");
-                if (statusObj != null) {
+                if (createTimeObj != null) {
                     // 使用Instant类将Unix时间戳转换为LocalDateTime对象
                     LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(createTimeObj+"")), ZoneId.systemDefault());
                     dmpDataMap.put("platformCreateTime", payTime);
@@ -122,7 +122,7 @@ public class TikTokOrderDmpHandler extends TikTokDmpHandler {
 
                 //修改时间
                 Object updateTimeObj = dmpDataMap.get("updateTime");
-                if (statusObj != null) {
+                if (updateTimeObj != null) {
                     // 使用Instant类将Unix时间戳转换为LocalDateTime对象
                     LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(updateTimeObj+"")), ZoneId.systemDefault());
                     dmpDataMap.put("platformUpdateTime", payTime);
@@ -130,10 +130,18 @@ public class TikTokOrderDmpHandler extends TikTokDmpHandler {
 
                 //发货时间
                 Object deliveryTimeObj = dmpDataMap.get("deliveryTime");
-                if (statusObj != null) {
+                if (deliveryTimeObj != null) {
                     // 使用Instant类将Unix时间戳转换为LocalDateTime对象
                     LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(deliveryTimeObj+"")), ZoneId.systemDefault());
                     dmpDataMap.put("deliveryTime", payTime);
+                }
+
+                //支付信息
+                Object paymentObj = dmpDataMap.get("payment");
+                if (paymentObj != null) {
+                    Map<String, Object> paymentMap = (Map<String, Object>) paymentObj;
+                    dmpDataMap.put("payAmount", paymentMap.get("totalAmount"));
+                    dmpDataMap.put("salePrice", paymentMap.get("totalAmount"));
                 }
             }
         }
