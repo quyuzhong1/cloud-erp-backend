@@ -100,6 +100,16 @@ public class DmpSoReceiverEntity extends BaseEntity<DmpSoReceiverEntity> {
     @TableField("second_phone")
     private String secondPhone = "";
     /**
+     * 地址加密值
+     */
+     @TableField("oa_id")
+     private String oaId = "";
+     /**
+      * 收货人税号
+      */
+      @TableField("receiver_tax_no")
+      private String receiverTaxNo = "";
+    /**
     * 输入任务id
     */
     @TableField("input_task_id")

@@ -1,8 +1,10 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -10,7 +12,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpSoOutstockEntity;
 import com.erp.server.dmp.service.DmpSoOutstockService;
 
@@ -27,6 +31,24 @@ public class DmpInputAliExpressOrderSoOutStockDetailDmpHandler extends DmpInputA
 	
 	@Resource
 	private DmpSoOutstockService dmpSoOutstockService;
+	
+	@Override
+	protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(
+			List<Map<String, Object>> dmpInputMongoChildList) {
+		if(CollUtil.isNotEmpty(dmpInputMongoChildList)) {
+			List<String> orderIdList = dmpInputMongoChildList.stream().map(d -> d.get("fulfillment_order_no").toString()).collect(Collectors.toList());
+			List<ParamData> paramDataList = new ArrayList<>();
+			paramDataList.add(new ParamData("fulfillment_order_no", "fulfillment_order_no", PannoEnum.IN, orderIdList));
+			List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_soOutstock_data");
+			if(CollUtil.isNotEmpty(findMongoData)) {
+				Map<String, String> orderNoWarehouseNameMap = findMongoData.stream().collect(Collectors.toMap(f -> f.get("fulfillment_order_no").toString(), f -> f.get("warehouse_name").toString()));
+				for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
+					dmpInputMongoChild.put("warehouseName", orderNoWarehouseNameMap.get(dmpInputMongoChild.get("fulfillment_order_no")));
+				}
+			}
+		}
+		return dmpInputMongoChildList;
+	}
 	
 	@Override
 	protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {

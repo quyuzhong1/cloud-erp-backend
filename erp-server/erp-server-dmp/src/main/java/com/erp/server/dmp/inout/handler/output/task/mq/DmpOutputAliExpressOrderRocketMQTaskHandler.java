@@ -4,27 +4,29 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.dto.PlatformOrderFinanceDTO;
+import com.common.business.dto.PlatformOrderLogisticsDTO;
+import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.entity.BaseEntity;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpLogisticInfoEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
@@ -35,7 +37,6 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.json.JSONUtil;
 
 @Service
 @Scope("prototype")
@@ -48,7 +49,9 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 		Map<String, List<DmpSoDetailEntity>> dmpSoDetailEntityMap = new HashMap<>();
 		Map<String, List<DmpSoReceiverEntity>> dmpSoReceiverEntityMap = new HashMap<>();
 		Map<String, List<DmpSoOutstockEntity>> dmpSoOutstockEntityMap = new HashMap<>();
+		Map<String, String> dmpSoOutstockIdMap = new HashMap<>();
 		Map<String, List<DmpSoOutstockDetailEntity>> dmpSoOutstockDetailEntityMap = new HashMap<>();
+		Map<String, List<DmpLogisticInfoEntity>> dmpLogisticInfoEntityMap = new HashMap<>();
 		
 		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
 			List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
@@ -91,6 +94,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 						}
 						list.add(dmpSoOutstockEntity);
 						dmpSoOutstockEntityMap.put(sourceId, list);
+						dmpSoOutstockIdMap.put(dmpSoOutstockEntity.getId(), dmpSoOutstockEntity.getSourceId());
 					}
 				}else if("dmp_so_outStock_detail".equals(storageName)) {
 					for(BaseEntity v : value) {
@@ -102,6 +106,17 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 						}
 						list.add(dmpSoOutstockDetailEntity);
 						dmpSoOutstockDetailEntityMap.put(mainId, list);
+					}
+				}else if("dmp_logistic_info".equals(storageName)) {
+					for(BaseEntity v : value) {
+						DmpLogisticInfoEntity dmpLogisticInfoEntity = (DmpLogisticInfoEntity) v;
+						String mainId = dmpLogisticInfoEntity.getMainId();
+						List<DmpLogisticInfoEntity> list = dmpLogisticInfoEntityMap.get(mainId);
+						if(CollUtil.isEmpty(list)) {
+							list = new ArrayList<>();
+						}
+						list.add(dmpLogisticInfoEntity);
+						dmpLogisticInfoEntityMap.put(mainId, list);
 					}
 				}
 			}
@@ -136,8 +151,12 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 					for(BaseEntity v : value) {
 						DmpSoOutstockDetailEntity dmpSoOutstockDetailEntity = (DmpSoOutstockDetailEntity) v;
 						String mainId = dmpSoOutstockDetailEntity.getMainId();
-						List<DmpSoOutstockEntity> list = dmpSoOutstockEntityMap.get(mainId);
-						changeIds.addAll(list.stream().map(DmpSoOutstockEntity::getSourceId).collect(Collectors.toSet()));
+						changeIds.add(dmpSoOutstockIdMap.get(mainId));
+					}
+				}else if("dmp_logistic_info".equals(storageName)) {
+					for(BaseEntity v : value) {
+						DmpLogisticInfoEntity dmpLogisticInfoEntity = (DmpLogisticInfoEntity) v;
+						changeIds.add(dmpLogisticInfoEntity.getMainId());
 					}
 				}
 			}
@@ -154,7 +173,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 				}
 			}
 			PlatformOrderDTO orderDTO = this.convert(dmpSoInfoEntityMap.get(changId), dmpSoDetailEntityMap.get(changId) 
-					, dmpSoReceiverEntityMap.get(changId) , dmpSoOutstockEntityList , dmpSoOutstockDetailEntityList , cfgOutputId);
+					, dmpSoReceiverEntityMap.get(changId) , dmpSoOutstockEntityList , dmpSoOutstockDetailEntityList , dmpLogisticInfoEntityMap.get(changId) , cfgOutputId);
 			if(orderDTO != null) {
 				map.put(changId, JSON.toJSONString(orderDTO));
 			}
@@ -166,7 +185,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
      * 解析订单数据
      **/
     public PlatformOrderDTO convert(DmpSoInfoEntity dmpSoInfoEntity , List<DmpSoDetailEntity> dmpSoDetailEntityList , List<DmpSoReceiverEntity> dmpSoReceiverEntityList
-    		, List<DmpSoOutstockEntity> dmpSoOutstockEntityList , List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList , String cfgOutputId) {
+    		, List<DmpSoOutstockEntity> dmpSoOutstockEntityList , List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList , List<DmpLogisticInfoEntity> dmpLogisticInfoEntityList , String cfgOutputId) {
     	if(this.validateDataBlack(dmpSoInfoEntity, cfgOutputId)) {
     		return null;
     	}
@@ -198,10 +217,10 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 		orderDTO.setShippingFee(shippingAmount);
         
         JSONObject oaidJson = new JSONObject();
+        DmpSoReceiverEntity dmpSoReceiverEntity = null;
         if(CollUtil.isNotEmpty(dmpSoReceiverEntityList)) {
-        	//TODO
-        	DmpSoReceiverEntity dmpSoReceiverEntity = dmpSoReceiverEntityList.get(0);
-        	oaidJson.put("oaid","");
+        	dmpSoReceiverEntity = dmpSoReceiverEntityList.get(0);
+        	oaidJson.put("oaid",dmpSoReceiverEntity.getOaId());
         }
         orderDTO.setExtendData(oaidJson.toString());
     	
@@ -249,6 +268,25 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
+        
+        List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList<>();
+        if(CollUtil.isNotEmpty(dmpLogisticInfoEntityList)) {
+        	for(DmpLogisticInfoEntity dmpLogisticInfoEntity : dmpLogisticInfoEntityList) {
+        		PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
+            	logisticsDTO.setCode(dmpLogisticInfoEntity.getLogisticsNo());
+                String logisticsServiceName = dmpLogisticInfoEntity.getLogisticsServiceName();
+                if(StringUtils.isBlank(logisticsServiceName)) {
+                	logisticsServiceName = "";
+                }
+                logisticsDTO.setName(logisticsServiceName);
+                //发货时间
+                logisticsDTO.setDeliveryTime(dmpLogisticInfoEntity.getDeliveryTime());
+                logisticsDTO.setActualShippingCost(shippingAmount);
+                logisticsDTO.setActualShippingCurrency(currencyCode);
+            	orderLogisticList.add(logisticsDTO);
+        	}
+        }
+        orderDTO.setLogisticsList(orderLogisticList);
         
         // 订单明细
         List<PlatformOrderDetailDTO> details = new ArrayList<>();
@@ -308,6 +346,60 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         	}
         }
         orderDTO.setDetails(details);
+        
+        if(CollUtil.isNotEmpty(dmpSoOutstockDetailEntityList)) {
+        	List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList = new ArrayList<>();
+        	for(DmpSoOutstockDetailEntity v : dmpSoOutstockDetailEntityList) {
+        		PlatformDeliveryDetailDTO deliveryDetailDTO = new PlatformDeliveryDetailDTO();
+                deliveryDetailDTO.setPlatformSkuNo(v.getPlatformSku());
+                deliveryDetailDTO.setQty(v.getQty());
+                deliveryDetailDTO.setPlatformWarehouseName(v.getWarehouseName());
+                deliveryDetailDTO.setPlatformSpuNo(v.getThirdDetailId());
+                deliveryDetailDTO.setPlatformSkuId(v.getSkuId());
+                deliveryDetailDTO.setScItemId(v.getPlatformDetailId());
+                platformDeliveryDetailDTOList.add(deliveryDetailDTO);
+        	}
+        	orderDTO.setDeliveryDetailDTOList(platformDeliveryDetailDTOList);
+        }
+        
+        PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
+        if(dmpSoReceiverEntity != null) {
+        	receiverDTO.setCountry(dmpSoReceiverEntity.getCountry());
+            receiverDTO.setFirstAddress(dmpSoReceiverEntity.getMainStreet());
+            receiverDTO.setSecondAddress(dmpSoReceiverEntity.getSecondStreet());
+            receiverDTO.setFullAddress(dmpSoReceiverEntity.getFullAddress());
+            receiverDTO.setCityName(dmpSoReceiverEntity.getCity());
+            receiverDTO.setProvinceName(dmpSoReceiverEntity.getProvince());
+            receiverDTO.setReceiverName(dmpSoReceiverEntity.getReceiverName());
+            receiverDTO.setReceiverTelNumber(dmpSoReceiverEntity.getReceiverTelNumber());
+            receiverDTO.setPostCode(dmpSoReceiverEntity.getPostCode());
+            receiverDTO.setReceiverTaxNo(dmpSoReceiverEntity.getReceiverTaxNo());
+            // 买家电话
+            receiverDTO.setTelNumber(dmpSoReceiverEntity.getMainPhone());
+            
+            String buyerId = dmpSoReceiverEntity.getBuyerId();
+			receiverDTO.setLoginId(buyerId);
+            receiverDTO.setCustomerId(buyerId);
+            receiverDTO.setName(dmpSoReceiverEntity.getBuyerName());
+        }else {
+        	receiverDTO.setCountry("");
+            receiverDTO.setName("");
+            receiverDTO.setFirstAddress("");
+            receiverDTO.setSecondAddress("");
+            receiverDTO.setFullAddress("");
+            receiverDTO.setCityName("");
+            receiverDTO.setCountryName("");
+            receiverDTO.setDistrictName("");
+            receiverDTO.setPostCode("");
+            receiverDTO.setCustomerId("");
+            receiverDTO.setLoginId("");
+        }
+        receiverDTO.setEmail("");
+        receiverDTO.setCountryName("");
+        receiverDTO.setDistrictName("");
+        receiverDTO.setTelNumber("");
+        
+        orderDTO.setReceiver(receiverDTO);
         
         // 订单财务信息
         PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();

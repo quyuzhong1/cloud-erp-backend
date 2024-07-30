@@ -150,6 +150,10 @@ public class DmpInputAliExpressOrderApiInitHandler extends DmpInputInitHandler{
 		}
 		
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+		order.forEach(o -> {
+			JSONObject j = (JSONObject) o;
+			j.put("order_id", j.get("order_id").toString());
+		});
 		dmpInputTaskInitDTO.setMsg(order.toJSONString());
 		
 		return Collections.singletonList(dmpInputTaskInitDTO);

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSON;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
@@ -79,11 +80,15 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputAliExpressDmpHand
 							dmpDataMap.put("shippingAmount", amountObj);
 						}
 					}
+					Object memo = detailData.get("memo");
+					if(memo != null) {
+						dmpDataMap.put("buyerRemark", memo);
+					}
 					
 					// 标签json
 			        Map<String, Object> labelMap = new HashMap<>();
 			        //订单明细
-			        List<OrderItemDetail> orderItemDetailList = sourceOrder.getDetail().getChildOrderList();
+			        List<OrderItemDetail> orderItemDetailList = JSON.parseArray(JSON.toJSONString(detailData.get("child_order_list")), OrderItemDetail.class);
 			        Boolean isAliexpressPlatformWarehouseOrder = Boolean.FALSE;
 			        if (CollectionUtils.isNotEmpty(orderItemDetailList)) {
 			            long count = orderItemDetailList.stream().
@@ -102,6 +107,7 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputAliExpressDmpHand
 			        
 			        dmpDataMap.put("extendData", JSON.toJSONString(labelMap));
 			        dmpDataMap.put("orderStatus", sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder));
+			        dmpDataMap.put("payStatus", sourceOrder.convertPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()));
 			        // 审核状态状态
 			        // （ApproveStatus字典类型）
 			        dmpDataMap.put("approveStatus", sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder));

@@ -37,7 +37,7 @@ public class DmpInputAliExpressOrderDoChildDmpHandler extends DmpInputDoChildDmp
 		List<ParamData> paramDataList = new ArrayList<>();
 		String childId = this.getDmpCfgInputChildId();
 		if(StringUtils.isBlank(childId)) {
-			throw new ServiceException("DmpInputAliExpressOrderDoChildDmpHandler子类id未查询到");
+			throw new ServiceException("未查询到DmpInputAliExpressOrderDoChildDmpHandler子类id");
 		}
 		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).eq(DmpInputTaskEntity::getCfgInputId, childId).list();
 		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));

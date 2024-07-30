@@ -41,6 +41,7 @@ public class DmpInputAliExpressOrderSoOutStockDmpHandler extends DmpInputAliExpr
 			String billNo = dmpInputMongoChildEntity.get("trade_order_no").toString();
 			String dmpId = billNoIdMap.get(billNo);
 			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
+			dmpInputMongoChildEntity.put("sourceId", dmpId);
 		}
 	}
 }
