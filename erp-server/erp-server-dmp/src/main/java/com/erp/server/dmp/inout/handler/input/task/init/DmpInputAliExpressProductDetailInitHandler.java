@@ -32,6 +32,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,7 +57,7 @@ public class DmpInputAliExpressProductDetailInitHandler extends DmpInputInitHand
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
 			findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
 		}
-		if(findMongoData == null) {
+		if(CollUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}
 		
