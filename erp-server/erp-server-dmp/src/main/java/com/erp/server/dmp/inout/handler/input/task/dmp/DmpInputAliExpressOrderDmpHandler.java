@@ -29,7 +29,7 @@ import cn.hutool.core.collection.CollUtil;
  */
 @Service
 @Scope("prototype")
-public class DmpInputAliExpressOrderDmpHandler extends DmpInputAliExpressDmpHandler{
+public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandler{
 
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
