@@ -63,7 +63,7 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
 
         //临时转换仓位
         for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
-            if(goods.getPositionNo().equals("头程拣货暂存仓位") || goods.getPositionNo().equals("B2B拣货暂存仓位")){
+            if(goods.getPositionNo().equals("TC-JHZC") || goods.getPositionNo().equals("B2B-JHZC")){
                 goods.setPositionNo("发货暂存");
             }
         }
@@ -118,7 +118,7 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
 
         //临时转换仓位
         for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
-            if(goods.getPositionNo().equals("头程拣货暂存仓位") || goods.getPositionNo().equals("B2B拣货暂存仓位")){
+            if(goods.getPositionNo().equals("TC-JHZC") || goods.getPositionNo().equals("B2B-JHZC")){
                 goods.setPositionNo("发货暂存");
             }
         }
