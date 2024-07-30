@@ -357,6 +357,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             addDTO.setContent(dto.getContent());
             //不同物流属性配置校验
             List<String> skuIds = addDTO.getDetailList().stream().map(WmsCartonDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
+            if (StrUtil.isNotBlank(addDTO.getCartonId())){
+                List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(addDTO.getCartonId()));
+                if (CollectionUtils.isNotEmpty(detailEntityList)){
+                    //合并已存在装箱数据
+                    skuIds = Stream.concat(skuIds.stream(), detailEntityList.stream().map(WmsCartonDetailEntity::getSkuId).collect(Collectors.toList()).stream()).distinct().collect(Collectors.toList());
+                }
+            }
             wmsCartonSpecService.checkProductPropertyIds(packingTask.getSourceType(), skuIds);
             //重置装箱信息 根据配置进行更新装箱状态
             buildCartonSpecWeight(addDTO, type);
