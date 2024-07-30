@@ -81,7 +81,8 @@ public enum InventoryBusinessTypeEnum {
     DELIVERY_NOTICE_PUSH_TRANSFER("delivery_notice_push_transfer", "39","直接调拨单（发货通知单/销售订单下推）"),
     DELIVERY_PUSH_TRANSFER_TO_ULANZI("delivery_push_transfer_to_ulanzi", "40","直接调拨单（头程发货单自动生成：发货仓->优蓝子中转仓）"),
     DELIVERY_PUSH_TRANSFER_FROM_ULANZI("delivery_push_transfer_from_ulanzi", "41","直接调拨单（头程发货单自动生成：优蓝子中转仓->目的在途仓）"),
-
+    WAREHOUSE_LOCATION_MOVE_INFO_ADD("warehouse_location_move_info_add", "42","仓位移动（拣货单新增）"),
+    WAREHOUSE_LOCATION_MOVE_INFO_SUBTRACT("warehouse_location_move_info_subtract", "43","仓位移动（拣货单减少）"),
     ;
 
     private String code;

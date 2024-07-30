@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -16,6 +15,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -36,11 +36,11 @@ import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
-import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
@@ -111,9 +111,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Resource
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
-
-    @Resource
-    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
     @Resource
     private SoInfoFeign soInfoFeign;
 
@@ -166,6 +163,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         .filter(entityClass -> entityClass.getId().equals(resultDTO.getSkuId()))
                         .findFirst().orElse(new ProductDetailEntity());
                 PickingDetailEntity detail = new PickingDetailEntity();
+                detail.setId(IdWorker.getIdStr());
                 detail.setMainId(entity.getId());
                 detail.setSkuId(resultDTO.getSkuId());
                 detail.setSkuNo(resultDTO.getSkuNo());
@@ -177,10 +175,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 entities.add(detail);
                 moveDto.setWarehouseId(resultDTO.getWarehouseId());
                 moveDetailList.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detail.getSkuId(), detail.getSkuNo(),
-                        detail.getWarehouseLocation(), detail.getStagingLocation(), detail.getQty(), resultDTO.getWarehouseId()));
+                        detail.getWarehouseLocation(), detail.getStagingLocation(), detail.getQty(), resultDTO.getWarehouseId(), detail.getId()));
             }
             entity.setLocationTotal(entities.size());
             moveDto.setPcShow(true);
+            moveDto.setSourceId(entity.getId());
+            moveDto.setSourceCode(code);
+            moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_ADD.getCode());
             moveDto.setDetailList(moveDetailList);
             ApplicationContextUtils.getBean(PickingListsServiceImpl.class).saveAddData(entity, entities, moveDto);
         }
@@ -229,6 +230,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         WarehouseLocationMoveDTO.AddDTO dto = new WarehouseLocationMoveDTO.AddDTO();
         dto.setPcShow(false);
         dto.setWarehouseId(entity.getWarehouseId());
+        dto.setSourceId(id);
+        dto.setSourceCode(entity.getCode());
+        dto.setSourceType(SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode());
         List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList = entityList.stream()
                 .map(detail -> {
                     WarehouseLocationMoveDetailDTO.AddDTO moveDetail = new WarehouseLocationMoveDetailDTO.AddDTO();
@@ -248,7 +252,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<String> sourceDetailIds = entityList.stream().map(PickingDetailEntity::getSourceDetailId).collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量
-            requisitionApplicationService.writeBackData(sourceDetailIds,Boolean.FALSE);
+            requisitionApplicationService.writeBackData(sourceDetailIds, Boolean.FALSE);
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }
@@ -263,6 +267,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             int count = firstMileDeliveryService.countNotVoided(entity.getSourceId());
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_99086);
+            }
+            //要货申请完成后，拣货单不允许修改和删除
+            RequisitionApplicationEntity application = requisitionApplicationService.getById(entity.getSourceId());
+            if (RequisitionApplicationStatusEnum.HANDLE.getStatus().equals(application.getStatus())) {
+                throw new ServiceException(ApiError.ERROR_99130);
             }
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             //销售通知单下推销售出库单后，拣货单不允许修改和删除
@@ -429,16 +438,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 .distinct().collect(Collectors.toList());
         this.checkPickingQty(entity, dto.getDetails());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
-        WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
-        moveDto.setWarehouseId(entity.getWarehouseId());
-        moveDto.setPcShow(true);
         List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS = new ArrayList<>();
+        List<WarehouseLocationMoveDetailDTO.AddDTO> subtractDTOS = new ArrayList<>();
         // 获取新增的数据
         handlerAddData(dto, detailList, detailEntityList, entity, addDTOS);
         // 获取删除的数据
-        handlerRemoveData(dto, detailList, addDTOS, entity);
+        handlerRemoveData(dto, detailList, subtractDTOS, entity);
         // 获取有差异的修改数据
-        handlerUpdateData(dto, detailList, addDTOS, entity);
+        handlerUpdateData(dto, detailList, addDTOS, subtractDTOS, entity);
         int qty = dto.getDetails().stream()
                 .map(PickingDetailDTO.View::getQty)
                 .reduce(0, Math::addExact);
@@ -447,13 +454,29 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         updateById(entity);
         // 进行对应的仓位移动
         if (!CollectionUtils.isEmpty(addDTOS)) {
+            WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
+            moveDto.setWarehouseId(entity.getWarehouseId());
+            moveDto.setPcShow(true);
+            moveDto.setSourceId(entity.getId());
+            moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_ADD.getCode());
+            moveDto.setSourceCode(entity.getCode());
             moveDto.setDetailList(addDTOS);
+            warehouseLocationMoveService.addAndApprove(moveDto);
+        }
+        if (!CollectionUtils.isEmpty(subtractDTOS)) {
+            WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
+            moveDto.setWarehouseId(entity.getWarehouseId());
+            moveDto.setPcShow(true);
+            moveDto.setSourceId(entity.getId());
+            moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode());
+            moveDto.setSourceCode(entity.getCode());
+            moveDto.setDetailList(subtractDTOS);
             warehouseLocationMoveService.addAndApprove(moveDto);
         }
         List<String> sourceDetailIds = detailList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量
-            requisitionApplicationService.writeBackData(sourceDetailIds,Boolean.TRUE);
+            requisitionApplicationService.writeBackData(sourceDetailIds, Boolean.TRUE);
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }
@@ -507,7 +530,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         if (entity.getSourceType().equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
             packingTaskEntity = packingTaskService.getBySourceCode(entity.getSourceCode());
         } else if (entity.getSourceType().equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode())) {
-            List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
+            List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
             if (!CollectionUtils.isEmpty(firstMileDeliveryEntityList)) {
                 FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.get(0);
                 packingTaskEntity = packingTaskService.getBySourceCode(firstMileDeliveryEntity.getSourceCode());
@@ -518,11 +541,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         if (Objects.isNull(packingTaskEntity)) {
             return;
         }
-        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Arrays.asList(packingTaskEntity.getId()));
+        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(packingTaskEntity.getId()));
         if (CollectionUtils.isEmpty(wmsCartonEntityList)) {
             return;
         }
-        List<WmsCartonDetailEntity> wmsCartonDetailEntityList = wmsCartonDetailService.listByMainIds(wmsCartonEntityList.stream().map(v -> v.getId()).collect(Collectors.toList()));
+        List<WmsCartonDetailEntity> wmsCartonDetailEntityList = wmsCartonDetailService.listByMainIds(wmsCartonEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
         if (CollectionUtils.isEmpty(wmsCartonDetailEntityList)) {
             return;
         }
@@ -532,7 +555,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         pickingQtyMap.forEach((skuNo, qty) -> {
             Integer packingQty = packingQtyMap.get(skuNo);
             if (Objects.nonNull(packingQty) && qty < packingQty) {
-                throw new ServiceException(StrUtil.format("sku【{}】编辑数量校验不可小于装箱数量{}", skuNo, packingQty));
+                throw new ServiceException(CharSequenceUtil.format("sku【{}】编辑数量校验不可小于装箱数量{}", skuNo, packingQty));
             }
         });
     }
@@ -656,12 +679,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     /**
      * 处理编辑的数据
      *
-     * @param dto        请求参数
-     * @param detailList 拣货明细
-     * @param entity     拣货单
-     * @param addDTOS    仓位移动
+     * @param dto          请求参数
+     * @param detailList   拣货明细
+     * @param addDTOS      仓位移动
+     * @param subtractDTOS 仓位移动
+     * @param entity       拣货单
      */
-    private void handlerUpdateData(PickingListsDTO.UpdateDTO dto, List<PickingDetailEntity> detailList, List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS, PickingListsEntity entity) {
+    private void handlerUpdateData(PickingListsDTO.UpdateDTO dto, List<PickingDetailEntity> detailList, List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS, List<WarehouseLocationMoveDetailDTO.AddDTO> subtractDTOS, PickingListsEntity entity) {
         List<PickingDetailDTO.View> updateData = dto.getDetails()
                 .stream()
                 .filter(detail -> ObjectUtil.isNotEmpty(detail.getId()))
@@ -675,21 +699,21 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //处理仓位移动数据
             if (view.getWarehouseLocation().equals(detailEntity.getWarehouseLocation())) {
                 if (detailEntity.getQty() > view.getQty()) {
-                    addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detailEntity.getSkuId(), detailEntity.getSkuNo(),
-                            detailEntity.getStagingLocation(), detailEntity.getWarehouseLocation(), detailEntity.getQty() - view.getQty(), entity.getWarehouseId()));
+                    subtractDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detailEntity.getSkuId(), detailEntity.getSkuNo(),
+                            detailEntity.getStagingLocation(), detailEntity.getWarehouseLocation(), detailEntity.getQty() - view.getQty(), entity.getWarehouseId(), entity.getId()));
                 } else if (detailEntity.getQty() < view.getQty()) {
                     //处理仓位移动数据
                     addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(view.getSkuId(), view.getSkuNo(),
-                            view.getWarehouseLocation(), view.getStagingLocation(), view.getQty() - detailEntity.getQty(), entity.getWarehouseId()));
+                            view.getWarehouseLocation(), view.getStagingLocation(), view.getQty() - detailEntity.getQty(), entity.getWarehouseId(), entity.getId()));
                 } else {
                     continue;
                 }
             } else {
                 // 仓位变更了需要进行原数据仓位退回，新仓位移出
                 addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(view.getSkuId(), view.getSkuNo(),
-                        view.getWarehouseLocation(), view.getStagingLocation(), view.getQty(), entity.getWarehouseId()));
-                addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detailEntity.getSkuId(), detailEntity.getSkuNo(),
-                        detailEntity.getStagingLocation(), detailEntity.getWarehouseLocation(), detailEntity.getQty(), entity.getWarehouseId()));
+                        view.getWarehouseLocation(), view.getStagingLocation(), view.getQty(), entity.getWarehouseId(), entity.getId()));
+                subtractDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detailEntity.getSkuId(), detailEntity.getSkuNo(),
+                        detailEntity.getStagingLocation(), detailEntity.getWarehouseLocation(), detailEntity.getQty(), entity.getWarehouseId(), entity.getId()));
             }
             String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，数量由【{}】变更为【{}】", view.getSkuNo(),
                     detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getQty(), view.getQty());
@@ -725,7 +749,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 removeIds.add(detail.getId());
                 //处理仓位移动数据
                 addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detail.getSkuId(), detail.getSkuNo(),
-                        detail.getStagingLocation(), detail.getWarehouseLocation(), detail.getQty(), entity.getWarehouseId()));
+                        detail.getStagingLocation(), detail.getWarehouseLocation(), detail.getQty(), entity.getWarehouseId(), detail.getId()));
                 String context = CharSequenceUtil.format("移除【{}】明细行,拣货仓位【{}}】,数量【{}】", detail.getSkuNo(), detail.getWarehouseLocation(), detail.getQty());
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
             }
@@ -757,6 +781,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         .findFirst().orElse(new ProductDetailEntity());
                 PickingDetailEntity detail = new PickingDetailEntity();
                 detail.setMainId(entity.getId());
+                detail.setId(IdWorker.getIdStr());
                 detail.setSkuId(data.getSkuId());
                 detail.setSkuNo(data.getSkuNo());
                 detail.setQty(data.getQty());
@@ -766,7 +791,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setStagingLocation(detailEntity.getStagingLocation());
                 //处理仓位移动数据
                 addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(data.getSkuId(), data.getSkuNo(),
-                        data.getWarehouseLocation(), data.getStagingLocation(), data.getQty(), entity.getWarehouseId()));
+                        data.getWarehouseLocation(), data.getStagingLocation(), data.getQty(), entity.getWarehouseId(), detail.getId()));
                 //处理日志
                 String context = CharSequenceUtil.format("增加【{}】明细行,拣货仓位【{}}】,数量【{}】", data.getSkuNo(), data.getWarehouseLocation(), data.getQty());
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
