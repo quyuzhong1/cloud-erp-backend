@@ -1605,19 +1605,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<DmpPushWdtDTO.AddDTO> wdtDtoList = new ArrayList<>();
         for (SoReturnInstockDetailEntity detailEntity : detailEntityList) {
             if(SyncOperateEnum.OPERATE_APPROVE.equals(operateEnum)){
-                CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
-                outGoods.setSpecNo(detailEntity.getSkuNo());
-                outGoods.setNum(BigDecimal.valueOf(detailEntity.getRealQty()));
-                outGoods.setPositionNo(detailEntity.getWarehouseLocation());
-
-                String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-                String thirdOutWarehouseCode = thirdWarehouseMap.get(detailEntity.getWarehouseId());
-                DmpPushTaskFeignDTO dmpPushTaskFeignDTO = syncWdtOtherOutStockService.generateTask(Collections.singletonList(outGoods), operateEnum.getCode(), entity.getCode(), detailEntity.getId(), outCode, thirdOutWarehouseCode, false);
-                unSaveTaskList.add(dmpPushTaskFeignDTO);
-                //其他出库单的中间表数据
-                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockOutInterim(entity.getId(), entity.getCode(), operateEnum.getCode(), detailEntity.getWarehouseId(), outCode, thirdOutWarehouseCode, outGoods);
-                wdtDtoList.add(addDTO);
-            }else if (SyncOperateEnum.OPERATE_DISAPPROVE.equals(operateEnum)){
                 CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
                 inGoods.setSpecNo(detailEntity.getSkuNo());
                 inGoods.setNum(BigDecimal.valueOf(detailEntity.getRealQty()));
@@ -1629,6 +1616,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 unSaveTaskList.add(taskFeignDTO);
                 //其他入库单的中间表数据
                 DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity.getId(), entity.getCode(), operateEnum.getCode(), detailEntity.getWarehouseId(), inCode, thirdWarehouseCode, inGoods);
+                wdtDtoList.add(addDTO);
+            }else if (SyncOperateEnum.OPERATE_DISAPPROVE.equals(operateEnum)){
+                CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+                outGoods.setSpecNo(detailEntity.getSkuNo());
+                outGoods.setNum(BigDecimal.valueOf(detailEntity.getRealQty()));
+                outGoods.setPositionNo(detailEntity.getWarehouseLocation());
+
+                String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+                String thirdOutWarehouseCode = thirdWarehouseMap.get(detailEntity.getWarehouseId());
+                DmpPushTaskFeignDTO dmpPushTaskFeignDTO = syncWdtOtherOutStockService.generateTask(Collections.singletonList(outGoods), operateEnum.getCode(), entity.getCode(), detailEntity.getId(), outCode, thirdOutWarehouseCode, false);
+                unSaveTaskList.add(dmpPushTaskFeignDTO);
+                //其他出库单的中间表数据
+                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockOutInterim(entity.getId(), entity.getCode(), operateEnum.getCode(), detailEntity.getWarehouseId(), outCode, thirdOutWarehouseCode, outGoods);
                 wdtDtoList.add(addDTO);
             }
         }
