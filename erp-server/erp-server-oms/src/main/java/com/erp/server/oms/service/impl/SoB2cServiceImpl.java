@@ -1257,6 +1257,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
         }
+        if(!existChannelId.equals(logisticsChannelId)){
+            soB2cLogisticsEntity.setTransferLogisticsSupplierId("");
+            soB2cLogisticsEntity.setTransferLogisticsChannelId("");
+        }
         //物流信息更新
         soB2cLogisticsService.updateById(soB2cLogisticsEntity);
 
@@ -7506,7 +7510,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = new ArrayList<>();
         //无需计算库存sku
         List<String> ignoreInventorySkuIds = new ArrayList<>();
-
+        // 国家信息
+        List<String> countryList = records.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getCountry()))
+                .map(SoB2cDTO.ExcelExportDTO::getCountry)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> countryNameMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(countryList)){
+            countryNameMap = sysDictFeign.listCountryByIds(countryList)
+                    .stream()
+                    .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
+        }
         //按子级SKU导出或缺货
         if (SoB2cExportTypeEnum.CHILD_EXPORT.getCode().equals(exportType) || isOutStock) {
             //根据SKU查询BOM判断是否是组合SKU
@@ -7548,6 +7563,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 exportDTO.setProductName(productDetailEntity.getName());
                 exportDTO.setVariantProperty(productDetailEntity.getVariantProperty());
             }
+            String countryName = countryNameMap.getOrDefault(exportDTO.getCountry(),"");
+            exportDTO.setCountryName(countryName);
 
             //仓位名称
             String warehouseLocationName = warehouseLocationEntityList.stream().filter(obj -> StrUtil.equals(obj.getCode(), exportDTO.getWarehouseLocation())

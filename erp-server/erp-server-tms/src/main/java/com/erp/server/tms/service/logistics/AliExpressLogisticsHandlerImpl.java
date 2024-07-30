@@ -599,7 +599,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelList));
-                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), "all", labelResponse.getErrorDesc());
+                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), "all", Objects.isNull(labelResponse)?"速卖通获取物流单失败":labelResponse.getErrorDesc());
                 responses.add(response);
                 return failure(responses);
             } else {
