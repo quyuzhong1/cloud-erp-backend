@@ -3765,9 +3765,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //修改状态为审核中
         boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.WAIT_COMMIT.getCode())
                 .in(ProductDetailEntity::getIsChange, IsConstant.NO)
-                .in(ProductDetailEntity::getId, entity.getProductId())
+                .eq(ProductDetailEntity::getId, entity.getId())
                 .update();
-
         //发送金蝶
         sendSinglePushTask(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "操作成功");
