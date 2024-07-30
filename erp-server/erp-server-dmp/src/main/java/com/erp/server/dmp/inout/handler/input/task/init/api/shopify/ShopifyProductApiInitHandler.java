@@ -36,7 +36,7 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
 
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
-//  根据店铺ID获取授权
+        //  根据店铺ID获取授权
         ShopifyShopInfoDTO tokenDTO = ShopSdkServer.getTokenAndDomainByShopId(nextLevelId);
         if (null == tokenDTO) {
             log.error("[Shopify产品下载]从缓存中获取shopify token 失败: shopId={}", nextLevelId);
@@ -45,12 +45,12 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
         String shopifyShopDomain = tokenDTO.getShopDomain();
         String accessToken = tokenDTO.getAccessToken();
 
-// Shopify产品下载所有(SDK已分页查询所有)
-  /*      ShopifyProducts products = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getProducts();
+        // Shopify产品下载所有(SDK已分页查询所有)
+        ShopifyProducts products = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getProducts();
         if (CollectionUtils.isEmpty(products.values())) {
             return Collections.emptyList();
-        }*/
-
+        }
+/*
         String json = "[{'image' : {" +
                 "'metafields' : []," +
                 "'productId' : '7646915592384'," +
@@ -134,7 +134,7 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
         List<ShopifyProduct> shopifyProductsList = jsonObject.toJavaList(ShopifyProduct.class);
 
         // 构造ShopifyProducts对象
-        ShopifyProducts products = new ShopifyProducts(shopifyProductsList);
+        ShopifyProducts products = new ShopifyProducts(shopifyProductsList);*/
 
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
         dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(products.values()));

@@ -46,7 +46,9 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                 Object shipmentId = shipmentIdMap.get("fid");
                 if (shipmentId != null) {
                     Map<String, Object> shipmentMap = dmpInputMongoChildList.stream().filter(req -> req.get("fid").equals(shipmentId)).findFirst().orElse(null);
-
+                    if (ObjectUtils.isEmpty(shipmentMap)) {
+                        continue;
+                    }
                     dmpDataMap.put("logisticsCode", shipmentMap.get("trackingNumber"));
 
                     //物流状态

@@ -56,11 +56,10 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
 
         MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(nextLevelId);
         if (ObjectUtil.isEmpty(shopInfoDTO)) {
-            throw new ServiceException("TikTok店铺id：" + nextLevelId + "未找到对应的店铺信息");
+            throw new ServiceException("美客多店铺id：" + nextLevelId + "未找到对应的店铺信息");
         }
 
 
-        List<OrdersBean> resultsBeanList = new ArrayList<>();
         String url = MercadoConstant.URL;
         String path = dmpInputApiInitRequest.getApiType();
 

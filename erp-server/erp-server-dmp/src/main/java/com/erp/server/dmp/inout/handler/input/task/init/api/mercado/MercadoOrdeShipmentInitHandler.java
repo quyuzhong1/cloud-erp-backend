@@ -78,7 +78,7 @@ public class MercadoOrdeShipmentInitHandler extends DmpInputInitHandler {
 
 		MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(parentTaskEntityList.get(0).getNextLevelId());
 		if (ObjectUtil.isEmpty(shopInfoDTO)) {
-			throw new ServiceException("TikTok店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
+			throw new ServiceException("美客多店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
 		}
 
 		//平台接口地址
