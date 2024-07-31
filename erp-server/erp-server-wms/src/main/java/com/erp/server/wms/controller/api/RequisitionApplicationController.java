@@ -426,12 +426,12 @@ public class RequisitionApplicationController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/handleData")
-    public ApiResult<List<BatchResultDTO>> handleData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> handleData(@RequestBody @Validated RequisitionApplicationDTO.handleDataDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = requisitionApplicationService.handleData(id);
+                deleteResult = requisitionApplicationService.handleData(id,dto.getIsFlag());
             }catch (Exception e){
                 log.error("要货申处理数据",e);
                 RequisitionApplicationEntity entity = requisitionApplicationService.getById(id);
