@@ -137,7 +137,7 @@ public class DmpOutputRocketMQPushUtils{
     	}
 	}
 	
-	public void updateStatus(String id , String status , String responseData , String message) {
+	public boolean updateStatus(String id , String status , String responseData , String message) {
 		Integer errorCount = null;
 		String code = "";
 		if(status.contains(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
@@ -145,7 +145,7 @@ public class DmpOutputRocketMQPushUtils{
 			if(!responseData.contains("数据已被他人锁住，为避免数据错误，请稍后再试")) {
 				errorCount = dmpOutputTaskRecordEntity.getErrorCount() + 1;
 			}
-			if(errorCount == 3) {
+			if(errorCount >= 3 && errorCount%3 == 0) {
 				status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
 				String requestData = dmpOutputTaskRecordEntity.getRequestData();
 				if(StringUtils.isNotBlank(requestData)) {
@@ -153,11 +153,14 @@ public class DmpOutputRocketMQPushUtils{
 					code = parseObject.getString("code");
 					if(StringUtils.isBlank(code)) {
 						code = parseObject.getString("fBillNo");
+						if(StringUtils.isBlank(code)) {
+							code = parseObject.getString("sourceId");
+						}
 					}
 				}
 			}
 		}
-		dmpOutputTaskRecordService.lambdaUpdate()
+		boolean update = dmpOutputTaskRecordService.lambdaUpdate()
 			.eq(DmpOutputTaskRecordEntity::getId, id)
 			.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 			.set(DmpOutputTaskRecordEntity::getStatus, status)
@@ -184,5 +187,6 @@ public class DmpOutputRocketMQPushUtils{
 			bodyMap.put("content", contentMap);
 			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
 		}
+		return update;
 	}
 }

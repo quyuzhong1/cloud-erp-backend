@@ -38,4 +38,9 @@ public class DmpInputInitResponse extends DmpInputTaskResponse{
 	 * 执行后续handler
 	 */
 	private boolean doNextChain = true;
+	
+	/**
+	 * 执行后续状态handler
+	 */
+	private boolean doNextStatus = true;
 }

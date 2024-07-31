@@ -15,6 +15,8 @@ public enum CfgSettingEnum implements EnumMessage {
     TRANSIT_SETTING("transitSetting","中转设置"),
     FINISH_PACKING_NOTICE("finishPackingNotice","装箱完成通知"),
 
+    WAREHOUSE_LOCATION_MOVE_BLACKLIST("warehouseLocationMoveBlacklist","库位移动同步旺店通黑名单")
+
     ;
 
     /**

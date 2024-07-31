@@ -72,7 +72,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     @GlobalTransactional(rollbackFor = Exception.class)
     public void add(List<TransferInfoDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_1041,"直接调波单明细");
         }
         List<TransferInfoDetailEntity> list = BeanMapperUtils.copyList(TransferInfoDetailEntity.class, detailList);
 
@@ -89,8 +89,8 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void update(List<TransferInfoDetailDTO.UpdateDTO> detailList, String mainId) {
-        if (detailList == null) {
-            detailList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_1041,"直接调波单明细");
         }
         //原明细数据
         List<TransferInfoDetailEntity> oldList = this.listByMainId(mainId);
@@ -199,7 +199,12 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDetails (List<TransferInfoDetailEntity> newList, String mainId, Boolean isUpdate) {
+    private void doOpHandleDetails (List<TransferInfoDetailEntity> detailList, String mainId, Boolean isUpdate) {
+        //去除服务、费用SKU
+        List<TransferInfoDetailEntity> newList = removeNoInventorySku(detailList);
+        if (CollectionUtils.isEmpty(newList)) {
+            throw new ServiceException(ApiError.ERROR_NO_INVENTORY_SKU_NOT_EXIST);
+        }
 
         //需要新增的数据
         List<TransferInfoDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
@@ -335,4 +340,19 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             }
         }
     }
+
+    /**
+     * 移除包含服务和费用的sku明细
+     * @author will
+     * @date 2024/7/26 22:52
+     * @param newList
+     * @return List<TransferInfoDetailEntity>
+     */
+    private List<TransferInfoDetailEntity> removeNoInventorySku (List<TransferInfoDetailEntity> newList) {
+        List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> skuIdList = CollectionUtils.isEmpty(noInventorySkuList)
+                ? new ArrayList<>() : noInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        return newList.stream().filter(obj -> !skuIdList.contains(obj.getSkuId())).collect(Collectors.toList());
+    }
+
 }

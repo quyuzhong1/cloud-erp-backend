@@ -525,7 +525,7 @@ public enum ApiError implements Serializable {
     ERROR_95269(95269, "启动日期应当晚于立项日期"),
     ERROR_95270(95270, "结项日期应当晚于启动日期"),
     ERROR_95271(95271, "SKU为空，不允许进行此操作"),
-
+    ERROR_NO_INVENTORY_SKU_NOT_EXIST(95272, "除服务、费用SKU外,不存在其他SKU信息！"),
 
     /**
      * TMS 错误

@@ -1,0 +1,121 @@
+package com.erp.server.dmp.inout.handler.input.task.init.api.mercado;
+
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONArray;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.HttpCommonUtil;
+import com.erp.model.dmp.entity.DmpCfgApiEntity;
+import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
+import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
+import com.erp.server.dmp.inout.dto.request.DmpInputTikTokApiInitRequest;
+import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sdk.oms.mercado.constant.MercadoConstant;
+import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
+import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
+import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
+import com.sdk.oms.tiktok.constant.TikTokConstant;
+import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
+import com.sdk.oms.tiktok.service.TikTokSdkClientService;
+import com.sdk.oms.tiktok.util.EncryptionUtils;
+import jodd.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import javax.annotation.Resource;
+import java.time.ZoneOffset;
+import java.util.*;
+import java.util.stream.Collectors;
+
+
+@Service
+@Slf4j
+@Scope("prototype")
+public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
+    @Resource
+    private MercadoSdkClientService mercadoSdkClientService;
+
+
+    @Override
+    public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
+
+        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+
+        String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
+
+
+        MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(nextLevelId);
+        if (ObjectUtil.isEmpty(shopInfoDTO)) {
+            throw new ServiceException("美客多店铺id：" + nextLevelId + "未找到对应的店铺信息");
+        }
+
+
+        String url = MercadoConstant.URL;
+        String path = dmpInputApiInitRequest.getApiType();
+
+        //每次最多获取200条
+        Integer pageSize = 200;
+        //当前页数
+        Integer pageNo = 0;
+        //总页数
+        Integer pageCount = 1;
+
+        List<OrderViewDTO> resultList = new ArrayList<>();
+
+        while (pageNo < pageCount) {
+
+            //入参
+            HashMap<String, Object> params = new HashMap<>(2);
+//            params.put("seller.id", "1511265855");
+//            params.put("seller.id", shopInfoDTO.getUserId());
+            params.put("order.status", "cancelled,paid,invalid");
+            params.put("last_updated.from", dmpInputApiInitRequest.getStartTime());
+            params.put("last_updated.to", dmpInputApiInitRequest.getEndTime());
+            params.put("limit", pageSize);
+            params.put("offset", pageNo);
+            //设置请求头
+            Map<String, String> headerMap = new HashMap<>(1);
+            headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
+
+            //拉取数据
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+                log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+            }
+            ObjectMapper objectMapper = new ObjectMapper();
+            com.sdk.oms.mercado.dto.mercado.order.OrderDTO orderDTO = null;
+            try {
+                orderDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
+            } catch (JsonProcessingException e) {
+                log.error("美客多orders/search接口数据解析错误，数据={}", apiResult.getData());
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+            }
+            //解析数据
+//            OrderDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
+            if (CollectionUtils.isEmpty(orderDTO.getResults())) {
+                break;
+            }
+            pageCount = (orderDTO.getPaging().getTotal() + pageSize - 1) / pageSize;
+            pageNo++;
+
+            DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+            dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(orderDTO.getResults()));
+            dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
+
+        }
+        return dmpInputTaskInitDTOList;
+    }
+}

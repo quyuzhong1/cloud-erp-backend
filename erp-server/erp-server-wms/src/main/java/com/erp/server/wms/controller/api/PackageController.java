@@ -1,8 +1,10 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.PackageDTO;
 import com.erp.server.wms.service.PackageService;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +70,7 @@ public class PackageController extends BaseController {
      * @return
      */
     @PostMapping("/merge")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "组包合并出库，ids:{dto.ids}")
     public ApiResult<List<BatchResultDTO>> merge(@RequestBody @Validated PackageDTO.MergePackageDTO dto) {
         List<BatchResultDTO> result = packageService.mergePackage(dto);
         return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);

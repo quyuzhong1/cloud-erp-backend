@@ -1,8 +1,9 @@
 package com.erp.server.dmp.inout.handler.input.create;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,8 @@ import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.lang.Pair;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -37,7 +40,6 @@ public class DmpInputHotfixCreateHandler extends DmpInputBaseCreateHandler{
 	@Autowired
 	private DmpInputTaskService dmpInputTaskService;
 	
-
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public List<DmpInputTaskEntity> createInputTask(DmpInputCreateRequest dmpRequest, DmpInputCreateResponse dmpResponse) {
@@ -58,27 +60,52 @@ public class DmpInputHotfixCreateHandler extends DmpInputBaseCreateHandler{
 			throw new ServiceException(msg);
 		}
 	
-		List<String> nextLevelIdList = dmpCfgInputDetailEntityList.stream().map(DmpCfgInputDetailEntity::getNextLevelId).collect(Collectors.toList());
-		
-		List<DmpInputTaskEntity> dmpInputTaskEntityList = new ArrayList<>(nextLevelIdList.size());
-		if(CollUtil.isNotEmpty(nextLevelIdList)) {
-			DmpInputTaskEntity dmpInputTaskEntity = null;
-			for(String nextLevelId : nextLevelIdList) {
+		List<DmpInputTaskEntity> dmpInputTaskEntityList = new ArrayList<>(dmpCfgInputDetailEntityList.size());
+
+		DmpInputTaskEntity dmpInputTaskEntity = null;
+		LocalDateTime startTime = dmpInputHotfixCreateRequest.getStartTime();
+		LocalDateTime endTime = dmpInputHotfixCreateRequest.getEndTime();
+		boolean splitFlag = dmpInputHotfixCreateRequest.isSplitFlag() && (startTime != null && endTime != null && endTime.isAfter(startTime));
+		List<Pair<LocalDateTime, LocalDateTime>> timeList = null;
+		for(DmpCfgInputDetailEntity dmpCfgInputDetailEntity : dmpCfgInputDetailEntityList) {
+			timeList = new ArrayList<>();
+			timeList.add(new Pair<>(startTime, endTime));
+			if(splitFlag) {
+				Integer intervalTime = dmpCfgInputDetailEntity.getIntervalTime();
+				if(intervalTime != null && intervalTime > 0) {
+					long between = LocalDateTimeUtil.between(startTime, endTime , ChronoUnit.SECONDS);
+					if(between > intervalTime) {
+						timeList = new ArrayList<>();
+						while(between > 0) {
+							LocalDateTime offset = LocalDateTimeUtil.offset(startTime, intervalTime, ChronoUnit.SECONDS);
+							if(offset.isAfter(endTime)) {
+								offset = endTime;
+							}
+							timeList.add(new Pair<>(startTime, offset));
+							startTime = offset;
+							between = between - intervalTime;
+						}
+					}
+				}
+			}
+			
+			for(Pair<LocalDateTime, LocalDateTime> time : timeList) {
 				dmpInputTaskEntity = new DmpInputTaskEntity();
 				dmpInputTaskEntity.setCfgInputId(cfgInputId);
-				dmpInputTaskEntity.setNextLevelId(nextLevelId);
+				dmpInputTaskEntity.setNextLevelId(dmpCfgInputDetailEntity.getNextLevelId());
 				
-				dmpInputTaskEntity.setStartTime(dmpInputHotfixCreateRequest.getStartTime());
-				dmpInputTaskEntity.setEndTime(dmpInputHotfixCreateRequest.getEndTime());
+				dmpInputTaskEntity.setStartTime(time.getKey());
+				dmpInputTaskEntity.setEndTime(time.getValue());
 				dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
 				dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
 				dmpInputTaskEntity.setExecTimeout(dmpInputHotfixCreateRequest.getExecTimeout());
+				dmpInputTaskEntity.setExtendJson(dmpCfgInputDetailEntity.getExtendJson());
 				
 				dmpInputTaskEntityList.add(dmpInputTaskEntity);
-				
 			}
-			dmpInputTaskService.saveBatch(dmpInputTaskEntityList);
 		}
+		dmpInputTaskService.saveBatch(dmpInputTaskEntityList);
+	
 		
 		return dmpInputTaskEntityList;
 	}
