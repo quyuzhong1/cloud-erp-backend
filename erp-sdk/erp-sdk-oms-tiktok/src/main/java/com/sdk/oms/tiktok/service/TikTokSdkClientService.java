@@ -13,6 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
+import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -368,6 +369,10 @@ public class TikTokSdkClientService {
      * @return
      */
     public TikTokShopInfoDTO getShopInfoByShopId(String shopId) {
+        if (StringUtil.isBlank(shopId)) {
+            log.error("===============>TikTok查询店铺授权信息失败，店铺id：{}", shopId);
+            return null;
+        }
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopId);
         // 缓存获取
         Object tokenObj = redisUtil.get(tokenKey);
