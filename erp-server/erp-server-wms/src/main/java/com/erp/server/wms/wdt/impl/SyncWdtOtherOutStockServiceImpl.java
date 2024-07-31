@@ -19,10 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 将erp其他出库单同步至旺店通
@@ -85,5 +85,21 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
         dmpSyncTaskDTO.setSyncOperate(operateCode);
         dmpSyncTaskDTO.setThirdCode(outerCode);
         return dmpSyncTaskDTO;
+    }
+
+    @Override
+    public List<CreateOtherStockoutRequest.GoodsList> sumBySkuAndPositionNo(List<CreateOtherStockoutRequest.GoodsList> goodsList) {
+        Map<String, List<CreateOtherStockoutRequest.GoodsList>> outCollect = goodsList.stream().collect(Collectors.groupingBy(item -> item.getSpecNo() + "#" + item.getPositionNo()));
+        List<CreateOtherStockoutRequest.GoodsList> outCollectList = new ArrayList<>();
+        for (Map.Entry<String, List<CreateOtherStockoutRequest.GoodsList>> entry : outCollect.entrySet()) {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            String[] split = entry.getKey().split("#");
+            goods.setSpecNo(split[0]);
+            goods.setPositionNo(split[1]);
+            int sum = entry.getValue().stream().mapToInt(item -> item.getNum().intValue()).sum();
+            goods.setNum(BigDecimal.valueOf(sum));
+            outCollectList.add(goods);
+        }
+        return outCollectList;
     }
 }

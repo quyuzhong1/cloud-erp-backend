@@ -26,4 +26,13 @@ public interface SyncWdtOtherOutStockService {
      * @author: tanmujin
      */
     DmpPushTaskFeignDTO generateTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode);
+
+    /**
+     * 根据sku和仓位合并明细
+     * @param goodsList 明细列表
+     * @return 合并后的列表
+     * @date: 2024-07-31
+     * @author: tanmujin
+     */
+    List<CreateOtherStockoutRequest.GoodsList> sumBySkuAndPositionNo(List<CreateOtherStockoutRequest.GoodsList> goodsList);
 }

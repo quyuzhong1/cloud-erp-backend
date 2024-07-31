@@ -14,14 +14,15 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.service.impl.AbstractWdtService;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 同步其他入库单到旺店通
@@ -83,5 +84,21 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
         dmpSyncTaskDTO.setSyncOperate(operateCode);
         dmpSyncTaskDTO.setThirdCode(outerCode);
         return dmpSyncTaskDTO;
+    }
+
+    @Override
+    public List<CreateOtherStockinRequest.GoodsList> sumBySkuAndPositionNo(List<CreateOtherStockinRequest.GoodsList> goodsList) {
+        Map<String, List<CreateOtherStockinRequest.GoodsList>> outCollect = goodsList.stream().collect(Collectors.groupingBy(item -> item.getSpecNo() + "#" + item.getPositionNo()));
+        List<CreateOtherStockinRequest.GoodsList> outCollectList = new ArrayList<>();
+        for (Map.Entry<String, List<CreateOtherStockinRequest.GoodsList>> entry : outCollect.entrySet()) {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            String[] split = entry.getKey().split("#");
+            goods.setSpecNo(split[0]);
+            goods.setPositionNo(split[1]);
+            int sum = entry.getValue().stream().mapToInt(item -> item.getNum().intValue()).sum();
+            goods.setNum(BigDecimal.valueOf(sum));
+            outCollectList.add(goods);
+        }
+        return outCollectList;
     }
 }
