@@ -1458,6 +1458,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             detail.setSkuNo(detailEntity.getSkuNo());
             detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
             detail.setSourceDetailId(detailEntity.getId());
+            detail.setBomVersion(detailEntity.getBomVersion());
             detailList.add(detail);
             detailEntity.setPickingQty(detailEntity.getApproveQty());
             updateDetails.add(detailEntity);

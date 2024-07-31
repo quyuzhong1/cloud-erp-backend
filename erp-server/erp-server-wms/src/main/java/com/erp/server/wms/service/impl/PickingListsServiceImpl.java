@@ -40,7 +40,6 @@ import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
-import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
@@ -141,6 +140,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         executionData.setBillType(dto.getBillType());
         executionData.setCustomerId(dto.getCustomerId());
         executionData.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());
+        executionData.setSourceCode(dto.getSourceCode());
         executionData.setDetails(details);
         // 执行拣货规则
         List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
@@ -200,11 +200,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<PickingDetailDTO.AddDTO> detailList = new ArrayList<>();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         for (PickingDetailDTO.AddDTO detail : dto.getDetails()) {
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detail.getSkuId())
+                            && req.getBomVersion().equals(detail.getBomVersion())
                             && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(sonSkuList)) {

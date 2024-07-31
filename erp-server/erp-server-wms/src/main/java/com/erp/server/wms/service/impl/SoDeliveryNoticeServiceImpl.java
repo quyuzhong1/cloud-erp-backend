@@ -1281,6 +1281,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (Boolean.FALSE.equals(checkUnpickedQty)) {
             throw new ServiceException(ApiError.UNPICKED_QUANTITY_SHORTAGE);
         }
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainId(soDeliveryNotice.getSourceId());
         PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
         addDTO.setBillType(PickingBillTypeEnum.B2B.getCode());
         addDTO.setCustomerId(soDeliveryNotice.getCustomerId());
@@ -1291,13 +1292,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<PickingDetailDTO.AddDTO> detailList = picking.getDetailIds().stream()
                 .map(id -> {
                     SoDeliveryNoticeDetailEntity detailEntity = details.stream().filter(v -> v.getId().equals(id))
-                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
+                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货通知单明细"));
+                    SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(v -> v.getId().equals(detailEntity.getSourceDetailId()))
+                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单明细"));
                     PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO(soDeliveryNotice.getWarehouseId(),
                             soDeliveryNotice.getWarehouseName(),
                             detailEntity.getSkuId(),
                             detailEntity.getSkuNo(),
                             detailEntity.getDeliveryQty() - detailEntity.getPickingQty(),
-                            detailEntity.getId()
+                            detailEntity.getId(),soDetailEntity.getBomVersion()
                     );
                     detailEntity.setPickingQty(detailEntity.getDeliveryQty());
                     updateDetails.add(detailEntity);
