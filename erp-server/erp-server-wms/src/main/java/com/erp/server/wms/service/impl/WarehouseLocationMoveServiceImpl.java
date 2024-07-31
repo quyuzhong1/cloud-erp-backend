@@ -2,8 +2,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -38,6 +40,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -58,6 +61,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,6 +126,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private SyncWdtOtherInStockService wdtOtherInStockService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -539,7 +545,18 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     }
 
     private void syncDisApproveInfoToWdt(WarehouseLocationMoveEntity entity,SyncOperateEnum operateCode) {
+        // 如果存在黑名单则跳过推送旺店通
+        CfgSettingEntity blackListEntity = cfgSettingService.getByKey(CfgSettingEnum.WAREHOUSE_LOCATION_MOVE_BLACKLIST.getCode());
+        List<String> blackList = ListUtil.empty();
+        if (ObjectUtil.isNotEmpty(blackListEntity) && ObjectUtil.isNotEmpty(blackListEntity.getDataJson())) {
+            JSONObject dataJson = blackListEntity.getDataJson();
+            dataJson.getBeanList("blackList", String.class).forEach(blackList::add);
+        }
+        if (blackList.contains(entity.getCode())) {
+            return;
+        }
 
+        //发送旺店通
         List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(entity.getId()));
 
         HashSet<String> warehouseIdSet = new HashSet<>();
