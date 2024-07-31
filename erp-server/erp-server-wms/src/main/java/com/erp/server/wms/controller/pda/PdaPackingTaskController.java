@@ -172,11 +172,10 @@ public class PdaPackingTaskController extends BaseController {
     @DataIdempotent(keyIdName = "dto.taskId")
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "完成并打印本箱")
-    public ApiResult<String> pdaPackingSave(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
+    public ApiResult<WmsCartonDTO.PrintDTO> pdaPackingSave(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
         dto.setOperation("装箱操作");
         dto.setContent("完成装箱");
-        String code = packingTaskService.pdaPackingSave(dto);
-        return success(code);
+        return success(packingTaskService.pdaPackingSave(dto));
     }
 
     /**
