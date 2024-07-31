@@ -8,6 +8,15 @@ public class StringUtil {
      */
     private static final char UNDERLINE = '_';
 
+    /**
+     * 如果传入的字符串是null，返回空字符串，否则返回原来的字符串
+     * @param input 需要检查的字符串
+     * @return 返回处理后的字符串
+     */
+    public static String getOrDefault(String input) {
+        return input == null ? "" : input;
+    }
+
     // 将陀峰命名中的大写字母（首字母除外）转成“_小写字母”
     public static String camelToUnderline(String param) {
         if (StringUtils.isNotBlank(param)) {
