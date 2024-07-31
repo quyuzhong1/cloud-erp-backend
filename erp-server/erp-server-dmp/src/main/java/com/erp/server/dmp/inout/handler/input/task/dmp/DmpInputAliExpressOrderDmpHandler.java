@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,16 +10,22 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
+import com.erp.server.dmp.service.DmpSoDetailService;
+import com.erp.server.dmp.service.DmpSoInfoService;
 
 import cn.hutool.core.collection.CollUtil;
 
@@ -31,6 +38,12 @@ import cn.hutool.core.collection.CollUtil;
 @Scope("prototype")
 public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandler{
 
+	@Autowired
+	private DmpSoInfoService dmpSoInfoService;
+	
+	@Autowired
+	private DmpSoDetailService dmpSoDetailService;
+	
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
 		super.afterConvertData(dmpInputDataDmpRelationMaps);
@@ -45,6 +58,21 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			}
 			paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
 			findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");
+			
+			List<DmpSoInfoEntity> list = dmpSoInfoService.lambdaQuery()
+					.in(DmpSoInfoEntity::getThirdCode, orderIdList)
+					.in(DmpSoInfoEntity::getSourceSystem, Arrays.asList(DmpBasicSystemCodeEnum.KINGDEE.getCode() , DmpBasicSystemCodeEnum.MABANG.getCode()))
+					.select(DmpSoInfoEntity::getId)
+					.list();
+			if(CollUtil.isNotEmpty(list)) {
+				List<String> ids = list.stream().map(DmpSoInfoEntity::getId).collect(Collectors.toList());
+				dmpSoInfoService.removeByIds(ids);
+				dmpSoDetailService.lambdaUpdate()
+						.in(DmpSoDetailEntity::getMainId, ids)
+						.eq(DmpSoDetailEntity::getIsDeleted, false)
+						.set(DmpSoDetailEntity::getIsDeleted, true)
+						.update();
+			}
 		}
 		
 		Map<String, Map<String, Object>> orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
