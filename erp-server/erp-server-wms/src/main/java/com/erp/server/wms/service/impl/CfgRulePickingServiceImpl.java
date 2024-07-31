@@ -201,7 +201,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : dto.getDetails()) {
             AtomicInteger quantity = new AtomicInteger(detail.getQty());
             List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> inventoryByWarehouse = cfgRulePickingInventoryDTOS.stream()
-                    .filter(v -> v.getWarehouseAreaId().equals(detail.getWarehouseId()))
+                    .filter(v -> v.getWarehouseId().equals(detail.getWarehouseId()))
                     .collect(Collectors.toList());
             for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inventory : inventoryByWarehouse) {
                 LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
