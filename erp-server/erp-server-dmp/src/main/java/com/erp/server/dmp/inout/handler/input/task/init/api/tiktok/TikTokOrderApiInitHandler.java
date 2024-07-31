@@ -144,7 +144,7 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
             }
 
             if (CollectionUtil.isEmpty(orderDTO.getData().getOrders())) {
-                continue;
+                break;
             }
 
             //获取到所有客户的产品id
