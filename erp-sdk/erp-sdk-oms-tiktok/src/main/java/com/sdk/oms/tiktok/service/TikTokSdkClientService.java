@@ -92,9 +92,24 @@ public class TikTokSdkClientService {
     public void setRedisUtil(RedisUtil redisUtil) {
         TikTokSdkClientService.redisUtil = redisUtil;
     }
-
     public static void main(String[] args) {
-   /*     TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
+
+        //标记发货
+        /*TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
+        TikTokShopInfoDTO tikTokShopInfoDTO = new TikTokShopInfoDTO();
+        tikTokShopInfoDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
+        tikTokShopInfoDTO.setClientId("6buinkjt3hmld");
+        tikTokShopInfoDTO.setAccessToken("ROW_U5iaMgAAAACj-JAAAriAWjVtF2MrUIFdi7m7AlAtQ6bl6gtVzPM0tTp3IflyK3ZHQk8ZtOa7XO9zFLKnlImAtqdJwcUXfb-yZzbQT5nsA9mvY0FRDmO3S2efX1Q1QLvHUCCS0TfBXkYHYtiTcIi6QO-VPRM69RI9ZSXvMk8rZ1cSj5IJfOA5Xw");
+        tikTokShopInfoDTO.setShopCipher("TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d");
+
+        ShipOrderUSParam param = new ShipOrderUSParam();
+        param.setTrackingNumber("9214490357610601379030");
+        param.setShippingProviderId("7117858858072016686");
+        param.setOrderLineItemIds(Arrays.asList("576649523604459563"));
+        sdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, "576649523604197419", param);*/
+
+        //产品信息查询
+/*        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
         ShopDTO.RefreshTokenDTO refreshTokenDTO = new ShopDTO.RefreshTokenDTO();
         refreshTokenDTO.setClientId("6buinkjt3hmld");
         refreshTokenDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
@@ -121,6 +136,7 @@ public class TikTokSdkClientService {
             System.out.println(ordersBean);
         }*/
 
+        //订单查询
         //每次最多获取200条
         Integer pageSize = 100;
         //分页token
@@ -196,7 +212,7 @@ public class TikTokSdkClientService {
             }
 
             if (CollectionUtil.isEmpty(orderDTO.getData().getOrders())) {
-                continue;
+                break;
             }
             if (StringUtil.isBlank(orderDTO.getData().getNextPageToken())) {
                 break;
@@ -1074,7 +1090,6 @@ public class TikTokSdkClientService {
         }
         return shippingProviderDTO;
     }
-
 
     /**
      * 订单发货（美国站）
