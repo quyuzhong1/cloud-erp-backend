@@ -22,8 +22,6 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpCfgMqEntity;
@@ -137,27 +135,18 @@ public class DmpOutputRocketMQPushUtils{
     	}
 	}
 	
-	public void updateStatus(String id , String status , String responseData , String message) {
+	public boolean updateStatus(String id , String status , String responseData , String message) {
 		Integer errorCount = null;
-		String code = "";
 		if(status.contains(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordService.getById(id);
 			if(!responseData.contains("数据已被他人锁住，为避免数据错误，请稍后再试")) {
 				errorCount = dmpOutputTaskRecordEntity.getErrorCount() + 1;
 			}
-			if(errorCount == 3) {
+			if(errorCount >= 3 && errorCount%3 == 0) {
 				status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
-				String requestData = dmpOutputTaskRecordEntity.getRequestData();
-				if(StringUtils.isNotBlank(requestData)) {
-					JSONObject parseObject = JSON.parseObject(requestData);
-					code = parseObject.getString("code");
-					if(StringUtils.isBlank(code)) {
-						code = parseObject.getString("fBillNo");
-					}
-				}
 			}
 		}
-		dmpOutputTaskRecordService.lambdaUpdate()
+		boolean update = dmpOutputTaskRecordService.lambdaUpdate()
 			.eq(DmpOutputTaskRecordEntity::getId, id)
 			.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 			.set(DmpOutputTaskRecordEntity::getStatus, status)
@@ -167,9 +156,9 @@ public class DmpOutputRocketMQPushUtils{
 			.update();
 		if(status.equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
 			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-	        warnMsgInfo.setBizName("中台推送erp");
+	        warnMsgInfo.setBizName("新中台推送erp");
 	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-	        warnMsgInfo.setTitle("中台推送erp失败，id=" + id);
+	        warnMsgInfo.setTitle("新中台推送erp失败，id=" + id);
 	        warnMsgInfo.setTableName("dmp_output_task_record");
 	        warnMsgInfo.setTableId(id);
 	        warnMsgInfo.setKeyInfo(responseData);
@@ -180,9 +169,10 @@ public class DmpOutputRocketMQPushUtils{
 			bodyMap.put("msg_type", "text");
 			Map<String, String> contentMap = new HashMap<String, String>();
 			
-			contentMap.put("text", "中台【"+ namespace +"】环境告警：" + "输出任务记录id=【" + id + "】，code=【" + code + "】处理失败：" + message);
+			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "输出任务记录id=" + id + "处理失败：" + message);
 			bodyMap.put("content", contentMap);
 			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
 		}
+		return update;
 	}
 }

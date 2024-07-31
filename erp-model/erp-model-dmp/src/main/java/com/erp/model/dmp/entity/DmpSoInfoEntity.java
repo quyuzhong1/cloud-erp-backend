@@ -62,6 +62,11 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     @TableField("invalid_status")
     private Boolean invalidStatus;
     /**
+     * 是否取消（false未取消，true已取消）
+     */
+    @TableField("is_cancel")
+    private Boolean isCancel;
+    /**
     * 订单状态 waitSubmit.待提交 approveIng.审核中 reject.审核不通过 approve.已审核
     */
     @TableField("order_status")
@@ -171,6 +176,11 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     */
     @TableField("logistics_name")
     private String logisticsName = "";
+    /**
+     * 审核状态
+     */
+    @TableField("approve_status")
+    private String approveStatus = "";
     /**
     * 拓展字段
     */

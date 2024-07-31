@@ -61,6 +61,7 @@ public class DmpInputChildCreateHandler extends DmpInputBaseCreateHandler{
 			List<List<String>> partition = Lists.partition(nextLevelIdList, 10000);
 			for(List<String> p : partition) {
 				Map<String, DmpInputTaskEntity> nextIdTaskEntityMap = dmpInputTaskService.lambdaQuery()
+						.eq(DmpInputTaskEntity::getCfgInputId, cfgInputId)
 						.eq(DmpInputTaskEntity::getParentTaskId, parentInputTaskId)
 						.eq(DmpInputTaskEntity::getTaskType, DmpInputTaskTaskTypeEnum.CHILD.getCode())
 						.in(DmpInputTaskEntity::getNextLevelId, p)

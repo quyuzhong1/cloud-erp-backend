@@ -74,6 +74,12 @@ public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
     private String parentTaskId;
     
     /**
+     * 扩展json
+     */
+     @TableField("extend_json")
+     private String extendJson;
+    
+    /**
      * 执行超时时间，单位秒
      */
      @TableField("exec_timeout")

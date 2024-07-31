@@ -27,6 +27,7 @@ import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 
 /**
@@ -75,7 +76,15 @@ public class DmpInputAliExpressProductApiInitHandler implements DmpInputApiInitH
 			JSONObject body = JSON.parseObject(response.getBody());
 			JSONObject result = body.getJSONObject("result");
 			Integer total = result.getInteger("total_page");
-			order.addAll(result.getJSONArray("aeop_a_e_product_display_d_t_o_list"));
+			boolean success = result.getBooleanValue("success");
+			if(success) {
+				JSONArray jsonArray = result.getJSONArray("aeop_a_e_product_display_d_t_o_list");
+				if(CollUtil.isNotEmpty(jsonArray)) {
+					order.addAll(jsonArray);
+				}
+			}else {
+				throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + result.toJSONString());
+			}
 			
 			if(pageNo >= total) {
 				break;
