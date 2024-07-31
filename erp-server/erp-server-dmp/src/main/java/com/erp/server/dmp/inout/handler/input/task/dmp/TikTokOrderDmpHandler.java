@@ -1,35 +1,71 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
+import com.common.core.anno.ParamData;
+import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.enums.MabangOriginalOrderStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.server.dmp.service.DmpSoDetailService;
+import com.erp.server.dmp.service.DmpSoInfoService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 订单主表字段映射转换
  */
 @Service
 @Scope("prototype")
-public class TikTokOrderDmpHandler extends TikTokDmpHandler {
+public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
+    @Resource
+    private DmpSoInfoService dmpSoInfoService;
+
+    @Resource
+    private DmpSoDetailService dmpSoDetailService;
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
+        super.afterConvertData(dmpInputDataDmpRelationMaps);
+
+        Set<List<Map<String, Object>>> keySet = dmpInputDataDmpRelationMaps.keySet();
+        if (CollUtil.isNotEmpty(keySet)) {
+            List<String> orderIdList = new ArrayList<>();
+            for (List<Map<String, Object>> key : keySet) {
+                orderIdList.addAll(key.stream().map(f -> f.get("fid").toString()).collect(Collectors.toList()));
+            }
+
+            List<DmpSoInfoEntity> list = dmpSoInfoService.lambdaQuery()
+                    .in(DmpSoInfoEntity::getThirdCode, orderIdList)
+                    .in(DmpSoInfoEntity::getSourceSystem, Arrays.asList(DmpBasicSystemCodeEnum.KINGDEE.getCode(), DmpBasicSystemCodeEnum.MABANG.getCode()))
+                    .select(DmpSoInfoEntity::getId)
+                    .list();
+            if (CollUtil.isNotEmpty(list)) {
+                List<String> ids = list.stream().map(DmpSoInfoEntity::getId).collect(Collectors.toList());
+                dmpSoInfoService.removeByIds(ids);
+                dmpSoDetailService.lambdaUpdate()
+                        .in(DmpSoDetailEntity::getMainId, ids)
+                        .eq(DmpSoDetailEntity::getIsDeleted, false).set(DmpSoDetailEntity::getIsDeleted, true)
+                        .update();
+            }
+        }
+
         String parentTaskId = dmpInputTaskEntity.getParentTaskId();
         List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, parentTaskId).list();
         if (CollectionUtil.isEmpty(list)) {
@@ -108,7 +144,7 @@ public class TikTokOrderDmpHandler extends TikTokDmpHandler {
                 Object paidTimeObj = dmpDataMap.get("paidTime");
                 if (paidTimeObj != null) {
                     // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(paidTimeObj+"")), ZoneId.systemDefault());
+                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(paidTimeObj + "")), ZoneId.systemDefault());
                     dmpDataMap.put("payTime", payTime);
                 }
 
@@ -116,7 +152,7 @@ public class TikTokOrderDmpHandler extends TikTokDmpHandler {
                 Object createTimeObj = dmpDataMap.get("createTime");
                 if (createTimeObj != null) {
                     // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(createTimeObj+"")), ZoneId.systemDefault());
+                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(createTimeObj + "")), ZoneId.systemDefault());
                     dmpDataMap.put("platformCreateTime", payTime);
                 }
 
@@ -124,7 +160,7 @@ public class TikTokOrderDmpHandler extends TikTokDmpHandler {
                 Object updateTimeObj = dmpDataMap.get("updateTime");
                 if (updateTimeObj != null) {
                     // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(updateTimeObj+"")), ZoneId.systemDefault());
+                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(updateTimeObj + "")), ZoneId.systemDefault());
                     dmpDataMap.put("platformUpdateTime", payTime);
                 }
 
@@ -132,7 +168,7 @@ public class TikTokOrderDmpHandler extends TikTokDmpHandler {
                 Object deliveryTimeObj = dmpDataMap.get("deliveryTime");
                 if (deliveryTimeObj != null) {
                     // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(deliveryTimeObj+"")), ZoneId.systemDefault());
+                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(deliveryTimeObj + "")), ZoneId.systemDefault());
                     dmpDataMap.put("deliveryTime", payTime);
                 }
 
