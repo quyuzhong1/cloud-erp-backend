@@ -84,6 +84,8 @@ public enum InventoryBusinessTypeEnum {
     SO_INFO_PUSH_TRANSFER("so_info_push_transfer", "44", "直接调拨单（销售订单下推）"),
     REQUISITION_PUSH_TRANSFER("requisition_push_transfer", "45", "直接调拨单（要货申请完成下推）"),
     FIRST_MILE_PUSH_TRANSFER("first_mile_push_transfer", "46", "直接调拨单（头程发货单下推）"),
+    ASSEMBLE_IN_PARENT_FREEZE("assemble_in_parent_freeze", "47", "加工单组装（父SKU冻结增加）"),
+    ASSEMBLE_IN_CHILD_FREEZE("assemble_in_child_freeze", "48", "加工单组装（子SKU冻结减少）"),
     ;
 
     private String code;

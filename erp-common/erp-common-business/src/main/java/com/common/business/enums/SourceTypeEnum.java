@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 @NoArgsConstructor
@@ -254,5 +255,8 @@ public enum SourceTypeEnum {
 
     public static SourceTypeEnum getByCode(String code) {
         return Arrays.stream(SourceTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    }
+    public static List<String> pickingLists() {
+        return Arrays.asList(PICKING_LISTS_ADD.getCode(), PICKING_LISTS_SUBTRACT.getCode());
     }
 }

@@ -710,6 +710,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        if (SourceTypeEnum.pickingLists().contains(entity.getSourceType())) {
+            throw new ServiceException(ApiError.ERROR_99141);
+        }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
