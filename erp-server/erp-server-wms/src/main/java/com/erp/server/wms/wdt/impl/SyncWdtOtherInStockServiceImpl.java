@@ -10,25 +10,18 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.impl.AbstractWdtService;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * 同步其他入库单到旺店通
@@ -41,9 +34,6 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
 
     @Resource
     private DmpMqFeign dmpMqFeign;
-
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
 
     public DmpPushTaskFeignDTO generateTask(List<CreateOtherStockinRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode){
         CreateOtherStockinRequest request = new CreateOtherStockinRequest();
@@ -68,7 +58,6 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
                 }
             }
         }
-
         List<CreateOtherStockinRequest.GoodsList> handlerGoodsList = super.handleGoodsList(goodsList);
 
         request.setWarehouseNo(thirdWarehouseCode);
