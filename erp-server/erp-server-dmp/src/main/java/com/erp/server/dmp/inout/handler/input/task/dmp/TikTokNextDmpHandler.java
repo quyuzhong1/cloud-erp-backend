@@ -17,13 +17,16 @@ import java.util.*;
 @Service
 @Scope("prototype")
 public class TikTokNextDmpHandler extends DmpInputDoNextDmpHandler{
+
+
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
 
         List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
         if(CollUtil.isNotEmpty(detailList)) {
             for(Map<String, Object> detail : detailList) {
-
+                detail.put("receiverTaxNo", detail.get("cpf"));
+                detail.put("email", detail.get("buyerEmail"));
                 Object recipientAddress = detail.get("recipientAddress");
                 if (ObjectUtil.isNotEmpty(recipientAddress)) {
                     Map<String, Object> recipientAddressMap = (Map<String, Object>) recipientAddress;
@@ -31,6 +34,11 @@ public class TikTokNextDmpHandler extends DmpInputDoNextDmpHandler{
                     detail.put("mainStreet", recipientAddressMap.get("addressLine1"));
                     detail.put("secondStreet", recipientAddressMap.get("addressLine2") + " " + recipientAddressMap.get("addressLine3") + " " + recipientAddressMap.get("addressLine4"));
                     detail.put("mainPhone", recipientAddressMap.get("phoneNumber"));
+                    detail.put("country", recipientAddressMap.get("regionCode"));
+                    detail.put("receiverName", recipientAddressMap.get("name"));
+                    detail.put("postCode", recipientAddressMap.get("postCode"));
+                    detail.put("fullAddress", recipientAddressMap.get("fullAddress") + " " + recipientAddressMap.get("addressDetail"));
+                    detail.put("postCode", recipientAddressMap.get("postCode"));
 
                     List<Map<String, Object>> districtInfoList = (List<Map<String, Object>>) recipientAddressMap.get("districtInfo");
 
@@ -52,11 +60,8 @@ public class TikTokNextDmpHandler extends DmpInputDoNextDmpHandler{
                     }
                     detail.put("district", district);
                 }
-
-
             }
         }
-
         return detailList;
     }
 }
