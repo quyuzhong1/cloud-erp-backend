@@ -550,9 +550,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         List<String> blackList = ListUtil.empty();
         if (ObjectUtil.isNotEmpty(blackListEntity) && ObjectUtil.isNotEmpty(blackListEntity.getDataJson())) {
             JSONObject dataJson = blackListEntity.getDataJson();
-            dataJson.getBeanList("blackList", String.class).forEach(blackList::add);
+            blackList = new ArrayList<>(dataJson.getBeanList("blackList", String.class));
         }
         if (blackList.contains(entity.getCode())) {
+            log.warn("单号【{}】的仓位移动单据，被加入黑名单，不推送旺店通", entity.getCode());
             return;
         }
 
