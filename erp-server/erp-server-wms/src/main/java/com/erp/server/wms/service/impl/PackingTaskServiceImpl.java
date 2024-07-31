@@ -936,10 +936,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String pdaPackingSave(WmsCartonSpecDTO.AddDTO dto) {
+    public WmsCartonDTO.PrintDTO pdaPackingSave(WmsCartonSpecDTO.AddDTO dto) {
         dto.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
-        String code = this.stagingPacking(dto);
-        return getOutBoxNoBase64(code);
+        return this.stagingPacking(dto);
     }
 
     @Override
@@ -1121,7 +1120,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String stagingPacking(WmsCartonSpecDTO.AddDTO addDTO) {
+    public WmsCartonDTO.PrintDTO stagingPacking(WmsCartonSpecDTO.AddDTO addDTO) {
         if (Objects.isNull(addDTO.getBoxQty())){
             addDTO.setBoxQty(MathUtil.ONE);
         }
@@ -1146,16 +1145,16 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //校验累计装箱数量不可大于发货数量
         checkPackQtyByPickQty(packingTaskEntity, addDTO.getDetailList());
         String specId;
+        WmsCartonEntity wmsCartonEntity = null;
         //不存在则新增
         if (Objects.isNull(cartonEntity)){
             specId = wmsCartonSpecService.add(addDTO);
             List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(addDTO.getTaskId()));
-            WmsCartonEntity wmsCartonEntity = cartonEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSpecId().equals(specId)).findFirst().orElse(new WmsCartonEntity());
+            wmsCartonEntity = cartonEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSpecId().equals(specId)).findFirst().orElse(new WmsCartonEntity());
             //更新装箱状态
             this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),addDTO.getTaskId());
             //发送飞书通知
             this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
-            return packingTaskEntity.getSourceCode()+"-"+wmsCartonEntity.getBoxNo();
         }else {
             specId = cartonEntity.getSpecId();
             WmsCartonSpecEntity wmsCartonSpecEntity = wmsCartonSpecService.getById(specId);
@@ -1167,9 +1166,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),addDTO.getTaskId());
             //发送飞书通知
             this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
-            WmsCartonEntity wmsCartonEntity = wmsCartonService.getById(cartonId);
-            return packingTaskEntity.getSourceCode()+"-"+wmsCartonEntity.getBoxNo();
+            wmsCartonEntity = wmsCartonService.getById(cartonId);
         }
+        if (Objects.isNull(wmsCartonEntity)){
+            throw new ServiceException(ApiError.ERROR_92146);
+        }
+        return WmsCartonDTO.PrintDTO.builder()
+                .boxNo(wmsCartonEntity.getBoxNo())
+                .cartonId(wmsCartonEntity.getId())
+                .sourceCode(packingTaskEntity.getSourceCode())
+                .sourceId(packingTaskEntity.getSourceId())
+                .taskId(packingTaskEntity.getId())
+                .build();
     }
 
     @Override
@@ -2170,7 +2178,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    public String getPrintBarCode(String cartonId) {
+    public WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId) {
         WmsCartonEntity cartonEntity = wmsCartonService.getById(cartonId);
         if (Objects.isNull(cartonEntity)){
             throw new ServiceException(ApiError.ERROR_92146);
@@ -2179,7 +2187,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
             throw new ServiceException(ApiError.ERROR_98001);
         }
-        return getOutBoxNoBase64(packingTaskEntity.getSourceCode()+"-"+cartonEntity.getBoxNo());
+        return WmsCartonDTO.PrintDTO.builder()
+                .boxNo(cartonEntity.getBoxNo())
+                .cartonId(cartonId)
+                .sourceCode(packingTaskEntity.getSourceCode())
+                .sourceId(packingTaskEntity.getSourceId())
+                .taskId(packingTaskEntity.getId())
+                .build();
     }
 
     /**

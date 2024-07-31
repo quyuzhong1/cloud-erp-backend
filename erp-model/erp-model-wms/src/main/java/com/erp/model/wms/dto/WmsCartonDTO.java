@@ -308,4 +308,31 @@ public class WmsCartonDTO {
          */
         private List<CartonDetailDTO> cartonDetailList;
     }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PrintDTO {
+        /**
+         * 源单id
+         */
+        private String sourceId;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 源单编码
+         */
+        private String sourceCode;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
+         * 箱号
+         */
+        private Integer boxNo;
+    }
 }
