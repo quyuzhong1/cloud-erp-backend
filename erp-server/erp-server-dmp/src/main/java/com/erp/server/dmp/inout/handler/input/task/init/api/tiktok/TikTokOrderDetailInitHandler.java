@@ -14,6 +14,7 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
@@ -66,7 +67,6 @@ public class TikTokOrderDetailInitHandler extends DmpInputInitHandler {
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-
 		List<Map<String, Object>> findMongoData = null;
 		String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
 		if (StringUtils.isNotBlank(parentStorageName)) {
