@@ -65,7 +65,6 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
             throw new ServiceException("TikTok店铺id：" + nextLevelId + "未找到对应的店铺信息");
         }
 
-
         List<OrdersBean> resultsBeanList = new ArrayList<>();
 
         //每次最多获取200条
@@ -161,6 +160,7 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
             if (StringUtil.isBlank(orderDTO.getData().getNextPageToken())) {
                 break;
             }
+            pageToken = orderDTO.getData().getNextPageToken();
         }
         return dmpInputTaskInitDTOList;
     }

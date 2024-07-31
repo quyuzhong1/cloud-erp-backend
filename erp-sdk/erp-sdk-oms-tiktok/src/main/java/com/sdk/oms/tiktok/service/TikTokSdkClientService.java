@@ -93,7 +93,7 @@ public class TikTokSdkClientService {
     }
 
     public static void main(String[] args) {
-        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
+   /*     TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
         ShopDTO.RefreshTokenDTO refreshTokenDTO = new ShopDTO.RefreshTokenDTO();
         refreshTokenDTO.setClientId("6buinkjt3hmld");
         refreshTokenDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
@@ -102,7 +102,7 @@ public class TikTokSdkClientService {
         Map<String, String> paramMap = new HashMap<>();
         paramMap.put("clientId","6buinkjt3hmld");
         paramMap.put("clientSecret","8ff628de24faf70c24855de4d967fb6a17a47e3f");
-        String acc = "TTP_zz1dfQAAAACj-JAAAriAWjVtF2MrUIFdcoSsV5qYEgxgluWTykrx7djh9RlXPMGkxyBMGE3rqjV507wH5oro0nrtdta-otheyRQNieVqBBAetJJJYjGdSS48qv18ankJHjE5j5gxwYOetJCmelLx-pcYq2jnMO5wilDaFMOO6qFBESUghvQ09A";
+        String acc = "ROW_U5iaMgAAAACj-JAAAriAWjVtF2MrUIFdi7m7AlAtQ6bl6gtVzPM0tTp3IflyK3ZHQk8ZtOa7XO9zFLKnlImAtqdJwcUXfb-yZzbQT5nsA9mvY0FRDmO3S2efX1Q1QLvHUCCS0TfBXkYHYtiTcIi6QO-VPRM69RI9ZSXvMk8rZ1cSj5IJfOA5Xw";
 
         TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
         shopInfoDTO.setAccessToken(acc);
@@ -118,9 +118,8 @@ public class TikTokSdkClientService {
         List<ListingViewDTO> listingViewDTOS = sdkClientService.sendMercadoGetListing(shopInfoDTO);
         for (ListingViewDTO ordersBean : listingViewDTOS) {
             System.out.println(ordersBean);
-        }
+        }*/
 
-/*
         //每次最多获取200条
         Integer pageSize = 100;
         //分页token
@@ -128,21 +127,20 @@ public class TikTokSdkClientService {
         //平台接口地址
         String url = TikTokConstant.URL;
         //服务密钥
-        String secret = "6buinkjt3hmld";
-        String token = "TTP_zz1dfQAAAACj-JAAAriAWjVtF2MrUIFdcoSsV5qYEgxgluWTykrx7djh9RlXPMGkxyBMGE3rqjV507wH5oro0nrtdta-otheyRQNieVqBBAetJJJYjGdSS48qv18ankJHjE5j5gxwYOetJCmelLx-pcYq2jnMO5wilDaFMOO6qFBESUghvQ09A";
+        String secret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
+        String token = "ROW_U5iaMgAAAACj-JAAAriAWjVtF2MrUIFdi7m7AlAtQ6bl6gtVzPM0tTp3IflyK3ZHQk8ZtOa7XO9zFLKnlImAtqdJwcUXfb-yZzbQT5nsA9mvY0FRDmO3S2efX1Q1QLvHUCCS0TfBXkYHYtiTcIi6QO-VPRM69RI9ZSXvMk8rZ1cSj5IJfOA5Xw";
 
-        StringBuffer sb = new StringBuffer();
         while (true) {
+            StringBuffer sb = new StringBuffer();
             //组装授权url
             String path = "/order/{version}/orders/search".replace("{version}", TikTokConstant.VERSION);
-
             // 定义查询参数
             Map<String, Object> params = new HashMap<>();
             params.put("access_token", token);
-            params.put("app_key", secret);
+            params.put("app_key", "6buinkjt3hmld");
             params.put("page_size", pageSize);
             params.put("page_token", pageToken);
-            params.put("shop_cipher", "TTP_gBJmlwAAAAC67DSXGtKhZV4epbjJVKXF");
+            params.put("shop_cipher", "TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d");
             params.put("shop_id", "");
             params.put("sign", "");
             String timestamp = System.currentTimeMillis() / 1000 + "";
@@ -164,15 +162,14 @@ public class TikTokSdkClientService {
             String sign = EncryptionUtils.generateSHA256(input, secret);
             //加入sign签名入参
             params.put("sign", sign);
-
             //组装url
             sb.append(url);
             sb.append(path);
             sb.append("?access_token=" + token + "");
-            sb.append("&app_key=" + secret + "");
+            sb.append("&app_key=" + "6buinkjt3hmld" + "");
             sb.append("&page_size=" + pageSize + "");
             sb.append("&page_token=" + pageToken + "");
-            sb.append("&shop_cipher=" + "TTP_gBJmlwAAAAC67DSXGtKhZV4epbjJVKXF" + "");
+            sb.append("&shop_cipher=" + "TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d" + "");
             sb.append("&shop_id=");
             sb.append("&sign=" + sign + "");
             sb.append("&timestamp=" + timestamp + "");
@@ -185,7 +182,26 @@ public class TikTokSdkClientService {
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}",
                         sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
             }
-        }*/
+
+            //解析数据
+            ObjectMapper objectMapper = new ObjectMapper();
+            OrderDTO orderDTO = null;
+            try {
+                orderDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
+            } catch (JsonProcessingException e) {
+                log.error("调用url={},入参params={}, 查询订单数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 查询订单数据解析失败，返回值 responseMap={}",
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+            }
+
+            if (CollectionUtil.isEmpty(orderDTO.getData().getOrders())) {
+                continue;
+            }
+            if (StringUtil.isBlank(orderDTO.getData().getNextPageToken())) {
+                break;
+            }
+            pageToken = orderDTO.getData().getNextPageToken();
+        }
 
     }
 
@@ -409,9 +425,8 @@ public class TikTokSdkClientService {
         //服务密钥
         String secret = shopInfoDTO.getClientSecret();
 
-
-        StringBuffer sb = new StringBuffer();
         while (true) {
+            StringBuffer sb = new StringBuffer();
             //组装授权url
             String path = "/product/" + TikTokConstant.VERSION + "/products/search";
 
@@ -593,8 +608,8 @@ public class TikTokSdkClientService {
         //服务密钥
         String secret = shopInfoDTO.getClientSecret();
 
-        StringBuffer sb = new StringBuffer();
         while (true) {
+            StringBuffer sb = new StringBuffer();
             //组装授权url
             String path = "/order/" + TikTokConstant.VERSION + "/orders/search";
 
