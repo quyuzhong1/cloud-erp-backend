@@ -742,7 +742,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //发送任务
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherInStockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode);
+        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherInStockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, false);
         List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override

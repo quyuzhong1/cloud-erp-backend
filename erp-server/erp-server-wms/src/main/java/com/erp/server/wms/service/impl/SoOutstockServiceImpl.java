@@ -3362,7 +3362,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 inGoods.setPositionNo(detailEntity.getWarehouseLocation());
 
                 String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-                DmpPushTaskFeignDTO taskFeignDTO = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), operateEnum.getCode(), entity.getCode(), detailEntity.getId(), inCode, thirdWarehouseCode);
+                DmpPushTaskFeignDTO taskFeignDTO = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), operateEnum.getCode(), entity.getCode(), detailEntity.getId(), inCode, thirdWarehouseCode, false);
                 unSaveTaskList.add(taskFeignDTO);
                 //其他入库单的中间表数据
                 DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity.getId(), entity.getCode(), operateEnum.getCode(), entity.getWarehouseId(), inCode, thirdWarehouseCode, inGoods);

@@ -1612,7 +1612,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
                 String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
                 String thirdWarehouseCode = thirdWarehouseMap.get(detailEntity.getWarehouseId());
-                DmpPushTaskFeignDTO taskFeignDTO = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), operateEnum.getCode(), entity.getCode(), detailEntity.getId(), inCode, thirdWarehouseCode);
+                DmpPushTaskFeignDTO taskFeignDTO = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), operateEnum.getCode(), entity.getCode(), detailEntity.getId(), inCode, thirdWarehouseCode, false);
                 unSaveTaskList.add(taskFeignDTO);
                 //其他入库单的中间表数据
                 DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity.getId(), entity.getCode(), operateEnum.getCode(), detailEntity.getWarehouseId(), inCode, thirdWarehouseCode, inGoods);

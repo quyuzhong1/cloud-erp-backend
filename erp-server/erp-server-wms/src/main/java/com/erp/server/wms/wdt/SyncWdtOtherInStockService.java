@@ -22,9 +22,10 @@ public interface SyncWdtOtherInStockService {
      * @param detailId           明细ID
      * @param outerCode          外部单号
      * @param thirdWarehouseCode 第三方仓库编码
+     * @param checkOuterCode     是否校验外部单号重复
      * @return DmpPushTaskEntity 由DMP返回的任务实体
      * @date: 2024-05-25
      * @author: tanmujin
      */
-    DmpPushTaskFeignDTO generateTask(List<CreateOtherStockinRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode);
+    DmpPushTaskFeignDTO generateTask(List<CreateOtherStockinRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode);
 }

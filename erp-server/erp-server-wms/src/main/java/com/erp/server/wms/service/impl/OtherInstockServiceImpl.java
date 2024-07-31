@@ -1180,7 +1180,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             goodsList.add(goods);
         });
 
-        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherInstockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode);
+        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherInstockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, true);
         List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
