@@ -323,7 +323,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
             ReceiptInfo receiptInfo = detail.getReceiptAddress();
             if (Objects.nonNull(receiptInfo)){
                 receiverDTO.setCountry(receiptInfo.getCountry());
-                receiverDTO.setFirstAddress(StringUtils.isBlank(receiptInfo.getAddress())?StringUtil.getOrDefault(receiptInfo.getDetailAddress())+StringUtil.getOrDefault(receiptInfo.getAddress2()):receiptInfo.getAddress());
+                receiverDTO.setFirstAddress(StringUtils.isBlank(receiptInfo.getAddress())?StringUtil.getOrDefault(receiptInfo.getDetailAddress())+" "+StringUtil.getOrDefault(receiptInfo.getAddress2()):receiptInfo.getAddress());
                 receiverDTO.setSecondAddress(receiptInfo.getAddress2());
                 receiverDTO.setFullAddress(receiptInfo.getDetailAddress());
                 receiverDTO.setCityName(receiptInfo.getCity());
