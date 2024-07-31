@@ -85,30 +85,31 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
                         dmpDataMap.put("remark", "ON_HOLD");
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("AWAITING_SHIPMENT".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("AWAITING_COLLECTION".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("PARTIALLY_SHIPPING".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("IN_TRANSIT".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("DELIVERED".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("COMPLETED".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("CANCELLED".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
