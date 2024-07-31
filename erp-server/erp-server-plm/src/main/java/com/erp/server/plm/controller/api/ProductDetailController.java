@@ -690,7 +690,6 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载导出模板")
     @GetMapping("/exportTemplate")
-    //@RequestPermissions("plm:product:detail:exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
         String excelName = "template.xlsx";
@@ -724,7 +723,7 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息")
     @PostMapping(value = "/exportProduct")
-    //@RequestPermissions("plm:product:detail:exportProduct")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
     public void exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuExcelDTO, response);
     }
