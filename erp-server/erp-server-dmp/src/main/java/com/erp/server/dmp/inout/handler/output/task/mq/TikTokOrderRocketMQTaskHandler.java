@@ -292,7 +292,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
                 .receiverName(soReceiverEntity.getReceiverName())
                 .telNumber(soReceiverEntity.getMainPhone())
                 .receiverTelNumber(soReceiverEntity.getReceiverTelNumber())
-                .email("")
+                .email(soReceiverEntity.getEmail())
                 .country(dmpSoInfoEntity.getCurrencyCode())
                 .provinceName(soReceiverEntity.getProvince())
                 .cityName(soReceiverEntity.getCity())
@@ -301,7 +301,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
                 .firstAddress(soReceiverEntity.getMainStreet())
                 .secondAddress(soReceiverEntity.getSecondStreet())
                 .fullAddress(soReceiverEntity.getFullAddress())
-//                .receiverTaxNo(soReceiverEntity.getReceiverTaxNo())
+                .receiverTaxNo(soReceiverEntity.getReceiverTaxNo())
                 .build();
     }
 
