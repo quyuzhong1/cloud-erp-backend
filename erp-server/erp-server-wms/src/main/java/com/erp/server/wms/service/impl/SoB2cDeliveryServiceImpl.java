@@ -1872,6 +1872,24 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "重新出库");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO handleErrorData(String id) {
+        SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
+            return BatchResultDTO.fail(id, "", "未找到b2c发货单");
+        }
+        List<SoB2cDeliveryDetailEntity> detailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(id));
+        if (CollectionUtils.isEmpty(detailList)) {
+            return BatchResultDTO.fail(id, "", "未找到b2c发货单明细");
+        }
+        //提交发货冻结虚拟库存
+        freezeVirtualInventory(soB2cDeliveryEntity,detailList);
+        //发货出库
+        outFreezeVirtualInventory(soB2cDeliveryEntity);
+        return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), "操作成功");
+    }
+
     /**
      * 生成直接调拨单
      * @author will
