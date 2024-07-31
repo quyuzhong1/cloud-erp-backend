@@ -11,6 +11,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
+import org.apache.commons.math3.util.Pair;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -184,10 +185,9 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
     /**
      * 根据匹配规则进行明细更新
      * @param entity
-     * @param detail
-     * @param warehouseId
+     * @param updateWarehouseList
      */
-    void updateWarehouse(SoB2cEntity entity, SoB2cDetailEntity detail, String warehouseId);
+    void updateWarehouse(SoB2cEntity entity, List<Pair<SoB2cDetailEntity,String>> updateWarehouseList);
     void updateSignShippedByDetailId(List<String> detailIdList);
 
     List<SoB2cDetailDTO.PropertyDTO> handlePropertyDTOList(SkuVO.PropertyDTO skuPropertyDTO);
