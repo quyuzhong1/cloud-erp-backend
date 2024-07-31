@@ -186,7 +186,7 @@
         rad.from_warehouse_id AS fromWarehouseId,
         rad.from_warehouse_name AS fromWarehouseName,
         rad.from_virtual_warehouse_id AS fromVirtualWarehouseId,
-        rad.from_virtual_warehouse_name AS fromVirtualWarehouseName,
+        vw.name AS fromVirtualWarehouseName,
         rad.to_warehouse_id AS toWarehouseId,
         rad.to_warehouse_name AS toWarehouseName,
         ra.create_user_name AS createUserName,
@@ -203,6 +203,7 @@
         LEFT JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = ra.channel_id and opw.is_deleted = false
         LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        left join virtual_warehouse vw on rad.from_virtual_warehouse_id = vw.id and vw.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and ra.is_deleted = FALSE
