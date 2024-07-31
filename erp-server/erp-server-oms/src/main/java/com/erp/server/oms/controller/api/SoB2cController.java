@@ -27,7 +27,6 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -148,7 +147,7 @@ public class SoB2cController extends BaseController {
                     //检查是否备案并修改状态
                     soB2cService.checkProductRegistrationAndUpdate(id, "");
                     //申报信息规则
-                    soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE);
+                    soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
                 if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
@@ -170,7 +169,7 @@ public class SoB2cController extends BaseController {
         for (String id : ids) {
             BatchResultDTO submit;
             try {
-                submit = soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE);
+                submit = soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE, true);
             } catch (Exception e) {
                 log.error("B2C销售订单 批量更新报关异常", e);
 
@@ -585,7 +584,7 @@ public class SoB2cController extends BaseController {
                     if (SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
                             && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
                     ){
-                        soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE);
+                        soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE, false);
                     }
                 }
             } catch (Exception e) {

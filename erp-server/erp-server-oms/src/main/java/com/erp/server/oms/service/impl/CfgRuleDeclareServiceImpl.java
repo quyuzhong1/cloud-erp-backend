@@ -199,12 +199,10 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
      * @param minCustomsAmount
      * @param isUpdate
      * @param declareProductList
-     * @param soId
-     * @param soLogisticId
      * @return
      */
     @Override
-    public void getRuleDeclareMatchResult(HashMap<String, Object> map, BigDecimal maxCustomsAmount, BigDecimal minCustomsAmount, Boolean isUpdate, List<SoB2cDeclareProductEntity> declareProductList, String soId, String soLogisticId) {
+    public void getRuleDeclareMatchResult(HashMap<String, Object> map, BigDecimal maxCustomsAmount, BigDecimal minCustomsAmount, Boolean isUpdate, List<SoB2cDeclareProductEntity> declareProductList) {
         if (Objects.isNull(map)) {
             return;
         }
@@ -239,9 +237,6 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
                 String msg = StrUtil.format("自动生成报关信息");
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), String.valueOf(map.get("id")), "报关信息生成");
             }
-            //更新包装重量
-            BigDecimal packWeight = addList.stream().map(SoB2cDeclareProductEntity::getWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            soB2cLogisticsService.updateWeight(soId,soLogisticId,packWeight,"更新报关信息同步重量");
         }
     }
 

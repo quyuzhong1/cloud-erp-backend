@@ -11,7 +11,6 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -843,11 +842,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 申报信息规则信息整理
+     *
      * @param id
      * @param map
+     * @param isUpdatePackingWeight
      * @return
      */
-    BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate);
+    BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate, Boolean isUpdatePackingWeight);
 
     /**
      * 根据订单拆分 申报明细

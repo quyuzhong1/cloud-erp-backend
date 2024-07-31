@@ -1384,7 +1384,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //校验是否存在申报信息，不存在则生成
         List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);
         if (CollectionUtils.isEmpty(declareList)) {
-            declareRule(id, new HashMap<>(), Boolean.FALSE);
+            declareRule(id, new HashMap<>(), Boolean.FALSE, false);
         }
         try {
             LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);
@@ -5874,7 +5874,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if(logisticsRuleResult.getIsRuleMatch()){
                     soB2cService.checkProductRegistrationAndUpdate(id, "");
                     //申报信息规则
-                    declareRule(id, new HashMap<>(), Boolean.FALSE);
+                    declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
@@ -7837,11 +7837,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      *
      * @param id
      * @param map
-     * @param isUpdate 是否更新申报信息
+     * @param isUpdate              是否更新申报信息
+     * @param isUpdatePackingWeight
      * @return
      */
     @Override
-    public BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate) {
+    public BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate, Boolean isUpdatePackingWeight) {
         //已审核 配货中才会进行 申报规则执行
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
@@ -7882,7 +7883,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             handleDeclareMatchJson(entity, detailList, map, logisticsPlatform);
         }
         //规则结果
-        cfgRuleDeclareService.getRuleDeclareMatchResult(map, maxCustomsAmount, minCustomsAmount, isUpdate,declareProductList,id ,logisticsEntity.getId() );
+        cfgRuleDeclareService.getRuleDeclareMatchResult(map, maxCustomsAmount, minCustomsAmount, isUpdate,declareProductList);
+        if(isUpdatePackingWeight){
+            //更新订单包装重量
+            List<SoB2cDeclareProductEntity> productEntityList = soB2cDeclareProductService.listBySoId(id);
+            if(CollectionUtils.isNotEmpty(productEntityList)){
+                BigDecimal packWeight = productEntityList.stream().map(SoB2cDeclareProductEntity::getWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                soB2cLogisticsService.updateWeight(id,logisticsEntity.getId(),packWeight,"更新报关信息同步重量");
+            }
+
+        }
         return BatchResultDTO.success(id, entity.getCode(), OperationTypeEnum.DECLARE_RULE);
     }
 

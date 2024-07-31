@@ -67,9 +67,7 @@ public interface CfgRuleDeclareService extends SuperService<CfgRuleDeclareEntity
      * @param minCustomsAmount
      * @param isUpdate
      * @param declareProductList
-     * @param soId
-     * @param soLogisticId
      * @return
      */
-    void getRuleDeclareMatchResult(HashMap<String, Object> map, BigDecimal maxCustomsAmount, BigDecimal minCustomsAmount, Boolean isUpdate, List<SoB2cDeclareProductEntity> declareProductList, String soId, String soLogisticId);
+    void getRuleDeclareMatchResult(HashMap<String, Object> map, BigDecimal maxCustomsAmount, BigDecimal minCustomsAmount, Boolean isUpdate, List<SoB2cDeclareProductEntity> declareProductList);
 }
