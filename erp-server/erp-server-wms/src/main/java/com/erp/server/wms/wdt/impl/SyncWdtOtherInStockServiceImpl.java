@@ -62,11 +62,11 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
         }
 
         //临时转换仓位
-        /*for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
+        for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
             if(goods.getPositionNo().equals("TC-JHZC") || goods.getPositionNo().equals("B2B-JHZC")){
-                goods.setPositionNo("发货暂存");
+                goods.setPositionNo(goods.getPositionNo() + "1");
             }
-        }*/
+        }
 
         request.setWarehouseNo(thirdWarehouseCode);
         request.setisCheck(Boolean.TRUE);
@@ -117,11 +117,11 @@ public class SyncWdtOtherInStockServiceImpl implements SyncWdtOtherInStockServic
         }
 
         //临时转换仓位
-        /*for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
+        for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
             if(goods.getPositionNo().equals("TC-JHZC") || goods.getPositionNo().equals("B2B-JHZC")){
-                goods.setPositionNo("发货暂存");
+                goods.setPositionNo(goods.getPositionNo() + "1");
             }
-        }*/
+        }
 
         request.setWarehouseNo(thirdWarehouseCode);
         request.setisCheck(Boolean.TRUE);
