@@ -127,7 +127,7 @@ public interface SysUserFeign {
      * 根据用户名称查询用户
      */
     @GetMapping("feign/user/getUserByUserName")
-    FindUserDTO getUserByUserName(@RequestParam String userName,@RequestParam("userType") String userType);
+    FindUserDTO getUserByUserName(@RequestParam("userName") String userName,@RequestParam("userType") String userType);
     /**
      * 根据用户名称查询用户
      */

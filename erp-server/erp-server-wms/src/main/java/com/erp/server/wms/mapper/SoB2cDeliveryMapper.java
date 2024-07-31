@@ -1,6 +1,7 @@
 package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -48,4 +49,7 @@ public interface SoB2cDeliveryMapper extends BaseMapper<SoB2cDeliveryEntity> {
      */
     List<SoB2cDeliveryDTO.ListDTO> list(@Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
 
+    List<SoB2cDeliveryDTO.CancelShipmentDTO> cancelShipmentView(@Param("ids") List<String> ids);
+
+    int countShipmentMark(@Param("params") PermissionsDTO params);
 }

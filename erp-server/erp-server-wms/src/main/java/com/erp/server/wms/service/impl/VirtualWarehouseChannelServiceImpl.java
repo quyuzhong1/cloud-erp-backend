@@ -7,15 +7,21 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseChannelMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.VirtualWarehouseChannelService;
@@ -48,6 +54,8 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     @Resource
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
 
+    @Resource
+    private CustomerFeign customerFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -92,7 +100,73 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 this.saveBatch(batchSaveDTOList);
             }
         }
+        //添加日志
+        addOperateLog(batchAddDTO,existChannelList);
+
         return new BaseResultDTO.AddDTO();
+    }
+    /**
+     * 添加日志
+     * @author will
+     * @date 2024/7/18 14:49
+     * @param batchAddDTO
+     * @param existChannelList
+     */
+    private void addOperateLog(VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO,List<VirtualWarehouseChannelEntity> existChannelList) {
+
+        if(CollectionUtils.isEmpty(existChannelList)) {
+            return;
+        }
+        Boolean isChange = Boolean.FALSE;
+        List<String> oldChannelMsg = new ArrayList<>();
+        List<String> newChannelMsg = new ArrayList<>();
+        //修改后数据
+        List<ShopInfoEntity> shopList = FeignQuery.list(ShopInfoEntity.class);
+
+        //平台信息
+        List<DictBasicDTO.ViewDTO> platformList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+
+        for (VirtualWarehouseChannelDTO.ChannelAddDTO channelAddDT : batchAddDTO.getChannelList()) {
+            String shopName = CollectionUtils.isEmpty(channelAddDT.getRelationList()) ? "" : shopList.stream().filter(obj -> channelAddDT.getRelationList().contains(obj.getId())).map(ShopInfoEntity::getName)
+                    .distinct().collect(Collectors.joining(",")) ;
+            String msg;
+            //平台名称
+            String platformName = platformList.stream().filter(obj -> StrUtil.equals(obj.getValue(), channelAddDT.getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+
+            if (StrUtil.isBlank(shopName)) {
+                msg = StrUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()));
+            } else {
+                msg = StrUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()), shopName);
+            }
+            oldChannelMsg.add(msg);
+        }
+        //修改前数据
+        Map<String, List<VirtualWarehouseChannelEntity>> map = existChannelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
+        for (Map.Entry<String, List<VirtualWarehouseChannelEntity>> entry : map.entrySet()) {
+            List<VirtualWarehouseChannelEntity> value = entry.getValue();
+            List<String> relationIdList = value.stream().map(VirtualWarehouseChannelEntity::getRelationId).collect(Collectors.toList());
+            String shopName = CollectionUtils.isEmpty(relationIdList) ? "" : shopList.stream().filter(obj -> relationIdList.contains(obj.getId())).map(ShopInfoEntity::getName)
+                    .distinct().collect(Collectors.joining(",")) ;
+            String msg ;
+            //平台名称
+            String platformName = platformList.stream().filter(obj -> StrUtil.equals(obj.getValue(), value.get(0).getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+
+            if (StrUtil.isBlank(shopName)) {
+                msg = StrUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()));
+            } else {
+                msg = StrUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName);
+            }
+            newChannelMsg.add(msg);
+            if (!oldChannelMsg.contains(msg)) {
+                isChange =  Boolean.TRUE;
+            }
+        }
+        //size不一致或者有变更
+        if (oldChannelMsg.size() != newChannelMsg.size() || isChange) {
+            // 操作日志
+            String msg = StrUtil.format("关联渠道：从【{}】修改为【{}】",StrUtil.join(";",newChannelMsg),StrUtil.join(";",oldChannelMsg));
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑信息");
+        }
     }
 
     /**

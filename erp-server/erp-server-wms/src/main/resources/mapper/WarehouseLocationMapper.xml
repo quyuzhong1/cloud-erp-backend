@@ -104,28 +104,311 @@
         select id,code,name,status,disabled from
         (
         select
-            wl.id,
-            wl.code,
-            wl.name,
-            wl.status,
-            wl.disabled
+        wl.id,
+        wl.code,
+        wl.name,
+        wl.status,
+        wl.disabled
         from warehouse_location wl
         where
-            wl.is_deleted = false and wl.type = 'location'
-            <if test="params.warehouseId != null and params.warehouseId != ''">
-                and wl.warehouse_id = #{params.warehouseId}
-            </if>
-            <if test="params.searchKeyword != null and params.searchKeyword != ''">
-                and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
-            </if>
-            order by
-            <if test="params.searchKeyword != null and params.searchKeyword != ''">
-                case when wl.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
-                when wl.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
-                when wl.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
-                end , wl.name,
-            </if>
-            wl.code asc
+        wl.is_deleted = false and wl.type = 'location'
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and wl.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.warehouseAreaId != null and params.warehouseAreaId != ''">
+            and wl.parent_id = #{params.warehouseAreaId}
+        </if>
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when wl.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when wl.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when wl.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , wl.name,
+        </if>
+        wl.code asc
         ) wls
+    </select>
+    <select id="areaPaging" resultType="com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO$PagingView">
+        SELECT wl.id,
+               wl.code,
+               wl.name,
+               wl.area_type,
+               wl.warehouse_id,
+               wl.disabled,
+               wl.status,
+               wl.remark,
+               wl.update_user_name,
+               wl.update_time
+        FROM warehouse_location AS wl
+        where ${params.sqlMap.default}
+          and wl.type = 'area' and is_deleted = false
+        order by wl.create_time desc,wl.id desc
+    </select>
+    <!--仓位管理高级查询-->
+    <select id="pagingByArgs" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">
+        select wl.id,
+               wl.code,
+               wl.name,
+               wl.status,
+               wl.disabled,
+               wl.remark,
+               wl.update_user_name as updateUserName,
+               wl.update_time as updateTime,
+               wa.id as warehouseAreaId,
+               wa.code as warehouseAreaCode,
+               wa.name as warehouseAreaName,
+               wt.id as warehouseId,
+               wt.kingdee_warehouse_code as warehouseCode,
+               wt.name as warehouseName
+        from warehouse_location wl inner join warehouse_location wa on wl.parent_id = wa.id
+                                   inner join warehouse wt on wl.warehouse_id = wt.id
+        where wl.is_deleted = false and wa.is_deleted = false and wt.is_deleted = false
+          and wt.approve_status = 'approve'
+          and ${params.sqlMap.default}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        order by wl.create_time desc
+    </select>
+    <select id="pagingByArgs1" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">
+        SELECT
+            wl.id as id,
+            wl.code as code,
+            wl.name as name,
+            wl.warehouse_id as warehouseId,
+            wt.kingdee_warehouse_code warehouseCode,
+            wt.name as warehouseName,
+            wa.id as warehouseAreaId,
+            wa.code as warehouseAreaCode,
+            wa.name as warehouseAreaName,
+            wl.status,
+            wl.disabled,
+            wl.remark,
+            wl.update_user_name as updateUserName,
+            wl.update_time as updateTime
+        FROM  warehouse_location wl
+--             LEFT JOIN warehouse wt on wl.warehouse_id = wt.id
+            LEFT JOIN warehouse_location wa on wl.parent_id = wa.id
+--             LEFT JOIN dict_basic db on db.id = wt.type_id and db.is_deleted = false and db.type = 'warehouseType'
+        where wl.is_deleted = false and wl.type = 'location'
+          and wa.is_deleted = false and wa.disabled = false
+--           and wt.is_deleted = false and wt.disabled = false and wt.approve_status = 'approve'
+        <!--<if test="params.code != null and params.code != ''">
+            AND wl.code = #{params.code}
+        </if>-->
+        <!--<if test="params.warehouseAreaCode != null and params.warehouseAreaCode != ''">
+            AND wa.code = #{params.warehouseAreaCode}
+        </if>-->
+        <!--<if test="params.warehouseName !=null and params.warehouseName != ''">
+            AND wl.name = #{params.warehouseName}
+        </if>-->
+        <!--<if test="params.status != null and params.status != ''">
+            AND wl.status = #{params.status}
+        </if>-->
+        <!--<if test="params.disabled != null and params.disabled != ''">
+            AND wl.disabled = #{params.disabled}
+        </if>-->
+        <!--<if test="params.updateUserName != null and params.updateUserName != ''">
+            AND wl.update_user_name = #{params.updateUserName}
+        </if>-->
+        <!--<if test="params.updateTime != null and params.updateTime != ''">
+            AND to_char(wl.update_time, 'YYYY-MM-DD') = #{params.updateTime}
+&#45;&#45;             and wl.update_time >= #{params.updateTime} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.bill_date
+        </if>-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        order by wl.create_time desc
+    </select>
+    <select id="listByIds" resultType="com.erp.model.wms.vo.WarehouseLocationExportVo">
+        select T.id,
+               T.code,
+               T.name,
+               S.code                   warehouseAreaCode,
+               M.kingdee_warehouse_code warehouseCode,
+               T.status,
+               T.disabled,
+               T.remark,
+               T.update_user_name,
+               T.update_time
+        from warehouse_location T
+                 inner join warehouse_location S on T.parent_id = S.id
+                 left join warehouse M on S.parent_id = M.id
+        where T.is_deleted = false and T.disabled = false
+          and S.is_deleted = false and S.disabled = false
+          and M.is_deleted = false and M.disabled = false
+        <if test="ids != null and ids.length != 0">
+            and T.id in
+            <foreach collection="ids" open="(" item="id" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectAllByParam" resultType="com.erp.model.wms.vo.WarehouseLocationExportVo">
+        select T.id,
+               T.code,
+               T.name,
+               S.code                   warehouseAreaCode,
+               M.kingdee_warehouse_code warehouseCode,
+               T.status,
+               T.disabled,
+               T.remark,
+               T.update_user_name,
+               T.update_time
+        from warehouse_location T
+                 inner join warehouse_location S on T.parent_id = S.id
+                 left join warehouse M on S.parent_id = M.id
+        where T.is_deleted = false and T.disabled = false
+          and S.is_deleted = false and S.disabled = false
+          and M.is_deleted = false and M.disabled = false
+        <if test="dto.code != null and dto.code != ''">
+            and T.code = #{dto.code}
+        </if>
+        <if test="dto.warehouseCode != null and dto.warehouseCode != ''">
+            and M.kingdee_warehouse_code = #{dto.warehouseCode}
+        </if>
+        <if test="dto.warehouseAreaCode != null and dto.warehouseAreaCode != ''">
+            and S.code = #{dto.warehouseCode}
+        </if>
+        <if test="dto.status != null and dto.status != ''">
+            and T.status = #{dto.status}
+        </if>
+        <if test="dto.disabled != null and dto.disabled != ''">
+            and T.disabled = #{dto.disabled}
+        </if>
+        <if test="dto.updateUserName != null and dto.updateUserName != ''">
+            and T.update_user_name = #{dto.updateUserName}
+        </if>
+        <if test="dto.updateTimeList != null and dto.updateTimeList.length == 2">
+            and T.update_time between #{dto.updateTimeList[0]} and #{dto.updateTimeList[1]}
+        </if>
+    </select>
+    <select id="listAreaByWarehouseId" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">
+        select id,
+               code,
+               name
+        from warehouse_location
+        where warehouse_id = #{warehouseId}
+          and type = 'area'
+          and is_deleted = false
+          and disabled = false
+    </select>
+    <select id="listAllByParam" resultType="com.erp.model.wms.vo.WarehouseLocationExportVo">
+        select wl.id,
+            wl.code,
+            wl.name,
+            (case when wl.status = 'idle' then '可分配' when wl.status = 'recyclable' then '可回收' when wl.status = 'occupied' then '被占用' ELSE '' end) status,
+            (case when wl.disabled = true then '禁用' when wl.disabled = false then '启用' else '' end) disabled,
+            wl.remark,
+            wl.update_user_name as updateUserName,
+            wl.update_time as updateTime,
+            wa.name as warehouseAreaName,
+            wt.name as warehouseName
+        from warehouse_location wl inner join warehouse_location wa on wl.parent_id = wa.id
+            inner join warehouse wt on wl.warehouse_id = wt.id
+        where wl.is_deleted = false and wa.is_deleted = false and wt.is_deleted = false
+            and wa.disabled = false and wt.disabled = false and wt.approve_status = 'approve'
+            and ${dto.sqlMap.default}
+        <if test="dto.permissionSql != null and dto.permissionSql != ''">
+            ${dto.permissionSql}
+        </if>
+        <!--<if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>-->
+        order by wl.create_time desc
+    </select>
+    <select id="pagingSelectBySku" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$LocationListDTO">
+        select id,code,name,status,disabled,usableQty from
+        (
+        select
+        wl.id,
+        wl.code,
+        wl.name,
+        wl.status,
+        wl.disabled,
+        COALESCE ( i.qty, 0 ) as usableQty
+        from warehouse_location wl
+        left join inventory i on wl.warehouse_id = i.warehouse_id and wl.code = i.warehouse_location
+        AND sku_no = #{params.skuNo}
+        AND wl.code = i.warehouse_location
+        AND i.dict_inventory_status = 'usable'
+        AND i.is_deleted = FALSE
+        where
+        wl.is_deleted = false and wl.type = 'location'
+        <if test="params.filterZero != null and params.filterZero">
+            AND i.qty > 0
+        </if>
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and wl.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.warehouseAreaId != null and params.warehouseAreaId != ''">
+            and wl.parent_id = #{params.warehouseAreaId}
+        </if>
+        order by usableQty desc,
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when wl.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when wl.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when wl.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , wl.name,
+        </if>
+        wl.code
+        ) ws
+    </select>
+    <select id="countByStatus" resultType="java.lang.Integer">
+        select count(1)
+        from warehouse_location wl
+                 inner join warehouse_location wa on wl.parent_id = wa.id
+                 inner join warehouse wt on wl.warehouse_id = wt.id
+        where wl.is_deleted = false and wa.is_deleted = false and wt.is_deleted = false
+          and wt.approve_status = 'approve'
+          <if test="statusCode != null and statusCode != ''">
+              and wl.status = #{statusCode};
+          </if>
+    </select>
+    <select id="listLocation" resultType="com.erp.model.wms.entity.WarehouseLocationEntity">
+        select wl.*
+        from warehouse_location wl
+                 left join warehouse_location wa on wl.parent_id = wa.id and wl.is_deleted = false and wa.is_deleted = false and
+                                                    wl.disabled = false and wa.disabled = false
+        where wa.warehouse_id = #{warehouseId} and wa.code = #{warehouseArea}
+    </select>
+    <select id="findWarehouseArea" resultType="com.erp.model.wms.entity.WarehouseLocationEntity">
+        select wa.* from warehouse_location wl left join warehouse_location wa on wl.parent_id = wa.id
+        where wa.is_deleted = false and wl.is_deleted = false
+        and wl.warehouse_id = #{warehouseId} and wl.code = #{warehouseLocation}
+    </select>
+    <select id="listArea2LocationMapping" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$MappingDTO">
+        select wa.warehouse_id as warehouseId,
+               wa.id        as areaId,
+               wa.code      as areaCode,
+               wa.name      as areaName,
+               wa.area_type as areaType,
+               wl.id        as locationId,
+               wl.code      as locationCode,
+               wl.name      as locationName
+        from warehouse_location wa
+                 left join warehouse_location wl on wl.parent_id = wa.id
+        where wa.type = 'area'
+          and wa.is_deleted = false
+          and wl.is_deleted = false
+          and wa.warehouse_id = #{warehouseId}
     </select>
 </mapper>

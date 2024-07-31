@@ -51,6 +51,7 @@ public class DataRecoveryJob {
         JSONObject param = JSONUtil.parseObj(jobParam);
         List<String> ids = param.getBeanList("ids", String.class);
         String type = param.get("type", String.class);
+        Boolean isManual = param.get("isManual", Boolean.class);
         Boolean isPushKingdee = param.getBool("isPushKingdee", Boolean.FALSE);
         if(CollectionUtil.isEmpty(ids)){
             if("soReturnInstockService".equals(type)){
@@ -74,7 +75,7 @@ public class DataRecoveryJob {
                 if(StrUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
                     soReturnInstockService.disApprove(idsDTO.getIds(), isPushKingdee);
                 }else if(StrUtil.isNotBlank(type) && "transferInfoService".equals(type)){
-                    transferInfoService.disApprove(idsDTO.getIds(), isPushKingdee);
+                    transferInfoService.disApprove(idsDTO.getIds(), isPushKingdee,isManual);
                 }else if(StrUtil.isNotBlank(type) && "soOutstockService".equals(type)){
                     soOutstockService.disApprove(idsDTO, isPushKingdee);
                 }
@@ -86,7 +87,6 @@ public class DataRecoveryJob {
 
 
     }
-
 
     private List<String> getInnerSoOutStockIds() {
         List<String> result= new ArrayList<>();

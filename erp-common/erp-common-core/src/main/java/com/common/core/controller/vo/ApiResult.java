@@ -106,6 +106,14 @@ public class ApiResult<T>  implements Serializable {
         return apiResult;
     }
 
+    public static <T> ApiResult<T> error(String msg, T data) {
+        ApiResult<T> apiResult = new ApiResult<>();
+        apiResult.setCode(500);
+        apiResult.setMsg(msg);
+        apiResult.setData(data);
+        return apiResult;
+    }
+
 
     public static <T> ApiResult<T> error(Integer code, String msg) {
         ApiResult<T> apiResult = new ApiResult<>();
@@ -126,6 +134,12 @@ public class ApiResult<T>  implements Serializable {
      */
     public static <T> ApiResult<T> success(T data) {
         return new ApiResult<>(200, "操作成功", data);
+    }
+    /**
+     * 成功时候的调用
+     */
+    public static <T> ApiResult<T> success(String msg,T data) {
+        return new ApiResult<>(200, msg, data);
     }
     /**
      * 成功时候的调用

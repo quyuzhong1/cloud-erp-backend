@@ -9,6 +9,8 @@ import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -39,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -217,7 +220,18 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
      */
     private void addAliExpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<PlatformOrderLogisticsDTO> logisticsDTOS, String warehouseName,List<PlatformDeliveryDetailDTO> detailDTOList) {
         AliexpressDeliveryDTO.AddDTO addDTO = new AliexpressDeliveryDTO.AddDTO();
-        addDTO.setOutBoundTime(logisticsDTOS.get(0).getDeliveryTime());
+//        addDTO.setOutBoundTime(logisticsDTOS.get(0).getDeliveryTime());
+        // 转化系统时区
+        PlatformOrderLogisticsDTO logisticsDTO = logisticsDTOS.stream().findFirst().orElse(null);
+        if (null == logisticsDTO){
+            ServiceException.runError("发货时间为空");
+        }
+        LocalDateTime sourceDeliveryTime = logisticsDTO.getDeliveryTime();
+        // 速卖通GMT时区转北京时区
+        LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(sourceDeliveryTime,
+                ZoneId.of("America/Los_Angeles"),
+                ZoneId.of("Asia/Shanghai"));
+        addDTO.setOutBoundTime(targetDeliveryTime);
         addDTO.setPlatformCode(mainEntity.getPlatformCode());
         addDTO.setSoId(mainEntity.getId());
         addDTO.setSoCode(mainEntity.getCode());

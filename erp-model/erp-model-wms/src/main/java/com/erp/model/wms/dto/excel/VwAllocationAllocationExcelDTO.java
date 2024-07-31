@@ -49,9 +49,17 @@ public class VwAllocationAllocationExcelDTO extends VwAllocationExcelDTO impleme
     private String toVirtualWarehouseName;
 
     /**
+     * 备注
+     */
+    @ColumnWidth(50)
+    @ExcelProperty(value = "备注", index = 4)
+    @FieldValid(fieldName = "备注", maxLength = 100)
+    private String detailRemark;
+
+    /**
      * 错误信息
      */
     @ColumnWidth(50)
-    @ExcelProperty(value = "导入错误说明", index = 4)
+    @ExcelProperty(value = "导入错误说明", index = 5)
     private String errorMsg;
 }

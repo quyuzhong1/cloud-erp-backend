@@ -3,7 +3,9 @@ package com.erp.model.dmp.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
+
 import java.io.Serializable;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -17,7 +19,7 @@ import com.common.business.enums.ApproveStatusEnum;
  *
  * @author shukai
  * @since 2024-06-24
-*/
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
@@ -25,116 +27,120 @@ import com.common.business.enums.ApproveStatusEnum;
 public class DmpSoReceiverEntity extends BaseEntity<DmpSoReceiverEntity> {
 
     /**
-    * 订单主表id
-    */
+     * 订单主表id
+     */
     @TableField("main_id")
     private String mainId;
     /**
-    * 国家二字码
-    */
+     * 国家二字码
+     */
     @TableField("country")
     private String country = "";
     /**
-    * 买家账号
-    */
+     * 买家账号
+     */
     @TableField("buyer_id")
     private String buyerId = "";
     /**
-    * 买家姓名
-    */
+     * 买家姓名
+     */
     @TableField("buyer_name")
     private String buyerName = "";
     /**
-    * 收货人名称
-    */
+     * 收货人名称
+     */
     @TableField("receiver_name")
     private String receiverName = "";
     /**
-    * 收货人电话
-    */
+     * 收货人电话
+     */
     @TableField("receiver_tel_number")
     private String receiverTelNumber = "";
     /**
-    * 邮编
-    */
+     * 邮编
+     */
     @TableField("post_code")
     private String postCode = "";
     /**
-    * 省份
-    */
+     * 省份
+     */
     @TableField("province")
     private String province = "";
     /**
-    * 城市
-    */
+     * 城市
+     */
     @TableField("city")
     private String city = "";
     /**
-    * 所属区域
-    */
+     * 所属区域
+     */
     @TableField("district")
     private String district = "";
     /**
-    * 街道详细地址
-    */
+     * 街道详细地址
+     */
     @TableField("full_address")
     private String fullAddress = "";
     /**
-    * 买家地址1
-    */
+     * 买家地址1
+     */
     @TableField("main_street")
     private String mainStreet = "";
     /**
-    * 买家地址2
-    */
+     * 买家地址2
+     */
     @TableField("second_street")
     private String secondStreet = "";
     /**
-    * 买家电话1
-    */
+     * 买家电话1
+     */
     @TableField("main_phone")
     private String mainPhone = "";
     /**
-    * 买家电话2
-    */
+     * 买家电话2
+     */
     @TableField("second_phone")
     private String secondPhone = "";
     /**
      * 地址加密值
      */
-     @TableField("oa_id")
-     private String oaId = "";
-     /**
-      * 收货人税号
-      */
-      @TableField("receiver_tax_no")
-      private String receiverTaxNo = "";
+    @TableField("oa_id")
+    private String oaId = "";
     /**
-    * 输入任务id
-    */
+     * 收货人税号
+     */
+    @TableField("receiver_tax_no")
+    private String receiverTaxNo = "";
+    /**
+     * 收货人邮箱
+     */
+    @TableField("email")
+    private String email;
+    /**
+     * 输入任务id
+     */
     @TableField("input_task_id")
     private String inputTaskId;
     /**
-    * 转换id
-    */
+     * 转换id
+     */
     @TableField("convert_id")
     private String convertId;
     /**
-    * 下一层级id
-    */
+     * 下一层级id
+     */
     @TableField("next_level_id")
     private String nextLevelId;
     /**
-    * 唯一字段md5值
-    */
+     * 唯一字段md5值
+     */
     @TableField("unique_encrypt")
     private String uniqueEncrypt;
     /**
-    * 数据字段md5值
-    */
+     * 数据字段md5值
+     */
     @TableField("data_encrypt")
     private String dataEncrypt;
-
 
     public static final String MAIN_ID = "main_id";
 
@@ -175,6 +181,10 @@ public class DmpSoReceiverEntity extends BaseEntity<DmpSoReceiverEntity> {
     public static final String UNIQUE_ENCRYPT = "unique_encrypt";
 
     public static final String DATA_ENCRYPT = "data_encrypt";
+
+    public static final String RECEIVER_TAX_NO = "receiver_tax_no";
+
+    public static final String EMAIL = "email";
 
     @Override
     public Serializable pkVal() {

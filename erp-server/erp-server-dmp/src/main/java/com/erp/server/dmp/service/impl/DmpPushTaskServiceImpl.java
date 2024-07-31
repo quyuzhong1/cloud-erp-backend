@@ -17,11 +17,9 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
-import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
@@ -30,19 +28,15 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
-import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
-import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.dto.DmpTaskMsgDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -437,6 +431,19 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 .in(DmpPushTaskEntity::getStatus, statusList).eq(DmpPushTaskEntity::getIsDeleted, Boolean.FALSE).list();
     }
 
+    /**
+     * 获取飞书预警信息需要推送的(Task汇总报告)
+     * @param statusList
+     * @return
+     */
+    @Override
+    public List<DmpTaskMsgDTO> getWarnTaskReport(List<String> statusList) {
+        if (CollectionUtils.isEmpty(statusList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getWarnTaskReport(statusList);
+    }
+
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
@@ -585,6 +592,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
      * 新增或修改
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String saveOrUpdateDmpSyncTask(DmpPushTaskEntity entity) {
         DmpSyncTaskDTO.OneDTO map = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
         DmpPushTaskEntity found = getByParam(map);
@@ -624,19 +632,19 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         List<String> sourceIdList = dtoList.stream().map(item -> item.getSourceId()).collect(Collectors.toList());
         List<DmpPushTaskEntity> list = lambdaQuery()
                 .in(DmpPushTaskEntity::getSourceId, sourceIdList)
-                .eq(DmpPushTaskEntity::getSourceType, SourceTypeEnum.OTHER_OUTSTOCK.getCode())
+//                .eq(DmpPushTaskEntity::getSourceType, SourceTypeEnum.OTHER_OUTSTOCK.getCode())
                 .eq(DmpPushTaskEntity::getSourcePlatformName, PlatformEnum.ERP.getDesc())
                 .eq(DmpPushTaskEntity::getTargetPlatformName, PlatformEnum.WANGDIAN.getDesc())
                 .eq(DmpPushTaskEntity::getMqTopic, RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC)
-                .eq(DmpPushTaskEntity::getMqTag, RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName())
+//                .eq(DmpPushTaskEntity::getMqTag, RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName())
                 .list();
-        Map<String, DmpPushTaskEntity> sourceIdEntityMap = list.stream().collect(Collectors.toMap(item1 -> item1.getSourceId(), item1 -> item1));
+        Map<String, DmpPushTaskEntity> sourceIdEntityMap = list.stream().collect(Collectors.toMap(item1 -> item1.getSourceId() + "#" + item1.getSourceType(), item1 -> item1, (o1,o2) -> o1));
 
         List<DmpPushTaskEntity> entityList = new ArrayList<>();
         for (DmpPushTaskFeignDTO dto : dtoList) {
             DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
             DmpSyncTaskDTO.OneDTO oneDTO = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
-            DmpPushTaskEntity found = sourceIdEntityMap.get(oneDTO.getSourceId());
+            DmpPushTaskEntity found = sourceIdEntityMap.get(oneDTO.getSourceId() + "#" + oneDTO.getSourceType());
             //存在则修改
             if (ObjectUtil.isNotEmpty(found)) {
                 entity.setId(found.getId());

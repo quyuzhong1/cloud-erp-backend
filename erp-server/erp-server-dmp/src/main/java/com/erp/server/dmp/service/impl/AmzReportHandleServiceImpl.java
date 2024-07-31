@@ -463,7 +463,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         }
         if (null != report) {
             // 设置到缓存(已完成或结束删除)
-            redisUtil.set(key, JSONUtil.toJsonStr(report));
+            redisUtil.set(key, JSONUtil.toJsonStr(report), 1800);
         }
 
         // 检查和缓存响应的速率到redis

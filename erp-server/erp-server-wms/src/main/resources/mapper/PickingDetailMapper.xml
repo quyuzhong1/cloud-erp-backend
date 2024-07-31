@@ -17,15 +17,8 @@
         <result column="sku_no" property="skuNo" />
         <result column="qty" property="qty" />
         <result column="unit" property="unit" />
-        <result column="warehouse_id" property="warehouseId" />
-        <result column="warehouse_name" property="warehouseName" />
         <result column="warehouse_location" property="warehouseLocation" />
-        <result column="org_id" property="orgId" />
-        <result column="org_name" property="orgName" />
-        <result column="source_id" property="sourceId" />
-        <result column="source_type" property="sourceType" />
         <result column="source_detail_id" property="sourceDetailId" />
-        <result column="source_code" property="sourceCode" />
     </resultMap>
 
 </mapper>

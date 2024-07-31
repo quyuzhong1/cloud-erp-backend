@@ -1,28 +1,21 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Map;
 
 /**
  * <p>
@@ -119,6 +112,20 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 称重重量单位
          */
         private String weightUnit;
+
+        /**
+         * 长
+         */
+        private BigDecimal length;
+        /**
+         * 宽
+         */
+        private BigDecimal width;
+        /**
+         * 高
+         */
+        private BigDecimal height;
+
         /**
          * 详情
          */
@@ -318,9 +325,17 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String id;
         /**
+         * 明细id
+         */
+        private String detailId;
+        /**
          * 发货单号【可排序】
          */
         private String code;
+        /**
+         * 波次号
+         */
+        private String waveCode;
         /**
          * 来源id
          */
@@ -498,9 +513,87 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 中转状态 not 不需要  wait 待中转   already 已经中转
          */
         private String transferStatus;
-
+        /**
+         * 异常原因
+         */
+        @Dict(enumClass = AbnormalCauseEnum.class)
+        private String abnormalCause;
 
     }
+
+    /**
+     * 打印拣货单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintPickingMainViewDTO {
+        /**
+         * 波次号
+         */
+        private String waveCode;
+        /**
+         * 订单数量
+         */
+        private Integer orderCount;
+        /**
+         * 拣货单信息
+         */
+        private List<PrintPickingViewDTO> detailList;
+    }
+
+
+    /**
+     * 打印配货单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AllocateCargoViewDTO {
+        /**
+         *发货单号
+         */
+        private String deliveryCode;
+        /**
+         *销售订单id
+         */
+        private String soId;
+        /**
+         * 产品id
+         */
+        private String skuId;
+        /**
+         * 产品编码
+         */
+        private String skuNo;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty;
+        /**
+         * 推荐仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            AllocateCargoViewDTO that = (AllocateCargoViewDTO) o;
+            return Objects.equals(deliveryCode, that.deliveryCode) && Objects.equals(soId, that.soId) && Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(warehouseLocation, that.warehouseLocation) && Objects.equals(isOutStock, that.isOutStock);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(deliveryCode, soId, skuId, skuNo, warehouseLocation, isOutStock);
+        }
+    }
+
+
     /**
      * 打印拣货单
      */
@@ -508,6 +601,18 @@ public class SoB2cDeliveryDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PrintPickingViewDTO {
+        /**
+         * 发货单id
+         */
+        private String deliveryId;
+        /**
+         * 发货单id集合
+         */
+        private List<String> deliveryIdList;
+        /**
+         * 波次号
+         */
+        private String waveCode;
         /**
          * 产品id
          */
@@ -540,18 +645,23 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 是否缺货
+         */
+        private Boolean isOutStock;
+
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             PrintPickingViewDTO that = (PrintPickingViewDTO) o;
-            return Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(productName, that.productName) && Objects.equals(warehouseId, that.warehouseId) && Objects.equals(warehouseName, that.warehouseName) && Objects.equals(warehouseLocation, that.warehouseLocation) ;
+            return Objects.equals(waveCode, that.waveCode) && Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(productName, that.productName) && Objects.equals(warehouseId, that.warehouseId) && Objects.equals(warehouseName, that.warehouseName) && Objects.equals(warehouseLocation, that.warehouseLocation) ;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(skuId, skuNo, productName, warehouseId, warehouseName, warehouseLocation);
+            return Objects.hash(waveCode,skuId, skuNo, productName, warehouseId, warehouseName, warehouseLocation);
         }
     }
 
@@ -657,6 +767,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 物流类型
          */
         private String logisticType;
+        /**
+         * 打印排序
+         */
+        private Integer index;
     }
 
     /**
@@ -774,5 +888,104 @@ public class SoB2cDeliveryDTO implements Serializable {
         private String logisticsChannelId;
 
 
+    }
+
+    @Getter
+    @Setter
+    public static class GenerationWavesDTO {
+
+        /**
+         * 拣货方式
+         */
+        @NotBlank(message = "拣货方式不能为空")
+        private String pickingType;
+        /**
+         * 拣货车类型
+         */
+        @NotBlank(message = "拣货车类型不能为空")
+        private String pickingCartTypeId;
+        /**
+         * 发货单号
+         */
+        @Size(min = 1, message = "发货单不能为空")
+        private List<String> ids;
+
+        @NotNull(message = "波次订单数量不能为空")
+        @Min(value = 1, message = "波次订单数量最小为1")
+        @Max(value = 9999, message = "波次订单数量最大为9999")
+        private Integer num;
+
+        private Boolean atuoAemainder = false;
+    }
+
+    @Getter
+    @Setter
+    public static class CancelShipmentView {
+
+        /**
+         * 发货单
+         */
+        @Size(min = 1, message = "发货单不能为空")
+        @Valid
+        @Dict
+        private List<CancelShipmentDTO> cancelShipments;
+    }
+
+    @Getter
+    @Setter
+    public static class CancelShipmentDTO {
+        /**
+         * 发货单id
+         */
+        private String id;
+        /**
+         * 发货单明细id
+         */
+        private String detailId;
+        /**
+         * 发货单号
+         */
+        private String code;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 仓库id
+         */
+        @Dict(queryFieldName = "id", tableName = "warehouse")
+        private String warehouseId;
+        /**
+         * 拣货仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 拣货仓位名称
+         */
+        private String warehouseLocationName;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty;
+        /**
+         * 返还仓位
+         */
+        private String returnWarehouseLocation;
+        /**
+         * 返还仓位
+         */
+        private String returnWarehouseLocationId;
+        /**
+         * 返还仓位名称
+         */
+        private String returnWarehouseLocationName;
+        /**
+         * 返还数量
+         */
+        private Integer returnQty;
     }
 }

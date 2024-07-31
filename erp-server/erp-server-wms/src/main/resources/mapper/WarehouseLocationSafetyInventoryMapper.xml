@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.WarehouseLocationSafetyInventoryMapper">
+
+    <resultMap id="baseResultMap" type="com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity">
+        <result column="id" property="id" />
+        <result column="sku_id" property="skuId" />
+        <result column="sku_no" property="skuNo" />
+        <result column="product_name" property="productName" />
+        <result column="warehouse_location" property="warehouseLocation" />
+        <result column="warehouse_id" property="warehouseId" />
+        <result column="warehouse_area" property="warehouseArea" />
+        <result column="warehouse_area_type" property="warehouseAreaType" />
+        <result column="safety_qty" property="safetyQty" />
+        <result column="max_qty" property="maxQty" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+    </resultMap>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDTO$ViewDTO">
+        select id,
+               sku_no,
+               product_name,
+               warehouse_location,
+               warehouse_id,
+               warehouse_area,
+               warehouse_area_type,
+               safety_qty,
+               max_qty
+        from warehouse_location_safety_inventory
+        where is_deleted = false
+        <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
+            and ${param.sqlMap.default}
+        </if>
+        ORDER BY
+        <if test="param.sortList != null and param.sortList.size > 0">
+            <foreach collection="param.sortList" item="item" separator="," close=",">
+                <if test="item.field == 'skuNo'">
+                    sku_no ${item.sort}
+                </if>
+            </foreach>
+        </if>
+        create_time DESC
+    </select>
+    <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity">
+        select id,
+                sku_no,
+                product_name,
+                warehouse_location,
+                warehouse_id,
+                warehouse_area,
+                warehouse_area_type,
+                safety_qty,
+                max_qty
+        from warehouse_location_safety_inventory
+        where is_deleted = false
+        <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
+            and ${param.sqlMap.default}
+        </if>
+        ORDER BY
+        <if test="param.sortList != null and param.sortList.size > 0">
+            <foreach collection="param.sortList" item="item" separator="," close=",">
+                <if test="item.field == 'skuNo'">
+                    sku_no ${item.sort}
+                </if>
+            </foreach>
+        </if>
+        create_time DESC
+    </select>
+</mapper>

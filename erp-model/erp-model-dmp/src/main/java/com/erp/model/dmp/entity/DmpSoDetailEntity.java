@@ -175,7 +175,11 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
-
+    /**
+     * 平台包裹号
+     */
+    @TableField("platform_package_id")
+    private String platformPackageId;
 
     public static final String MAIN_ID = "main_id";
 
@@ -234,6 +238,8 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     public static final String UNIQUE_ENCRYPT = "unique_encrypt";
 
     public static final String DATA_ENCRYPT = "data_encrypt";
+
+    public static final String PLATFORM_PACKAGE_ID = "platform_package_id";
 
     @Override
     public Serializable pkVal() {

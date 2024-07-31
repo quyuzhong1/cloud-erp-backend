@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
@@ -209,22 +210,28 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     private OrderRequest processCreateOrderData(LogisticsOrderVO logisticsOrderVO) {
+        String oaid = logisticsOrderVO.getOaid();
+        String orderType = logisticsOrderVO.getOrderType();
         //申报产品信息
         List<DeclareProduct> declareProducts = LogisticsOrderConverter.INSTANCE.orderRequestProductByAliExpress(logisticsOrderVO.getLogisticsProductVOList());
         //收寄信息
         AddressDTO addressDTO = new AddressDTO();
         if (Objects.nonNull(logisticsOrderVO.getSenderInfo())){
-            addressDTO.setSender(LogisticsOrderConverter.INSTANCE.orderRequestSendUserByAliExpress(logisticsOrderVO));
+            Address sender = LogisticsOrderConverter.INSTANCE.orderRequestSendUserByAliExpress(logisticsOrderVO);
+            addressDTO.setSender(sender);
         }
         if (Objects.nonNull(logisticsOrderVO.getPickUpInfo())){
-            addressDTO.setPickup(LogisticsOrderConverter.INSTANCE.orderRequestPickUpUserByAliExpress(logisticsOrderVO));
+            Address pickUp = LogisticsOrderConverter.INSTANCE.orderRequestPickUpUserByAliExpress(logisticsOrderVO);
+            addressDTO.setPickup(pickUp);
         }
         if (Objects.nonNull(logisticsOrderVO.getReturnInfo())){
-            addressDTO.setRefund(LogisticsOrderConverter.INSTANCE.orderRequestRefundUserByAliExpress(logisticsOrderVO));
+            Address refund = LogisticsOrderConverter.INSTANCE.orderRequestRefundUserByAliExpress(logisticsOrderVO);
+            addressDTO.setRefund(refund);
         }
 //        addressDTO.setRefund(addressDTO.getSender());
         if (Objects.nonNull(logisticsOrderVO.getReceiverInfoVO())){
-            addressDTO.setReceiver(LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO));
+            Address receiver = LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO);
+            addressDTO.setReceiver(encryptByOrderType(orderType,receiver));
         }
         if(Objects.isNull(addressDTO.getPickup())){
             Address sender = addressDTO.getSender();
@@ -232,7 +239,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             addressDTO.getPickup().setMemberType("pickup");
         }
         return OrderRequest.builder()
-                .oaid(logisticsOrderVO.getOaid())
+                .oaid(oaid)
                 .pickup_type(logisticsOrderVO.getLogisticsChannelEntity().getDeliveryType())
                 .declareProducts(declareProducts)
                 .domestic_logistics_company("自送")
@@ -249,7 +256,179 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .top_user_key(logisticsOrderVO.getTopUserKey())
                 .build();
     }
+    private Address encryptByOrderType(String orderType, Address address){
+        if (!StringUtils.isBlank(orderType) && !SourceTypeEnum.SELF_ADD.getCode().equals(orderType)){
+            return address;
+        }
+        //除了第一个姓其他的转换成*
+        String name = address.getName();
+        address.setName(maskExceptFirstChar(name));
+        //隐藏后四位之前的四位
+        String phone = address.getPhone();
+        address.setPhone(maskLastFourBeforeFour(phone));
+        //隐藏街道地址从后向前8位字符
+        String streetAddress = address.getStreetAddress();
+        address.setStreetAddress(maskLastEightChars(streetAddress));
+        //email：隐藏@前的 1/3 字符，至少一个字符
+        String email = address.getEmail();
+        address.setEmail(obfuscateEmail(email));
+        return address;
+    }
 
+    public static String obfuscateEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return null; // 如果邮箱无效，直接返回原字符串
+        }
+
+        String[] parts = email.split("@", 2); // 分割邮箱为用户名和域名两部分
+        String username = parts[0];
+        String domain = parts[1];
+
+        // 计算要隐藏的字符数，至少隐藏一个字符
+        int lengthToHide = Math.max(1, username.length() / 3);
+
+        // 使用星号(*)隐藏指定数量的字符
+        StringBuilder obfuscatedUsername = new StringBuilder();
+        for (int i = 0; i < lengthToHide; i++) {
+            obfuscatedUsername.append("*");
+        }
+        // 如果用户名还有剩余字符，则追加剩余部分
+        if (username.length() > lengthToHide) {
+            obfuscatedUsername.append(username.substring(lengthToHide));
+        }
+
+        // 拼接隐藏后的用户名和原域名
+        return obfuscatedUsername.toString() + "@" + domain;
+    }
+    /**
+     * 姓名： 按照隐私开头三个字母后的所有字符，如果姓名不足3个字符，则至少隐去1个字符；
+     * 例如 Андрей, Борис->Анд*** Joseph Jacques Césaire Joffre->Jos*** Georges Clemenceau->Geo***
+     *
+     * Name test ==========
+     * 惊允 -> 惊*
+     * 惊允允 -> 惊**
+     * 惊允允允 -> 惊允允*
+     * Mi chael -> Mi c****
+     * Michael -> Mic****
+     * Андрей, Борис -> Анд*********
+     * Joseph Jacques Césaire Joffre -> Jos***********************
+     * Georges Clemenceau -> Geo**************
+     *
+     * @param str
+     * @return
+     */
+    public static String maskExceptFirstChar(String str) {
+        if (StringUtils.isBlank(str)) {
+            // 如果字符串为空或只有一个字符，直接返回原字符串
+            return str;
+        }
+        StringBuilder sb = new StringBuilder();
+        if (str.length() <= 3){
+            // 添加第一个字符
+            sb.append(str.charAt(0));
+            // 从第二个字符开始，全部替换为'*'
+            for (int i = 1; i < str.length(); i++) {
+                sb.append('*');
+            }
+            return sb.toString();
+        }
+        // 添加前三个字符
+        sb.append(str, 0, 3); // 添加前缀
+        // 从第二个字符开始，全部替换为'*'
+        for (int i = 3; i < str.length(); i++) {
+            sb.append('*');
+        }
+        // 将StringBuilder转换回String
+        return sb.toString();
+    }
+
+    /**
+     * 隐藏后四位之前的四位
+     * 电话： 隐去中间一半的字符，例如： 12345678901->123****1901, +12345678-> +12***78
+     *
+     * Phone test ==========
+     * 1 -> *
+     * 12 -> 1*
+     * 123 -> 1*
+     * 1234 -> 1**4
+     * 1234567 -> 12***67
+     * 12345678 -> 12****78
+     * 123456789 -> 12****789
+     * 13339561234 -> 133*****234
+     * 1333956123456 -> 133******3456
+     * 8613339561234 -> 861******1234
+     * 0113339561234 -> 011******1234
+     *
+     * @param str
+     * @return
+     */
+    public static String maskLastFourBeforeFour(String str) {
+        int length = str.length();
+        if (str.length() <= 1){
+            return "*";
+        }
+        StringBuilder sb = new StringBuilder();
+        if (length < 3) {
+            // 添加第一个字符
+            sb.append(str.charAt(0));
+            for (int i = 1; i < str.length(); i++) {
+                sb.append('*');
+            }
+            return sb.toString();
+        }
+        // 如果字符串长度小于8，则无法隐藏后四位之前的四个字符，直接返回原字符串
+        if (length < 9) {
+            int start = 2;
+            // 使用StringBuilder来构建结果字符串
+            sb.append(str, 0, start); // 添加前缀
+            if (length - 2 > start) { // 如果还有空间可以隐藏字符
+                for (int i = 0; i < 2; i++) {
+                    sb.append('*'); // 添加四个*
+                }
+            }
+            sb.append(str, length - 2, length); // 添加最后四位
+            return sb.toString();
+        }
+        if (length < 12) {
+            int start = 3;
+            // 使用StringBuilder来构建结果字符串
+            sb.append(str, 0, start); // 添加前缀
+            if (length - 3 > start) { // 如果还有空间可以隐藏字符
+                for (int i = 0; i < 3; i++) {
+                    sb.append('*'); // 添加四个*
+                }
+            }
+            sb.append(str, length - 3, length); // 添加最后四位
+            return sb.toString();
+        }
+        // 计算需要隐藏字符的起始位置
+        // 如果字符串长度减去8小于4，则从字符串开头隐藏到可能的最大位置
+        int start = Math.max(0, length - 8);
+        // 使用StringBuilder来构建结果字符串
+        sb.append(str, 0, start); // 添加前缀
+        if (length - 4 > start) { // 如果还有空间可以隐藏字符
+            for (int i = 0; i < 4; i++) {
+                sb.append('*'); // 添加四个*
+            }
+        }
+        sb.append(str, length - 4, length); // 添加最后四位
+        return sb.toString();
+    }
+
+    public static String maskLastEightChars(String address) {
+        if (address == null || address.length() < 8) {
+            // 如果字符串为空或长度小于8，直接返回原字符串
+            return address;
+        }
+        // 使用StringBuilder来构建结果字符串
+        StringBuilder sb = new StringBuilder(address);
+        // 从后向前替换最后8个字符为*
+        for (int i = address.length() - 1; i >= address.length() - 8 && i >= 0; i--) {
+            sb.setCharAt(i, '*');
+        }
+        // 将StringBuilder转换回String
+        return sb.toString();
+    }
     /**
      * 查询订单(批量)
      *
@@ -420,7 +599,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelList));
-                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), "all", labelResponse.getErrorDesc());
+                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), "all", Objects.isNull(labelResponse)?"速卖通获取物流单失败":labelResponse.getErrorDesc());
                 responses.add(response);
                 return failure(responses);
             } else {

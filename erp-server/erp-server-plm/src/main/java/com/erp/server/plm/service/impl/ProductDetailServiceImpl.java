@@ -7,12 +7,6 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
-import com.sdk.wangdian.sdk.api.Result;
-import com.sdk.wangdian.sdk.api.goods.GoodsAPI;
-import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
-import com.sdk.wangdian.server.WangDianClientService;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSONObject;
@@ -63,6 +57,7 @@ import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
@@ -251,8 +246,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
-    @Resource
-    private WangDianClientService wangDianClientService;
+
 
 
     //变更财务人员审核
@@ -5232,5 +5226,47 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         List<SkuVO> skuList = baseMapper.listSkuPurchaseByIds(skuIds);
         return skuList;
+    }
+
+    @Override
+    public ProductDetailEntity getBySkuNoOrEan(String skuCode) {
+
+        ProductDetailEntity entity = getOne(Wrappers.<ProductDetailEntity>lambdaQuery().eq(ProductDetailEntity::getSkuNo, skuCode));
+        if (ObjectUtil.isEmpty(entity)) {
+            ProductPurchaseEntity purchaseEntity = productPurchaseService.getOne(Wrappers.<ProductPurchaseEntity>lambdaQuery()
+                    .eq(ProductPurchaseEntity::getEan, skuCode)
+                    .last("LIMIT 1")
+            );
+            if (ObjectUtil.isNotEmpty(purchaseEntity)) {
+                entity = getById(purchaseEntity.getSkuId());
+            }
+        }
+        return entity;
+    }
+
+    @Override
+    public String dimensionalWeightMeasure(DimensionalWeightDTO dto) {
+        ProductDetailEntity purchaseEntity = this.getBySkuNoOrEan(dto.getBarCode());
+        if(Objects.isNull(purchaseEntity)){
+            throw new ServiceException("编码不存在");
+        }
+        ProductPackEntity productPackEntity = productPackService.getBySkuId(purchaseEntity.getId());
+        if(Objects.isNull(productPackEntity)){
+            throw new ServiceException("包装信息不存在");
+        }
+        BigDecimal length = LengthConverterUtil.cmToMm(dto.getLength());
+        BigDecimal width = LengthConverterUtil.cmToMm(dto.getWidth());
+        BigDecimal height = LengthConverterUtil.cmToMm(dto.getHeight());
+        BigDecimal weight = dto.getWeight().multiply(new BigDecimal("1000"));
+        String logContent = StrUtil.format("更新【包装尺寸长】从{}更新为{}，【包装尺寸宽】从{}更新为{}，【包装尺寸高】从{}更新为{}，【毛重】从{}更新为{}",productPackEntity.getProductLength(),length,productPackEntity.getProductWidth(),width,productPackEntity.getProductHeight(),height,productPackEntity.getGrossWeight(),weight);
+        productPackEntity.setProductLength(length);
+        productPackEntity.setProductWidth(width);
+        productPackEntity.setProductHeight(height);
+        productPackEntity.setGrossWeight(weight);
+        productPackService.updateById(productPackEntity);
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
+                .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent));
+
+        return "操作成功";
     }
 }

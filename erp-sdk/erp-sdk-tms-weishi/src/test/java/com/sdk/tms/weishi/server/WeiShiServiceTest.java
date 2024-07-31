@@ -30,13 +30,13 @@ class WeiShiServiceTest {
         //http://track.360lion.com/api/service
         //*令牌：f8067aa0dc9ab7e927e03dfbce54ff4d
         //*令牌：*账户：f8067aa0dc9ab7e927e03dfbce54ff4d7b6fc31d87f0c7e913c112f8b33423ce
-//        authMap.put("url","http://track.360lion.com/api/service");
-//        authMap.put("clientId","f8067aa0dc9ab7e927e03dfbce54ff4d");
-//        authMap.put("clientSecret","f8067aa0dc9ab7e927e03dfbce54ff4d7b6fc31d87f0c7e913c112f8b33423ce");
+        authMap.put("url","http://track.360lion.com/api/service");
+        authMap.put("clientId","f8067aa0dc9ab7e927e03dfbce54ff4d");
+        authMap.put("clientSecret","f8067aa0dc9ab7e927e03dfbce54ff4d7b6fc31d87f0c7e913c112f8b33423ce");
         //测试
-        authMap.put("url","http://218.17.123.141:18080/toms/service");
-        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
-        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
+//        authMap.put("url","http://218.17.123.141:18080/toms/service");
+//        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
+//        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
     }
 
     @Test
@@ -92,7 +92,7 @@ class WeiShiServiceTest {
     @Test
     void getLabelUrl() {
         WeiShiGetLabelUrlRequest weiShiGetLabelUrlRequest = WeiShiGetLabelUrlRequest.builder()
-                .referenceNo("XSDD24041500834")
+                .referenceNo("XSDD24071804969")
                 .lableType("2")
                 .build()
                 ;

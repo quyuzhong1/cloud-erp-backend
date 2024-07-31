@@ -28,4 +28,12 @@ public interface PackageService {
      * @return
      */
     List<BatchResultDTO> mergePackage(PackageDTO.MergePackageDTO dto);
+    /**
+     * 查询发货单的称重重量
+     * @author will
+     * @date 2024/7/1 10:35
+     * @param dto
+     * @return WeightDTO
+     */
+    PackageDTO.WeightDTO getOrderWeight(PackageDTO.WeightParamDTO dto);
 }

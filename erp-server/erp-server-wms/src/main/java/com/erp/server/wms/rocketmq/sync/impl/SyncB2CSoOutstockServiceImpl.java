@@ -35,7 +35,7 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -101,6 +101,23 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+
+
+    private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
+
+    static {
+        WDT_NULL_LOCATION.add("直发暂存");
+        WDT_NULL_LOCATION.add("发货暂存待放回");
+        WDT_NULL_LOCATION.add("下架暂存");
+        WDT_NULL_LOCATION.add("销退质检");
+        WDT_NULL_LOCATION.add("补货暂存");
+        WDT_NULL_LOCATION.add("其它未上架");
+        WDT_NULL_LOCATION.add("销退暂存");
+        WDT_NULL_LOCATION.add("盘亏暂存");
+        WDT_NULL_LOCATION.add("发货暂存");
+        WDT_NULL_LOCATION.add("采购未上架");
+    }
+
     /**
      * 同步金蝶的销售出库单
      *
@@ -229,7 +246,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
         soOutstock.setSalesOrgName(shopInfo.getSalesOrgName());
-        soOutstock.setPackingStatus(PackingStatusEnum.NOT_PACKING.getCode());
+        soOutstock.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
         soOutstock.setInvalidStatus(false);
         soOutstock.setApproveStatus(ApproveStatusEnum.APPROVE);
         soOutstock.setApproveTime(soOutstock.getActualDeliveryDate());
@@ -262,7 +279,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 boolean isDeduction = !noInventorySkuNoList.contains(detailEntity.getSkuNo());
                 if (Boolean.TRUE.equals(isDeduction)) {
                     //并且扣库存 才执行
-                    buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList,"");
+                    buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList);
                 }
             } else {
                 for (WdtSoOutStockDetailDTO.PositionDetailsList detail : detailDTO.getPositionDetailsList()) {
@@ -283,7 +300,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     //仓库
                     detailEntity.setWarehouseId(warehouse.getId());
                     detailEntity.setWarehouseName(warehouse.getName());
-                    detailEntity.setWarehouseLocation(detail.getPositionNo());
+                    detailEntity.setWarehouseLocation(WDT_NULL_LOCATION.contains(detail.getPositionNo()) ? "" : detail.getPositionNo());
                     detailEntity.setVirtualWarehouseId(virtualWarehouseId);
                     detailEntity.setPlanQty(detail.getPositionGoodsCount());
                     detailEntity.setActualQty(detail.getPositionGoodsCount());
@@ -291,7 +308,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     //是否扣减库存 true 就要
                     boolean isDeduction = !noInventorySkuNoList.contains(detailEntity.getSkuNo());
                     if (Boolean.TRUE.equals(isDeduction)) {
-                        buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList,detail.getPositionNo());
+                        buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList);
                     }
                 }
             }
@@ -319,7 +336,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         sendPushTask(soOutstock);
     }
 
-    private static void buildInOutStock(String id, SoOutstockDetailEntity detailEntity, SoOutstockEntity soOutstock, String virtualWarehouseId, List<InOutStockDTO> inOutStockList, String warehouseLocation) {
+    private static void buildInOutStock(String id, SoOutstockDetailEntity detailEntity, SoOutstockEntity soOutstock, String virtualWarehouseId, List<InOutStockDTO> inOutStockList) {
         InOutStockDTO inOutStock = new InOutStockDTO();
         inOutStock.setSourceId(id);
         inOutStock.setSourceDetailId(detailEntity.getId());
@@ -330,7 +347,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         inOutStock.setSkuNo(detailEntity.getSkuNo());
         inOutStock.setSourceCode(soOutstock.getCode());
         inOutStock.setWarehouseId(soOutstock.getWarehouseId());
-        inOutStock.setWarehouseLocation(warehouseLocation);
+        inOutStock.setWarehouseLocation(detailEntity.getWarehouseLocation());
         inOutStock.setVirtualWarehouseId(virtualWarehouseId);
         inOutStockList.add(inOutStock);
     }

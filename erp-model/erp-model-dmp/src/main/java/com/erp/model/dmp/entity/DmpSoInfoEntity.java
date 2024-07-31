@@ -211,6 +211,21 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     */
     @TableField("next_level_id")
     private String nextLevelId;
+    /**
+    * 物流类型
+    */
+    @TableField("logistic_type")
+    private String logisticType;
+    /**
+    * 渠道id
+    */
+    @TableField("logistics_channel_id")
+    private String logisticsChannelId;
+    /**
+    * 渠道名称
+    */
+    @TableField("logistics_channel_name")
+    private String logisticsChannelName;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
@@ -282,6 +297,12 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     public static final String CONVERT_ID = "convert_id";
 
     public static final String NEXT_LEVEL_ID = "next_level_id";
+
+    public static final String LOGISTIC_TYPE = "logistic_type";
+
+    public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
+
+    public static final String LOGISTICS_CHANNEL_NAME = "logistics_channel_name";
 
     @Override
     public Serializable pkVal() {

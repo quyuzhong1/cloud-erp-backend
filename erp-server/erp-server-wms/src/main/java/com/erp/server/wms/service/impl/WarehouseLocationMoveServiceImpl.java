@@ -2,8 +2,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -11,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -37,6 +40,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -57,6 +61,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -121,6 +126,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private SyncWdtOtherInStockService wdtOtherInStockService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -538,7 +545,19 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     }
 
     private void syncDisApproveInfoToWdt(WarehouseLocationMoveEntity entity,SyncOperateEnum operateCode) {
+        // 如果存在黑名单则跳过推送旺店通
+        CfgSettingEntity blackListEntity = cfgSettingService.getByKey(CfgSettingEnum.WAREHOUSE_LOCATION_MOVE_BLACKLIST.getCode());
+        List<String> blackList = ListUtil.empty();
+        if (ObjectUtil.isNotEmpty(blackListEntity) && ObjectUtil.isNotEmpty(blackListEntity.getDataJson())) {
+            JSONObject dataJson = blackListEntity.getDataJson();
+            blackList = new ArrayList<>(dataJson.getBeanList("blackList", String.class));
+        }
+        if (blackList.contains(entity.getCode())) {
+            log.warn("单号【{}】的仓位移动单据，被加入黑名单，不推送旺店通", entity.getCode());
+            return;
+        }
 
+        //发送旺店通
         List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(entity.getId()));
 
         HashSet<String> warehouseIdSet = new HashSet<>();
@@ -553,7 +572,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
 
         //同步旺店通 审核{调入仓位做其他入库单，调出仓位做其他出库单}，反审核{调入仓位做其他出库单，调出仓位做其他入库单}
-        List<DmpPushTaskEntity> dmpPushTaskEntityList = new ArrayList<>();
+        List<DmpPushTaskFeignDTO> unSaveTaskList = new ArrayList<>();
         for (WarehouseLocationMoveDetailEntity moveDetailEntity : detailEntityList) {
             //转换成出库单
             if(! thirdWarehouseMap.containsKey(moveDetailEntity.getWarehouseId())){
@@ -568,10 +587,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
             String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
             String outWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
-            DmpPushTaskEntity outDmpPushTask = wdtOtherOutStockService.saveTask(Collections.singletonList(outGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), outCode, outWarehouseId, false);
-            if(outDmpPushTask != null){
-                dmpPushTaskEntityList.add(outDmpPushTask);
-            }
+            DmpPushTaskFeignDTO dmpPushTaskFeignDTO = wdtOtherOutStockService.generateTask(Collections.singletonList(outGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), outCode, outWarehouseId, false);
+            unSaveTaskList.add(dmpPushTaskFeignDTO);
             //调入仓转换为其他入库单
             CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
             inGoods.setSpecNo(moveDetailEntity.getSkuNo());
@@ -581,16 +598,15 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
             String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
             String inWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
-            DmpPushTaskEntity inDmpPushTask = wdtOtherInStockService.saveTask(Collections.singletonList(inGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), inCode, inWarehouseId, false);
-            if(inDmpPushTask != null){
-                dmpPushTaskEntityList.add(inDmpPushTask);
-            }
+            DmpPushTaskFeignDTO taskFeignDTO = wdtOtherInStockService.generateTask(Collections.singletonList(inGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), inCode, inWarehouseId, false);
+            unSaveTaskList.add(taskFeignDTO);
         }
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(unSaveTaskList);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                if(! dmpPushTaskEntityList.isEmpty()){
-                    dmpMqFeign.sendTask(dmpPushTaskEntityList);
+                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
                 }
             }
         });

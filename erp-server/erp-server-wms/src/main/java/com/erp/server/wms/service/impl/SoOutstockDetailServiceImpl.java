@@ -90,7 +90,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     private WarehouseService warehouseService;
 
     @Resource
-    private WmsCartonService wmsCartonService;
+    private WmsCartonSpecService wmsCartonSpecService;
 
 
     @Override
@@ -113,6 +113,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-19 10:18
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -248,7 +249,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-22 15:54
      */
     @Override
-    public void checkOutQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> detailList) {
+    public void checkOutQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> detailList, String batchNo) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
@@ -273,37 +274,23 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
         //发货通知到
         if (soDeliveryNotice.equals(sourceType)) {
-            //表示是发货通知单的
-            List<SoDeliveryNoticeDetailEntity> deliveryNoticeDetailList = CollectionUtils.isNotEmpty(sourceDetailIdList) ? soDeliveryNoticeDetailService.listByIds(sourceDetailIdList) : Collections.emptyList();
-            //发货通知单数量
-            Integer deliveryQty = deliveryNoticeDetailList.stream().mapToInt(SoDeliveryNoticeDetailEntity::getDeliveryQty).sum();
-
-            //应发数量
-            Integer planQty = detailList.stream().mapToInt(SoOutstockDetailDTO.UpdateDTO::getPlanQty).sum();
-            if (!planQty.equals(deliveryQty)) {
-                throw new ServiceException(ApiError.ERROR_92031);
-            }
-            List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-            List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
-            for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
-                String sourceDetailId = item.getSourceDetailId();
-                String soDetailId = deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("");
-                SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
-                if (StringUtils.isBlank(soDetailId)) {
-                    throw new ServiceException(ApiError.ERROR_SO_OUTSTOCK_NOT_EXIST, skuVO.getSkuNo());
+            List<SoOutstockDetailEntity> detailEntities = listDetailBySoIds(Collections.singletonList(soId));
+            //添加校验
+            List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(soId));
+            for (SoOutstockDetailDTO.UpdateDTO dto : detailList) {
+                int sellQty = soDetails.stream()
+                        .filter(v -> v.getSkuNo().equals(dto.getSkuNo()))
+                        .mapToInt(SoDetailEntity::getQty).sum();
+                if (sellQty == 0) {
+                    throw new ServiceException(ApiError.ERROR_99107, dto.getSkuNo());
                 }
-                //这个是已出的数量
-                Integer outStockQty = soOutstockDetailList.stream().filter(s ->
-                        s.getSoDetailId().equals(soDetailId)
-                ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
-
-                if (ignoreInventorySkuIds.contains(item.getSkuId())) {
-                    log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
-                } else {
-                    if (outStockQty + planQty > deliveryQty) {
-                        throw new ServiceException(ApiError.ERROR_92028);
-                    }
+                int actualQty = detailEntities.stream()
+                        .filter(e -> Boolean.FALSE.equals(e.getInvalidStatus()))
+                        .filter(v -> v.getSkuNo().equals(dto.getSkuNo()))
+                        .mapToInt(SoOutstockDetailEntity::getActualQty)
+                        .sum();
+                if (sellQty < actualQty + Optional.ofNullable(dto.getPlanQty()).orElse(0)) {
+                    throw new ServiceException(ApiError.ERROR_99103, dto.getSkuNo());
                 }
             }
         } else {
@@ -345,11 +332,13 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     if (outStockQty + planQty > soQty) {
                         throw new ServiceException(ApiError.ERROR_92028);
                     }
-                    //即时库存
-                    Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
-                            equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
-                    if (planQty > inventory) {
-                        throw new ServiceException(ApiError.ERROR_92030);
+                    if (ObjectUtil.isEmpty(batchNo)) {
+                        //即时库存
+                        Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
+                                equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+                        if (planQty > inventory) {
+                            throw new ServiceException(ApiError.ERROR_92030);
+                        }
                     }
                 }
             }
@@ -946,29 +935,28 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         return list;
     }
 
-    @Override
-    public List<SoOutstockDTO.GroupSkuDTO> listGroupSkuByMainId(String mainId) {
-        List<SoOutstockDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainId(mainId);
-
-        //查询产品信息
-        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-
-        //查询已装箱数
-        List<WmsCartonDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonService.listPackingQtyByMainId(mainId, null);
-        for (SoOutstockDTO.GroupSkuDTO groupSkuDTO : list) {
-            //待装箱数量=发货数量-已装箱数量
-            int usePackQty = packingQtyDTOS.stream()
-                    .filter(req -> req.getSourceId().equals(groupSkuDTO.getId())
-                            && req.getSkuId().equals(groupSkuDTO.getSkuId()))
-                    .mapToInt(req -> req.getUsePackQty()).sum();
-            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
-            groupSkuDTO.setPackQty(usePackQty);
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
-            groupSkuDTO.setProductName(skuVO.getSkuName());
-        }
-        return list;
-    }
+//    @Override
+//    public List<SoOutstockDTO.GroupSkuDTO> listGroupSkuByMainId(String mainId) {
+//        List<SoOutstockDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainId(mainId);
+//
+//        //查询产品信息
+//        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+//        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+//
+//        //查询已装箱数
+//        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(mainId, null);
+//        for (SoOutstockDTO.GroupSkuDTO groupSkuDTO : list) {
+//            //待装箱数量=发货数量-已装箱数量
+//            int usePackQty = packingQtyDTOS.stream()
+//                    .filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId()))
+//                    .mapToInt(WmsCartonSpecDTO.PackingQtyDTO::getPackQty).sum();
+//            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
+//            groupSkuDTO.setPackQty(usePackQty);
+//            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
+//            groupSkuDTO.setProductName(skuVO.getSkuName());
+//        }
+//        return list;
+//    }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)

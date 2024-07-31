@@ -8,6 +8,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
@@ -107,6 +108,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 .set(RequisitionApplicationDetailEntity::getToWarehouseId, toWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseName, toWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)
+                .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
                 .eq(RequisitionApplicationDetailEntity::getId, id);
         if (StringUtils.isNotBlank(fromVirtualWarehouseId)) {
             eq.set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId, fromVirtualWarehouseId)
@@ -135,6 +137,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         lambdaUpdate().eq(RequisitionApplicationDetailEntity::getMainId,mainId)
                 .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId,"")
                 .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName,"")
+                .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty, MathUtil.ZERO)
                 .update();
     }
 

@@ -4,12 +4,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.vo.PagingVO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.poi.ss.formula.functions.T;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -69,6 +71,27 @@ public class InventoryDTO implements Serializable {
          */
         private Boolean hideZeroInventory;
 
+        /**
+         * 查询维度：warehouse仓库，warehouseArea库区，warehouseLocation仓位<br/>
+         * 接口地址：/wms/dict/drop/down?type=inventoryDimension
+         */
+        @NotBlank
+        private String dimension;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 库区名称
+         */
+        private String warehouseAreaName;
+
+        /**
+         * SKU ID编码集合
+         */
+        private List<String> skuIdList;
     }
 
     /**
@@ -141,11 +164,27 @@ public class InventoryDTO implements Serializable {
         @NotEmpty(message = "sku不能为空")
         private String skuId;
 
+        /**
+         * 导出维度：warehouse，warehouseArea，warehouseLocation
+         */
+        @NotEmpty(message = "dimension不能为空")
+        private String dimension;
+
+        /**
+         * 仓位编码（按仓位导出时传递）
+         */
+        private String warehouseAreaCode;
+
+        /**
+         * 库区编码（按库区导出时传递）
+         */
+        private String warehouseLocationCode;
     }
 
     /**
      * 即时库存导出查询条件
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class ExportSearchParamDTO extends SortDTO {
@@ -192,6 +231,45 @@ public class InventoryDTO implements Serializable {
          */
         private Boolean hideZeroInventory;
 
+        /**
+         * 查询维度：warehouse仓库，warehouseArea库区，warehouseLocation仓位
+         */
+        private String dimension;
+
+        /**
+         * 仓位编码
+         */
+//        private String warehouseLocationCode;
+
+        /**
+         * 库区编码
+         */
+//        private String warehouseAreaCode;
+
+        /**
+         * 库区编码集合
+         */
+        private List<String> warehouseAreaCodeList;
+
+        /**
+         * 仓位编码集合
+         */
+        private List<String> warehouseLocationCodeList;
+
+        /**
+         * 库区名称
+         */
+        private String warehouseAreaName;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
     }
 
     /**
@@ -312,6 +390,16 @@ public class InventoryDTO implements Serializable {
          * 仓位名称
          */
         private String warehouseLocationName;
+
+        /**
+         * 库区编码
+         */
+        private String warehouseArea;
+
+        /**
+         * 库区名称
+         */
+        private String warehouseAreaName;
 
     }
 
@@ -949,6 +1037,7 @@ public class InventoryDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class UsableInventoryParamDTO {
         /**
          * 组织id
@@ -1636,4 +1725,71 @@ public class InventoryDTO implements Serializable {
         private Integer frozenQty;
     }
 
+    @Getter
+    @Setter
+    public static class LocationInventory {
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+        /**
+         * 库位名字
+         */
+        private String warehouseLocationName;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+    }
+
+    @Getter
+    @Setter
+    public static class LocationInventoryResult {
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * sku
+         */
+        private String warehouseId;
+        /**
+         * 库位
+         */
+        private List<LocationInventory> locationInventory;
+    }
+
+    @Getter
+    @Setter
+    public static class LocationInventoryParam {
+        @NotBlank(message = "sku不能为空")
+        private String skuNo;
+        @NotBlank(message = "仓库不能空")
+        private String warehouseId;
+    }
+
+    @Getter
+    @Setter
+    public static class RecommendedLocationParam {
+        @NotBlank(message = "sku不能为空")
+        private String skuNo;
+        @NotBlank(message = "仓库不能空")
+        private String warehouseId;
+        @NotNull(message = "数量不能空")
+        private Integer usableQty;
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class tabDto{
+        /**
+         * 类型：warehouse仓库，warehouseArea库区，warehouseLocation仓位
+         */
+        private String tabFlag;
+
+        /**
+         * 数量
+         */
+        private long count;
+    }
 }

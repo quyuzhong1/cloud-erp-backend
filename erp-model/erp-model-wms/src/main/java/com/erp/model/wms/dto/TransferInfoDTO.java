@@ -49,6 +49,15 @@ public class TransferInfoDTO implements Serializable {
         private String  code;
 
         /**
+         * 来源类型【可排序】(firstMileDelivery、firstMileDeliveryToUlanzi、firstMileDeliveryFromUlanzi、requisitionApplicationHandle、requisitionApplicationFinish)来源不支持修改
+         */
+        private String sourceType;
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
+
+        /**
          * 来源单据【可排序】
          */
         private String sourceCode;
@@ -304,6 +313,11 @@ public class TransferInfoDTO implements Serializable {
          * 金蝶同步id
          */
         private String syncKingdeeId;
+
+        /**
+         * 批次号，发货单下推时生成
+         */
+        private String batchNo;
     }
 
     @Data

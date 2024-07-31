@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.dto.DmpTaskMsgDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -57,4 +58,11 @@ public interface DmpPushTaskMapper extends BaseMapper<DmpPushTaskEntity> {
     void deleteByIds(List<String> ids);
 
     void updateStatus(@Param("noNeedSyncIds")List<String> noNeedSyncIds);
+
+    /**
+     *
+     * @param statusList
+     * @return
+     */
+    List<DmpTaskMsgDTO> getWarnTaskReport(@Param("statusList") List<String> statusList);
 }

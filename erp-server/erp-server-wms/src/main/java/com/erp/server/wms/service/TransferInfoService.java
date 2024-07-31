@@ -71,6 +71,13 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return Boolean
      */
     Boolean updateAndSubmit(TransferInfoDTO.UpdateDTO dto);
+
+    /**
+     * 保存并审核
+     * @param dto
+     * @return
+     */
+    String addAndApprove(TransferInfoDTO.AddDTO dto);
     /**
      * @description: 提交
      * @author Will
@@ -118,7 +125,7 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @param ids
      * @return Boolean
      */
-    Boolean disApprove(List<String> ids, Boolean isPushKingDee);
+    Boolean disApprove(List<String> ids, Boolean isPushKingDee,Boolean isManual);
     /**
      * @description: 取消流程
      * @author Will
@@ -217,4 +224,20 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return java.lang.Boolean 处理结果
      **/
     Boolean checkHistoryAndDel(String sourceCode,String sourceType, LocalDate billDate);
+    /**
+     * 根据批次号查询直接调拨单
+     * @author will
+     * @date 2024/7/12 10:11
+     * @param batchNoList
+     * @return List<TransferInfoEntity>
+     */
+    List<TransferInfoEntity> listByBatchNoList(List<String> batchNoList);
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2024/7/19 20:04
+     * @param sourceId
+     * @return List<TransferInfoEntity>
+     */
+    List<TransferInfoEntity> listBySourceId(String sourceId);
 }

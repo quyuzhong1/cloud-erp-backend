@@ -4,6 +4,7 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -27,4 +28,12 @@ public interface SoB2cLogisticsMapper extends BaseMapper<SoB2cLogisticsEntity> {
      * @create 2024-01-05 9:31
      */
     List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList();
+    /**
+     * 根据物流单号或者运单号查询
+     * @author will
+     * @date 2024/7/5 10:29
+     * @param logisticsCode
+     * @return SoB2cLogisticsEntity
+     */
+    SoB2cLogisticsEntity getByTrackNoOrTransportNo(@Param("logisticsCode") String logisticsCode);
 }

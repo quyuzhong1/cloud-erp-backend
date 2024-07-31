@@ -171,6 +171,16 @@ public class DmpSkuInfoEntity extends BaseEntity<DmpSkuInfoEntity> {
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
+    /**
+    * 包装尺寸单位
+    */
+    @TableField("package_unit")
+    private String packageUnit;
+    /**
+    * 重量单位
+    */
+    @TableField("weight_unit")
+    private String weightUnit;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
@@ -230,6 +240,10 @@ public class DmpSkuInfoEntity extends BaseEntity<DmpSkuInfoEntity> {
     public static final String UNIQUE_ENCRYPT = "unique_encrypt";
 
     public static final String DATA_ENCRYPT = "data_encrypt";
+
+    public static final String PACKAGE_UNIT = "package_unit";
+
+    public static final String WEIGHT_UNIT = "weight_unit";
 
     @Override
     public Serializable pkVal() {

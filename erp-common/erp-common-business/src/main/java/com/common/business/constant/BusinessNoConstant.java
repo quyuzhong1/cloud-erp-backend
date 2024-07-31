@@ -140,4 +140,11 @@ public interface BusinessNoConstant {
     String XLS = "XLS";
     //虚拟仓分货单
     String FH = "FH";
+    String ZXRW = "ZXRW";
+    String JHD = "JHD";
+
+    //拣货车
+    String JHC = "JHC";
+    //拣货波次
+    String JHBC = "JHBC";
 }

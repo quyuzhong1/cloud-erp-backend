@@ -1,6 +1,8 @@
 package com.erp.server.wms.service;
 
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.PackingInspectionDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
 /**
  * <p>
@@ -15,4 +17,5 @@ public interface PackingInspectionService {
     PackingInspectionDTO.ViewDTO scan(PackingInspectionDTO.ScanDTO dto);
 
     void reset(String id);
+
 }

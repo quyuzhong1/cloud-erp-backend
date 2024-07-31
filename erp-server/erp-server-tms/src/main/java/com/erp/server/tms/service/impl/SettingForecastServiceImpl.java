@@ -110,7 +110,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listLogisticsSupplier() {
-        List<BaseDropDownDTO.DisabledDTO> list = logisticsSupplierService.listAll();
+        List<BaseDropDownDTO.DisabledDTO> list = logisticsSupplierService.listAll(false);
         return list;
     }
 

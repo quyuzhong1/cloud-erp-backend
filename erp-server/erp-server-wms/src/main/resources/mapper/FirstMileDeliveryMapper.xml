@@ -11,7 +11,6 @@
         fd.demand_type AS demandType,
         fd.approve_status AS approveStatus,
         fd.invalid_status AS invalidStatus,
-        fd.packing_status AS packingStatus,
         fd.shop_id AS shopId,
         fd.shop_name AS shopName,
         fd.country_id AS countryId,
@@ -34,14 +33,16 @@
         fd.create_time AS createTime,
         fd.approve_user_name AS approveUserName,
         fd.approve_time AS approveTime,
-        op.code as provideCode,
         fdd.platform_sku_no as thirdWarehouseSku,
         fd.logistics_status,
+        (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
+        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = fdd.sku_id) as packingQty,
+        pt.packing_status as packingStatus,
+        pt.id as taskId,
         fd.declare_status
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false
-        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        LEFT JOIN packing_task pt on pt.source_id = fd.id and pt.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and    fd.is_deleted = FALSE
@@ -70,7 +71,6 @@
         fd.demand_type AS demandType,
         fd.approve_status AS approveStatus,
         fd.invalid_status AS invalidStatus,
-        fd.packing_status AS packingStatus,
         fd.shop_id AS shopId,
         fd.shop_name AS shopName,
         fd.country_id AS countryId,
@@ -176,19 +176,20 @@
 
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
-            fmd.id,
-            fmcb.box_no,
-            concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
-            box_length*box_width*box_height as multiplySize,
-            fmc.package_weight,
-            fmcb.box_desc,
-            fmc.box_length as length,
-            fmc.box_width as width,
-            fmc.box_height as height,
-            (select string_agg(cd.sku_no , ',') from wms_carton_detail cd where cd.is_deleted = false and cd.carton_id = fmc.id) as sku
+        fmd.id,
+        wc.box_no,
+        concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
+        box_length*box_width*box_height as multiplySize,
+        wcs.package_weight,
+        (select string_agg(concat(wcd.sku_no,'*',wcd.pack_qty), ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as boxDesc,
+        wcs.box_length as length,
+        wcs.box_width as width,
+        wcs.box_height as height,
+        (select string_agg(wcd.sku_no, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku
         FROM first_mile_delivery fmd
-        INNER JOIN wms_carton fmc ON fmc.source_id = fmd.id AND fmc.is_deleted = FALSE
-        INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        INNER JOIN packing_task pt on pt.source_id = fmd.id and pt.is_deleted = false
+        INNER JOIN wms_carton wc ON pt.id = wc.packing_task_id AND wc.is_deleted = FALSE
+        INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
         WHERE fmd.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND fmd.id IN
@@ -196,24 +197,25 @@
                 #{id}
             </foreach>
         </if>
-        ORDER BY CAST(fmcb.box_no AS INTEGER)
+        ORDER BY CAST(wc.box_no AS INTEGER)
     </select>
 
     <!--导出装箱清单Excel-->
-    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonDTO$ExportPackingDTO">
+    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$ExportPackingDTO">
         SELECT
         DISTINCT
         fd.id,
-        fd.packing_status,
+        pt.packing_status,
         fd.code,
-        CAST(fmcb.box_no AS INTEGER) AS box_no,
-        concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
-        fmc.package_weight,
-        fmcb.box_desc
-        FROM first_mile_delivery fd
-        LEFT JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id
-        LEFT JOIN wms_carton fmc ON fmc.source_id = fd.id AND fmc.is_deleted = FALSE
-        LEFT JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        CAST(wc.box_no AS INTEGER) AS box_no,
+        concat(wcs.box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
+        wcs.package_weight,
+        (select string_agg(concat(wcd.sku_no,'*',wcd.pack_qty), ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as boxDesc
+        FROM first_mile_delivery_detail fdd
+        LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        LEFT JOIN packing_task pt on pt.source_id = fd.id and pt.is_deleted = false
+        left join wms_carton wc on wc.packing_task_id = pt.id and wc.is_deleted = false
+        left join wms_carton_spec wcs on wcs.id = wc.spec_id and wcs.is_deleted = false
         WHERE 1 = 1
         <if test="params.ids !=null and params.ids.size>0">
             AND fd.id IN
@@ -223,7 +225,7 @@
         </if>
         and fd.is_deleted = FALSE
         ORDER BY fd.code,
-        CAST(fmcb.box_no AS INTEGER)
+        CAST(wc.box_no AS INTEGER)
         limit 50000
     </select>
     <select id="getGenerateLogisticDTO"
@@ -245,11 +247,12 @@
             tw.address as toAddress,
             fmd.remark
         from first_mile_delivery fmd
+                left join packing_task pt on fmd.id = pt.source_id and pt.is_deleted = false
                  left join warehouse fw on fmd.delivery_warehouse_id = fw.id and fw.is_deleted =false
                  left join warehouse tw on fmd.dest_warehouse_id = tw.id and tw.is_deleted = false
         where fmd.is_deleted = false
         <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND (fmd.packing_status = #{params.packingStatus} or fmd.approve_status = 'approve')
+            AND (pt.packing_status = #{params.packingStatus} or fmd.approve_status = 'approve')
         </if>
         <if test="params.logisticsStatus != null and params.logisticsStatus != ''">
             AND fmd.logistics_status = #{params.logisticsStatus}
@@ -302,9 +305,10 @@
             fmd.source_type as businessType
         from
              first_mile_delivery fmd
+        inner join packing_task pt on pt.source_id = fmd.id and pt.is_deleted = false
         where fmd.is_deleted = false
         <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND (fmd.packing_status = #{params.packingStatus} or fmd.approve_status = 'approve')
+            AND (pt.packing_status = #{params.packingStatus} or fmd.approve_status = 'approve')
         </if>
         <if test="params.declareStatus != null and params.declareStatus != ''">
             AND fmd.declare_status = #{params.declareStatus}

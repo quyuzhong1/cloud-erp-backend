@@ -41,6 +41,10 @@ public class LogisticsOrderVO implements Serializable {
     private String monthlyCard;
     //订单来源
     private String orderSource;
+    /**
+     * 订单来源 取值 so_b2c.source_type
+     */
+    private String orderType;
 
     /**
      * 预约时间，格式为：yyyy-MM-dd

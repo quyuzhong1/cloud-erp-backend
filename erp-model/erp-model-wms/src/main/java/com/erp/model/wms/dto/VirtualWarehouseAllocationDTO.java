@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -51,6 +52,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         /**
          * 明细集合
          */
+        @Valid
         private List<DetailDto> detailList;
 
     }
@@ -213,7 +215,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 备注
          */
 //        @NotBlank(message = "备注不能为空")
-//        @Size(max = 200, message = "备注最大长度不能超过200位")
+        @Size(max = 100, message = "备注最大长度不能超过100位")
         private String remark;
 
         /**
@@ -290,6 +292,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
 
         /**
          * skuId
@@ -561,6 +568,12 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String syncStatusName;
 
+        /**
+         * 备注
+         */
+        @Size(max = 100, message = "备注最大长度不能超过100位")
+        private String detailRemark;
+
         public String getSyncStatusName() {
             return VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(syncStatus);
         }
@@ -675,5 +688,16 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 作废说明
          */
         private String invalidDescription;
+    }
+
+    @Data
+    public static class UpdateRemarkDTO{
+        @NotBlank(message = "ID不能为空")
+        private String id;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 }

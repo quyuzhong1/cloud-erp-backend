@@ -29,7 +29,7 @@ public enum VirtualInventoryBusinessTypeEnum {
     SO_B2C_DELIVERY("so_b2c_delivery", "04","b2c发货单"),
 
     /**
-     * 发货通知单，减可用，加冻结
+     * 发货通知单，减可用
      */
     SO_DELIVERY_NOTICE("so_delivery_notice", "05","发货通知单"),
 
@@ -37,6 +37,41 @@ public enum VirtualInventoryBusinessTypeEnum {
      * 销售出库单，减冻结
      */
     SO_OUT_STOCK("so_out_stock", "06","销售出库单"),
+
+    /**
+     * B2B销售订单锁定库存，添加冻结减少可用
+     */
+    SO_INFO_LOCK_ADD("so_info_lock_add", "07","B2B销售订单"),
+
+    /**
+     * B2B销售订单锁定库存，添加可用减少冻结
+     */
+    SO_INFO_LOCK_LESS("so_info_lock_less", "08","B2B销售订单"),
+
+    /**
+     * B2B销售订单释放库存，减冻结加可用
+     */
+    SO_INFO_UNLOCK("so_info_unlock", "09","B2B销售订单"),
+
+    /**
+     * b2c发货单取消发货，减冻结，加可用
+     */
+    SO_B2C_DELIVERY_CANCEL("so_b2c_delivery_cancel", "10","b2c发货单"),
+
+    /**
+     * 要货申请处理，减可用，加冻结
+     */
+    REQUISITION_APPLICATION_HANDLE("requisition_application_handle", "11","要货申请处理"),
+
+    /**
+     * 要货申请回退处理，减冻结，加可用
+     */
+    REQUISITION_APPLICATION_RETURN_HANDLE("requisition_application_return_handle", "12","要货申请回退处理"),
+
+    /**
+     * 直接调拨单审核，减冻结
+     */
+    TRANSFER_INFO_APPROVE("transfer_info_approve", "13","直接调波单审核"),
     ;
 
     private String code;

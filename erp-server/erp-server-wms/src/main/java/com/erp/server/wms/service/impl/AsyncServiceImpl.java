@@ -1,22 +1,45 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.handler.PlatformSaveHandler;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.TransferStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.service.AsyncService;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.SoOutstockService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,6 +59,19 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
+
+    @Resource
+    private TransferDeclareFeign transferDeclareFeign;
+
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private SoOutstockService soOutstockService;
+
 
     @Async("wmsErpExecutor")
     @Override
@@ -105,4 +141,83 @@ public class AsyncServiceImpl implements AsyncService {
         soB2cFeign.updateSignShippedByDetailId(detailIds);
         return detailIds;
     }
+
+    /**
+     * 自动出库
+     * @author will
+     * @date 2024/6/28 16:37
+     * @param soB2cEntity
+     * @param entity
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Async("wmsErpExecutor")
+    public void soB2cDeliveryAutoOut (SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity) {
+
+        if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
+                || SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())){
+            throw new ServiceException(ApiError.ERROR_99114);
+        }
+
+        TransferDeclareDetailEntity declareDetailEntity = transferDeclareFeign.getBySoId(soB2cEntity.getId());
+        if (ObjectUtil.isEmpty(declareDetailEntity)) {
+            declareDetailEntity = new TransferDeclareDetailEntity();
+        }
+        //如果是待上传或上传失败则直接返回
+        if (StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.WAIT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
+                StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
+            return;
+        }
+        //获取一个当前时间当作发货时间
+        LocalDateTime deliveryTime = LocalDateTime.now();
+
+        //修改订单状态待发货
+        SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
+        updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+        updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+        updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
+        soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
+
+        String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "包装验货", entity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
+
+        if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
+            // 调用第三方平台SDK标记发货(独立事务)
+            String businessDesc = "包装验货";
+            this.asyncShipOrder(soB2cEntity.getId(),
+                    soB2cEntity.getCode(),
+                    soB2cEntity.getDictPlatform(),
+                    soB2cEntity.convertSubmitPlatformUniqueKey(),
+                    JSONUtil.toJsonStr(entity),
+                    businessDesc, false);
+        } else {
+            log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+        }
+        //将发货状态更新为已发货
+        entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
+        entity.setDeliveryTime(deliveryTime);
+        entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
+        soB2cDeliveryService.updateById(entity);
+
+        //扣减冻结库存
+        soB2cDeliveryService.outFreezeVirtualInventory(entity);
+
+        //生成直接调拨单
+        Boolean isPush = soB2cDeliveryService.pushTransferInfo(entity);
+        if (isPush) {
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Async("wmsErpExecutor")
+    public void asyncGenerateB2cSoOutstock (String b2cSoId) {
+        soOutstockService.generateB2cSoOutstock(b2cSoId);
+    }
+
 }

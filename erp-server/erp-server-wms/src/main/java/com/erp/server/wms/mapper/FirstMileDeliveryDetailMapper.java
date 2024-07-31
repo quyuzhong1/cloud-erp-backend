@@ -29,22 +29,22 @@ public interface FirstMileDeliveryDetailMapper extends BaseMapper<FirstMileDeliv
      **/
     List<FirstMileDeliveryDetailEntity> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
 
-    /**
-     * 根据主表id分组sku查询发货及待装箱数
-     * @Author Luo_WG
-     * @Date 2023/11/28 18:40
-     * @param mainId
-     * @return java.util.List<com.erp.model.wms.dto.FirstMileDeliveryDTO.GroupSkuDTO>
-     **/
-    List<FirstMileDeliveryDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String mainId);
+//    /**
+//     * 根据主表id分组sku查询发货及待装箱数
+//     * @Author Luo_WG
+//     * @Date 2023/11/28 18:40
+//     * @param mainId
+//     * @return java.util.List<com.erp.model.wms.dto.FirstMileDeliveryDTO.GroupSkuDTO>
+//     **/
+//    List<FirstMileDeliveryDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String mainId);
 
-    /**
-     * 根据主表id分组查询发货单已包装发货及待装箱数
-     * @Author Luo_WG
-     * @Date 2023/11/30 11:30
-     * @param sourceId
-     * @return java.util.List<com.erp.model.wms.dto.FirstMileDeliveryDTO.GroupSkuDTO>
-     **/
-    List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuBySourceId(@Param("sourceId") String sourceId, @Param("boxSpecNo") Integer boxSpecNo);
+//    /**
+//     * 根据主表id分组查询发货单已包装发货及待装箱数
+//     * @Author Luo_WG
+//     * @Date 2023/11/30 11:30
+//     * @param sourceId
+//     * @return java.util.List<com.erp.model.wms.dto.FirstMileDeliveryDTO.GroupSkuDTO>
+//     **/
+//    List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuBySourceId(@Param("sourceId") String sourceId, @Param("boxSpecNo") Integer boxSpecNo);
 
 }
