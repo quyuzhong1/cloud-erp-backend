@@ -14,10 +14,8 @@ import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
-import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.OtherOutstockDetailEntity;
 import com.erp.model.wms.entity.OtherOutstockEntity;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -69,7 +67,7 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
     @GlobalTransactional(rollbackFor = Exception.class)
     public void add(List<OtherOutstockDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_1041,"其他入库明细");
         }
         List<OtherOutstockDetailEntity> list = BeanMapperUtils.copyList(OtherOutstockDetailEntity.class, detailList);
 
@@ -86,8 +84,8 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void update(List<OtherOutstockDetailDTO.UpdateDTO> detailList, String mainId) {
-        if (detailList == null) {
-            detailList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_1041,"其他入库明细");
         }
         //原明细数据
         List<OtherOutstockDetailEntity> oldList = this.listByMainId(mainId);
@@ -143,8 +141,12 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDetails (List<OtherOutstockDetailEntity> newList, String mainId, Boolean isUpdate) {
-
+    private void doOpHandleDetails (List<OtherOutstockDetailEntity> detailList, String mainId, Boolean isUpdate) {
+        //去除服务、费用SKU
+        List<OtherOutstockDetailEntity> newList = removeNoInventorySku(detailList);
+        if (CollectionUtils.isEmpty(newList)) {
+            throw new ServiceException(ApiError.ERROR_NO_INVENTORY_SKU_NOT_EXIST);
+        }
         //需要新增的数据
         List<OtherOutstockDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -220,4 +222,19 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
         }
     }
+
+    /**
+     * 移除包含服务和费用的sku明细
+     * @author will
+     * @date 2024/7/26 22:52
+     * @param newList
+     * @return List<OtherInstockDetailEntity>
+     */
+    private List<OtherOutstockDetailEntity> removeNoInventorySku (List<OtherOutstockDetailEntity> newList) {
+        List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> skuIdList = CollectionUtils.isEmpty(noInventorySkuList)
+                ? new ArrayList<>() : noInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        return newList.stream().filter(obj -> !skuIdList.contains(obj.getSkuId())).collect(Collectors.toList());
+    }
+
 }
