@@ -201,5 +201,5 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @param id
      * @return Boolean
      */
-    BatchResultDTO handleData(String id);
+    BatchResultDTO handleData(String id,Boolean isFlag);
 }
