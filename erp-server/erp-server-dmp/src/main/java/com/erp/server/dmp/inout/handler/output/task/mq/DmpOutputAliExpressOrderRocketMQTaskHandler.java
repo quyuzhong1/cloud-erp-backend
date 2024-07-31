@@ -282,7 +282,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 //发货时间
                 logisticsDTO.setDeliveryTime(dmpLogisticInfoEntity.getDeliveryTime());
                 logisticsDTO.setActualShippingCost(shippingAmount);
-                logisticsDTO.setActualShippingCurrency(currencyCode);
+                logisticsDTO.setActualShippingCurrency(dmpLogisticInfoEntity.getCurrencyCode());
             	orderLogisticList.add(logisticsDTO);
         	}
         }
@@ -321,7 +321,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 }
                 
 				detailDTO.setAmount(sellPriceOrigin);
-                detailDTO.setCurrency(currencyCode);
+                detailDTO.setCurrency(dmpSoDetailEntity.getCurrencyCode());
                 
                 // 汇率
                 detailDTO.setExchangeRate(BigDecimal.ONE);

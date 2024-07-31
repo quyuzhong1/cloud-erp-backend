@@ -56,6 +56,11 @@ public class DmpLogisticInfoEntity extends BaseEntity<DmpLogisticInfoEntity> {
     @TableField("receive_status")
     private String receiveStatus;
     /**
+     * 币种编码
+     */
+     @TableField("currency_code")
+     private String currencyCode = "";
+    /**
     * 输入任务id
     */
     @TableField("input_task_id")
