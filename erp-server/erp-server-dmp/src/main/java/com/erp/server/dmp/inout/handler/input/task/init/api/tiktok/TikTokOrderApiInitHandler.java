@@ -76,8 +76,9 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
         //服务密钥
         String secret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
 
-        StringBuffer sb = new StringBuffer();
+
         while (true) {
+            StringBuffer sb = new StringBuffer();
             //组装授权url
             String path = dmpInputApiInitRequest.getApiType().replace("{version}", TikTokConstant.VERSION);
 

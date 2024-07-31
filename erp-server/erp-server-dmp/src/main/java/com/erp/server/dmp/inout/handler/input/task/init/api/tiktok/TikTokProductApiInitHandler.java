@@ -62,8 +62,9 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
         String secret = shopInfoDTO.getClientSecret();
 
 
-        StringBuffer sb = new StringBuffer();
+
         while (true) {
+            StringBuffer sb = new StringBuffer();
             //组装授权url
             String path = dmpInputApiInitRequest.getApiType().replace("{version}", TikTokConstant.VERSION);
 
