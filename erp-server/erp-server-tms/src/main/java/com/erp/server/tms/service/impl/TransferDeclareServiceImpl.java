@@ -420,7 +420,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
                 TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
                         .orderCode(soB2cEntity.getShippingOrderNo())
-                        .packNum(packageForecastDTO.getCode())
+                        .packNum(StringUtils.isBlank(packageForecastDTO.getTransportNo())?packageForecastDTO.getCode():packageForecastDTO.getTransportNo())
                         .grossWeight(maxWeight)
                         .build();
                 receiveItemList.add(receiveItem);
