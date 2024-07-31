@@ -210,8 +210,10 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntities) {
         //相同的sku和packageId合并去重
-        return dmpSoDetailEntities.stream()
-                .map(e -> intPlatformOrderDetailDTO(dmpSoInfoEntity, e))
+        Map<String, List<DmpSoDetailEntity>> collect = dmpSoDetailEntities.stream().collect(Collectors.groupingBy(req -> req.getSkuNo() + req.getPlatformPackageId()));
+
+        return collect.entrySet().stream()
+                .map(e -> intPlatformOrderDetailDTO(dmpSoInfoEntity, e.getValue()))
                 .collect(Collectors.toList());
     }
 
@@ -219,8 +221,12 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     /**
      * 转换明细
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, DmpSoDetailEntity soDetailEntity) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> soDetailEntityList) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
+        if (CollectionUtil.isEmpty(soDetailEntityList)) {
+            return detailDTO;
+        }
+        DmpSoDetailEntity soDetailEntity = soDetailEntityList.get(0);
         // 图片URL
         detailDTO.setImageUrl("");
         // skuId
@@ -243,10 +249,11 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         // 库存是否扣除
         detailDTO.setWarehouseId("");
         // 数量
-        detailDTO.setQty(1);
+        detailDTO.setQty(soDetailEntityList.size());
 
         // 金额
-        detailDTO.setAmount(soDetailEntity.getAfterAmount());
+        BigDecimal salePrice = soDetailEntityList.stream().map(req -> req.getAfterAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        detailDTO.setAmount(salePrice);
         // 单价
         detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPrice()));
         // 币别（原币）

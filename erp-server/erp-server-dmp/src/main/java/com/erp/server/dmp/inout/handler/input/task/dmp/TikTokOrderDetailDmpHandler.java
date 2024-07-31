@@ -17,16 +17,6 @@ import java.util.TreeMap;
 @Scope("prototype")
 public class TikTokOrderDetailDmpHandler extends TikTokOrderGetDetailDmpHandler {
 
-
-    @Override
-    protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
-        List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
-        detailList.forEach(d -> {
-            d.put("fid", dmpInputMongoEntity.get("fid"));
-        });
-        return detailList;
-    }
-
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
