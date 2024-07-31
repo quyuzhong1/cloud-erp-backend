@@ -183,7 +183,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setLabelJson(dmpSoInfoEntity.getExtendData());
         orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
         orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
-
+        orderDTO.setInvalidStatus(dmpSoInfoEntity.getInvalidStatus());
 
         orderDTO.setIsCancel(Boolean.FALSE);
         // 平台订单原始状态
