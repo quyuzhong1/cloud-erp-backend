@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.StringUtil;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
@@ -322,7 +323,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
             ReceiptInfo receiptInfo = detail.getReceiptAddress();
             if (Objects.nonNull(receiptInfo)){
                 receiverDTO.setCountry(receiptInfo.getCountry());
-                receiverDTO.setFirstAddress(receiptInfo.getAddress());
+                receiverDTO.setFirstAddress(StringUtils.isBlank(receiptInfo.getAddress())?StringUtil.getOrDefault(receiptInfo.getDetailAddress())+StringUtil.getOrDefault(receiptInfo.getAddress2()):receiptInfo.getAddress());
                 receiverDTO.setSecondAddress(receiptInfo.getAddress2());
                 receiverDTO.setFullAddress(receiptInfo.getDetailAddress());
                 receiverDTO.setCityName(receiptInfo.getCity());
@@ -513,6 +514,5 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         }
         return logisticInfoList.stream().anyMatch(e-> StringUtils.isNotBlank(e.getGmtSend()));
     }
-
 
 }
