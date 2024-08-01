@@ -14,6 +14,7 @@ import com.erp.server.dmp.push.service.wdt.WdtOtherOutStockService;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
 import com.sdk.wangdian.sdk.api.wms.external.out.*;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.StockoutAPI;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutResponse;
@@ -59,7 +60,14 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
             response = stockoutAPI.createOtherOutOrder(request);
         } catch (WdtErpException e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单异常: %s", e.getMessage()));
+            StringBuilder message = new StringBuilder(e.getMessage());
+            if(e.getMessage().contains("货位不存在")){
+                String positionNo = e.getMessage().replace("货位不存在", "").trim();
+                List<CreateOtherStockoutRequest.GoodsList> goodsList = stockoutRequest.getGoodsList();
+                List<String> skuList = goodsList.stream().filter(item -> item.getPositionNo().equals(positionNo)).map(CreateOtherStockoutRequest.GoodsList::getSpecNo).distinct().collect(Collectors.toList());
+                message.append("，受影响SKU：").append(String.join(",", skuList));
+            }
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单异常: %s", message));
         }
         if(response.getStatus() != 0){
             log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockoutRequest, response);
