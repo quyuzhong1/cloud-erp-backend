@@ -72,7 +72,7 @@ public class WangDianVwAllocationHandleDetailConsumer<T extends DmpSyncTaskIdDTO
         //获取当前任务状态-不是成功状态再进行处理
         DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(pushDTOS.getDmpSyncTaskId());
         if (Objects.isNull(dmpPushTaskEntity) || !SyncStatusEnum.SUCCESS_SYNC.getCode().equals(dmpPushTaskEntity.getStatus())) {
-            wangDianVwPushHandleDetailService.executeConsumer(pushDTOS,dmpPushTaskEntity);
+            return wangDianVwPushHandleDetailService.executeConsumer(pushDTOS);
         }
         return ApiResult.success();
     }

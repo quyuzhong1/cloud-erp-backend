@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -62,14 +63,16 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
 
 
     @Override
-    public void executeConsumer(VwPushHandelDetailPushDTO pushDTOS, DmpPushTaskEntity dmpPushTaskEntity) {
+    public ApiResult<?> executeConsumer(VwPushHandelDetailPushDTO pushDTOS) {
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
-            return;
+            return ApiResult.error(PlatformEnum.WANGDIAN.getName()+"平台类型未获取到");
         }
         RLock lock = redissonClient.getLock(LOCK + pushDTOS.getVirtual_warehouse_no());
         try {
             boolean locked = lock.tryLock(10, TimeUnit.SECONDS);
+            VirtualWarehouseAllocationDTO.SyncUpdateDto dto = new VirtualWarehouseAllocationDTO.SyncUpdateDto();
+            String msg = null;
             if (locked) {
                 VwPushHandleDetailAPI api = wangDianClientService.get(VwPushHandleDetailAPI.class);
                 log.info("旺店通虚拟仓订单创建：消费者接收数据：{}", pushDTOS);
@@ -78,8 +81,6 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
                 Object bizType = map.get("bizType");
                 Map<String, Object> request = commonService.makeApiFieldMap(map, platformEntity.getId(), ApiModuleTypeEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL.getCode());
                 log.info("旺店通虚拟仓订单创建：请求参数：{}", request);
-                String msg = null;
-                VirtualWarehouseAllocationDTO.SyncUpdateDto dto = new VirtualWarehouseAllocationDTO.SyncUpdateDto();
                 //审核时间: 仅在order_type=3时生效, 格式: yyyy-MM-dd HH:mm, 时间要大于当前服务器时间2分钟以上
                 Object orderTypeObj = request.get("order_type");
                 if (Objects.nonNull(orderTypeObj) && !StringUtil.isEmpty(orderTypeObj.toString()) && Objects.equals(orderTypeObj.toString(), "3")) {
@@ -87,30 +88,31 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
                 }
                 try {
                     VwPushHandelDetailResponse pushResult = api.push(request, request.get("detailList"));
-                    dmpPushTaskEntity.setReturnMsg(JSONObject.toJSONString(pushResult));
+                    msg = JSONObject.toJSONString(pushResult);
                     log.info("旺店通虚拟仓订单创建：响应结果：{}", pushResult);
                     if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
                         dto.setSysType(ThirdSysTypeEnum.WDT.getCode());
                         dto.setSysTypeName(ThirdSysTypeEnum.WDT.getName());
                         buildResultData(pushResult, dto);
                         dto.setHandelDetailId(map.get("sourceId").toString());
-                        dmpPushTaskEntity.setStatus(dto.getSyncStatus());
                         log.info("旺店通虚拟仓订单创建：同步分货单：{}", dto);
                         allocationDetailFeign.updateSyncStatus(dto);
-                        dmpPushTaskService.updateById(dmpPushTaskEntity);
                     }
                 } catch (WdtErpException e) {
                     if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
                         dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
                         dto.setHandelDetailId(map.get("sourceId").toString());
                         dto.setFinishDescription(e.getMessage());
-                        dmpPushTaskEntity.setStatus(dto.getSyncStatus());
                         log.info("旺店通虚拟仓订单创建：同步分货单：{}", dto);
                         allocationDetailFeign.updateSyncStatus(dto);
-                        dmpPushTaskService.updateById(dmpPushTaskEntity);
                     }
                     throw new ServiceException(e.getMessage());
                 }
+            }
+            if (VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode().equals(dto.getSyncStatus())){
+                return ApiResult.error(msg);
+            }else {
+                return ApiResult.success(msg);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
