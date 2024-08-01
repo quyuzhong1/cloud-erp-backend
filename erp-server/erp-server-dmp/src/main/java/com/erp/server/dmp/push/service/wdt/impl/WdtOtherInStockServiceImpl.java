@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,7 +61,14 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
             response = stockinAPI.createOtherOrder(request);
         } catch (WdtErpException e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单异常: %s", e.getMessage()));
+            StringBuilder message = new StringBuilder(e.getMessage());
+            if(e.getMessage().contains("货位不存在")){
+                String positionNo = e.getMessage().replace("货位不存在", "").trim();
+                List<CreateOtherStockinRequest.GoodsList> goodsList = stockinRequest.getGoodsList();
+                List<String> skuList = goodsList.stream().filter(item -> item.getPositionNo().equals(positionNo)).map(CreateOtherStockinRequest.GoodsList::getSpecNo).distinct().collect(Collectors.toList());
+                message.append("，受影响SKU：").append(String.join(",", skuList));
+            }
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单异常: %s", message));
         }
         if (response.getStatus() != 0) {
             log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockinRequest, response);
