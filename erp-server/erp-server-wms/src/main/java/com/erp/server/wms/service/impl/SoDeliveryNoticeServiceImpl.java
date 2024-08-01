@@ -898,10 +898,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
-        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(id));
-        if (CollectionUtils.isEmpty(views)) {
-            throw new ServiceException(ApiError.ERROR_99101, entity.getCode());
-        }
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(soInfoEntity.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_99105);
@@ -916,6 +912,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
         if (closeCount > 0) {
             throw new ServiceException(ApiError.ERROR_98068);
+        }
+        boolean allNoInventorySku = entityList.stream().allMatch(v -> noInventorySkuIds.contains(v.getSkuId()));
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(id));
+        if (Boolean.FALSE.equals(allNoInventorySku) && CollectionUtils.isEmpty(views)) {
+            throw new ServiceException(ApiError.ERROR_99101, entity.getCode());
         }
         SoInfoEntity info = soInfoFeign.getSoInfoById(entity.getSourceId());
         List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(entity.getSourceId()));
