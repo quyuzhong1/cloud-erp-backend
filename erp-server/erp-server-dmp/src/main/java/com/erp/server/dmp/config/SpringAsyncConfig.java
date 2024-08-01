@@ -73,6 +73,7 @@ public class SpringAsyncConfig {
 			log.warn("ThreadPool Size: [{}]", threadPool.getPoolSize());
 			log.warn("Active Threads: {}", threadPool.getActiveCount());
 			log.warn("Number of Tasks : {}", threadPool.getThreadPoolExecutor().getTaskCount());
+			log.warn("Number of CompletedTask : {}", threadPool.getThreadPoolExecutor().getCompletedTaskCount());
 			log.warn("Number of Tasks in Queue: {}", threadPool.getThreadPoolExecutor().getQueue().size());
 			log.warn("=========================");
 		}, 0, 5*60, TimeUnit.SECONDS);

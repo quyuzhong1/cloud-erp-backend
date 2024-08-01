@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -53,12 +54,16 @@ public class MQLingxingConsumerService {
         @Override
         public void onMessage(Object extObj) {
             log.info("监听领星店铺信息消息：entity={}", JSONUtil.toJsonStr(extObj));
-            ShopEntity ext = JSONUtil.toBean(extObj.toString(), ShopEntity.class);
-            // 检查任务和记录平台店铺ID
-            shopInfoMappingService.saveAndHandle(ext);
-            MapUtil mapUtil = getMapParam();
-            UniqueDto updateDto = UniqueDto.getUniqId(ext.getUniqueId());
-            finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ShopEntity.class);
+            try {
+                ShopEntity ext = JSONUtil.toBean(extObj.toString(), ShopEntity.class);
+                // 检查任务和记录平台店铺ID
+                shopInfoMappingService.saveAndHandle(ext);
+                MapUtil mapUtil = getMapParam();
+                UniqueDto updateDto = UniqueDto.getUniqId(ext.getUniqueId());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ShopEntity.class);
+            } catch (Throwable e) {
+                log.error("领星店铺信息消息消费失败：error={}", ExceptionUtil.stacktraceToString(e));
+            }
         }
     }
 
@@ -73,16 +78,20 @@ public class MQLingxingConsumerService {
         @Override
         public void onMessage(Object extObj) {
             log.info("监听领星Fba签收明细消息：entity={}", JSONUtil.toJsonStr(extObj));
-            FbaReceiveGroupEntity ext = JSONUtil.toBean(extObj.toString(), FbaReceiveGroupEntity.class);
-            // 检查店铺ID
-            if (null == ext.getShopId()){
-                throw new ServiceException(StrUtil.format("来源数据异常, 店铺ID为空, dto={}", extObj.toString()));
+            try {
+                FbaReceiveGroupEntity ext = JSONUtil.toBean(extObj.toString(), FbaReceiveGroupEntity.class);
+                // 检查店铺ID
+                if (null == ext.getShopId()){
+                    throw new ServiceException(StrUtil.format("来源数据异常, 店铺ID为空, dto={}", extObj.toString()));
+                }
+                // 保存和检查调拨
+                wmsShipmentFeign.saveAndCheckTransfer(ext);
+                MapUtil mapUtil = getMapParam();
+                UniqueDto updateDto = UniqueDto.getUniqId(ext.getUniqueId());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
+            } catch (Throwable e) {
+                log.error("监听领星Fba签收明细消费失败：error={}", ExceptionUtil.stacktraceToString(e));
             }
-            // 保存和检查调拨
-            wmsShipmentFeign.saveAndCheckTransfer(ext);
-            MapUtil mapUtil = getMapParam();
-            UniqueDto updateDto = UniqueDto.getUniqId(ext.getUniqueId());
-            finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
         }
     }
 
