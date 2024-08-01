@@ -601,10 +601,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (CollectionUtils.isEmpty(applicationDetailList)) {
             throw new ServiceException("拣货单关联的要货申请明细未找到");
         }
-        //查询bom信息
-        List<String> skuIdList = applicationDetailList.stream().map(RequisitionApplicationDetailEntity::getSkuId).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
-
         //添加
         List<VirtualInventoryStockDTO.OutInStockDTO> addList = new ArrayList<>();
 
@@ -621,87 +617,48 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             if (!StrUtil.equals(applicationDetailEntity.getFromWarehouseId(),applicationDetailEntity.getToWarehouseId())) {
                 continue;
             }
-            //用量，没有默认1
-            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), applicationDetailEntity.getSkuId())
-                            && StrUtil.equals(applicationDetailEntity.getBomVersion(), obj.getBomVersion()))
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(childList)) {
-                VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-                outInStockDTO.setBillDate(LocalDate.now());
-                outInStockDTO.setSourceId(finishListDTO.getSourceId());
-                outInStockDTO.setSourceCode(finishListDTO.getSourceCode());
-                outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
-                outInStockDTO.setSourceDetailId(applicationDetailEntity.getId());
-                outInStockDTO.setBillDate(LocalDate.now());
-                outInStockDTO.setSkuId(applicationDetailEntity.getSkuId());
-                outInStockDTO.setSkuNo(applicationDetailEntity.getSkuNo());
-                outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
-                outInStockDTO.setBomVersion(applicationDetailEntity.getBomVersion());
-                if (StrUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
-                    continue;
-                }
-                outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
-                Integer virtualFrozenQty = applicationDetailEntity.getVirtualFrozenQty();
-                Integer qty = applicationDetailEntity.getPickingQty();
-                if (MathUtil.compareTo(qty, virtualFrozenQty) > MathUtil.ZERO) {
-                    outInStockDTO.setQty((qty - virtualFrozenQty) );
-                    addList.add(outInStockDTO);
-                } else if (MathUtil.compareTo(virtualFrozenQty, qty) > MathUtil.ZERO) {
-                    outInStockDTO.setQty((virtualFrozenQty - qty) );
-                    subList.add(outInStockDTO);
-                } else {
-                    log.info("无需要多退少补的库存需要变更");
-                }
-
-            } else {
-                for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
-                    VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-                    outInStockDTO.setBillDate(LocalDate.now());
-                    outInStockDTO.setSourceId(finishListDTO.getSourceId());
-                    outInStockDTO.setSourceCode(finishListDTO.getSourceCode());
-                    outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
-                    outInStockDTO.setSourceDetailId(applicationDetailEntity.getId());
-                    outInStockDTO.setBillDate(LocalDate.now());
-                    outInStockDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
-                    outInStockDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                    outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
-                    outInStockDTO.setBomVersion(applicationDetailEntity.getBomVersion());
-                    if (StrUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
-                        continue;
-                    }
-                    outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
-
-                    Integer virtualFrozenQty = applicationDetailEntity.getVirtualFrozenQty();
-                    Integer qty = applicationDetailEntity.getPickingQty();
-
-                    if (MathUtil.compareTo(qty, virtualFrozenQty) > MathUtil.ZERO) {
-                        outInStockDTO.setQty((qty - virtualFrozenQty) * bomChildrenSkuDTO.getQuantity());
-                        addList.add(outInStockDTO);
-                    } else if (MathUtil.compareTo(virtualFrozenQty, qty) > MathUtil.ZERO) {
-                        outInStockDTO.setQty((virtualFrozenQty - qty) * bomChildrenSkuDTO.getQuantity());
-                        subList.add(outInStockDTO);
-                    } else {
-                        log.info("无需要多退少补的库存需要变更");
-                    }
-                }
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(finishListDTO.getSourceId());
+            outInStockDTO.setSourceCode(finishListDTO.getSourceCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
+            outInStockDTO.setSourceDetailId(applicationDetailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(applicationDetailEntity.getSkuId());
+            outInStockDTO.setSkuNo(applicationDetailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
+            outInStockDTO.setBomVersion(applicationDetailEntity.getBomVersion());
+            if (StrUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
+                continue;
             }
-            applicationDetailEntity.setVirtualFrozenQty(applicationDetailEntity.getPickingQty());
-        }
-        if (CollectionUtils.isNotEmpty(addList)) {
-            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
-            stockParamDTO.setParamList(addList);
-            virtualInventoryTransCoreService.approve(stockParamDTO);
-        }
-        if (CollectionUtils.isNotEmpty(subList)) {
-            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_RETURN_HANDLE.getCode());
-            stockParamDTO.setParamList(subList);
-            virtualInventoryTransCoreService.approve(stockParamDTO);
-        }
+            outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
+            Integer virtualFrozenQty = applicationDetailEntity.getVirtualFrozenQty();
+            Integer qty = applicationDetailEntity.getPickingQty();
+            if (MathUtil.compareTo(qty, virtualFrozenQty) > MathUtil.ZERO) {
+                outInStockDTO.setQty((qty - virtualFrozenQty) );
+                addList.add(outInStockDTO);
+            } else if (MathUtil.compareTo(virtualFrozenQty, qty) > MathUtil.ZERO) {
+                outInStockDTO.setQty((virtualFrozenQty - qty) );
+                subList.add(outInStockDTO);
+            } else {
+                log.info("无需要多退少补的库存需要变更");
+            }
+            if (CollectionUtils.isNotEmpty(addList)) {
+                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
+                stockParamDTO.setParamList(addList);
+                virtualInventoryTransCoreService.approve(stockParamDTO);
+            }
+            if (CollectionUtils.isNotEmpty(subList)) {
+                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_RETURN_HANDLE.getCode());
+                stockParamDTO.setParamList(subList);
+                virtualInventoryTransCoreService.approve(stockParamDTO);
+            }
 
-        //更新虚拟仓冻结数量
-        requisitionApplicationDetailService.updateBatchById(applicationDetailList);
+            //更新虚拟仓冻结数量
+            requisitionApplicationDetailService.updateBatchById(applicationDetailList);
+        }
     }
 
 
