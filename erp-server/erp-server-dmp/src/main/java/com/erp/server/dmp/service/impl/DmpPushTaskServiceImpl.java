@@ -370,12 +370,12 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
         }
-        List<DmpPushTaskEntity> noNeedSyncIds = list.stream().filter(obj ->
+        List<String> noNeedSyncIds = list.stream().filter(obj ->
                         (!SyncStatusEnum.IN_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())))
-                .collect(Collectors.toList());
-        noNeedSyncIds.forEach(dmpPushTaskEntity -> dmpPushTaskEntity.setStatus(SyncStatusEnum.NO_NEED_SYNC.getCode()));
+                .map(DmpPushTaskEntity::getId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(noNeedSyncIds)) {
-            updateBatchById(noNeedSyncIds, 500);
+            this.lambdaUpdate().in(DmpPushTaskEntity::getId, noNeedSyncIds)
+                    .set(DmpPushTaskEntity::getStatus, SyncStatusEnum.NO_NEED_SYNC.getCode()).update();
         }
         return Boolean.TRUE;
     }
