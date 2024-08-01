@@ -17,6 +17,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoInfoService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -42,6 +43,7 @@ public class DmpInputAliExpressOrderLogisticNextDmpHandler extends DmpInputDoNex
 			List<String> orderIdList = dmpInputMongoEntityList.stream().map(d -> d.get("order_id").toString()).collect(Collectors.toList());
 
 			paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
+			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");
 			if(CollUtil.isNotEmpty(findMongoData)) {
 				Map<String, Map<String, Object>> orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
@@ -77,6 +79,7 @@ public class DmpInputAliExpressOrderLogisticNextDmpHandler extends DmpInputDoNex
 								value.put("logisticsTypeCode", logistic_info.get("logistics_type_code"));
 								value.put("receiveStatus", logistic_info.get("receive_status"));
 								value.put("currencyCode", currencyCode);
+								value.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, nextLevelId);
 								valueList.add(value);
 							}
 							dmpInputDataDmpRelationMaps.put(Collections.singletonList(orderDetails), valueList);
