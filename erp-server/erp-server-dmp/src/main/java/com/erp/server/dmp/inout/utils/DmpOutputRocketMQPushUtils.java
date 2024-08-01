@@ -142,8 +142,9 @@ public class DmpOutputRocketMQPushUtils{
 		String code = "";
 		if(status.contains(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordService.getById(id);
+			errorCount = dmpOutputTaskRecordEntity.getErrorCount();
 			if(!responseData.contains("数据已被他人锁住，为避免数据错误，请稍后再试")) {
-				errorCount = dmpOutputTaskRecordEntity.getErrorCount() + 1;
+				errorCount = errorCount + 1;
 			}
 			if(errorCount >= 3 && errorCount%3 == 0) {
 				status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
