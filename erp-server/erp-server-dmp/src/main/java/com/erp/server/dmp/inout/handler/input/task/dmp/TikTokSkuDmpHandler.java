@@ -17,6 +17,9 @@ import jodd.util.StringUtil;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -39,8 +42,22 @@ public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
                     List<Map<String, Object>> skuList = (List<Map<String, Object>>) skuObj;
 
                     skuList.forEach(l -> {
-                        l.put("platformCreateTime", dmpInputMongoChild.get("createTime"));
-                        l.put("platformUpdateTime", dmpInputMongoChild.get("updateTime"));
+                        //创建时间
+                        Object createTimeObj = dmpInputMongoChild.get("createTime");
+                        if (createTimeObj != null) {
+                            // 使用Instant类将Unix时间戳转换为LocalDateTime对象
+                            LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(createTimeObj + "")), ZoneId.systemDefault());
+                            l.put("platformCreateTime", payTime);
+                        }
+
+                        //修改时间
+                        Object updateTimeObj = dmpInputMongoChild.get("updateTime");
+                        if (updateTimeObj != null) {
+                            // 使用Instant类将Unix时间戳转换为LocalDateTime对象
+                            LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(updateTimeObj + "")), ZoneId.systemDefault());
+                            l.put("platformUpdateTime", payTime);
+                        }
+
                         l.put("spuId", dmpInputMongoChild.get("fid"));
 
                         List<Map<String, Object>> mainImages = (List<Map<String, Object>>) dmpInputMongoChild.get("mainImages");
