@@ -376,7 +376,9 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (CollectionUtils.isNotEmpty(noNeedSyncIds)) {
             //http://pm.ulanzi.cn:8020/browse/ERP-3637?filter=-1  手动标记分货单同步完结时注意，同时修改dmp_push_task表中的状态为同步成功。
             this.lambdaUpdate().in(DmpPushTaskEntity::getId, noNeedSyncIds)
-                    .set(DmpPushTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode()).update();
+                    .set(DmpPushTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
+                    .set(DmpPushTaskEntity::getReturnMsg,"")
+                    .update();
         }
         return Boolean.TRUE;
     }
