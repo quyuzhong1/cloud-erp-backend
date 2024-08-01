@@ -820,6 +820,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 } else {
                     customs.setTaxRate(BigDecimal.ZERO);
                 }
+                //根据sku获取是否存在记录
+                ProductCustomsEntity oldEntity = productCustomsService.getBySkuIdAndCountry(skuId, country);
+                if (Objects.nonNull(oldEntity)){
+                    customs.setId(oldEntity.getId());
+                }
                 customsList.add(customs);
 
                 //存在错误信息则

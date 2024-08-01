@@ -104,4 +104,16 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                 .eq(StringUtils.isNotEmpty(country), ProductCustomsEntity::getCountry, country)
                 .list();
     }
+
+    @Override
+    public ProductCustomsEntity getBySkuIdAndCountry(String skuId, String country) {
+        if (StringUtils.isBlank(skuId)){
+            return null;
+        }
+        List<ProductCustomsEntity> list = this.lambdaQuery().eq(ProductCustomsEntity::getSkuId, skuId).eq(ProductCustomsEntity::getCountry, country).list();
+        if (CollectionUtil.isNotEmpty(list)){
+            return list.get(0);
+        }
+        return null;
+    }
 }

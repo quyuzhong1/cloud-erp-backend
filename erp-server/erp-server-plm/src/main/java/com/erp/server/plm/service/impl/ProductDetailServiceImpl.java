@@ -1152,6 +1152,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     customsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
                     customsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
                 }
+                //根据sku获取是否存在记录
+                ProductCustomsEntity oldEntity = productCustomsService.getBySkuIdAndCountry(skuId, customsDTO.getCountry());
+                if (Objects.nonNull(oldEntity)){
+                    customsEntity.setId(oldEntity.getId());
+                }
                 customsEntityList.add(customsEntity);
             }
             addProductCustomsLog(productCustomsDTO, id);
@@ -1384,6 +1389,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }else {
                     customsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
                     customsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                }
+                //根据sku获取是否存在记录
+                ProductCustomsEntity oldEntity = productCustomsService.getBySkuIdAndCountry(customsDTO.getSkuId(), customsDTO.getCountry());
+                if (Objects.nonNull(oldEntity)){
+                    customsEntity.setId(oldEntity.getId());
                 }
                 customsEntityList.add(customsEntity);
             }
