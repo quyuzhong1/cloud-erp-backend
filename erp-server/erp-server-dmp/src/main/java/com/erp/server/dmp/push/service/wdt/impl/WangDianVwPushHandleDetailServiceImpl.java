@@ -1,12 +1,14 @@
 package com.erp.server.dmp.push.service.wdt.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.enums.ApiModuleTypeEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
@@ -17,6 +19,7 @@ import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WangDianVwPushHandleDetailService;
+import com.erp.server.dmp.service.DmpPushTaskService;
 import com.sdk.wangdian.sdk.WdtErpException;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.VwPushHandleDetailAPI;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwPushHandelDetailPushDTO;
@@ -52,12 +55,14 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
 
     @Resource
     private RedissonClient redissonClient;
+    @Resource
+    private DmpPushTaskService dmpPushTaskService;
 
     private static final String LOCK = "wdt:push:virtualWarehouseSync:";
 
 
     @Override
-    public void executeConsumer(VwPushHandelDetailPushDTO pushDTOS) {
+    public void executeConsumer(VwPushHandelDetailPushDTO pushDTOS, DmpPushTaskEntity dmpPushTaskEntity) {
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
@@ -82,22 +87,27 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
                 }
                 try {
                     VwPushHandelDetailResponse pushResult = api.push(request, request.get("detailList"));
+                    dmpPushTaskEntity.setReturnMsg(JSONObject.toJSONString(pushResult));
                     log.info("旺店通虚拟仓订单创建：响应结果：{}", pushResult);
                     if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
                         dto.setSysType(ThirdSysTypeEnum.WDT.getCode());
                         dto.setSysTypeName(ThirdSysTypeEnum.WDT.getName());
                         buildResultData(pushResult, dto);
                         dto.setHandelDetailId(map.get("sourceId").toString());
-                        log.info("旺店通虚拟仓订单创建：成功同步分货单：{}", dto);
+                        dmpPushTaskEntity.setStatus(dto.getSyncStatus());
+                        log.info("旺店通虚拟仓订单创建：同步分货单：{}", dto);
                         allocationDetailFeign.updateSyncStatus(dto);
+                        dmpPushTaskService.updateById(dmpPushTaskEntity);
                     }
                 } catch (WdtErpException e) {
                     if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
                         dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
                         dto.setHandelDetailId(map.get("sourceId").toString());
                         dto.setFinishDescription(e.getMessage());
-                        log.info("旺店通虚拟仓订单创建：失败同步分货单：{}", dto);
+                        dmpPushTaskEntity.setStatus(dto.getSyncStatus());
+                        log.info("旺店通虚拟仓订单创建：同步分货单：{}", dto);
                         allocationDetailFeign.updateSyncStatus(dto);
+                        dmpPushTaskService.updateById(dmpPushTaskEntity);
                     }
                     throw new ServiceException(e.getMessage());
                 }
