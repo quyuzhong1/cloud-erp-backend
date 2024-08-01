@@ -641,13 +641,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     continue;
                 }
                 outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
-                Integer approveQty = applicationDetailEntity.getApproveQty();
+                Integer virtualFrozenQty = applicationDetailEntity.getVirtualFrozenQty();
                 Integer qty = applicationDetailEntity.getPickingQty();
-                if (MathUtil.compareTo(qty, approveQty) > MathUtil.ZERO) {
-                    outInStockDTO.setQty((qty - approveQty) );
+                if (MathUtil.compareTo(qty, virtualFrozenQty) > MathUtil.ZERO) {
+                    outInStockDTO.setQty((qty - virtualFrozenQty) );
                     addList.add(outInStockDTO);
-                } else if (MathUtil.compareTo(approveQty, qty) > MathUtil.ZERO) {
-                    outInStockDTO.setQty((approveQty - qty) );
+                } else if (MathUtil.compareTo(virtualFrozenQty, qty) > MathUtil.ZERO) {
+                    outInStockDTO.setQty((virtualFrozenQty - qty) );
                     subList.add(outInStockDTO);
                 } else {
                     log.info("无需要多退少补的库存需要变更");
@@ -671,14 +671,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     }
                     outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
 
-                    Integer approveQty = applicationDetailEntity.getApproveQty();
+                    Integer virtualFrozenQty = applicationDetailEntity.getVirtualFrozenQty();
                     Integer qty = applicationDetailEntity.getPickingQty();
 
-                    if (MathUtil.compareTo(qty, approveQty) > MathUtil.ZERO) {
-                        outInStockDTO.setQty((qty - approveQty) * bomChildrenSkuDTO.getQuantity());
+                    if (MathUtil.compareTo(qty, virtualFrozenQty) > MathUtil.ZERO) {
+                        outInStockDTO.setQty((qty - virtualFrozenQty) * bomChildrenSkuDTO.getQuantity());
                         addList.add(outInStockDTO);
-                    } else if (MathUtil.compareTo(approveQty, qty) > MathUtil.ZERO) {
-                        outInStockDTO.setQty((approveQty - qty) * bomChildrenSkuDTO.getQuantity());
+                    } else if (MathUtil.compareTo(virtualFrozenQty, qty) > MathUtil.ZERO) {
+                        outInStockDTO.setQty((virtualFrozenQty - qty) * bomChildrenSkuDTO.getQuantity());
                         subList.add(outInStockDTO);
                     } else {
                         log.info("无需要多退少补的库存需要变更");
