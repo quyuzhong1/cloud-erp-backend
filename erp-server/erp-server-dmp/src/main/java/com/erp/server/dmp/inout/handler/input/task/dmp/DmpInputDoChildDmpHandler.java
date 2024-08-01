@@ -75,6 +75,7 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 									dmpInputDmpBaseEntity.put(c.replace(".", ""), value);
 								}
 							}
+							this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
 							dmpInputDataDmpRelationMaps.put(Collections.singletonList(dmpInputMongoChildEntity), Collections.singletonList(dmpInputDmpBaseEntity));
 						}
 					}
@@ -85,7 +86,7 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 		return dmpInputDataDmpRelationMaps;
 	}
 	
-	protected String getChildMongoStorageName() {
+	protected String getDmpCfgInputChildId() {
 		String cfgInputId = dmpCfgInputEntity.getId();
 		List<DmpCfgInputChildEntity> dmpCfgInputChildList = dmpCfgInputChildService.lambdaQuery()
 			.eq(DmpCfgInputChildEntity::getParentId, cfgInputId)
@@ -96,7 +97,14 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 			return null;
 		}
 		DmpCfgInputChildEntity dmpCfgInputChildEntity = dmpCfgInputChildList.get(0);
-		String childId = dmpCfgInputChildEntity.getChildId();
+		return dmpCfgInputChildEntity.getChildId();
+	}
+	
+	protected String getChildMongoStorageName() {
+		String childId = this.getDmpCfgInputChildId();
+		if(StringUtils.isBlank(childId)) {
+			return null;
+		}
 		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(childId) 
 				&& d.getInputStatus().equals(DmpInputTaskStatusEnum.MONGO.getCode()));
 		if(CollUtil.isEmpty(dmpCfgInputConvertEntityList)) {

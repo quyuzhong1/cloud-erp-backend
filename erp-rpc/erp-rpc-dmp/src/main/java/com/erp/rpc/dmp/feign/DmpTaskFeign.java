@@ -241,4 +241,10 @@ public interface DmpTaskFeign {
 
     @PostMapping("feign/dmp/getWarnPullTaskList")
     List<DmpPullTaskEntity> getWarnPullTaskList(@RequestBody List<String> statusList);
+    /**
+     * 获取飞书预警信息需要推送的(Task汇总报告)
+     * @return
+     */
+    @PostMapping("feign/dmp/getWarnTaskReport")
+    List<DmpTaskMsgDTO> getWarnTaskReport(@RequestBody List<String> statusList);
 }

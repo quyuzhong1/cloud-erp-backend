@@ -501,7 +501,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             excelPath = "excel/inventory_area.xlsx";
         }
         if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
-            dataList = this.baseMapper.exportByLocation(searchParamDTO, param.getWarehouseLocationCodeList());
+            if(StringUtils.isNotBlank(param.getWarehouseLocationName())){
+                List<WarehouseLocationEntity> list = warehouseLocationService.listByLocationName(param.getWarehouseLocationName());
+                if(! list.isEmpty()){
+                    List<String> codeList = list.stream().map(WarehouseLocationEntity::getCode).distinct().collect(Collectors.toList());
+                    dataList = this.baseMapper.exportByLocation(searchParamDTO, codeList);
+                }
+            }else {
+                dataList = this.baseMapper.exportByLocation(searchParamDTO, param.getWarehouseLocationCodeList());
+            }
             excelPath = "excel/inventory_location.xlsx";
         }
 

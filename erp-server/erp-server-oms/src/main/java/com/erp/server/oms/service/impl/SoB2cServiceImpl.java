@@ -1257,6 +1257,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             soB2cLogisticsEntity.setLogisticsChannelName(logisticsChannel.getName());
         }
+        if(!existChannelId.equals(logisticsChannelId)){
+            soB2cLogisticsEntity.setTransferLogisticsSupplierId("");
+            soB2cLogisticsEntity.setTransferLogisticsChannelId("");
+        }
         //物流信息更新
         soB2cLogisticsService.updateById(soB2cLogisticsEntity);
 
@@ -3112,17 +3116,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //可用库存
                     useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
                                     && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
-                                    && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
                                     && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                            .orElse(MathUtil.ZERO);
+                            .mapToInt(obj -> obj.getInventoryTotal()).sum();
                     //冻结库存
                     freezeQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
                                     && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
-                                    && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
                                     && InventoryStatusEnum.FROZEN.getCode().equals(obj.getInventoryStatus()))
-                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                            .orElse(MathUtil.ZERO);
+                            .mapToInt(obj -> obj.getInventoryTotal()).sum();
                 }
                 detailDTO.setUseableQty(useableQty);
                 detailDTO.setFreezeQty(freezeQty);
@@ -3226,10 +3226,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //可用库存
             Integer childUseableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())
                             && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
-                            && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
                             && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                    .orElse(MathUtil.ZERO);
+                    .mapToInt(obj -> obj.getInventoryTotal()).sum();
             if ((detailDTO.getQty() * childrenSkuDTO.getQuantity() > childUseableQty) && !ignoreInventorySkuIds.contains(childrenSkuDTO.getSkuId())) {
                 isOutStock = Boolean.TRUE;
                 break;
@@ -7063,6 +7061,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             soB2cLogisticsEntity.setTransferLogisticsSupplierId(dto.getTransferLogisticsSupplierId());
             soB2cLogisticsEntity.setTransferLogisticsChannelId(dto.getTransferLogisticsChannelId());
+            soB2cLogisticsEntity.setVersion(null);
             updateLogisticList.add(soB2cLogisticsEntity);
 
             ShopInfoEntity shopInfo = shopInfoEntityList.stream().filter(v -> v.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(new ShopInfoEntity());
@@ -7160,8 +7159,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> cancelOrderForecast(List<String> ids) {
         List<SoB2cEntity> soB2cEntityList = listByIds(ids);
         List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
@@ -7172,10 +7169,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> deleteErrorIds = new ArrayList<>();
         List<SoB2cErrorEntity> errorList = soB2cErrorService.getByMainIdsAndType(ids, SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
         List<SoB2cErrorEntity> addOrUpdateErrors = new ArrayList<>();
-        List<TransferDeclareDTO.UpdateForcastStatusDTO> updateInstockForcastList = new ArrayList<>();
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
-            TransferDeclareDTO.UpdateForcastStatusDTO updateForcastStatusDTO = new TransferDeclareDTO.UpdateForcastStatusDTO();
-            updateForcastStatusDTO.setSoId(soB2cEntity.getId());
 
             if (!TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus())) {
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "仅可操作预报成功订单的单据"));
@@ -7224,7 +7218,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(soB2cEntity.getSignOrderError())) {
                     soB2cEntity.setSignOrderError("");
                 }
-                updateForcastStatusDTO.setStatus(TransferStatusEnum.WAIT.getCode());
                 updateList.add(soB2cEntity);
                 if (StringUtils.isNotBlank(error.getId())) {
                     deleteErrorIds.add(error.getId());
@@ -7245,8 +7238,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //更新操作同个事务
         soB2cService.orderForecastUpdateSoAndError(updateList,deleteErrorIds,addOrUpdateErrors,new ArrayList<>());
 
-        //更新入库预报单详情的上传状态
-        transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
         return resultDTOList;
     }
 
@@ -7519,7 +7510,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = new ArrayList<>();
         //无需计算库存sku
         List<String> ignoreInventorySkuIds = new ArrayList<>();
-
+        // 国家信息
+        List<String> countryList = records.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getCountry()))
+                .map(SoB2cDTO.ExcelExportDTO::getCountry)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> countryNameMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(countryList)){
+            countryNameMap = sysDictFeign.listCountryByIds(countryList)
+                    .stream()
+                    .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
+        }
         //按子级SKU导出或缺货
         if (SoB2cExportTypeEnum.CHILD_EXPORT.getCode().equals(exportType) || isOutStock) {
             //根据SKU查询BOM判断是否是组合SKU
@@ -7561,6 +7563,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 exportDTO.setProductName(productDetailEntity.getName());
                 exportDTO.setVariantProperty(productDetailEntity.getVariantProperty());
             }
+            String countryName = countryNameMap.getOrDefault(exportDTO.getCountry(),"");
+            exportDTO.setCountryName(countryName);
 
             //仓位名称
             String warehouseLocationName = warehouseLocationEntityList.stream().filter(obj -> StrUtil.equals(obj.getCode(), exportDTO.getWarehouseLocation())
@@ -7575,10 +7579,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //可用库存
                     useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(exportDTO.getSkuId())
                                     && obj.getWarehouseId().equals(exportDTO.getWarehouseId())
-                                    && obj.getWarehouseLocationId().equals(exportDTO.getWarehouseLocation())
                                     && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                            .orElse(MathUtil.ZERO);
+                            .mapToInt(obj -> obj.getInventoryTotal()).sum();
                 }
                 exportDTO.setUseableQty(useableQty);
                 //存在仓库则需要判断是否缺货

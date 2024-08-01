@@ -255,6 +255,21 @@ public class InventoryDTO implements Serializable {
          * 仓位编码集合
          */
         private List<String> warehouseLocationCodeList;
+
+        /**
+         * 库区名称
+         */
+        private String warehouseAreaName;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
     }
 
     /**

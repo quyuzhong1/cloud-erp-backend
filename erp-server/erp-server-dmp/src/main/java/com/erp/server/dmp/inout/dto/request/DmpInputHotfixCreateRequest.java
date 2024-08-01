@@ -31,4 +31,8 @@ public class DmpInputHotfixCreateRequest extends DmpInputCreateRequest{
      */
     private Integer execTimeout;
     
+    /**
+     * 是否切割时间
+     */
+    private boolean splitFlag = false;
 }

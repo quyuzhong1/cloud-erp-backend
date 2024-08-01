@@ -1157,4 +1157,16 @@ public class RequisitionApplicationDTO implements Serializable {
         private String shopName;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class handleDataDTO {
+        /**
+         * 主键ids
+         */
+        private List<String> ids;
+        /**
+         * 标记
+         */
+        private Boolean isFlag;
+    }
 }

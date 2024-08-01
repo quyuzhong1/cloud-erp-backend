@@ -7,7 +7,6 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.UnitEnum;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -25,7 +24,6 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
-import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
@@ -126,8 +124,8 @@ public class PackageServiceImpl implements PackageService {
         }*/
 
         //扫描判断：扫描判断是否平台取消以及拦截单【异常提示：订单单号被拦截/取消，不可组包操作】
-        if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getForcastStatus())
-                || TransferStatusEnum.FAILURE.getCode().equals(scanResult.getForcastStatus())) {
+        if (TransferStatusEnum.WAIT.getCode().equals(scanResult.getTransferStatus())
+                || TransferStatusEnum.FAILURE.getCode().equals(scanResult.getTransferStatus())) {
             //校验订单状态中转状态为待中转/上传失败，扫描识别后非成功状态若勾选则取消勾选并禁用，若未勾选则直接禁用
             throw new ServiceException(ApiError.TRANSFER_FAILURE_NOT_PACKAGE);
         }

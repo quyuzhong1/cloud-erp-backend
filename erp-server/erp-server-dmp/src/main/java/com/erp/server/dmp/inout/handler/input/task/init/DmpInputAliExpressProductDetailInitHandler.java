@@ -1,10 +1,12 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.net.ssl.SSLHandshakeException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -30,6 +32,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,7 +57,7 @@ public class DmpInputAliExpressProductDetailInitHandler extends DmpInputInitHand
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
 			findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
 		}
-		if(findMongoData == null) {
+		if(CollUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}
 		
@@ -69,28 +72,57 @@ public class DmpInputAliExpressProductDetailInitHandler extends DmpInputInitHand
 		
         IopRequest request = new IopRequest();
         String typeId = dmpCfgInputEntity.getTypeId();
+        String dataNode = JSON.parseObject(dmpCfgInputEntity.getExtendJson()).getString("dataNode");
+        
         DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
         
         String apiType = dmpCfgApiEntity.getApiType();
 		request.setApiName(apiType);
-        
-        IopResponse response = null;
+		
         for(Map<String, Object> findMongo : findMongoData) {
-        	request.addApiParameter("product_id", findMongo.get("product_id").toString());
-            try {
-				response = client.execute(request, token, Protocol.TOP);
-			} catch (ApiException e) {
-				throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
-			}
-            JSONObject body = JSON.parseObject(response.getBody());
-            JSONObject data = body.getJSONObject("aliexpress_offer_product_query_response");
-            JSONObject result = data.getJSONObject("result");
+        	String product_id = findMongo.get("product_id").toString();
+			request.addApiParameter("product_id", product_id);
+        	JSONObject data = null;
+        	long sleepTime = 1000;
+        	while(data == null) {
+        		data = this.execute(client, request, token, apiType , dataNode);
+        		if(data == null) {
+        			try {
+						Thread.sleep(sleepTime);
+					} catch (InterruptedException e) {}
+        			sleepTime = sleepTime + 1000;
+        		}
+        	}
             
+            JSONObject result = data.getJSONObject("result");
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
     		dmpInputTaskInitDTO.setMsg(result.toJSONString());
     		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         }
         
 		return dmpInputTaskInitDTOList;
+	}
+	
+	private JSONObject execute(IopClient client , IopRequest request , String token , String apiType , String dataNode){
+		IopResponse response = null;
+		try {
+			response = client.execute(request, token, Protocol.TOP);
+		} catch (ApiException e) {
+			Throwable cause = e.getCause();
+			if(cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {
+				return null;
+			}
+			throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+		}
+		JSONObject body = JSON.parseObject(response.getBody());
+        JSONObject data = body.getJSONObject(dataNode);
+        if(data == null) {
+        	JSONObject errorResponse = body.getJSONObject("error_response");
+        	String code = errorResponse.getString("code");
+        	if(!"ApiCallLimit".equals(code) && !"15".equals(code)) {
+        		throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + errorResponse.getString("msg"));
+        	}
+        }
+		return data;
 	}
 }

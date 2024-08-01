@@ -920,7 +920,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：FBA货件
-        addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+        addDTO.setSourceType(SourceTypeEnum.OVERSEAS_INBOUND.getCode());
         //默认调出日期：当前日期
         addDTO.setBillDate(LocalDate.now());
         //默认调拨方向：普通

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.server.dmp.inout.utils.DmpOutputRocketMQPushUtils;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -51,8 +50,9 @@ public class DmpOutputTaskJob {
 		List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
 			.in(CollUtil.isNotEmpty(ids) ,DmpOutputTaskRecordEntity::getId, ids)
 			.in(CollUtil.isNotEmpty(mainIds) ,DmpOutputTaskRecordEntity::getMainId, mainIds)
-			.in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.INIT.getCode() , DmpOutputTaskRecordStatusEnum.MQERROR.getCode() , DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode()))
-			.last(" order by update_time limit " + size)
+			.eq(DmpOutputTaskRecordEntity::getIsDeleted, false)
+			.last(CollUtil.isEmpty(ids) , " and (status in ('init' , 'mqerror' , 'cosumererror') or (status = 'mqsuccess' and update_time < (CURRENT_TIMESTAMP - interval '7200 seconds'))) "
+					+ "order by update_time limit " + size)
 			.list();
 		
 		dmpOutputRocketMQPushUtils.dealDmpOutputTaskRecordEntityList(dmpOutputTaskRecordEntityList);

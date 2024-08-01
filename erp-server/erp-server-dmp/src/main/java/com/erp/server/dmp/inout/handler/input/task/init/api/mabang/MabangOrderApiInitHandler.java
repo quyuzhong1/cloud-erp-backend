@@ -35,9 +35,8 @@ public class MabangOrderApiInitHandler implements DmpInputApiInitHandler {
 	public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
 
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-        DmpInputMabangApiInitRequest dmpInputMabangApiInitRequest = (DmpInputMabangApiInitRequest) dmpInputApiInitRequest;
 
-        String requestParam = dmpInputMabangApiInitRequest.getRequestParam();
+        String requestParam = dmpInputApiInitRequest.getRequestParam();
         Map<String, Object> paramMap = JSON.parseObject(requestParam, Map.class);
 
         String pageSize = "1000";
@@ -51,10 +50,10 @@ public class MabangOrderApiInitHandler implements DmpInputApiInitHandler {
             if (StrUtil.isNotBlank(pageIndex)){
                 paramMap.put("cursor", pageIndex);
             }
-            paramMap.put("updateTimeStart", dmpInputMabangApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            paramMap.put("updateTimeEnd", dmpInputMabangApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            paramMap.put("updateTimeStart", dmpInputApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            paramMap.put("updateTimeEnd", dmpInputApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             paramMap.put("maxRows", pageSize);
-            ParamHeaderVO paramVo = MabangTool.getParamMap(dmpInputMabangApiInitRequest.getApiType(), 0, paramMap);
+            ParamHeaderVO paramVo = MabangTool.getParamMap(dmpInputApiInitRequest.getApiType(), 0, paramMap);
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
             if (!Objects.equals(responseMap.getInteger("code"), 200)) {
                 log.error("调用url={} param={} {}马帮销售订单数据失败 responseMap={}", UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));

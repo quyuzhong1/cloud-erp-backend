@@ -1247,9 +1247,30 @@
                     left join product_sale ps on ps.sku_id = pd.id AND  ps.is_deleted = FALSE
         <where>
             it.is_deleted = false
-            <if test="params.skuIdList != null and params.skuIdList.size() > 0">
+            <if test="params.productName != null and params.productName != ''">
+                and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                and it.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <!--<if test="params.skuIdList != null and params.skuIdList.size() > 0">
                 and it.sku_id in
                 <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>-->
+            <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                and pi.spu_no in
+                <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+                and ps.sale_state in
+                <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
@@ -1326,16 +1347,37 @@
                              left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
                              left join product_info pi on pd.product_id = pi.id AND pi.is_deleted = FALSE
                              left join product_sale ps on ps.sku_id = pd.id AND ps.is_deleted = FALSE
-                             left join (select distinct s.code as location_code, wa.code as area_code, s.warehouse_id
+                             left join (select distinct s.code as location_code, wa.code as area_code, s.warehouse_id, wa.name as area_name
                                         from warehouse_location s
                                                  left join warehouse_location wa
                                                            on s.parent_id = wa.id and s.is_deleted = false and wa.is_deleted = false) wl
                                        on it.warehouse_location = wl.location_code and it.warehouse_id = wl.warehouse_id
                     <where>
                         it.is_deleted = false
+                        <if test="params.productName != null and params.productName != ''">
+                            and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
+                        </if>
+                        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                            and it.sku_no in
+                            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                                #{item}
+                            </foreach>
+                        </if>
                         <if test="params.skuIdList != null and params.skuIdList.size != ''">
                             and it.sku_id in
                             <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                                #{item}
+                            </foreach>
+                        </if>
+                        <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                            and pi.spu_no in
+                            <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                                #{item}
+                            </foreach>
+                        </if>
+                        <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+                            and ps.sale_state in
+                            <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
                                 #{item}
                             </foreach>
                         </if>
@@ -1356,6 +1398,9 @@
 							<foreach collection="warehouseAreaCodeList" item="code" open="(" close=")" separator=",">
                                 #{code}
                             </foreach>
+                        </if>
+                        <if test="params.warehouseAreaName != null and params.warehouseAreaName != ''">
+                            and wl.area_name = #{params.warehouseAreaName}
                         </if>
                         <if test="params.permissionSql != null and params.permissionSql != ''">
                             ${params.permissionSql}
@@ -1418,9 +1463,30 @@
                                 left join product_sale ps on ps.sku_id = pd.id AND ps.is_deleted = FALSE
         <where>
             it.is_deleted = false
+            <if test="params.productName != null and params.productName != ''">
+                and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                and it.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.skuIdList != null and params.skuIdList.size != ''">
                 and it.sku_id in
                 <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                and pi.spu_no in
+                <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+                and ps.sale_state in
+                <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
