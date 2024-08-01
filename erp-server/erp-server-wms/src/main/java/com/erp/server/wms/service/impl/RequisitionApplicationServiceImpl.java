@@ -644,23 +644,22 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 log.info("无需要多退少补的库存需要变更");
             }
             applicationDetailEntity.setVirtualFrozenQty(applicationDetailEntity.getPickingQty());
-
-            if (CollectionUtils.isNotEmpty(addList)) {
-                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
-                stockParamDTO.setParamList(addList);
-                virtualInventoryTransCoreService.approve(stockParamDTO);
-            }
-            if (CollectionUtils.isNotEmpty(subList)) {
-                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_RETURN_HANDLE.getCode());
-                stockParamDTO.setParamList(subList);
-                virtualInventoryTransCoreService.approve(stockParamDTO);
-            }
-
-            //更新虚拟仓冻结数量
-            requisitionApplicationDetailService.updateBatchById(applicationDetailList);
         }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
+            stockParamDTO.setParamList(addList);
+            virtualInventoryTransCoreService.approve(stockParamDTO);
+        }
+        if (CollectionUtils.isNotEmpty(subList)) {
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_RETURN_HANDLE.getCode());
+            stockParamDTO.setParamList(subList);
+            virtualInventoryTransCoreService.approve(stockParamDTO);
+        }
+
+        //更新虚拟仓冻结数量
+        requisitionApplicationDetailService.updateBatchById(applicationDetailList);
     }
 
 
