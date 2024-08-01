@@ -1532,23 +1532,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return sonItemList;
     }
 
-    /**
-     * 校验打包数量
-     * @param packDateDTOS
-     * @param firstMileDeliveryDetailEntities
-     */
-    private void checkDeliveryQty(List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities) {
-        for (WmsCartonSpecDTO.PackDateDTO packDateDTO : packDateDTOS) {
-            //发货数量
-            int deliveryQty = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(packDateDTO.getId())).mapToInt(req -> req.getDeliveryQty()).sum();
-            //待装箱数量=发货数量-所有已装箱数量
-            int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
-            if (deliveryQty < packQtySum) {
-                throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, packDateDTO.getBoxSpecNo(), packDateDTO.getSkuNo());
-            }
-        }
-    }
-
     @Override
     public OverseasWarehouseInboundDTO.ViewDTO getGenerateOverseasWarehouseInboundView(String id) {
         FirstMileDeliveryEntity entity = this.getById(id);
@@ -1633,7 +1616,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         for (OverseasWarehouseInboundDetailDTO.ViewDTO dto : detailViewList) {
             //装箱数量
-            int packQty = packDateDTOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(req -> req.getPackQty() * req.getBoxQty()).sum();
+            int packQty = packDateDTOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(WmsCartonSpecDTO.PackDateDTO::getPackQty).sum();
             if (packQty > dto.getDeliveryQty()) {
                 dto.setPackQty(dto.getDeliveryQty());
             } else {

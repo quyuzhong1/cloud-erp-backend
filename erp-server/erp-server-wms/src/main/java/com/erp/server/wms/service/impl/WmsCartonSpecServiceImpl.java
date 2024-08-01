@@ -146,7 +146,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 int deliveryQty = taskDetailEntityList.stream().filter(req -> dto.getSkuId().equals(req.getSkuId())).mapToInt(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 dto.setDeliveryQty(deliveryQty);
                 //待装箱数量=发货数量-所有已装箱数量
-                int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
+                int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(WmsCartonSpecDTO.PackDateDTO::getPackQty).sum();
                 dto.setWaitPackQty(deliveryQty - packQtySum);
 
                 //匹配产品信息，设置中文名

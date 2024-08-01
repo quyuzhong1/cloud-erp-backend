@@ -462,11 +462,6 @@ public class WmsCartonSpecDTO implements Serializable {
          * 箱规编号
          */
         private Integer boxSpecNo;
-
-        /**
-         * 箱数
-         */
-        private Integer boxQty;
     }
 
     /**

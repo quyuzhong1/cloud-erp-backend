@@ -2880,22 +2880,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
     }
-    /**
-     * 校验打包数量
-     * @param packDateDTOS
-     * @param soOutstockDetailEntities
-     */
-    private void checkDeliveryQty(List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS, List<SoOutstockDetailEntity> soOutstockDetailEntities) {
-        for (WmsCartonSpecDTO.PackDateDTO packDateDTO : packDateDTOS) {
-            //发货数量
-            int deliveryQty = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(packDateDTO.getId()) && req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getActualQty()).sum();
-            //待装箱数量=发货数量-所有已装箱数量
-            int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
-            if (deliveryQty < packQtySum) {
-                throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, packDateDTO.getBoxSpecNo(), packDateDTO.getSkuNo());
-            }
-        }
-    }
     @Override
     public List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
         List<TmsDeclareBillDTO.SoOutDTO> result = baseMapper.getCanGenerateDeclare(querySourceDTO);
