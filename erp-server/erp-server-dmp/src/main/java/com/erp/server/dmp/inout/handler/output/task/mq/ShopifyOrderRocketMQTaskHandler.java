@@ -4,38 +4,31 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.*;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.MathUtil;
-import com.erp.model.dmp.entity.*;
-import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.model.dmp.entity.DmpSoReceiverEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-import com.sdk.oms.tiktok.dto.tiktok.order.view.DistrictInfoBean;
-import com.sdk.oms.tiktok.dto.tiktok.order.view.LineItemsBean;
-import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Scope("prototype")
-public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -129,7 +122,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setPlatformCode(dmpSoInfoEntity.getThirdCode());
 
         //销售平台
-        orderDTO.setDictPlatform(PlatformDictEnum.TIK_TOK.getCode());
+        orderDTO.setDictPlatform(PlatformDictEnum.SHOPIFY.getCode());
 
         // 店铺ID
         orderDTO.setShopId(dmpSoInfoEntity.getNextLevelId());
@@ -184,15 +177,9 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
         orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
         orderDTO.setInvalidStatus(dmpSoInfoEntity.getInvalidStatus());
-
+        // 作废类型（manual手动作废，automatic自动作废）
+        orderDTO.setInvalidType(dmpSoInfoEntity.getInvalidStatus() ? "automatic" : "");
         orderDTO.setIsCancel(Boolean.FALSE);
-        // 平台订单原始状态
-        orderDTO.setPlatformOrderStatus(dmpSoInfoEntity.getPlatformOriginalStatus());
-        if ("ON_HOLD".equalsIgnoreCase(dmpSoInfoEntity.getPlatformOriginalStatus())) {
-            orderDTO.setRemark("ON_HOLD");
-        } else if ("CANCELLED".equalsIgnoreCase(dmpSoInfoEntity.getPlatformOriginalStatus())) {
-            orderDTO.setRemark("平台取消");
-        }
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
@@ -214,11 +201,8 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
      * 批量转换明细
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntities) {
-        //相同的sku和packageId合并去重
-        Map<String, List<DmpSoDetailEntity>> collect = dmpSoDetailEntities.stream().collect(Collectors.groupingBy(req -> req.getPlatformSku() + req.getPlatformPackageId()));
-
-        return collect.entrySet().stream()
-                .map(e -> intPlatformOrderDetailDTO(dmpSoInfoEntity, e.getValue()))
+        return dmpSoDetailEntities.stream()
+                .map(e -> intPlatformOrderDetailDTO(dmpSoInfoEntity, e))
                 .collect(Collectors.toList());
     }
 
@@ -226,12 +210,9 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     /**
      * 转换明细
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> soDetailEntityList) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, DmpSoDetailEntity soDetailEntity) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
-        if (CollectionUtil.isEmpty(soDetailEntityList)) {
-            return detailDTO;
-        }
-        DmpSoDetailEntity soDetailEntity = soDetailEntityList.get(0);
+
         // 图片URL
         detailDTO.setImageUrl("");
         // skuId
@@ -254,11 +235,10 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         // 库存是否扣除
         detailDTO.setWarehouseId("");
         // 数量
-        detailDTO.setQty(soDetailEntityList.size());
+        detailDTO.setQty(soDetailEntity.getQty());
 
         // 金额
-        BigDecimal salePrice = soDetailEntityList.stream().map(req -> req.getAfterAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
-        detailDTO.setAmount(salePrice);
+        detailDTO.setAmount(soDetailEntity.getAfterAmount());
         // 单价
         detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPrice()));
         // 币别（原币）
@@ -305,7 +285,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
                 .telNumber(soReceiverEntity.getMainPhone())
                 .receiverTelNumber(soReceiverEntity.getReceiverTelNumber())
                 .email(soReceiverEntity.getEmail())
-                .country(soReceiverEntity.getCountry())
+                .country(dmpSoInfoEntity.getCurrencyCode())
                 .provinceName(soReceiverEntity.getProvince())
                 .cityName(soReceiverEntity.getCity())
                 .districtName(soReceiverEntity.getDistrict())
