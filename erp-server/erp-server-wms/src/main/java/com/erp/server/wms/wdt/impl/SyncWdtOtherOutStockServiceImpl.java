@@ -95,7 +95,11 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
             CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
             String[] split = entry.getKey().split("#");
             goods.setSpecNo(split[0]);
-            goods.setPositionNo(split[1]);
+            if(split.length == 1){
+                goods.setPositionNo("");
+            }else {
+                goods.setPositionNo(split[1]);
+            }
             int sum = entry.getValue().stream().mapToInt(item -> item.getNum().intValue()).sum();
             goods.setNum(BigDecimal.valueOf(sum));
             outCollectList.add(goods);

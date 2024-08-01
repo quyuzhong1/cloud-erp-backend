@@ -582,52 +582,32 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             ingoodsList.add(inGoods);
         }
         //转换为同一个其他出库单
-        Map<String, List<CreateOtherStockoutRequest.GoodsList>> outCollect = outgoodsList.stream().collect(Collectors.groupingBy(item -> item.getSpecNo() + "#" + item.getPositionNo()));
-        List<CreateOtherStockoutRequest.GoodsList> outCollectList = new ArrayList<>();
-        for (Map.Entry<String, List<CreateOtherStockoutRequest.GoodsList>> entry : outCollect.entrySet()) {
-            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
-            String[] split = entry.getKey().split("#");
-            goods.setSpecNo(split[0]);
-            goods.setPositionNo(split[1]);
-            int sum = entry.getValue().stream().mapToInt(item -> item.getNum().intValue()).sum();
-            goods.setNum(BigDecimal.valueOf(sum));
-            outCollectList.add(goods);
-        }
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-        DmpPushTaskFeignDTO dmpPushTaskFeignDTO = wdtOtherOutStockService.generateTask(outCollectList, SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), entity.getId(), outCode, thirdWarehouseCode, false);
+        List<CreateOtherStockoutRequest.GoodsList> outGoodsLists = wdtOtherOutStockService.sumBySkuAndPositionNo(outgoodsList);
+        DmpPushTaskFeignDTO dmpPushTaskFeignDTO = wdtOtherOutStockService.generateTask(outGoodsLists, SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), entity.getId(), outCode, thirdWarehouseCode, false);
         unSaveTaskList.add(dmpPushTaskFeignDTO);
         if(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)){
             //其他出库单的中间表数据
-            DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getWarehouseId(), outCode, thirdWarehouseCode, outCollectList, SourceTypeEnum.OTHER_OUTSTOCK);
+            DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getWarehouseId(), outCode, thirdWarehouseCode, outGoodsLists, SourceTypeEnum.OTHER_OUTSTOCK);
             wdtDtoList.add(addDTO);
         }else {
             //其他入库单的中间表数据
-            DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), entity.getWarehouseId(), outCode, thirdWarehouseCode, outCollectList, SourceTypeEnum.OTHER_INSTOCK);
+            DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), entity.getWarehouseId(), outCode, thirdWarehouseCode, outGoodsLists, SourceTypeEnum.OTHER_INSTOCK);
             wdtDtoList.add(addDTO);
         }
 
         //转换为同一个其他入库单
-        Map<String, List<CreateOtherStockinRequest.GoodsList>> inCollect = ingoodsList.stream().collect(Collectors.groupingBy(item -> item.getSpecNo() + "#" + item.getPositionNo()));
-        List<CreateOtherStockinRequest.GoodsList> inCollectList = new ArrayList<>();
-        for (Map.Entry<String, List<CreateOtherStockinRequest.GoodsList>> entry : inCollect.entrySet()) {
-            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            String[] split = entry.getKey().split("#");
-            goods.setSpecNo(split[0]);
-            goods.setPositionNo(split[1]);
-            int sum = entry.getValue().stream().mapToInt(item -> item.getNum().intValue()).sum();
-            goods.setNum(BigDecimal.valueOf(sum));
-            inCollectList.add(goods);
-        }
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        DmpPushTaskFeignDTO taskFeignDTO = wdtOtherInStockService.generateTask(inCollectList, SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), entity.getId(), inCode, thirdWarehouseCode, false);
+        List<CreateOtherStockinRequest.GoodsList> inGoodsLists = wdtOtherInStockService.sumBySkuAndPositionNo(ingoodsList);
+        DmpPushTaskFeignDTO taskFeignDTO = wdtOtherInStockService.generateTask(inGoodsLists, SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), entity.getId(), inCode, thirdWarehouseCode, false);
         unSaveTaskList.add(taskFeignDTO);
         if(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)){
             //其他入库单的中间表数据
-            DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getWarehouseId(), outCode, thirdWarehouseCode, inCollectList, SourceTypeEnum.OTHER_INSTOCK);
+            DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getWarehouseId(), outCode, thirdWarehouseCode, inGoodsLists, SourceTypeEnum.OTHER_INSTOCK);
             wdtDtoList.add(addDTO);
         }else {
             //其他出库单的中间表数据
-            DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), entity.getWarehouseId(), inCode, thirdWarehouseCode, inCollectList, SourceTypeEnum.OTHER_OUTSTOCK);
+            DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), entity.getWarehouseId(), inCode, thirdWarehouseCode, inGoodsLists, SourceTypeEnum.OTHER_OUTSTOCK);
             wdtDtoList.add(addDTO);
         }
 
