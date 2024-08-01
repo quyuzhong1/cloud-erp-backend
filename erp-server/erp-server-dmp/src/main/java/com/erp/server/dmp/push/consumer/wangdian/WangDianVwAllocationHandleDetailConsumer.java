@@ -66,7 +66,8 @@ public class WangDianVwAllocationHandleDetailConsumer<T extends DmpSyncTaskIdDTO
             List<String> thirdCodeList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getThirdCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             if (CollectionUtil.isNotEmpty(thirdCodeList)){
                 log.warn("虚拟仓订单创建->获取分货单推送编号：{},来源单号id:{}", String.join(",",thirdCodeList), pushDTOS.getSourceId());
-                return ApiResult.success();
+                List<String> errorMsgList = detailEntityList.stream().map(VirtualWarehouseAllocationDetailEntity::getFinishDescription).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                return ApiResult.error(String.join(";",errorMsgList));
             }
         }
         //获取当前任务状态-不是成功状态再进行处理
