@@ -24,6 +24,7 @@ import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 
@@ -57,6 +58,7 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 				orderIdList.addAll(key.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList()));
 			}
 			paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
+			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");
 			
 			List<DmpSoInfoEntity> list = dmpSoInfoService.lambdaQuery()

@@ -153,6 +153,9 @@ public class DmpOutputRocketMQPushUtils{
 					code = parseObject.getString("code");
 					if(StringUtils.isBlank(code)) {
 						code = parseObject.getString("fBillNo");
+						if(StringUtils.isBlank(code)) {
+							code = parseObject.getString("sourceId");
+						}
 					}
 				}
 			}

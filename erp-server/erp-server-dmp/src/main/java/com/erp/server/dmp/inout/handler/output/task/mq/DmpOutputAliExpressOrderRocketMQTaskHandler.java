@@ -24,6 +24,7 @@ import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.StringUtil;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpLogisticInfoEntity;
@@ -365,9 +366,21 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if(dmpSoReceiverEntity != null) {
         	receiverDTO.setCountry(dmpSoReceiverEntity.getCountry());
-            receiverDTO.setFirstAddress(dmpSoReceiverEntity.getMainStreet());
-            receiverDTO.setSecondAddress(dmpSoReceiverEntity.getSecondStreet());
-            receiverDTO.setFullAddress(dmpSoReceiverEntity.getFullAddress());
+            String firstAddress = dmpSoReceiverEntity.getMainStreet();
+            String fullAddress = dmpSoReceiverEntity.getFullAddress();
+            if(StringUtils.isBlank(fullAddress)) {
+            	fullAddress = "";
+            }
+            String secondStreet = dmpSoReceiverEntity.getSecondStreet();
+            if(StringUtils.isBlank(secondStreet)) {
+            	secondStreet = "";
+            }
+			if(StringUtils.isBlank(firstAddress)) {
+            	firstAddress = fullAddress + " " + secondStreet;
+            }
+        	receiverDTO.setFirstAddress(firstAddress);
+            receiverDTO.setSecondAddress(secondStreet);
+            receiverDTO.setFullAddress(fullAddress);
             receiverDTO.setCityName(dmpSoReceiverEntity.getCity());
             receiverDTO.setProvinceName(dmpSoReceiverEntity.getProvince());
             receiverDTO.setReceiverName(dmpSoReceiverEntity.getReceiverName());

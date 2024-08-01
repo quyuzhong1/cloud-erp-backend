@@ -44,12 +44,22 @@ public class DmpInputChildCreateHandler extends DmpInputBaseCreateHandler{
 		String parentInputTaskId = dmpInputChildCreateRequest.getParentInputTaskId();
 		String msg = "";
 		if(StringUtils.isBlank(parentInputTaskId)) {
-			msg = "子类任务父任务id不能为空";
+			msg = "子类任务父任务id不能为空" + parentInputTaskId;
 			log.error(msg);
 			if(throwException) {
 				throw new ServiceException(msg);
 			}
 		}
+		
+		DmpInputTaskEntity parentEntity = dmpInputTaskService.getById(parentInputTaskId);
+		if(parentEntity == null) {
+			msg = "父任务不存在" + parentInputTaskId;
+			log.error(msg);
+			if(throwException) {
+				throw new ServiceException(msg);
+			}
+		}
+		String parentNextLevel = parentEntity.getNextLevelId();
 		
 		DmpCfgInputEntity dmpCfgInputEntity = dmpResponse.getDmpCfgInputEntity();
 		String cfgInputId = dmpCfgInputEntity.getId();
@@ -72,7 +82,11 @@ public class DmpInputChildCreateHandler extends DmpInputBaseCreateHandler{
 						if(dmpInputTaskEntity == null) {
 							dmpInputTaskEntity = new DmpInputTaskEntity();
 							dmpInputTaskEntity.setCfgInputId(cfgInputId);
-							dmpInputTaskEntity.setNextLevelId(nextLevelId);
+							if(StringUtils.isBlank(nextLevelId) && StringUtils.isNotBlank(parentNextLevel)) {
+								dmpInputTaskEntity.setNextLevelId(parentNextLevel);
+							}else {
+								dmpInputTaskEntity.setNextLevelId(nextLevelId);
+							}
 							
 							dmpInputTaskEntity.setStartTime(dmpInputChildCreateRequest.getStartTime());
 							dmpInputTaskEntity.setEndTime(dmpInputChildCreateRequest.getEndTime());

@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
+import com.sdk.oms.mercado.dto.mercado.listing.BodyBean;
 import com.sdk.oms.mercado.dto.mercado.listing.ListingViewDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
@@ -86,7 +87,6 @@ public class MercadoProductDetailInitHandler extends DmpInputInitHandler {
 		String path = dmpCfgApiEntity.getApiType();
 		List<List<String>> partition = Lists.partition(productIds, 20);
 
-		List<ListingViewDTO> resultList = new ArrayList<>();
 		for (List<String> list : partition) {
 
 			//入参
@@ -104,13 +104,25 @@ public class MercadoProductDetailInitHandler extends DmpInputInitHandler {
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多Listing数据失败，返回值 responseMap={}",
 						url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
-/*
-			JSONObject jsonObject = JSON.parseObject((String) apiResult.getData());
 
+			ObjectMapper objectMapper = new ObjectMapper();
+			List<ListingViewDTO> dataList = null;
+			try {
+				dataList = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), new TypeReference<List<ListingViewDTO>>() {});
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+				log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+						url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+			}
+			if(CollectionUtil.isEmpty(dataList)){
+				break;
+			}
 
+			List<BodyBean> collect = dataList.stream().map(req -> req.getBody()).collect(Collectors.toList());
 			DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-			dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(Arrays.asList(orderViewDTO)));
-			dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);*/
+			dmpInputTaskInitDTO.setMsg(JSON.toJSONString(collect));
+			dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 		}
 
 		return dmpInputTaskInitDTOList;
