@@ -235,5 +235,13 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
     public ApiResult<Boolean> updateRemark(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO){
         return success(virtualWarehouseAllocationDetailService.updateRemark(updateRemarkDTO));
     }
+    /**
+     * 处理推送失败的第三方编码问题
+     */
+    @PostMapping("/initFailThirdCode")
+    public ApiResult initFailThirdCode(@RequestBody String errorMsg){
+        virtualWarehouseAllocationDetailService.initFailThirdCode(errorMsg);
+        return success();
+    }
 
 }

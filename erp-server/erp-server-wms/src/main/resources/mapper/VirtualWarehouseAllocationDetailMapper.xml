@@ -73,6 +73,12 @@
         <if test="params.sysTypeName!=null and params.sysTypeName!=''">
             , sys_type_name=#{params.sysTypeName}
         </if>
+        <if test="params.finishDescription!=null and params.finishDescription!=''">
+            , finish_description=#{params.finishDescription}
+        </if>
+        <if test="params.syncStatus!=null and params.syncStatus!=''">
+            , sync_status=#{params.syncStatus}
+        </if>
         where id in
         <foreach collection="ids" item="id" open="(" close=")" separator=",">
             #{id}

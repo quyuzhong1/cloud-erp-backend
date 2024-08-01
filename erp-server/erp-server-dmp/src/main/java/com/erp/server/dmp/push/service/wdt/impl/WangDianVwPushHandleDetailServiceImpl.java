@@ -32,6 +32,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 旺店通虚拟仓订单创建处理明细
@@ -84,8 +86,7 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
                     if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
                         dto.setSysType(ThirdSysTypeEnum.WDT.getCode());
                         dto.setSysTypeName(ThirdSysTypeEnum.WDT.getName());
-                        dto.setThirdCode(pushResult.getMessage());
-                        dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.SUCCESS_SYNC.getCode());
+                        buildResultData(pushResult, dto);
                         dto.setHandelDetailId(map.get("sourceId").toString());
                         log.info("旺店通虚拟仓订单创建：成功同步分货单：{}", dto);
                         allocationDetailFeign.updateSyncStatus(dto);
@@ -94,6 +95,7 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
                     if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
                         dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
                         dto.setHandelDetailId(map.get("sourceId").toString());
+                        dto.setFinishDescription(e.getMessage());
                         log.info("旺店通虚拟仓订单创建：失败同步分货单：{}", dto);
                         allocationDetailFeign.updateSyncStatus(dto);
                     }
@@ -105,6 +107,32 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
             throw new ServiceException(ApiError.ERROR_1026);
         } finally {
             lock.unlock();
+        }
+    }
+
+    /**
+     * 构建返回数据
+     * @param pushResult
+     * @param dto
+     */
+    private void buildResultData(VwPushHandelDetailResponse pushResult, VirtualWarehouseAllocationDTO.SyncUpdateDto dto) {
+        if (Objects.nonNull(pushResult.getStatus()) && 0 == pushResult.getStatus()){
+            dto.setThirdCode(pushResult.getMessage());
+            dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.SUCCESS_SYNC.getCode());
+        }else {
+            // 正则表达式匹配模式
+            String pattern = "\\bVO\\d{12}\\b";
+            // 创建 Pattern 对象
+            Pattern r = Pattern.compile(pattern);
+            // 创建 Matcher 对象
+            Matcher m = r.matcher(pushResult.getMessage());
+            // 查找匹配的
+            if (m.find()) {
+                String extractedString = m.group(0);
+                dto.setThirdCode(extractedString);
+            }
+            dto.setFinishDescription(pushResult.getMessage());
+            dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
         }
     }
 }
