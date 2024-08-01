@@ -1,6 +1,8 @@
 package com.erp.server.wms.controller.feign;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.utils.CollectionUtils;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleRelationEntity;
@@ -9,6 +11,7 @@ import com.erp.server.wms.service.VirtualWarehousePushHandleRelationService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +43,9 @@ public class VirtualWarehouseAllocationDetailFeignController {
         List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehousePushHandleRelationService
                 .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handelDetailId));
         List<String> detailIds = handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(detailIds)){
+            return Collections.emptyList();
+        }
         return virtualWarehouseAllocationDetailService.listByIds(detailIds);
     }
 }
