@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 
 import cn.hutool.core.collection.CollUtil;
 
@@ -32,6 +33,7 @@ public class DmpInputAliExpressOrderReceiverDmpHandler extends DmpInputAliExpres
 			List<String> orderIdList = dmpInputMongoChildList.stream().map(d -> d.get("order_id").toString()).collect(Collectors.toList());
 
 			paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
+			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");
 			if(CollUtil.isNotEmpty(findMongoData)) {
 				orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));

@@ -35,6 +35,7 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 			List<ParamData> paramDataList = new ArrayList<>();
 			List<String> orderIdList = dmpInputMongoChildList.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList());
 			paramDataList.add(new ParamData("trade_order_no", "trade_order_no", PannoEnum.IN, orderIdList));
+			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_soOutstock_data");
 			Map<String, Map<String, Object>> soOutstockMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("trade_order_no").toString(), f -> f , (f1 , f2) -> f2));
 			
