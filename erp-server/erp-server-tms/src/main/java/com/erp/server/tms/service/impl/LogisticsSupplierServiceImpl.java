@@ -214,6 +214,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         //这个是删除的同步来源ids
         List<String> deleteSyncSourceIdList = saleChannelList.stream().filter(BaseEntity::getIsDeleted).map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
         List<LogisticsChannelEntity> channelList = logisticsChannelService.listBySyncSourceIds(syncSourceIdList, id);
+        List<LogisticsChannelEntity> allChannels = logisticsChannelService.listByMainId(id);
         //这个是对应删除的渠道id集合
         List<String> deleteChannelIdList = channelList.stream().filter(c -> deleteSyncSourceIdList.contains(c.getSyncSourceId())).map(LogisticsChannelEntity::getId).collect(Collectors.toList());
 
@@ -261,7 +262,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             logisticsChannelService.removeByIdList(deleteChannelIdList);
         }
         //对比现有已开启渠道校验是否需要禁用
-        List<LogisticsChannelEntity> noSyncList = channelList.stream().filter(e -> !syncSourceIdList.contains(e.getSyncSourceId())).collect(Collectors.toList());
+        List<LogisticsChannelEntity> noSyncList = allChannels.stream().filter(e -> !syncSourceIdList.contains(e.getSyncSourceId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(noSyncList)){
             List<String> channelIds = noSyncList.stream().map(LogisticsChannelEntity::getId).distinct().collect(Collectors.toList());
             logisticsChannelService.updateStatusByIds(channelIds, Boolean.TRUE);

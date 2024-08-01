@@ -290,16 +290,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public BatchResultDTO delete(String id) {
         LogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            return BatchResultDTO.fail(id,id, "不存在");
         }
         List<SoB2cLogisticsEntity> b2cLogisticsList = soB2cFeign.listSoB2cLogisticsByChannelId(id);
         if(CollectionUtils.isNotEmpty(b2cLogisticsList)){
-            throw new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
+            return BatchResultDTO.fail(id,entity.getCode(), ApiError.ERROR_CHANNEL_QUOTE.msg);
         }
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
-
-
         removeById(id);
         List<String> channelIdList = Arrays.asList(id);
         //平台物流映射
@@ -310,10 +308,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelAddressService.removeByChannelIdList(channelIdList);
         //发货限制 黑名单
         logisticsChannelBlacklistService.removeByChannelIdList(channelIdList);
-
         //删除模板和渠道的关系表
         shippingTemplateRefChannelService.removeRef(channelIdList);
-
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
     }
@@ -402,7 +398,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (CollectionUtils.isEmpty(syncSourceIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().eq(LogisticsChannelEntity::getMainId, mainId).in(LogisticsChannelEntity::getSyncSourceId, syncSourceIdList).list();
+        return this.lambdaQuery().eq(LogisticsChannelEntity::getMainId, mainId)
+                .in(CollectionUtils.isNotEmpty(syncSourceIdList),LogisticsChannelEntity::getSyncSourceId, syncSourceIdList).list();
     }
 
     @Override
@@ -742,5 +739,13 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                 String.format(msgFormat,DeliveryTypeEnum.getName(old.getDeliveryType()), DeliveryTypeEnum.getName(dto.getDeliveryType())),
                 String.format(msgFormat, UnDeliverableDecisionEnum.getName(old.getUndeliverableDecision()), UnDeliverableDecisionEnum.getName(dto.getUndeliverableDecision())));
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), old.getId(), "发货配置");
+    }
+
+    @Override
+    public List<LogisticsChannelEntity> listByMainId(String id) {
+        if (StringUtils.isBlank(id)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(LogisticsChannelEntity::getMainId, id).list();
     }
 }

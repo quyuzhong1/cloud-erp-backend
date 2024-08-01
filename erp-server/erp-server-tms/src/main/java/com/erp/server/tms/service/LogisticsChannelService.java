@@ -222,4 +222,11 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @param dto
      */
     void deliverySetting(LogisticsChannelDTO.DeliveryDTO dto);
+
+    /**
+     * 根据主键id获取渠道列表
+     * @param id
+     * @return
+     */
+    List<LogisticsChannelEntity> listByMainId(String id);
 }
