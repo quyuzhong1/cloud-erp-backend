@@ -52,42 +52,16 @@ public class MercadoProductDmpHandler extends DmpInputDbConvertDmpHandler{
                 dmpDataMap.put("shopId", list.get(0).getNextLevelId());
 
                 //创建时间
-                Object createTimeObj = mongoDataMap.get("createTime");
+                Object createTimeObj = mongoDataMap.get("dateCreated");
                 if(createTimeObj != null) {
                     dmpDataMap.put("dmpDataMap", createTimeObj);
                 }
 
                 //修改时间
-                Object updateTimeObj = mongoDataMap.get("updateTime");
+                Object updateTimeObj = mongoDataMap.get("lastUpdated");
                 if(updateTimeObj != null) {
                     dmpDataMap.put("dmpDataMap", updateTimeObj);
                 }
-
-                //产品信息
-                Object attributesObj = mongoDataMap.get("attributes");
-                if(attributesObj != null) {
-                    List<Map<String, Object>> attributesList = (List<Map<String, Object>>) attributesObj;
-                    for (Map<String, Object> map : attributesList) {
-                        if ("SELLER_SKU".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
-                            dmpDataMap.put("skuNo", map.get("valueName"));
-                        }
-                        if ("BRAND".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
-                            dmpDataMap.put("brandName", map.get("valueName"));
-                        }
-                    }
-                }
-
-                //状态
-                Object statusObj = mongoDataMap.get("status");
-                if (statusObj != null) {
-                    String status = String.valueOf(statusObj);
-                    if ("active".equalsIgnoreCase(status)) {
-                        dmpDataMap.put("status", "1");
-                    } else {
-                        dmpDataMap.put("status", "3");
-                    }
-                }
-
             }
         }
     }
