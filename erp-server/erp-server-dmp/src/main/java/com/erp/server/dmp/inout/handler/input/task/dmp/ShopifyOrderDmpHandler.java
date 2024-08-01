@@ -36,17 +36,21 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                     if ("fulfilled".equalsIgnoreCase(financialStatus)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("refunded".equalsIgnoreCase(financialStatus)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.REJECT.getCode());
                         dmpDataMap.put("returnStatus", DmpOrderReturnStatusEnum.ORDER_RETURN.getCode());
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("partially_refunded".equalsIgnoreCase(financialStatus)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.REJECT.getCode());
                         dmpDataMap.put("returnStatus", DmpOrderReturnStatusEnum.PARTIAL_RETURN.getCode());
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("voided".equalsIgnoreCase(financialStatus)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.REJECT.getCode());
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
                     } else {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     }
                 }
                 //买家备注
@@ -72,6 +76,7 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                         dmpDataMap.put("shippingAmount", shippingAmount);
                     }
                 }
+
             }
         }
     }
