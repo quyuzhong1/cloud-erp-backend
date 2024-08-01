@@ -7886,9 +7886,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         cfgRuleDeclareService.getRuleDeclareMatchResult(map, maxCustomsAmount, minCustomsAmount, isUpdate,declareProductList);
         if(isUpdatePackingWeight){
             //更新订单包装重量
-            List<SoB2cDeclareProductEntity> productEntityList = soB2cDeclareProductService.listBySoId(id);
-            if(CollectionUtils.isNotEmpty(productEntityList)){
-                BigDecimal packWeight = productEntityList.stream().map(SoB2cDeclareProductEntity::getWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(id);
+            List<SplitSkuDTO> splitSkuDTOS = this.splitBySoDetail(soB2cDetailEntityList,new ArrayList<>(), null, true);
+            if(CollectionUtils.isNotEmpty(splitSkuDTOS)){
+                List<String> keyList = new ArrayList<>();
+                keyList.add(CalculateSizeEnum.GROSS_WEIGHT.getCode());
+                List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
+                Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
+                BigDecimal packWeight = SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS,collect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode()));
                 soB2cLogisticsService.updateWeight(id,logisticsEntity.getId(),packWeight,"更新报关信息同步重量");
             }
 
