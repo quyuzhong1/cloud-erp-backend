@@ -137,7 +137,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "orderNumber" ,source = "deliveryNo"),
             @Mapping(target = "receiverInfo.name",source = "receiverInfoVO.contact"),
             @Mapping(target = "receiverInfo.country",source = "receiverInfoVO.country"),
-            @Mapping(target = "receiverInfo.address",expression = "java(logisticsOrderVO.getReceiverInfoVO().getAddressFirst()+logisticsOrderVO.getReceiverInfoVO().getAddressSecond()+logisticsOrderVO.getReceiverInfoVO().getStreetAddress())"),
+            @Mapping(target = "receiverInfo.address",expression = "java(receiverInfoVO.getAddressFirst()+\" \"+receiverInfoVO.getAddressSecond()+\" \"+receiverInfoVO.getStreetAddress())"),
             @Mapping(target = "receiverInfo.phone",source = "receiverInfoVO.telNumber"),
             @Mapping(target = "receiverInfo.state",source = "receiverInfoVO.province"),
             @Mapping(target = "receiverInfo.city",source = "receiverInfoVO.city"),
