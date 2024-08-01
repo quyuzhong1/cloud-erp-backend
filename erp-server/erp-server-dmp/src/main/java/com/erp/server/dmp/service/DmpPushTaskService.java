@@ -37,7 +37,7 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @param dtos
      * @return
      */
-    List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
+//    List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
 
     /**
      * 根据id推送任务

@@ -1,11 +1,14 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -21,6 +24,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -51,6 +55,7 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -113,15 +118,15 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
      * @param dtos
      * @return
      */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos) {
-        List<DmpPushTaskEntity> dmpPushTaskEntityList=new ArrayList<>();
-        dtos.forEach(dto->{
-            dmpPushTaskEntityList.add(dmpPushTaskService.saveTask(dto));
-        });
-        return dmpPushTaskEntityList;
-    }
+//    @Override
+//    @Transactional(rollbackFor = Exception.class)
+//    public List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos) {
+//        List<DmpPushTaskEntity> dmpPushTaskEntityList=new ArrayList<>();
+//        dtos.forEach(dto->{
+//            dmpPushTaskEntityList.add(dmpPushTaskService.saveTask(dto));
+//        });
+//        return dmpPushTaskEntityList;
+//    }
 
     @Override
     public void sendTask(List<DmpPushTaskEntity> dmpPushTaskEntityList) {
@@ -592,18 +597,53 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
      * 新增或修改
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public String saveOrUpdateDmpSyncTask(DmpPushTaskEntity entity) {
         DmpSyncTaskDTO.OneDTO map = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
-        DmpPushTaskEntity found = getByParam(map);
+        DmpPushTaskServiceImpl bean = ApplicationContextUtils.getBean(DmpPushTaskServiceImpl.class);
+        DmpPushTaskEntity found = bean.queryByParam(map);
         //存在则修改
         if (ObjectUtil.isNotEmpty(found)) {
             entity.setId(found.getId());
             entity.setCreateTime(LocalDateTime.now());
             entity.setUpdateTime(LocalDateTime.now());
+            bean.updateDmpSyncTask(entity);
+        }else {
+			bean.saveDmpSyncTask(entity);
         }
-        this.saveOrUpdate(entity);
         return entity.getId();
+    }
+    
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
+    public DmpPushTaskEntity queryByParam(DmpSyncTaskDTO.OneDTO oneDTO) {
+        return lambdaQuery()
+                .eq(DmpPushTaskEntity::getSourceId, oneDTO.getSourceId())
+                .eq(StringUtils.isNotBlank(oneDTO.getSourceType()),DmpPushTaskEntity::getSourceType, oneDTO.getSourceType())
+                .eq(DmpPushTaskEntity::getSourcePlatformName, oneDTO.getSourcePlatformName())
+                .eq(DmpPushTaskEntity::getTargetPlatformName, oneDTO.getTargetPlatformName())
+                .eq(StringUtils.isNotBlank(oneDTO.getMqTopic()),DmpPushTaskEntity::getMqTopic, oneDTO.getMqTopic())
+                .eq(StringUtils.isNotBlank(oneDTO.getMqTag()),DmpPushTaskEntity::getMqTag, oneDTO.getMqTag())
+                .last("LIMIT 1")
+                .one();
+    }
+    
+    /**
+     * 新增
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void saveDmpSyncTask(DmpPushTaskEntity entity) {
+    	this.save(entity);
+    }
+    
+    /**
+     * 修改
+     */
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
+    public void updateDmpSyncTask(DmpPushTaskEntity entity) {
+    	try {
+			this.updateById(entity);
+		} catch (Exception e) {
+			log.error("更新推送表失败：{}" , entity.getId() , e);
+		}
     }
 
     @Override
@@ -627,20 +667,15 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<DmpPushTaskEntity> saveWdtTaskList(List<DmpPushTaskFeignDTO> dtoList) {
         List<String> sourceIdList = dtoList.stream().map(item -> item.getSourceId()).collect(Collectors.toList());
-        List<DmpPushTaskEntity> list = lambdaQuery()
-                .in(DmpPushTaskEntity::getSourceId, sourceIdList)
-//                .eq(DmpPushTaskEntity::getSourceType, SourceTypeEnum.OTHER_OUTSTOCK.getCode())
-                .eq(DmpPushTaskEntity::getSourcePlatformName, PlatformEnum.ERP.getDesc())
-                .eq(DmpPushTaskEntity::getTargetPlatformName, PlatformEnum.WANGDIAN.getDesc())
-                .eq(DmpPushTaskEntity::getMqTopic, RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC)
-//                .eq(DmpPushTaskEntity::getMqTag, RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName())
-                .list();
+        DmpPushTaskServiceImpl bean = ApplicationContextUtils.getBean(DmpPushTaskServiceImpl.class);
+        List<DmpPushTaskEntity> list = bean.queryList(sourceIdList);
         Map<String, DmpPushTaskEntity> sourceIdEntityMap = list.stream().collect(Collectors.toMap(item1 -> item1.getSourceId() + "#" + item1.getSourceType(), item1 -> item1, (o1,o2) -> o1));
 
-        List<DmpPushTaskEntity> entityList = new ArrayList<>();
+        List<DmpPushTaskEntity> insertEntityList = new ArrayList<>();
+        List<DmpPushTaskEntity> updateEntityList = new ArrayList<>();
+        
         for (DmpPushTaskFeignDTO dto : dtoList) {
             DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
             DmpSyncTaskDTO.OneDTO oneDTO = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
@@ -650,12 +685,20 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 entity.setId(found.getId());
                 entity.setCreateTime(LocalDateTime.now());
                 entity.setUpdateTime(LocalDateTime.now());
+                updateEntityList.add(entity);
+            }else {
+            	insertEntityList.add(entity);
             }
-            entityList.add(entity);
         }
-
-        this.saveOrUpdateBatch(entityList);
-        return entityList;
+        if(CollUtil.isNotEmpty(insertEntityList)) {
+        	bean.insertBatchList(insertEntityList);
+        }
+        if(CollUtil.isNotEmpty(updateEntityList)) {
+        	bean.updateBatchList(updateEntityList);
+        }
+        
+        insertEntityList.addAll(updateEntityList);
+		return insertEntityList;
 
 
 
@@ -678,5 +721,29 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         return saveEntityList;*/
     }
 
-
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
+    public List<DmpPushTaskEntity> queryList(List<String> sourceIdList){
+    	return lambdaQuery()
+                .in(DmpPushTaskEntity::getSourceId, sourceIdList)
+//              .eq(DmpPushTaskEntity::getSourceType, SourceTypeEnum.OTHER_OUTSTOCK.getCode())
+              .eq(DmpPushTaskEntity::getSourcePlatformName, PlatformEnum.ERP.getDesc())
+              .eq(DmpPushTaskEntity::getTargetPlatformName, PlatformEnum.WANGDIAN.getDesc())
+              .eq(DmpPushTaskEntity::getMqTopic, RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC)
+//              .eq(DmpPushTaskEntity::getMqTag, RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName())
+              .list();
+    }
+    
+    @Transactional(rollbackFor = Exception.class)
+    public void insertBatchList(List<DmpPushTaskEntity> insertEntityList) {
+    	this.saveBatch(insertEntityList);
+    }
+    
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
+    public void updateBatchList(List<DmpPushTaskEntity> updateEntityList) {
+    	try {
+			this.updateBatchById(updateEntityList);
+		} catch (Exception e) {
+			log.error("批量更新失败：{}" , JSON.toJSONString(updateEntityList) , e);
+		}
+    }
 }
