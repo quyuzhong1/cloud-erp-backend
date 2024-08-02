@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -14,6 +13,7 @@ import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -24,16 +24,17 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -54,6 +55,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -84,11 +86,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private WarehouseService warehouseService;
-
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
@@ -232,7 +232,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             return new PagingVO<>(pageData);
         }
         List<String> skuIdList = list.stream().map(TransferInDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (TransferInDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -319,7 +319,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         //意见
         String comment = dto.getComment();
         String content = "";
-        LoginUser user = commonService.getUserInfo();
+        LoginUser user = UserContext.getDefaultLoginUser();
         ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
         if (dto.getType().equals(ApproveType.PASS)) {
             handleData(ids);
@@ -535,7 +535,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         List<String> skuIdList = list.stream().map(TransferInDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (TransferInDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -616,6 +616,17 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         viewDTO.setInOrgName(inOrgName);
         List<TransferInDetailDTO.ViewDTO> detailList = transferInDetailService.listByMainId(id);
+        //增加仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList1 = detailList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(inWarehouseId, obj.getInWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList2 = detailList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(outWarehouseId, obj.getOutWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = Stream.concat(paramList1.stream(), paramList2.stream()).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
+        detailList.forEach(viewDTO1 -> {
+            WarehouseLocationEntity inWarehouseLocation = warehouseLocationEntityList.stream().filter(e -> StringUtils.isNotBlank(inWarehouseId) && inWarehouseId.equals(e.getWarehouseId()) && viewDTO1.getInWarehouseLocation().equals(e.getCode())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDTO1.setInWarehouseLocationName(inWarehouseLocation.getName());
+            WarehouseLocationEntity outWarehouseLocation = warehouseLocationEntityList.stream().filter(e -> StringUtils.isNotBlank(outWarehouseId) && outWarehouseId.equals(e.getWarehouseId()) && viewDTO1.getOutWarehouseLocation().equals(e.getCode())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDTO1.setOutWarehouseLocationName(outWarehouseLocation.getName());
+        });
         viewDTO.setDetailList(detailList);
         return viewDTO;
     }

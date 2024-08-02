@@ -66,16 +66,31 @@ public interface ProductConstant {
      * 带电标识
      */
     String IS_ELECTRIC="isElectric";
+    /**
+     * 液体标识
+     */
+    String IS_LIQUID="isLiquid";
 
 
     /**
-     * 产品单位:Pcs
+     * 默认产品单位:Pcs
      */
     String PRODUCT_UNIT_DEFAULT = "Pcs";
 
     /**
-     * 产品属性:自研发
+     * 默认产品属性:自研发
      */
     String PRODUCT_PROPERTY_DEFAULT = "自研发";
+
+    /**
+     * 产品属性:费用
+     */
+    String PRODUCT_PROPERTY_COST = "费用";
+
+    /**
+     * 产品属性:服务
+     */
+    String PRODUCT_PROPERTY_SERVICE = "服务";
+
 
 }

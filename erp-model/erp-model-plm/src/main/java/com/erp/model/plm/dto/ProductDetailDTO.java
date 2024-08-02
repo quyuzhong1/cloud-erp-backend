@@ -325,11 +325,19 @@ public class ProductDetailDTO implements Serializable {
          * sku编号
          */
         private String skuNo;
+        /**
+         * sku Url
+         */
+        private String imagesUrl;
 
         /**
          * 分类
          */
         private String category;
+        /**
+         * 分类id
+         */
+        private String categoryId;
 
         /**
          * 属性
@@ -362,7 +370,43 @@ public class ProductDetailDTO implements Serializable {
          * spu编号
          */
         private String spuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+    }
 
+    @Data
+    public static class ServiceToWavePickingDTO {
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku 编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品图片url
+         */
+        private String imageUrl;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 颜色
+         */
+        private String variantProperty;
+
+        /**
+         * 产品EAN码
+         */
+        private String eanNo;
     }
 
 }

@@ -539,27 +539,4 @@ public class StocktakingProfitLossDTO implements Serializable {
 
     }
 
-    /**
-     * 库存组织ID和SKuId最新单据时间
-     */
-    @Data
-    @NoArgsConstructor
-    public static class LastDTO {
-
-        /**
-         * 单据日期
-         */
-        private LocalDate billDate;
-
-        /**
-         * 库存组织
-         */
-        private String inventoryOrgId;
-
-        /**
-         * skuId
-         */
-        private String skuId;
-    }
-
 }

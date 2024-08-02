@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -65,7 +66,9 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
      * @param params
      * @return
      */
-    List<WmsDataCompareTaskDTO.FbaShipmentDTO> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.FbaShipmentDTO params , @Param("pageSize") Integer pageSize);
+    List<Map<String, String>> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.FbaShipmentDTO params);
     
     Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.FbaShipmentDTO params);
+
+    IPage<FbaShipmentDTO.SearchResultDTO> search(Page query, @Param("params") FbaShipmentDTO.SearchDTO params);
 }

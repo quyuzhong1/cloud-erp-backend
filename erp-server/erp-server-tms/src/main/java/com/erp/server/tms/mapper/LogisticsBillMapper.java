@@ -36,6 +36,15 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@Param("sourceIdList") List<String> sourceIdList);
 
     /**
+     * 根据来源查询物流信息及跟踪号
+     * @Author hyj
+     * @Date 2024/05/11 14:58
+     * @param trackNoList
+     * @return java.util.List<com.erp.model.tms.dto.LogisticsBillDTO.LogisticsBillVo>
+     **/
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByTrackNo(@Param("trackNoList") List<String> trackNoList);
+
+    /**
      * 统计tab
      *@parms permissionSql
      *@return 
@@ -51,15 +60,7 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@author yl
      *@date 2023-11-16
      */
-    IPage<LogisticsBillDTO.PagingVO> paging(Page query, @Param("params")LogisticsBillDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
-
-    /**
-     * 自己统计分页总数
-     * @param params
-     * @param statusList
-     * @return
-     */
-    Long pageCount(@Param("params")LogisticsBillDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
+    IPage<LogisticsBillDTO.PagingVO> paging(Page query,@Param("params")LogisticsBillDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
     /**
      * 导出
      *@parms dto
@@ -116,5 +117,13 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
                                                                              @Param("mainIds") List<String> mainIds,
                                                                              @Param("transportNoList") List<String> transportNoList,
                                                                              @Param("logisticsSupplierIdList") List<String> logisticsSupplierIdList,
-                                                                             LocalDate startDate, LocalDate endDate);
+                                                                              LocalDate startDate, LocalDate endDate);
+    /**
+     * 根据物流跟踪单号或运单号查询物流单详情
+     * @author will
+     * @date 2024/7/3 18:03
+     * @param logisticsCode
+     * @return BaseDTO
+     */
+    LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(@Param("logisticsCode") String logisticsCode);
 }

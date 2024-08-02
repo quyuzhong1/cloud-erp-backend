@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -200,14 +201,21 @@ public class LogisticsChannelController extends BaseController {
         return success(logisticsChannelService.listAll());
     }
 
-
+    /**
+     * 所有渠道下拉远程搜索
+     * @return
+     */
+    @PostMapping("pagingSelect")
+    public ApiResult<PagingVO<LogisticsChannelDTO.PagingSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<LogisticsChannelDTO.SelectDTO> dto){
+        return success(logisticsChannelService.pagingSelect(dto));
+    }
     /**
      * 所有渠道级联
      * @return
      */
     @GetMapping("tree")
-    public ApiResult<List<BaseDropDownDTO.Tree>> tree(){
-        return success(logisticsChannelService.tree());
+    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam(value = "filterDisabled",required = false, defaultValue = "false") Boolean filterDisabled){
+        return success(logisticsChannelService.tree(filterDisabled));
     }
 
     /**

@@ -177,6 +177,11 @@ public class TransferDeclareDetailDTO implements Serializable {
         */
         private String weightUnit;
 
+        /**
+        * 第三方中转服务商的发货单号
+        */
+        private String shippingOrderNo;
+
     }
 
 

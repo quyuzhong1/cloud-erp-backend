@@ -119,7 +119,20 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @author yl
      * @date 2023-03-21 12:06
      */
+    List<SkuVO> getSkuInfoBySkuIds(@Param("skuIds") List<String> skuIds);
+    /**
+     * 获取sku基础信息
+     * @param skuIds
+     * @return
+     */
     List<SkuVO> getSkuBaseBySkuIds(@Param("skuIds") List<String> skuIds);
+
+    /**
+     * 获取sku 采购信息
+     * @param skuIds
+     * @return
+     */
+    List<SkuVO> listSkuPurchaseBySkuIds(@Param("skuIds") List<String> skuIds);
 
     /**
      * 获取所有产品明细包括删除，用来同步到DMP
@@ -250,6 +263,69 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      */
     List<SkuVO> accessoriesSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state);
     /**
+     * 根据skuid 集合获取到sku基础信息 + 采购信息（产品采购信息+产品采购含税单价）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuCostByIds(@Param("skuIds")List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuProductByIds(@Param("skuIds") List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息 + 包裹信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuPackByIds(@Param("skuIds")List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息 +销售信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuSaleByIds(@Param("skuIds")List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息 + 物流信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuLogisticsByIds(@Param("skuIds")List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息 + 品类信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuCategoryByIds(@Param("skuIds")List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 产品信息 + 采购信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuPurchaseByIds(@Param("skuIds")List<String> skuIds);
+    /**
      * @description: tab
      * @author Will
      * @date: 2024/3/18 19:26
@@ -263,6 +339,8 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return
      */
     List<ProductDetailEntity> getProductDetailByDestDeclarePrice();
+    IPage<SkuVO> pagingSelect(Page query, @Param("params")SkuVO.SelectDTO params);
+
 }
 
 

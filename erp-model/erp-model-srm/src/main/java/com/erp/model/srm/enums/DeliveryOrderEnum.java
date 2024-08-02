@@ -11,6 +11,7 @@ public enum DeliveryOrderEnum {
     @Getter
     public enum ReceiptStatusEnum implements EnumMessage {
         WAIT_CONFIRMED("waitConfirmed","待确认"),
+        PART_CONFIRMED("partConfirmed","部分确认"),
         CONFIRMED("confirmed","已确认"),
         ;
         private final String code;

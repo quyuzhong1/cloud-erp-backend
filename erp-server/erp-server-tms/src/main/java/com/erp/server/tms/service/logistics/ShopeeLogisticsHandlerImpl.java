@@ -64,11 +64,11 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
     /**
      * 虾皮  authId 需要是店铺 shopId
      *
-     * @param authId
+     * @param shopId
      * @return
      */
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
+    public Map<String, String> getLogisticsAuthConfigByShopId(String shopId) {
         //获取商铺配置信息
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
@@ -77,13 +77,13 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         findDTO.setPlatformType(appClientEnum.getPlatformType());
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         Map<String, String> map = new HashMap<>();
-        map.put("id", authId);
+        map.put("id", shopId);
         map.put("logisticsPlatform", getPlatForm().getCode());
         map.put("partnerKey", cfgAppClient.getClientSecret());
         map.put("partnerId", cfgAppClient.getClientId());
         map.put("url", cfgAppClient.getUrl());
-        if (StringUtils.isNotBlank(authId)) {
-            ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(authId);
+        if (StringUtils.isNotBlank(shopId)) {
+            ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(shopId);
             if (Objects.nonNull(shopAuth)) {
                 map.put("shopId", shopAuth.getData().getShopeeId());
                 map.put("token", shopAuth.getData().getAccessToken());
@@ -163,7 +163,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             BaseResponse baseResponse = shopeeShipperService.getChannelList(baseRequest);
             if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
-                logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseResponse));
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" );
@@ -171,7 +171,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             JSONObject response = baseResponse.getResponse();
             String error = response.getString("error");
             if (StrUtil.isNotEmpty(error)) {
-                logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseResponse));
                 log.error("获取渠道列表异常：{}", error);
@@ -182,13 +182,13 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             List<LogisticsChannel> logisticsChannels = JSONObject.parseArray(jsonArray.toJSONString(), LogisticsChannel.class);
             //接口数据映射
             List<LogisticsSaleChannelEntity> logisticsSaleChannelEntities = LogisticsChannelConverter.INSTANCE.channelConvertByShopee(logisticsChannels);
-            logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseResponse));
             return success(logisticsSaleChannelEntities);
         } catch (Exception e) {
             log.error("虾皮接口调用异常：{}", e.getMessage());
-            logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(e));
             return failure(getPlatForm().getName() + ":" + e.getMessage());

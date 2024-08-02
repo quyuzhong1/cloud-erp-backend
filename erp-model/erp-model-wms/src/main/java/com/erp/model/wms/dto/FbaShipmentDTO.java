@@ -12,10 +12,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -448,6 +449,26 @@ public class FbaShipmentDTO implements Serializable {
         private Map<String, String> sqlMap;
 
 
+    }
+
+    /**
+     * 列表查询返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchResultDTO {
+        private String id;
+        private String code;
+    }
+
+    /**
+     * 列表查询返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+        private String code;
+        private String id;
     }
 
     /**

@@ -51,28 +51,9 @@
         select
         <include refid="Base_Column_List"></include>
         from dmp_pull_task_history
-        where is_deleted = false
-        <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
-            and source_type in
-            <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.sourceCode != null and params.sourceCode != '' ">
-            and source_code ilike concat('%',#{params.sourceCode}::text,'%')
-        </if>
-        <if test="params.returnMsg != null and params.returnMsg != '' ">
-            and return_msg ilike concat('%',#{params.returnMsg}::text,'%')
-        </if>
-        <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
-            and target_platform_name = #{params.targetPlatformName}
-        </if>
-        <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
-            and source_platform_name = #{params.sourcePlatformName}
-        </if>
-        <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
-            and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
-        </if>
+        where
+        ${params.sqlMap.default}
+        and is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -85,40 +66,13 @@
         select
         <include refid="Base_Column_List"></include>
         from dmp_pull_task_history
-        where is_deleted = false
-        <if test="params.ids != null and params.ids.size > 0">
-            and id in
-            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.ids == null or params.ids.size == 0">
-            <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
-                and source_type in
-                <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.sourceCode != null and params.sourceCode != '' ">
-                and source_code ilike concat('%',#{params.sourceCode}::text,'%')
-            </if>
-            <if test="params.returnMsg != null and params.returnMsg != '' ">
-                and return_msg ilike concat('%',#{params.returnMsg}::text,'%')
-            </if>
-            <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
-                and target_platform_name = #{params.targetPlatformName}
-            </if>
-            <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
-                and source_platform_name = #{params.sourcePlatformName}
-            </if>
-            <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
-                and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
-            </if>
-        </if>
+        where  ${params.sqlMap.default}
+        and is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
         order by id desc
+        limit 50000
     </select>
 </mapper>

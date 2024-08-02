@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,13 +18,13 @@ import java.io.Serializable;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = false)
 public class ComplaintPolicy implements Serializable {
-    @JSONField(name = "warranty_time")
+    @Alias( "warranty_time")
     private String warrantyTime;
-    @JSONField(name = "exclude_entrepreneur_warranty")
+    @Alias( "exclude_entrepreneur_warranty")
     private boolean excludeEntrepreneurWarranty;
-    @JSONField(name = "complaint_address_id")
+    @Alias( "complaint_address_id")
     private Long complaintAddressId;
-    @JSONField(name = "additional_information")
+    @Alias( "additional_information")
     private String additionalInformation;
 
 }

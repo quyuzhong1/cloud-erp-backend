@@ -46,7 +46,7 @@ public class WmsWorkOptionFeignController {
     private FirstMileDeliveryService firstMileDeliveryService;
 
     @Resource
-    private OverseasDeliveryPlanService overseasDeliveryPlanService;
+    private WmsDeliveryPlanService wmsDeliveryPlanService;
 
     /**
      * 根据入参查询单据数量
@@ -157,12 +157,12 @@ public class WmsWorkOptionFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/overseasDeliveryPlanApprove")
-    public Boolean overseasDeliveryPlanApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+    public Boolean deliveryPlanApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         ApproveOneDTO oneDto = new ApproveOneDTO();
         BeanMapper.copy(baseApproveParamDTO,oneDto);
         String id= CollectionUtils.isNotEmpty(baseApproveParamDTO.getIds())?baseApproveParamDTO.getIds().get(0):"";
         oneDto.setId(id);
-        overseasDeliveryPlanService.approve(oneDto);
+        wmsDeliveryPlanService.approve(oneDto);
         return Boolean.TRUE;
     }
 }

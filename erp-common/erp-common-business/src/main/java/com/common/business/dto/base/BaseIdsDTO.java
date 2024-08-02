@@ -35,6 +35,18 @@ public class BaseIdsDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class DetailIdListDTO extends PermissionsDTO {
+
+        /**
+         * 明细表 detailIdList
+         */
+        @NotEmpty(message = "detailIdList不能为空")
+        private List<String> detailIdList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class RemarkDTO extends IdsDTO{
 
         @NotBlank(message = "填写信息不能为空")

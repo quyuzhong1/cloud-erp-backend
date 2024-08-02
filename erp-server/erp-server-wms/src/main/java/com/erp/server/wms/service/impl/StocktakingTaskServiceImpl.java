@@ -9,8 +9,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.RedisUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -34,7 +39,6 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.StocktakingTaskExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -76,10 +80,6 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     private StocktakingTaskUserService stocktakingTaskUserService;
     @Resource
     private WorkflowFeign workflowFeign;
-
-    @Resource
-    private CommonService commonService;
-
     @Resource
     private OperateLogService operateLogService;
 
@@ -284,7 +284,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      */
     public void startProcess(StocktakingTaskEntity task) {
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(task.getId());
         startDTO.setBusinessCode(task.getCode());
@@ -410,7 +410,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      * @param dto
      */
     public void approveProcess(StocktakingTaskEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_TASK.getCode());
@@ -590,7 +590,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             return Lists.newArrayList();
         }
         List<StocktakingTaskDTO.CheckResultDTO> resultList = baseMapper.listQtyZero(ids);
-        String userName = commonService.getUserInfo().getUserName();
+        String userName = UserContext.getDefaultLoginUser().getUserName();
         String moduleType = ModuleTypeEnum.STOCKTAKING_TASK.getCode();
         List<OperateLogDTO.AddModuleOperateLogDTO> addList = new ArrayList<>(10);
         //以任务id分组
@@ -629,7 +629,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      */
     public Boolean updateForApprove(String id, ApproveStatusEnum approveStatus, StocktakingStatusEnum billStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         return this.lambdaUpdate().eq(StocktakingTaskEntity::getId, id)
                 .set(StocktakingTaskEntity::getApproveUserId, userInfo.getUid())
                 .set(StocktakingTaskEntity::getApproveUserName, userInfo.getUserName())
@@ -662,7 +662,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (!Objects.equals(ingStatus, taskEntity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         handleCancelProcess(taskEntity, userId);
         List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(taskEntity.getSourceId());
         // 全部审核完成 修改盘点计划单据状态
@@ -866,7 +866,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 }));
         // 4. 根据分组结果构建数据并保存盘点任务
         // 避免多线程时，只有主线程才能获取到用户信息
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         String uid = userInfo.getUid();
         String username = userInfo.getUserName();
         inventoryMap.keySet().parallelStream().forEach(key -> {

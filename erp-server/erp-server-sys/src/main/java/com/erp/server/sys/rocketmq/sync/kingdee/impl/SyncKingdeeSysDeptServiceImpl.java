@@ -4,16 +4,15 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
-import com.erp.server.sys.service.SysDepartmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,10 +44,10 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(KingdeeDepartmentEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(KingdeeDepartmentEntity entity, String operate) {
 
         if (ObjectUtils.isEmpty(entity)) {
-            return;
+            throw new ServiceException("金蝶部门信息不存在");
         }
 
         Map<String, Object> resultMap = new HashMap<>();
@@ -71,7 +70,7 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
             resultMap.put("parentCode", parent.getKingdeeDeptCode());
         }
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -82,7 +81,7 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (KingdeeDepartmentEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (KingdeeDepartmentEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -94,6 +93,6 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

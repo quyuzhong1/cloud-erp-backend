@@ -1,9 +1,13 @@
 package com.erp.server.wms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.RequisitionApplicationEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.entity.RequisitionApplicationEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -162,4 +166,40 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.ChildViewDTO>
      **/
     List<RequisitionApplicationDTO.ChildViewDTO> listChildBySku(RequisitionApplicationDTO.ChildParamDTO dto);
+
+
+    /**
+     * 生成拣货单弹窗
+     * @param page 要货申请id
+     */
+    PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page);
+    /**
+     * 生成拣货单
+     * @param picking 拣货参数
+     */
+    void generatePickingList(RequisitionApplicationDTO.GeneratePickingDTO picking);
+
+    List<BatchResultDTO> bindShipment(List<RequisitionApplicationDTO.BindShipment> dto);
+
+    PagingVO<RequisitionApplicationDTO.WarehouseListDTO> pagingSelect(PagingDTO<RequisitionApplicationDTO.WarehouseSelectDTO> dto);
+
+    /**
+     * 修改拣货单反写要货申请单
+     * @param sourceDetailIds 明细id
+     */
+    void writeBackData(List<String> sourceDetailIds,Boolean isCheck);
+
+    List<RequisitionApplicationDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids);
+
+    Boolean generateDeliverSave(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list);
+
+    Boolean generateDeliverSaveAndSubmit(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list);
+    /**
+     * 处理数据
+     * @author will
+     * @date 2024/7/29 9:33
+     * @param id
+     * @return Boolean
+     */
+    BatchResultDTO handleData(String id,Boolean isFlag);
 }

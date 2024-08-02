@@ -18,6 +18,10 @@ public final class UserContext {
         return userThreadLocal.get();
     }
 
+    /**
+     * 获取登录用户，不存在则取系统用户
+     * @return {@link LoginUser}
+     */
     public static LoginUser getNonLoginUser() {
         LoginUser loginUser = userThreadLocal.get();
         if (Objects.isNull(loginUser)) {
@@ -28,6 +32,11 @@ public final class UserContext {
         }
         return loginUser;
     }
+
+    /**
+     * 获取登录用户，不存在则设置为空
+     * @return {@link LoginUser}
+     */
     public static LoginUser getDefaultLoginUser() {
         LoginUser loginUser = userThreadLocal.get();
         if (Objects.isNull(loginUser)) {

@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 
 /**
@@ -16,7 +17,7 @@ public interface SyncKingdeeSoOutstockService {
      * @param operate
      * @return void
      **/
-    void syncDataToKingdee(SoOutstockEntity entity, String operate);
+    DmpPushTaskEntity syncDataToKingdee(SoOutstockEntity entity, String operate);
 
     /**
      * 发送消息同步金蝶
@@ -27,7 +28,12 @@ public interface SyncKingdeeSoOutstockService {
      * @return
      * @create 2023-12-27 16:50
      */
-    void syncB2cDataToKingdee(SoOutstockEntity entity, String operate);
+    DmpPushTaskEntity syncB2cDataToKingdee(SoOutstockEntity entity, String operate);
+
+    /**
+     *  同步旺店通数据到金蝶
+     */
+    DmpPushTaskEntity syncWdtDataToKingdee(SoOutstockEntity entity, String operate);
     /**
      * 推送订单到mq
      *

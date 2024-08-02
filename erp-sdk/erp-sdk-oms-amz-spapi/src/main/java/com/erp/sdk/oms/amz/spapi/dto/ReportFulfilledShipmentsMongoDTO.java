@@ -1,8 +1,17 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.util.StrUtil;
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.annotation.Transient;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 
 /**
@@ -12,6 +21,8 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class ReportFulfilledShipmentsMongoDTO extends ReportSuperMongoDTO {
+
+    private String amazonReportId;
 
     private String amazonOrderId;
 
@@ -27,9 +38,15 @@ public class ReportFulfilledShipmentsMongoDTO extends ReportSuperMongoDTO {
 
     private String purchaseDate;
 
+    private String purchaseDateLocale;
+
     private String paymentsDate;
 
+    private String paymentsDateLocale;
+
     private String shipmentDate;
+
+    private String shipmentDateLocale;
 
     private String reportingDate;
 
@@ -102,4 +119,78 @@ public class ReportFulfilledShipmentsMongoDTO extends ReportSuperMongoDTO {
     private String fulfillmentChannel;
 
     private String salesChannel;
+
+    private String pointsGranted;
+
+    /**
+     * 仓库id
+     */
+    private String warehouseId;
+
+    /**
+     * 仓库名称
+     */
+    private String warehouseName;
+
+    /**
+     * 库存组织
+     */
+    private String warehouseOrgId;
+
+    /**
+     * 库存组织名称
+     */
+    private String warehouseOrgName;
+
+    /**
+     * 中转参数:不保存mongo
+     */
+    @Transient
+    private String shopId;
+
+    @Transient
+    public String getShopId() {
+        return shopId;
+    }
+
+    public void setShopId(String shopId) {
+        this.shopId = shopId;
+    }
+
+    public String convertShipmentDate(){
+        if (StringUtils.isBlank(this.shipmentDateLocale)){
+            return "";
+        }
+        return OffsetDateTime.parse(this.shipmentDate).toLocalDate().toString();
+    }
+
+    public void checkAndSetAllDateLocale(String timeZone) {
+        if (StringUtils.isBlank(timeZone)){
+            return;
+        }
+        if (StringUtils.isNotBlank(this.shipmentDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.shipmentDate);
+            this.setShipmentDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
+        }
+        if (StringUtils.isNotBlank(this.paymentsDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.paymentsDate);
+            this.setPaymentsDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
+        }
+        if (StringUtils.isNotBlank(this.purchaseDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.purchaseDate);
+            this.setPurchaseDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
+        }
+    }
+
+    /**
+     * 是否是多渠道订单
+     */
+    public boolean hasMultiChannel() {
+        return this.salesChannel.contains("Non") || this.getAmazonOrderId().contains("S");
+    }
+
+    @Override
+    public String convertBusinessUniqueKey() {
+        return StrUtil.format("{}_{}", this.shipmentItemId, this.quantityShipped);
+    }
 }

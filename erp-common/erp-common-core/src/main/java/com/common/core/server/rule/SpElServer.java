@@ -1,5 +1,4 @@
 package com.common.core.server.rule;
-import cn.hutool.json.JSONObject;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 
@@ -41,6 +40,14 @@ public interface SpElServer {
      */
     Boolean matchExpression(String expression,Object obj);
 
+    /**
+     * 根据参数进行匹配表达式
+     * @param spElDTO
+     * @param obj
+     * @return
+     */
+    Boolean matchExpressionWithVariable(SpElExpressionDTO spElDTO,Object obj);
+
 
     /**
      * 匹配表达式结果
@@ -50,5 +57,21 @@ public interface SpElServer {
      */
     Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String,Object> obj);
 
+    /**
+     * 匹配明细表达式结果
+     * @param conditionList
+     * @param obj
+     * @return
+     */
+    Boolean matchDetailExpressionByConditionList(List<ConditionElement> conditionList, Map<String,Object> obj);
 
+    /**
+     * 获取字段
+     * @author will
+     * @date 2024/7/3 15:28
+     * @param fieldCode
+     * @param mapList
+     * @return Object
+     */
+    Object getByField(String fieldCode, List<Map<String, Object>> mapList);
 }

@@ -33,7 +33,7 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     @TableField("code")
     private String code;
     /**
-    * 状态 waitHandle:待处理  picking:拣货中 falseShipment:虚假发货 shipped:已发货  cancelDelivery:取消发货
+    * 状态 waitHandle:待处理  picking:拣货中 falseShipment:手动标发 shipped:已发货  cancelDelivery:取消发货
     */
     @TableField("status")
     private String status;
@@ -88,6 +88,12 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     */
     @TableField("is_print_picking")
     private Boolean isPrintPicking;
+
+    /**
+     * 是否打印物流单
+     */
+    @TableField("is_print_logistic")
+    private Boolean isPrintLogistic;
 
     /**
      * 完成打印时间
@@ -150,6 +156,59 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     */
     @TableField("remark")
     private String remark;
+    /**
+    * 物流类型 oms的dict_basic表type=orderLogisticType
+    */
+    @TableField("logistic_type")
+    private String logisticType;
+
+    /**
+     * 异常原因
+     */
+    @TableField("abnormal_cause")
+    private String abnormalCause;
+
+    /**
+     * 是否自动出库
+     */
+    @TableField("is_auto_out")
+    private Boolean isAutoOut;
+
+    /**
+     * 长，cm
+     */
+    @TableField("length")
+    private BigDecimal length;
+    /**
+     * 宽，cm
+     */
+    @TableField("width")
+    private BigDecimal width;
+    /**
+     * 高，cm
+     */
+    @TableField("height")
+    private BigDecimal height;
+
+    /**
+     * 发货标记类型
+     */
+    @TableField("shipment_mark")
+    private String shipmentMark;
+
+    /**
+     * 同类波次标识
+     */
+    @TableField(exist = false)
+    private String sameWaveStr;
+
+
+    /**
+     * 批次号
+     */
+    @TableField(exist = false)
+    private String batchNo;
+
 
     public static final String CODE = "code";
 

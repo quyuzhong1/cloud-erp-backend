@@ -42,5 +42,21 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
      * @param nameList
      */
     List<WarehouseDTO.ListDTO> getByNames(@Param("nameList") List<String> nameList);
-
+    /**
+     * @description: 根据关键词查询
+     * @author Will
+     * @date: 2024/5/23 19:43
+     * @param params
+     * @return List<WarehouseEntity>
+     */
+    List<WarehouseEntity> listWarehouse(@Param("params") WarehouseDTO.ListInventoryQtyParamDTO params);
+    /**
+     * @description: 分页远程查询
+     * @author Will
+     * @date: 2024/5/24 12:58
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<WarehouseDTO.ListDTO> pagingSelect(Page query,@Param("params") WarehouseDTO.SelectDTO params);
 }

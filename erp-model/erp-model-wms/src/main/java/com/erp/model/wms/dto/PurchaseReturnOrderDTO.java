@@ -496,6 +496,16 @@ public class PurchaseReturnOrderDTO {
         private String skuNo;
 
         /**
+         * 是否组合品 true 是
+         */
+        private Boolean isCombination;
+
+        /**
+         * 是否组合品中文名称
+         */
+        private String isCombinationName;
+
+        /**
          * 产品名称
          */
         private String productName;
@@ -981,9 +991,13 @@ public class PurchaseReturnOrderDTO {
         private Integer receiveQty;
 
         /**
-         * 库位名称
+         * 库位编码
          */
         private String warehouseLocation;
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
 
         /**
          * 币种

@@ -17,11 +17,12 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -55,7 +56,7 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
      * @param dto 任务信息
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         List<OrderEntity> entityList = MabangApiUtils.queryHistorySalesList(dto.getPlatformApiEnum().getTaskName(), nextTime);
@@ -78,7 +79,7 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
             }
             OrderEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -95,7 +96,7 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
             return;
         }
         // 构造订单结构
-        List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(MabangOrderInfoServiceImpl::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -107,7 +108,7 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送马帮订单MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
-            DmpDeliveryDetailInfoEntity deliveryDetailInfo = MabangDeliveryDetailServiceImpl.initOrderInfoEntity(orderEntityMap.get(msg.getPlatformOrderId()));
+            BiDeliveryDetailInfoEntity deliveryDetailInfo = MabangDeliveryDetailServiceImpl.initOrderInfoEntity(orderEntityMap.get(msg.getPlatformOrderId()));
             SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
                     deliveryDetailInfo, StrUtil.format("{}_{}", deliveryDetailInfo.getPlatformOrderId(), deliveryDetailInfo.getBillNo()));
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
@@ -122,7 +123,7 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(OrderEntity mongoDatum) {
 
     }

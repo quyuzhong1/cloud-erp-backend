@@ -46,11 +46,7 @@ public class DeliveryOrderEntity extends BaseEntity<DeliveryOrderEntity> {
     */
     @TableField("plan_delivery_date")
     private LocalDate planDeliveryDate;
-    /**
-    * 收货单号
-    */
-    @TableField("receive_code")
-    private String receiveCode;
+
     /**
     * 来源订单号
     */
@@ -86,21 +82,7 @@ public class DeliveryOrderEntity extends BaseEntity<DeliveryOrderEntity> {
     */
     @TableField(value = "print_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate printDate;
-    /**
-    * 确认收货日期
-    */
-    @TableField("confirm_receive_date")
-    private LocalDate confirmReceiveDate;
-    /**
-    * 收货员id
-    */
-    @TableField("receive_user_id")
-    private String receiveUserId;
-    /**
-    * 收货员名
-    */
-    @TableField("receive_user_name")
-    private String receiveUserName;
+
     /**
     * 收货电话
     */
@@ -126,7 +108,16 @@ public class DeliveryOrderEntity extends BaseEntity<DeliveryOrderEntity> {
     */
     @TableField("is_print")
     private Boolean isPrint;
-
+    /**
+     * 收货员id
+     */
+    @TableField("receive_user_id")
+    private String receiveUserId;
+    /**
+     * 收货员名
+     */
+    @TableField("receive_user_name")
+    private String receiveUserName;
 
     public static final String CODE = "code";
 

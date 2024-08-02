@@ -86,6 +86,12 @@ public class SoB2cDetailDTO implements Serializable {
          * 本位币别（默认人民币）
          */
        private String currency;
+
+       /**
+        * 虚拟仓id
+        */
+       private String virtualWarehouseId;
+
         /**
          * 出货仓库
          */
@@ -119,11 +125,45 @@ public class SoB2cDetailDTO implements Serializable {
          * 是否匹配仓库规则
          */
         private Boolean isMatchWarehouseRule;
-        
-       /**
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+
+        /**
         * 明细标签对象
         */
        private DetailLabelDTO detailLabelDTO;
+
+
+        /**
+         * 属性对象
+         */
+       private List<PropertyDTO> propertyDTOList;
+        /**
+         * 目的国申报价
+         */
+        private BigDecimal toDeclarePrice;
+
+        /**
+         * 目的国申报币种
+         */
+        private String toCurrency;
+
+        /**
+         * 目的国申报币种符号
+         */
+        private String toCurrencySymbol;
+
+        /**
+         * 申报标签(正常申报normal，高申报high，低申报low)
+         */
+        private String declareLabel;
+        /**
+         * 申报标签名称
+         */
+        private String declareLabelName;
 
     }
 
@@ -142,6 +182,25 @@ public class SoB2cDetailDTO implements Serializable {
          * 速卖通打标
          */
         private List<String> tagList;
+        /**
+         * 当前明细是否退款: true=退款, false=未退款
+         */
+        private Boolean isRefunded;
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PropertyDTO {
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
     }
 
     @Data
@@ -169,6 +228,16 @@ public class SoB2cDetailDTO implements Serializable {
          * 缺货订单(待审核、配货中订单，仓库可用库存为0)
          */
        private Boolean isOutStock;
+
+       /**
+        * 虚拟仓是否缺货
+        */
+       private Boolean isVirtualOutStock;
+
+       /**
+        * 当前是否退款: true=退款, false=未退款
+        */
+       private Boolean isRefunded;
     }
 
     /**
@@ -204,6 +273,11 @@ public class SoB2cDetailDTO implements Serializable {
         private String platformSpuNo;
 
         /**
+         * 产品skuId
+         */
+        private String skuId;
+
+        /**
         * 产品sku编号
         */
         private String skuNo;
@@ -212,6 +286,28 @@ public class SoB2cDetailDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+        /**
+         * 产品尺寸（长）
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品尺寸（宽）
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品尺寸（高）
+         */
+        private BigDecimal productHeight;
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
 
         /**
         * 库存sku编号 http://172.16.100.11:3002/project/110/interface/api/19609
@@ -248,6 +344,25 @@ public class SoB2cDetailDTO implements Serializable {
         */
         private BigDecimal exchangeRate;
 
+        /**
+        * 来源详情id
+        */
+        private String sourceDetailId;
+
+        /**
+         * 拆分的明细id
+         */
+        private String splitDetailId;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination = false;
+
+        /**
+         * 还原id
+         */
+        private String revertId;
     }
 
     /**
@@ -265,6 +380,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 操作明细集合id
          */
         private String operateDetailId;
+
+        /**
+         * 拆分的Id 如果用户拆分BOM套装则这个值为原本的明细id
+         */
+        private String splitDetailId;
     }
 
     /**
@@ -279,6 +399,31 @@ public class SoB2cDetailDTO implements Serializable {
         */
         private String id;
 
+        /**
+         * 拆分的Id 如果用户拆分BOM套装则这个值为原本的明细id
+         */
+        private String splitDetailId;
+
+        private String sourceDetailId;
+        /**
+         * 金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 建议售价（本位币）
+         */
+        private BigDecimal advicePrice;
+
+        /**
+         * 还原id
+         */
+        private String revertId;
+
+        /**
+         * 主表Id
+         */
+        private String mainId;
     }
 
     @Data
@@ -311,13 +456,22 @@ public class SoB2cDetailDTO implements Serializable {
         */
         @NotNull(message = "单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "单价整数位不能超过12位，小数位不能超过4位")
-        @DecimalMin(value = "0", message = "单价最小值必须大于0")
         private BigDecimal price;
 
         /**
          * 来源平台
          */
         private String sourcePlatform;
+
+        private String warehouseSkuNo;
+        /**
+         * 平台sku编号
+         */
+        private String platformSkuNo;
+        /**
+         * 平台 产品id
+         */
+        private String platformSpuNo;
     }
 
 

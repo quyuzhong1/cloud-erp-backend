@@ -53,6 +53,11 @@ public interface AliexpressConstants {
     String DECLARE_DELIVER="aliexpress.logistics.sellershipmentfortop";
 
     /**
+     *   子单声明发货
+     */
+    String SUB_DECLARE_DELIVER = "aliexpress.logistics.order.shipment";
+
+    /**
      * 海外仓表示
      */
     String CAINIAO_INTERNATIONAL_WAREHOUSE="cainiaoInternationalWarehouse";
@@ -61,5 +66,27 @@ public interface AliexpressConstants {
      * 发货单查询
      */
     String ALIEXPRESS_ASCP_FFO_QUERY="aliexpress.ascp.ffo.query";
+
+    /**
+     * 发货单明细查询
+     */
+    String ALIEXPRESS_ASCP_FFO_ITEM_QUERY="aliexpress.ascp.ffo.item.query";
+
+    /**
+     * 产品明细查询
+     */
+    String ALIEXPRESS_OFFER_PRODUCT_QUERY="aliexpress.offer.product.query";
+
+
+    /**
+     * 查询卖家资料
+     */
+    String ALIEXPRESS_MERCHANT_PROFILE_GET ="aliexpress.merchant.profile.get";
+
+
+    /**
+     * 查询所有的实际承运商
+     */
+    String ALIEXPRESS_CARRIER_QUERY_LIST = "cainiao.global.logistics.carrier.querylist";
 
 }

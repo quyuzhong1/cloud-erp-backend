@@ -37,7 +37,10 @@ public enum OperationTypeEnum {
     CONFIRM("confirm", "确认操作"),
     CANCEL_CONFIRM("cancelConfirm", "取消确认操作"),
     RECEIVE("receive", "单据签收"),
+    DECLARE_RULE("declareRule", "申报规则匹配"),
+    MANUAL_FINISH("manualFinish", "手动完结"),
 
+    EXECUTE("execute", "执行"),
     ;
     @JsonValue
     @EnumValue

@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.global.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -19,6 +19,6 @@ import java.io.Serializable;
 @EqualsAndHashCode(callSuper = false)
 public class Brand implements Serializable {
     private int brand_id;
-    @JSONField(name ="original_brand_name")
+    @Alias("original_brand_name")
     private String originalBrandName;
 }

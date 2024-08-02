@@ -5,6 +5,7 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.RedisService;
@@ -111,6 +112,17 @@ public class SysUserFeignController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto) {
+        return success(sysUserInfoService.pagingSelect(dto));
+    }
+
     @PostMapping("/findAuthorityList")
 
     public ApiResult<List<FindUserDTO>> findAuthorityList(@RequestBody @Validated BaseSearchDTO dto) {
@@ -167,19 +179,6 @@ public class SysUserFeignController extends BaseController {
     public void updateSysUserTime(@RequestBody List<String> userIdList) {
       sysUserInfoService.updateSysUserTime(userIdList);
     }
-
-    /**
-     * 查询左菜单栏
-     *
-     * @param roleIds
-     * @return
-     */
-    @PostMapping("/findLeftMenuByRoleIds")
-    public List<SysMenuVO> findLeftMenuByRoleIds(@RequestBody List<String> roleIds) {
-        return sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
-    }
-
-
     /**
      * 根据第三方绑定的关系 获取用户信息
      *
@@ -246,8 +245,8 @@ public class SysUserFeignController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/getUserByUserName")
-    public FindUserDTO getUserByUserName(@RequestParam String userName,@RequestParam("userType") String userType) {
+    @GetMapping("/getUserByUserName")
+    public FindUserDTO getUserByUserName(@RequestParam("userName") String userName,@RequestParam("userType") String userType) {
         FindUserDTO dto = sysUserInfoService.getUserByUserName(userName,userType);
         return dto;
     }
@@ -550,5 +549,16 @@ public class SysUserFeignController extends BaseController {
     @GetMapping("/getUserDatePermissionSql")
     public String getUserDatePermissionSql(@RequestParam("tableField") String tableField, @RequestParam("menuCode") String menuCode) {
         return userDatePermissionService.getUserDatePermissionSql(tableField, menuCode);
+    }
+    /**
+     * 根据菜单cdoe查询用户数据权限
+     * @author hyj
+     * @date 2024/5/9 10:43
+     * @param menuCode 菜单编号
+     * @return Boolean 是否有权限
+     **/
+    @GetMapping("/getUserDatePermissionByMenuCode")
+    public Boolean getUserDatePermissionByMenuCode(@RequestParam("menuCode") String menuCode) {
+        return userDatePermissionService.getUserDatePermissionByMenuCode( menuCode);
     }
 }

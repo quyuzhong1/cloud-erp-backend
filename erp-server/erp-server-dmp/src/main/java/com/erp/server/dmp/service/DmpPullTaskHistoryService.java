@@ -49,5 +49,5 @@ public interface DmpPullTaskHistoryService extends IService<DmpPullTaskHistoryEn
     /**
      * 同步3个月前拉取数据到归档表
      */
-    void syncPullTaskHistory();
+    void syncPullTaskHistory(Integer month);
 }

@@ -7,11 +7,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
-import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.server.tms.service.LogisticsBillCostService;
@@ -86,6 +84,18 @@ public class LogisticsBillFeignController {
         List<LogisticsBillDTO.LogisticsBillVo> flag = logisticsBillService.listLogisticsBillVoBySourceIds(sourceIdList);
         return flag;
     }
+    /**
+     * 根据来源信息获取最大的运输状态
+     *
+     * @param billVoList 来源信息
+     * @return List<LogisticsBillDTO.LogisticsBillVo>
+     * @author hyj
+     * @date 2024/5/11 10:39
+     */
+    @PostMapping("/getTrackStatusByTrackNo")
+    public List<LogisticsBillDTO.LogisticsBillVo> getTrackStatusByTransportNo(@RequestBody List<LogisticsBillDTO.LogisticsBillVo> billVoList) {
+        return logisticsBillService.getTrackStatusByTrackNo(billVoList);
+    }
 
     /**
      * 生成物流单 像物流商下單
@@ -98,6 +108,19 @@ public class LogisticsBillFeignController {
     @PostMapping("/generateBill")
     public LogisticsBillDTO.GenerateBillResultDTO generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO dto) {
         return logisticsBillService.generateBill(dto);
+    }
+
+    /**
+     * 调用物流商接口更新重量
+     *
+     * @return
+     * @parms
+     * @author yl
+     * @date 2023-11-23
+     */
+    @PostMapping("/updateLogisticWeight")
+    public ApiResult<String > updateLogisticWeight(@RequestBody @Valid LogisticsBillDTO.UpdateWeight dto) {
+        return logisticsBillService.updateLogisticWeight(dto);
     }
     
     /**
@@ -128,10 +151,9 @@ public class LogisticsBillFeignController {
      * @param query
      * @return
      */
-    @PostMapping("/getLogisticsBillDetails")
-    public PagingVO<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query) {
-        PagingVO<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
-        return page;
+    @PostMapping("/listTrackDto")
+    public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(@RequestBody LogisticsBillDetailQueryDTO query) {
+        return logisticsBillDetailService.listTrackDto(query);
     }
 
 
@@ -147,6 +169,19 @@ public class LogisticsBillFeignController {
     public Boolean updateTrackNo(@RequestBody LogisticsBillDTO.UpdateTrackNoDTO billDTO) {
         Boolean result = logisticsBillDetailService.updateTrackNo(billDTO);
         return result;
+    }
+
+    /**
+     * 根据物流跟踪单号或运单号查询物流单详情
+     * @author will
+     * @date 2024/7/3 17:39
+     * @param logisticsCode
+     * @return BaseDTO
+     */
+    @GetMapping("/getByTrackNoOrTransportNo")
+    public LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(@RequestParam(value = "logisticsCode") String logisticsCode) {
+        LogisticsBillDTO.BaseDTO entity = logisticsBillService.getByTrackNoOrTransportNo(logisticsCode);
+        return entity;
     }
 
     /**
@@ -247,5 +282,17 @@ public class LogisticsBillFeignController {
     @PostMapping("/removeLogisticsBillBySourceId")
     public Boolean removeLogisticsBillBySourceId(@RequestBody List<String> sourceId) {
         return logisticsBillService.removeLogisticsBillBySourceId(sourceId);
+    }
+
+    /**
+     * @description: 根据销售出库单id集合查询
+     * @author Will
+     * @date: 2024/5/20 16:05
+     * @param outstockIdList
+     * @return List<LogisticsBillEntity>
+     */
+    @PostMapping("/listBySoOutStockIdList")
+    public List<LogisticsBillEntity> listBySoOutStockIdList(@RequestBody List<String> outstockIdList) {
+        return logisticsBillService.listBySoOutStockIdList(outstockIdList);
     }
 }

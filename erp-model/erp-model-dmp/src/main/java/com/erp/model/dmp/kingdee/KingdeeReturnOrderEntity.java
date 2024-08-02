@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 @ToString
 public class KingdeeReturnOrderEntity extends CleanBaseDTO {
 
@@ -49,7 +48,7 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     private String fRetcustName;
     @JSONField(name = "FRetcustId.FNumber")
     @JsonProperty("FRetcustId.FNumber")
-    private String FRetcustNumber;
+    private String fRetcustNumber;
     @JSONField(name = "FSalesManId")
     @JsonProperty("FSalesManId")
     private String fSalesManId;
@@ -92,8 +91,8 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     @JSONField(name = "FHeadNote")
     @JsonProperty("FHeadNote")
     private String FHeadNote;
-    @JSONField(name = "FReturnReason")
-    @JsonProperty("FReturnReason")
+    @JSONField(name = "FReturnReason.FDataValue")
+    @JsonProperty("FReturnReason.FDataValue")
     private String fReturnReason;
     @JSONField(name = "FSaledeptid.FNumber")
     @JsonProperty("FSaledeptid.FNumber")
@@ -107,11 +106,22 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     @JSONField(name = "FISGENFORIOS")
     @JsonProperty("FISGENFORIOS")
     private Boolean fIsGenForIos;
+
     @JSONField(name = "FETHIRDBILLNO")
     @JsonProperty("FETHIRDBILLNO")
     private String fEThirdBillNo;
 
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
     private List<KingdeeReturnOrderItemEntity> itemEntityList;
+
+    public KingdeeReturnOrderEntity() {
+        this.isValid = Boolean.TRUE;
+    }
+
     @Override
     public String toString() {
         return "KingdeeReturnOrderEntity{" +

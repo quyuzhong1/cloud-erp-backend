@@ -282,7 +282,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      */
     SoB2cDTO.ViewReceiveDataDTO viewReceiveData(String id);
 
-    CustomerB2cEntity saveOrUpdateEntity(CustomerB2cEntity oldCustomerB2cEntity, PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList);
+    CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList);
 
     CustomerB2cEntity getBySourceId(String mainId);
 
@@ -300,5 +300,22 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param pagingDTO
      * @return
      */
-    PagingVO<CustomerB2CDTO.DropListDTO> customerDropDown(PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO);
+    CustomerB2CDTO.DropPagingDTO<CustomerB2CDTO.DropListDTO> customerDropDown(PagingDTO<CustomerB2CDTO.DropSearchDTO> pagingDTO);
+
+    /**
+     * @description: 根据id或名称查询
+     * @author Will
+     * @date: 2024/5/28 9:23
+     * @param keyWord
+     * @return CustomerB2cEntity
+     */
+    CustomerB2cEntity getByIdOrName (String keyWord);
+
+    /**
+     * 远程搜索
+     * @param searchDTO
+     * @return
+     */
+    PagingVO<CustomerB2CDTO.InfoDTO> pagingSelect(PagingDTO<CustomerB2CDTO.SelectDTO> searchDTO);
+
 }

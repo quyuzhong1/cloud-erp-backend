@@ -10,15 +10,12 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ReflectUtils;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cFinanceDTO;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cFinanceEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cFinanceMapper;
-import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cFinanceService;
 import com.erp.server.oms.service.SoB2cService;
@@ -31,7 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * <p>
@@ -46,8 +46,6 @@ import java.util.*;
 public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper, SoB2cFinanceEntity> implements SoB2cFinanceService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Resource
     private SoB2cService soB2cService;
 
@@ -143,9 +141,11 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
             // 更新
             SoB2cFinanceEntity newEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateFinance(oldEntity, financeDTO);
             // 历史数据修复
-            if (!BusinessCommonConstants.hasProfile("prod")){
-                fillAndHandleData(mainEntity, logisticsEntity, detailList, financeDTO, newEntity, false);
-            }
+//            if (!BusinessCommonConstants.hasProfile("prod")){
+//                fillAndHandleData(mainEntity, logisticsEntity, detailList, financeDTO, newEntity, false);
+//            }
+            // 指定字段有值不更新
+            ReflectUtils.updateSpecifiedFieldsIfNotValue(newEntity, oldEntity, SoB2cFinanceEntity.fieldsExistNotUpdate());
             if (!this.updateById(newEntity)){
                 throw new ServiceException("[SoB2cFinanceEntity] 更新失败");
             }
@@ -176,6 +176,9 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         }
         if (null != financeDTO.getVatRate() && financeDTO.getVatRate().compareTo(BigDecimal.ZERO) > 0){
             newEntity.setVatRate(financeDTO.getTransferRate());
+        }
+        if (null != financeDTO.getPlatformCost() && financeDTO.getPlatformCost().compareTo(BigDecimal.ZERO) > 0){
+            newEntity.setPlatformCost(financeDTO.getPlatformCost());
         }
     }
 

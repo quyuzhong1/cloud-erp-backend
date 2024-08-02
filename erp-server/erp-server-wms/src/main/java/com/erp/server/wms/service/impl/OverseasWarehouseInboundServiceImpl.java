@@ -5,19 +5,19 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -25,7 +25,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -34,7 +33,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO.OverseasInboundDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
@@ -76,13 +74,9 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService,WmsDataCompareDbService<OverseasInboundDTO> {
+public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService {
     @Resource
     private OperateLogService operateLogService;
-    @Resource
-    private CommonService commonService;
-    @Resource
-    private DocNoGenHelper docNoGenHelper;
     @Resource
     private OverseasWarehouseInboundDetailService overseasWarehouseInboundDetailService;
     @Resource
@@ -126,6 +120,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Resource
     private SkuMappingFeign skuMappingFeign;
 
+    @Resource
+    private PackingTaskService packingTaskService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -137,9 +134,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(addDTO.getSourceId());
         Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
-        if (!PackingStatusEnum.PACKING.getCode().equalsIgnoreCase(deliveryEntity.getPackingStatus())) {
-            String msg = StrUtil.format("【{}】发货单未装箱完", deliveryEntity.getCode());
-            throw new ServiceException(msg);
+        PackingTaskEntity packingTaskEntity = packingTaskService.getBySourceCode(deliveryEntity.getCode());
+
+        if (Objects.isNull(packingTaskEntity) || !PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.getPackingStatus())) {
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND);
         }
 
         // 发货单明细
@@ -158,7 +156,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         log.info("开始新增海外仓入库单");
         mainEntity.setIsDeleted(false);
         mainEntity.setVersion(0);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         mainEntity.setCreateUserId(loginUser.getUid());
         mainEntity.setCreateUserName(loginUser.getUserName());
         mainEntity.setCreateTime(LocalDateTime.now());
@@ -183,7 +181,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .collect(Collectors.toList());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】来源单号为【{}】", commonService.getUserInfo().getUserName(), "海外仓入库单", mainEntity.getSourceCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】来源单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓入库单", mainEntity.getSourceCode());
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "新增操作");
         // 新增明细（如果有明细的话）
@@ -221,7 +219,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
      * 构建请求参数
      */
     private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity,
-                                                                     List<WmsCartonDTO.PackingItemDTO> itemDTOList,
+                                                                     List<WmsCartonSpecDTO.PackingItemDTO> itemDTOList,
                                                                      Map<SettingEnum, String> shipperInfo,
                                                                      String verifyCode,
                                                                      String code,
@@ -246,7 +244,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
-        for (WmsCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
+        for (WmsCartonSpecDTO.PackingItemDTO itemDTO : itemDTOList) {
             FirstMileDeliveryDetailEntity  firstMileDeliveryDetailEntity = deliveryDetailEntityList.stream().filter(v->v.getSkuId().equals(itemDTO.getSkuId())).findFirst().orElse(null);
             if (null == firstMileDeliveryDetailEntity) {
                 String msg = StrUtil.format("海外仓入库单明细中找不到skuId为【{}】的明细", itemDTO.getSkuId());
@@ -371,7 +369,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 记录主单操作日志
         log.info("编辑 开始记录海外仓入库单日志数据，单号：【{}】", mainEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), mainEntity.getCode(), "海外仓入库单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getCode(), "海外仓入库单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, mainEntity, null, mainEntity.getId(), msg);
 
@@ -686,7 +684,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
         //查询skuId产品信息
         List<String> skuIds = detailEntityList.stream().map(OverseasWarehouseInboundDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        Map<String, String> imageUrlMap = plmTaskFeign.getSkuInfoByIds(skuIds)
+        Map<String, String> imageUrlMap = plmTaskFeign.listSkuProductByIds(skuIds)
                 .stream()
                 .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::checkAndGetSkuImagesUrl));
 
@@ -783,7 +781,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单明细");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】取消了单据编号为【{}】的海外入库单", commonService.getUserInfo().getUserName(), mainEntity.getCode());
+        String msg = StrUtil.format("用户【{}】取消了单据编号为【{}】的海外入库单", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "取消操作");
 
         if (null != providerEntity){
@@ -820,7 +818,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             throw new ServiceException("【海外入库单】更新状态失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的海外入库单", commonService.getUserInfo().getUserName(), entity.getCode());
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的海外入库单", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), entity.getId(), "删除操作");
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
@@ -922,7 +920,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：FBA货件
-        addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+        addDTO.setSourceType(SourceTypeEnum.OVERSEAS_INBOUND.getCode());
         //默认调出日期：当前日期
         addDTO.setBillDate(LocalDate.now());
         //默认调拨方向：普通
@@ -992,7 +990,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                                                                      String verityCode
     ) {
         // 查询包装信息
-        List<WmsCartonDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceId(mainEntity.getSourceId());
+        List<WmsCartonSpecDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceId(mainEntity.getSourceId());
         if (CollectionUtils.isEmpty(packingQtyDTOS)) {
             String format = StrUtil.format("【{}】发货单：未找到包装信息", mainEntity.getSourceCode());
             throw new ServiceException(format);
@@ -1202,32 +1200,5 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
         }
     }
-
-    @Override
-	public List<OverseasInboundDTO> getDataCompareByCondition(OverseasInboundDTO params , Integer pageSize) {
-    	if("0".equals(params.getId())) {
-			this.getParams(params);
-		}
-		return baseMapper.getDataCompareByCondition(params , pageSize);
-	}
-
-	@Override
-	public Integer getDataCompareByConditionCount(OverseasInboundDTO params) {
-		this.getParams(params);
-		return baseMapper.getDataCompareByConditionCount(params);
-	}
-	
-	private void getParams(OverseasInboundDTO params) {
-		if(CollUtil.isEmpty(params.getReceiveDateList())) {
-			throw new ServiceException("第三方仓货件签收的系统数据范围【签收日期】不能为空");
-		}
-		String toWarehouseId = params.getToWarehouseId();
-		if(StringUtils.isNotBlank(toWarehouseId)) {
-			WarehouseEntity warehouseEntity = warehouseService.getById(toWarehouseId);
-			if(warehouseEntity != null) {
-				params.setToWarehouseName(warehouseEntity.getName());
-			}
-		}
-	}
 
 }

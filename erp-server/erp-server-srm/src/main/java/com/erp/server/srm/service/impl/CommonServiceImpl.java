@@ -1,6 +1,6 @@
 package com.erp.server.srm.service.impl;
 
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -26,22 +26,8 @@ public class CommonServiceImpl implements CommonService {
     private SupplierFeign supplierFeign;
 
     @Override
-    public LoginUser getUserInfo() {
-        String userId = "";
-        String userName = "";
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (Objects.isNull(loginUser)) {
-            loginUser = new LoginUser();
-            loginUser.setUid(userId);
-            loginUser.setUserName(userName);
-            loginUser.setUserAccount("");
-        }
-        return loginUser;
-    }
-
-    @Override
     public SupplierEntity getSupplierEntity(){
-        LoginUser loginUser = this.getUserInfo();
+        LoginUser loginUser = UserContext.getLoginUser();
         if(Objects.isNull(loginUser)){
             throw new ServiceException(ApiError.ERROR_403);
         }

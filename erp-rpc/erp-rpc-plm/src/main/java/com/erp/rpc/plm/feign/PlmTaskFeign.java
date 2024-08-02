@@ -7,6 +7,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.SysUserInfoDTO;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -70,6 +71,23 @@ public interface PlmTaskFeign {
     void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
 
     /**
+     * 根据skuId集合获取到sku信息,推荐按需使用
+     * listSkuProductByIds  基础信息+产品信息
+     * listSkuCostByIds     基础信息+成本信息
+     * listSkuPackByIds     基础信息+产品信息+包装信息
+     * listSkuSaleByIds     基础信息+产品信息+销售信息
+     * listSkuLogisticsByIds基础信息+产品信息+物流信息
+     * listSkuCategoryByIds 基础信息+产品信息+分类信息
+     * listSkuPurchaseByIds 基础信息+产品信息+采购信息
+     * @param skuIds
+     * @return
+     * @author yl
+     * @date 2023-03-21 12:19
+     */
+    @Deprecated
+    @PostMapping("feign/product/getSkuInfoByIds")
+    List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
+    /**
      * 根据skuid集合获取到sku 信息
      *
      * @param skuIds
@@ -77,8 +95,8 @@ public interface PlmTaskFeign {
      * @author yl
      * @date 2023-03-21 12:19
      */
-    @PostMapping("feign/product/getSkuInfoByIds")
-    List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
+    @PostMapping("feign/product/listSkuPurchaseBySkuIds")
+    List<SkuVO> listSkuPurchaseBySkuIds(@RequestBody List<String> skuIds);
 
     @PostMapping("feign/product/getSkuInfoAdvanceQuery")
     List<SkuVO> getSkuInfoAdvanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
@@ -515,16 +533,92 @@ public interface PlmTaskFeign {
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@RequestBody List<String> skuIds);
 
     /**
-     * 根据skuid 集合获取到sku基础信息
+     * 根据skuid 集合获取到sku信息 （走redis缓存审核sku时刷新缓存）
      *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
-     * @author yl
-     * @date 2023-03-21 12:06
+     * @author zdy
+     * @date 2024-04-25 12:06
      */
-    @PostMapping("feign/product/getSkuBaseByIds")
-    List<SkuVO> getSkuBaseByIds(@RequestBody List<String> skuIds);
+    @PostMapping("feign/product/listSkuAllAttributeByIds")
+    List<SkuVO> listSkuAllAttributeByIds(@RequestBody List<String> skuIds);
 
-    @PostMapping("feign/product/getProductDetailExportData")
-    List<ProductDetailExcelDTO> getProductDetailExportData(@RequestBody String metaInfo);
+    /**
+     * 根据skuid 集合获取到sku产品信息（基础信息+产品信息)
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("feign/product/listSkuProductByIds")
+    List<SkuVO> listSkuProductByIds(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据skuid 集合获取到sku基础信息（基础信息+成本信息+销售信息)
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("feign/product/listSkuCostByIds")
+    List<SkuVO> listSkuCostByIds(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("feign/product/listSkuPackByIds")
+    List<SkuVO> listSkuPackByIds(@RequestBody List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku销售信息 （基础信息+产品信息+销售信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("feign/product/listSkuSaleByIds")
+    List<SkuVO> listSkuSaleByIds(@RequestBody List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku物流信息 （基础信息+产品信息+物流信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("feign/product/listSkuLogisticsByIds")
+    List<SkuVO> listSkuLogisticsByIds(@RequestBody List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+分类信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("feign/product/listSkuCategoryByIds")
+    List<SkuVO> listSkuCategoryByIds(@RequestBody List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+采购信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("feign/product/listSkuPurchaseByIds")
+    List<SkuVO> listSkuPurchaseByIds(@RequestBody List<String> skuIds);
+
+    @GetMapping("feign/product/listSkuPurchaseByIds")
+    ProductDetailEntity getBySkuNoOrEan(@RequestParam("skuCode") String skuCode);
+
+    @PostMapping("feign/product/dimensionalWeightMeasure")
+    String dimensionalWeightMeasure(@RequestBody DimensionalWeightDTO dto);
 }

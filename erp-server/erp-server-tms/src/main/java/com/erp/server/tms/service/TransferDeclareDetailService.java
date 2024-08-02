@@ -45,6 +45,14 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
     List<TransferDeclareDetailEntity> listByMainIds(List<String> mainIds);
 
     /**
+     * 用于分页查询 子查询关联过滤
+     * @param mainIds
+     * @param params
+     * @return
+     */
+    List<TransferDeclareDetailEntity> listByCondition(List<String> mainIds,TransferDeclareDTO.PagingParamDTO params);
+
+    /**
      * 详情明细高级查询
      * @Author Luo_WG
      * @Date 2024/1/24 10:15
@@ -106,7 +114,7 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean updateOutstockStatus(TransferDeclareDTO.UpdateOutstockStatusDTO dto);
+//    Boolean updateOutstockStatus(TransferDeclareDTO.UpdateOutstockStatusDTO dto);
     /**
      * @description: 根据销售订单编号集合查询中专报关
      * @author Will

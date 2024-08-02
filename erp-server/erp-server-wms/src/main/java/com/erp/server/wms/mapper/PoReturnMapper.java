@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -32,6 +33,8 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
     List<PurchaseReturnOrderDTO.PagingViewDTO> listExport(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 
     Integer listCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
+
+    Integer pdaListCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 
     /**
      * 根据供应商id集合、单据日期查询退货数量
@@ -76,4 +79,6 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
      * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO>
      **/
     List<String> listPoReturnAutoConfirm(@Param("params") List<CfgSettingDTO.ViewDTO> list);
+
+    List<PoReturnDetailEntity> listPoReturnByPoDetailIds(@Param("podIds") List<String> podIds,@Param("approveStatusList") List<String> approveStatusList);
 }

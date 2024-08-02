@@ -1,10 +1,8 @@
 package com.erp.server.scm.service.impl;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -14,8 +12,8 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SubcontractChangeDetailDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractChangeDetailEntity;
+import com.erp.model.scm.entity.SubcontractChangeEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -68,7 +66,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
     private SubcontractOrderDetailService subcontractOrderDetailService;
 
     @Resource
-    private PurchaseOrderDetailService purchaseOrderDetailService;
+    private SubcontractChangeService subcontractChangeService;
 
     @Override
     public void add(List<SubcontractChangeDetailDTO.AddDTO> detailList, String mainId) {
@@ -211,7 +209,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             throw new ServiceException(ApiError.ERROR_95163);
         }
         //产品信息
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(allSkuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
@@ -219,6 +217,12 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         List<SupplierEntity> supplierList = null;
         if (CollectionUtils.isNotEmpty(supplierIds)) {
             supplierList = supplierService.listByIds(supplierIds);
+        }
+
+        //主表信息
+        SubcontractChangeEntity changeEntity = subcontractChangeService.getById(mainId);
+        if (ObjectUtils.isEmpty(changeEntity)) {
+            throw new ServiceException(ApiError.ERROR_98084);
         }
 
         //仓库信息
@@ -271,7 +275,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setBomVersion(StringUtils.isBlank(detailEntity.getBomVersion()) ? bomChildrenSkuDTO.getBomVersion() : detailEntity.getBomVersion());
 
-            handleSupplierTaxPrice(detailEntity,subEntity,Boolean.FALSE);
+            handleSupplierTaxPrice(detailEntity,subEntity,Boolean.FALSE,changeEntity.getPurchaseOrgId());
             //子集SKU信息
             List<SubcontractChangeDetailEntity>   childList = BeanMapperUtils.copyList(SubcontractChangeDetailEntity.class, detailEntity.getChildList());
             for (SubcontractChangeDetailEntity childEntity : childList) {
@@ -308,7 +312,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 childEntity.setSkuNo(childSkuVO.getSkuNo());
                 childEntity.setBomVersion(StringUtils.isBlank(childEntity.getBomVersion()) ? bomChildrenSkuDTO.getBomVersion() : childEntity.getBomVersion());
 
-                handleSupplierTaxPrice(childEntity,childSubEntity,Boolean.TRUE);
+                handleSupplierTaxPrice(childEntity,childSubEntity,Boolean.TRUE,changeEntity.getPurchaseOrgId());
             }
             resultList.add(detailEntity);
             resultList.addAll(childList);
@@ -337,7 +341,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
      * @param entity
      * @param isChild
      */
-    private void handleSupplierTaxPrice(SubcontractChangeDetailEntity entity,SubcontractOrderDetailEntity subEntity  , Boolean isChild) {
+    private void handleSupplierTaxPrice(SubcontractChangeDetailEntity entity,SubcontractOrderDetailEntity subEntity,Boolean isChild,String purchaseOrgId) {
 
         //供应商为空
         if (StringUtils.isBlank(entity.getSupplierId())) {
@@ -353,11 +357,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             return;
         }
         //供应商报价信息
-        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-        searchDTO.setSkuId(entity.getSkuId());
-        searchDTO.setSupplierId(entity.getSupplierId());
-        searchDTO.setPurchaseQty(entity.getQty());
-        searchDTO.setSkuNo(entity.getSkuNo());
+        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(entity.getQty(),entity.getSkuId(),entity.getSkuNo(),entity.getSupplierId(),purchaseOrgId);
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
         PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
         entity.setCurrency(viewDTO.getCurrency());

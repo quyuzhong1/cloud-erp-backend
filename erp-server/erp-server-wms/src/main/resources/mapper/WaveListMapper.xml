@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.erp.server.wms.mapper.WaveListMapper">
+    <select id="listDeliveryIdByStatus" resultType="java.lang.String">
+        select delivery_id
+        from wave_list as pw
+                 left join wave_list_detail as pwd on pw.id = pwd.main_id and pwd.is_deleted = false
+        where pw.status = #{status} and pw.is_deleted = false
+    </select>
+    <select id="listDetailByMainId"
+            resultType="com.erp.model.wms.dto.WaveListDTO$PickingWaveDetailDTO">
+        SELECT
+        pwd.main_id,
+        pwd.basket_no,
+        pwd.delivery_id,
+        pd.id as pickDetailId,
+        pd.sku_id,
+        pd.sku_no,
+        pd.picked_qty,
+        pd.allocated_qty
+        FROM
+        wave_list_detail AS pwd
+        inner join picking_lists AS pl on pl.source_id = pwd.delivery_id and pl.is_deleted = FALSE
+        inner JOIN picking_detail AS pd ON pd.is_deleted = FALSE AND pd.main_id = pl.id
+        <where>
+            <if test="waveId != null and waveId != ''">
+                pwd.main_id = #{waveId}
+            </if>
+            <if test="basketNo != null and basketNo != ''">
+                and pwd.basket_no = #{basketNo}
+            </if>
+            <if test="skuId != null and skuId != ''">
+                and pd.sku_id = #{skuId}
+            </if>
+        </where>
+
+    </select>
+
+    <select id="countDelivery" resultType="java.lang.Integer">
+        select count(pwd.delivery_id)
+        FROM wave_list as pw
+                 LEFT JOIN wave_list_detail as pwd on pwd.main_id = pw.id and pwd.is_deleted = false
+        WHERE pw.is_deleted = false
+          and pw.status = 'await_pick'
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+    <select id="paging" resultType="com.erp.model.wms.entity.WaveListEntity">
+        select wl.id,
+                wl.create_time,
+                wl.update_time,
+                wl.create_user_name,
+                wl.update_user_name,
+                wl.code,
+                wl.name,
+                wl.type,
+                wl.status,
+                wl.picking_cart_type,
+                wl.picking_cart_code,
+                wl.picking_type,
+                wl.print_status,
+                wl.picking_user_id,
+                wl.picking_user_name,
+                wl.picking_time,
+                wl.is_out_stock
+        from wave_list wl
+        where is_deleted = false
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
+        </if>
+        order by create_time desc
+    </select>
+    <select id="listTab" resultType="com.erp.model.wms.dto.WaveListDTO$TabDTO">
+        select status as tabFlag, count(1) as count from wave_list where is_deleted = false and status is not null group by status
+    </select>
+    <select id="listByDeliverIds" resultType="com.erp.model.wms.dto.WaveListDTO$WaveDeliveryDTO">
+        select pw.code as waveCode, pwd.delivery_id
+        from wave_list as pw
+        left join wave_list_detail as pwd on pw.id = pwd.main_id and pwd.is_deleted = false
+        where pw.is_deleted = false
+        AND pwd.delivery_id IN
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="listDeliveryIdBySql" resultType="java.lang.String">
+        select pwd.delivery_id
+        from wave_list as pw
+                 left join wave_list_detail as pwd on pw.id = pwd.main_id and pwd.is_deleted = false
+        where pw.is_deleted = false and pw.code ${sql}
+    </select>
+</mapper>

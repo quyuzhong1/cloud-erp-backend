@@ -6,15 +6,19 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +88,16 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      **/
     Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO);
 
+    /**
+     * 比较尺寸
+     *
+     * @param larger   大尺寸
+     * @param smaller  小尺寸
+     * @param apiError 报错信息
+     * @author hyj
+     * @date 2024/5/10 9:05
+     */
+    void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError);
     /**
      * @Description 新增多规格sku信息
      * @Author Luo_WG
@@ -417,7 +431,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @author Will
      * @date: 2023/3/9 9:26
      * @param id
-     * @param syncKingdeeStatus
+     * @param syncKingdeeId
      */
     Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
@@ -619,7 +633,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param warehouseLocation 仓位信息
      * @return void
      **/
-    Boolean updateWarehouseLocationById(String id, String warehouseLocation);
+    Boolean updateWarehouseLocationById(String id, String warehouseLocation, String warehouseLocationLarge);
 
     /**
      * 根据skuNo查询
@@ -691,4 +705,96 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     void recalDestDeclarePrice(List<ProductDetailEntity> details);
 
     void initProductSizeAndBoxSize();
+
+    /**
+     * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中
+     * @param skuIds
+     */
+    void initProductCustom(List<String> skuIds);
+
+    /**
+     * 获取sku 采购信息
+     * @param skuIds
+     * @return
+     */
+    List<SkuVO> listSkuPurchaseBySkuIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 费用信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuCostByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku产品信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuProductByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku产品信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuAllAttributeByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuPackByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku销售信息 （基础信息+产品信息+销售信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    List<SkuVO> listSkuSaleByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku物流信息 （基础信息+产品信息+物流信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    List<SkuVO> listSkuLogisticsByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+分类信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    List<SkuVO> listSkuCategoryByIds(List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+采购信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    List<SkuVO> listSkuPurchaseByIds(List<String> skuIds);
+
+    ProductDetailEntity getBySkuNoOrEan(String skuCode);
+
+    String dimensionalWeightMeasure(DimensionalWeightDTO dto);
+    void initProductToWangDian(List<String> ids);
+    PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
+
 }

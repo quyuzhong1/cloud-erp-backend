@@ -82,6 +82,32 @@ public class PdaWarehouseLocationMoveController extends BaseController {
     }
 
     /**
+     * 新增并审核
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增仓位移动（自动审核）")
+    @PostMapping("/addAndApprove")
+    public ApiResult<String> addAndApprove(@RequestBody @Validated WarehouseLocationMoveDTO.AddDTO dto) {
+        return success(warehouseLocationMoveService.addAndApprove(dto));
+    }
+
+    /**
+     * 更新并审核
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新仓位移动（自动审核）")
+    @PostMapping("/updateAndApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:update",
+            serviceClass = WarehouseLocationMoveService.class,
+            keyIdName = "id")
+    public ApiResult<String> updateAndApprove(@RequestBody @Validated WarehouseLocationMoveDTO.UpdateDTO dto) {
+        return success(warehouseLocationMoveService.updateAndApprove(dto));
+    }
+    /**
     * 修改
     * @author Luo_WG
     * @date:  2023-08-24
@@ -596,11 +622,11 @@ public class PdaWarehouseLocationMoveController extends BaseController {
      * @date 2024/4/16 11:33
      * @param dto
      */
-    @LogViewService
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓位移动")
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:pdaWarehouseLocationMoveInfo:pc:export",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:export",
             serviceClass = WarehouseLocationMoveService.class,
             keyIdName = "id")
     @WebAdvanceQuery(handler = MarehouseMoveInfoQueryHandler.class)

@@ -101,7 +101,7 @@
            so.approve_user_name AS approveUserName,
            so.create_user_name AS createUserName,
            so.create_time AS createTime,
-           so.track_no AS trackNo,
+           so.track_no AS trackNos,
            so.seller_id AS sellerId,
            so.seller_name AS sellerName,
            so.customer_id AS customerId,
@@ -145,7 +145,7 @@
             </foreach>
         </if>
             so.create_time DESC
-
+			limit 50000
     </select>
 
 
@@ -157,6 +157,7 @@
         sod.id AS sourceDetailId,
         sod.sku_id,sod.sku_no,
         sod.warehouse_location,
+        sod.virtual_warehouse_id,
         sod.actual_qty AS qty,
         so.bill_date
         FROM so_outstock so
@@ -280,6 +281,34 @@
 
     </select>
 
+    <select id="pdaListCount" resultType="java.lang.Integer">
+        select
+        count(distinct so.id)
+        FROM so_outstock_detail sod
+        INNER JOIN so_outstock so ON sod.main_id = so.id AND sod.is_deleted = FALSE
+        WHERE so.is_deleted = FALSE
+        AND so.source_type NOT IN ('SAL_OUTSTOCK')
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and so.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.billDateList !=null and params.billDateList.size>0">
+            AND so.bill_date >= #{params.billDateList[0]} and
+            (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > so.bill_date
+        </if>
+        <if test="params.invalidStatus != null">
+            and so.invalid_status = #{params.invalidStatus}
+        </if>
+
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+
+    </select>
+
     <select id="getTotalByQuery" resultType="com.erp.model.wms.dto.SoOutstockDTO$PagingTotalDTO">
         SELECT
             sum(sod.actual_qty) as actualTotalQty,
@@ -304,26 +333,28 @@
     <!--根据发货单id查询装箱清单-->
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
-            so.id,
-            fmcb.box_no as boxNo,
-            concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
-            box_length*box_width*box_height as multiplySize,
-            fmc.package_weight as packageWeight,
-            fmcb.box_desc as boxDesc,
-        (select string_agg(cd.sku_no , ',') from wms_carton_detail cd where cd.is_deleted = false and cd.carton_id = fmc.id) as sku
+        so.id,
+        wc.box_no as boxNo,
+        concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
+        box_length*box_width*box_height as multiplySize,
+        wcs.package_weight as packageWeight,
+        (select string_agg(concat(wcd.sku_no,'*',wcd.pack_qty), ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as boxDesc,
+        (select string_agg(wcd.sku_no , ',') from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku
         FROM so_outstock so
-        INNER JOIN wms_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
-        INNER JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        inner join so_delivery_notice sdn on sdn.id = so.source_id and sdn.is_deleted = false
+        inner join packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
+        INNER JOIN wms_carton wc ON wc.packing_task_id = pt.id AND wc.is_deleted = FALSE
+        INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
         WHERE so.is_deleted = FALSE
         AND so.id in
         <foreach collection="ids" item="id" open="(" close=")" separator=",">
             #{id}
         </foreach>
-        ORDER BY CAST(fmcb.box_no AS INTEGER)
+        ORDER BY CAST(wc.box_no AS INTEGER)
     </select>
 
     <!--导出装箱信息-->
-    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonDTO$ExportPackingDTO">
+    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$ExportPackingDTO">
         SELECT
         so.id,
         so.packing_status,
@@ -333,8 +364,8 @@
         fmc.package_weight,
         fmcb.box_desc
         FROM so_outstock so
-        LEFT JOIN wms_carton fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
-        LEFT JOIN wms_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
+        LEFT JOIN wms_carton_spec fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
+        LEFT JOIN wms_carton fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         AND so.is_deleted = FALSE
@@ -346,7 +377,7 @@
         CAST(fmcb.box_no AS INTEGER)
     </select>
     <!--根据销售出单单ID 查询sku 信息-->
-    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.WmsCartonDTO$GroupSkuDTO">
+    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">
            SELECT
                so.id,
                sod.sku_id,
@@ -368,10 +399,12 @@
                so.country,
                so.order_type as businessType
             from so_outstock so
+        inner join so_delivery_notice sdn on sdn.id = so.source_id and sdn.is_deleted = false
+        inner join packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
         where so.is_deleted = false
           and so.country != 'CN' and so.order_type = 'B2B'
         <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND (so.packing_status = #{params.packingStatus} or so.approve_status ='approve')
+            AND (pt.packing_status = #{params.packingStatus} or so.approve_status ='approve')
         </if>
         <if test="params.declareStatus != null and params.declareStatus != ''">
             AND so.declare_status = #{params.declareStatus}
@@ -410,10 +443,11 @@
         order by  EXTRACT(year FROM approve_time), EXTRACT(month FROM approve_time)
     </select>
 
-    <select id="getDataCompareByCondition" resultType="com.erp.model.wms.dto.WmsDataCompareTaskDTO$SoOutstockDTO">
+    <select id="getDataCompareByCondition" resultType="java.util.Map">
 		        SELECT g.id,g.platform_code so_code,t.customer_name shop_name,
 			T.warehouse_name,
 			G.sku_no,
+			G.platform_detail_id platform_sku_no,
 			G.actual_qty::VARCHAR actual_qty,
 			TO_CHAR(T.bill_date, 'YYYY-MM-DD') bill_date
 		FROM
@@ -429,18 +463,28 @@
 			T LEFT JOIN so_outstock_detail G ON T.ID = G.main_id
 		<include refid="SoDataCompareByCondition"/>
     </select>
+    <select id="listApproveBySourceDetailIds" resultType="com.erp.model.wms.entity.SoOutstockDetailEntity">
+        select sod.sku_id,sod.sku_no,sod.actual_qty from so_outstock_detail as sod inner join public.so_outstock so on
+        so.id = sod.main_id
+        where
+            so.approve_status = 'approve'
+        <if test="ids != null and ids.size > 0">
+            AND sod.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
 
     <sql id="SoDataCompareByCondition">
    		WHERE
 		T.approve_status = 'approve'
 		AND T.is_deleted = 'f' and G.is_deleted = 'f'
-		<if test="params.id!=null and params.id!=''">
-		and g.id > #{params.id}
-		</if>
-		<if test="params.customerNameList !=null and params.customerNameList.size>0">
-           AND t.customer_name IN
-           <foreach collection="params.customerNameList" item="name" open="(" separator="," close=")">
-               #{name}
+		<if test="params.customerIdList !=null and params.customerIdList.size>0">
+           AND t.customer_id IN
+           <foreach collection="params.customerIdList" item="id" open="(" separator="," close=")">
+               #{id}
            </foreach>
        	</if>
 		<if test="params.billDateList !=null and params.billDateList.size>0">
@@ -450,9 +494,6 @@
        	</if>
        	<if test="params.warehouseName!=null and params.warehouseName!=''">
            AND t.warehouse_name = #{params.warehouseName}
-       	</if>
-		<if test="params.taskId!=null and params.taskId!=''">
-           and not exists (select id from wms_data_compare_temp where system_data_id = g.id and task_id = #{params.taskId})
        	</if>
     </sql>
 </mapper>

@@ -75,6 +75,11 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("warehouse_name")
      private String warehouseName;
     /**
+     * 虚拟仓库Id
+     */
+    @TableField("virtual_warehouse_id")
+    private String virtualWarehouseId;
+    /**
     * 单价
     */
     @TableField("price")
@@ -153,6 +158,18 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("source_platform")
     private String sourcePlatform;
 
+    /**
+     * 第三方平台的包裹号
+     */
+    @TableField("platform_package_id")
+    private String platformPackageId;
+
+
+    /**
+     * 拆分的明细id
+     */
+    @TableField("split_detail_id")
+    private String splitDetailId;
 
     /**
      * 当前净重
@@ -166,6 +183,17 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField(exist = false)
     private String operateDetailId;
 
+    /**
+     * 是否已标记发货
+     */
+    @TableField("is_sign_shipped")
+    private Boolean isSignShipped;
+
+    /**
+     * 还原id
+     */
+    @TableField(exist = false)
+    private String revertId;
 
     public static final String MAIN_ID = "main_id";
 

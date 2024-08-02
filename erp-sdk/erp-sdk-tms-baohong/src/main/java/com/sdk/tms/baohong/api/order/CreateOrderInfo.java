@@ -145,7 +145,7 @@ public class CreateOrderInfo {
      * 默认 1
      */
     @Builder.Default
-    protected Integer channel = 1;
+    protected Integer channel = 0;
 
     /**
      * 服务商单号

@@ -1,6 +1,15 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.interceptor.CommonInterceptor;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
@@ -31,25 +40,11 @@ public class CommonServiceImpl  implements CommonService {
     private WorkflowFeign workflowFeign;
 
     @Override
-    public LoginUser getUserInfo() {
-        String userId = "";
-        String userName = "";
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (Objects.isNull(loginUser)) {
-            loginUser = new LoginUser();
-            loginUser.setUid(userId);
-            loginUser.setUserName(userName);
-            loginUser.setUserAccount("");
-        }
-        return loginUser;
-    }
-
-    @Override
     public List<String> listProcessCurBusinessIds (String businessKey) {
         //获取当前人需要审核的业务ids
         ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList = new ValidList<>();
         ProcessManagementDTO.ApproveActivityDTO approveActivityDTO = new ProcessManagementDTO.ApproveActivityDTO();
-        approveActivityDTO.setCurApproveId(this.getUserInfo().getUid());
+        approveActivityDTO.setCurApproveId(UserContext.getDefaultLoginUser().getUid());
         approveActivityDTO.setBusinessKey(businessKey);
         dtoList.add(approveActivityDTO);
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.batchCurApproverByApprove(dtoList);
@@ -58,5 +53,10 @@ public class CommonServiceImpl  implements CommonService {
         }
         List<String> businessIds = listApiResult.getData().stream().filter(obj -> StringUtils.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
         return  businessIds;
+    }
+    
+    @Override
+    public LoginUser getUserInfo() {
+        return UserContext.getDefaultLoginUser();
     }
 }

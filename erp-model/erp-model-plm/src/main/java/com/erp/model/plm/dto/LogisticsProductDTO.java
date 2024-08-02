@@ -7,7 +7,6 @@ package com.erp.model.plm.dto;/**
  */
 
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.utils.LengthConverterUtil;
 import lombok.Data;
 import lombok.Getter;
@@ -975,7 +974,7 @@ public class LogisticsProductDTO {
         /**
          * 单据审核状态
          */
-        private ApproveStatusEnum logisticsApproveStatus;
+        private String logisticsApproveStatus;
         /**
          * 单据审核状态
          */
@@ -1042,6 +1041,20 @@ public class LogisticsProductDTO {
         private BigDecimal boxSizeHigh;
 
         /**
+         * 产品长
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品宽
+         */
+        private BigDecimal productWidth;
+        /**
+         * 产品高
+         */
+        private BigDecimal productHeight;
+
+        /**
          * 产品属性
          */
         private String productProperty;
@@ -1078,6 +1091,15 @@ public class LogisticsProductDTO {
          * 是否带电
          */
         private Boolean isElectric;
+        /**
+         * 是否纯电
+         */
+        private Boolean onlyBattery;
+
+        /**
+         * 是否液体
+         */
+        private Boolean isLiquid;
 
 
         /**

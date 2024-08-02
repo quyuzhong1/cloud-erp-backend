@@ -23,6 +23,7 @@ public class MathUtil {
 
     public final int scale = 4;
     public final BigDecimal BigDecimal_100 = new BigDecimal("100");
+    public final BigDecimal BigDecimal_1000 = new BigDecimal("1000");
     public final BigDecimal BigDecimal__1 = new BigDecimal("-1");
     public final BigDecimal BigDecimal_1 = new BigDecimal("1");
     public final BigDecimal BigDecimal_2 = new BigDecimal("2");
@@ -43,6 +44,7 @@ public class MathUtil {
     public final Integer CONSTANT_BYTE_SIZE = 1024;
     public final Integer EX_HK_NO_COUNT = 13;
     public final Integer CUSTOMS_CODE_COUNT = 18;
+    public final Integer EXPORT_MAX_COUNT = 50000;
 
 
     /**
@@ -571,6 +573,24 @@ public class MathUtil {
     }
 
     /**
+     * 求多个数中最大值，为空返回0
+     * @param values
+     * @return
+     */
+    public static BigDecimal findMax(BigDecimal... values) {
+        if (values == null || values.length == 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal max = values[0];
+        for (BigDecimal value : values) {
+            if (value.compareTo(max) > 0) {
+                max = value;
+            }
+        }
+        return max;
+    }
+    /**
      * 求最小值，这里的最大MAX值，作为初始条件判断值，如果某些数据范围超过百亿，可以根据需求换成 Long.MAX_VALUE 或者 Double.MAX_VALUE
      *
      * @param mapper
@@ -624,5 +644,20 @@ public class MathUtil {
 
     }
 
+    /**
+     * 校验 BigDecimal位数
+     * @param number
+     * @param integerNum 整数位数
+     * @return
+     */
+    public static boolean isValidNumber(BigDecimal number,int integerNum) {
+        String numberStr = number.toPlainString();
+        int dotIndex = numberStr.indexOf('.');
+        if (dotIndex == -1) {
+            return numberStr.length() <= integerNum;
+        } else {
+            return dotIndex <= integerNum;
+        }
+    }
 
 }

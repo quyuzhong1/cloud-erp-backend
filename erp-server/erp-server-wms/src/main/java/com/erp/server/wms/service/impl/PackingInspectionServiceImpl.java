@@ -1,12 +1,11 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.handler.PlatformSaveHandler;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
@@ -17,21 +16,27 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.dto.PackingInspectionDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.PackingInspectionOperationEnum;
+import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.convert.PackingInspectConverter;
 import com.erp.server.wms.service.*;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,10 +75,13 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     private OperateLogService operateLogService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private TransferDeclareFeign transferDeclareFeign;
+
+    @Lazy
+    @Resource
+    private AsyncService asyncService;
+    @Autowired
+    private LogisticsFeign logisticsFeign;
 
 
     @Override
@@ -99,8 +107,32 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
         //验证订单平台是否取消
         if (soB2cEntity.getIsCancel()) {
             //订单拦截
-            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消"));
+            soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消或退款"));
             return null;
+        }
+        //请求接口过慢，暂时取消 TODO
+        /*else {
+            if (soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
+                //如果订单原始状态非取消，这里需要再次调用平台接口查询，是否已取消
+                PlatformDeliveryInterceptDTO deliveryInterceptDTO = new PlatformDeliveryInterceptDTO();
+                deliveryInterceptDTO.setSoB2cId(soB2cEntity.getId());
+                deliveryInterceptDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+                deliveryInterceptDTO.setOldIsCancel(soB2cEntity.getIsCancel());
+                deliveryInterceptDTO.setPlatformCode(soB2cEntity.getPlatformCode());
+                deliveryInterceptDTO.setShopId(soB2cEntity.getShopId());
+                Boolean flag = PlatformSaveHandler.deliveryIntercept(deliveryInterceptDTO);
+                if (flag) {
+                    soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(soB2cEntity.getId(), "平台取消或退款"));
+                    return null;
+                }
+            }
+        }*/
+
+        if (soB2cEntity.getIsIntercept()) {
+            throw new ServiceException(ApiError.LOGISTICS_INTERCEPT_NOT_PACKAGE);
+        }
+        if (soB2cEntity.getInvalidStatus()) {
+            throw new ServiceException(ApiError.INVALID_NOT_PACKAGE);
         }
 
         //因为明细只保存父级SKU，所以如果有组合品没办法直接更新明细，将明细sku拆分放到redis，扫描时操作redis的值，在最后全部扫描完成统一更新数据库
@@ -115,7 +147,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             //根据SKU查询BOM判断是否是组合SKU
             List<String> skuIdList = detailEntityList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
             //查询sku基础信息
-            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
             Map<String,SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId,Function.identity()));
             PackingInspectionDTO.ViewDTO addViewDTO;
             addViewDTO = PackingInspectConverter.INSTANCE.convertViewDTO(entity,detailEntityList);
@@ -145,11 +177,15 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             }
             viewDTO = addViewDTO;
             //跟踪号赋值
-            if(viewDTO.getTrackNo() == null){
+            if(viewDTO.getTrackNo() == null || null == viewDTO.getPaperSize()){
                 List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
                 if(CollectionUtils.isNotEmpty(soB2cLogisticsEntityList)){
                     SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.get(0);
                     viewDTO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
+                    LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
+                    if(Objects.nonNull(logisticsChannelEntity)){
+                        viewDTO.setPaperSize(logisticsChannelEntity.getPaperSize());
+                    }
                 }
             }
         }
@@ -216,6 +252,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             detailEntityList.forEach(v-> v.setWaitScanQty(0));
             entity.setIsInspection(true);
             entity.setInspectionTime(LocalDateTime.now());
+            entity.setIsAutoOut(dto.getIsAutoOut());
             viewDTO.setStatus(true);
             if(!soB2cDeliveryService.updateById(entity)){
                 throw new ServiceException("发货单更新失败");
@@ -223,7 +260,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if(!soB2cDeliveryDetailService.updateBatchById(detailEntityList)){
                 throw new ServiceException("发货单明细更新失败");
             }
-            String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", commonService.getUserInfo().getUserName(), "b2c发货单", entity.getCode());
+            String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
         }
         //数据存redis
@@ -231,52 +268,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
 
         viewDTO.setTransferStatus(soB2cEntity.getTransferStatus());
         viewDTO.setOrderUploadStatus(declareDetailEntity.getOrderUploadStatus());
-
-        //直接出库
-        if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList()) && dto.getIsAutoOut()  && entity.getIsInspection()) {
-            //如果是待上传或上传失败则直接返回
-            if (StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.WAIT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
-                    StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
-                return viewDTO;
-            }
-
-            //调用第三方平台SDK发货
-            try {
-                if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-                    //调用第三方平台SDK发货
-                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-                    platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-                    platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-                }
-            } catch (Exception e) {
-                log.error("【包装验货】销售单【{}】后:标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-                throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-            }
-
-            //获取一个当前时间当作发货时间
-            LocalDateTime deliveryTime = LocalDateTime.now();
-
-            //将发货状态更新为已发货
-            entity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
-            entity.setDeliveryTime(deliveryTime);
-            if (!soB2cDeliveryService.updateById(entity)) {
-                throw new ServiceException("发货单更新失败");
-            }
-
-            //修改订单状态待发货
-            SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
-            updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
-            updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
-            soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
-
-            //出库
-            soB2cDeliveryService.generateB2cSoOutstock(entity);
-
-            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", commonService.getUserInfo().getUserName(), "包装验货", entity.getCode());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
-        }
         return viewDTO;
     }
 

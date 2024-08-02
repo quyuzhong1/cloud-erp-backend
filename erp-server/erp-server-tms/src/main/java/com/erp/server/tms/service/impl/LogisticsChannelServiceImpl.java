@@ -4,15 +4,16 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.*;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -27,7 +28,6 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
-import lombok.extern.slf4j.Slf4j;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -53,8 +53,6 @@ import java.util.stream.Collectors;
 public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChannelMapper, LogisticsChannelEntity> implements LogisticsChannelService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private LogisticsSupplierService logisticsSupplierService;
@@ -86,6 +84,13 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Resource
     private LogisticsChannelConstraintService logisticsChannelConstraintService;
 
+    @Resource
+    private LogisticsChannelWarehouseService logisticsChannelWarehouseService;
+
+    @Resource
+    private TmsCarrierService tmsCarrierService;
+
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsChannelDTO.AddDTO addDTO) {
@@ -110,8 +115,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelAddressService.add(channelId, addDTO.getAddressList());
         //发货限制 黑名单
         logisticsChannelBlacklistService.add(channelId, addDTO.getBlackList());
+        //仓库设置
+        logisticsChannelWarehouseService.batchUpdate(channelId, addDTO.getWarehouseDTO());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(logisticsChannelEntity.getId(), logisticsChannelEntity.getCode());
     }
@@ -143,9 +150,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         String templateId = updateDTO.getShippingTemplateId();
         //保存模板和渠道的关系表
         shippingTemplateRefChannelService.addRef(channelId, templateId);
+        //仓库设置
+        logisticsChannelWarehouseService.batchUpdate(channelId, updateDTO.getWarehouseDTO());
 
         // 记录主单操作日志
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
         operateLogService.addModuleOperateLogByObj(old, logisticsChannelEntity, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -156,27 +165,22 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, String name) {
+    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, LogisticsSupplierDTO.PagingParamDTO params) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
-        List<LogisticsChannelEntity> list = this.lambdaQuery().
-                in(LogisticsChannelEntity::getMainId, mainIdList).
-                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).
-                orderByAsc(LogisticsChannelEntity::getDisabled).
-                orderByDesc(LogisticsChannelEntity::getCreateTime).
-                list();
+        List<LogisticsChannelEntity> list = baseMapper.listByMainIdsAndName(mainIdList, params);
+//        List<LogisticsChannelEntity> list = this.lambdaQuery().
+//                in(LogisticsChannelEntity::getMainId, mainIdList).
+//                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).
+//                orderByAsc(LogisticsChannelEntity::getDisabled).
+//                orderByDesc(LogisticsChannelEntity::getCreateTime).
+//                list();
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
         List<String> channelIdList = list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
         List<ShippingTemplateRefChannelEntity> shippingTemplateList = shippingTemplateRefChannelService.listChannelIdList(channelIdList);
         for (LogisticsChannelEntity item : list) {
-            LogisticsChannelDTO.BaseDTO base = new LogisticsChannelDTO.BaseDTO();
-            base.setCode(item.getCode());
-            base.setDisabled(item.getDisabled());
-            base.setId(item.getId());
-            base.setName(item.getName());
-            base.setMainId(item.getMainId());
-            base.setSortingCode(item.getSortingCode());
+            LogisticsChannelDTO.BaseDTO base = LogisticsChannelConverter.INSTANCE.convertToChannelDTO(item);
             String effectiveTime = item.getEffectiveTime();
             String timeUnit = item.getEffectiveTimeUnit();
             String timeUnitName = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class, timeUnit);
@@ -185,8 +189,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
                     map(ShippingTemplateRefChannelEntity::getShippingTemplateName).findFirst().orElse("");
             base.setShippingTemplateName(ShippingTemplateName);
-            base.setSourceId(item.getSourceId());
-
             //获取服务商编号
             LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getMainId());
             if (ObjectUtil.isNotEmpty(authEntity)) {
@@ -229,6 +231,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
          * 物流映射列表
          */
         List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(id);
+        mappingListFillData(mappingList);
 
         /**
          * 打印标签类型
@@ -245,11 +248,38 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
          * 发货限制列表
          */
         List<LogisticsChannelBlacklistDTO.ViewDTO> blackList = logisticsChannelBlacklistService.listByChannelId(id);
+
+        /**
+         * 仓库设置
+         */
+        LogisticsChannelWarehouseDTO.ViewDTO warehouseDTO = logisticsChannelWarehouseService.getByChannelId(id);
+
         view.setAddressList(addressList);
         view.setBlackList(blackList);
         view.setMappingList(mappingList);
         view.setPrintTypeList(printTypeList);
+        view.setWarehouseDTO(warehouseDTO);
         return view;
+    }
+
+    /**
+     * mappingList 填充数据
+     */
+    private void mappingListFillData(List<LogisticsMappingDTO.ViewDTO> mappingList) {
+        if (mappingList.stream().allMatch(e-> StringUtils.isBlank(e.getCarrierCode()))){
+            return;
+        }
+        List<TmsCarrierEntity> carrierList = tmsCarrierService.list();
+        for (LogisticsMappingDTO.ViewDTO viewDTO : mappingList) {
+            if (StringUtils.isBlank(viewDTO.getCarrierCode())) {
+                continue;
+            }
+            carrierList.stream()
+                    .filter(e -> e.getSalesPlatform().equalsIgnoreCase(viewDTO.getSalesPlatform()) && e.getCode().equalsIgnoreCase(viewDTO.getCarrierCode()))
+                    .findFirst()
+                    .ifPresent(carrierEntity -> viewDTO.setCarrierName(carrierEntity.getName()));
+        }
+
     }
 
     @Override
@@ -263,7 +293,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(CollectionUtils.isNotEmpty(b2cLogisticsList)){
             new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
         }
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
 
 
@@ -297,7 +327,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         entity.setDisabled(disabled);
         this.updateById(entity);
-        String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "物流渠道", disabled ? "停用" : "启用");
+        String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "物流渠道", disabled ? "停用" : "启用");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "启用/停用");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DISABLED);
 
@@ -329,11 +359,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (Objects.isNull(channel)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
-        LogisticsChannelEntity addChannel = new LogisticsChannelEntity();
         String addChannelId = IdWorker.getIdStr();
-        BeanMapperUtils.copy(channel, addChannel);
-        addChannel.setId(addChannelId);
-        Boolean result = this.save(addChannel);
+        channel.setId(addChannelId);
+        Boolean result = this.save(channel);
 
         //平台物流映射
         logisticsMappingService.copy(id, addChannelId);
@@ -472,6 +500,12 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(StringUtils.isBlank(channelId)){
             return result;
         }
+        if (StringUtils.isNotBlank(channelId)){
+            LogisticsAuthEntity authEntity = logisticsAuthService.getByChannelId(channelId);
+            if (Objects.nonNull(authEntity)){
+                result.setLogisticsPlatform(authEntity.getLogisticsPlatform());
+            }
+        }
         //先通过国家+渠道获取
         LogisticsChannelConstraintEntity logisticsChannelConstraintEntity = logisticsChannelConstraintService.getByChannelAndCountry(channelId,country);
         if(Objects.nonNull(logisticsChannelConstraintEntity)){
@@ -489,9 +523,12 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<BaseDropDownDTO.Tree> tree() {
-        List<BaseDropDownDTO.DisabledDTO> supplierDTOList = logisticsSupplierService.listAll();
+    public List<BaseDropDownDTO.Tree> tree(Boolean filterDisabled) {
+        List<BaseDropDownDTO.DisabledDTO> supplierDTOList = logisticsSupplierService.listAll(false);
         List<BaseDropDownDTO.Tree> result = BeanUtil.copyToList(supplierDTOList,BaseDropDownDTO.Tree.class);
+        if(filterDisabled){
+            result = result.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
+        }
         if(CollectionUtils.isEmpty(result)){
             return new ArrayList<>();
         }
@@ -499,6 +536,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         Collections.sort(result, Comparator.comparing(BaseDropDownDTO.Tree::getDisabled));
         List<String> supplierList = result.stream().map(BaseDropDownDTO.Tree::getCode).collect(Collectors.toList());
         List<LogisticsChannelEntity> childrenList = this.listDbByMainIdList(supplierList);
+        if(filterDisabled){
+            childrenList = childrenList.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
+        }
         Map<String,List<LogisticsChannelEntity>> channelMap = childrenList.stream().collect(Collectors.groupingBy(LogisticsChannelEntity::getMainId));
         for (BaseDropDownDTO.Tree tree : result) {
             List<LogisticsChannelEntity> channelList = channelMap.get(tree.getCode());
@@ -527,24 +567,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return new ArrayList<>();
         }
         return this.lambdaQuery().in(LogisticsChannelEntity::getName, channelNameList).list();
-    }
-
-    @Override
-    public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelId(String channelId) {
-        LogisticsChannelDTO.SignShipDTO signShipDTO = new LogisticsChannelDTO.SignShipDTO();
-        LogisticsChannelEntity channelEntity = this.getById(channelId);
-        String code = "";
-        if (Objects.nonNull(channelEntity)) {
-            signShipDTO.setLogisticsChannelId(channelEntity.getId());
-            code = channelEntity.getCode();
-            signShipDTO.setCode(code);
-        }
-        LogisticsSaleChannelEntity saleChannelEntity = logisticsSaleChannelService.getByCode(code);
-        if (Objects.nonNull(saleChannelEntity)) {
-            signShipDTO.setSaleChannelSupplierName(saleChannelEntity.getSupplierName());
-        }
-        return signShipDTO;
-
     }
 
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
@@ -622,7 +644,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
         }
-
     }
 
     @Override
@@ -646,6 +667,34 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (null == entity){
             throw new ServiceException("对应销售平台物流渠道信息不存在");
         }
-        return new LogisticsChannelDTO.SignShipDTO(entity.getId(),logisticsChannelId, entity.getCode(), entity.getCnName(), viewDTO.getOrderDeliveryMarkType());
+        // 承运商代号
+        String carrierCode = viewDTO.getCarrierCode();
+         // 承运商轨迹查询地址(部分速卖通物流渠道必填)
+        String logisticsTrackUrl = "";
+        if (StringUtils.isNotBlank(carrierCode)){
+            TmsCarrierEntity carrierEntity = tmsCarrierService.getByCodeAndSalesPlatform(carrierCode, dictPlatform);
+            if (null != carrierEntity){
+                logisticsTrackUrl = carrierEntity.getLogisticsTrackUrl();
+            }
+        }
+        return new LogisticsChannelDTO.SignShipDTO(entity.getId(),
+                logisticsChannelId,
+                entity.getCode(),
+                entity.getCnName(),
+                viewDTO.getOrderDeliveryMarkType(),
+                carrierCode,
+                logisticsTrackUrl
+        );
+    }
+    @Override
+    public PagingVO<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsChannelDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        LogisticsChannelDTO.SelectDTO params = dto.getParams();
+        IPage<LogisticsChannelDTO.PagingSelectDTO> pagResult = baseMapper.pagingSelect(query, params);
+//        List<LogisticsChannelDTO.PagingSelectDTO> records = pagResult.getRecords();
+        //排序
+//        List<LogisticsChannelDTO.PagingSelectDTO> list = records.stream().sorted(Comparator.comparing(LogisticsChannelDTO.PagingSelectDTO::getDisabled)).collect(Collectors.toList());
+//        pagResult.setRecords(list);
+        return new PagingVO<>(pagResult);
     }
 }

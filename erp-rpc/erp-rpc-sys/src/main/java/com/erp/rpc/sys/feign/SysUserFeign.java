@@ -5,14 +5,18 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.vo.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.cloud.openfeign.SpringQueryMap;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,11 +61,28 @@ public interface SysUserFeign {
     ApiResult<List<FindUserDTO>> userList(@RequestBody BaseSearchDTO dto);
 
     /**
-     * 获取用户权限
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
      */
+    @PostMapping("feign/user/pagingSelect")
+    ApiResult<PagingVO<UserSelectDto.PageSelectDTO>> pagingSelect(@RequestBody PagingDTO<UserSelectDto.SelectDTO> dto);
+
+        /**
+         * 获取用户权限
+         */
     @PostMapping("feign/user/getRequestPermissionsList")
     List<UserRequestPermissionsDTO> getRequestPermissionsList(@RequestBody String userId);
-
+    /**
+     * 根据菜单cdoe查询用户数据权限
+     * @author hyj
+     * @date 2024/5/9 10:43
+     * @param menuCode 菜单编号
+     * @return java.lang.String
+     **/
+    @GetMapping("feign/user/getUserDatePermissionByMenuCode")
+    Boolean getUserDatePermissionByMenuCode(@RequestParam("menuCode") String menuCode);
     /**
      * 获取用户列表
      */
@@ -87,15 +108,6 @@ public interface SysUserFeign {
     List<String> getRoleIdList(@RequestBody String userId);
 
     /**
-     * 查询左菜单栏
-     *
-     * @param roleIds
-     * @return
-     */
-    @PostMapping("feign/user/findLeftMenuByRoleIds")
-    List<SysMenuVO> findLeftMenuByRoleIds(@RequestBody List<String> roleIds);
-
-    /**
      * 根据第三方平台 以及union id 获取用户id
      */
     @PostMapping("feign/user/getUserIdByThird")
@@ -115,7 +127,7 @@ public interface SysUserFeign {
      * 根据用户名称查询用户
      */
     @GetMapping("feign/user/getUserByUserName")
-    FindUserDTO getUserByUserName(@RequestParam String userName,@RequestParam("userType") String userType);
+    FindUserDTO getUserByUserName(@RequestParam("userName") String userName,@RequestParam("userType") String userType);
     /**
      * 根据用户名称查询用户
      */

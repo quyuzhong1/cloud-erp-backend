@@ -1,6 +1,7 @@
 package com.erp.server.srm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -68,7 +69,7 @@ public class HomePageServiceImpl implements HomePageService {
 
     @Override
     public HomePageDTO.AccountInfoDTO getAccountInfo() {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         if(Objects.isNull(loginUser)){
             throw new ServiceException(ApiError.ERROR_403);
         }

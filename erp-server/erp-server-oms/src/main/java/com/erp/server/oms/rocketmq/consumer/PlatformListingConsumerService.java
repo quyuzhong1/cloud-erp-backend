@@ -24,7 +24,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
-import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
@@ -69,9 +68,6 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     @Resource
     private OperateLogService operateLogService;
 
-    @Resource
-    private CommonService commonService;
-
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
         try {
@@ -93,10 +89,12 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     public ApiResult<?> handle(Object ext) {
         log.info("[Listing] 消费: dto={}", JSONUtil.toJsonStr(ext));
         PlatformProductDTO dto = JSONUtil.toBean(ext.toString(), PlatformProductDTO.class);
-            // Shopify来源卖家sku可能为空
+            // ALiExpress,Shopify来源卖家sku可能为空
             if (StringUtils.isBlank(dto.getPlatformSkuNo())) {
                 log.warn("[Listing] 消费:来源数据异常PlatformSkuNo为空, msg={}", JSONUtil.toJsonStr(dto));
-                return ApiResult.success();
+//                return ApiResult.success()
+                // 防止来源为null
+                dto.setPlatformSkuNo("");
             }
             ListingInfoEntity oldEntity = null;
             if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
@@ -109,8 +107,11 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
                 // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
-                if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())){
+                if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform()) ||
+                        PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform()) ||
+                        PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
                     paramDTO.setPlatformSpuNoList(Collections.singletonList(dto.getPlatformProductNo()));
+                    paramDTO.setPlatformSkuIdList(StringUtils.isNotBlank(dto.getPlatformSkuId()) ? Collections.singletonList(dto.getPlatformSkuId()) : null);
                 }
                 paramDTO.setIsExpire(false);
                 List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);

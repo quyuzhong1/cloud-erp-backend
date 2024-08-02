@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
@@ -56,8 +57,6 @@ import java.util.stream.Collectors;
 public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMapper, SkuMappingRuleEntity> implements SkuMappingRuleService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Resource
     private SkuMappingService skuMappingService;
@@ -84,7 +83,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", commonService.getUserInfo().getUserName(), "sku对照表匹配规则" , skuMappingRuleEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku对照表匹配规则" , skuMappingRuleEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), skuMappingRuleEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(skuMappingRuleEntity.getId(), skuMappingRuleEntity.getId());
@@ -112,7 +111,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
         // 记录主单操作日志
         log.info("编辑 开始记录sku对照表匹配规则日志数据，id：【{}】", skuMappingRuleEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), skuMappingRuleEntity.getId(), "sku对照表匹配规则");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), skuMappingRuleEntity.getId(), "sku对照表匹配规则");
         SkuMappingRuleDTO.LogDTO oldView = this.buildLogDTO(old);
         skuMappingRuleEntity.setDisabled(old.getDisabled());
         SkuMappingRuleDTO.LogDTO newView = this.buildLogDTO(skuMappingRuleEntity);
@@ -137,7 +136,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             throw new ServiceException("sku对照表匹配规则保存失败");
         }
         SkuMappingRuleDTO.LogDTO newView = this.buildLogDTO(old);
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), old.getId(), "sku对照表匹配规则");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getId(), "sku对照表匹配规则");
         operateLogService.addModuleOperateLogByObj(oldView, newView, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), old.getId(), msg);
         return Boolean.TRUE;
     }

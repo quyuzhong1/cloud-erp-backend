@@ -9,6 +9,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -84,9 +85,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Resource
     private OperateLogService operateLogService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private QcInfoService qcInfoService;
@@ -368,7 +366,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //获取sku的id集合
         List<String> skuIdList = detailEntityList.stream().map(SoReturnReceiveDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
-        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIdList);
         //退货单详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Arrays.asList(entity.getSourceId()));
         //销售单详情id集合
@@ -479,7 +477,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
-            LoginUser userInfo = commonService.getUserInfo();
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnReceiveEntity::getApproveUserId, userInfo.getUid())
@@ -514,7 +512,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<String> skuIds = qcList.stream().map(QcInfoDTO.SoReturnReceiveToQcDTO::getSkuId).collect(Collectors.toList());
         //获取到sku 信息
         List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIds);
-        List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
         String sourceType = SourceTypeEnum.SO_RETURN_RECEIVE.getCode();
         for (QcInfoDTO.SoReturnReceiveToQcDTO item : qcList) {
             String skuId = item.getSkuId();
@@ -526,13 +524,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             item.setProductGrade(sku.getProductGrade());
             item.setSaleMethod(productDetailEntity.getSaleMethod());
             item.setVariantProperty(sku.getVariantProperty());
-            item.setBoxHeight(LengthConverterUtil.mmToCm(sku.getBoxHeight()));
-            item.setBoxLength(LengthConverterUtil.mmToCm(sku.getBoxLength()));
-            item.setBoxWeight(LengthConverterUtil.mmToCm(sku.getBoxWeight()));
-            item.setBoxWidth(LengthConverterUtil.mmToCm(sku.getBoxWidth()));
-            item.setProductHeight(LengthConverterUtil.mmToCm(sku.getProductHeight()));
-            item.setProductLength(LengthConverterUtil.mmToCm(sku.getProductLength()));
-            item.setProductWidth(LengthConverterUtil.mmToCm(sku.getProductWidth()));
+            item.setBoxHeight(sku.getBoxHeight());
+            item.setBoxLength(sku.getBoxLength());
+            item.setBoxWeight(sku.getBoxWeight());
+            item.setBoxWidth(sku.getBoxWidth());
+            item.setProductHeight(sku.getProductHeight());
+            item.setProductLength(sku.getProductLength());
+            item.setProductWidth(sku.getProductWidth());
             item.setProductNetWeight(sku.getProductNetWeight());
 
         }
@@ -881,7 +879,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(soReturnReceiveDetailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(req -> req.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             view.setSalesQty(soDetailEntity.getQty());
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSoId().equals(soDetailEntity.getMainId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             view.setDeliveryQty(actualQty);
             view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
             view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());

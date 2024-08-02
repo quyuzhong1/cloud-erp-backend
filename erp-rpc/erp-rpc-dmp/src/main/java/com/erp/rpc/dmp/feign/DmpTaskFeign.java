@@ -37,7 +37,7 @@ public interface DmpTaskFeign {
      * 获取所有的店铺信息
      */
     @PostMapping("feign/listShop")
-    List<DmpShopInfoEntity> listShop();
+    List<BiShopInfoEntity> listShop();
 
     /**
      * 根据条件获详情
@@ -148,33 +148,6 @@ public interface DmpTaskFeign {
     Boolean disabledPlatformTask(@RequestBody @Valid PlatformTaskDTO.DisabledDTO disabledDTO);
 
     /**
-     * 发送MQ消息并保存任务
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("feign/send/mq/save/task")
-    Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPullTaskFeignDTO dto);
-
-    /**
-     * 保存任务
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("feign/save/pull/task")
-    String savePullTask(@RequestBody @Valid DmpPullTaskFeignDTO dto);
-
-    /**
-     * 根据订单id删除订单
-     *
-     * @param ids
-     * @return
-     */
-    @PostMapping("feign/remove/orderByIds")
-    Boolean removeDmpOrderByIds(@RequestBody @Valid List<String> ids);
-
-    /**
      *
      */
     @PostMapping("feign/pull/sendWarnMsg")
@@ -253,4 +226,25 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/dmp/allAddOrUpdateTaskAndSchedule")
     void allAddOrUpdateTaskAndSchedule(@RequestBody @Valid PlatformTaskDTO.DisabledDTO disabledDTO);
+
+    /**
+     * 获取飞书预警信息需要推送的(PushTask任务记录)
+     * @return
+     */
+    @PostMapping("feign/dmp/getWarnPushTaskList")
+    List<DmpPushTaskEntity> getWarnPushTaskList(@RequestBody List<String> statusList);
+
+    /**
+     * 获取飞书预警信息需要推送的(PullTask任务记录)
+     * @return
+     */
+
+    @PostMapping("feign/dmp/getWarnPullTaskList")
+    List<DmpPullTaskEntity> getWarnPullTaskList(@RequestBody List<String> statusList);
+    /**
+     * 获取飞书预警信息需要推送的(Task汇总报告)
+     * @return
+     */
+    @PostMapping("feign/dmp/getWarnTaskReport")
+    List<DmpTaskMsgDTO> getWarnTaskReport(@RequestBody List<String> statusList);
 }

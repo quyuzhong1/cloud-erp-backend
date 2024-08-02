@@ -8,7 +8,10 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -64,6 +67,12 @@ public class SoB2cFinanceEntity extends BaseEntity<SoB2cFinanceEntity> {
     private BigDecimal platformRate;
 
     /**
+     * 平台费
+     */
+    @TableField("platform_cost")
+    private BigDecimal platformCost;
+
+    /**
      * vat 费率
      */
     @TableField("vat_rate")
@@ -115,6 +124,22 @@ public class SoB2cFinanceEntity extends BaseEntity<SoB2cFinanceEntity> {
     @Override
     public Serializable pkVal() {
         return null;
+    }
+
+    public static List<String> fieldsExistNotUpdate() {
+        return Arrays.asList(
+                "currency",
+                "shipping",
+                "itemCost",
+                "logisticsCost",
+                "accessoriesCost",
+                "platformRate",
+                "vatRate",
+                "transferRate",
+                "platformCostType",
+                "transferCostType",
+                "vatCostType"
+        );
     }
 
 }

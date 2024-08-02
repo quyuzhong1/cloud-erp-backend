@@ -1,5 +1,6 @@
 package com.erp.model.plm.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +27,9 @@ public class SkuVO implements Serializable {
     private String skuId;
 
     private String productId;
-
+    /**
+     * ean码
+     */
     private String ean;
 
     /**
@@ -47,6 +50,10 @@ public class SkuVO implements Serializable {
     private String declareCurrencySymbol;
 
     /**
+     * 单箱数量
+     */
+    private Integer boxQty;
+    /**
      * 销售方式
      */
     private String saleMethod;
@@ -55,19 +62,6 @@ public class SkuVO implements Serializable {
      * 单箱数量
      */
     private Integer unitQty;
-
-    /**
-     * 长
-     */
-    private BigDecimal length;
-    /**
-     * 宽
-     */
-    private BigDecimal width;
-    /**
-     * 高
-     */
-    private BigDecimal height;
 
     /**
      * sku 名称
@@ -162,9 +156,13 @@ public class SkuVO implements Serializable {
     private String supplierId;
 
     /**
-     * 仓位
+     * 仓位-推荐仓位(小货区)
      */
     private String warehouseLocation;
+    /**
+     * 推荐仓位(大货区)
+     */
+    private String warehouseLocationLarge;
 
     /**
      * 毛重
@@ -177,9 +175,13 @@ public class SkuVO implements Serializable {
     private BigDecimal targetTaxCost;
 
     /**
-     * 实际含税成本
+     * 实际含税成本(含税)
      */
     private BigDecimal actualTaxCost;
+    /**
+     * 成本价格（不含税）
+     */
+    private BigDecimal notTaxCostPrice;
 
     /**
      * 标准零售价
@@ -227,6 +229,12 @@ public class SkuVO implements Serializable {
     private BigDecimal netWeight;
 
     /**
+     * 属性
+     */
+    private PropertyDTO propertyDTO;
+
+
+    /**
      * 是否是捆绑商品:true=是，false=否
      * (可能字段为null，需添加查询)
      */
@@ -237,5 +245,90 @@ public class SkuVO implements Serializable {
             return "";
         }
         return this.skuImagesUrl;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PropertyDTO {
+        /**
+         * 是否带电
+         */
+        private Boolean isElectric = false;
+        /**
+         * 带电属性名
+         */
+        private String electricName;
+        /**
+         * 是否带磁
+         */
+        private Boolean isMagnetism = false;
+
+        /**
+         * 带磁属性名
+         */
+        private String magnetismName;
+        /**
+         * 是否液体
+         */
+        private Boolean isLiquid = false;
+
+        /**
+         * 液体属性名
+         */
+        private String liquidName;
+        /**
+         * 是否木
+         */
+        private Boolean isWood = false;
+
+        /**
+         * 木属性名
+         */
+        private String woodName;
+        /**
+         * 是否粉末
+         */
+        private Boolean isPowder = false;
+
+        /**
+         * 粉末属性名
+         */
+        private String powderName;
+        /**
+         * 是否膏体
+         */
+        private Boolean isPlaster = false;
+
+        /**
+         * 膏体属性名
+         */
+        private String plasterName;
+        /**
+         * 是否刀具
+         */
+        private Boolean isCuttingTool = false;
+
+        /**
+         * 刀具属性名
+         */
+        private String cuttingToolName;
+        /**
+         * 是否其他
+         */
+        private Boolean isOther = false;
+
+        /**
+         * 其他属性名
+         */
+        private String otherName;
     }
 }

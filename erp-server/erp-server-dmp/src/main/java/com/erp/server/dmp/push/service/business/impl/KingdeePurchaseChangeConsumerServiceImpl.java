@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -12,11 +13,11 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeePurchaseChangeConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,7 +47,7 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         //操作项
         String operate = (String) map.get("operate");
 
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
@@ -65,8 +66,8 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
      * 审核
      */
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        //查询采购订单财务信息
-        handleFinance(map);
+        //查询采购订单信息
+        handlePurchaseOrderData(map);
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
@@ -79,7 +80,7 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         }
 
         //判断金蝶系统是否已存在该数据
-        SaveParam param = new SaveParam(json);
+        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
@@ -113,12 +114,12 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
     /**
      * 查询采购订单财务信息
      */
-    private void handleFinance (Map<String, Object> map) {
+    private void handlePurchaseOrderData (Map<String, Object> map) {
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", map.get("sourceCode")));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FPOOrderFinance_FEntryID,FExchangeRate,FPayConditionId.FNumber";
+        String fieldKeys = "FPOOrderFinance_FEntryID,FExchangeRate,FPayConditionId.FNumber,FIinstallment_FENTRYID,FRelBillNo,FOrderActualPaySubEntity_FDetailID,FPOORDERID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
         if (CollectionUtils.isEmpty(queryList)) {
             throw new ServiceException(10000, StrUtil.format("未找到采购订单{}",map.get("sourceCode").toString()));
@@ -129,5 +130,31 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         map.put("financeId",financeId);
         map.put("exchangeRate",exchangeRate);
         map.put("payConditionId",payConditionId);
+
+
+
+        /**
+         * 采购订单下推付款申请后，变更单无法审核通过，提示以下推付款申请单不能删除
+         * 考虑将付款计划查出来推到变更单，但是这个清空会导致变更后采购订单的付款计划被删除，只传传付款计划id会被删，传了明细id也会被删
+         * 现暂时不用，代码先存储，表配置删除。
+         */
+        List<JSONObject> fIinstallmentList = new ArrayList<>();
+        Map<Object, List<Map<String, Object>>> resultMap = queryList.stream().collect(Collectors.groupingBy(obj -> obj.get("FIinstallment_FENTRYID")));
+        for (Map.Entry<Object, List<Map<String, Object>>> entry : resultMap.entrySet()) {
+            JSONObject actualPayJson = new JSONObject();
+            //付款计划id
+            actualPayJson.set("finstallmentId",entry.getKey());
+            //付款计划明细id
+            List<JSONObject> fDetailIdList = new ArrayList<>();
+            for (Map<String, Object> detailMap : entry.getValue()) {
+                JSONObject detailJson = new JSONObject();
+                Object fDetailId = detailMap.get("FOrderActualPaySubEntity_FDetailID");
+                detailJson.set("fDetailId",fDetailId);
+                fDetailIdList.add(detailJson);
+            }
+            actualPayJson.set("fDetailIdList",fDetailIdList);
+            fIinstallmentList.add(actualPayJson);
+        }
+        map.put("fIinstallmentList",fIinstallmentList);
     }
 }

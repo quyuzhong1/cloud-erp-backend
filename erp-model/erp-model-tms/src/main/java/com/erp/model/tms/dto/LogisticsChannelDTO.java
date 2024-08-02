@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -8,9 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -110,6 +109,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 渠道id
          */
         private String  channelId;
+        /**
+         * 物流平台（下单平台）
+         */
+        private String  logisticsPlatform;
 
         /**
          * 国家二字码
@@ -229,6 +232,16 @@ public class LogisticsChannelDTO implements Serializable {
          * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
          */
         private String orderDeliveryMarkType;
+
+        /**
+         * 承运商代号(部分速卖通物流渠道必填)
+         */
+        private String carrierCode;
+
+        /**
+         * 承运商轨迹查询地址(部分速卖通物流渠道必填)
+         */
+        private String logisticsTrackUrl;
 
         public String checkAndGetOrderDeliveryMarkType(){
             if (StringUtils.isBlank(this.getOrderDeliveryMarkType())){
@@ -394,6 +407,11 @@ public class LogisticsChannelDTO implements Serializable {
         private Boolean isApiInsurance;
 
         /**
+         * 保宏单号（报关单号类型）
+         */
+        private String declareCodeType;
+
+        /**
          * 物流映射列表
          */
         private List<LogisticsMappingDTO.ViewDTO> mappingList;
@@ -414,7 +432,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private List<LogisticsChannelBlacklistDTO.ViewDTO> blackList;
 
-
+        /**
+         * 仓库设置
+         */
+        private LogisticsChannelWarehouseDTO.ViewDTO warehouseDTO;
     }
 
     /**
@@ -444,6 +465,12 @@ public class LogisticsChannelDTO implements Serializable {
          * 发货限制列表
          */
         private List<LogisticsChannelBlacklistDTO.AddDTO> blackList;
+
+        /**
+         * 仓库设置
+         */
+        @NotNull(message = "仓库设置不能为空")
+        private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
     }
 
     /**
@@ -480,6 +507,12 @@ public class LogisticsChannelDTO implements Serializable {
          * 发货限制列表
          */
         private List<LogisticsChannelBlacklistDTO.AddDTO> blackList;
+
+        /**
+         * 仓库设置
+         */
+        @NotNull(message = "仓库设置不能为空")
+        private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
 
     }
 
@@ -629,7 +662,15 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private Boolean isApiInsurance;
 
+        /**
+         * 保宏单号（报关单号类型） /tms/drop/down/dict/list?key=declareCodeType
+         */
+        private String declareCodeType;
 
+        /**
+         * 配送方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
+         */
+        private String deliveryType;
     }
 
     @Data
@@ -710,4 +751,51 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String logisticsSupplierName;
     }
+    @Data
+    @NoArgsConstructor
+    public static class PagingSelectDTO {
+        /**
+         * 渠道id
+         */
+        private String id;
+        /**
+         * 启用/禁用
+         */
+        private Boolean disabled;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 值
+         */
+        private String value;
+        /**
+         * 物流供应商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流供应商名称
+         */
+        private String logisticsSupplierName;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+        /**
+         * 是否展示物流商
+         */
+        private Boolean showSupplier=false;
+    }
+
 }

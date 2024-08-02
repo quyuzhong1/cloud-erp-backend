@@ -1,15 +1,21 @@
 package com.erp.server.wms.controller.feign;
 
 
+import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -53,12 +59,12 @@ public class SoB2cDeliveryFeignController extends BaseController {
       */
     @PostMapping("/add")
     public Boolean listBySoDetailIds(@RequestBody SoB2cDeliveryDTO.AddDTO dto) {
-        Boolean addResult=  soB2cDeliveryService.add(dto);
+        Boolean addResult = soB2cDeliveryService.add(dto);
         return addResult;
     }
 
     /**
-     * 虚假发货
+     * 手动标发
      * @Author Luo_WG
      * @Date 2023/12/27 15:30
      * @param id
@@ -98,7 +104,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
     }
 
     /**
-     * 虚假发货
+     * 手动标发
      * @Author Luo_WG
      * @Date 2023/12/27 16:00
      * @param ids 发货单id
@@ -110,29 +116,42 @@ public class SoB2cDeliveryFeignController extends BaseController {
         return flag;
     }
 
-
     /**
-     * 标记发货
-     * @author Will
-     * @date: 2024/4/28 9:35
-     * @param id
-     * @return List<BatchResultDTO>
-     */
-    @PostMapping("/retryFalseDelivery")
-    public List<BatchResultDTO> retryFalseDelivery(@RequestBody String id) {
-        List<BatchResultDTO> list = soB2cDeliveryService.retryFalseDelivery(id);
-        return list;
+     * 平台标记发货
+     **/
+    @PostMapping("/shipOrder")
+    public Boolean shipOrder(@RequestBody @Validated PlatformShipOrderDTO platformShipOrderDTO) {
+        return soB2cDeliveryService.shipOrder(platformShipOrderDTO);
     }
 
     /**
-     * 合并组包发货
-     * @Author Luo_WG
-     * @Date 2023/12/27 16:00
-     * @param soIdList
-     * @return java.lang.Boolean
-     **/
-    @PostMapping("/mergePackageDelivery")
-    public Boolean mergePackageDelivery(@RequestBody List<String> soIdList) {
-        return soB2cDeliveryService.mergePackageDelivery(soIdList);
+     * 流水线称重
+     * @author will
+     * @date 2024/6/28 15:48
+     * @param dto
+     * @return String
+     */
+    @PostMapping("/dimensionalWeightPipeline")
+    public ApiResult<String> dimensionalWeightPipeline(@RequestBody @Validated DimensionalWeightDTO dto) {
+        try {
+            long startTime = System.currentTimeMillis();
+            ApiResult<String> result = soB2cDeliveryService.dimensionalWeightPipeline(dto);
+            long endTime = System.currentTimeMillis();
+            log.warn("dimensionalWeightPipeline 流水线称重耗时:{},barcode:{}",endTime - startTime,dto.getBarCode());
+            return result;
+        }catch (Exception e){
+            log.error("流水线称重异常",e);
+            return ApiResult.error(StrUtil.format("系统异常:{}",e.getMessage()), CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode());
+        }
+    }
+
+    /**
+     * 修改发货单标发类型
+     * @param ids 发货单id
+     * @param code 类型
+     */
+    @PostMapping("/updateShipmentMark")
+    void updateShipmentMark(List<String> ids, String code) {
+        soB2cDeliveryService.updateShipmentMark(ids, code);
     }
 }

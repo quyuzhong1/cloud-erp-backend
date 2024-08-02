@@ -2,8 +2,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -11,12 +13,14 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -25,6 +29,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -33,31 +39,42 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
-import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
-import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.listener.MoveInfoExcelListener;
 import com.erp.server.wms.mapper.WarehouseLocationMoveMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.StopWatch;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -77,8 +94,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
@@ -97,7 +112,23 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     @Resource
     private SysUserFeign sysUserFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Resource
+    @Lazy
+    private WarehouseLocationMoveServiceImpl service;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private SyncWdtOtherOutStockService wdtOtherOutStockService;
+
+    @Resource
+    private SyncWdtOtherInStockService wdtOtherInStockService;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private CfgSettingService cfgSettingService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(WarehouseLocationMoveDTO.AddDTO addDTO) {
@@ -116,7 +147,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "仓位移动主单" , warehouseLocationMoveEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "仓位移动主单" , warehouseLocationMoveEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveEntity.getId(), "新增操作");
         // 新增明细
         warehouseLocationMoveDetailService.add(addDTO, warehouseLocationMoveEntity.getId());
@@ -146,7 +177,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             throw new ServiceException("仓位移动主单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "仓位移动主单" , warehouseLocationMoveEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "仓位移动主单" , warehouseLocationMoveEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveEntity.getId(), "新增操作");
         //新增明细
         pcAddDTO.getDetailList().forEach(detail->{
@@ -180,14 +211,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        WarehouseLocationMoveEntity warehouseLocationMoveEntity =  BeanMapperUtils.map(WarehouseLocationMoveEntity.class, updateDTO);
-        if (updateDTO.getPcShow() && StringUtils.isBlank(updateDTO.getWarehouseId())) {
-            List<WarehouseLocationMoveDTO.ViewDTO> listDTOS = BeanMapperUtils.copyList(WarehouseLocationMoveDTO.ViewDTO.class, updateDTO.getDetailList());
-            String warehouseId = listDTOS.stream().map(WarehouseLocationMoveDTO.ViewDTO::getWarehouseId).distinct().findFirst().orElse(null);
-            if (StringUtils.isBlank(warehouseId)) {
-                throw new ServiceException(ApiError.ERROR_99001);
-            }
-        }
+        WarehouseLocationMoveEntity warehouseLocationMoveEntity = BeanMapperUtils.map(WarehouseLocationMoveEntity.class, updateDTO);
         // 数据处理
         handleData(warehouseLocationMoveEntity);
         log.info("编辑 开始修改仓位移动主单数据，单号：【{}】", old.getCode());
@@ -199,7 +223,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         warehouseLocationMoveDetailService.update(updateDTO, warehouseLocationMoveEntity.getId());
         // 记录主单操作日志
         log.info("编辑 开始记录仓位移动主单日志数据，单号：【{}】", warehouseLocationMoveEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), warehouseLocationMoveEntity.getCode(), "仓位移动主单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), warehouseLocationMoveEntity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLogByObj(old, warehouseLocationMoveEntity, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -221,7 +245,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             throw new ServiceException(ApiError.ERROR_1029);
         }
         WarehouseLocationMoveEntity warehouseLocationMoveEntity =  BeanMapperUtils.map(WarehouseLocationMoveEntity.class, pcUpdateDTO);
-
+        if (StringUtils.isBlank(pcUpdateDTO.getWarehouseId())){
+            warehouseLocationMoveEntity.setWarehouseId("");
+            warehouseLocationMoveEntity.setWarehouseName("");
+        }
         // 数据处理
         log.info("编辑 开始修改仓位移动主单数据，单号：【{}】", old.getCode());
         int i = baseMapper.updateById(warehouseLocationMoveEntity);
@@ -231,7 +258,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
         // 记录主单操作日志
         log.info("编辑 开始记录仓位移动主单日志数据，单号：【{}】", warehouseLocationMoveEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), warehouseLocationMoveEntity.getCode(), "仓位移动主单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), warehouseLocationMoveEntity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLogByObj(old, warehouseLocationMoveEntity, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveEntity.getId(), msg);
         //修改明细
         WarehouseLocationMoveDTO.UpdateDTO updateDto = new WarehouseLocationMoveDTO.UpdateDTO();
@@ -293,28 +320,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         List<WarehouseLocationMoveDTO.PdaPcListDTO> itemDTOList = pageData.getRecords();
         List<String> skuList = itemDTOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         //feign获取产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuList);
         List<String> warehouseIds = itemDTOList.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<String> infoWarehouseIds = itemDTOList.stream().map(req -> req.getInfoWarehouseId()).distinct().collect(Collectors.toList());
         warehouseIds.addAll(infoWarehouseIds);
-        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
-        for (WarehouseLocationMoveDTO.PdaPcListDTO pdaPcListDTO : itemDTOList) {
-            pdaPcListDTO.setApproveStatusName(ApproveStatusEnum.getName(pdaPcListDTO.getApproveStatus()));
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(pdaPcListDTO.getSkuId())).findFirst().orElse(null);
-            if (Objects.nonNull(skuVO)) {
-                pdaPcListDTO.setProductName(skuVO.getSkuName());
-            }
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            pdaPcListDTO.setInWarehouseLocationName(warehouseLocationEntity.getName());
-            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            pdaPcListDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
-            if (StringUtils.isBlank(pdaPcListDTO.getWarehouseId())){
-                pdaPcListDTO.setWarehouseId(pdaPcListDTO.getInfoWarehouseId());
-            }
-            if (StringUtils.isBlank(pdaPcListDTO.getWarehouseName())){
-                pdaPcListDTO.setWarehouseName(pdaPcListDTO.getInfoWarehouseName());
-            }
-        }
+        dataProcess(itemDTOList, skuVOList, warehouseIds);
         return new PagingVO(pageData);
     }
 
@@ -409,7 +419,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录仓位移动主单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -432,32 +442,30 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录仓位移动主单日志数据，id：【{}】", mainId);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public void addAndSubmit(WarehouseLocationMoveDTO.AddDTO dto) {
+    public String addAndSubmit(WarehouseLocationMoveDTO.AddDTO dto) {
+        //新增和提交分开事务
         // 新增
-        String id = this.add(dto);
+        String id = service.add(dto);
         // 提交
-        this.submit(id);
+        service.submit(id);
+        return id;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(WarehouseLocationMoveDTO.UpdateDTO dto) {
+        //分开事务
         // 修改
-        this.update(dto);
+        service.update(dto);
         // 提交
-        this.submit(dto.getId());
+        service.submit(dto.getId());
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
@@ -473,7 +481,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -492,7 +500,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     * @param dto
     */
     private void approveProcess(WarehouseLocationMoveEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
@@ -527,10 +535,81 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO, Arrays.asList(id));
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
+
+        //发送旺店通
+        syncDisApproveInfoToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+    }
+
+    private void syncDisApproveInfoToWdt(WarehouseLocationMoveEntity entity,SyncOperateEnum operateCode) {
+        // 如果存在黑名单则跳过推送旺店通
+        CfgSettingEntity blackListEntity = cfgSettingService.getByKey(CfgSettingEnum.WAREHOUSE_LOCATION_MOVE_BLACKLIST.getCode());
+        List<String> blackList = ListUtil.empty();
+        if (ObjectUtil.isNotEmpty(blackListEntity) && ObjectUtil.isNotEmpty(blackListEntity.getDataJson())) {
+            JSONObject dataJson = blackListEntity.getDataJson();
+            blackList = new ArrayList<>(dataJson.getBeanList("blackList", String.class));
+        }
+        if (blackList.contains(entity.getCode())) {
+            log.warn("单号【{}】的仓位移动单据，被加入黑名单，不推送旺店通", entity.getCode());
+            return;
+        }
+
+        //发送旺店通
+        List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(entity.getId()));
+
+        HashSet<String> warehouseIdSet = new HashSet<>();
+        for (WarehouseLocationMoveDetailEntity detail : detailEntityList) {
+            warehouseIdSet.add(detail.getWarehouseId());
+        }
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(warehouseIdSet), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
+
+        //同步旺店通 审核{调入仓位做其他入库单，调出仓位做其他出库单}，反审核{调入仓位做其他出库单，调出仓位做其他入库单}
+        List<DmpPushTaskFeignDTO> unSaveTaskList = new ArrayList<>();
+        for (WarehouseLocationMoveDetailEntity moveDetailEntity : detailEntityList) {
+            //转换成出库单
+            if(! thirdWarehouseMap.containsKey(moveDetailEntity.getWarehouseId())){
+                continue;
+            }
+            CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+            outGoods.setSpecNo(moveDetailEntity.getSkuNo());
+            outGoods.setNum(BigDecimal.valueOf(moveDetailEntity.getQty()));
+            outGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE) ?
+                    (StringUtils.isNotBlank(moveDetailEntity.getOutWarehouseLocation()) ? moveDetailEntity.getOutWarehouseLocation() : "") :
+                    (StringUtils.isNotBlank(moveDetailEntity.getInWarehouseLocation()) ? moveDetailEntity.getInWarehouseLocation() : ""));
+
+            String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+            String outWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
+            DmpPushTaskFeignDTO dmpPushTaskFeignDTO = wdtOtherOutStockService.generateTask(Collections.singletonList(outGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), outCode, outWarehouseId, false);
+            unSaveTaskList.add(dmpPushTaskFeignDTO);
+            //调入仓转换为其他入库单
+            CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+            inGoods.setSpecNo(moveDetailEntity.getSkuNo());
+            inGoods.setNum(BigDecimal.valueOf(moveDetailEntity.getQty()));
+            inGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)?
+                    (ObjectUtils.isEmpty(moveDetailEntity.getInWarehouseLocation()) ? "" : moveDetailEntity.getInWarehouseLocation()) : ObjectUtils.isEmpty(moveDetailEntity.getOutWarehouseLocation()) ? "" : moveDetailEntity.getOutWarehouseLocation());
+
+            String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+            String inWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
+            DmpPushTaskFeignDTO taskFeignDTO = wdtOtherInStockService.generateTask(Collections.singletonList(inGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), inCode, inWarehouseId, false);
+            unSaveTaskList.add(taskFeignDTO);
+        }
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(unSaveTaskList);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
+            }
+        });
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -551,7 +630,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -580,7 +659,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除仓位移动主单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除仓位移动主单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -600,9 +679,23 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除仓位移动主单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除仓位移动主单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public String addAndApprove(WarehouseLocationMoveDTO.AddDTO dto) {
+        String id = service.addAndSubmit(dto);
+        service.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(),"新增自动审核"));
+        return id;
+    }
+
+    @Override
+    public String updateAndApprove(WarehouseLocationMoveDTO.UpdateDTO dto) {
+        service.updateAndSubmit(dto);
+        service.approve(new ApproveOneDTO(dto.getId(), ApproveTypeEnum.PASS.getStatus(),"更新自动审核"));
+        return "";
     }
 
     /**
@@ -625,12 +718,12 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
-        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -656,12 +749,12 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", mainId);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), mainId, "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
-        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -687,14 +780,17 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 transferDTO.setSourceCode(infoEntity.getCode());
                 transferDTO.setBillDate(infoEntity.getBillDate());
                 transferDTO.setSourceDetailId(detailEntity.getId());
-                transferDTO.setCurWarehouseId(dto.getPcShow()?detailEntity.getWarehouseId():infoEntity.getWarehouseId());
+                transferDTO.setCurWarehouseId(dto.getPcShow()?
+                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
                 transferDTO.setCurWarehouseLocation(detailEntity.getOutWarehouseLocation());
-                transferDTO.setTargetWarehouseId(dto.getPcShow()?detailEntity.getWarehouseId():infoEntity.getWarehouseId());
+                transferDTO.setTargetWarehouseId(dto.getPcShow()?
+                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
                 transferDTO.setTargetWarehouseLocation(detailEntity.getInWarehouseLocation());
                 transferDTO.setQty(detailEntity.getQty());
                 transferDTO.setSkuId(detailEntity.getSkuId());
                 transferDTO.setSkuNo(detailEntity.getSkuNo());
-                transferDTO.setWarehouseId(dto.getPcShow()?detailEntity.getWarehouseId():infoEntity.getWarehouseId());
+                transferDTO.setWarehouseId(dto.getPcShow() ?
+                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
 //            transferDTO.setWarehouseLocation("");
                 transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
                 transferDTOList.add(transferDTO);
@@ -707,8 +803,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
             ruleDTO.setRules(transactionRuleDTOList);
             inventoryTransCoreService.approveByRule(ruleDTO);
-        }
 
+
+            //发送旺店通
+            syncDisApproveInfoToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
+        }
         return Boolean.TRUE;
     }
 
@@ -720,20 +819,35 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         fillOne(data);
         List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(data.getId()));
         List<WarehouseLocationMoveDetailDTO.ViewDTO> detailList = BeanMapper.copyList(detailEntityList, WarehouseLocationMoveDetailDTO.ViewDTO.class);
-        List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<String> skuIds = detailList.stream().map(WarehouseLocationMoveDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
 
-        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(data.getWarehouseId()));
-
+//        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(data.getWarehouseId()));
+        List<String> allWarehouseIds=new ArrayList<>();
+        List<String> detailWarehouseIds = detailEntityList.stream().map(WarehouseLocationMoveDetailEntity::getWarehouseId)
+                .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if (StringUtils.isNotBlank(warehouseLocationMoveEntity.getWarehouseId())) {
+            allWarehouseIds.add(warehouseLocationMoveEntity.getWarehouseId());
+        }
+        if (CollectionUtils.isNotEmpty(detailWarehouseIds)) {
+            allWarehouseIds.addAll(detailWarehouseIds);
+        }
+        List<WarehouseLocationEntity> warehouseLocationEntities =new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(allWarehouseIds)) {
+            warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(allWarehouseIds);
+        }
         for (WarehouseLocationMoveDetailDTO.ViewDTO viewDTO : detailList) {
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(new SkuVO());
             viewDTO.setUnitName(skuVO.getUnitName());
             viewDTO.setSkuImg(skuVO.getSkuImagesUrl());
             viewDTO.setProductName(skuVO.getSkuName());
-            viewDTO.setWarehouseId(warehouseLocationMoveEntity.getWarehouseId());
-            WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(data.getWarehouseId()) && req.getCode().equals(viewDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDTO.setWarehouseId(StringUtils.isBlank(warehouseLocationMoveEntity.getWarehouseId()) ? viewDTO.getWarehouseId() : warehouseLocationMoveEntity.getWarehouseId());
+            viewDTO.setWarehouseName(StringUtils.isBlank(warehouseLocationMoveEntity.getWarehouseName()) ? viewDTO.getWarehouseName() : warehouseLocationMoveEntity.getWarehouseName());
+            WarehouseLocationEntity inWarehouseLocationEntity = getWarehouseLocationEntity(warehouseLocationEntities,
+                    StringUtils.isBlank(warehouseLocationMoveEntity.getWarehouseId()) ? viewDTO.getWarehouseId() : warehouseLocationMoveEntity.getWarehouseId(), viewDTO.getInWarehouseLocation());
             viewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
-            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(data.getWarehouseId()) && req.getCode().equals(viewDTO.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            WarehouseLocationEntity outWarehouseLocationEntity = getWarehouseLocationEntity(warehouseLocationEntities,
+                    StringUtils.isBlank(warehouseLocationMoveEntity.getWarehouseId()) ? viewDTO.getWarehouseId() : warehouseLocationMoveEntity.getWarehouseId(), viewDTO.getOutWarehouseLocation());
             viewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
         }
 
@@ -742,15 +856,29 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     }
     @Override
     public WarehouseLocationMoveDTO.PcViewDTO pcView(String id) {
+        StopWatch stopWatch = new StopWatch("仓位移动PC预览");
         WarehouseLocationMoveDTO.DetailViewDTO viewDTO = Optional.ofNullable(baseMapper.findOne(id)).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
         WarehouseLocationMoveDTO.PcViewDTO pcViewDTO = new WarehouseLocationMoveDTO.PcViewDTO();
         BeanMapperUtils.copy(viewDTO, pcViewDTO);
         pcViewDTO.setApproveStatusName(ApproveStatusEnum.getName(pcViewDTO.getApproveStatus()));
+        stopWatch.start("获取明细");
         List<WarehouseLocationMoveDTO.DetailViewDTO> detailViewDTOs = baseMapper.getDetail(id);
-        detailViewDTOs.stream().forEach(detailViewDTO -> {
-            String skuId = detailViewDTO.getSkuId();
-            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(skuId));
-            List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(detailViewDTO.getWarehouseId()));
+        stopWatch.stop();
+        List<String> skuIds = detailViewDTOs.stream().map(WarehouseLocationMoveDTO.DetailViewDTO::getSkuId).collect(Collectors.toList());
+        stopWatch.start("获取sku");
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+        stopWatch.stop();
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(detailViewDTOs.stream()
+                .map(WarehouseLocationMoveDTO.DetailViewDTO::getWarehouseId).collect(Collectors.toList()));
+        stopWatch.start("拼接数据");
+        detailViewDTOs.forEach(detailViewDTO -> {
+            if (StringUtils.isBlank(detailViewDTO.getWarehouseId())) {
+                detailViewDTO.setWarehouseId(detailViewDTO.getInfoWarehouseId());
+                detailViewDTO.setWarehouseName(detailViewDTO.getInfoWarehouseName());
+            }
+            if (StringUtils.isBlank(detailViewDTO.getWarehouseName())) {
+                detailViewDTO.setWarehouseName(detailViewDTO.getInfoWarehouseName());
+            }
             InventoryDTO.InventoryBySkuIdAndWarehouseDTO inventoryBySkuIdAndWarehouseDTO = new InventoryDTO.InventoryBySkuIdAndWarehouseDTO();
             BeanMapper.copy(detailViewDTO, inventoryBySkuIdAndWarehouseDTO);
             inventoryBySkuIdAndWarehouseDTO.setWarehouseLocation(detailViewDTO.getOutWarehouseLocation());
@@ -758,25 +886,28 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             if (Objects.nonNull(sku)) {
                 detailViewDTO.setProductName(sku.getSkuName());
             }
-            WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req ->
-                            req.getWarehouseId().equals(detailViewDTO.getWarehouseId()) && req.getCode().equals(detailViewDTO.getInWarehouseLocation()))
-                    .findFirst().orElse(new WarehouseLocationEntity());
-            detailViewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
-            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req ->
-                            req.getWarehouseId().equals(detailViewDTO.getWarehouseId()) && req.getCode().equals(detailViewDTO.getOutWarehouseLocation()))
-                    .findFirst().orElse(new WarehouseLocationEntity());
-            detailViewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
+            detailViewDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, detailViewDTO.getWarehouseId(), detailViewDTO.getInWarehouseLocation()).getName());
+            detailViewDTO.setOutWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, detailViewDTO.getWarehouseId(), detailViewDTO.getOutWarehouseLocation()).getName());
             //设置库存
-            List<InventoryDTO.InventoryViewQtyDTO> inventoryQtys = inventoryService.getInventoryQty(Arrays.asList(inventoryBySkuIdAndWarehouseDTO));
-            inventoryQtys.stream().forEach(inventoryQtyDTO -> {
+            List<InventoryDTO.InventoryViewQtyDTO> inventoryQtys = inventoryService.getInventoryQty(Collections.singletonList(inventoryBySkuIdAndWarehouseDTO));
+            inventoryQtys.forEach(inventoryQtyDTO -> {
                 detailViewDTO.setUsableQty(inventoryQtyDTO.getUsableQty());
                 detailViewDTO.setFrozenQty(inventoryQtyDTO.getFrozenQty());
                 detailViewDTO.setRealQty(inventoryQtyDTO.getRealQty());
             });
         });
+        stopWatch.stop();
         pcViewDTO.setDetailList(detailViewDTOs);
+        log.info(stopWatch.prettyPrint());
         return pcViewDTO;
     }
+
+    private static WarehouseLocationEntity getWarehouseLocationEntity(List<WarehouseLocationEntity> warehouseLocationEntities, String detailViewDTO, String detailViewDTO1) {
+        return  warehouseLocationEntities.stream().filter(req ->
+                        req.getWarehouseId().equals(detailViewDTO) && req.getCode().equals(detailViewDTO1))
+                .findFirst().orElse(new WarehouseLocationEntity());
+    }
+
     /**
     * 启动流程
     *
@@ -791,7 +922,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         startDTO.setBusinessCode(entity.getCode());
         startDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
         startDTO.setBusinessName(entity.getCode());
-        startDTO.setUserId(commonService.getUserInfo().getUid());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
@@ -811,7 +942,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     */
     public void updateForApprove(String id, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(WarehouseLocationMoveEntity::getId, id)
             .set(WarehouseLocationMoveEntity::getApproveUserId, userInfo.getUid())
             .set(WarehouseLocationMoveEntity::getApproveUserName, userInfo.getUserName())
@@ -856,18 +987,36 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         //查询详情
         List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(ids);
-        List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
-        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
+        List<String> allWarehouseIds=new ArrayList<>();
+        List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> detailWarehouseIds = detailEntityList.stream().map(req -> req.getWarehouseId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(warehouseIds)) {
+            allWarehouseIds.addAll(warehouseIds);
+        }
+        if (CollectionUtils.isNotEmpty(detailWarehouseIds)) {
+            allWarehouseIds.addAll(detailWarehouseIds);
+        }
+        List<WarehouseLocationEntity> warehouseLocationEntities =new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(allWarehouseIds)) {
+            warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(allWarehouseIds);
+        }
         // 属性赋值
         for(WarehouseLocationMoveDTO.PdaListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             List<WarehouseLocationMoveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
             List<WarehouseLocationMoveDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, WarehouseLocationMoveDTO.PdaItemDTO.class);
-            List<String> skuList = itemDTOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+            List<String> skuList = itemDTOList.stream().map(WarehouseLocationMoveDTO.PdaItemDTO::getSkuId).distinct().collect(Collectors.toList());
             data.setDetailCount(skuList.size());
             for (WarehouseLocationMoveDTO.PdaItemDTO pdaItemDTO : itemDTOList) {
-                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(data.getWarehouseId()) && req.getCode().equals(pdaItemDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-                pdaItemDTO.setInWarehouseLocationName(warehouseLocationEntity.getName());
+                pdaItemDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities,
+                        StringUtils.isBlank(data.getWarehouseId()) ? pdaItemDTO.getWarehouseId() : data.getWarehouseId(), pdaItemDTO.getInWarehouseLocation()).getName());
+                if (StringUtils.isBlank(pdaItemDTO.getWarehouseId())){
+                    pdaItemDTO.setWarehouseId(data.getWarehouseId());
+                }
+
+                if (StringUtils.isBlank(pdaItemDTO.getWarehouseName())){
+                    pdaItemDTO.setWarehouseName(data.getWarehouseName());
+                }
             }
             data.setItemList(itemDTOList);
         }
@@ -891,8 +1040,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (StringUtils.isBlank(warehouseLocationMoveEntity.getId()) && ObjectUtil.isNull(warehouseLocationMoveEntity.getBillDate())) {
             warehouseLocationMoveEntity.setBillDate(LocalDate.now());
         }
-        warehouseLocationMoveEntity.getWarehouseId();
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(warehouseLocationMoveEntity.getWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(warehouseLocationMoveEntity.getWarehouseId()));
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(warehouseLocationMoveEntity.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
         warehouseLocationMoveEntity.setWarehouseName(updateDTO.getName());
         warehouseLocationMoveEntity.setInventoryOrgId(updateDTO.getOrgId());
@@ -900,6 +1048,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(updateDTO.getOrgId());
         if (ObjectUtil.isNotEmpty(companyEntity)) {
             warehouseLocationMoveEntity.setInventoryOrgName(companyEntity.getCompanyName());
+        }
+        if (StringUtils.isBlank(warehouseLocationMoveEntity.getWarehouseId())){
+            warehouseLocationMoveEntity.setWarehouseId("");
+            warehouseLocationMoveEntity.setWarehouseName("");
         }
     }
 
@@ -933,22 +1085,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     @Override
     public void listExport(WarehouseLocationMoveDTO.ExportDTO dto, HttpServletResponse response) {
         List<WarehouseLocationMoveDTO.PdaPcListDTO> pdaPcListDTOS = baseMapper.listExport(dto);
-        List<String> skuList = pdaPcListDTOS.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<String> skuList = pdaPcListDTOS.stream().map(WarehouseLocationMoveDTO.PdaPcListDTO::getSkuId).distinct().collect(Collectors.toList());
         //feign获取产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuList);
-        List<String> warehouseIds = pdaPcListDTOS.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
-        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
-        for (WarehouseLocationMoveDTO.PdaPcListDTO pdaPcListDTO : pdaPcListDTOS) {
-            pdaPcListDTO.setApproveStatusName(ApproveStatusEnum.getName(pdaPcListDTO.getApproveStatus()));
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(pdaPcListDTO.getSkuId())).findFirst().orElse(null);
-            if (Objects.nonNull(skuVO)) {
-                pdaPcListDTO.setProductName(skuVO.getSkuName());
-            }
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            pdaPcListDTO.setInWarehouseLocationName(warehouseLocationEntity.getName());
-            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(pdaPcListDTO.getWarehouseId()) && req.getCode().equals(pdaPcListDTO.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            pdaPcListDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
-        }
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuList);
+        List<String> warehouseIds = pdaPcListDTOS.stream().map(WarehouseLocationMoveDTO.PdaPcListDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        dataProcess(pdaPcListDTOS, skuVOList, warehouseIds);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/pdaMoveInfo.xlsx";
         String name = "仓库移动导出";
@@ -961,6 +1102,26 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
+
+    private void dataProcess(List<WarehouseLocationMoveDTO.PdaPcListDTO> pdaPcListDTOS, List<SkuVO> skuVOList, List<String> warehouseIds) {
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
+        for (WarehouseLocationMoveDTO.PdaPcListDTO pdaPcListDTO : pdaPcListDTOS) {
+            pdaPcListDTO.setApproveStatusName(ApproveStatusEnum.getName(pdaPcListDTO.getApproveStatus()));
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(pdaPcListDTO.getSkuId())).findFirst().orElse(null);
+            if (Objects.nonNull(skuVO)) {
+                pdaPcListDTO.setProductName(skuVO.getSkuName());
+            }
+            if (StringUtils.isBlank(pdaPcListDTO.getWarehouseId())){
+                pdaPcListDTO.setWarehouseId(pdaPcListDTO.getInfoWarehouseId());
+            }
+            if (StringUtils.isBlank(pdaPcListDTO.getWarehouseName())){
+                pdaPcListDTO.setWarehouseName(pdaPcListDTO.getInfoWarehouseName());
+            }
+            pdaPcListDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, pdaPcListDTO.getWarehouseId(), pdaPcListDTO.getInWarehouseLocation()).getName());
+            pdaPcListDTO.setOutWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, pdaPcListDTO.getWarehouseId(), pdaPcListDTO.getOutWarehouseLocation()).getName());
+        }
+    }
+
     @Override
     public WarehouseLocationMoveDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
         MoveInfoExcelListener excelListenerUtil = new MoveInfoExcelListener(this, warehouseService, warehouseLocationService, plmTaskFeign, inventoryService);

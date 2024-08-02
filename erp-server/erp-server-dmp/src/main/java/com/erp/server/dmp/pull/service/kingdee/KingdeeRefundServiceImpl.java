@@ -125,7 +125,7 @@
 //        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
 //        LinkedList<String> queryFilters = new LinkedList<>();
 //        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-//        queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(5))));
+//        queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(8))));
 //        queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
 //        queryFilters.add(String.format("FBillTypeID = '%s'", "ef06f87d394a462d9f96cb2397803372"));
 //        queryFilters.add(String.format("FDOCUMENTSTATUS = '%s'", "C"));

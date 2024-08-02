@@ -60,6 +60,11 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 虚拟仓库Id
+     */
+    @TableField("virtual_warehouse_id")
+    private String virtualWarehouseId;
 
     /**
      * 仓库id
@@ -140,6 +145,12 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
      */
     @TableField("platform_code")
     private String platformCode;
+
+    /**
+     * 平台销售出库单明细ID
+     */
+    @TableField("platform_detail_id")
+    private String platformDetailId;
 
     @TableField(exist = false)
     private String approveStatus;

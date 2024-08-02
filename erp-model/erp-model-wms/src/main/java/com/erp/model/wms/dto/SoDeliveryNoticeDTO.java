@@ -3,9 +3,12 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -103,6 +106,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String sourceId;
         /**
+         * 类型
+         */
+        private String sourceType;
+        /**
          * 销售单明细id
          */
         private String sourceDetailId;
@@ -139,6 +146,15 @@ public class SoDeliveryNoticeDTO {
          */
         private String approveStatusName;
         /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 装箱状态名称
+         */
+        private String packingStatusName;
+        /**
          * 作废状态
          */
         private Boolean invalidStatus;
@@ -174,6 +190,11 @@ public class SoDeliveryNoticeDTO {
          * 发货数量
          */
         private Integer deliveryQty;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packingQty;
         /**
          * 销售单位
          */
@@ -334,6 +355,10 @@ public class SoDeliveryNoticeDTO {
          * 退货单编号
          */
         private String sourceCode;
+        /**
+         * 类型
+         */
+        private String sourceType;
         /**
          * 单据编号
          */
@@ -547,4 +572,43 @@ public class SoDeliveryNoticeDTO {
         private String code;
     }
 
+    @Getter
+    @Setter
+    public static class PickingViewDTO {
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 计划数量
+         */
+        private Integer planQty;
+        /**
+         * 已拣数量
+         */
+        private Integer pickedQuantity;
+        /**
+         * 未拣数量
+         */
+        private Integer unpickedQuantity;
+    }
+
+    @Getter
+    @Setter
+    public static class GeneratePickingDTO {
+
+        @NotBlank(message = "要货申请不能为空")
+        private String id;
+
+        @Size(min = 1,max = 100,message = "至少存在一条明细,且明细条数不可大于100条,才可生成拣货单")
+        private List<String> detailIds;
+    }
 }

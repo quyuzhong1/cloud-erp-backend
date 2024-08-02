@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
@@ -17,6 +18,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -92,9 +94,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
@@ -377,6 +376,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             searchDTO.setSkuId(entity.getSkuId());
             searchDTO.setSkuNo(entity.getSkuNo());
             searchDTO.setSupplierId(skuPurchase.getSupplierId());
+            searchDTO.setPurchaseOrgId(entity.getPurchaseOrgId());
             searchDTO.setPurchaseQty(entity.getApplyQty().intValue() - purchaseQty.intValue());
             Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = purchasePriceDetailService.listPurchaseTaxPriceView(searchDTO);
             List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> value = pair.getValue();
@@ -410,7 +410,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
         //sku信息
         List<String> skuIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuLogisticsByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
@@ -420,17 +420,12 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //设置采购订单生成类型
         List<PurchaseApplicationDetailEntity> detailList = setCreatePoType(list, mainList);
 
-
-
         //供应商默认联系人
         List<String> supplierIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getSupplierId).collect(Collectors.toList());
         List<SupplierContactEntity> defaultSupplierContactList = supplierContactService.getDefaultBySupplierIdList(supplierIds);
 
         //供应商
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
-
-        //委外订单
-        List<String> applicationDetailIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseApplicationDetailId).collect(Collectors.toList());
 
         //采购订单新增数据
         List<PurchaseOrderDTO.AddDTO> resultList = new ArrayList<>();
@@ -451,14 +446,18 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setDeliveryWarehouseId(value.get(0).getDestWarehouseId());
             addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
             addDTO.setIsFirstMassProduct(entity.getIsFirstMassProduct());
-            //付款条件
-            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(value.get(0).getSupplierId()) && StringUtils.isNotBlank(obj.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
-
 
             //采购订单供应商信息
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
             supplierDTO.setSupplierId(value.get(0).getSupplierId());
-            supplierDTO.setPaymentCondition(paymentCondition);
+
+            //付款条件
+            SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                supplierDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
+                supplierDTO.setPayMethodId(supplierEntity.getPayMethodId());
+            }
+
             //供应商默认联系人
             if (CollectionUtils.isNotEmpty(defaultSupplierContactList)) {
                 SupplierContactEntity supplierContactEntity = defaultSupplierContactList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
@@ -724,7 +723,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<String> childSkuList = bomChildList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
         skuIds.addAll(childSkuList);
         //产品信息
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(skuIds);
 
         //供应商信息
         List<String> supplierIdList = skuList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId()))
@@ -768,7 +767,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             viewDTO.setDeliveryQty(viewDTO.getToPushdownQty());
             viewDTO.setSourceType(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
             //报价信息
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewDTO.getQty(), viewDTO.getSkuId(), viewDTO.getSkuNo(), viewDTO.getSupplierId());
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewDTO.getQty(), viewDTO.getSkuId(), viewDTO.getSkuNo(), viewDTO.getSupplierId(),viewDTO.getPurchaseOrgId());
             getTaxPrice(priceDTO,viewDTO,null);
             viewDTO.setIndex(index);
             index++;
@@ -800,7 +799,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setCurrencySymbol(null);
                 viewGenerateDTO.setAmount(null);
                 //报价信息
-                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO childPriceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewGenerateDTO.getQty(), viewGenerateDTO.getSkuId(), viewGenerateDTO.getSkuNo(), viewGenerateDTO.getSupplierId());
+                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO childPriceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewGenerateDTO.getQty(), viewGenerateDTO.getSkuId(), viewGenerateDTO.getSkuNo(), viewGenerateDTO.getSupplierId(),viewGenerateDTO.getPurchaseOrgId());
                 getTaxPrice(childPriceDTO,null,viewGenerateDTO);
                 viewGenerateDTO.setIndex(index);
                 index++;
@@ -839,13 +838,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
         List<String> skuIds = list.stream().map(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getSkuId).collect(Collectors.toList());
         //产品信息
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
 
         //创建人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
         if (ObjectUtils.isEmpty(findUserDTO)) {
@@ -964,7 +963,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
      */
     private void updateApproveStatusForApprove(List<String> ids,String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         this.lambdaUpdate().in(PurchaseApplicationEntity::getId,ids)
                 .set(PurchaseApplicationEntity::getApproveUserId,userInfo.getUid())

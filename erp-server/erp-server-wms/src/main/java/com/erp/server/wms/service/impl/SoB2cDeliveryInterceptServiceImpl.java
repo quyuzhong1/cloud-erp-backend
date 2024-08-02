@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -11,6 +12,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -22,7 +24,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.PackageStatusEnum;
 import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -36,11 +37,6 @@ import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptDetailEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -57,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,11 +61,6 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -83,8 +75,6 @@ import javax.annotation.Resource;
 public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDeliveryInterceptMapper, SoB2cDeliveryInterceptEntity> implements SoB2cDeliveryInterceptService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
@@ -120,8 +110,18 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Resource
     private TransferLogisticsFeign transferLogisticsFeign;
+    @Autowired
+    private SoOutstockDetailServiceImpl soOutstockDetailServiceImpl;
+    @Resource
+    private PickingListsService pickingListsService;
+    @Lazy
+    @Resource
+    private AsyncService asyncService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Resource
+    @Lazy
+    private WaveListDetailService waveListDetailService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDTO.AddDTO addDTO) {
@@ -142,7 +142,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "b2c发货拦截单" , soB2cDeliveryInterceptEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货拦截单" , soB2cDeliveryInterceptEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), soB2cDeliveryInterceptEntity.getId(), "新增操作");
         // 新增明细（如果有明细的话）
         soB2cDeliveryInterceptDetailService.add(addDTO, soB2cDeliveryInterceptEntity.getId());
@@ -268,6 +268,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .referenceNumber(soB2cEntity.getCode())
                 .reason("b2c发货拦截单自动拦截")
                 .orderId(entity.getId())
+                .shopId(soB2cEntity.getShopId())
                 .build();
         //先取消订单，取消订单失败的再拦截订单
         ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(dto);
@@ -308,7 +309,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         this.updateById(entity);
 
         // 操作日志
-        String logMsg = StrUtil.format("用户【{}】发起物流拦截,单据【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());
+        String logMsg = StrUtil.format("用户【{}】发起物流拦截,单据【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截单", entity.getCode());
         operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "处理操作");
         if(isSuccess){
             return BatchResultDTO.success(entity.getId(),entity.getCode(),msg);
@@ -319,19 +320,17 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id) {
         SoB2cDeliveryInterceptEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货拦截单");
         }
-
         //已处理不可重复操作
         if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
             throw new ServiceException(ApiError.STATUS_IS_HANDLE_NOT_OPERATE);
         }
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         Boolean isSuccess= HandleResultEnum.SUCCESS.getCode().equals(dto.getHandleResult());
         if (isSuccess) {
@@ -395,32 +394,99 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             }
 
             //回滚冻结库存
-            List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(entity.getSourceId()));
-            if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
-                List<String> ids = soB2cDeliveryEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
-                soB2cDeliveryService.rollbackInventory(ids);
-                soB2cDeliveryService.updateStatus(ids, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+            SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getById(entity.getDeliveryId());
+            if (ObjectUtil.isNotEmpty(soB2cDelivery)) {
+                if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(soB2cDelivery.getStatus()) ||
+                        SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())) {
+                    throw new ServiceException(ApiError.ERROR_99125);
+                }
+
+                List<WaveListDetailEntity> waveLists = waveListDetailService.listCancelByDeliveryIds(Collections.singletonList(soB2cDelivery.getId()));
+                String cancelCodes = waveLists.stream().map(WaveListDetailEntity::getDeliveryCode).collect(Collectors.joining(","));
+                if (ObjectUtil.isNotEmpty(cancelCodes)) {
+                    throw new ServiceException(ApiError.ERROR_99123, cancelCodes);
+                }
+                //取消发货库存回滚
+                soB2cDeliveryService.rollbackInventory(Collections.singletonList(soB2cDelivery.getId()));
+                // 生成波次和拣货中回滚库存
+                if (SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode().equals(soB2cDelivery.getStatus()) ||
+                        SoB2cDeliveryStatusEnum.PICKING.getCode().equals(soB2cDelivery.getStatus()) ||
+                        SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(soB2cDelivery.getStatus())) {
+                    pickingListsService.deleteBySourceId(Collections.singletonList(soB2cDelivery.getId()));
+                    // 移除波次
+                    waveListDetailService.moveOut(soB2cDelivery.getId());
+                }
+                soB2cDeliveryService.updateStatus(Collections.singletonList(soB2cDelivery.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
             }
         } else {
-            //修改拦截状态，冻结状态
+            //拦截失败的订单正常自动出库流程
             SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
-            interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
-            interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
-            soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
+            SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getById(entity.getDeliveryId());
+            if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(soB2cDelivery.getStatus())
+                    || SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(soB2cDelivery.getStatus())||
+                    SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())){
+                throw new ServiceException(ApiError.ERROR_99124);
+            }
+            if(!SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(soB2cDelivery.getStatus())){
+                soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
+                soB2cDeliveryService.updateById(soB2cDelivery);
+                interceptUpdateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+                SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
+//                if(!soB2cEntity.getIsCancel() && !SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())){
+//                    //调用第三方平台SDK发货
+//                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+//                    platformShipOrderDTO.setSoB2cId(soB2cEntity.getId());
+//                    platformShipOrderDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+//                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
+//                }
+                //在这里修改拦截状态，冻结状态，因为下面生成销售出库单依赖这个状态
+                interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+                interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+                interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+                interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+                soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
+                //扣减冻结库存
+                soB2cDeliveryService.outFreezeVirtualInventory(soB2cDelivery);
+
+                //生成直接调拨单
+                Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
+                if (isPush) {
+                    asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
+                }
+                //更新备注
+                soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
+
+                if (!soB2cEntity.getIsCancel() && soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
+                    // 调用第三方平台SDK标记发货(独立事务)
+                    String businessDesc = "称重出库";
+                    asyncService.asyncShipOrder(soB2cEntity.getId(),
+                            soB2cEntity.getCode(),
+                            soB2cEntity.getDictPlatform(),
+                            soB2cEntity.convertSubmitPlatformUniqueKey(),
+                            JSONUtil.toJsonStr(dto),
+                            businessDesc, false);
+                } else {
+                    log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+                }
+            }else{
+                //修改拦截状态，冻结状态
+                interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+                interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+                interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+                interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+                soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
+            }
         }
 
         // 操作日志
-        String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", commonService.getUserInfo().getUserName(), "发货拦截单", entity.getCode());
+        String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截单", entity.getCode());
         operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "处理操作");
 
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "拦截结果确认");
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void updateInterceptStatus(SoB2cDeliveryInterceptEntity entity) {
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
@@ -478,11 +544,19 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     @Override
+    public List<SoB2cDeliveryInterceptEntity> listByDeliveryIds(List<String> deliveryIds) {
+        if (CollectionUtils.isEmpty(deliveryIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SoB2cDeliveryInterceptEntity::getDeliveryId, deliveryIds).list();
+    }
+
+    @Override
     public Boolean updateHandleStatus(List<String> sourceIds, String status) {
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Boolean.FALSE;
         }
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         return lambdaUpdate()
                 .in(SoB2cDeliveryInterceptEntity::getSourceId, sourceIds)
@@ -491,6 +565,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .set(SoB2cDeliveryInterceptEntity::getHandleUserName, userInfo.getUserName())
                 .set(SoB2cDeliveryInterceptEntity::getHandleTime, LocalDateTime.now())
                 .update();
+    }
+
+    @Override
+    public List<SoB2cDeliveryInterceptEntity> listByStatus(String code) {
+        return lambdaQuery().eq(SoB2cDeliveryInterceptEntity::getHandleStatus,code).list();
     }
 
     /**
@@ -508,7 +587,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDeliveryEntities.get(MathUtil.ZERO).getCode());
         }
 
-
+        SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getNotCancelBySoId(soB2cDeliveryInterceptEntity.getSourceId());
+        if(Objects.nonNull(soB2cDelivery)){
+            soB2cDeliveryInterceptEntity.setDeliveryId(soB2cDelivery.getId());
+            soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDelivery.getCode());
+        }
     }
 
     /**

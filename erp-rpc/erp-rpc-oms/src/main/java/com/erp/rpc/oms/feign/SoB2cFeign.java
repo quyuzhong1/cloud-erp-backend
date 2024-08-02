@@ -40,6 +40,16 @@ public interface SoB2cFeign {
     SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(@RequestBody String trackNo);
 
     /**
+     * 根据跟踪单号查询订单物流信息
+     * @author will
+     * @date 2024/7/5 10:26
+     * @param logisticsCode
+     * @return SoB2cLogisticsEntity
+     */
+    @PostMapping("/feign/soB2c/getByTrackNoOrTransportNo")
+    SoB2cLogisticsEntity getByTrackNoOrTransportNo(@RequestBody String logisticsCode);
+
+    /**
      * 根据订单id 获取到运费估算的参数值
      *
      * @param orderId
@@ -56,6 +66,17 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/listDetailByIds")
     List<SoB2cDetailEntity> listDetailByIds(@RequestBody List<String> soDetailIdList);
+
+
+    /**
+     * 获取明细信息
+     *
+     * @param soDetailIdList
+     * @return
+     */
+    @PostMapping("/feign/soB2c/listDetailContainDeleted")
+    List<SoB2cDetailEntity> listDetailContainDeleted(@RequestBody List<String> soDetailIdList);
+
 
     /**
      * 根据主表id查询B2C订单主表信息
@@ -100,9 +121,6 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/orderShipped")
     Boolean orderShipped(@RequestBody String soId);
-
-
-
 
     /**
      * 根据b2c订单id查询详情信息
@@ -535,4 +553,45 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/listMergePackageBySoIds")
     List<PackageDTO.ScanResultDTO> listMergePackageBySoIds(@RequestBody List<String> ids);
+
+
+    /**
+     * 批量更新平台订单取消状态
+     */
+    @PostMapping("/feign/soB2c/batchUpdateCancelAndLog")
+    Boolean batchUpdateCancelAndLog(@RequestBody List<String> soB2cIdList);
+
+
+    /**
+     * 根据销售单号查询订单
+     */
+    @GetMapping("/feign/soB2c/getSoCode")
+    SoB2cEntity getSoCode(@RequestParam("soB2cCode") String soB2cCode);
+
+    @GetMapping("/feign/soB2c/listRefBomSplit")
+    SoB2cDTO.CombinationDTO listRefBomSplit(@RequestParam("detailId") String detailId);
+
+    @PostMapping("/feign/soB2c/updateSignShippedByDetailId")
+    void updateSignShippedByDetailId(@RequestBody List<String> detailIds);
+
+
+    /**
+     * 根据id和当前仓库ID获取到需要销售出单的数据
+     *
+     * @param soId 销售订单ID
+     * @param warehouseId 仓库ID(非必传：默认第一个明细记录的仓库)
+     * @return 新增销售出库单DTO
+     */
+    @GetMapping("/feign/soB2c/getSoOutStockByIdAndWarehouseId")
+    SoOutstockDTO.GenerateB2cDTO getSoOutStockByIdAndWarehouseId(@RequestParam(value = "soId") String soId,
+                                                                 @RequestParam(value = "warehouseId", required = false) String warehouseId);
+    /**
+     * 根据数据类型集合查询
+     * @author will
+     * @date 2024/6/25 20:06
+     * @return SoB2cDataDTO
+     */
+    @PostMapping("/feign/soB2c/listSoB2cData")
+    SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO);
+
 }

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
@@ -78,6 +79,7 @@ public class PlatformDataThread {
     }
 
     @Async("pullErpOpenApi")
+    @DataIdempotent
     public void cleanOrder(JobTaskDTO jobTaskDTO) {
         try {
             log.info("发起异步调用平台【{}】", jobTaskDTO.getDictPlatform());
@@ -103,6 +105,7 @@ public class PlatformDataThread {
     public void executeTask(String taskName, boolean isAsync) {
         // 获取请求任务
         String o = template.opsForList().rightPop(taskName);
+        log.info("从redis获取到任务：{}", JSONUtil.toJsonStr(o));
         if(ObjectUtils.isEmpty(o) || "null".equals(o)) {
             return;
         }
@@ -129,7 +132,7 @@ public class PlatformDataThread {
     /**
      * 更新或保存报表
      */
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void checkAndSaveMongo(ReportList reportList, String marketplaceId) {
         if (CollectionUtil.isEmpty(reportList)) {
             XxlJobHelper.log("[拉取亚马逊报表任务] 无报告信息：marketplaceId={}", marketplaceId);

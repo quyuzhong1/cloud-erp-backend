@@ -1,14 +1,16 @@
 package com.erp.server.tms.service;
+
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -70,7 +72,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @author yl
      * @date 2023-11-17
      */
-    BatchResultDTO updateStatus(String id, String trackStatus);
+    BatchResultDTO updateStatus(String id, String trackStatus, LocalDateTime trackTime,String trackDesc);
 
     /**
      * 分页获取轨迹数据
@@ -87,7 +89,19 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      */
     PagingVO<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(LogisticsBillDetailQueryDTO query);
 
-    LogisticsBillDetailEntity getDetailByTrackNo(String trackNo);
+    /**
+     * 列表查询
+     * @param query
+     * @return
+     */
+    List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query);
+
+    /**
+     * 根据运单号查询明细记录
+     * @param trackNo
+     * @return
+     */
+    List<LogisticsBillDetailEntity> getDetailByTrackNo(String trackNo);
 
     /**
      * 更改运输单号
@@ -97,4 +111,13 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     Boolean updateTrackNo(LogisticsBillDTO.UpdateTrackNoDTO billDTO);
 
     List<LogisticsBillDetailEntity> listByTrackNo(List<String> trackNoList);
+    /**
+     * @description: 根据平台订单号和物流跟踪单号查询
+     * @author Will
+     * @date: 2024/5/11 11:50
+     * @param platformCodeList
+     * @param trackNoList
+     * @return List<LogisticsBillDetailEntity>
+     */
+    List<LogisticsBillDetailEntity> listByPlatformCodeAndTrackNo(List<String> platformCodeList, List<String> trackNoList);
 }

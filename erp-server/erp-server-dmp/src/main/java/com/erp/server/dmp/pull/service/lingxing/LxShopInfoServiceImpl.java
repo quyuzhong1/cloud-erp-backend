@@ -28,6 +28,7 @@ import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.server.dmp.service.ShopInfoMappingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.sdk.third.lingxing.dto.ShopInfoDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
     private ShopInfoMappingService shopInfoMappingService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<ShopEntity> entityList = pullDate();
 
@@ -96,7 +97,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
             }
             ShopEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             entityToMqlist.add(entity);
@@ -138,7 +139,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(ShopEntity shopInfo) {
         UniqueDto updateDto = UniqueDto.getUniqId(shopInfo.getSid().toString());
         if(null == shopInfo){

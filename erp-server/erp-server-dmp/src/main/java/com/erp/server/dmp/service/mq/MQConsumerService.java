@@ -1,20 +1,16 @@
 package com.erp.server.dmp.service.mq;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
-import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.CleanBaseDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpExchangeRateDTO;
-import com.common.message.service.mq.MQProducerService;
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.*;
@@ -24,8 +20,6 @@ import com.erp.model.dmp.gyy.*;
 import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.plm.dto.NewProductDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +31,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -46,19 +39,19 @@ import java.util.Map;
 public class MQConsumerService {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Resource
-    private DmpDeliveryDetailInfoService deliveryDetailInfoService;
+    private BiDeliveryDetailInfoService deliveryDetailInfoService;
     @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
+    private BiRefundInfoService biRefundInfoService;
 
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    private BiReturnOrderInfoService biReturnOrderInfoService;
     @Resource
-    private DmpShopInfoService dmpShopInfoService;
+    private BiShopInfoService biShopInfoService;
     @Resource
-    private DmpSkuInfoService dmpSkuInfoService;
+    private BiSkuInfoService biSkuInfoService;
 
     @Resource
     private ProductInfoService productInfoService;
@@ -67,7 +60,7 @@ public class MQConsumerService {
     private ProductDetailService productDetailService;
 
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private BiOrderItemSplitService biOrderItemSplitService;
     @Resource
     private DmpBomService dmpBomService;
     @Resource
@@ -99,13 +92,13 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "gyy_sales_order_tag||gyy_sales_history_order_tag||kingdee_sales_order_tag||mabang_sales_order_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_order_consumer")
-    public class ConsumerErpSalesOrder implements RocketMQListener<DmpOrderInfoEntity> {
+    public class ConsumerErpSalesOrder implements RocketMQListener<BiOrderInfoEntity> {
         @Override
-        public void onMessage(DmpOrderInfoEntity ext) {
+        public void onMessage(BiOrderInfoEntity ext) {
             try{
                 log.info("监听到销售订单消息：entity={}", JSONUtil.toJsonStr(ext));
                 // 调用订单写入与更新
-                dmpOrderInfoService.checkOrder(ext);
+                biOrderInfoService.checkOrder(ext);
                 log.info("dmpOrderInfoService.checkOrder(ext) after");
                 MapUtil mapUtil = getMapParam();
 
@@ -135,9 +128,9 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "gyy_delivery_order_tag||kingdee_delivery_order_tag||mabang_delivery_order_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_delivery_consumer")
-    public class ConsumerErpDeliveryOrder implements RocketMQListener<DmpDeliveryDetailInfoEntity> {
+    public class ConsumerErpDeliveryOrder implements RocketMQListener<BiDeliveryDetailInfoEntity> {
         @Override
-        public void onMessage(DmpDeliveryDetailInfoEntity ext) {
+        public void onMessage(BiDeliveryDetailInfoEntity ext) {
             log.info("监听到发货订单消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
             deliveryDetailInfoService.checkOrder(ext);
@@ -168,13 +161,13 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "gyy_refund_order_tag||kingdee_refund_order_tag||mabang_refund_order_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_refund_order_consumer")
-    public class ConsumerErpRefundOrder implements RocketMQListener<DmpRefundInfoEntity> {
+    public class ConsumerErpRefundOrder implements RocketMQListener<BiRefundInfoEntity> {
         @Override
-        public void onMessage(DmpRefundInfoEntity ext) {
+        public void onMessage(BiRefundInfoEntity ext) {
             try{
                 log.info("监听退款订单消息：entity={}", JSONUtil.toJsonStr(ext));
                 // 调用订单写入与更新
-                dmpRefundInfoService.checkOrder(ext);
+                biRefundInfoService.checkOrder(ext);
                 MapUtil mapUtil = getMapParam();
                 if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
                     OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getRefundCode());
@@ -201,12 +194,12 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "gyy_return_order_tag||kingdee_return_order_tag||mabang_return_order_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_return_order_consumer")
-    public class ConsumerErpReturnOrder implements RocketMQListener<DmpReturnOrderInfoEntity> {
+    public class ConsumerErpReturnOrder implements RocketMQListener<BiReturnOrderInfoEntity> {
         @Override
-        public void onMessage(DmpReturnOrderInfoEntity ext) {
+        public void onMessage(BiReturnOrderInfoEntity ext) {
             log.info("监听退货订单消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
-            dmpReturnOrderInfoService.checkOrder(ext);
+            biReturnOrderInfoService.checkOrder(ext);
             MapUtil mapUtil = getMapParam();
 
             if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
@@ -228,15 +221,15 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "gyy_shop_info_tag||kingdee_shop_info_tag||mabang_shop_info_tag||kingdee_ecc_shop_info_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_shop_info_consumer")
-    public class ConsumerErpShopInfo implements RocketMQListener<DmpShopInfoEntity> {
+    public class ConsumerErpShopInfo implements RocketMQListener<BiShopInfoEntity> {
         @Override
-        public void onMessage(DmpShopInfoEntity ext) {
+        public void onMessage(BiShopInfoEntity ext) {
             log.info("监听店铺信息消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign()) || PlatformEnum.KINGDEE_ECC.getDesc().equals(ext.getPlatformSign())){
-                dmpShopInfoService.checkShopByKingDee(ext);
+                biShopInfoService.checkShopByKingDee(ext);
             }else {
-                dmpShopInfoService.checkOrder(ext);
+                biShopInfoService.checkOrder(ext);
             }
             MapUtil mapUtil = getMapParam();
             if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
@@ -261,12 +254,12 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "kingdee_sku_info_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_sku_info_consumer")
-    public class ConsumerErpSkuInfo implements RocketMQListener<DmpSkuInfoEntity> {
+    public class ConsumerErpSkuInfo implements RocketMQListener<BiSkuInfoEntity> {
         @Override
-        public void onMessage(DmpSkuInfoEntity ext) {
+        public void onMessage(BiSkuInfoEntity ext) {
             log.info("监听商品信息消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
-            dmpSkuInfoService.checkOrder(ext);
+            biSkuInfoService.checkOrder(ext);
             MapUtil mapUtil = getMapParam();
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
                 OrderMongoDTO updateDto = OrderMongoDTO.getByFNumber(ext.getSkuNo());
@@ -305,7 +298,7 @@ public class MQConsumerService {
         @Override
         public void onMessage(Map<String,List<NewProductDTO>> ext) {
             try {
-                dmpOrderItemService.updateNewSign(ext);
+                biOrderItemSplitService.updateNewSign(ext);
             }catch (Exception e){
                 log.error("sync_dmp_product_listing_tag 更新新品标记失败 ！{}",JSONUtil.toJsonStr(ext),e);
             }
@@ -320,7 +313,7 @@ public class MQConsumerService {
         @Override
         public void onMessage(Map<String,List<NewProductDTO>> ext) {
             try {
-                dmpOrderItemService.getProductListing(ext);
+                biOrderItemSplitService.getProductListing(ext);
             }catch (Exception e){
                 log.error("get_dmp_product_listing_tag 查询产品listing失败 ！{}",JSONUtil.toJsonStr(ext),e);
             }

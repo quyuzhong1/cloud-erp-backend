@@ -14,6 +14,12 @@
             <if test="params.categoryId!=null and params.categoryId!=''  ">
                 AND P.category_id=#{params.categoryId}
             </if>
+        <if test="params.categoryIdList !=null and params.categoryIdList.size()>0">
+            AND P.category_id IN
+            <foreach collection="params.categoryIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
             <if test="params.searchKeyword!=null and  params.searchKeyword!=''  ">
                 AND (P.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                 OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))

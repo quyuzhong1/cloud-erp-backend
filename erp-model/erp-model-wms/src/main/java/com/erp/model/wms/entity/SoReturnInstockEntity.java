@@ -168,19 +168,6 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
      */
     @TableField("source_type")
     private String sourceType;
-
-    /**
-     * 仓库id
-     */
-    @TableField("warehouse_id")
-    private String warehouseId;
-
-    /**
-     * 仓库名称
-     */
-    @TableField("warehouse_name")
-    private String warehouseName;
-
     /**
      * 销售单id
      */
@@ -216,6 +203,12 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
      */
     @TableField("third_code")
     private String thirdCode;
+
+    /**
+     * 第三方单据创建时间
+     */
+    @TableField("created")
+    private LocalDateTime created;
 
     public static final String APPROVE_STATUS = "approve_status";
 

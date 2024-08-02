@@ -11,13 +11,13 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -29,6 +29,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
@@ -39,10 +40,10 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -55,6 +56,8 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -79,8 +82,6 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     @Autowired
     private ModuleOperateLogService operateLogService;
 
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private SubcontractChangeDetailService subcontractChangeDetailService;
@@ -109,6 +110,10 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
 
     @Override
     public PagingVO<SubcontractChangeDTO.ListDTO> paging(PagingDTO<SubcontractChangeDTO.PagingParamDTO> pagingParamDTO) {
@@ -348,7 +353,18 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             handleSubcontractOrder(ids,list);
 
             //审核通过发送金蝶(防止数据先删除导致查不到，需要先发送金蝶)
-            list.forEach(obj -> syncKingdeeSubcontractChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            List<DmpPushTaskEntity> resultList = new ArrayList<>();
+            list.forEach(obj -> {
+                DmpPushTaskEntity pushTaskEntity = syncKingdeeSubcontractChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                resultList.add(pushTaskEntity);
+            });
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(resultList);
+                }
+            });
 
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) {
            // TODO 终止审批流程
@@ -723,7 +739,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         }
         //产品信息
         List<String> skuIds = subcontractChangeDetailList.stream().map(SubcontractChangeDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
@@ -823,7 +839,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     */
     private void updateForApprove(List<String> ids, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().in(SubcontractChangeEntity::getId, ids)
             .set(SubcontractChangeEntity::getApproveUserId, userInfo.getUid())
             .set(SubcontractChangeEntity::getApproveUserName, userInfo.getUserName())
@@ -853,7 +869,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         }
         //产品信息
         List<String> skuIds = list.stream().map(SubcontractChangeDTO.ListDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         // 属性赋值
         for(SubcontractChangeDTO.ListDTO data : list) {

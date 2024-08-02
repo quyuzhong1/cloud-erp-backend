@@ -12,18 +12,19 @@ import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OtherInstockDetailDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.OtherInstockDetailEntity;
+import com.erp.model.wms.entity.OtherInstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.OtherInstockDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.OtherInstockDetailService;
-import io.seata.spring.annotation.GlobalTransactional;
 import com.erp.server.wms.service.OtherInstockService;
 import com.erp.server.wms.service.WarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -64,7 +65,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
     @GlobalTransactional(rollbackFor = Exception.class)
     public void add(List<OtherInstockDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            return;
+            throw new ServiceException(ApiError.ERROR_1041,"其他出库明细");
         }
         List<OtherInstockDetailEntity> list = BeanMapperUtils.copyList(OtherInstockDetailEntity.class, detailList);
 
@@ -81,8 +82,8 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void update(List<OtherInstockDetailDTO.UpdateDTO> detailList, String mainId) {
-        if (detailList == null) {
-            detailList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_1041,"其他出库明细");
         }
         //原明细数据
         List<OtherInstockDetailEntity> oldList = this.listByMainId(mainId);
@@ -139,7 +140,12 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDetails (List<OtherInstockDetailEntity> newList, String mainId, Boolean isUpdate) {
+    private void doOpHandleDetails (List<OtherInstockDetailEntity> detailList, String mainId, Boolean isUpdate) {
+        //去除服务、费用SKU
+        List<OtherInstockDetailEntity> newList = removeNoInventorySku(detailList);
+        if (CollectionUtils.isEmpty(newList)) {
+            throw new ServiceException(ApiError.ERROR_NO_INVENTORY_SKU_NOT_EXIST);
+        }
 
         //需要新增的数据
         List<OtherInstockDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
@@ -153,7 +159,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
 
         //SKU信息
         List<String> skuIds = newList.stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
@@ -216,4 +222,19 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
         }
     }
+
+    /**
+     * 移除包含服务和费用的sku明细
+     * @author will
+     * @date 2024/7/26 22:52
+     * @param newList
+     * @return List<OtherInstockDetailEntity>
+     */
+    private List<OtherInstockDetailEntity> removeNoInventorySku (List<OtherInstockDetailEntity> newList) {
+        List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> skuIdList = CollectionUtils.isEmpty(noInventorySkuList)
+                ? new ArrayList<>() : noInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+       return newList.stream().filter(obj -> !skuIdList.contains(obj.getSkuId())).collect(Collectors.toList());
+    }
+
 }

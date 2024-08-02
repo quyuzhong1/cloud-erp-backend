@@ -3,20 +3,17 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -31,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -221,6 +217,19 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
                     .update();
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public ProductPurchaseEntity getByEan(String ean) {
+        LambdaQueryWrapper<ProductPurchaseEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductPurchaseEntity::getEan, ean);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public ProductDetailDTO.ServiceToWavePickingDTO getProductInfoBySkuId(String skuId) {
+        return baseMapper.listWavePickingDTOBySkuIds(skuId);
     }
 }
 

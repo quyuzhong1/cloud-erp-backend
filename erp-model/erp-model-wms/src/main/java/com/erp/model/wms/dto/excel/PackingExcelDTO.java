@@ -58,26 +58,26 @@ public class PackingExcelDTO implements Serializable {
     /**
      * 每箱实重（KG）
      */
-    @ExcelProperty(value = "每箱实重（KG）", index = 4)
+    @ExcelProperty(value = "每箱实重(KG)", index = 4)
     private BigDecimal singleBoxWeight;
 
     /**
      * 每箱体积长（CM)
      */
-    @ExcelProperty(value = "每箱体积长",index = 5)
+    @ExcelProperty(value = "每箱体积长(CM)",index = 5)
     private BigDecimal singleBoxLength;
 
 
     /**
      * 每箱体积宽（CM)
      */
-    @ExcelProperty(value = "每箱体积宽",index = 6)
+    @ExcelProperty(value = "每箱体积宽(CM)",index = 6)
     private BigDecimal singleBoxWidth;
 
     /**
      * 每箱体积高（CM)
      */
-    @ExcelProperty(value = "每箱体积高",index = 7)
+    @ExcelProperty(value = "每箱体积高(CM)",index = 7)
     private BigDecimal singleBoxHeight;
 
 

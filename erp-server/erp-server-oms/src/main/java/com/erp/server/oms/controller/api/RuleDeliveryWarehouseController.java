@@ -1,7 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
-import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
@@ -40,6 +40,7 @@ public class RuleDeliveryWarehouseController extends BaseController {
      * @date: 2023-08-28
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<RuleDeliveryWarehouseDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<RuleDeliveryWarehouseDTO.PagingParamDTO> dto) {
         PagingVO<RuleDeliveryWarehouseDTO.PagingViewDTO> pagingVO = ruleDeliveryWarehouseService.paging(dto);
         return success(pagingVO);

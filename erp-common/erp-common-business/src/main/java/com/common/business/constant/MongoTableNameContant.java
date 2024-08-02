@@ -182,34 +182,28 @@ public interface MongoTableNameContant {
     /**
      * 亚马逊物流管理库存状况报告
      */
-    String REPORT_AMAZON_FBA_INVENTORY_PLANNING = "report_amazon_fba_inventory_planning";
-
-
-    /**
-     * 亚马逊报表表
-     */
-    String REPORT_AMAZON_INFO = "report_amazon_info";
+    String DATA_REPORT_AMZ_FBA_INVENTORY_PLANNING = "data_report_amz_fba_inventory_planning";
 
     /**
      * 亚马逊商品报告表
      */
-    String REPORT_AMAZON_LISTING = "report_amazon_listing";
+    String DATA_REPORT_AMZ_LISTING = "data_report_amz_listing";
 
     /**
      * 亚马逊物流管理库存-已存档
      */
-    String REPORT_AMAZON_FBA_MYI_ALL_INVENTORY = "report_amazon_fba_myi_all_inventory";
+    String DATA_REPORT_AMZ_FBA_MYI_ALL_INVENTORY = "data_report_amz_fba_myi_all_inventory";
 
     /**
      * 亚马逊物流预留库存报告
      */
-    String REPORT_AMAZON_RESERVED = "report_amazon_reserved";
-
+    String DATA_REPORT_AMZ_RESERVED = "data_report_amz_reserved";
 
     /**
      * 亚马逊物流销售报告
      */
-    String REPORT_AMAZON_FULFILLED_SHIPMENTS = "report_amazon_fulfilled_shipments";
+    String DATA_REPORT_AMZ_FULFILLED_SHIPMENTS = "data_report_amz_fulfilled_shipments";
+
 
     // Shopify数据库表名
     /**
@@ -242,24 +236,38 @@ public interface MongoTableNameContant {
      */
     String ORIGINAL_LX_FBA_SHIPMENT_RECEIVE = "original_lx_fba_shipment_receive";
 
+    /**
+     * 旺店通销售出库单
+     */
+    String THIRD_SYSTEM_WDT_SELL_STOCK_OUT_ORDER = "third_system_wdt_sell_stock_out_order";
 
     /**
+     * 旺店通销售出库单
+     */
+    String THIRD_SYSTEM_WDT_RETURN_STOCK_OUT_ORDER = "third_system_wdt_return_stock_out_order";
+    String ORIGNAL_WANGDIAN_WAREHOUSE = "orignal_wangdian_warehouse";
+    String ORIGNAL_WANGDIAN_SHOP = "orignal_wangdian_shop";
+    String ORIGNAL_WANGDIAN_VIRTUAL_WAREHOUSE = "orignal_wangdian_virtual_warehouse";
+    /**
      * 根据任务 key 获取表名
+     *
      * @param key
      * @return
      */
-    static List<String> getTableListByTask(String key){
-        switch (key){
+    static List<String> getTableListByTask(String key) {
+        switch (key) {
             case TaskConstant.MABANG_PULL_DATA_TASK:
-                return Arrays.asList(ORIGINAL_MABANG_ORDER, ORIGINAL_MABANG_SKU, ORIGINAL_MABANG_RETURN_ORDER, ORIGINAL_MABANG_REFUND, ORIGINAL_MABANG_SHOP, ORIGINAL_MABANG_DELIVERY_DETAIL,ORIGINAL_MABANG_COMBO_SKU);
+                return Arrays.asList(ORIGINAL_MABANG_ORDER, ORIGINAL_MABANG_SKU, ORIGINAL_MABANG_RETURN_ORDER, ORIGINAL_MABANG_REFUND, ORIGINAL_MABANG_SHOP, ORIGINAL_MABANG_DELIVERY_DETAIL, ORIGINAL_MABANG_COMBO_SKU);
             case TaskConstant.GYY_PULL_DATA_TASK:
                 return Arrays.asList(ORIGINAL_GYY_ORDER, ORIGINAL_GYY_SKU, ORIGINAL_GYY_RETURN_ORDER, ORIGINAL_GYY_REFUND, ORIGINAL_GYY_SHOP, ORIGINAL_GYY_DELIVERY_DETAIL);
             case TaskConstant.KINGDEE_PULL_DATA_TASK:
-                return Arrays.asList(ORIGINAL_KINGDEE_ORDER, ORIGINAL_KINGDEE_SKU, ORIGINAL_KINGDEE_RETURN_ORDER, ORIGINAL_KINGDEE_SHOP, ORIGINAL_KINGDEE_ECC_SHOP, ORIGINAL_KINGDEE_DELIVERY_DETAIL,ORIGINAL_KINGDEE_DIRECT_TRANSFER);
+                return Arrays.asList(ORIGINAL_KINGDEE_ORDER, ORIGINAL_KINGDEE_SKU, ORIGINAL_KINGDEE_RETURN_ORDER, ORIGINAL_KINGDEE_SHOP, ORIGINAL_KINGDEE_ECC_SHOP, ORIGINAL_KINGDEE_DELIVERY_DETAIL, ORIGINAL_KINGDEE_DIRECT_TRANSFER);
             case TaskConstant.IML_PULL_DATA_TASK:
                 return Arrays.asList(ORIGINAL_IML_INBOUND_ORDER);
             case TaskConstant.LX_PULL_DATA_TASK:
-                return Arrays.asList(ORIGINAL_LX_SHOP_LIST,  ORIGINAL_LX_FBA_SHIPMENT_RECEIVE);
+                return Arrays.asList(ORIGINAL_LX_SHOP_LIST, ORIGINAL_LX_FBA_SHIPMENT_RECEIVE);
+            case TaskConstant.WDT_PULL_DATA_TASK:
+                return Arrays.asList(THIRD_SYSTEM_WDT_SELL_STOCK_OUT_ORDER, THIRD_SYSTEM_WDT_RETURN_STOCK_OUT_ORDER,ORIGNAL_WANGDIAN_WAREHOUSE,ORIGNAL_WANGDIAN_SHOP,ORIGNAL_WANGDIAN_VIRTUAL_WAREHOUSE);
             default:
                 return Collections.EMPTY_LIST;
         }

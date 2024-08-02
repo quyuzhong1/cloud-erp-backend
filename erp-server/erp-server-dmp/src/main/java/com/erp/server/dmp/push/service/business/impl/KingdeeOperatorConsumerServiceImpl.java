@@ -1,8 +1,10 @@
 package com.erp.server.dmp.push.service.business.impl;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -11,11 +13,11 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeOperatorConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +54,7 @@ public class KingdeeOperatorConsumerServiceImpl implements KingdeeOperatorConsum
         //操作项
         String operate = (String) map.get("operate");
 
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
@@ -86,13 +88,15 @@ public class KingdeeOperatorConsumerServiceImpl implements KingdeeOperatorConsum
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
         }
         //判断金蝶系统是否已存在该数据
-        SaveParam param = new SaveParam(json);
+        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         }catch (Exception e){
             //未查找到数据，新增数据
             JSONObject firstJson = json;
+            JSONUtil.toJsonStr(firstJson);
+            JSONUtil.toJsonStr(param);
             //更新数据
             kingdeeCommonService.save(platformEntity,map,apiUtils,json,param,type);
             return;

@@ -46,7 +46,7 @@ public class ProductDetailExcelDTO {
     /**
      * 销售方式
      */
-    @FieldValid(fieldName = "销售方式",enumClass = SaleMethodEnum.class)
+    @FieldValid(fieldName = "销售方式",isNotBlank = true,enumClass = SaleMethodEnum.class)
     private String saleMethod;
 
     /**
@@ -467,6 +467,18 @@ public class ProductDetailExcelDTO {
      */
     @FieldValid(fieldName = "单箱数量",formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String boxQty;
+
+    /**
+     * 仓位
+     */
+    @FieldValid(fieldName = "推荐仓位(小货区)")
+    private String warehouseLocation;
+
+    /**
+     * 仓位
+     */
+    @FieldValid(fieldName = "推荐仓位(大货区)")
+    private String warehouseLocationLarge;
 
     /**
      * 错误信息

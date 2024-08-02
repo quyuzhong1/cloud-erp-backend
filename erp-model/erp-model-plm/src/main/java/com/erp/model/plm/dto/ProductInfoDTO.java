@@ -5,9 +5,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -83,6 +85,7 @@ public class ProductInfoDTO {
     /**
      * 分类id
      */
+    @NotBlank(message = "产品分类不能为空")
     private String categoryId;
 
     /**
@@ -138,6 +141,7 @@ public class ProductInfoDTO {
     /**
      * 销售方式
      */
+    @NotBlank(message = "销售方式不能为空")
     private String saleMethod;
 
     private Integer approvalStatus;
@@ -224,6 +228,22 @@ public class ProductInfoDTO {
          * 项目负责人
          */
         private String projectChargeId;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    public static class IdsDateDto{
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+        
+        /**
+         * 立项日期/启动日期/结项日期
+         */
+        @NotNull(message = "日期不能为空")
+        private LocalDate localDate;
     }
 
 

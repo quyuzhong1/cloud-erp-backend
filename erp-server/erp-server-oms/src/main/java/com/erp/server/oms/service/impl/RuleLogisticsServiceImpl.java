@@ -1,48 +1,48 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.RuleConditionDTO;
-import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
+import com.erp.model.oms.dto.RuleLogisticsDTO;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
-import com.erp.model.oms.entity.RuleOrderApprovalEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.tms.enums.LogisticsChannelWarehouseTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.model.tms.entity.LogisticsChannelWarehouseEntity;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.mapper.RuleLogisticsMapper;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
 import com.erp.server.oms.service.RuleLogisticsService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.RuleLogisticsDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -57,8 +57,6 @@ import com.common.core.enums.ApiError;
 public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapper, RuleLogisticsEntity> implements RuleLogisticsService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Autowired
     private RuleConditionService ruleConditionService;
 
@@ -81,7 +79,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
@@ -95,7 +93,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流规则单", id);
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流规则单", id);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_LOGISTICS.getCode(), id, "新增操作");
         return ruleLogisticsEntity.getId();
     }
@@ -118,7 +116,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
         RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
         // 数据处理
@@ -129,7 +127,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         }
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleLogisticsEntity.getId(), "物流规则单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleLogisticsEntity.getId(), "物流规则单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, ruleLogisticsEntity, ModuleTypeEnum.RULE_LOGISTICS.getCode(), ruleLogisticsEntity.getId(), msg);
         return Boolean.TRUE;
@@ -232,10 +230,35 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                     sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
 
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
-            //获取到表达式
-
+            //获取到表达式,判断表达式是否匹配
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
             if (matchResult) {
+                //验证渠道下是否设置了仓库
+                List<LogisticsChannelWarehouseEntity> list = FeignQuery.create(LogisticsChannelWarehouseEntity.class)
+                        .eq(LogisticsChannelWarehouseEntity::getLogisticsChannelId, item.getLogisticsChannelId())
+                        .list();
+                if (CollectionUtils.isEmpty(list)) {
+                    throw new ServiceException(StrUtil.format("渠道【{}】未设置仓库，请先设置仓库",item.getLogisticsChannelName()));
+                }
+                //全部指定直接过，部分指定校验仓库是否一致
+                if (StrUtil.equals(list.get(0).getType(),LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {
+                    List<String> warehouseIdList = mapList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get("deliveryWarehouseId")) && StrUtil.isNotBlank(obj.get("deliveryWarehouseId").toString())).map(obj -> obj.get("deliveryWarehouseId").toString()).collect(Collectors.toList());
+                    if (CollectionUtils.isEmpty(warehouseIdList)) {
+                        throw new ServiceException("B2C销售订单仓库不能为空");
+                    }
+                    List<String> channelWarehouseIdList = list.stream().map(LogisticsChannelWarehouseEntity::getWarehouseId).collect(Collectors.toList());
+                   Boolean isMatch =  Boolean.TRUE;
+                    for (String warehouseId : warehouseIdList) {
+                       if (!channelWarehouseIdList.contains(warehouseId)) {
+                           isMatch = Boolean.FALSE;
+                           break;
+                       }
+                   }
+                    //如果仓库没匹配上则进行下一条规则的匹配
+                   if (!isMatch) {
+                       continue;
+                   }
+                }
                 RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
                 ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
                 ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());

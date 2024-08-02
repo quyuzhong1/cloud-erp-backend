@@ -1,23 +1,29 @@
 package com.erp.server.wms.controller.api;
 
 
-import cn.hutool.core.util.StrUtil;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationAreaTypeEnum;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
+import com.erp.server.wms.query.WarehouseLocationInfoQueryHandler;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import com.common.core.controller.BaseController;
-
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -30,8 +36,24 @@ import java.util.List;
 @RestController
 @RequestMapping("/warehouseLocation")
 public class WarehouseLocationController extends BaseController {
+    @Resource
+    private OperateLogService operateLogService;
 
     private final WarehouseLocationService warehouseLocationService;
+
+
+    /**
+     * 仓位远程查询（分页型）
+     * @author Will
+     * @date: 2024/5/16 15:17
+     * @param dto
+     * @return ApiResult<PagingVO<LocationListDTO>>
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<WarehouseLocationDTO.LocationListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.SelectDTO> dto) {
+        PagingVO<WarehouseLocationDTO.LocationListDTO> pagingVO = warehouseLocationService.pagingSelect(dto);
+        return success(pagingVO);
+    }
 
     /**
      * 获取仓位下拉列表
@@ -957,5 +979,104 @@ public class WarehouseLocationController extends BaseController {
         return success();
     }
 
+    /**
+     * 分页查询仓位
+     */
+    @PostMapping("/pagingByParam")
+    @WebAdvanceQuery(handler = WarehouseLocationInfoQueryHandler.class)
+    public ApiResult<PagingVO<WarehouseLocationDTO.ViewDto>> pagingByParam(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.SearchParamDTO> dto){
+        PagingVO<WarehouseLocationDTO.ViewDto> list = warehouseLocationService.pagingByParam(dto);
+        return ApiResult.success(list);
+    }
+
+    /**
+     * 新增仓位
+     */
+    @PostMapping("/add")
+    public ApiResult<Void> add(@RequestBody @Validated WarehouseLocationDTO.AddDTO addDTO){
+        warehouseLocationService.add(addDTO);
+        return ApiResult.success();
+    }
+
+    /**
+     * 批量删除仓位
+     * @return 失败描述列表
+     */
+    @PostMapping("/deleteBatch")
+    public ApiResult<List<String>> deleteBatch(@RequestBody WarehouseLocationDTO.IdsDto idsDto){
+        List<String> errorList = warehouseLocationService.deleteBatch(idsDto);
+        return errorList.isEmpty() ? ApiResult.success() : new ApiResult(500, "部分数据删除失败", errorList);
+    }
+
+    /**
+     * 导入仓位Excel
+     */
+    @PostMapping("/importExcel")
+    public ApiResult<Void> importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response){
+        warehouseLocationService.importExcel(file, response);
+        return ApiResult.success();
+    }
+
+    /**
+     * 导出仓位Excel
+     */
+    @WebAdvanceQuery(handler = WarehouseLocationInfoQueryHandler.class)
+    @PostMapping("/exportExcel")
+    public void exportExcel(@RequestBody @Validated WarehouseLocationDTO.exportParamDto dto, HttpServletResponse response){
+        warehouseLocationService.exportExcel(dto, response);
+    }
+
+    /**
+     * 回收仓位
+     */
+    @PostMapping("/recycle")
+    public ApiResult<List<BatchResultDTO>> recycle(@RequestBody @Validated WarehouseLocationDTO.IdsDto idsDto){
+        List<BatchResultDTO> errorList = warehouseLocationService.recycle(idsDto);
+        return errorList.isEmpty() ? success() : failure(errorList);
+    }
+
+    /**
+     * 启用/禁用仓位
+     */
+    @PostMapping("/updateStatus")
+    public ApiResult<Void> updateStatus(@RequestBody @Validated WarehouseLocationDTO.updateStatusDto dto){
+        warehouseLocationService.updateDisabled(dto);
+        return ApiResult.success();
+    }
+
+    /**
+     * 查询操作日志
+     * 业务ID：仓位ID
+     */
+    @PostMapping("/listOperateLog")
+    public ApiResult<PagingVO<OperateLogDTO.ListDTO>> listOperateLog(@RequestBody PagingDTO<OperateLogDTO.SearchDTO> dto){
+        PagingVO<OperateLogDTO.ListDTO> paging = operateLogService.paging(dto);
+        return ApiResult.success(paging);
+    }
+
+    /**
+     * 编辑更新仓位
+     */
+    @PostMapping("/edit")
+    public ApiResult<Void> edit(@RequestBody @Validated WarehouseLocationDTO.updateDto dto){
+        warehouseLocationService.update(dto);
+        return ApiResult.success();
+    }
+
+    /**
+     * 仓位管理tab接口
+     */
+    @GetMapping("/tabList")
+    public ApiResult<List<WarehouseLocationDTO.tabDto>> tabList(){
+        return ApiResult.success(warehouseLocationService.tabList());
+    }
+
+    /**
+     * 下载导入模板
+     */
+    @GetMapping("/downloadTemplate")
+    public void downloadTemplate(HttpServletResponse response){
+        warehouseLocationService.downloadTemplate(response);
+    }
 
 }

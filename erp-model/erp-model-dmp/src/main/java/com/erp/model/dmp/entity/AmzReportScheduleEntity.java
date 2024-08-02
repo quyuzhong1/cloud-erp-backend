@@ -82,6 +82,17 @@ public class AmzReportScheduleEntity extends BaseEntity<AmzReportScheduleEntity>
      */
     @TableField("subscribed_type")
     private String subscribedType;
+    /**
+     * 报告数据间隔时间:PT5M，PT15M，PT30M，PT1H，PT2H，PT4H，PT8H，PT12H，P1D，P2D，P3D，PT84H，P7D，P14D，P15D，P18D，P30D，P1M
+     * {@link com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification.PeriodEnum}
+     */
+    @TableField("data_period")
+    private String dataPeriod;
+    /**
+     * 报告数据开始时间
+     */
+    @TableField("data_start_time")
+    private LocalDateTime dataStartTime;
 
 
     public static final String AMZ_REPORT_SCHEDULE_ID = "amz_report_schedule_id";

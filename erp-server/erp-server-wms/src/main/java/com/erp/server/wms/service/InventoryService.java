@@ -240,10 +240,9 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     /**
      * PDA:库存查询
      *
-     * @param skuNo SKU编号
      * @return PDA即时库存
      **/
-    InventoryDTO.PdaInventorySearch getInventoryBySkuNo(String skuNo);
+    InventoryDTO.PdaInventorySearch getInventoryBySkuNo(PagingDTO<InventoryDTO.PdaSearchParamDTO> dto);
 
 
     /**
@@ -272,4 +271,64 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return java.util.List<com.erp.model.wms.entity.InventoryEntity>
      **/
     List<InventoryDTO.UsableInventoryViewDTO> listByParam(List<InventoryDTO.UsableInventoryParamDTO> list);
+
+    /**
+     * 根据sku获取sku对应库位库存
+     *
+     * @param skus sku集合
+     */
+    List<InventoryDTO.LocationInventoryResult> listLocationInventoryBySkus(List<InventoryDTO.LocationInventoryParam> skus);
+
+    /**
+     * 根据仓库id sku 数量获取最优仓位
+     * @param param param
+     */
+    InventoryDTO.LocationInventory recommendedLocation(InventoryDTO.RecommendedLocationParam param);
+
+    /**
+     * 按仓库统计数量
+     */
+    long countByWarehouse();
+
+    /**
+     * 按库区统计数量
+     */
+    long countByArea();
+
+    /**
+     * 按仓位统计数量
+     */
+    long countByLocation();
+
+    /**
+     * PDA:库存查询（仓库）
+     * @param searchDTO
+     * @return
+     */
+    InventoryDTO.PdaInventoryWarehousePageDTO<InventoryDTO.PdaInventoryPageDTO> getInventoryByWarehouse(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO);
+
+    /**
+     * 查询某个仓位的库存数量
+     * @param warehouseId 仓库ID
+     * @param warehouseLocation 仓位编码
+     * @return 库存数量
+     * @date: 2024-06-13
+     * @author: tanmujin
+     */
+    Integer getQtyByLocation(String warehouseId, String warehouseLocation);
+
+    /**
+     * 统计冻结库存数量
+     * @param warehouseId
+     * @param skuId
+     * @return
+     */
+    Integer getFrozenInventoryTotal(String warehouseId, String skuId);
+    /**
+     * 根据skuId和仓库id获取可用数量
+     * @param paramDTO
+     * @return
+     */
+    List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(InventoryDTO.ParamDTO paramDTO);
+
 }

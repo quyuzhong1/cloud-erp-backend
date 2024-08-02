@@ -1,22 +1,19 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -533,6 +530,11 @@ public class RequisitionApplicationDTO implements Serializable {
         private Integer pickingQty;
 
         /**
+         * 虚拟仓冻结数量
+         */
+        private Integer virtualFrozenQty;
+
+        /**
          * 要货仓库id
          */
         private String requisitionWarehouseId;
@@ -551,6 +553,15 @@ public class RequisitionApplicationDTO implements Serializable {
          * 调出仓库名称
          */
         private String fromWarehouseName;
+        /**
+         * 调出虚拟仓库
+         */
+        private String fromVirtualWarehouseId;
+
+        /**
+         * 调出虚拟仓库名称
+         */
+        private String fromVirtualWarehouseName;
 
         /**
          * 调入仓库id
@@ -585,7 +596,15 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 服务商code
          */
-        private String provideCode;;
+        private String provideCode;
+        /**
+         * 货件号
+         */
+        private String fbaShipmentCode;
+        /**
+         * 货件id
+         */
+        private String shipmentId;
     }
 
     /**
@@ -654,6 +673,14 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         @NotBlank(message = "调出仓库不能为空")
         private String fromWarehouseId;
+        /**
+         * 调出虚拟仓库Id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 调出虚拟仓库名称
+         */
+        private String fromVirtualWarehouseName;
         /**
          * 调出仓库仓位
          */
@@ -760,7 +787,6 @@ public class RequisitionApplicationDTO implements Serializable {
          * 拣货数量
          */
         @NotNull(message = "拣货数量不能为空")
-        @Min(value = 1,message = "拣货数量最小值为1")
         @Max(value = 999999999,message = "拣货数量最大值为999999999")
         private Integer pickingQty;
 
@@ -847,7 +873,23 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String bomVersion;
     }
-
+    /**
+     * 绑定货件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BindShipment {
+        /**
+         * id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+        /**
+         * 货件id
+         */
+        @NotBlank(message = "货件id 不能为空")
+        private String shipmentId;
+    }
     /**
      * 子件信息
      */
@@ -879,5 +921,252 @@ public class RequisitionApplicationDTO implements Serializable {
          * 要货数量
          */
         private Integer requisitionQty;
+    }
+    /**
+     * 仓库列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseListDTO {
+
+        /**
+         * code
+         */
+        private String kingdeeWarehouseCode;
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 仓库类型 对应dict 表id
+         */
+        private String typeId;
+
+        /**
+         * 组织id
+         */
+        private String orgId;
+
+
+        /**
+         * 组织名称
+         */
+        private String orgName;
+
+        /**
+         * disabled
+         * true 禁用
+         */
+        private Boolean disabled;
+
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 是否可选
+         */
+        private Boolean canCheck=true;
+        /**
+         * 是否关联虚拟仓
+         */
+        private Boolean hasVw=false;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseSelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 前端忽略
+         */
+        private List<String> ids;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+    }
+
+
+    @Getter
+    @Setter
+    public static class PickingViewDTO {
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 计划数量
+         */
+        private Integer planQty;
+        /**
+         * 已拣数量
+         */
+        private Integer pickedQuantity;
+        /**
+         * 未拣数量
+         */
+        private Integer unpickedQuantity;
+    }
+
+    @Getter
+    @Setter
+    public static class GeneratePickingDTO {
+
+        @NotBlank(message = "要货申请不能为空")
+        private String id;
+
+        @Size(min = 1,max = 100,message = "至少存在一条明细,且明细条数不可大于100条,才可生成拣货单")
+        private List<String> detailIds;
+    }
+
+    /**
+     * 下推发货单列表查询
+     */
+    @Getter
+    @Setter
+    public static class GenerateDeliverViewDTO {
+
+        /**
+         * 发货计划id
+         */
+        private String deliveryPlanId;
+        /**
+         * 发货计划明细id
+         */
+        private String deliveryPlanDetailId;
+
+        /**
+         * 主表id
+         */
+        private String sourceId;
+
+        /**
+         * 明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 要货申请
+         */
+        private String sourceCode;
+
+        /**
+         * 发货仓id
+         */
+        private String deliveryWarehouseId;
+        /**
+         * 发货仓名字
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 目的仓id
+         */
+        private String toWarehouseId;
+
+        /**
+         * 目的仓名称
+         */
+        private String toWarehouseName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * ERP的SKU
+         */
+        private String skuNo;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 计划数量
+         */
+        private Integer planQty;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        private String platformSku;
+
+        private String country;
+
+        private String type;
+
+        private String status;
+
+
+        /**
+         * 平台sku
+         */
+        private String platformSpuNo;
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+        /**
+         * 库存组织id
+         */
+        private String inventoryOrgId;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class handleDataDTO {
+        /**
+         * 主键ids
+         */
+        private List<String> ids;
+        /**
+         * 标记
+         */
+        private Boolean isFlag;
     }
 }

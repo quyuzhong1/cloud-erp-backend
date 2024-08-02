@@ -1,0 +1,21 @@
+package com.sdk.oms.mercado.dto.mercado.order;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
+
+import java.util.List;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ConfigBean {
+    @JsonProperty("items")
+    private List<ItemsBean> items;
+
+    public List<ItemsBean> getItems() {
+        return items;
+    }
+
+    public void setItems(List<ItemsBean> items) {
+        this.items = items;
+    }
+}

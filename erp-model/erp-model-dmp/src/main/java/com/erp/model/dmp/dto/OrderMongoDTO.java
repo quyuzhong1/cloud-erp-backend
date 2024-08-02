@@ -29,6 +29,9 @@ public class  OrderMongoDTO {
     @Panno(findType = PannoEnum.EQ,field = "stockSku")
     private String stockSku;
 
+    @Panno(findType = PannoEnum.EQ,field = "financial")
+    private String financial;
+
     @Panno(findType = PannoEnum.EQ,field = "platformCode")
     private String platformCode;
 
@@ -100,10 +103,9 @@ public class  OrderMongoDTO {
         this.id = id;
     }
 
-    public static OrderMongoDTO getByFIdAndBillNo(String fBillNo, String fId) {
+    public static OrderMongoDTO getByFIdAndBillNo(String fBillNo) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setBillNo(fBillNo);
-        orderMongoDTO.setFId(fId);
         return orderMongoDTO;
     }
 
@@ -197,12 +199,28 @@ public class  OrderMongoDTO {
         orderMongoDTO.setDelivery_no(deliveryNo);
         return orderMongoDTO;
     }
+
+    /**
+     * 库存SKu
+     * @param stockSku
+     * @return
+     */
     public static OrderMongoDTO getByStockSku(String stockSku) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setStockSku(stockSku);
         return orderMongoDTO;
     }
 
+    /**
+     * 财务编码
+     * @param financial
+     * @return
+     */
+    public static OrderMongoDTO getByFinancial(String financial) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setFinancial(financial);
+        return orderMongoDTO;
+    }
     public static OrderMongoDTO getUniqId(String uniqueId) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setUniqueId(uniqueId);

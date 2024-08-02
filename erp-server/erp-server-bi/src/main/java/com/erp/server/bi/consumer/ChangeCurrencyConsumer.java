@@ -9,12 +9,12 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpRefundInfoService;
-import com.erp.server.bi.service.DmpReturnOrderInfoService;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiRefundInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.server.bi.service.BiOrderInfoService;
+import com.erp.server.bi.service.BiRefundInfoService;
+import com.erp.server.bi.service.BiReturnOrderInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -38,13 +38,13 @@ import java.util.stream.Collectors;
 public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiOrderInfoService biOrderInfoService;
 
     @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
+    private BiRefundInfoService biRefundInfoService;
 
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    private BiReturnOrderInfoService biReturnOrderInfoService;
 
 
     @Override
@@ -65,19 +65,19 @@ public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
-        List<DmpOrderInfoEntity> updateList = new ArrayList<>();
+        List<BiOrderInfoEntity> updateList = new ArrayList<>();
         entityList.forEach(obj->{
-            List<DmpOrderInfoEntity> list =  dmpOrderInfoService.lambdaQuery()
-                    .eq(DmpOrderInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode())
-                    .ge(DmpOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateBegin())
-                    .le(DmpOrderInfoEntity::getPlatformCreateTime, LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
-                    .select(DmpOrderInfoEntity::getId,DmpOrderInfoEntity::getCreateTime)
-                    .ne(DmpOrderInfoEntity::getCnySettleRate,obj.getExchangeRate())
+            List<BiOrderInfoEntity> list =  biOrderInfoService.lambdaQuery()
+                    .eq(BiOrderInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode())
+                    .ge(BiOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateBegin())
+                    .le(BiOrderInfoEntity::getPlatformCreateTime, LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
+                    .select(BiOrderInfoEntity::getId, BiOrderInfoEntity::getCreateTime)
+                    .ne(BiOrderInfoEntity::getCnySettleRate,obj.getExchangeRate())
                     .list();
             if (CollectionUtils.isEmpty(list)) {
                 return;
             }
-            List<DmpOrderInfoEntity> collect = list.stream().map(x -> new DmpOrderInfoEntity(x, obj.getExchangeRate())).collect(Collectors.toList());
+            List<BiOrderInfoEntity> collect = list.stream().map(x -> new BiOrderInfoEntity(x, obj.getExchangeRate())).collect(Collectors.toList());
             updateList.addAll(collect);
         });
         //更新
@@ -88,20 +88,20 @@ public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
      * 更新退货单结算币别
      */
     private void updateRefundCurrency(List<BiSettlementExchangeRateEntity> entityList) {
-        List<DmpRefundInfoEntity> updateList = new ArrayList<>();
+        List<BiRefundInfoEntity> updateList = new ArrayList<>();
         entityList.forEach(obj-> {
-            List<DmpRefundInfoEntity> list = dmpRefundInfoService.lambdaQuery()
-                    .eq(DmpRefundInfoEntity::getCurrencyCode, obj.getSourceCurrencyCode())
-                    .ge(DmpRefundInfoEntity::getOrderTime, obj.getSettlementDateBegin())
-                    .le(DmpRefundInfoEntity::getOrderTime, LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
-                    .ne(DmpRefundInfoEntity::getCnySettleRate, obj.getExchangeRate())
-                    .select(DmpRefundInfoEntity::getId)
+            List<BiRefundInfoEntity> list = biRefundInfoService.lambdaQuery()
+                    .eq(BiRefundInfoEntity::getCurrencyCode, obj.getSourceCurrencyCode())
+                    .ge(BiRefundInfoEntity::getOrderTime, obj.getSettlementDateBegin())
+                    .le(BiRefundInfoEntity::getOrderTime, LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
+                    .ne(BiRefundInfoEntity::getCnySettleRate, obj.getExchangeRate())
+                    .select(BiRefundInfoEntity::getId)
                     .list();
 
             if (CollectionUtils.isEmpty(list)) {
                 return;
             }
-            List<DmpRefundInfoEntity> collect = list.stream().map(x -> new DmpRefundInfoEntity(x, obj.getExchangeRate())).collect(Collectors.toList());
+            List<BiRefundInfoEntity> collect = list.stream().map(x -> new BiRefundInfoEntity(x, obj.getExchangeRate())).collect(Collectors.toList());
             updateList.addAll(collect);
         });
         //更新
@@ -115,20 +115,20 @@ public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
-        List<DmpReturnOrderInfoEntity> updateList = new ArrayList<>();
+        List<BiReturnOrderInfoEntity> updateList = new ArrayList<>();
         entityList.forEach(obj-> {
-            List<DmpReturnOrderInfoEntity> list = dmpReturnOrderInfoService.lambdaQuery()
-                    .eq(DmpReturnOrderInfoEntity::getCurrencyCode, obj.getSourceCurrencyCode())
-                    .ge(DmpReturnOrderInfoEntity::getOrderTime, obj.getSettlementDateBegin())
-                    .le(DmpReturnOrderInfoEntity::getOrderTime, LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
-                    .ne(DmpReturnOrderInfoEntity::getCnySettleRate, obj.getExchangeRate())
-                    .select(DmpReturnOrderInfoEntity::getId)
+            List<BiReturnOrderInfoEntity> list = biReturnOrderInfoService.lambdaQuery()
+                    .eq(BiReturnOrderInfoEntity::getCurrencyCode, obj.getSourceCurrencyCode())
+                    .ge(BiReturnOrderInfoEntity::getOrderTime, obj.getSettlementDateBegin())
+                    .le(BiReturnOrderInfoEntity::getOrderTime, LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
+                    .ne(BiReturnOrderInfoEntity::getCnySettleRate, obj.getExchangeRate())
+                    .select(BiReturnOrderInfoEntity::getId)
                     .list();
 
             if (CollectionUtils.isEmpty(list)) {
                 return;
             }
-            List<DmpReturnOrderInfoEntity> collect = list.stream().map(x -> new DmpReturnOrderInfoEntity(x, obj.getExchangeRate())).collect(Collectors.toList());
+            List<BiReturnOrderInfoEntity> collect = list.stream().map(x -> new BiReturnOrderInfoEntity(x, obj.getExchangeRate())).collect(Collectors.toList());
             updateList.addAll(collect);
         });
         //更新
@@ -164,16 +164,16 @@ public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
      */
     private void updateList (List<?> collect,Integer type) {
         if (MathUtil.ONE.equals(type)) {
-            List<DmpOrderInfoEntity> list = (List<DmpOrderInfoEntity>)collect;
-            dmpOrderInfoService.updateBatchById(list);
+            List<BiOrderInfoEntity> list = (List<BiOrderInfoEntity>)collect;
+            biOrderInfoService.updateBatchById(list);
         }
         if (MathUtil.TWO.equals(type)) {
-            List<DmpRefundInfoEntity> list = (List<DmpRefundInfoEntity>)collect;
-            dmpRefundInfoService.updateBatchById(list);
+            List<BiRefundInfoEntity> list = (List<BiRefundInfoEntity>)collect;
+            biRefundInfoService.updateBatchById(list);
         }
         if (MathUtil.THREE.equals(type)) {
-            List<DmpReturnOrderInfoEntity> list = (List<DmpReturnOrderInfoEntity>)collect;
-            dmpReturnOrderInfoService.updateBatchById(list);
+            List<BiReturnOrderInfoEntity> list = (List<BiReturnOrderInfoEntity>)collect;
+            biReturnOrderInfoService.updateBatchById(list);
         }
     }
 

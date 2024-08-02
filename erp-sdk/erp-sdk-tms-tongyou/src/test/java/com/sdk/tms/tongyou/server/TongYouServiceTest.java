@@ -3,20 +3,15 @@ package com.sdk.tms.tongyou.server;
 
 import com.common.core.utils.FileUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.sdk.tms.tongyou.dto.request.TongYouCreateOrderRequest;
-import com.sdk.tms.tongyou.dto.request.TongYouCallBackOrderRequest;
-import com.sdk.tms.tongyou.dto.request.TongYouGetOrderRequest;
-import com.sdk.tms.tongyou.dto.request.TongYouPrintLabelRequest;
-import com.sdk.tms.tongyou.dto.response.TongYouCreateOrder;
-import com.sdk.tms.tongyou.dto.response.TongYouCallBackOrder;
-import com.sdk.tms.tongyou.dto.response.TongYouOrderInfo;
-import com.sdk.tms.tongyou.dto.response.TongYouPrintLabel;
+import com.sdk.tms.tongyou.dto.request.*;
+import com.sdk.tms.tongyou.dto.response.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,8 +42,8 @@ public class TongYouServiceTest {
                 .logisticsId("FZXXRKVP705")
                 .material("string")
                 .note("note")
-                .orderNo("WJ20231102001")
-                .weight(1.1)
+                .orderNo("TEST20240527001")
+                .weight(BigDecimal.valueOf(1.1))
                 .declareInfos(Arrays.asList(TongYouCreateOrderRequest.DeclareInfo.builder()
                                 .currency("USD")
                                 .des("goods")
@@ -91,7 +86,7 @@ public class TongYouServiceTest {
     public void callBackOrderInfo() {
         TongYouCallBackOrderRequest request = TongYouCallBackOrderRequest.builder()
                 .logisticsId("FZXXRKVP705")
-                .orderNo("WJ20231102001")
+                .orderNo("XSDD24052105803")
                 .build();
         TongYouCallBackOrder orderInfo = tongYouService.callBackOrderInfo(request,authMap);
         System.out.println(orderInfo);
@@ -114,9 +109,20 @@ public class TongYouServiceTest {
     @Test
     public void getOrderInfo() {
         TongYouGetOrderRequest request = TongYouGetOrderRequest.builder()
-                .orderNo("WJ20231102001")
+                .orderNo("WJ20240521001")
                 .build();
         TongYouOrderInfo orderInfo = tongYouService.getOrderInfo(request,authMap);
+        System.out.println(orderInfo);
+    }
+
+    @Test
+    public void updateWeight() {
+        TongYouUpdateWeightRequest request = TongYouUpdateWeightRequest.builder()
+                .orderNo("TEST202405271")
+                .trackNo("AT449462225CN")
+                .weight(new BigDecimal("12.1"))
+                .build();
+        TongYouResponse<String> orderInfo = tongYouService.updateWeight(request,authMap);
         System.out.println(orderInfo);
     }
 }

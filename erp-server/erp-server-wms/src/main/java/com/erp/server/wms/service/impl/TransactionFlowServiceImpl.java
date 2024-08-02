@@ -13,6 +13,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -27,6 +28,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.excel.ExportTransactionFlowDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO.InOutStockSummaryPagingViewDTO;
@@ -34,10 +36,6 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO.ListDailyInventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.entity.InventoryHisEntity;
-import com.erp.model.wms.entity.TransactionFlowEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -85,9 +83,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     private TransactionFlowMapper transactionFlowMapper;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private WarehouseService warehouseService;
 
     @Autowired
@@ -131,7 +126,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Transactional(rollbackFor = Exception.class)
     @Override
     public int updateUnapprovedById(String id, Integer version) {
-        LoginUser loginUser =  commonService.getUserInfo();
+        LoginUser loginUser =  UserContext.getDefaultLoginUser();
         return transactionFlowMapper.updateUnapprovedById(id, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
 
@@ -169,7 +164,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setSourceCode(param.getSourceCode());
         transactionFlowEntity.setSourceDetailId(param.getSourceDetailId());
         transactionFlowEntity.setDictBizType(businessType.getCode());
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         transactionFlowEntity.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "");
         transactionFlowEntity.setTradeTime(LocalDateTime.now());
         transactionFlowEntity.setTransactionRuleId(StrUtils.null2EmptyWithTrim(transactionRuleId));
@@ -194,7 +189,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Override
     public void add(TransactionFlowEntity tradeParam, Integer afterInventoryQty) {
         // 记录交易流水
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
 
         // 复制所有参数
         TransactionFlowEntity transactionFlow = new TransactionFlowEntity();
@@ -385,7 +380,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Transactional(rollbackFor = Exception.class)
     public void addUnApproveFlow(InventoryDetailEntity detail, TransactionFlowEntity txnFlow, Integer afterQty) {
         // 记录交易流水
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         // 复制所有参数
         TransactionFlowEntity transactionFlow = new TransactionFlowEntity();
         BeanMapper.copy(txnFlow,transactionFlow);
@@ -418,10 +413,14 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO params, HttpServletResponse response) {
+        PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> pagingParamDTO = new PagingDTO<InventoryReportDTO.DailyInventoryParamDTO>();
+        pagingParamDTO.setParams(params);
+        pagingParamDTO.setPageSize(-1);
         if (ObjectUtils.isEmpty(params.getDate())) {
             params.setDate(LocalDate.now());
         }
-        List<InventoryReportDTO.ListDailyInventoryDTO> dataList = baseMapper.listDailyInventory(params);
+        PagingVO<InventoryReportDTO.ListDailyInventoryDTO> pageData = this.dailyInventoryPaging(pagingParamDTO);
+        List<ListDailyInventoryDTO> dataList = (List<ListDailyInventoryDTO>) pageData.getList();
         // 填充
         handleDailyInventory(dataList);
         StringBuffer sb = new StringBuffer();
@@ -497,7 +496,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
 
         List<String> skuIds = dataList.stream().map(InventoryDTO.TransFlowPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         dataList.stream().forEach(data->{
             if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
@@ -521,13 +520,16 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             return;
         }
         List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuSaleByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
 
         List<String> sourceIdList = dataList.stream().map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSourceId).distinct().collect(Collectors.toList());
         DmpSyncTaskDTO.ListDTO listDTO = new DmpSyncTaskDTO.ListDTO(sourceIdList, PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc());
         List<DmpPushTaskEntity> pushTaskList = dmpMqFeign.listByParam(listDTO);
+        //仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = dataList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         dataList.stream().forEach(data->{
             if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
                 SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
@@ -551,6 +553,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             data.setOperationModeName(Optional.ofNullable(inventoryOperationMode).map(InventoryOperationModeEnum::getName).orElse(""));
             InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(data.getInventoryStatus());
             data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(data.getWarehouseId()) && e.getCode().equals(data.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            data.setWarehouseLocationName(warehouseLocationEntity.getName());
         });
     }
 
@@ -559,7 +563,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             return;
         }
         List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockSummaryPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         // 此处修复，返回的记录按sku id不是唯一的了
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         Map<String,WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
@@ -626,7 +630,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         }
         // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
         List<String> skuIds = list.stream().map(InventoryReportDTO.TransportPagingDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
@@ -677,7 +681,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
         // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
         List<String> skuIds = list.stream().map(InventoryReportDTO.ListTransportPagingDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         for(InventoryReportDTO.ListTransportPagingDTO data : list) {
             if (skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {

@@ -346,11 +346,24 @@ public class SoOutstockDetailDTO implements Serializable {
          */
         private LinkedList<ListingInfoWithSkuMappingGenDTO> historySkuMappingList;
 
+        /**
+         * 第三方单据编号
+         */
+        private String platformCode;
+
+        /**
+         * 平台销售出库单明细ID
+         */
+        private String platformDetailId;
+
+        private String warehouseId;
+
         public AddDTO(ListingInfoWithSkuMappingGenDTO currentSkuMappingDTO, AddDTO addDTO, Integer currentQty) {
             this.skuId = currentSkuMappingDTO.getProductSkuId();
             this.skuNo = currentSkuMappingDTO.getPlatformSkuNo();
             this.planQty = currentQty;
             this.actualQty = currentQty;
+            this.warehouseId = addDTO.getWarehouseId();
             this.warehouseLocation = addDTO.getWarehouseLocation();
             this.attachNameList = addDTO.getAttachNameList();
             this.attachUrlList = addDTO.getAttachUrlList();
@@ -358,6 +371,8 @@ public class SoOutstockDetailDTO implements Serializable {
             this.sourceDetailId = addDTO.getSourceDetailId();
             this.soDetailId = addDTO.getSoDetailId();
             this.historySkuMappingList = addDTO.getHistorySkuMappingList();
+            this.platformCode = addDTO.getPlatformCode();
+            this.platformDetailId = addDTO.getPlatformDetailId();
         }
     }
 
@@ -507,6 +522,11 @@ public class SoOutstockDetailDTO implements Serializable {
          * 来源明细id
          */
         private String sourceDetailId;
+
+        /**
+         * 销售明细id
+         */
+        private String soDetailId;
     }
 
 

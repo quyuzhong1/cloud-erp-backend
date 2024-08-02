@@ -144,6 +144,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private String id;
         /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
          * 明细主键Id
          */
         private String detailId;
@@ -159,6 +163,7 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 物流单状态中文
          */
         private String logisticsStatusName;
+
         /**
          * 报关单状态编码
          */
@@ -327,6 +332,11 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 发货数量
          */
         private Integer deliveryQty;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packingQty;
 
         /**
          * 备注
@@ -879,6 +889,11 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 发货时间
          */
         private LocalDateTime deliveryTime;
+
+        /**
+         * 货件/入库单号
+         */
+        private String refCode;
     }
 
     /**

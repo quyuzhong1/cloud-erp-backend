@@ -1,16 +1,15 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.OrderCategoryDTO;
 import com.erp.model.oms.dto.OrderCategoryDetailDTO;
-import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.oms.entity.OrderCategoryDetailEntity;
 import com.erp.model.oms.entity.OrderCategoryEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.server.oms.query.OrderCategoryQueryHandler;
 import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.OrderCategoryService;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +45,7 @@ public class OrderCategoryController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = OrderCategoryQueryHandler.class)
     public ApiResult<PagingVO<OrderCategoryDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<OrderCategoryDTO.PagingParamDTO> dto) {
         PagingVO<OrderCategoryDTO.PagingViewDTO> pagingVO = orderCategoryService.paging(dto);
         return success(pagingVO);

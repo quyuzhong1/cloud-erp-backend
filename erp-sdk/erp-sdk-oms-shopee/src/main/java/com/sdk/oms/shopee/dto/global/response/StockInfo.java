@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.global.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -19,15 +19,15 @@ import java.io.Serializable;
 @EqualsAndHashCode(callSuper = false)
 public class StockInfo implements Serializable {
 
-    @JSONField(name ="stock_type")
+    @Alias("stock_type")
     private int stockType;
 
-    @JSONField(name ="stock_location_id")
+    @Alias("stock_location_id")
     private String stockLocationId;
 
-    @JSONField(name ="normal_stock")
+    @Alias("normal_stock")
     private int normalStock;
 
-    @JSONField(name ="reserved_stock")
+    @Alias("reserved_stock")
     private int reservedStock;
 }

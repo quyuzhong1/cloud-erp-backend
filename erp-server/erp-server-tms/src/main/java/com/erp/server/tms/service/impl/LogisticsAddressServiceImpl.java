@@ -9,39 +9,42 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.LogisticsAddressMapper;
 import com.erp.server.tms.service.LogisticsAddressService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -57,13 +60,11 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     @Autowired
     private OperateLogService operateLogService;
 
-    @Autowired
-    private CommonService commonService;
-
 
     @Autowired
     private SysUserFeign sysUserFeign;
-
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     @Autowired
     @Lazy
@@ -85,7 +86,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】", commonService.getUserInfo().getUserName(), "物流地址");
+        String msg = StrUtil.format("用户【{}】新增【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流地址");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, logisticsAddressEntity.getId(), "新增操作");
 
@@ -112,7 +113,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         }
         // 记录主单操作日志
         log.info("编辑 开始记录物流地址单日志数据，id：【{}】", logisticsAddressEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsAddressEntity.getId(), "物流地址单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsAddressEntity.getId(), "物流地址单");
         operateLogService.addModuleOperateLogByObj(old, logisticsAddressEntity, null, logisticsAddressEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -224,6 +225,31 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
                 }
             });
         }
+    }
+
+    @Override
+    public List<LogisticsAddressDTO.ListDTO> listAddressByType(LogisticsAddressDTO.AddressByTypeDTO dto) {
+        if (StringUtils.isBlank(dto.getType()) || CollectionUtils.isEmpty(dto.getShopIds())){
+            return Collections.emptyList();
+        }
+        List<LogisticsAddressEntity> addressList =
+                this.lambdaQuery().select(LogisticsAddressEntity::getId,LogisticsAddressEntity::getName,LogisticsAddressEntity::getShopId)
+                .eq(LogisticsAddressEntity::getType,dto.getType())
+                .in(LogisticsAddressEntity::getShopId, dto.getShopIds())
+                .list();
+        //填充店铺名称
+        List<String> shopIds = addressList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getShopId())).map(LogisticsAddressEntity::getShopId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(shopIds)){
+            List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
+            addressList.forEach(logisticsAddressEntity -> {
+                ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(logisticsAddressEntity.getShopId())).findFirst().orElse(null);
+                if (Objects.nonNull(shopInfoEntity)){
+                    String name = logisticsAddressEntity.getName();
+                    logisticsAddressEntity.setName(name +"【" + shopInfoEntity.getName() +"】");
+                }
+            });
+        }
+        return BeanMapperUtils.copyList(LogisticsAddressDTO.ListDTO.class,addressList);
     }
 
     private LogisticsAddressEntity getLogisticsServiceAddress(String addressId,String shopId){

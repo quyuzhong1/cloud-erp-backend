@@ -4,6 +4,10 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -14,8 +18,10 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -24,6 +30,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -46,6 +53,7 @@ import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
@@ -57,6 +65,8 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
 import com.erp.server.wms.mapper.PoReturnMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -69,6 +79,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -103,9 +115,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Resource
     private WarehouseService warehouseService;
-
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -153,7 +162,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     private SysPostFeign sysPostFeign;
 
     @Autowired
-    private WarehouseReceiveService warehouseReceiveService;
+    private DmpMqFeign dmpMqFeign;
 
     @Autowired
     private SrmCfgSettingFeign srmCfgSettingFeign;
@@ -169,6 +178,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
+
+    @Resource
+    private SyncWdtOtherInStockService syncWdtOtherInStockService;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     /**
      * 主页分页查询
@@ -222,6 +239,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 deductAmountAmount = MathUtil.multiply(record.getReturnPrice(),record.getReturnQty());
             }
             record.setDeductAmountAmount(deductAmountAmount);
+
+            //是否是组合品
+            record.setIsCombinationName(record.getIsCombination() ? "是" : "否");
         });
 
         List<String> warehouseIds = records.stream().map(req -> req.getReturnWarehouseId()).distinct().collect(Collectors.toList());
@@ -575,8 +595,45 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             throw new ServiceException(ApiError.ERROR_98010);
         }
 
-        //TODO 待加审核流程
+        //采购组织不能为空
+        String codes = purchaseReturnOrderEntities.stream().filter(obj -> StrUtil.isBlank(obj.getPurchaseOrgId())).map(PoReturnEntity::getCode).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(codes)) {
+            throw new ServiceException(StrUtil.format("采购退货单【{}】采购组织不能为空",codes));
+        }
+        //迭代1.27.5新增校验 ：校验退货数量不能大于已收货数量(已审核)-已入库数量(已审核)【按照SKU明细校验】
+        List<PoReturnDetailEntity> allPoReturnDetailEntities = poReturnDetailService.listByMainIds(ids);
+        List<String> podIds = allPoReturnDetailEntities.stream().map(PoReturnDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //采购收货
+        List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        receiveDetails = receiveDetails.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+        //采购入库
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(podIds);
+        poInstockDetailList = poInstockDetailList.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+        List<String> errorCodes = new ArrayList<>();
+        //已提交的采购退货
+        List<PoReturnDetailEntity> samePurchaseDetailIds = baseMapper.listPoReturnByPoDetailIds(podIds,Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus(),ApproveStatusEnum.APPROVE.getStatus()));
+        samePurchaseDetailIds = samePurchaseDetailIds.stream().filter(v->!ids.contains(v.getMainId())).collect(Collectors.toList());
+        for (PoReturnEntity purchaseReturnOrderEntity : purchaseReturnOrderEntities) {
+            if(!SourceTypeEnum.QC_INFO.getCode().equals(purchaseReturnOrderEntity.getSourceType())){
+                continue;
+            }
+            List<PoReturnDetailEntity> poReturnDetailEntityList = allPoReturnDetailEntities.stream().filter(v->v.getMainId().equals(purchaseReturnOrderEntity.getId())).collect(Collectors.toList());
+            for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailEntityList) {
+                Integer receiveQty = receiveDetails.stream().filter(v->v.getPurchaseOrderDetailId().equals(poReturnDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer instockQty = poInstockDetailList.stream().filter(v->v.getPurchaseOrderDetailId().equals(poReturnDetailEntity.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer otherDetailQty = samePurchaseDetailIds.stream().filter(v->v.getPurchaseOrderDetailId().equals(poReturnDetailEntity.getPurchaseOrderDetailId())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                if(poReturnDetailEntity.getReturnQty() > receiveQty-instockQty - otherDetailQty){
+                    errorCodes.add(StrUtil.format("采购退货单【{}】sku【{}】退货数量不能大于已收货数量-已入库数量-已提交的质检退货数量【{}】",purchaseReturnOrderEntity.getCode(),poReturnDetailEntity.getSkuNo(),receiveQty-instockQty-otherDetailQty));
+                }else{
+                    samePurchaseDetailIds.add(poReturnDetailEntity);
+                }
+            }
+        }
+        if(CollectionUtils.isNotEmpty(errorCodes)){
+            throw new ServiceException(errorCodes.toString().replace("[","").replace("]",""));
+        }
 
+        //TODO 待加审核流程
         //更新审核状态
         lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(PoReturnEntity::getId, ids)
@@ -659,7 +716,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //操作日志
         List<Pair<String, String>> pairList = poReturnEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
             String confirmStatus = "";
@@ -722,9 +779,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             autoAddPoReconciliationDetail(poReturnEntityList);
             // 更新库存信息
             updateInventoryTransCore(poReturnEntityList);
-            //审核通过发送金蝶
-            poReturnEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
 
+            //发送金蝶
+            sendPushTask(poReturnEntityList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            //发送旺店通
+            poReturnEntityList.forEach(obj -> syncApprovePoReturnToWdt(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -736,6 +796,61 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
 
         return Boolean.TRUE;
+    }
+
+    /**
+     * 将审核通过的采购退货单转换为其他出库单推送到旺店通
+     *
+     * @param entity 采购退货单
+     * @param operateCode
+     * @return void
+     * @date: 2024-05-20
+     * @author: tanmujin
+     */
+    private void syncApprovePoReturnToWdt(PoReturnEntity entity, String operateCode) {
+        if(! "other".equals(entity.getSourceType())){
+            log.info("非库存退货单无需推送旺店通：{}", entity);
+            return;
+        }
+        List<PoReturnDetailEntity> detailList = poReturnDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if(detailList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getReturnWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
+
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(PoReturnDetailEntity::getReturnQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
+
+        //组装SKU
+        List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
+        skuMap.forEach((key, value) -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            goodsList.add(goods);
+        });
+
+        //发送异步任务
+        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+            }
+        });
     }
 
     /**
@@ -879,9 +994,66 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //操作日志
         List<Pair<String, String>> pairList = poReturnEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "反审核操作");
-        //审核通过发送金蝶
-        poReturnEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+
+        //发送金蝶
+        sendPushTask(poReturnEntityList,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+
+        //发送旺店通
+        poReturnEntityList.forEach(obj -> syncDisApprovePoReturnToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         return Boolean.TRUE;
+    }
+
+    /**
+     * 将反审核通过的采购退货单转换为其他入库单推送到旺店通
+     *
+     * @param entity 采购退货单
+     * @param operateCode
+     * @return void
+     * @date: 2024-05-20
+     * @author: tanmujin
+     */
+    private void syncDisApprovePoReturnToWdt(PoReturnEntity entity, String operateCode) {
+        if(! "other".equals(entity.getSourceType())){
+            log.info("非库存退货单无需推送旺店通：{}", entity);
+            return;
+        }
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getReturnWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
+
+        List<PoReturnDetailEntity> detailList = poReturnDetailService.getDetailByMainId(entity.getId());
+        if(detailList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(PoReturnDetailEntity::getReturnQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
+
+        List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
+        skuMap.forEach((key, value) -> {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            goodsList.add(goods);
+        });
+
+        //发送异步任务
+        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+            }
+        });
     }
 
     /**
@@ -960,8 +1132,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个采购退货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "作废操作");
 
-        //作废发送金蝶
-        warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
+        //发送金蝶
+        sendPushTask(warehouseReceiveList,SyncOperateEnum.OPERATE_INVALID.getCode());
         return Boolean.TRUE;
     }
 
@@ -991,8 +1163,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         //删除详情表
         poReturnDetailService.delete(ids);
-        //审核通过发送金蝶
-        warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
+        //发送金蝶
+        sendPushTask(warehouseReceiveList,SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除主表
         return this.removeByIds(ids);
     }
@@ -1071,7 +1244,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      **/
     @Override
     public List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> listCount(PermissionsDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         PoReturnStatusEnum[] values = PoReturnStatusEnum.values();
         List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> list = new ArrayList<>();
         for (PoReturnStatusEnum item : values) {
@@ -1397,7 +1570,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()): Lists.newArrayList();
 
         List<String> skuIds = detailList.stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
 
         String warehouseId = dto.getReturnWarehouseId();
@@ -1753,7 +1926,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 addDTO.setPurchaseDeptId(deptId);
             }
             //采购组织
-            addDTO.setPurchaseOrgId(companyCodeList.get(0).getId());
+            addDTO.setPurchaseOrgId(entity.getPurchaseOrgId());
             addDTO.setDeliveryWarehouseId("");
             //采购供应商信息
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
@@ -1884,11 +2057,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             Integer count = MathUtil.ZERO;
             if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
                 List<LocalDate> dateList = new ArrayList<>();
@@ -1896,7 +2069,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 dateList.add(endDate);
                 pagingParamDTO.setBillDateList(dateList);
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
@@ -2167,7 +2340,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
 
         //查询登录信息
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         if(Objects.isNull(loginUser)){
             throw new ServiceException(ApiError.ERROR_403);
         }
@@ -2212,7 +2385,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         PurchaseReturnOrderDTO.SupplierPagingParamDTO searchParam = new PurchaseReturnOrderDTO.SupplierPagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //查询供应商信息
         SupplierEntity supplier = supplierFeign.getSupplierByUid(userInfo.getUid());
         if (ObjectUtils.isNotEmpty(supplier)) {
@@ -2247,7 +2420,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             throw new ServiceException(ApiError.NOT_WAIT_CONFIRM_STATUS);
         }
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         //更新确认状态
         lambdaUpdate()
@@ -2263,7 +2436,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         srmPoReconciliationFeign.updateBusinessStatusBySourceIdList(statusDTO);
 
         //操作日志
-        String msg = StrUtil.format("用户【{}】操作单号为【{}】的【{}】退货确认状态为已确认", commonService.getUserInfo().getUserName(), entity.getCode(), "退货确认");
+        String msg = StrUtil.format("用户【{}】操作单号为【{}】的【{}】退货确认状态为已确认", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "退货确认");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "退货确认");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "退货确认");
     }
@@ -2409,5 +2582,27 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                         .eq(PoReturnEntity::getConfirmStatus, returnRequestDTO.getConfirmStatus())
                         .eq(PoReturnEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus()).count())
                 .build();
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<PoReturnEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeReturnOrderService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 }

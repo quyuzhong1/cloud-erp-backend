@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -90,9 +91,6 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
-
-    @Resource
-    private CommonService commonService;
 
     @Autowired
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
@@ -370,7 +368,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
      * @date 2023-04-27 19:24
      */
     @Override
-    @Async
+//    @Async
     public void sendQcResultMsg(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return;
@@ -382,12 +380,12 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         }
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.HANDLE_MODE_TYPE.getKey()));
         List<String> skuIdList = list.stream().map(QcResultDTO.QcNoticeDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         //采购订单id
         List<String> poIds = list.stream().map(QcResultDTO.QcNoticeDTO::getPurchaseOrderId).collect(Collectors.toList());
         List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(poIds);
 
-        String userName = commonService.getUserInfo().getUserName();
+        String userName = UserContext.getDefaultLoginUser().getUserName();
         for (QcResultDTO.QcNoticeDTO item : list) {
             String qcType = item.getQcType();
             String qcTypeName = QcTypeEnum.getByCode(qcType);

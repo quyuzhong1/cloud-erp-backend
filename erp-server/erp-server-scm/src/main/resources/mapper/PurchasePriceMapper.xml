@@ -86,6 +86,7 @@
             </foreach>
         </if>
         pp.create_time DESC,ppd.id DESC
+        limit 50000
     </select>
 
     <select id="listSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
@@ -127,7 +128,9 @@
             ppd.tax_rate,
             ppd.min_qty,
             ppd.max_qty,
-            ppd.currency
+            ppd.currency,
+            pp.purchase_org_id as purchaseOrgId,
+            pp.purchase_org_name as purchaseOrgName
         FROM purchase_price pp
         LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
         WHERE pp.is_deleted = false and ppd.disabled = false and approve_status = 'approve' AND pp.supplier_id IN

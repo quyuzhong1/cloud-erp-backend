@@ -65,6 +65,15 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @date 2023-05-16 15:01
      */
     SoInfoDTO.ViewDTO view(String id);
+    /**
+     * 打印拣货单
+     *
+     * @param id
+     * @return com.erp.model.oms.dto.SoInfoDTO.ViewDTO
+     * @author yl
+     * @date 2023-05-16 15:01
+     */
+    SoInfoDTO.ViewDTO printPickingView(String id);
 
     PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto);
     /**
@@ -244,12 +253,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     /**
      * 下推销售退货订单-列表查询
      *
-     * @param ids ids
+     * @param detailIds detailIds 订单详情id
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>
      * @Author Luo_WG
      * @Date 2023/5/25 15:17
      **/
-    List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(List<String> ids);
+    List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(List<String> detailIds);
 
     /**
      * 更改销售订单金蝶推送的状态
@@ -422,4 +431,33 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return BatchResultDTO
      */
     Boolean generateMachineInfo(List<String> ids);
+
+    List<SoInfoDTO.GenerateSoOutView> generateSoOutView(List<String> ids);
+
+    List<BatchResultDTO> generateSoOut(List<SoInfoDTO.GenerateSoOutView> generateSoOutViewList);
+    /**
+     * 查询单个锁定的数据
+     * @author will
+     * @date 2024/7/15 11:20
+     * @param id
+     * @return SoInfoDTO.LockVirtualInventoryDTO
+     */
+    SoInfoDTO.LockVirtualInventoryDTO viewLockVirtualInventory(String id);
+    /**
+     * 批量锁定查询
+     * @author will
+     * @date 2024/7/15 15:08
+     * @param detailIdList
+     * @return List<BatchLockVirtualInventoryDTO>
+     */
+    List<SoInfoDTO.BatchLockVirtualInventoryDTO> viewBatchLockVirtualInventory(List<String> detailIdList);
+
+    /**
+     * 单个释放
+     * @author will
+     * @date 2024/7/16 8:57
+     * @param id
+     * @return Boolean
+     */
+    Boolean unLockVirtualInventory(String id);
 }

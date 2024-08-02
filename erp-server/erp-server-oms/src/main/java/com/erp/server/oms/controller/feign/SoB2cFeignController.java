@@ -54,10 +54,13 @@ public class SoB2cFeignController extends BaseController {
     private SoB2cRefService soB2cRefService;
 
     @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
     private SoB2cStatusService b2cStatusService;
 
     @Resource
-    private OperateLogService operateLogService;
+    private SoB2cSplitService soB2cSplitService;
 
 
     /**
@@ -82,6 +85,19 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/getSoB2cLogisticsByTrackNo")
     public SoB2cLogisticsEntity getSoB2cLogisticsByTrackNo(@RequestBody String trackNo) {
         SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getSoB2cLogisticsByTrackNo(trackNo);
+        return soB2cLogistics;
+    }
+
+    /**
+     * 根据跟踪单号查询订单物流信息
+     * @author will
+     * @date 2024/7/5 10:27
+     * @param logisticsCode
+     * @return SoB2cLogisticsEntity
+     */
+    @PostMapping("/getByTrackNoOrTransportNo")
+    public SoB2cLogisticsEntity getByTrackNoOrTransportNo(@RequestBody String logisticsCode) {
+        SoB2cLogisticsEntity soB2cLogistics = soB2cLogisticsService.getByTrackNoOrTransportNo(logisticsCode);
         return soB2cLogistics;
     }
 
@@ -114,6 +130,35 @@ public class SoB2cFeignController extends BaseController {
         return list;
     }
 
+    /**
+     * 根据b2c详情id获取详情（包含删除）
+     */
+    @PostMapping("/listDetailContainDeleted")
+    public List<SoB2cDetailEntity> listDetailContainDeleted(@RequestBody List<String> detailIdList) {
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return Collections.emptyList();
+        }
+        List<SoB2cDetailEntity> list = soB2cDetailService.listContainDeleted(detailIdList);
+        return list;
+    }
+
+    @GetMapping("/listRefBomSplit")
+    public SoB2cDTO.CombinationDTO listRefBomSplit(@RequestParam("detailId") String detailId){
+        return soB2cSplitService.listRefBomSplit(detailId);
+    }
+
+    /**
+     * 更新标记发货标识
+     * @param detailIdList
+     * @return
+     */
+    @PostMapping("/updateSignShippedByDetailId")
+    public void updateSignShippedByDetailId(@RequestBody List<String> detailIdList) {
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return ;
+        }
+        soB2cDetailService.updateSignShippedByDetailId(detailIdList);
+    }
     /**
      * 根据主表id查询B2C订单主表信息
      *
@@ -535,7 +580,7 @@ public class SoB2cFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getTransferDeclareProductBySoIds")
-    public List<TransferDeclareProductDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) {
+    public List<SplitSkuDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) {
         return soB2cService.getTransferDeclareProductBySoIds(soIds);
     }
 
@@ -677,4 +722,45 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.listMergePackageBySoIds(ids);
     }
 
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @PostMapping("/batchUpdateCancelAndLog")
+    public Boolean batchUpdateCancelAndLog(@RequestBody List<String> soB2cIdList){
+        return b2cStatusService.batchUpdateCancelAndLog(soB2cIdList);
+    }
+
+
+    /**
+     * 更新平台订单取消状态
+     */
+    @GetMapping("/getSoCode")
+    public SoB2cEntity getSoCode(@RequestParam("soB2cCode") String soB2cCode) {
+        return soB2cService.getByCode(soB2cCode);
+    }
+
+
+    /**
+     * 根据id和当前仓库ID获取到需要销售出单的数据
+     */
+    @GetMapping("/getSoOutStockByIdAndWarehouseId")
+    public SoOutstockDTO.GenerateB2cDTO getSoOutStockByIdAndWarehouseId(@RequestParam(value = "soId") String soId,
+                                                              @RequestParam(value = "warehouseId", required = false) String warehouseId
+    ) {
+       return soB2cService.getSoOutstockByIdAndWarehouseId(soId, warehouseId);
+    }
+
+
+    /**
+     * 查询b2c销售订单数据
+     * @author will
+     * @date 2024/6/25 20:14
+     * @param paramDTO
+     * @return SoB2cEntity
+     */
+    @PostMapping("/listSoB2cData")
+    public SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO) {
+        return soB2cService.listSoB2cData(paramDTO);
+    }
 }

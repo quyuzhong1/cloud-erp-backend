@@ -2,20 +2,20 @@ package com.erp.server.dmp.push.consumer.erp;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.dmp.convert.DmpOrderConverter;
-import com.erp.server.dmp.service.DmpDeliveryDetailInfoService;
+import com.erp.server.dmp.service.BiDeliveryDetailInfoService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -37,7 +37,7 @@ public class B2cDeliveryPushDmpDeliveryConsumer extends AbstractPlatformConsumer
     @Resource
     private DmpPushTaskService dmpPushTaskService;
     @Resource
-    private DmpDeliveryDetailInfoService dmpDeliveryDetailInfoService;
+    private BiDeliveryDetailInfoService biDeliveryDetailInfoService;
     @Resource
     private SoB2cFeign soB2cFeign;
 
@@ -74,10 +74,16 @@ public class B2cDeliveryPushDmpDeliveryConsumer extends AbstractPlatformConsumer
             return;
         }
 
-        DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity = DmpOrderConverter.INSTANCE.soB2cDeliveryToDmpDelivery(viewDTO, soB2cView);
-        List<DmpDeliveryDetailItemEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cDeliveryDetailToDmpDeliveryItem(viewDTO.getDetailList());
-        dmpDeliveryDetailInfoEntity.setDetails(itemEntityList);
+        BiDeliveryDetailInfoEntity biDeliveryDetailInfoEntity = DmpOrderConverter.INSTANCE.soB2cDeliveryToDmpDelivery(viewDTO, soB2cView);
+        if (SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(viewDTO.getStatus())) {
+            biDeliveryDetailInfoEntity.setStatus(2);
+        } else {
+            biDeliveryDetailInfoEntity.setStatus(1);
+        }
 
-        dmpDeliveryDetailInfoService.checkOrder(dmpDeliveryDetailInfoEntity);
+        List<BiDeliveryDetailItemEntity> itemEntityList = DmpOrderConverter.INSTANCE.soB2cDeliveryDetailToDmpDeliveryItem(viewDTO.getDetailList());
+        biDeliveryDetailInfoEntity.setDetails(itemEntityList);
+
+        biDeliveryDetailInfoService.checkOrder(biDeliveryDetailInfoEntity);
     }
 }

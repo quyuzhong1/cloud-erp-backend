@@ -1,6 +1,6 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -8,11 +8,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -156,6 +159,8 @@ public class WarehouseDTO implements Serializable {
 
         @NotBlank(message = "id不能为空")
         private String id;
+
+        private Integer index;
     }
 
     /**
@@ -240,6 +245,80 @@ public class WarehouseDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class WarehouseInventoryQtyDTO extends ListDTO{
+        /**
+         * 库存数量
+         */
+        private Integer inventoryQty;
+
+        /**
+         * 虚拟库存数量
+         */
+        private Integer virtualInventoryQty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListInventoryQtyDTO {
+
+        /**
+         * SKU
+         */
+        private String skuId;
+
+        /**
+         * 仓库数据
+         */
+        private List<WarehouseInventoryQtyDTO> warehouseInventoryQtyList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListInventoryQtyParamDTO {
+
+        /**
+         * 明细信息
+         */
+        @NotEmpty(message = "明细信息不能为空")
+        private List<ListInventoryDetailParamDTO> detailList;
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 启用状态
+         */
+        private Boolean disabled;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListInventoryDetailParamDTO {
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 关联id
+         */
+        private String relationId;
+    }
+
+
+    @Data
+    @NoArgsConstructor
     public static class ListParamDTO {
 
         /**
@@ -261,6 +340,8 @@ public class WarehouseDTO implements Serializable {
          * 库存ids集合
          */
         private List<String> warehouseIdList;
+
+        private Boolean isSupplier;
 
     }
 
@@ -488,7 +569,14 @@ public class WarehouseDTO implements Serializable {
          * 库存组织id 集合
          */
         private List<String> orgIdList;
-
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
     }
 
 
@@ -575,6 +663,47 @@ public class WarehouseDTO implements Serializable {
          */
         private List<String> typeIdList;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+
+        /**
+         * 是否需要过滤组织
+         */
+        private boolean filterOrgFlag;
+
+        /**
+         * 是否需要过滤自建
+         */
+        private boolean filterSelfAddFlag;
+
+        /**
+         * 前端忽略
+         */
+        private List<String> orgIds;
+        /**
+         * 前端忽略
+         */
+        private List<String> ids;
+        /**
+         * 前端忽略
+         */
+        private String warehouseManageType;
+        /**
+         * 审核状态
+         * waitSubmit :待提交
+         * approveIng :审核中
+         * reject :审核不通过
+         * approve :已审核
+         */
+        private String approveStatus;
     }
 
     /**

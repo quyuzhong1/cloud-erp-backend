@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 public class KingdeeOrderEntity  extends CleanBaseDTO {
 
     private String _id;
@@ -63,6 +62,12 @@ public class KingdeeOrderEntity  extends CleanBaseDTO {
      */
     @Alias("FSalerId.FName")
     private String fSalerId;
+
+    /**
+     * 销售员名称
+     */
+    @Alias("FSalerId.FNumber")
+    private String fSalerName;
 
     /**
      * 收货方地址
@@ -243,7 +248,13 @@ public class KingdeeOrderEntity  extends CleanBaseDTO {
     private String f_SK_Date;
 
     /**
-     * 收货国家
+     * 收货国家编码
+     */
+    @Alias("F_SHGJ1.FNumber")
+    private String countryCode;
+
+    /**
+     * 收货国家中文
      */
     @Alias("F_SHGJ1")
     private String fSHGJ1;
@@ -260,10 +271,27 @@ public class KingdeeOrderEntity  extends CleanBaseDTO {
     @Alias("FSettleCurrId.FCode")
     private String fSettleCurrId;
 
+
+    /**
+     * 发货时间
+     */
+    @Alias("FDeliveryDate")
+    private String fDeliveryDate;
+
+
+    /**
+     * 是否无效 false：无效  true：有效
+     */
+    private Boolean isValid;
+
     /**
      * 商品信息
      */
     private List<KingdeeOrderItemEntity> orderItemEntityList;
+
+    public KingdeeOrderEntity() {
+        this.isValid = Boolean.TRUE;
+    }
 
     @Override
     public String toString() {

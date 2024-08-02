@@ -169,7 +169,7 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 if(Objects.isNull(firstMileDeliveryEntity)){
                     errorMsgList.add("未找到对应的发货单");
                 }
-                if(!firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && (statusEnum == FmLogisticTrackStatusEnum.TRACK_ING || statusEnum == FmLogisticTrackStatusEnum.ARRIVED ||statusEnum == FmLogisticTrackStatusEnum.SIGN )){
+                if(!firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && (statusEnum == FmLogisticTrackStatusEnum.TRACK_ING || statusEnum == FmLogisticTrackStatusEnum.ARRIVED ||statusEnum == FmLogisticTrackStatusEnum.SIGN ||statusEnum == FmLogisticTrackStatusEnum.INSPECTING )){
                     errorMsgList.add(StrUtil.format("关联单据{}尚未审核通过无法提交",firstMileDeliveryEntity.getCode()));
                 }
 

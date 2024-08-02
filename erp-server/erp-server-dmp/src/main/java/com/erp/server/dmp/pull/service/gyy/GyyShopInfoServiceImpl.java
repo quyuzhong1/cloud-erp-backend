@@ -19,13 +19,14 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.gyy.GyyShopInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -51,7 +52,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
     private MongoService mongoService;
 
     @Resource
-    private MQProducerService<DmpShopInfoEntity> mqProducerService;
+    private MQProducerService<BiShopInfoEntity> mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -82,7 +83,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<GyyShopInfoEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -103,7 +104,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
             }
             GyyShopInfoEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -119,7 +120,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
             return;
         }
         // 构造订单结构
-        List<DmpShopInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiShopInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .distinct()
@@ -153,9 +154,9 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(GyyShopInfoEntity mongoDatum) {
-        DmpShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
+        BiShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());
         if(null == shopInfo){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -193,28 +194,28 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
     /**
      * 解析店铺数据
      **/
-    private DmpShopInfoEntity initOrderInfoEntity(GyyShopInfoEntity shopInfoEntity) {
-        DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
+    private BiShopInfoEntity initOrderInfoEntity(GyyShopInfoEntity shopInfoEntity) {
+        BiShopInfoEntity biShopInfoEntity = new BiShopInfoEntity();
         //平台店铺编号
-        dmpShopInfoEntity.setPlatformShopNo(shopInfoEntity.getCode());
+        biShopInfoEntity.setPlatformShopNo(shopInfoEntity.getCode());
         //平台店铺账户
-        dmpShopInfoEntity.setAccountUserName("");
+        biShopInfoEntity.setAccountUserName("");
         //平台店铺标识
-        dmpShopInfoEntity.setAccountStoreName(shopInfoEntity.getNick());
+        biShopInfoEntity.setAccountStoreName(shopInfoEntity.getNick());
         //店铺名称
-        dmpShopInfoEntity.setName(shopInfoEntity.getName());
+        biShopInfoEntity.setName(shopInfoEntity.getName());
         //店铺站点
-        dmpShopInfoEntity.setSite("CN");
+        biShopInfoEntity.setSite("CN");
         //店铺状态:1启用 2停用
-        dmpShopInfoEntity.setStatus(1);
+        biShopInfoEntity.setStatus(1);
         //平台名称
-        dmpShopInfoEntity.setPlatformName(shopInfoEntity.getTypeName());
+        biShopInfoEntity.setPlatformName(shopInfoEntity.getTypeName());
         //财务编码
-        dmpShopInfoEntity.setFinanceCode("");
+        biShopInfoEntity.setFinanceCode("");
         //平台标识
-        dmpShopInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
-        dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
-        return dmpShopInfoEntity;
+        biShopInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
+        biShopInfoEntity.setCreateTime(LocalDateTime.now());
+        return biShopInfoEntity;
     }
 
     /**

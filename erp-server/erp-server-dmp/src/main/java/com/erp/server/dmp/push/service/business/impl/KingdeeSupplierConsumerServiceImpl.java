@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.KingdeeParamDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -13,11 +14,11 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSupplierConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +49,7 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
         Integer type = ApiModuleTypeEnum.SUPPLIER.getCode();
         //操作项
         String operate = (String) map.get("operate");
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
@@ -106,7 +107,7 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
      */
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
         //判断金蝶系统是否已存在该数据
-        SaveParam param = new SaveParam(json);
+        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
         Boolean erpForbidStatus = ObjectUtil.isNotEmpty(map.get("disabled")) ? (Boolean) map.get("disabled") : Boolean.FALSE;
         JSONObject model;
         try {
@@ -174,7 +175,7 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
         //业务编码
         String code = (String) map.get("code");
         //判断金蝶系统是否已存在该数据
-        SaveParam param = new SaveParam(json);
+        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
         Boolean erpForbidStatus = ObjectUtil.isNotEmpty(map.get("disabled")) ? (Boolean) map.get("disabled") : Boolean.FALSE;
         JSONObject model;
         try {

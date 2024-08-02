@@ -1,25 +1,25 @@
 package com.erp.server.tms.controller.api;
 
 
-import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
 import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
+import com.erp.server.tms.service.TmsCarrierService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -36,6 +36,8 @@ public class LogisticsSaleChannelController extends BaseController {
 
     @Autowired
     private LogisticsSaleChannelService logisticsSaleChannelService;
+    @Resource
+    private TmsCarrierService tmsCarrierService;
 
     /**
     * 新增
@@ -74,11 +76,16 @@ public class LogisticsSaleChannelController extends BaseController {
      * @return
      */
     @PostMapping("/listByType")
-    public ApiResult<List<SaleChannelDTO>> listByType(@RequestParam("platformType") String platformType) {
-        if (StringUtils.isBlank(platformType)){
-            throw new ServiceException(ApiError.ERROR_600);
-        }
-        return success(logisticsSaleChannelService.listByType(platformType));
+    public ApiResult<List<SaleChannelDTO>> listByType(@RequestBody LogisticsSaleChannelDTO.QueryDTO dto) {
+        return success(logisticsSaleChannelService.listByType(dto.getPlatformType(), dto.getServicePlatform()));
     }
 
+
+    /**
+     * 根据平台类型获取承运商列表
+     */
+    @GetMapping("/carrier")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> carrierList(@RequestParam(value = "salesPlatform", defaultValue = "AliExpress") String salesPlatform) {
+        return success(tmsCarrierService.listBySalesPlatform(salesPlatform));
+    }
 }

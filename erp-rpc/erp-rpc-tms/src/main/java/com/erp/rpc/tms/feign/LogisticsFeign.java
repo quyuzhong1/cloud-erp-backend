@@ -3,6 +3,7 @@ package com.erp.rpc.tms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
@@ -10,6 +11,7 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -69,9 +71,6 @@ public interface LogisticsFeign {
     @PostMapping("/feign/logistics/listChannelInfoById")
     List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(@RequestBody List<String> channelIds);
 
-    @PostMapping("/feign/logistics/getSignShipInfoByChannelById")
-    LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelById(@RequestBody String channelId );
-
     @GetMapping("/feign/logistics/getLogisticsChannelConstraint")
     LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(@RequestParam(value = "channelId")String channelId,@RequestParam(value = "country")String country);
     /**
@@ -87,4 +86,12 @@ public interface LogisticsFeign {
     LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(@RequestParam("logisticsChannelId") String logisticsChannelId,
                                                                  @RequestParam("dictPlatform") String dictPlatform
     );
+
+    /**
+     * 根据地址类型获取地址列表
+     *
+     * @return
+     */
+    @PostMapping("/feign/logistics/listAddressByType")
+    List<LogisticsAddressDTO.ListDTO> listAddressByType(@RequestBody @Validated LogisticsAddressDTO.AddressByTypeDTO dto);
 }

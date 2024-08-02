@@ -2,7 +2,9 @@ package com.erp.rpc.tms.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -43,8 +45,8 @@ public interface TransferDeclareFeign {
      * @param dto
      * @return java.lang.Boolean
      **/
-    @PostMapping("/feign/transferDeclare/updateOutstockStatus")
-    Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto);
+//    @PostMapping("/feign/transferDeclare/updateOutstockStatus")
+//    Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto);
 
 
     /**
@@ -63,9 +65,16 @@ public interface TransferDeclareFeign {
     @PostMapping("/feign/transferDeclare/listByLogisticsChannelIdList")
     List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(@RequestBody List<String> logisticsChannelIdList);
 
-
     @PostMapping("/feign/transferDeclare/b2cOrderForecast")
     TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(@RequestBody TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO);
+
+
+    /**
+     * 取消订单预报
+     * @return
+     */
+    @PostMapping("/feign/transferDeclare/cancelOrderForecast")
+    ApiResult<String> cancelOrderForecast(@RequestBody TransferDeclareDTO.CancelOrderForecastDTO cancelOrderForecastDTO);
 
     /**
      * 批量修改报关单详情上传状态
@@ -74,4 +83,5 @@ public interface TransferDeclareFeign {
      */
     @PostMapping("/feign/transferDeclare/updateTransferStatusByBatch")
     Boolean updateTransferStatusByBatch(@RequestBody List<TransferDeclareDTO.UpdateForcastStatusDTO> list);
+
 }

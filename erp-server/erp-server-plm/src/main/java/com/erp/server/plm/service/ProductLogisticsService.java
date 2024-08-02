@@ -93,4 +93,15 @@ public interface ProductLogisticsService extends IService<ProductLogisticsEntity
     ProductLogisticsEntity getEntityById(String id);
 
     List<ProductDetailDTO.ProductLogisticDTO> listProductLogisticsByIds(List<String> skuIdList);
+
+    /**
+     * 批量更新父sku的物流属性
+     * 取子件SKU的属性合集
+     *
+     * @param parentSkuId
+     * @return
+     */
+    Boolean saveOrUpdateParentPropertyId(List<String> parentSkuId);
+    Boolean saveOrUpdateParentPropertyIdByChildSkuId(List<String> childSkuId);
+
 }

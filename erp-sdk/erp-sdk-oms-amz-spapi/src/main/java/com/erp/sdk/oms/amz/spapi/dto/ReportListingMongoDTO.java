@@ -1,10 +1,17 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.util.ReflectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
+import com.common.core.utils.ReflectUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -101,4 +108,60 @@ public class ReportListingMongoDTO extends ReportSuperMongoDTO  {
 
     @Panno(findType = PannoEnum.EQ, field = "status")
     private String status;
+
+    @Override
+    public String convertBusinessUniqueKey() {
+        Class<? extends ReportListingMongoDTO> subClass = this.getClass();
+        StringBuilder sb = new StringBuilder();
+        sb.append(subClass.getSimpleName()).append("{");
+        Arrays.stream(ReflectUtil.getFields(subClass)).forEach(field -> {
+            String fieldName = field.getName();
+            // 指定字段字段不在忽略列表中，则将其添加到字符串表示形式中
+            if (businessUniqueKeyFields().contains(fieldName)) {
+                Object value = ReflectUtils.getFieldValue(this, fieldName);
+                sb.append(fieldName).append("=").append(value).append(", ");
+            }
+        });
+        // 删除最后一个逗号和空格
+        if (sb.length() > 2) {
+            sb.setLength(sb.length() - 2);
+        }
+        sb.append("}");
+        return DigestUtil.md5Hex(sb.toString());
+    }
+
+    private List<String> businessUniqueKeyFields(){
+        return Arrays.asList(
+                "requestShopId",
+                "itemName",
+                "itemDescription",
+                "listingId",
+                "sellerSku",
+                "price",
+                "quantity",
+                "openDate",
+                "imageUrl",
+                "itemIsMarketplace",
+                "productIdType",
+                "zshopShippingFee",
+                "itemNote",
+                "itemCondition",
+                "zshopCategory1",
+                "zshopBrowsePath",
+                "zshopStorefrontFeature",
+                "asin1",
+                "asin2",
+                "asin3",
+                "willShipInternationally",
+                "expeditedShipping",
+                "zshopBoldface",
+                "productId",
+                "bidForFeaturedPlacement",
+                "addDelete",
+                "pendingQuantity",
+                "fulfillmentChannel",
+                "merchantShippingGroup",
+                "status"
+        );
+    }
 }

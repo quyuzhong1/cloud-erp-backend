@@ -1,13 +1,14 @@
 package com.erp.server.tms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -22,13 +23,13 @@ import java.util.List;
 @Mapper
 public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEntity> {
     /**
-     * @description: tab列表
+     * @description: 查询数量
      * @author Will
-     * @date: 2023/11/13 15:56
-     * @param permissionSql
-     * @return List<TabListDTO>
+     * @date: 2024/5/10 10:58
+     * @param pagingParamDTO
+     * @return Integer
      */
-    List<LogisticsBillCostDTO.TabListDTO> tabList(@Param("permissionSql") String permissionSql);
+    Integer listCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO pagingParamDTO);
 
     /**
      * @description: 分页查询
@@ -46,7 +47,7 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @param params
      * @return List<ListDTO>
      */
-    List<LogisticsBillCostDTO.ListDTO> listByExportExcel(@Param("params") LogisticsBillCostDTO.ExportExcelParamDTO params);
+    List<LogisticsBillCostDTO.ListDTO> listByExportExcel(@Param("params") LogisticsBillCostDTO.PagingParamDTO params);
 
     /**
      * 根据销售出库单 获取销售出库单自发货费用列表
@@ -54,4 +55,6 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @return
      */
     List<LogisticsBillCostDTO.OutStockDTO> listBillCostByOutstockIds(@Param("ids") List<String> ids);
+
+    BigDecimal getActualLogisticCost(@Param("soId") String soId);
 }

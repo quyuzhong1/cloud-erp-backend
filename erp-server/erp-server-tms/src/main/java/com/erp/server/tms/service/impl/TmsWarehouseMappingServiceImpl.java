@@ -59,10 +59,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehouseMappingMapper, TmsWarehouseMappingEntity> implements TmsWarehouseMappingService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private WmsTaskFeign wmsTaskFeign;

@@ -1,12 +1,11 @@
 package com.erp.server.sys.handler;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.utils.MathUtil;
-import com.erp.server.sys.service.CommonService;
 import org.apache.ibatis.reflection.MetaObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -20,15 +19,14 @@ import java.util.Date;
  */
 @Component
 public class ErpObjectHandler implements MetaObjectHandler {
-    @Autowired
-    private CommonService commonService;
 
     //插入时的填充数据
     @Override
     public void insertFill(MetaObject metaObject) {
         Date now = new Date();
-        String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")){
             this.setFieldValByName("createTime", now, metaObject);
             this.setFieldValByName("updateTime", now, metaObject);
@@ -48,8 +46,9 @@ public class ErpObjectHandler implements MetaObjectHandler {
     //更新时的 填充数据
     @Override
     public void updateFill(MetaObject metaObject) {
-        String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")){
             this.setFieldValByName("updateTime", new Date(), metaObject);
         }else {

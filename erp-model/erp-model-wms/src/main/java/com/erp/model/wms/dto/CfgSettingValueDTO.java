@@ -123,5 +123,58 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private LocalTime sendTime;
     }
+    /**
+     * 发货拦截设置DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class B2cDeliveryInterceptDTO{
+        /**
+         * B2C发货拦截 （组包后不允许拦截）
+         */
+        private Boolean b2cDeliveryIntercept;
+    }
+    /**
+     * 组包设置DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackageSettingDTO{
+        /**
+         * 发货物流商Id
+         */
+        private List<String> supplierIds;
+    }
+
+    /**
+     * 中转设置DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TransitSettingDTO{
+
+        /**
+         * 中转仓库Id
+         */
+        private String warehouseId;
+    }
+
+
+    /**
+     * 装箱完成通知
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FinishPackingNoticeDTO{
+        /**
+         * 岗位id集合,post请求,/api/sys/post/list
+         */
+        private List<String> postIdList;
+
+        /**
+         * 抄送人员id集合,post请求,/api/plm/common/findUserList
+         */
+        private List<String> userIdList;
+    }
 
 }

@@ -21,10 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -86,14 +83,15 @@ public class GetLogisticsTrackNoTaskJob {
                     List<LogisticsOrderResponseVO> resultList = orderResponse.getData();
                     List<SoB2cLogisticsEntity> updateList = new ArrayList<>(resultList.size());
                     for (LogisticsOrderResponseVO item : resultList) {
-                        String deliveryNo = item.getDeliveryNo();
-                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getDeliveryNo().equals(deliveryNo)).
+                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
                                 map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
+                        Integer version = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
+                                map(SoB2cLogisticsDTO.TrackNoDTO::getVersion).findFirst().orElse(null);
                         if (StringUtils.isNotBlank(b2cLogisticsId)) {
                             List<String> trackNoList = new ArrayList<>(2);
                             SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
                             entity.setId(b2cLogisticsId);
-
+                            entity.setVersion(version);
                             //跟踪单号
                             String trackNo = item.getTrackNo();
                             if (StringUtils.isBlank(trackNo) || "null".equals(trackNo)) {
@@ -136,6 +134,7 @@ public class GetLogisticsTrackNoTaskJob {
                     equals(item.getLogisticsChannelId())).findFirst().map(LogisticsChannelDTO.LogisticsPlatformDTO::getAuthId).orElse("");
             if (StringUtils.isNotBlank(authId)) {
                 LogisticsQueryBaseVO queryBase = new LogisticsQueryBaseVO();
+                queryBase.setOrderId(item.getSoB2cId());
                 queryBase.setTransportNo(item.getTransportNo());
                 String deliveryNo = item.getSoCode();
                 if (isAliExpress) {
@@ -146,7 +145,7 @@ public class GetLogisticsTrackNoTaskJob {
                 }
                 item.setDeliveryNo(deliveryNo);
                 queryBase.setDeliveryNo(deliveryNo);
-                Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(authId, logisticsPlatform);
+                Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(authId,item.getShopId(), logisticsPlatform);
                 authMap.put("token", item.getShopToken());
                 queryBase.setAuthMap(authMap);
                 queryBaseList.add(queryBase);

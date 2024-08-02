@@ -1,6 +1,7 @@
 package com.erp.model.srm.dto;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
@@ -182,6 +183,11 @@ public class DeliveryOrderDTO implements Serializable {
         private String receiptStatus;
 
         /**
+         * 明细收货状态
+         */
+        private String detailReceiptStatus;
+
+        /**
          * 送货单号
          */
         private String code;
@@ -234,6 +240,15 @@ public class DeliveryOrderDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
         /**
          * 采购单号
@@ -377,6 +392,16 @@ public class DeliveryOrderDTO implements Serializable {
          * 收货状态中文
          */
         private String receiptStatusName;
+
+        /**
+         * 收货状态
+         */
+        private String detailReceiptStatus;
+
+        /**
+         * 收货状态中文
+         */
+        private String detailReceiptStatusName;
 
         /**
          * 供应商id
@@ -554,11 +579,6 @@ public class DeliveryOrderDTO implements Serializable {
         private String sourceId;
 
         /**
-         * 收货单号
-         */
-        private String receiveCode;
-
-        /**
          * 打印日期
          */
         private LocalDate printDate;
@@ -607,7 +627,6 @@ public class DeliveryOrderDTO implements Serializable {
          * 收货员名
          */
         private String receiveUserName;
-
         /**
          * 收货电话
          */

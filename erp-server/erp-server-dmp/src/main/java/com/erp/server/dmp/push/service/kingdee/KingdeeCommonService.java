@@ -1,9 +1,9 @@
 package com.erp.server.dmp.push.service.kingdee;
 
 import cn.hutool.json.JSONObject;
+import com.common.business.dto.KingdeeParamDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
-import com.kingdee.bos.webapi.entity.SaveParam;
 
 import java.util.Map;
 
@@ -45,7 +45,7 @@ public interface KingdeeCommonService {
      * @author Will
      * @date: 2023/3/3 14:52
      */
-    Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type);
+    Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type);
 
     /**
      * 新增或修改客户地址
@@ -59,7 +59,7 @@ public interface KingdeeCommonService {
      * @Author Luo_WG
      * @Date 2023/7/28 10:34
      **/
-    Boolean saveOrUpdateCustomerContact(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type);
+    Boolean saveOrUpdateCustomerContact(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type);
 
 
     /**
@@ -73,7 +73,7 @@ public interface KingdeeCommonService {
      * @author Will
      * @date: 2023/3/3 14:52
      */
-    Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, SaveParam param, Integer type, JSONObject json);
+    Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, KingdeeParamDTO.SaveParamDTO param, Integer type, JSONObject json);
 
     /**
      * 提交及审核
@@ -164,13 +164,18 @@ public interface KingdeeCommonService {
 
     /**
      * @param map
-     * @param type
+     * @param typeName
      * @return PlatformEntity
      * @description: 查询平台
      * @author Will
      * @date: 2023/4/7 11:39
      */
-    PlatformEntity getPlatformEntity(Map<String, Object> map, Integer type);
+    PlatformEntity getPlatformEntity(Map<String, Object> map, String typeName);
+
+    /**
+     * @param platformName 平台名称
+     */
+    PlatformEntity getPlatformEntity(String platformName);
 
     /**
      * @param apiUtils
@@ -240,7 +245,7 @@ public interface KingdeeCommonService {
      * @Author Luo_WG
      * @Date 2023/5/26 15:46
      **/
-    Boolean customerGroupSaveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type);
+    Boolean customerGroupSaveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type);
 
     /**
      * 保存到金蝶数据
@@ -273,7 +278,7 @@ public interface KingdeeCommonService {
      * @date 2024-03-15 18:22
      * @author Lambda
      */
-    Boolean save(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type);
+    Boolean save(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, KingdeeParamDTO.SaveParamDTO param, Integer type);
 }
 
 

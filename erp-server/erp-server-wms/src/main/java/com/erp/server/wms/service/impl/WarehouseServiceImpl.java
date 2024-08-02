@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -23,19 +24,22 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.wms.dto.DictBasicDTO;
-import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehouseMappingDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
-import com.erp.model.wms.entity.DictBasicEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
-import com.erp.model.wms.entity.WarehouseMappingEntity;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.WarehouseManageTypeEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -55,6 +59,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -102,6 +108,21 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Resource
     private WarehouseMappingService warehouseMappingService;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private InventoryService inventoryService;
+
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
+
+    @Resource
+    private VirtualInventoryService virtualInventoryService;
+
+    @Resource
+    private VirtualWarehouseChannelService virtualWarehouseChannelService;
+
 
     @Override
     public List<WarehouseDTO.UpdateDTO> listWarehouseByIds(List<String> ids) {
@@ -129,6 +150,104 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         this.fillListData(resultList, warehouseBindMap);
 
         return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<WarehouseDTO.ListInventoryQtyDTO> listWarehouseInventoryQty(WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        List<WarehouseEntity> list = baseMapper.listWarehouse(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
+
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+        // 填充信息
+        this.fillListData(resultList, warehouseBindMap);
+        //添加及时库存数量
+        List<WarehouseDTO.ListInventoryQtyDTO> warehouseList = fillListInventoryQty(dto,resultList);
+
+        return warehouseList;
+    }
+
+
+    /**
+     * @description: 填充库存数量
+     * @author Will
+     * @date: 2024/5/23 19:12
+     * @param dto
+     * @param list
+     * @return List<ListInventoryQtyDTO>
+     */
+    private List<WarehouseDTO.ListInventoryQtyDTO> fillListInventoryQty (WarehouseDTO.ListInventoryQtyParamDTO dto, List<WarehouseDTO.ListDTO> list) {
+        //sku去重
+       List<String> skuIdList =  dto.getDetailList().stream().map(WarehouseDTO.ListInventoryDetailParamDTO::getSkuId).distinct().collect(Collectors.toList());
+
+        //仓库id集合
+        List<String> warehouseIdList = list.stream().map(WarehouseDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        //查询SKU、仓库下的及时库存数量
+        InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+        skuInventoryDTO.setSkuIdList(skuIdList);
+        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+        skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
+
+        //查询虚拟仓库信息
+        VirtualWarehouseChannelDTO.ListPlatformDTO ListPlatformDTO = new VirtualWarehouseChannelDTO.ListPlatformDTO();
+        ListPlatformDTO.setWarehouseIdList(warehouseIdList);
+        List<String> dictPlatformList = dto.getDetailList().stream().map(WarehouseDTO.ListInventoryDetailParamDTO::getDictPlatform).distinct().collect(Collectors.toList());
+        ListPlatformDTO.setDictPlatformList(dictPlatformList);
+        List<VirtualWarehouseRelationDTO.ListPlatformDTO> virtualWarehouseList = virtualWarehouseChannelService.listVirtualWarehouseByPlatform(ListPlatformDTO);
+
+        //查询虚拟仓可用库存
+        List<VirtualInventoryDTO.ViewQtyDTO> virtualUsableQtyList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(virtualWarehouseList)) {
+            List<String> virtualWarehouseIdList = virtualWarehouseList.stream().map(VirtualWarehouseRelationDTO.ListPlatformDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+            VirtualInventoryDTO.ParamDTO vmParamDto = new VirtualInventoryDTO.ParamDTO();
+            vmParamDto.setSkuIdList(skuIdList);
+            vmParamDto.setWarehouseIdList(warehouseIdList);
+            vmParamDto.setVirtualWarehouseIdList(virtualWarehouseIdList);
+            virtualUsableQtyList = virtualInventoryService.getVmUsableQtyBySkuIdsAndWIdsAndVmIds(vmParamDto);
+        }
+
+        List<WarehouseDTO.ListInventoryQtyDTO> resultList = new ArrayList<>();
+        for (WarehouseDTO.ListInventoryDetailParamDTO paramDTO : dto.getDetailList()) {
+            WarehouseDTO.ListInventoryQtyDTO inventoryQtyDTO = new WarehouseDTO.ListInventoryQtyDTO();
+            inventoryQtyDTO.setSkuId(paramDTO.getSkuId());
+            List<WarehouseDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList = new ArrayList<>();
+            for (WarehouseDTO.ListDTO listDTO : list) {
+                WarehouseDTO.WarehouseInventoryQtyDTO warehouseInventoryQtyDTO = BeanMapperUtils.map(WarehouseDTO.WarehouseInventoryQtyDTO.class, listDTO);
+                //即时库存
+                Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), paramDTO.getSkuId())
+                                && Objects.equals(r.getWarehouseId(), listDTO.getId()))
+                        .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal)
+                        .reduce(MathUtil.ZERO,Integer::sum);
+                warehouseInventoryQtyDTO.setInventoryQty(curInventoryQty);
+
+
+                //实体仓库下的虚拟仓
+                List<String> virtualWarehouseIdList = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), listDTO.getId())
+                        && StrUtil.equals(obj.getDictPlatform(),paramDTO.getDictPlatform()))
+                        .map(VirtualWarehouseRelationDTO.ListPlatformDTO::getVirtualWarehouseId).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(virtualUsableQtyList)) {
+                    warehouseInventoryQtyList.add(warehouseInventoryQtyDTO);
+                    continue;
+                }
+                //实体仓下可用虚拟库存
+                Integer virtualInventoryQty = virtualUsableQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), listDTO.getId())
+                                && StrUtil.equals(obj.getSkuId(),paramDTO.getSkuId())
+                                && virtualWarehouseIdList.contains(obj.getToVirtualWarehouseId()))
+                        .map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseUsableQty).reduce(MathUtil.ZERO, Integer::sum);
+                warehouseInventoryQtyDTO.setVirtualInventoryQty(virtualInventoryQty);
+
+                warehouseInventoryQtyList.add(warehouseInventoryQtyDTO);
+            }
+            //排序
+            List<WarehouseDTO.WarehouseInventoryQtyDTO> sortedList = warehouseInventoryQtyList.stream().sorted(Comparator.comparing(WarehouseDTO.WarehouseInventoryQtyDTO::getDisabled).reversed().thenComparing(WarehouseDTO.WarehouseInventoryQtyDTO::getInventoryQty).reversed()).collect(Collectors.toList());
+            inventoryQtyDTO.setWarehouseInventoryQtyList(sortedList);
+            resultList.add(inventoryQtyDTO);
+        }
+        return resultList;
     }
 
     /**
@@ -264,6 +383,71 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
          return resultList;
     }
 
+    @Override
+    public PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> searchDTO) {
+        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
+        WarehouseDTO.SelectDTO params = searchDTO.getParams();
+        //查询配置过滤对应组织仓库
+        if(params.isFilterOrgFlag()){
+            List<DictBasicDTO.ListDTO> listDTOList = dictBasicService.getByKey(WmsConstant.WAREHOUSE_BY_FILTER_ORG);
+            if(CollectionUtils.isNotEmpty(listDTOList)){
+                DictBasicDTO.ListDTO orgDTOList = listDTOList.get(0);
+                String orgArr = orgDTOList.getValue();
+                params.setOrgIds(Arrays.asList(orgArr.split(",")));
+            }
+        }
+        if(params.isFilterSelfAddFlag()){
+            params.setWarehouseManageType(WarehouseManageTypeEnum.SELF_BUILD.getCode());
+        }
+        IPage<WarehouseDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        List<WarehouseDTO.ListDTO> records = pagResult.getRecords();
+        handleSelect(records);
+        //排序
+        List<WarehouseDTO.ListDTO> list = records.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
+        pagResult.setRecords(list);
+        return new PagingVO<>(pagResult);
+    }
+
+
+    /**
+     * @description: 分页下拉处理
+     * @author Will
+     * @date: 2024/5/24 13:06
+     * @param records
+     */
+    private void handleSelect (List<WarehouseDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+        // 填充信息
+        this.fillListSelectData(records, warehouseBindMap);
+    }
+
+    /**
+     * 填充列表信息
+     */
+    private void fillListSelectData(List<WarehouseDTO.ListDTO> resultList, Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap) {
+        List<ApproveStatusEnum> statusList = Collections.singletonList(ApproveStatusEnum.APPROVE);
+
+        List<String> orgIds = resultList.stream().map(WarehouseDTO.ListDTO::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+
+        for (WarehouseDTO.ListDTO listDTO : resultList) {
+            // 组织信息
+            String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+            listDTO.setOrgName(orgName);
+            if (!statusList.contains(listDTO.getApproveStatus())) {
+                listDTO.setDisabled(true);
+            }
+            //平台信息
+            OmsPlatformEnum platformEnum = this.checkAndGetPlatformInfo(listDTO, warehouseBindMap);
+            listDTO.setDictPlatform(null == platformEnum ? "" : platformEnum.getCode());
+            listDTO.setPlatformName(null == platformEnum ? "" : platformEnum.getName());
+        }
+    }
+
     /**
      * 检查绑定海外仓库服务商信息
      */
@@ -355,6 +539,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String name = dto.getName();
         checkName(warehouseId, name);
         checkKingdeeWarehouseCode(warehouseId, code);
+        //仓库下绑定第三方店铺不能修改为禁用状态
+        //Delete by Edison.qu 2024-07-23 去除不必要的限制
+//        if (Objects.nonNull(dto.getDisabled()) && !Objects.equals(dto.getDisabled(), warehouse.getDisabled()) && Objects.equals(dto.getDisabled(), true)) {
+//            checkDmpThirdMapping(warehouseId,warehouse.getName());
+//        }
         BeanMapper.copy(dto, warehouse);
 
         //如果设置了在途仓，获取匹配在途仓名称
@@ -473,19 +662,26 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (Objects.isNull(warehouse)) {
             throw new ServiceException(ApiError.ERROR_99001);
         }
+        //仓库下绑定第三方店铺不能修改为禁用状态
+        //Delete by Edison.qu 2024-07-23 去除不必要的限制
+//        if (Objects.nonNull(dto.getState()) && !Objects.equals(dto.getState(), warehouse.getDisabled()) && Objects.equals(dto.getState(), true)) {
+//            checkDmpThirdMapping(warehouseId,warehouse.getName());
+//        }
         warehouse.setDisabled(dto.getState());
         this.updateById(warehouse);
 
         //发送金蝶
+        String operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
         if (dto.getState()) {
-            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Arrays.asList(dto.getId()));
-            if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
-                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE, shopInfoEntities.get(MathUtil.ZERO).getName());
-            }
-            syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncOperateEnum.OPERATE_DISABLE.getCode());
-        } else {
-            syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncOperateEnum.OPERATE_ENABLE.getCode());
+            //Delete by Edison.qu 2024-07-23 去除不必要的限制:仓库绑定店铺，不允许禁用
+//            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Arrays.asList(dto.getId()));
+//            if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
+//                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE, shopInfoEntities.get(MathUtil.ZERO).getName());
+//            }
+            operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
+        //审核通过后发送金蝶
+        sendPushTask(Arrays.asList(warehouse),operate);
         return Boolean.TRUE;
     }
 
@@ -519,7 +715,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
 
             //审核通过后发送金蝶
-            list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
             return result;
         } else {
             //审核不通过
@@ -571,12 +767,26 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE, shopInfoEntity.getName());
             }
         }
+        //仓库下绑定第三方店铺不能进行反审核
+        list.forEach(warehouseEntity -> {
+            checkDmpThirdMapping(warehouseEntity.getId(),warehouseEntity.getName());
+        });
 
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
 
         //反审核后发送金蝶
-        list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return result;
+    }
+
+    private void checkDmpThirdMapping(String warehouseId,String warehouseName) {
+        ThirdMappingDTO.ViewParamDTO viewParamDTO=new ThirdMappingDTO.ViewParamDTO();
+        viewParamDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
+        viewParamDTO.setSysId(warehouseId);
+        Boolean hasThirdMapping = dmpThirdMappingFeign.getWhetherBind(viewParamDTO);
+        if (!hasThirdMapping){
+            throw new ServiceException(ApiError.EXIST_THIRD_WAREHOUSE_MAPPING,warehouseName);
+        }
     }
 
 
@@ -602,8 +812,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        //审核通过后发送金蝶
-        list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
+        //删除发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
         return this.removeByIds(ids);
     }
 
@@ -949,7 +1160,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
-
+        DictBasicEntity basic = dictBasicService.getOne(Wrappers.<DictBasicEntity>lambdaQuery().eq(DictBasicEntity::getValue, WmsConstant.SUPPLIER));
         // 填充信息
         this.fillListData(resultList, warehouseBindMap);
 
@@ -957,6 +1168,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 .filter(e -> StringUtils.isBlank(dto.getDictPlatform()) ||
                         (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
                 )
+                .filter(e -> ObjectUtil.isEmpty(dto.getIsSupplier()) || (Boolean.TRUE.equals(dto.getIsSupplier()) && e.getTypeId().equals(basic.getId())))
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
                 .collect(Collectors.toList());
     }
@@ -1126,5 +1338,27 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public List<WarehouseDTO.ListDTO> getByNames(@Param("nameList") List<String> nameList) {
         return baseMapper.getByNames(nameList);
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<WarehouseEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeWarehouseService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 }

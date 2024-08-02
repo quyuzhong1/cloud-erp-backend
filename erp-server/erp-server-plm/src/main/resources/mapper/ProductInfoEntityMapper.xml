@@ -26,7 +26,10 @@
         pi.start_time,
         p.create_user_name,
         p.spu_no,
-        pph.name as projectPhase
+        pph.name as projectPhase,
+        p.approval_time AS project_init_date,
+        pi.project_launch_date,
+        pi.project_finish_date
         FROM product_info p
         LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
@@ -48,7 +51,7 @@
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
             AND (P.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
-            concat('%',#{params.searchKeyword},'%'))
+            concat('%',#{params.searchKeyword}::text,'%'))
             OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size>0">
@@ -149,7 +152,21 @@
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             )
         </if>
-
+        <if test="params.initDateList != null and params.initDateList.size == 2">
+            AND p.approval_time BETWEEN #{params.initDateList[0]} AND #{params.initDateList[1]}
+        </if>
+        <if test="params.launchDateList != null and params.launchDateList.size == 2">
+            AND pi.project_launch_date BETWEEN #{params.launchDateList[0]} AND #{params.launchDateList[1]}
+        </if>
+        <if test="params.finishDateList != null and params.finishDateList.size == 2">
+            AND pi.project_finish_date BETWEEN #{params.finishDateList[0]} AND #{params.finishDateList[1]}
+        </if>
+        <if test="params.projectStatusList != null and params.projectStatusList.size > 0">
+            AND pi.project_status in
+                <foreach collection="params.projectStatusList" open="(" item="status" close=")" separator=",">
+                    #{status}
+                </foreach>
+        </if>
         ORDER BY p.create_time DESC
     </select>
 
@@ -177,7 +194,10 @@
         pi.start_time,
         p.create_user_name,
         p.spu_no,
-        pph.name as projectPhase
+        pph.name as projectPhase,
+        p.approval_time AS project_init_date,
+        pi.project_launch_date,
+        pi.project_finish_date
         FROM product_info p
         LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
@@ -202,7 +222,7 @@
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
             AND (p.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
-            concat('%',#{params.searchKeyword},'%'))
+            concat('%',#{params.searchKeyword}::text,'%'))
             OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size>0">
@@ -291,6 +311,21 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.initDateList != null and params.initDateList.size == 2">
+            AND p.approval_time BETWEEN #{params.initDateList[0]} AND #{params.initDateList[1]}
+        </if>
+        <if test="params.launchDateList != null and params.launchDateList.size == 2">
+            AND pi.project_launch_date BETWEEN #{params.launchDateList[0]} AND #{params.launchDateList[1]}
+        </if>
+        <if test="params.finishDateList != null and params.finishDateList.size == 2">
+            AND pi.project_finish_date BETWEEN #{params.finishDateList[0]} AND #{params.finishDateList[1]}
+        </if>
+        <if test="params.projectStatusList != null and params.projectStatusList.size > 0">
+            AND pi.project_status in
+            <foreach collection="params.projectStatusList" open="(" item="status" close=")" separator=",">
+                #{status}
+            </foreach>
+        </if>
         ORDER BY p.create_time DESC
     </select>
     <select id="collect" resultType="com.erp.model.plm.dto.ProductShowDTO">
@@ -340,7 +375,7 @@
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
             AND (p.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
-            concat('%',#{params.searchKeyword},'%'))
+            concat('%',#{params.searchKeyword}::text,'%'))
             OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size>0">
@@ -457,7 +492,7 @@
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
             AND (p.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
-            concat('%',#{params.searchKeyword},'%'))
+            concat('%',#{params.searchKeyword}::text,'%'))
             OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size>0">
@@ -579,6 +614,7 @@
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>
+        limit 50000
     </select>
 
     <select id="getProductRelevanceList" resultType="com.erp.model.plm.dto.CountDTO">
@@ -810,7 +846,7 @@
                 <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
                     AND (P.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                     OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
-                    concat('%',#{params.searchKeyword},'%'))
+                    concat('%',#{params.searchKeyword}::text,'%'))
                     OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
                 </if>
                 <if test="params.stateList !=null and params.stateList.size>0">
@@ -917,6 +953,7 @@
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
+        limit 50000
     </select>
 
     <select id="listAllTaskExport" resultType="com.erp.model.plm.dto.excel.TaskExportDTO$ProductTaskExcelDTO">
@@ -955,7 +992,7 @@
                 <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
                     AND (P.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                     OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
-                    concat('%',#{params.searchKeyword},'%'))
+                    concat('%',#{params.searchKeyword}::text,'%'))
                     OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
                 </if>
                 <if test="params.stateList !=null and params.stateList.size>0">
@@ -1054,7 +1091,7 @@
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
-
+        limit 50000
     </select>
 
     <select id="listMyProjectExport" resultType="com.erp.model.plm.dto.ProductShowDTO">
@@ -1114,7 +1151,7 @@
                 <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
                     AND (P.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                     OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
-                    concat('%',#{params.searchKeyword},'%'))
+                    concat('%',#{params.searchKeyword}::text,'%'))
                     OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
                 </if>
                 <if test="params.stateList !=null and params.stateList.size>0">
@@ -1208,6 +1245,7 @@
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
+        limit 50000
     </select>
 
     <select id="listMyProjectTaskExport"
@@ -1250,7 +1288,7 @@
                 <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
                     AND (P.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                     OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
-                    concat('%',#{params.searchKeyword},'%'))
+                    concat('%',#{params.searchKeyword}::text,'%'))
                     OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
                 </if>
                 <if test="params.stateList !=null and params.stateList.size>0">
@@ -1344,7 +1382,7 @@
             </otherwise>
         </choose>
         ORDER BY pt.create_time DESC
-
+        limit 50000
     </select>
 
 
@@ -1403,7 +1441,7 @@
                 <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
                     AND (P.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                     OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
-                    concat('%',#{params.searchKeyword},'%'))
+                    concat('%',#{params.searchKeyword}::text,'%'))
                     OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
                 </if>
                 <if test="params.stateList !=null and params.stateList.size>0">
@@ -1501,6 +1539,7 @@
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
+        limit 50000
     </select>
 
     <select id="collectTaskExport" resultType="com.erp.model.plm.dto.excel.TaskExportDTO$ProductTaskExcelDTO">
@@ -1540,7 +1579,7 @@
                 <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
                     AND (P.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                     OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
-                    concat('%',#{params.searchKeyword},'%'))
+                    concat('%',#{params.searchKeyword}::text,'%'))
                     OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
                 </if>
                 <if test="params.stateList !=null and params.stateList.size>0">
@@ -1702,7 +1741,9 @@
                 pi.id as productId,
                 pd.id as skuId,
                 pd.sku_no,
+                pd.images_url,
                 pi.category,
+                pi.category_id,
                 pi.property,
                 COALESCE(pl.product_property_id,'') AS logisticsPropertyId
             from  product_detail pd

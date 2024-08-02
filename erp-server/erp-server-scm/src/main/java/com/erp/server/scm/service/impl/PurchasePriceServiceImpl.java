@@ -16,6 +16,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -25,6 +26,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
@@ -35,8 +37,8 @@ import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
@@ -55,6 +57,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -101,9 +105,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     private WorkflowFeign workflowFeign;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
@@ -113,7 +114,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     private PurchasePriceChangeService purchasePriceChangeService;
 
     @Resource
-    private SysDictFeign sysDictFeign;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private PurchasePriceQueryHandler purchasePriceQueryHandler;
@@ -149,7 +150,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
         //生成单号
-//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGJM);
         purchasePrice.setCode(code);
         purchasePrice.setId(id);
@@ -232,7 +232,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
 
         List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
         purchasePriceDetailList.forEach(req -> {
             SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new SkuVO());
             req.setProductName(skuVO.getSkuName());
@@ -386,9 +386,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             List<Pair<String, String>> pairList = purchasePriceList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "删除");
             attachmentService.deleteByBusinessIds(ids);
-            //删除同步金蝶
-            purchasePriceList.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
+            //发送金蝶
+            sendPushTask(purchasePriceList,SyncOperateEnum.OPERATE_DELETE.getCode());
         }
         return result;
     }
@@ -505,7 +505,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         //审核通过发送金蝶
         if (dto.getType().equals(ScmConstant.PASS)) {
-            list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            //发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -531,7 +532,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
 
         //撤销现有流程
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
@@ -572,7 +573,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> skuIds = list.stream().map(PurchasePriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
+            List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
             List<String> currencyIdList = list.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
@@ -633,7 +634,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
             List<String> skuIds = viewList.stream().map(PurchasePriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
+            List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
 
             //最新审核人
             ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
@@ -744,7 +745,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @date 2023-03-27 12:13
      */
     private Boolean updateApproveStatus(List<PurchasePriceEntity> list, ApproveStatusEnum statusEnum) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
@@ -868,6 +869,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                         savePurchasePriceDetailEntity.setExpireDate(expireDate);
                         savePurchasePriceDetailEntity.setTaxRate(taxRate);
                         savePurchasePriceDetailEntity.setId(detailId);
+                        if (StringUtils.isBlank(savePurchasePriceDetailEntity.getCurrency())){
+                            savePurchasePriceDetailEntity.setCurrency(item.getCurrency());
+                        }
                         updateItemList.add(savePurchasePriceDetailEntity);
                     }
                 } else {
@@ -966,8 +970,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (result) {
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+
             //发送金蝶
-            list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return result;
     }
@@ -1009,7 +1014,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @param list
      */
     private void startProcess (List<PurchasePriceEntity> list) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
         list.forEach(obj -> {
             ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
@@ -1036,7 +1041,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     private void approveProcess (List<PurchasePriceEntity> list,BaseApproveParamDTO dto) {
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         list.forEach(obj -> {
             ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
             approveDTO.setBusinessId(obj.getId());
@@ -1064,5 +1069,25 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
     }
 
-
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<PurchasePriceEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
 }

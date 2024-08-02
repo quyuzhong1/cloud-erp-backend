@@ -1,10 +1,18 @@
 package com.erp.server.oms.service.impl;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.annotation.DataIdempotent;
+import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.handler.PlatformSaveHandler;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
+import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.mapper.SoB2cErrorMapper;
@@ -14,6 +22,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,10 +42,12 @@ import java.util.Objects;
 @Service
 public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cErrorEntity> implements SoB2cErrorService {
 
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
     @Resource
-    private SoOutstockFeign soOutstockFeign;
+    private SoB2cDeliveryFeign soB2cDeliveryFeign;
+
 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -222,6 +233,53 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         //给订单赋值第三方平台发货单号
         List<TransferDeclareDTO.ShippingOrderDTO> shippingOrderDTOList = BeanMapperUtils.copyList(TransferDeclareDTO.ShippingOrderDTO.class, addAndDeleteDTO.getShippingOrderDTO());
         soB2cService.updateShippingOrderNo(shippingOrderDTOList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @DataIdempotent
+    public BatchResultDTO retryFalseDelivery(String soB2cId) {
+        // 直接重新触发标记发货
+        // 调用第三方平台SDK标记发货(独立事务)
+        SoB2cEntity mainEntity = soB2cService.getById(soB2cId);
+        if (null == mainEntity){
+            return BatchResultDTO.fail(soB2cId, soB2cId, "订单不存在");
+        }
+        String errorType = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
+        SoB2cErrorEntity soB2cError = this.getByMainIdAndType(soB2cId, errorType);
+        if (null == soB2cError){
+            if (errorType.equalsIgnoreCase(mainEntity.getSignOrderError())){
+                soB2cService.removeSignError(soB2cId, errorType);
+                return BatchResultDTO.success(soB2cId, mainEntity.getCode(), "移除头部异常信息成功");
+            }
+            return BatchResultDTO.fail(soB2cId, mainEntity.getCode(), "无异常信息");
+        }
+        // 移除已有异常
+        removeErrorOrder(soB2cId, errorType);
+
+        String soCode = mainEntity.getCode();
+        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+        platformShipOrderDTO.setSoB2cId(soB2cId);
+        platformShipOrderDTO.setSubmitPlatformUniqueKey(mainEntity.convertSubmitPlatformUniqueKey());
+        platformShipOrderDTO.setDictPlatform(mainEntity.getDictPlatform());
+        platformShipOrderDTO.setFalseDeliveryFlag(true);
+        try {
+            soB2cDeliveryFeign.shipOrder(platformShipOrderDTO);
+            return BatchResultDTO.success(soB2cId, soCode, "重新标记发货成功");
+        } catch (Exception e) {
+            log.error("【标记发货重试】销售单【{}】 标记发货失败 >>>错误信息{}", soCode, ExceptionUtil.stacktraceToString(e));
+            // 独立异常
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO(
+                    soB2cId,
+                    SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode(),
+                    soB2cId,
+                    e.getMessage(),
+                    ExceptionUtil.stacktraceToString(e),
+                    ""
+            );
+            this.add(addError);
+            return BatchResultDTO.fail(soB2cId, soCode, e.getMessage());
+        }
     }
 
     /**

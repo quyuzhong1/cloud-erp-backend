@@ -1,6 +1,7 @@
 package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -12,10 +13,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -78,7 +81,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(ProductDetailEntity entity,String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate) {
 
         Map<String, Object> resultMap = new HashMap<>();
         //sku
@@ -94,8 +97,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         //产品信息
@@ -231,9 +233,15 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             //一级供应商
             resultMap.put("mainSupplier", productPurchaseEntity.getMainSupplier());
         }
+        //服务和费用类型不允许库存
+        if (StrUtil.equals(productInfoEntity.getProperty(), ProductConstant.PRODUCT_PROPERTY_COST)
+                || StrUtil.equals(productInfoEntity.getProperty(), ProductConstant.PRODUCT_PROPERTY_SERVICE))  {
+            //不允许库存
+            resultMap.put("isStock", Boolean.FALSE);
+        }
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+       return saveTask(entity,operate,resultMap);
     }
 
 
@@ -245,7 +253,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (ProductDetailEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (ProductDetailEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
@@ -257,6 +265,6 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
-        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+        return dmpMqFeign.saveTask(taskFeignDTO);
     }
 }

@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ReflectUtils;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -17,15 +19,20 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
-import com.erp.server.oms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.erp.server.oms.service.CustomerB2cService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoB2cReceiverService;
+import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,8 +51,6 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     @Resource
     private CustomerB2cService customerB2cService;
 
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private OperateLogService operateLogService;
@@ -78,7 +83,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         SoB2cEntity soB2cEntity = soB2cService.getById(old.getMainId());
         // 记录主单操作日志
         log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", soB2cEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
         return update;
     }
@@ -147,19 +152,40 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 }
                 return entity;
             }else {
-                SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
-                BeanMapperUtils.copy(receiverDTO, entity2);
-                if (null != dictCountryEntity && StringUtils.isBlank(entity2.getCountryName())){
+                SoB2cReceiverEntity newReceiverEntity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(receiverDTO, mainEntity.getId());
+                if (null != dictCountryEntity && StringUtils.isBlank(entity.getCountryName())){
                     entity.setCountryName(dictCountryEntity.getNameCn());
                 }
-                entity2.setId(entity.getId());
-                this.updateById(entity2);
+                // 指定有值不更新
+                ReflectUtils.updateSpecifiedFieldsIfNotValue(entity, newReceiverEntity, SoB2cReceiverEntity.fieldsExistNotUpdate());
+
+                this.updateById(entity);
 //                if (!this.updateById(entity2)){
 //                    throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
 //                }
-                return entity2;
+                return entity;
             }
 
+    }
+
+    @Override
+    public void updateFieldById(SoB2cReceiverEntity receiver) {
+        if (Objects.isNull(receiver) || StringUtils.isBlank(receiver.getId())){
+            return;
+        }
+        lambdaUpdate()
+                .set(SoB2cReceiverEntity::getCountry,receiver.getCountry())
+                .set(SoB2cReceiverEntity::getCountryName,receiver.getCountryName())
+                .set(SoB2cReceiverEntity::getProvinceName,receiver.getProvinceName())
+                .set(SoB2cReceiverEntity::getCityName,receiver.getCityName())
+                .set(SoB2cReceiverEntity::getPostCode,receiver.getPostCode())
+                .set(SoB2cReceiverEntity::getReceiverName,receiver.getReceiverName())
+                .set(SoB2cReceiverEntity::getReceiverTelNumber,receiver.getReceiverTelNumber())
+                .set(SoB2cReceiverEntity::getReceiverTaxNo,receiver.getReceiverTaxNo())
+                .set(SoB2cReceiverEntity::getFirstAddress,receiver.getFirstAddress())
+                .set(SoB2cReceiverEntity::getSecondAddress,receiver.getSecondAddress())
+                .set(SoB2cReceiverEntity::getFullAddress,receiver.getFullAddress())
+                .eq(SoB2cReceiverEntity::getId, receiver.getId()).eq(SoB2cReceiverEntity::getMainId,receiver.getMainId()).update();
     }
 
     /**

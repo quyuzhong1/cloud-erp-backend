@@ -6,8 +6,10 @@ import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
-import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -33,13 +35,26 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
+    public static final String NON_AMAZON = "Non-Amazon";
+
     private Order order;
 
     @Panno(findType = PannoEnum.EQ,field = "shopId")
     private String shopId;
 
+    @Panno(findType = PannoEnum.EQ,field = "shopName")
+    private String shopName;
+
+    /**
+     * 平台店铺编码/卖家编码
+     * 亚马逊平台=卖家ID
+     */
+    @Panno(findType = PannoEnum.EQ,field = "platformShopCode")
+    private String platformShopCode;
+
     /**
      * 数据下载状态
+     * -1 异常数据无法更新
      * 0 详情数据需要更新
      * 1 详情数据已更新
      */
@@ -64,14 +79,67 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
      */
     private String redissonKey;
 
-    public PlatformAmazonOrderDTO(Order order, String shopId) {
+    public PlatformAmazonOrderDTO(Order order, AmazonShopInfoDTO shopInfoDTO) {
         this.order = order;
-        this.shopId = shopId;
-        this.setUniqueId(combineUnique(order.getAmazonOrderId(), shopId));
+        // 根据站点判断店铺ID
+        AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(order.getMarketplaceId());
+        this.shopId = null == shopNameDTO ? "" : shopNameDTO.getShopId();
+        this.shopName = null == shopNameDTO ? "" : shopNameDTO.getShopName();
+        this.platformShopCode = shopInfoDTO.getPlatformShopCode();
+        this.setUniqueId(combineUnique(order.getAmazonOrderId(), this.shopId));
         this.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        this.setDownloadStatus(0);
-        this.setDownloadAddressStatus(0);
+        if (StringUtils.isBlank(this.shopId)){
+            // 店铺为空异常
+            this.setDownloadStatus(-1);
+        } else {
+            this.setDownloadStatus(0);
+        }
+        if (order.getAmazonOrderId().contains("S")){
+            // 多渠道订单不下载地址
+            this.setDownloadAddressStatus(-1);
+        } else {
+            this.setDownloadAddressStatus(0);
+        }
         this.setIsClean(CleanStatusEnum.NONE.getCode());
+    }
+
+    public PlatformAmazonOrderDTO(Order order, AmazonShopInfoDTO shopInfoDTO, List<CfgTimezoneEntity> timeZoneList) {
+        this.order = order;
+        // 1 根据站点判断店铺ID
+        AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(order.getMarketplaceId());
+        if (null == shopNameDTO){
+            // 2, 根据销售渠道匹配
+            CfgTimezoneEntity timeZoneEntity = timeZoneList.stream()
+                    .filter(t -> t.getAndParseCondition().contains(order.getSalesChannel()))
+                    .findFirst()
+                    .orElse(null);
+            if (null != timeZoneEntity){
+                AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(timeZoneEntity.getCountry());
+                if (null != marketplaceEnum){
+                    shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(marketplaceEnum.getMarketplaceId());
+                }
+            }
+        }
+
+        this.shopId = null == shopNameDTO ? "" : shopNameDTO.getShopId();
+        this.shopName = null == shopNameDTO ? "" : shopNameDTO.getShopName();
+        this.platformShopCode = shopInfoDTO.getPlatformShopCode();
+        this.setUniqueId(combineUnique(order.getAmazonOrderId(), this.shopId));
+        this.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        if (StringUtils.isBlank(this.shopId)){
+            // 店铺为空异常
+            this.setDownloadStatus(-1);
+        } else {
+            this.setDownloadStatus(0);
+        }
+        if (order.getAmazonOrderId().contains("S")){
+            // 多渠道订单不下载地址
+            this.setDownloadAddressStatus(-1);
+        } else {
+            this.setDownloadAddressStatus(0);
+        }
+        this.setIsClean(CleanStatusEnum.NONE.getCode());
+
     }
 
     public static PlatformAmazonOrderDTO getByAddressDownloadStatus() {
@@ -85,6 +153,10 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         return StrUtil.format("{}_{}", orderId, shopId);
     }
 
+    public String convertOrderIdWithPlatformShopCode(){
+        return StrUtil.format("{}_{}", this.order.getAmazonOrderId(), this.platformShopCode);
+    }
+
     /**
      * 转换目标实体:PlatformProductDTO
      */
@@ -95,8 +167,9 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         BeanUtils.copyProperties(dto, orderDTO);
 
-        // 来源类型
-        orderDTO.setSourceType("soB2c");
+        // 来源类型/多渠道订单/B2C销售订单
+        String sourceType = dto.getOrder().hasMultiChannel() ? "soMultiChannel" : "soB2c";
+        orderDTO.setSourceType(sourceType);
         // 来源id
         orderDTO.setSourceId(sourceOrder.getAmazonOrderId());
         // 来源编码
@@ -213,9 +286,9 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 订单物流信息(无)
 
         // 订单买家信息
+        PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         BuyerInfo buyerInfo = dto.getOrder().getBuyerInfo();
-        if (null != dto.getOrder().getBuyerInfo()){
-            PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
+        if (null != buyerInfo){
             BuyerTaxInfo buyerTaxInfo = dto.getOrder().getBuyerInfo().getBuyerTaxInfo();
             if (null != buyerTaxInfo){
                 List<TaxClassification> taxClassifications = dto.getOrder().getBuyerInfo().getBuyerTaxInfo().getTaxClassifications();
@@ -230,31 +303,37 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
                     }
                 }
             }
-
+            // 买家名称
+            receiverDTO.setName(StringUtils.isBlank(buyerInfo.getBuyerName()) ? "" : buyerInfo.getBuyerName());
             receiverDTO.setEmail(StringUtils.isBlank(buyerInfo.getBuyerEmail()) ? "" : buyerInfo.getBuyerEmail());
-            Address shippingAddress = dto.getOrder().getShippingAddress();
-            if (null != shippingAddress){
-                receiverDTO.setName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
-                receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddressLine1()) ? "" : shippingAddress.getAddressLine1());
-                String secondAddress = StrUtil.concat(true, shippingAddress.getAddressLine2(), shippingAddress.getAddressLine3());
-                receiverDTO.setSecondAddress(secondAddress);
-
-                receiverDTO.setReceiverTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" : shippingAddress.getPhone());
-                receiverDTO.setTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" : shippingAddress.getPhone());
-                receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
-                receiverDTO.setCountry(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
-                receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
-                // 区域
-                receiverDTO.setDistrictName(StringUtils.isBlank(shippingAddress.getDistrict()) ? "" : shippingAddress.getDistrict());
-                // 省/州
-                receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getStateOrRegion()) ? "" : shippingAddress.getStateOrRegion());
-
-                String fullAddress = StrUtil.concat(true,  shippingAddress.getMunicipality());
-                receiverDTO.setFullAddress(fullAddress);
-                receiverDTO.setPostCode(shippingAddress.getPostalCode());
-            }
-            orderDTO.setReceiver(receiverDTO);
         }
+
+        Address shippingAddress = dto.getOrder().getShippingAddress();
+        if (null != shippingAddress){
+            // 买家名称为空使用发货单名称覆盖
+            if (StringUtils.isBlank(receiverDTO.getName())){
+                receiverDTO.setName(StringUtils.isBlank(receiverDTO.getName()) ? "" : shippingAddress.getName());
+            }
+            receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddressLine1()) ? "" : shippingAddress.getAddressLine1());
+            String secondAddress = StrUtil.concat(true, shippingAddress.getAddressLine2(), shippingAddress.getAddressLine3());
+            receiverDTO.setSecondAddress(secondAddress);
+
+            receiverDTO.setReceiverTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" : shippingAddress.getPhone());
+            receiverDTO.setTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" : shippingAddress.getPhone());
+            receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
+            receiverDTO.setCountry(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
+            receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
+            // 区域
+            receiverDTO.setDistrictName(StringUtils.isBlank(shippingAddress.getDistrict()) ? "" : shippingAddress.getDistrict());
+            // 省/州
+            receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getStateOrRegion()) ? "" : shippingAddress.getStateOrRegion());
+
+            String fullAddress = StrUtil.concat(true,  shippingAddress.getMunicipality());
+            receiverDTO.setFullAddress(fullAddress);
+            receiverDTO.setPostCode(shippingAddress.getPostalCode());
+        }
+        orderDTO.setReceiver(receiverDTO);
+
         return orderDTO;
     }
 

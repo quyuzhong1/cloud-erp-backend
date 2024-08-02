@@ -1,8 +1,9 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -882,6 +883,25 @@ public class CustomerB2CDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class DropPagingDTO<T> extends PagingVO {
+
+        /**
+         * 是否存在与输入值相同的数据，true是，false否
+         */
+        private Boolean isExist;
+
+        public DropPagingDTO(IPage<T> page) {
+            this.setList(page.getRecords());
+            this.setTotalCount((int) page.getTotal());
+            this.setPageSize((int) page.getSize());
+            this.setCurrPage((int) page.getCurrent());
+            this.setTotalPage((int) page.getPages());
+        }
+
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class DropListDTO {
         /**
          * 客户id
@@ -935,5 +955,20 @@ public class CustomerB2CDTO implements Serializable {
          * 电话
          */
         private String telNumber;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        private String approveStatus;
+
+        /**
+         * 是否禁用
+         * false 没有
+         */
+        private Boolean disabled;
     }
 }

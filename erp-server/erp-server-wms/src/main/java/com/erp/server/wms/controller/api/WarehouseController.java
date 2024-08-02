@@ -2,16 +2,19 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
+import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -50,6 +53,7 @@ public class WarehouseController extends BaseController {
             menuCode = "wms:warehouse:paging",
             tableAlias = "warehouse"
     )
+    @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
     public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
         PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
         return success(pagingVO);
@@ -285,6 +289,33 @@ public class WarehouseController extends BaseController {
     @GetMapping("/list")
     public ApiResult<List<WarehouseDTO.ListDTO>> list() {
         List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse();
+        return success(list);
+    }
+
+
+    /**
+     * 远程分页下拉查询
+     * @author Will
+     * @date: 2024/5/24 13:06
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/selectPaging")
+    public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody PagingDTO<WarehouseDTO.SelectDTO> dto) {
+        PagingVO<WarehouseDTO.ListDTO> pagingVO = warehouseService.selectPaging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 根据sku查询仓库库存
+     * @author Will
+     * @date: 2024/5/23 18:25
+     * @param dto
+     * @return ApiResult<List<ListDTO>>
+     */
+    @PostMapping("/listWarehouseInventoryQty")
+    public ApiResult<List<WarehouseDTO.ListInventoryQtyDTO>> listWarehouseInventoryQty(@RequestBody @Valid WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        List<WarehouseDTO.ListInventoryQtyDTO> list = warehouseService.listWarehouseInventoryQty(dto);
         return success(list);
     }
 

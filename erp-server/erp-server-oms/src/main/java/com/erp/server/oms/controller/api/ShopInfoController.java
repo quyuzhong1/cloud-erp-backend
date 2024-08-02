@@ -1,8 +1,11 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -10,9 +13,15 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.server.oms.query.ShopQueryHandler;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -29,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+
 
 /**
  * 店铺管理
@@ -51,7 +61,8 @@ public class ShopInfoController extends BaseController {
     @Resource
     private CustomerInfoService customerInfoService;
 
-
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
     /**
      * 店铺 分页
      *
@@ -63,6 +74,7 @@ public class ShopInfoController extends BaseController {
             menuCode = "oms:shop:paging",
             tableAlias = "si"
     )
+    @WebAdvanceQuery(handler = ShopQueryHandler.class)
     public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
         PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
         return success(pagingVO);
@@ -79,16 +91,7 @@ public class ShopInfoController extends BaseController {
     public ApiResult<?> add(@RequestBody @Validated ShopDTO.AddDTO dto) {
         List<ShopInfoEntity> list = shopInfoService.add(dto);
         for (ShopInfoEntity shop : list) {
-            //店铺客户信息
-            String id = shopInfoService.autoCreateShopCustomer(shop.getId());
-            if (StringUtils.isNotBlank(id)) {
-                List<String> ids = Arrays.asList(id);
-                //提交
-                Boolean submitResult = customerInfoService.submit(ids);
-                if (submitResult) {
-                    customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(),"",Boolean.FALSE));
-                }
-            }
+            saveCustom(shop);
         }
         return !CollectionUtils.isEmpty(list) ? success() : failure();
     }
@@ -134,7 +137,30 @@ public class ShopInfoController extends BaseController {
             keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
         ShopInfoEntity shopInfoEntity = shopInfoService.updateShop(dto);
+        //如果没有选客户，就进行绑定
+        saveCustom(shopInfoEntity);
         return null != shopInfoEntity ? success() : failure();
+    }
+
+    /**
+     * 如果没有选客户，就进行绑定
+     */
+    private void saveCustom(ShopInfoEntity shopInfoEntity) {
+        if (StringUtils.isBlank(shopInfoEntity.getCustomerId())) {
+            //店铺客户信息--如果存在则直接绑定原始的，不存在就创建并提交审核
+            CustomerInfoEntity customerInfoEntity = shopInfoService.autoCreateShopCustomer(shopInfoEntity.getId());
+            if (Objects.nonNull(customerInfoEntity)) {
+                ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
+                if (Objects.isNull( approveStatus)||!Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus.getStatus())) {
+                    List<String> ids = Arrays.asList(customerInfoEntity.getId());
+                    //提交
+                    Boolean submitResult = customerInfoService.submit(ids);
+                    if (submitResult) {
+                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE));
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -165,6 +191,16 @@ public class ShopInfoController extends BaseController {
     }
 
     /**
+     * 店铺下拉
+     * @return
+     */
+    @GetMapping("/listShopSelect")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listShopSelect() {
+        List<BaseDropDownDTO.DisabledDTO> list = shopInfoService.listShopSelect();
+        return success(list);
+    }
+
+    /**
      * 获取已授权店铺
      *
      * @return ApiResult<List < ShopInfoEntity>>
@@ -174,6 +210,17 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/listAuth")
     public ApiResult<List<ShopInfoEntity>> listAuth(@RequestBody ShopDTO.PlatformDTO platformDTO) {
         List<ShopInfoEntity> list = shopInfoService.listAuth(platformDTO);
+        return success(list);
+    }
+    /**
+     * 获取店铺--showByAuth true已授权 false所有数据
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
+     * @author hyj
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
+        PagingVO<ShopDTO.ListDTO> list = shopInfoService.pagingSelect(dto);
         return success(list);
     }
 
@@ -218,9 +265,19 @@ public class ShopInfoController extends BaseController {
                 if (Objects.isNull(shop)) {
                     submit = BatchResultDTO.fail(id, id, "店铺不存在");
                 } else {
-                    flagCode = shop.getName();
-                    submit = shopInfoService.updateStatus(shop, disabled);
-
+                    //仓库下绑定第三方店铺不能修改为禁用状态
+                    if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
+                        Boolean flag = checkDmpThirdMapping(id);
+                        if (!flag) {
+                            submit = BatchResultDTO.fail(id, shop.getName(), StrUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
+                        }else{
+                            flagCode = shop.getName();
+                            submit = shopInfoService.updateStatus(shop, disabled);
+                        }
+                    }else {
+                        flagCode = shop.getName();
+                        submit = shopInfoService.updateStatus(shop, disabled);
+                    }
                 }
             } catch (Exception e) {
                 log.error("店铺更改状态失败>>>>{}", e);
@@ -391,4 +448,81 @@ public class ShopInfoController extends BaseController {
         return success(shopInfoService.lambdaQuery().eq(ShopInfoEntity::getDictPlatform, dictPlatform).list());
     }
 
+    /**
+     * 删除
+     *
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除店铺")
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:delete",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = shopInfoService.deleteByIds(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 导出
+     * @author hyj
+     * @date 2024/5/23
+     * @param dto
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出店铺")
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:export",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "id")
+    @WebAdvanceQuery(handler = ShopQueryHandler.class)
+    public void listExport(@RequestBody ShopDTO.ExportDTO dto, HttpServletResponse response) {
+        shopInfoService.listExport(dto,response);
+    }
+
+    /**
+     * 添加店铺
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加店铺")
+    @PostMapping("/addIntenal")
+    public ApiResult<?> addIntenal(@RequestBody @Validated ShopDTO.AddInternalDTO dto) {
+        List<ShopInfoEntity> list = shopInfoService.addIntenal(dto);
+        for (ShopInfoEntity shop : list) {
+            saveCustom(shop);
+        }
+        return !CollectionUtils.isEmpty(list) ? success() : failure();
+    }
+
+
+    /**
+     * 修改国内店铺
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改店铺")
+    @PostMapping("/updateInternal")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:updateInternal",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "id")
+    public ApiResult<?> updateInternal(@RequestBody @Validated ShopDTO.UpdateInternalDTO dto) {
+        ShopInfoEntity shopInfoEntity = shopInfoService.updateInternalShop(dto);
+        //如果没有选客户，就进行绑定
+        saveCustom(shopInfoEntity);
+        return null != shopInfoEntity ? success() : failure();
+    }
+
+    private Boolean checkDmpThirdMapping(String shopId) {
+        ThirdMappingDTO.ViewParamDTO viewParamDTO=new ThirdMappingDTO.ViewParamDTO();
+        viewParamDTO.setType(ThirdSysTypeEnum.SHOP.getCode());
+        viewParamDTO.setSysId(shopId);
+        return dmpThirdMappingFeign.getWhetherBind(viewParamDTO);
+    }
 }

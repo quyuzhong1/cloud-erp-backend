@@ -20,7 +20,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.dmp.entity.BiSkuInfoEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -29,6 +29,7 @@ import com.erp.model.dmp.kingdee.KingdeeSkuEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -57,12 +58,12 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
     private MongoService mongoService;
 
     @Resource
-    private MQProducerService<DmpSkuInfoEntity> mqProducerService;
+    private MQProducerService<BiSkuInfoEntity> mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<KingdeeSkuEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -98,7 +99,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
             }
             KingdeeSkuEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -115,7 +116,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
             return;
         }
         // 构造订单结构
-        List<DmpSkuInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiSkuInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -149,9 +150,9 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(KingdeeSkuEntity mongoDatum) {
-        DmpSkuInfoEntity skuInfo = initOrderInfoEntity(mongoDatum);
+        BiSkuInfoEntity skuInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
         if(null == skuInfo){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -182,7 +183,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
 
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'C'"));
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
 
         String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate," +
@@ -220,64 +221,64 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    public DmpSkuInfoEntity initOrderInfoEntity(KingdeeSkuEntity skuInfoEntity) {
+    public BiSkuInfoEntity initOrderInfoEntity(KingdeeSkuEntity skuInfoEntity) {
         if (StrUtil.isEmpty(skuInfoEntity.getFUseOrgId()) ||
                 ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(skuInfoEntity.getFUseOrgId()) ||
                 ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(skuInfoEntity.getFUseOrgId())
         ){
             return null;
         }
-        DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
-        dmpSkuInfoEntity.setItemCode(skuInfoEntity.getFMaterialId());
+        BiSkuInfoEntity biSkuInfoEntity = new BiSkuInfoEntity();
+        biSkuInfoEntity.setItemCode(skuInfoEntity.getFMaterialId());
         //sku编号
-        dmpSkuInfoEntity.setSkuNo(skuInfoEntity.getFNumber());
+        biSkuInfoEntity.setSkuNo(skuInfoEntity.getFNumber());
         //中文名
-        dmpSkuInfoEntity.setNameCn(skuInfoEntity.getFName());
+        biSkuInfoEntity.setNameCn(skuInfoEntity.getFName());
         //英文名
-        dmpSkuInfoEntity.setNameEn("");
+        biSkuInfoEntity.setNameEn("");
         //统一成本价
-        dmpSkuInfoEntity.setDefaultCost(new BigDecimal(skuInfoEntity.getFPurPrice_CMK()));
+        biSkuInfoEntity.setDefaultCost(new BigDecimal(skuInfoEntity.getFPurPrice_CMK()));
         Integer status = 3;
         if (skuInfoEntity.getFForbidStatus().equals("C")) {
             status = 5;
         }
         //商品状态:1.自动创建;2.待开发;3.正常;4.清仓;5.停止销售
-        dmpSkuInfoEntity.setStatus(status);
+        biSkuInfoEntity.setStatus(status);
         //商品创建时间
-        dmpSkuInfoEntity.setSkuCreateTime(skuInfoEntity.getFCreateDate());
+        biSkuInfoEntity.setSkuCreateTime(skuInfoEntity.getFCreateDate());
         //商品修改时间
-        dmpSkuInfoEntity.setSkuUpdateTime(skuInfoEntity.getFModifyDate());
+        biSkuInfoEntity.setSkuUpdateTime(skuInfoEntity.getFModifyDate());
         //品牌
-        dmpSkuInfoEntity.setBrandName("");
+        biSkuInfoEntity.setBrandName("");
         //商品目录(一级)
         if (StringUtils.isNotBlank(skuInfoEntity.getF_PRVD_Assistant()) && !"null".equals(skuInfoEntity.getF_PRVD_Assistant())) {
-            dmpSkuInfoEntity.setParentCategoryName(skuInfoEntity.getF_PRVD_Assistant());
+            biSkuInfoEntity.setParentCategoryName(skuInfoEntity.getF_PRVD_Assistant());
         } else {
-            dmpSkuInfoEntity.setParentCategoryName("");
+            biSkuInfoEntity.setParentCategoryName("");
         }
         //商品目录(二级)
         if (StringUtils.isNotBlank(skuInfoEntity.getF_PRVD_Assistant1()) && !"null".equals(skuInfoEntity.getF_PRVD_Assistant1())) {
-            dmpSkuInfoEntity.setCategoryName(skuInfoEntity.getF_PRVD_Assistant1());
+            biSkuInfoEntity.setCategoryName(skuInfoEntity.getF_PRVD_Assistant1());
         } else {
-            dmpSkuInfoEntity.setCategoryName("");
+            biSkuInfoEntity.setCategoryName("");
         }
         //售价
-        dmpSkuInfoEntity.setSalePrice(new BigDecimal(skuInfoEntity.getFSalePrice_CMK()));
+        biSkuInfoEntity.setSalePrice(new BigDecimal(skuInfoEntity.getFSalePrice_CMK()));
         //申报价格
-        dmpSkuInfoEntity.setDeclarePrice(BigDecimal.ZERO);
+        biSkuInfoEntity.setDeclarePrice(BigDecimal.ZERO);
         //开发员id
-        dmpSkuInfoEntity.setDeveloperId("");
+        biSkuInfoEntity.setDeveloperId("");
         //开发员名称
-        dmpSkuInfoEntity.setDeveloperName("");
+        biSkuInfoEntity.setDeveloperName("");
         //平台标识
-        dmpSkuInfoEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
+        biSkuInfoEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
         //企业id
-        dmpSkuInfoEntity.setCompanyId(skuInfoEntity.getFUseOrgId());
+        biSkuInfoEntity.setCompanyId(skuInfoEntity.getFUseOrgId());
         //企业名称
-        dmpSkuInfoEntity.setCompanyName(skuInfoEntity.getFUseOrgName());
+        biSkuInfoEntity.setCompanyName(skuInfoEntity.getFUseOrgName());
         //上市时间
         if (!"null".equals(skuInfoEntity.getFSSRQ()) && StrUtil.isNotEmpty(skuInfoEntity.getFSSRQ())){
-            dmpSkuInfoEntity.setListingTime(LocalDateTime.parse(skuInfoEntity.getFSSRQ()));
+            biSkuInfoEntity.setListingTime(LocalDateTime.parse(skuInfoEntity.getFSSRQ()));
         }
         String itemProperty = "";
         switch (skuInfoEntity.getFErpClsID()) {
@@ -298,8 +299,8 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
                 break;
         }
         //物料属性
-        dmpSkuInfoEntity.setItemProperty(itemProperty);
-        dmpSkuInfoEntity.setCreateTime(LocalDateTime.now());
-        return  dmpSkuInfoEntity;
+        biSkuInfoEntity.setItemProperty(itemProperty);
+        biSkuInfoEntity.setCreateTime(LocalDateTime.now());
+        return biSkuInfoEntity;
     }
 }

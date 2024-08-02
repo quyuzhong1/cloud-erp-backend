@@ -207,10 +207,9 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
             newEntity.setMainId(mainEntity.getId());
             String address = StrUtil.concat(true, receiverEntity.getFirstAddress(), receiverEntity.getSecondAddress(), receiverEntity.getFullAddress());
             newEntity.setAddress(address);
-
-
             newEntity.setPerson(receiverEntity.getName());
             newEntity.setTelNumber(receiverEntity.getTelNumber());
+            newEntity.setEmail(receiverEntity.getEmail());
             newEntity.setIsDefault(true);
             newEntity.setDisabled(false);
             if (!save(newEntity)){
@@ -233,8 +232,9 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
             if (entity.getDisabled()){
                 entity.setIsDefault(false);
             }
-            entity.setEmail(receiverEntity.getEmail());
-            entity.setTelNumber(receiverEntity.getTelNumber());
+            if (StringUtils.isBlank(entity.getEmail())){
+                entity.setEmail(receiverEntity.getEmail());
+            }
             updateById(entity);
 //            if (!updateById(entity)){
 //                throw new ServiceException("[CustomerB2cAddressEntity] 更新失败");

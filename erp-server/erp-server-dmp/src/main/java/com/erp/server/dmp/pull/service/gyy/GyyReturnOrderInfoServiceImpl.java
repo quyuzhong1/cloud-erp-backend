@@ -22,8 +22,8 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.GyyRefundDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -32,6 +32,7 @@ import com.erp.model.dmp.gyy.bean.ReturnOrderDetailsBean;
 import com.erp.model.dmp.gyy.bean.ReturnOrderPayments;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +63,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
     private MongoService mongoService;
 
     @Resource
-    private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
+    private MQProducerService<BiReturnOrderInfoEntity> mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -97,7 +98,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
      * @param dto 任务信息
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<GyyReturnOrderEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -120,7 +121,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
             }
             GyyReturnOrderEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             entity.set_id(null);
@@ -137,7 +138,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
             return;
         }
         // 构造订单结构
-        List<DmpReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -170,9 +171,9 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(GyyReturnOrderEntity mongoDatum) {
-        DmpReturnOrderInfoEntity returnOrderInfo = initOrderInfoEntity(mongoDatum);
+        BiReturnOrderInfoEntity returnOrderInfo = initOrderInfoEntity(mongoDatum);
         GyyRefundDTO updateDto = new GyyRefundDTO(mongoDatum.get_id());
         if(null == returnOrderInfo){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -204,30 +205,30 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
     /**
      * 解析订单数据
      **/
-    private DmpReturnOrderInfoEntity initOrderInfoEntity(GyyReturnOrderEntity gyyReturnOrderEntity) {
+    private BiReturnOrderInfoEntity initOrderInfoEntity(GyyReturnOrderEntity gyyReturnOrderEntity) {
         if (assertOrgIsVijim(gyyReturnOrderEntity.getShopName())){
             return null;
         }
-        DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
+        BiReturnOrderInfoEntity biReturnOrderInfoEntity = new BiReturnOrderInfoEntity();
         //退货单号
-        dmpReturnOrderInfoEntity.setReturnCode(gyyReturnOrderEntity.getCode());
+        biReturnOrderInfoEntity.setReturnCode(gyyReturnOrderEntity.getCode());
         //平台订单编号
-        dmpReturnOrderInfoEntity.setPlatformOrderId(gyyReturnOrderEntity.getPlatformCode());
+        biReturnOrderInfoEntity.setPlatformOrderId(gyyReturnOrderEntity.getPlatformCode());
         // 平台退款单号
-        dmpReturnOrderInfoEntity.setPlatformReturnCode(gyyReturnOrderEntity.getPlatformRefundId());
+        biReturnOrderInfoEntity.setPlatformReturnCode(gyyReturnOrderEntity.getPlatformRefundId());
         // erp平台销售单号
-        dmpReturnOrderInfoEntity.setOrderCode(gyyReturnOrderEntity.getOrderCode());
+        biReturnOrderInfoEntity.setOrderCode(gyyReturnOrderEntity.getOrderCode());
         //店铺编号
-        dmpReturnOrderInfoEntity.setShopNo(gyyReturnOrderEntity.getShopCode());
+        biReturnOrderInfoEntity.setShopNo(gyyReturnOrderEntity.getShopCode());
         //店铺名称
-        dmpReturnOrderInfoEntity.setShopName(gyyReturnOrderEntity.getShopName());
+        biReturnOrderInfoEntity.setShopName(gyyReturnOrderEntity.getShopName());
         List<ReturnOrderPayments> payments = gyyReturnOrderEntity.getPayments();
         if (payments.size() > 0) {
             //付款时间
-            dmpReturnOrderInfoEntity.setPaidTime(payments.get(0).getPayTime());
+            biReturnOrderInfoEntity.setPaidTime(payments.get(0).getPayTime());
         }
         //发货时间
-        dmpReturnOrderInfoEntity.setExpressTime(null);
+        biReturnOrderInfoEntity.setExpressTime(null);
         //0:未处理 1:同意退货 2:拒绝退货
         Integer status = 4;
         if (gyyReturnOrderEntity.getAgreeRefuse() != null) {
@@ -246,53 +247,53 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
             }
         }
         //状态：1待处理 2已退款 3已重发 4已完成 5已作废
-        dmpReturnOrderInfoEntity.setStatus(status);
+        biReturnOrderInfoEntity.setStatus(status);
         //平台交易号
-        dmpReturnOrderInfoEntity.setSalesRecordNumber(gyyReturnOrderEntity.getPlatformCode());
+        biReturnOrderInfoEntity.setSalesRecordNumber(gyyReturnOrderEntity.getPlatformCode());
         List<ReturnOrderDetailsBean> details = gyyReturnOrderEntity.getDetails();
         BigDecimal amount = new BigDecimal(BigInteger.ZERO);
         for (ReturnOrderDetailsBean detail : details) {
             amount = amount.add(detail.getAmount());
         }
         //订单金额
-        dmpReturnOrderInfoEntity.setOrderFee(amount);
+        biReturnOrderInfoEntity.setOrderFee(amount);
         //订单重量
-        dmpReturnOrderInfoEntity.setOrderWeight(new BigDecimal(BigInteger.ZERO));
+        biReturnOrderInfoEntity.setOrderWeight(new BigDecimal(BigInteger.ZERO));
         //平台名称
-        dmpReturnOrderInfoEntity.setPlatformName("");
+        biReturnOrderInfoEntity.setPlatformName("");
         //国家英文名称
-        dmpReturnOrderInfoEntity.setCountryNameEn(CountrySiteEnum.CHINA.getCurrencyCode());
+        biReturnOrderInfoEntity.setCountryNameEn(CountrySiteEnum.CHINA.getCurrencyCode());
         //国家英文名称
-        dmpReturnOrderInfoEntity.setCountryNameCn(CountrySiteEnum.CHINA.getCurrencyName());
+        biReturnOrderInfoEntity.setCountryNameCn(CountrySiteEnum.CHINA.getCurrencyName());
         //买家账号
-        dmpReturnOrderInfoEntity.setBuyerUserId(gyyReturnOrderEntity.getVipCode());
+        biReturnOrderInfoEntity.setBuyerUserId(gyyReturnOrderEntity.getVipCode());
         //买家姓名
-        dmpReturnOrderInfoEntity.setBuyerName(gyyReturnOrderEntity.getReceiverName());
+        biReturnOrderInfoEntity.setBuyerName(gyyReturnOrderEntity.getReceiverName());
         //登记人编号
-        dmpReturnOrderInfoEntity.setEmployeeId("");
+        biReturnOrderInfoEntity.setEmployeeId("");
         //登记人名称
-        dmpReturnOrderInfoEntity.setEmployeeName(gyyReturnOrderEntity.getBusinessMan());
+        biReturnOrderInfoEntity.setEmployeeName(gyyReturnOrderEntity.getBusinessMan());
         //备注
-        dmpReturnOrderInfoEntity.setRemark(StrUtil.format("Note = {}_refundCodes =【{}】", gyyReturnOrderEntity.getNote(), JSONUtil.toJsonStr(gyyReturnOrderEntity.getRefundCodes())));
+        biReturnOrderInfoEntity.setRemark(StrUtil.format("Note = {}_refundCodes =【{}】", gyyReturnOrderEntity.getNote(), JSONUtil.toJsonStr(gyyReturnOrderEntity.getRefundCodes())));
         //退货信息创建时间
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         if (!"null".equalsIgnoreCase(gyyReturnOrderEntity.getCreateDate()) && StrUtil.isNotBlank(gyyReturnOrderEntity.getCreateDate())) {
-            dmpReturnOrderInfoEntity.setReturnCreateTime(LocalDateTime.parse(gyyReturnOrderEntity.getCreateDate(), sdf));
+            biReturnOrderInfoEntity.setReturnCreateTime(LocalDateTime.parse(gyyReturnOrderEntity.getCreateDate(), sdf));
         }
         //退款时间
         if (!"null".equalsIgnoreCase(gyyReturnOrderEntity.getApproveDate()) && StrUtil.isNotBlank(gyyReturnOrderEntity.getApproveDate())) {
-            dmpReturnOrderInfoEntity.setRefundTime(LocalDateTime.parse(gyyReturnOrderEntity.getApproveDate(), sdf));
+            biReturnOrderInfoEntity.setRefundTime(LocalDateTime.parse(gyyReturnOrderEntity.getApproveDate(), sdf));
         }
         //币种
-        dmpReturnOrderInfoEntity.setCurrencyCode("CNY");
+        biReturnOrderInfoEntity.setCurrencyCode("CNY");
         //汇率
-        dmpReturnOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
+        biReturnOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
         //平台标识
-        dmpReturnOrderInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
-        dmpReturnOrderInfoEntity.setIsDeleted(Boolean.FALSE);
-        dmpReturnOrderInfoEntity.setCreateTime(LocalDateTime.now());
-        dmpReturnOrderInfoEntity.setItemList(initOrderItem(gyyReturnOrderEntity));
-        return dmpReturnOrderInfoEntity;
+        biReturnOrderInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
+        biReturnOrderInfoEntity.setIsDeleted(Boolean.FALSE);
+        biReturnOrderInfoEntity.setCreateTime(LocalDateTime.now());
+        biReturnOrderInfoEntity.setItemList(initOrderItem(gyyReturnOrderEntity));
+        return biReturnOrderInfoEntity;
     }
 
     /**
@@ -302,36 +303,36 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    private List<DmpReturnOrderItemEntity> initOrderItem(GyyReturnOrderEntity gyyReturnOrderEntity) {
-        List<DmpReturnOrderItemEntity> orderItemList = new ArrayList<>();
+    private List<BiReturnOrderItemEntity> initOrderItem(GyyReturnOrderEntity gyyReturnOrderEntity) {
+        List<BiReturnOrderItemEntity> orderItemList = new ArrayList<>();
         Map<String, Integer> skuCountMap = new HashMap<>();
         gyyReturnOrderEntity.getDetails().stream().forEach(orderItemBean -> {
-            DmpReturnOrderItemEntity dmpReturnOrderItemEntity = new DmpReturnOrderItemEntity();
+            BiReturnOrderItemEntity biReturnOrderItemEntity = new BiReturnOrderItemEntity();
             //sku编号
             String skuNo = orderItemBean.getItemCode();
-            dmpReturnOrderItemEntity.setSkuNo(skuNo);
+            biReturnOrderItemEntity.setSkuNo(skuNo);
             //商品名称
-            dmpReturnOrderItemEntity.setItemName(orderItemBean.getItemName());
+            biReturnOrderItemEntity.setItemName(orderItemBean.getItemName());
             //买家购买数量
-            dmpReturnOrderItemEntity.setQuantity(orderItemBean.getQty());
+            biReturnOrderItemEntity.setQuantity(orderItemBean.getQty());
             //商品单位
-            dmpReturnOrderItemEntity.setProductUnit("");
+            biReturnOrderItemEntity.setProductUnit("");
             //商品图片地址
-            dmpReturnOrderItemEntity.setPictureUrl("");
+            biReturnOrderItemEntity.setPictureUrl("");
             //售价
-            dmpReturnOrderItemEntity.setSellPrice(orderItemBean.getTotalCostPrice());
+            biReturnOrderItemEntity.setSellPrice(orderItemBean.getTotalCostPrice());
             //物品属性
-            dmpReturnOrderItemEntity.setSpecifics("");
+            biReturnOrderItemEntity.setSpecifics("");
             //状态 1待处理 2验货入库 3自然耗损
-            dmpReturnOrderItemEntity.setStatus(0);
+            biReturnOrderItemEntity.setStatus(0);
             //erp平台商品id
             String erpOrderItemId = gyyReturnOrderEntity.getCode() + "_" + gyyReturnOrderEntity.getPlatformCode() + "_" + skuNo;
             erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
-            dmpReturnOrderItemEntity.setErpOrderItemId(erpOrderItemId);
-            dmpReturnOrderItemEntity.setIsDeleted(Boolean.FALSE);
+            biReturnOrderItemEntity.setErpOrderItemId(erpOrderItemId);
+            biReturnOrderItemEntity.setIsDeleted(Boolean.FALSE);
             //折扣后金额
-            dmpReturnOrderItemEntity.setAmountAfter(new BigDecimal(orderItemBean.getAmountAfter()));
-            orderItemList.add(dmpReturnOrderItemEntity);
+            biReturnOrderItemEntity.setAmountAfter(new BigDecimal(orderItemBean.getAmountAfter()));
+            orderItemList.add(biReturnOrderItemEntity);
         });
        return orderItemList;
     }

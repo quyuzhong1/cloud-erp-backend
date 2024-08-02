@@ -32,6 +32,7 @@
        <result column="is_ioss_prepay" property="isIossPrepay" />
        <result column="is_api_sign" property="isApiSign" />
        <result column="is_api_insurance" property="isApiInsurance" />
+       <result column="delivery_type" property="deliveryType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -45,7 +46,10 @@
         update_time,
         version,
         is_deleted,
-        main_id, name, code, effective_time, effective_time_unit, track_query_mode, paper_length, paper_width, sorting_code, shipping_template_id, fee_rule, max_customs_amount, max_customs_currency, min_customs_amount, min_customs_currency, max_weight, weight_unit, tax_model, is_ioss_prepay, is_api_sign, is_api_insurance
+        main_id, name, code, effective_time, effective_time_unit, track_query_mode, paper_length, paper_width, sorting_code, fee_rule,
+        max_customs_amount, max_customs_currency, min_customs_amount, min_customs_currency, max_weight, weight_unit, tax_model,
+        is_ioss_prepay, is_api_sign, is_api_insurance,disabled,paper_size,source_id,source_type,sync_source_id,max_length,size_unit,
+        max_width,max_height,declare_code_type,delivery_type
     </sql>
 
     <select id="listLogisticsChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ListSelectDTO">
@@ -145,6 +149,56 @@
                 #{item}
             </foreach>
         </if>
+    </select>
+    <select id="listByMainIdsAndName" resultType="com.erp.model.tms.entity.LogisticsChannelEntity">
+        select
+            <include refid="Base_Column_List"/>
+        from  logistics_channel lc
+        where
+        lc.is_deleted = false
+        <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+            and ${params.sqlMap.detail}
+        </if>
+        <if test="mainIdList != null and mainIdList.size > 0">
+            and lc.main_id in
+            <foreach collection="mainIdList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        order by  lc.disabled asc,lc.create_time desc
+    </select>
+    <select id="pagingSelect" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$PagingSelectDTO">
+        select id,name as value,code,disabled,logisticsSupplierId,logisticsSupplierName
+        from
+        (
+        select
+        lc.id,
+        lc.name,
+        lc.code,
+        lc.disabled,
+        ls.id as logisticsSupplierId,
+        ls.short_name as logisticsSupplierName
+        from logistics_channel lc
+        left join logistics_supplier ls on ls.id = lc.main_id and ls.is_deleted = false
+        where
+        lc.is_deleted = false
+          and ls.id is not null
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((lc.code = #{params.searchKeyword}) or (lc.id = #{params.searchKeyword})  or lc.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.disabled != null">
+            and lc.disabled=#{params.disabled}
+        </if>
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when lc.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when lc.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when lc.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , lc.name,
+        </if>
+        lc.disabled asc,code asc
+        ) wls
+
     </select>
 
 

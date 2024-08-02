@@ -307,7 +307,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
         //产品信息
         List<String> skuIds = sourceDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
@@ -383,7 +383,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             throw new ServiceException(ApiError.ERROR_95163);
         }
         //产品信息
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(allSkuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(allSkuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
@@ -463,7 +463,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(detailEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 detailEntity.setSupplierName(supplierName);
             }
-            handleSupplierTaxPrice(detailEntity,Boolean.FALSE);
+            handleSupplierTaxPrice(detailEntity,Boolean.FALSE,subcontractOrderEntity.getSubcontractOrgId());
             //子集SKU信息
             List<SubcontractOrderDetailEntity>   childList = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailEntity.getChildList());
             for (SubcontractOrderDetailEntity childEntity : childList) {
@@ -492,7 +492,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                     String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                     childEntity.setSupplierName(supplierName);
                 }
-                handleSupplierTaxPrice(childEntity,Boolean.TRUE);
+                handleSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getSubcontractOrgId());
             }
             resultList.add(detailEntity);
             resultList.addAll(childList);
@@ -556,7 +556,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
      * @param entity
      * @param isChild
      */
-    private void handleSupplierTaxPrice(SubcontractOrderDetailEntity entity,Boolean isChild) {
+    private void handleSupplierTaxPrice(SubcontractOrderDetailEntity entity,Boolean isChild,String purchaseOrgId) {
         //供应商为空
         if (StringUtils.isBlank(entity.getSupplierId())) {
             return;
@@ -571,11 +571,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             return;
         }
         //供应商报价信息
-        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-        searchDTO.setSkuId(entity.getSkuId());
-        searchDTO.setSupplierId(entity.getSupplierId());
-        searchDTO.setPurchaseQty(entity.getQty());
-        searchDTO.setSkuNo(entity.getSkuNo());
+        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(entity.getQty(),entity.getSkuId(),entity.getSkuNo(),entity.getSupplierId(),purchaseOrgId);
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
         PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
         entity.setCurrency(viewDTO.getCurrency());

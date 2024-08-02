@@ -103,7 +103,11 @@ public class CfgAmzReportTypeEntity extends BaseEntity<CfgAmzReportTypeEntity> {
      */
     @TableField(value = "country_list", typeHandler = JacksonTypeHandler.class)
     private List<String> countryList;
-
+    /**
+     * 解析的此报告类型每次保存的行数
+     */
+    @TableField("parse_row_count")
+    private Integer parseRowCount;
 
     public static final String REPORT_TYPE = "report_type";
 

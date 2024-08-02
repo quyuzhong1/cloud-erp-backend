@@ -1,8 +1,12 @@
 package com.erp.server.tms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -61,4 +65,13 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     List<LogisticsChannelDTO.LogisticsPlatformDTO> listChannelPlatform(@Param("channelIdList")List<String> channelIdList);
 
     List<LogisticsChannelDTO.ProvideChannelDTO> getProvideChannel(@Param("channelCodeList") List<String> channelCodeList, @Param("provideNameList")List<String> provideNameList);
+
+    /**
+     * 根据归属进行模糊匹配
+     * @param mainIdList
+     * @param params
+     * @return
+     */
+    List<LogisticsChannelEntity> listByMainIdsAndName(@Param("mainIdList") List<String> mainIdList,@Param("params") LogisticsSupplierDTO.PagingParamDTO params);
+    IPage<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(Page query, @Param("params") LogisticsChannelDTO.SelectDTO params);
 }

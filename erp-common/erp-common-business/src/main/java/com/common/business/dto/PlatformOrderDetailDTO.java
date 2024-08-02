@@ -101,9 +101,17 @@ public class PlatformOrderDetailDTO {
      */
     private String platformLineNumber;
     /**
+     * 平台包裹号
+     */
+    private String platformPackageId;
+    /**
      *来源平台
      */
     private String sourcePlatform = "thirdPlatform";
+    /**
+     * 明细是否退款
+     */
+    private Boolean isDetailRefund = false;
 
 
 }

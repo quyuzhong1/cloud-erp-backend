@@ -32,15 +32,17 @@ public class WeiShiLogisticsHandlerImplTest {
 
     public WeiShiLogisticsHandlerImplTest(){
         //测试环境账号
-        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
-        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
+//        authMap.put("url","http://218.17.123.141:18080/toms/service");
+//        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
+//        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
         //正式环境账号
-//        authMap.put("clientId","d7d0bfc63ecd2fc453092e64a373292d");
-//        authMap.put("clientSecret","d7d0bfc63ecd2fc453092e64a373292d6b14e5ecef56ee35aeffee5cd96930a8");
+        authMap.put("url","http://track.360lion.com/api/service");
+        authMap.put("clientId","f8067aa0dc9ab7e927e03dfbce54ff4d");
+        authMap.put("clientSecret","f8067aa0dc9ab7e927e03dfbce54ff4d7b6fc31d87f0c7e913c112f8b33423ce");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = weiShiLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = weiShiLogisticsHandler.getLogisticsAuthConfigByShopId("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
@@ -121,12 +123,12 @@ public class WeiShiLogisticsHandlerImplTest {
     @Test
     public void getLabelUrl() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-        logisticsQueryVO.setDeliveryNo("wj12345167721");
+        logisticsQueryVO.setDeliveryNo("XSDD24071804969");
         logisticsQueryVO.setAuthMap(authMap);
-        LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("wj12345167720");
-        logisticsQueryVO2.setAuthMap(authMap);
-        ApiResult<List<LogisticsPrintLabelResponse>> result = weiShiLogisticsHandler.getLabelList(Arrays.asList(logisticsQueryVO,logisticsQueryVO2));
+//        LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
+//        logisticsQueryVO2.setDeliveryNo("wj12345167720");
+//        logisticsQueryVO2.setAuthMap(authMap);
+        ApiResult<List<LogisticsPrintLabelResponse>> result = weiShiLogisticsHandler.getLabelList(Arrays.asList(logisticsQueryVO));
         System.out.println(result);
     }
 

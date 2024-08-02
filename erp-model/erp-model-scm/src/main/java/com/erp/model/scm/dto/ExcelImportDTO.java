@@ -43,6 +43,11 @@ public class ExcelImportDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
     }
 
     @Data
@@ -54,6 +59,12 @@ public class ExcelImportDTO implements Serializable {
          */
         @NotBlank(message = "供应商不能为空")
         private String supplierId;
+
+        /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
     }
 
 

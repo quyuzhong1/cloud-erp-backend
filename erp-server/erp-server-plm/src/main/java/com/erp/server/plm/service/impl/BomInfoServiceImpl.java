@@ -15,12 +15,14 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -39,6 +41,7 @@ import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.workflow.dto.BusinessTableDTO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -54,6 +57,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -111,6 +116,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Resource
     private WmsTaskFeign wmsTaskFeign;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private ProductLogisticsService productLogisticsService;
+
     /**
      * 添加bom
      *
@@ -159,6 +170,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //添加 bom的操作日志
             String operateContent = String.format(BomOperateContent.ADD, serialNumber);
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.ADD.getType(), operateContent);
+            //更新父sku物流属性
+            List<String> parentSkuIds = bomSkuList.stream().map(BomSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+            productLogisticsService.saveOrUpdateParentPropertyId(parentSkuIds);
         }
         return bomId;
     }
@@ -319,7 +333,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     //TODO 2020330暂时取消审核流程，只修改状态
     /*public void startBomProcess(String bomId, List<BomSkuDTO> skuList) {
         FindProcessDTO findProcess = new FindProcessDTO();
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         String businessType = WorkflowBusinessEnum.BOM_AUDIT.getBusinessType();
         String platform = WorkflowBusinessEnum.BOM_AUDIT.getPlatform();
         findProcess.setBusinessType(businessType);
@@ -439,7 +453,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<Integer> stateList = new ArrayList<>();
         //待审核
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
-          /*  String userId = commonService.getUserInfo().getUid();
+          /*  String userId = UserContext.getDefaultLoginUser().getUid();
             //获取我的待办信息
             //TODO 2020330暂时取消审核流程，只修改状态
             List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
@@ -537,6 +551,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             if (StringUtils.isNotBlank(operateContent)) {
                 bomOperateLogService.saveOperate(id, BomOperationTypeEnum.UPDATE.getType(), operateContent);
             }
+            //更新父sku物流属性
+            List<String> parentSkuIds = bomSkuList.stream().map(BomSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+            productLogisticsService.saveOrUpdateParentPropertyId(parentSkuIds);
         }
         return result;
     }
@@ -654,9 +671,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (ObjectUtils.isEmpty(bomInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
-        List<BomSkuDTO> bomList = bomSkuService.getByBomId(bomInfoEntity.getId());
-        //更新金蝶
-        syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
+
         boolean flag = this.removeById(bomId);
         if (flag) {
             bomSkuService.deleteByBomId(bomId);
@@ -664,6 +679,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = BomOperateContent.DELETE;
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.DELETE.getType(), operateContent);
         }
+        //发送金蝶
+        sendPushTask(Arrays.asList(bomInfoEntity),SyncOperateEnum.OPERATE_DELETE.getCode());
         return flag;
     }
 
@@ -894,8 +911,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (result) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_PASS.getName(), BomStateEnum.WAIT_SUBMIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
-            //bom反审核
-            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+
+            //发送金蝶
+            sendPushTask(Arrays.asList(bom),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return result;
     }
@@ -1009,7 +1027,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //待审核
         List<String> bomIdList = new ArrayList<>();
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
-            String userId = commonService.getUserInfo().getUid();
+            String userId = UserContext.getDefaultLoginUser().getUid();
             //获取我的待办信息
             //TODO 2020330暂时取消审核流程，只修改状态
 /*            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
@@ -1087,7 +1105,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Boolean result = this.updateById(bom);
 
         //TODO 2020330暂时取消审核流程，只修改状态
-/*        String userId = commonService.getUserInfo().getUid();
+/*        String userId = UserContext.getDefaultLoginUser().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(bom.getId());
         tableDTO.setUserId(userId);
@@ -1115,9 +1133,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //保存bom 审核通过的的历史数据
             productBomHistoryService.saveBomApprovalHistory(bom);
         }
-//        }
-        // 发送到金蝶
-        syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+        //发送金蝶
+        sendPushTask(Arrays.asList(bom),SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
 
 
@@ -1143,8 +1161,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(), BomStateEnum.AUDIT_PASS.getName());
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
-            // 发送到金蝶
-            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            //发送金蝶
+            sendPushTask(Arrays.asList(bom),SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
     }
 
@@ -1178,8 +1197,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
                 String operateContent = getUpdateContent(oldBomList, bomSkuList);
                 bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.UPDATE.getType(), operateContent);
-                //再次发送到金蝶
-                syncKingdeeBomInfoService.syncDataToKingdee(bomEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+                //发送金蝶
+                sendPushTask(Arrays.asList(bomEntity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
     }
@@ -1222,7 +1242,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         bom.setState(BomStateEnum.AUDIT_NO_PASS.getState());
         bom.setRemark(dto.getComment());
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(bom.getId());
         tableDTO.setUserId(userId);
@@ -1530,5 +1550,27 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         parentDTO.setChildren(childSkuList);
         parentSkuList.add(parentDTO);
         return parentSkuList;
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<BomInfoEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            List<DmpPushTaskEntity> pushTaskEntityList = syncKingdeeBomInfoService.syncDataToKingdee(obj, operate);
+            resultList.addAll(pushTaskEntityList);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 }

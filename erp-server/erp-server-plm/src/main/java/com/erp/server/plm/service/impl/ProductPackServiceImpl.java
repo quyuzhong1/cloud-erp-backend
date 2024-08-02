@@ -76,6 +76,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     public Boolean saveOrUpdate(ProductPackDTO productPackDTO) {
         ProductPackEntity packEntity = new ProductPackEntity();
         BeanMapper.copy(productPackDTO, packEntity);
+        packEntity.handleData();
         return this.saveOrUpdate(packEntity);
     }
 
@@ -89,6 +90,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     @Override
     public Boolean saveOrUpdateBatch(List<ProductPackDTO> productPackList) {
         List<ProductPackEntity> list = BeanMapper.copyList(productPackList, ProductPackEntity.class);
+        list.forEach(ProductPackEntity::handleData);
         return this.saveOrUpdateBatch(list);
     }
 
@@ -131,7 +133,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
         List<ProductPackEntity> list = this.lambdaQuery().in(ProductPackEntity::getSkuId, skuIds).list();
         //产品详情信息
-        List<SkuVO> productDetailList = productDetailService.getSkuInfoBySkuIds(skuIds);
+        List<SkuVO> productDetailList = productDetailService.listSkuPackByIds(skuIds);
 
         List<ProductVO.ProductPackVO> resultList = new ArrayList<>(list.size());
         for (ProductPackEntity item : list) {
@@ -220,16 +222,16 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
      */
     private void updateProductPackPackaging (ProductPackDTO productPackDTO) {
         lambdaUpdate()
-                .eq(ProductPackEntity::getSkuId,productPackDTO.getSkuId())
-                .set(ProductPackEntity::getProductLength,productPackDTO.getProductLength())
-                .set(ProductPackEntity::getProductWidth,productPackDTO.getProductWidth())
-                .set(ProductPackEntity::getProductHeight,productPackDTO.getProductHeight())
-                .set(ProductPackEntity::getBoxLength,productPackDTO.getBoxLength())
-                .set(ProductPackEntity::getBoxWidth,productPackDTO.getBoxWidth())
-                .set(ProductPackEntity::getBoxHeight,productPackDTO.getBoxHeight())
-                .set(ProductPackEntity::getBoxQty,productPackDTO.getBoxQty())
-                .set(ProductPackEntity::getBoxWeight,productPackDTO.getBoxWeight())
-                .set(ProductPackEntity::getNetWeight,productPackDTO.getNetWeight())
+		        .eq(ProductPackEntity::getSkuId,productPackDTO.getSkuId())
+		        .set(productPackDTO.getProductLength() != null , ProductPackEntity::getProductLength,productPackDTO.getProductLength())
+		        .set(productPackDTO.getProductWidth() != null , ProductPackEntity::getProductWidth,productPackDTO.getProductWidth())
+		        .set(productPackDTO.getProductHeight() != null , ProductPackEntity::getProductHeight,productPackDTO.getProductHeight())
+		        .set(productPackDTO.getBoxLength() != null , ProductPackEntity::getBoxLength,productPackDTO.getBoxLength())
+		        .set(productPackDTO.getBoxWidth() != null , ProductPackEntity::getBoxWidth,productPackDTO.getBoxWidth())
+		        .set(productPackDTO.getBoxHeight() != null , ProductPackEntity::getBoxHeight,productPackDTO.getBoxHeight())
+		        .set(productPackDTO.getBoxQty() != null , ProductPackEntity::getBoxQty,productPackDTO.getBoxQty())
+		        .set(productPackDTO.getBoxWeight() != null , ProductPackEntity::getBoxWeight,productPackDTO.getBoxWeight())
+		        .set(productPackDTO.getNetWeight() != null , ProductPackEntity::getNetWeight,productPackDTO.getNetWeight())
                 .update();
     }
 }

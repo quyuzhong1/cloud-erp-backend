@@ -13,14 +13,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.*;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.UserTypeEnum;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.RedisService;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -31,6 +32,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.dto.email.EmailDTO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.common.message.service.MailService;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysRoleUserEntity;
@@ -43,6 +45,7 @@ import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.rpc.auth.feign.AuthFeign;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.sdk.fs.service.FsService;
@@ -63,6 +66,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -110,14 +115,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     private SysDepartmentMapper sysDepartmentMapper;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private ShopSysUserAuthFeign shopSysUserAuthFeign;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     //123456
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
@@ -176,10 +180,19 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
             }
             //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+                }
+            });
         }
     }
     @Override
+
+
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public String addSrmUser(SysUserInfoDTO sysUserInfoDTO) {
@@ -256,7 +269,14 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (updateResult) {
             sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, false);
             //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //推送金蝶
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+                }
+            });
         }
         //更新plm任务列表任务负责人名称
         if (!StrUtil.equals(sysUserInfoDTO.getUserName(),userName)) {
@@ -314,7 +334,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         BeanMapperUtils.copy(entity, vo);
         vo.setIsSupper(entity.getIsSuper());
         //判断是否是超级管理员登录
-        SysUserDTO sysUserDTO = adminLogin(vo);
+        SysUserDTO sysUserDTO = adminLogin(vo,dto.getUserType());
         if (sysUserDTO != null) {
             return sysUserDTO;
         }
@@ -322,9 +342,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //后面还有编写 1580852739573813249
         String uid = entity.getUid();
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
-        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
-        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds,MathUtil.ONE);
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
+        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds,dto.getUserType());
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds,MathUtil.ONE,dto.getUserType());
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE,dto.getUserType());
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(overallMenuList);
         vo.setLeftMenuList(leftMenuList);
@@ -344,9 +364,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (!vo.getUserAccount().equals(SysConstant.ADMIN_USER)) {
             return null;
         }
-        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
-        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll();
-        List<String> permissionList = sysRoleMenuService.findMenuCodeAll();
+        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll(vo.getUserType());
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll(vo.getUserType());
+        List<String> permissionList = sysRoleMenuService.findMenuCodeAll(vo.getUserType());
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(menuAll);
         vo.setLeftMenuList(leftMenuList);
@@ -355,13 +375,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return vo;
     }
 
-    public SysUserDTO adminLogin(SysUserDTO vo) {
+    public SysUserDTO adminLogin(SysUserDTO vo,String userType) {
         if (!vo.getUserAccount().equals(SysConstant.ADMIN_USER)) {
             return null;
         }
-        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
-        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll(MathUtil.ONE);
-        List<String> permissionList = sysRoleMenuService.findMenuCodeAll();
+        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll(userType);
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll(MathUtil.ONE, userType);
+        List<String> permissionList = sysRoleMenuService.findMenuCodeAll(userType);
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(menuAll);
         vo.setLeftMenuList(leftMenuList);
@@ -453,7 +473,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         //当不为空的时候
         if (StringUtils.isNotBlank(flagId)) {
-            LoginUser loginUser = CommonInterceptor.threadLocal.get();
+            LoginUser loginUser = UserContext.getLoginUser();
             String uid = loginUser.getUid();
             boolean ifBinding = sysUserThirdService.checkIfBinding(uid, flagId, bindingPlatform);
             if (ifBinding) {
@@ -491,10 +511,19 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (SysUserInfoEntity entity : list) {
             String operate = MathUtil.ZERO.equals(stateDTO.getState()) ? SyncOperateEnum.OPERATE_DISABLE.getCode() : SyncOperateEnum.OPERATE_ENABLE.getCode();
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, operate);
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(entity, operate);
+            resultList.add(pushTaskEntity);
         }
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -514,6 +543,30 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     public List<SysUserInfoEntity> listErpUser() {
         return this.lambdaQuery().eq(SysUserInfoEntity::getUserType, UserTypeEnum.ERP.getCode()).list();
+    }
+
+    /**
+     * 远程搜索
+     *
+     * @param dto
+     * @return ApiResult
+     */
+    @Override
+    public PagingVO<UserSelectDto.PageSelectDTO> pagingSelect(PagingDTO<UserSelectDto.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<UserSelectDto.PageSelectDTO> pageData = this.baseMapper.pagingSelect(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        Integer notState = SysConstant.NO_STATE;
+        LoginUser loginUser = UserContext.getLoginUser();
+
+        pageData.getRecords().forEach(item -> {
+            Integer userState = item.getUserState();
+            item.setDisabled(notState.equals(userState));
+            item.setIsMyState(Objects.nonNull(loginUser) && Objects.equals(loginUser.getUid(), item.getUserId()) ? 1 : 0);
+        });
+        return new PagingVO<>(pageData);
     }
 
     /**
@@ -541,7 +594,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             throw new ServiceException(ApiError.ERROR_1001);
         }
 
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String uid = loginUser.getUid();
         SysUserInfoEntity infoEntity = this.getById(uid);
         if (!Objects.isNull(infoEntity)) {
@@ -558,7 +611,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             this.updateById(infoEntity);
             //退出登录 清除token
             sysAuthFeign.logout(loginUser.getAccessToken());
-            CommonInterceptor.threadLocal.remove();
+            UserContext.clear();
 
         }
 
@@ -611,9 +664,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String uid = userEntity.getUid();
 
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
-        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
-        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds,MathUtil.ONE);
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
+        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds,userEntity.getUserType());
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds,MathUtil.ONE,userEntity.getUserType());
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE,userEntity.getUserType());
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(overallMenuList);
         vo.setLeftMenuList(leftMenuList);
@@ -633,7 +686,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public UserBaseDTO myCenter() {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         UserBaseDTO vo = new UserBaseDTO();
         SysUserThirdEntity sysUserThirdEntity = sysUserThirdService.findByUserId(loginUser.getUid());
         SysUserInfoEntity entity = this.getById(loginUser.getUid());
@@ -658,7 +711,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public void updateBase(SysUserBaseDTO dto) {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         SysUserInfoEntity entity = this.getById(loginUser.getUid());
         if (!Objects.isNull(entity)) {
             entity.setRealName(dto.getRealName());
@@ -686,7 +739,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         checkEmailIfExist(email);
         //检查 验证码是否i正确
         checkMobileCode(dto.getEmail(), dto.getVerifyCode());
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (!Objects.isNull(loginUser)) {
             SysUserInfoEntity entity = this.getById(loginUser.getUid());
             entity.setEmail(email);
@@ -747,7 +800,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
     @Override
     public void removeEmail() {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (!Objects.isNull(loginUser)) {
             SysUserInfoEntity entity = this.getById(loginUser.getUid());
             entity.setEmail("");
@@ -767,7 +820,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public List<FindUserDTO> getUserList(BaseSearchDTO dto) {
         List<FindUserDTO> resultList = new LinkedList<>();
         //先添加自己
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         Boolean flag = !Objects.isNull(loginUser);
         if (flag) {
             FindUserDTO user = new FindUserDTO();
@@ -778,7 +831,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             resultList.add(user);
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName);
+        queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName,SysUserInfoEntity::getUserState);
         queryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         queryWrapper.eq(SysUserInfoEntity::getUserType, UserTypeEnum.ERP.getCode());
         if (flag) {
@@ -865,9 +918,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     public SysUserInfoEntity findByAccount(String account, String userType) {
+        //暂时将pda账号重置为erp pda和erp共用用户体系
+        if (UserTypeEnum.PDA.code.equals(userType)){
+            userType = UserTypeEnum.ERP.code;
+        }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUserAccount, account)
-                .eq(SysUserInfoEntity::getUserType, userType)
+                .eq(StringUtils.isNotBlank(userType), SysUserInfoEntity::getUserType, userType)
                 .eq(SysUserInfoEntity::getDeleteState, 1);
         queryWrapper.last("LIMIT 1");
         SysUserInfoEntity entity = this.getOne(queryWrapper);
@@ -1139,9 +1196,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //后面还有编写 1580852739573813249
         String uid = entity.getUid();
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
-        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
-        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
+        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds, entity.getUserType());
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds, entity.getUserType());
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE,entity.getUserType());
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(overallMenuList);
         vo.setLeftMenuList(leftMenuList);
@@ -1175,7 +1232,18 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         this.removeByIds(uids);
         //同步金蝶员工数据
-        list.forEach(obj -> syncKingdeeSysUserInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        List<DmpPushTaskEntity> restList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode());
+            restList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(restList);
+            }
+        });
     }
 
     /**
@@ -1255,6 +1323,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .set(SysUserInfoEntity::getNeedChangePwd, Boolean.TRUE)
                 .eq(SysUserInfoEntity::getUid, uid).update();
         redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
+        String loginErrorKey = StrUtil.format(RedisCacheConstants.LOGIN_ERROR_KEY, userInfoEntity.getUserType(), userInfoEntity.getUserAccount());
+        redisService.deleteObject(loginErrorKey);
         return flag;
     }
 
@@ -1296,6 +1366,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .eq(SysUserInfoEntity::getUid, sysUserInfoEntity.getUid()).update();
 
         redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + sysUserInfoEntity.getUid());
+        String loginErrorKey = StrUtil.format(RedisCacheConstants.LOGIN_ERROR_KEY, forgotPasswordDTO.getUserType(), forgotPasswordDTO.getUserAccount());
+        redisService.deleteObject(loginErrorKey);
         return flag;
     }
 
@@ -1374,7 +1446,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
         List<FindUserDTO> resultList = new LinkedList<>();
         //先添加自己
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         Boolean flag = !Objects.isNull(loginUser);
         if (flag) {
             FindUserDTO user = new FindUserDTO();
@@ -1413,7 +1485,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
     @Override
     public Boolean uploadHeadPhoto(MultipartFile headPhotoFile) {
-        String userId = commonService.getUserInfo().getUid();
+        String userId = UserContext.getDefaultLoginUser().getUid();
         SysUserInfoEntity userInfo = this.getById(userId);
         if (Objects.isNull(userInfo)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
@@ -1512,6 +1584,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     public List<SysUserInfoEntity> listUserByDept(String deptName) {
         List<SysDepartmentTreeDTO> treeList = baseMapper.listSonDeptAll(deptName);
+        if (CollectionUtils.isEmpty(treeList)){
+            return Collections.emptyList();
+        }
         List<String> deptIds = treeList.stream().map(SysDepartmentTreeDTO::getId).distinct().collect(Collectors.toList());
         return baseMapper.listUserByDept(deptIds);
     }

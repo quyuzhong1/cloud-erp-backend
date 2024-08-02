@@ -13,6 +13,7 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.*;
@@ -33,7 +34,10 @@ import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.SoReturnInstockDetailService;
+import com.erp.server.wms.service.SoReturnReceiveDetailService;
+import com.erp.server.wms.service.SoReturnReceiveService;
+import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +93,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(SoReturnInstockEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(SoReturnInstockEntity entity, String operate) {
 
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
@@ -102,8 +106,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
@@ -140,7 +143,6 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soId));
         }
         List<String> warehouseIds = returnInstockDetailEntities.stream().map(SoReturnInstockDetailEntity::getWarehouseId).collect(Collectors.toList());
-        warehouseIds.add(entity.getWarehouseId());
         //仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
         List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
@@ -270,7 +272,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             map.put("salesOrgCode", resultMap.get("salesOrgCode"));
             //仓库
             if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String warehouseId = StringUtils.isBlank(detailEntity.getWarehouseId())?entity.getWarehouseId():detailEntity.getWarehouseId();
+                String warehouseId = detailEntity.getWarehouseId();
                 String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(warehouseId)).map(WarehouseDTO.UpdateDTO::getKingdeeWarehouseCode).findFirst().orElse("");
                 //仓库
                 map.put("warehouseCode", warehouseCode);
@@ -312,7 +314,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         resultMap.put("FEntityList", list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     private String getSoDetailid(SoReturnInstockEntity entity,  List<SoReturnDetailEntity> returnDetailEntitys, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList, SoReturnInstockDetailEntity detailEntity, String soDetailId) {
@@ -343,7 +345,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (SoReturnInstockEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (SoReturnInstockEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -356,6 +358,6 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
         dmpSyncTaskDTO.setParentId(entity.getSoId());
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

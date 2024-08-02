@@ -1,10 +1,8 @@
 package com.erp.rpc.sys.feign;
 
 import com.erp.model.sys.dto.DictBasicDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.ImlDictCityEntity;
+import com.erp.model.sys.dto.DictKingdeeDTO;
+import com.erp.model.sys.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,6 +46,14 @@ public interface SysDictFeign {
     @PostMapping("feign/dictCountry/listCountryByNames")
     List<DictCountryEntity> listCountryByNames(@RequestBody List<String> names);
 
+    /**
+     * 根据组织编码获取国家组织关系列表
+     * @param orgCode
+     * @return
+     */
+    @PostMapping("feign/dictCountry/listCountryOrgByOrgCode")
+    List<DictCountryOrgEntity> listCountryOrgByOrgCode(@RequestBody String orgCode);
+
 
     /**
      * 根据地区id 集合 获取到地区列表
@@ -73,4 +79,11 @@ public interface SysDictFeign {
      */
     @PostMapping("/feign/city/listImlCityByDictIdList")
     List<ImlDictCityEntity> listImlCityByDictIdList(List<String> dictIds);
+
+
+    @GetMapping("/feign/dict/kingdee/getByCode")
+    DictKingdeeDTO.ListDTO getByCode(@RequestParam(value = "typeName") String typeName, @RequestParam(value = "code") String code);
+
+    @GetMapping("/feign/dict/kingdee/listByTypeName")
+    List<DictKingdeeDTO.ListDTO> listByTypeName(@RequestParam(value = "typeName")String typeName);
 }

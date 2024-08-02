@@ -15,7 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.server.tms.query.TmsB2BDeclareQueryHandler;
 import com.erp.server.tms.service.TmsDeclareBillService;
@@ -137,7 +137,7 @@ public class TmsB2BDeclareBillController extends BaseController {
     @GetMapping("/getCanGenerateSoOut")
     public ApiResult<List<TmsDeclareBillDTO.SoOutDTO>> getCanGenerateSoOut() {
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
-                .packingStatus(PackingStatusEnum.PACKING.getCode())
+                .packingStatus(PackingTaskStatusEnum.PACKED.getCode())
                 .declareStatus(WmsDeclareStatusEnum.WAIT.getCode())
                 .build();
         return success(tmsDeclareBillService.getCanGenerateSoOut(querySourceDTO));

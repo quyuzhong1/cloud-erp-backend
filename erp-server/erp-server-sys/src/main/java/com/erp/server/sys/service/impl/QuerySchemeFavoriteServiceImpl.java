@@ -3,8 +3,8 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.QuerySchemeFavoriteDTO;
@@ -37,7 +37,7 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
         if (!entityOpt.isPresent()) {
             throw new ServiceException(ApiError.SCHEME_NOT_EXIST);
         }
-        String userId = CommonInterceptor.threadLocal.get().getUid();
+        String userId = UserContext.getLoginUser().getUid();
         if (StrUtil.isBlank(userId)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
@@ -46,7 +46,7 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
 
     @Override
     public Boolean add(QuerySchemeFavoriteDTO.AddDTO addDTO) {
-        String userId = CommonInterceptor.threadLocal.get().getUid();
+        String userId = UserContext.getLoginUser().getUid();
         if (StrUtil.isBlank(userId)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
@@ -62,7 +62,7 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
     @Override
     public List<QuerySchemeFavoriteDTO.ViewDTO> listByUserId(String userId, String modulePath) {
         if (StrUtil.isBlank(userId)) {
-            userId = CommonInterceptor.threadLocal.get().getUid();
+            userId = UserContext.getLoginUser().getUid();
         }
         if (StrUtil.isBlank(userId)) {
             throw new ServiceException(ApiError.ERROR_403);

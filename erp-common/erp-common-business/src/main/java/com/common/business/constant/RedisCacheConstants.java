@@ -143,11 +143,34 @@ public interface RedisCacheConstants {
      */
     String PLATFORM_RATE_LIMIT_ENDPOINTS = "platform_rate_limit:{}:{}:{}:{}";
 
+    /**
+     * 平台请求频率:{(平台类型:sellerId::端点)=groupId}:{业务类型/接口类型}
+     */
+    String PLATFORM_RATE_LIMIT_GROUP_ID_PREFIX = "platform_rate_limit:{}:{}";
+
 
     /**
      * 平台请求频率前缀:groupId
      */
     String PLATFORM_RATE_LIMIT_PREFIX = "platform_rate_limit:{}";
+
+    /**
+     * 美客多授权:{id}
+     * 内容店铺ID
+     */
+    String AUTH_MERCADO_STATE = "third-party-auth:mercado_state:{}";
+
+    /**
+     * TikTok授权:{id}
+     * 内容店铺ID
+     */
+    String AUTH_TIKTOK_STATE = "third-party-auth:tiktok_state:{}";
+
+    /**
+     * 平台token刷新重试次数记录
+     * platform-refresh-token:平台名称:店铺ID
+     */
+    String REDIS_REFRESH_PLATFORM_TOKEN = "platform-refresh-token:{}:{}";
 
 
     /**
@@ -176,5 +199,30 @@ public interface RedisCacheConstants {
      * 物流报关单合同号
      */
     String TMS_DECLARE_CODE = "tms_declare_code:{}_{}";
+
+    /**
+     * 亚马逊订单任务开始时间前置:taskId
+     */
+    String AMAZON_ORDER_TASK_TIME_PREFIX = "amazon_order_start_time:{}";
+
+    String SNOWFLAKE_KEY = "snowflake_key:{}";
+
+
+    /**
+     * 组包标记发货key:{平台}:{店铺ID}
+     */
+    String MERGE_PACKAGE_SIGN_DELIVERY_KEY = "merge_package_sign_delivery_key:{}:{}";
+
+
+    /**
+     * 组包生成销售出库单扣库存key:{扣库存key}
+     */
+    String MERGE_PACKAGE_INVENTORY_KEY = "merge_package_inventory_key:{}";
+
+
+    /**
+     * 组包消费重试次数:{soId}
+     */
+    String MERGE_PACKAGE_RETRY_COUNT_KEY = "merge_package_retry_count_key:{}";
 
 }

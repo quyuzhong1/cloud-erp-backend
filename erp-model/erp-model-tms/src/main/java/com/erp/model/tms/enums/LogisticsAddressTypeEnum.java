@@ -16,7 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 public enum LogisticsAddressTypeEnum implements EnumMessage {
     DELIVER("deliver","发货地址"),
     REFUND("refund","退货地址"),
-    COLLECT("collect","揽收地址")
+    COLLECT("collect","揽收地址"),
+    TRANSFER("transfer","中转地址")
     ;
 
     /**

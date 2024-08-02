@@ -1,0 +1,24 @@
+package com.sdk.oms.tiktok.dto.tiktok.order.view;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
+import java.math.BigDecimal;
+
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ItemTaxBean {
+    /**
+     * tax_amount : 21.2
+     * tax_rate : 0.35
+     * tax_type : SALES_TAX
+     */
+
+    @JsonProperty("tax_amount")
+    private BigDecimal taxAmount;
+    @JsonProperty("tax_rate")
+    private BigDecimal taxRate;
+    @JsonProperty("tax_type")
+    private String taxType;
+}

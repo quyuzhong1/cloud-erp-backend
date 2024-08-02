@@ -14,6 +14,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -52,7 +53,6 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.wms.kingdee.SyncKingdeeSubcontractIssueService;
 import com.erp.server.wms.mapper.SubcontractIssueMapper;
 import com.erp.server.wms.query.SubcontractIssueQueryHandler;
 import com.erp.server.wms.service.*;
@@ -83,9 +83,6 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     private OperateLogService operateLogService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private DocNoGenHelper docNoGenHelper;
 
     @Autowired
@@ -111,9 +108,6 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
     @Autowired
     private SubcontractIssueQueryHandler subcontractIssueQueryHandler;
-
-    @Autowired
-    private SyncKingdeeSubcontractIssueService syncKingdeeSubcontractIssueService;
 
     @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
@@ -150,7 +144,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         subcontractIssueDetailService.add(addDTO.getDetailList(),subcontractIssueEntity.getId());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "委外发料单" , subcontractIssueEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外发料单" , subcontractIssueEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), subcontractIssueEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(subcontractIssueEntity.getId(), code);
     }
@@ -189,7 +183,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         // 记录主单操作日志
         log.info("编辑 开始记录委外发料单日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), old.getCode(), "委外发料单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "委外发料单");
         operateLogService.addModuleOperateLogByObj(old, subcontractIssueEntity, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), subcontractIssueEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -272,7 +266,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
         // 记录操作日志
         log.info("提交 开始记录委外发料单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -294,7 +288,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -306,7 +300,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     * @param dto
     */
     private void approveProcess(SubcontractIssueEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
@@ -338,11 +332,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         // 审核完成自动退料扣库存
         autoOutStockInventory(entity,Boolean.FALSE);
 
-        //推送金蝶
-        syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -364,11 +355,9 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //删除明细
         subcontractIssueDetailService.deleteByMainId(id);
 
-        //推送金蝶
-        syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_DELETE.getCode());
         // 删除日志数据
         log.info("删除 开始删除委外发料单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getCode(), "删除委外发料单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -390,10 +379,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             .set(SubcontractIssueEntity::getInvalidRemark, remark)
             .update();
 
-        //推送金蝶
-        syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_INVALID.getCode());
         log.info("作废 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单", remark);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
@@ -416,12 +403,12 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "委外发料单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
-        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -438,8 +425,6 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         if (dto.getType().equals(ApproveType.PASS)) {
             // 审核完成自动发料扣库存
             autoOutStockInventory(entity,Boolean.TRUE);
-            //推送金蝶
-            syncKingdeeSubcontractIssueService.syncDataToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -480,7 +465,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         List<SubcontractIssueDetailEntity> hasDetailList = subcontractIssueDetailService.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
 
         //sku信息
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(parentSkuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuCategoryByIds(parentSkuIdList);
 
         //即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSubDetailSkuInventoryList(childList);
@@ -522,6 +507,10 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                 detailDTO.setWarehouseName(childDetailEntity.getWarehouseName());
                 detailDTO.setReceiveQty(childDetailEntity.getDeliveryQty());
                 detailDTO.setWarehouseLocation(childDetailEntity.getWarehouseLocation());
+                WarehouseLocationEntity warehouseLocation = warehouseLocationService.findByWarehouseIdAndCode(childDetailEntity.getWarehouseId(), childDetailEntity.getWarehouseLocation());
+                if (Objects.nonNull(warehouseLocation)){
+                    detailDTO.setWarehouseLocationName(warehouseLocation.getName());
+                }
                 //bom信息
                 BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId()))
                         .findFirst().orElse(null);
@@ -620,7 +609,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         startDTO.setBusinessCode(entity.getCode());
         startDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
         startDTO.setBusinessName(entity.getCode());
-        startDTO.setUserId(commonService.getUserInfo().getUid());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
@@ -656,7 +645,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         //产品信息
         List<String> skuIdList = subcontractIssueDetailList.stream().map(SubcontractIssueDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         //仓位信息
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = subcontractIssueDetailList.stream()
@@ -711,7 +700,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     */
     public void updateForApprove(String id, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(SubcontractIssueEntity::getId, id)
             .set(SubcontractIssueEntity::getApproveUserId, userInfo.getUid())
             .set(SubcontractIssueEntity::getApproveUserName, userInfo.getUserName())
@@ -742,7 +731,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
         //产品信息
         List<String> skuIdList = list.stream().map(SubcontractIssueDTO.ListDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         //仓位信息
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());

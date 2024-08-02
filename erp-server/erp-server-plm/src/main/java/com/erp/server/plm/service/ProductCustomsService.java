@@ -53,4 +53,17 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      * @return
      */
     List<ProductCustomsEntity> listProductCustomsBySkuIds(ProductCustomsSkuDTO dto);
+
+    /**
+     * 新增sku默认海关编码记录
+     * @param skuIds
+     */
+    void addDefaultCustoms(List<String> skuIds);
+
+    /**
+     * 根据skuIds获取目的国申报信息列表
+     * @param skuIds
+     * @return
+     */
+    List<ProductCustomsEntity> listBySkuIds(List<String> skuIds, String country);
 }

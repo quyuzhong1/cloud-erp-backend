@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -139,12 +140,23 @@ public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> impleme
     private Boolean occupyStatus;
 
     /**
-     * 仓位
+     * 推荐仓位(小货区)
      */
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 推荐仓位(大货区)
+     */
+    @TableField("warehouse_location_large")
+    private String warehouseLocationLarge;
 
+
+    /**
+     * 目的国申报价
+     */
+    @TableField(exist = false)
+    private BigDecimal destDeclarePrice;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

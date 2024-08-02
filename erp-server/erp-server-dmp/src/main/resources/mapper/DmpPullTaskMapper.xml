@@ -59,34 +59,8 @@
         select
         <include refid="Base_Column_List"></include>
         from dmp_pull_task
-        where is_deleted = false
-        <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
-            and source_type in
-            <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.sourceCode != null and params.sourceCode != '' ">
-            and source_code ilike concat('%',#{params.sourceCode}::text,'%')
-        </if>
-        <if test="params.returnMsg != null and params.returnMsg != '' ">
-            and return_msg ilike concat('%',#{params.returnMsg}::text,'%')
-        </if>
-        <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
-            and target_platform_name = #{params.targetPlatformName}
-        </if>
-        <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
-            and source_platform_name = #{params.sourcePlatformName}
-        </if>
-        <if test="params.statusList != null and params.statusList.size > 0">
-            and status in
-            <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
-            and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
-        </if>
+        where         ${params.sqlMap.default}
+         and   is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -99,47 +73,44 @@
         select
         <include refid="Base_Column_List"></include>
         from dmp_pull_task
-        where is_deleted = false
-        <if test="params.ids != null and params.ids.size > 0">
-            and id in
-            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.ids == null or params.ids.size == 0">
-            <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
-                and source_type in
-                <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.sourceCode != null and params.sourceCode != '' ">
-                and source_code ilike concat('%',#{params.sourceCode}::text,'%')
-            </if>
-            <if test="params.returnMsg != null and params.returnMsg != '' ">
-                and return_msg ilike concat('%',#{params.returnMsg}::text,'%')
-            </if>
-            <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
-                and target_platform_name = #{params.targetPlatformName}
-            </if>
-            <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
-                and source_platform_name = #{params.sourcePlatformName}
-            </if>
-            <if test="params.statusList != null and params.statusList != '' ">
-                and status in
-                <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
-                and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
-            </if>
-        </if>
+        where ${params.sqlMap.default}
+          and is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
         order by id desc
+        limit 50000
+    </select>
+    <select id="countMonth" resultType="java.lang.Integer">
+        select count(id) from dmp_pull_task where status in ('0', '3') and create_time &lt;= #{date}
+    </select>
+    <select id="listMonth" resultType="com.erp.model.dmp.entity.DmpPullTaskEntity">
+        select id,
+               create_time,
+               create_user_id,
+               create_user_name,
+               update_time,
+               update_user_id,
+               update_user_name,
+               version,
+               is_deleted,
+               target_platform_name,
+               mq_topic,
+               mq_tag,
+               mq_data,
+               status,
+               return_msg,
+               last_sync_time,
+               source_platform_name,
+               source_type,
+               source_id,
+               source_code,
+               retry_times
+        from dmp_pull_task
+        where status in ('0', '3')
+          and create_time &lt;= #{date}
+        LIMIT #{pageSize} OFFSET #{effect}
     </select>
 
     <update id="updateStatus">

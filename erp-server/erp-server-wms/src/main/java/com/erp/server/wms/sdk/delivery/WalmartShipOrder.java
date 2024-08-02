@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
+import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.WalmartShipDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -21,12 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @Component
 @PlatformShipOrderAnno(method = PlatformDictEnum.WALMART)
-public class WalmartShipOrder implements IPlatformService {
+public class WalmartShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -35,7 +37,7 @@ public class WalmartShipOrder implements IPlatformService {
     private LogisticsMappingFeign logisticsMappingFeign;
 
     @Override
-    public void shipOrder(PlatformShipOrderDTO dto) {
+    public List<String> shipOrder(PlatformShipOrderDTO dto) {
         //映射发货需要的字段，如果合并的订单拆分返回
         List<WalmartShipDTO> walmartShipOrderParam = soB2cFeign.getWalmartShipOrderParam(dto.getSoB2cId());
 
@@ -54,10 +56,21 @@ public class WalmartShipOrder implements IPlatformService {
 
             walmartSdkClientService.shipOrder(walmartShipDTO);
         }
+        return new ArrayList<>();
     }
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean asyncBatchQueryAndUpdateOrderStatus(List<PlatformOrderQueryDTO> dtoList){
         return null;
     }
 }

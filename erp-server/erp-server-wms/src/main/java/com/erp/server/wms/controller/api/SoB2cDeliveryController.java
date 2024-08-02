@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -12,9 +13,9 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -27,7 +28,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * b2c发货单
@@ -89,11 +93,11 @@ public class SoB2cDeliveryController extends BaseController {
      * @Date 2023/12/13 19:13
      **/
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:soB2cDelivery:paging",
-            tableAlias = "sbd"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "wms:soB2cDelivery:paging",
+//            tableAlias = "sbd"
+//    )
     @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
         return success(soB2cDeliveryService.paging(dto));
@@ -118,6 +122,7 @@ public class SoB2cDeliveryController extends BaseController {
         Boolean flag = soB2cDeliveryService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
+
 
     /**
      * 详情
@@ -162,18 +167,12 @@ public class SoB2cDeliveryController extends BaseController {
                 result = soB2cDeliveryService.delivery(id, deliveryType);
                 Boolean isSuccess = result.getSuccess();
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
-                if (isManual) {
+                if (isManual && isSuccess) {
                     //生成销售出库单
-                    if(isSuccess){
+                    Boolean isOutStock = soB2cDeliveryService.pushTransferInfo(entity);
+                    if (isOutStock) {
                         soB2cDeliveryService.generateB2cSoOutstock(entity);
                     }
-                }
-                //清状态
-                if(isSuccess){
-                    SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-                    deleteDTO.setType(type);
-                    deleteDTO.setMainId(entity.getSourceId());
-                    soB2cFeign.deleteError(deleteDTO);
                 }
             } catch (Exception e) {
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
@@ -181,15 +180,6 @@ public class SoB2cDeliveryController extends BaseController {
                     result = BatchResultDTO.fail(id, id, "发货单不存在, 手动发货失败");
                     resultDTOS.add(result);
                     continue;
-                }else{
-                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                    addError.setType(type);
-                    addError.setParamJson(deliveryType);
-                    addError.setReturnJson("");
-                    addError.setMainId(entity.getSourceId());
-                    addError.setMessage(e.getMessage());
-                    soB2cFeign.addSoB2cError(addError);
-                    log.error("发货单发货失败", e);
                 }
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
@@ -199,7 +189,7 @@ public class SoB2cDeliveryController extends BaseController {
     }
 
     /**
-     * 虚假发货
+     * 手动标发
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BatchResultDTO>>
@@ -219,10 +209,10 @@ public class SoB2cDeliveryController extends BaseController {
             try {
                 result = soB2cDeliveryService.falseDelivery(id);
             } catch (Exception e) {
-                log.error("发货单 虚假发货失败", e);
+                log.error("发货单 手动标发失败", e);
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "发货单不存在, 虚假发货失败");
+                    result = BatchResultDTO.fail(id, id, "发货单不存在, 手动标发失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -233,34 +223,6 @@ public class SoB2cDeliveryController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
-    /**
-     * 订单标记发货失败后再次触发 ids 为销售订单id
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/retryFalseDelivery")
-    public ApiResult<List<BatchResultDTO>> retryDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-        //id 为销售订单id
-        for (String id : dto.getIds()) {
-            try {
-                List<BatchResultDTO> resultList = soB2cDeliveryService.retryFalseDelivery(id);
-                resultDTOS.addAll(resultList);
-            } catch (Exception e) {
-                log.error("发货单 虚假发货失败", e);
-            }
-
-            SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-            deleteDTO.setType(type);
-            deleteDTO.setMainId(id);
-            soB2cFeign.deleteError(deleteDTO);
-
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
 
     /**
      * 打印拣货单预览
@@ -296,7 +258,7 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 取消打印拣货单
-     *
+     * 1.24。2版本调整为取消打印（拣货单，物流单）
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
@@ -360,8 +322,21 @@ public class SoB2cDeliveryController extends BaseController {
      **/
 
     @PostMapping("/printLogisticsBillConfirm")
+    @Idempotent
     public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
         soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
+    }
+
+    /**
+     * 根据发货单大于物流面单
+     * @author will
+     * @date 2024/7/1 18:14
+     * @param dto
+     * @param response
+     */
+    @PostMapping("/printLogisticsBillConfirmById")
+    public void printLogisticsBillConfirmById(@RequestBody @Validated BaseIdDTO dto, HttpServletResponse response) {
+        soB2cDeliveryService.printLogisticsBillConfirmById(dto.getId(), response);
     }
 
 
@@ -391,6 +366,179 @@ public class SoB2cDeliveryController extends BaseController {
                 resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 物流拦截
+     */
+    @PostMapping("/logisticsIntercept")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soB2cDelivery:logisticsIntercept",
+            serviceClass = SoB2cDeliveryService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> logisticsIntercept(@RequestBody BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOS = soB2cDeliveryService.logisticsIntercept(idsDTO.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 拦截结果确认
+     * @Author Luo_WG
+     * @Date 2023/12/14 11:45
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
+     **/
+    @PostMapping("/interceptResultConfirm")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soB2cDelivery:interceptResultConfirm",
+            serviceClass = SoB2cDeliveryService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> interceptResultConfirm(@RequestBody SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cDeliveryService.interceptResultConfirm(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 生成波次
+     * @param dto 参数
+     * @see BaseResultDTO.AddDTO
+     */
+    @PostMapping("/generationWaves")
+    public ApiResult<List<BaseResultDTO.AddDTO>> generationWaves(@RequestBody @Validated SoB2cDeliveryDTO.GenerationWavesDTO dto){
+        List<BaseResultDTO.AddDTO> result = soB2cDeliveryService.generationWaves(dto);
+        return ApiResult.success(result);
+    }
+
+    /**
+     * 清除异常
+     * @param dto 参数
+     * @see BaseResultDTO.AddDTO
+     */
+    @PostMapping("/batchClearException")
+    public ApiResult<List<BatchResultDTO>> batchClearException(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (String id : new HashSet<>(dto.getIds())) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soB2cDeliveryService.clearException(id);
+            }catch (Exception e){
+                log.error("清除异常失败",e);
+                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 清除异常失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 取消发货
+     * @param dto 参数
+     * @see BaseResultDTO.AddDTO
+     */
+    @PostMapping("/batchCancelShipment")
+    public ApiResult<List<BatchResultDTO>> batchCancelShipment(@RequestBody @Validated SoB2cDeliveryDTO.CancelShipmentView dto){
+        Map<String, List<SoB2cDeliveryDTO.CancelShipmentDTO>> collect = dto.getCancelShipments().stream().collect(Collectors.groupingBy(SoB2cDeliveryDTO.CancelShipmentDTO::getId));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(collect.keySet().size());
+        for (Map.Entry<String, List<SoB2cDeliveryDTO.CancelShipmentDTO>> entry : collect.entrySet()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soB2cDeliveryService.cancelShipment(entry.getKey(), entry.getValue());
+            }catch (Exception e){
+                log.error("取消发货失败",e);
+                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(entry.getKey());
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "发货单不存在, 取消发货失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 取消发货弹窗
+     * @param dto 参数
+     * @see BaseResultDTO.AddDTO
+     */
+    @PostMapping("/cancelShipmentView")
+    public ApiResult<SoB2cDeliveryDTO.CancelShipmentView> cancelShipmentView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        SoB2cDeliveryDTO.CancelShipmentView view = soB2cDeliveryService.cancelShipmentView(dto.getIds());
+        return success(view);
+    }
+
+
+    /**
+     * 重新出库
+     * @author will
+     * @date 2024/7/12 15:47
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/retryOutstock")
+    public ApiResult<List<BatchResultDTO>> retryOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soB2cDeliveryService.retryOutstock(id);
+                if (resultDTO.getSuccess()) {
+                    SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                    soB2cDeliveryService.generateB2cSoOutstock(entity);
+                }
+            }catch (Exception e){
+                log.error("重新出库失败",e);
+                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 重新出库失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 库存数据修复
+     * @author will
+     * @date 2024/7/31 19:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/handleErrorData")
+    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO receiverResult;
+            try {
+                receiverResult = soB2cDeliveryService.handleErrorData(id);
+            } catch (Exception e) {
+                log.error("处理数据", e);
+                SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    receiverResult = BatchResultDTO.fail(id, entity.getCode(), "发货单不存在, 处理数据失败");
+                    resultDTOS.add(receiverResult);
+                    continue;
+                }
+                receiverResult = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(receiverResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

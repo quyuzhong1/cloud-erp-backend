@@ -10,6 +10,12 @@ public enum CfgSettingEnum implements EnumMessage {
     PO_RETURN("poReturn","采购退货单设置"),
     PO_RECONCILIATION("poReconciliation","采购对账单设置"),
     FS_QC_NOTICE("fsQcNotice","飞书通知配置"),
+    DELIVERY_INTERCEPT("b2cDeliveryIntercept","发货拦截设置"),
+    PACKAGE_SETTING("packageSetting","组包设置"),
+    TRANSIT_SETTING("transitSetting","中转设置"),
+    FINISH_PACKING_NOTICE("finishPackingNotice","装箱完成通知"),
+
+    WAREHOUSE_LOCATION_MOVE_BLACKLIST("warehouseLocationMoveBlacklist","库位移动同步旺店通黑名单")
 
     ;
 

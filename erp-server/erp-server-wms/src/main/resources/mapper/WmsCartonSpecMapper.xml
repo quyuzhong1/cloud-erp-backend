@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.WmsCartonSpecMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.WmsCartonSpecEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="box_spec_no" property="boxSpecNo" />
+       <result column="package_weight" property="packageWeight" />
+       <result column="box_length" property="boxLength" />
+       <result column="box_width" property="boxWidth" />
+       <result column="box_height" property="boxHeight" />
+       <result column="box_qty" property="boxQty" />
+       <result column="weight_unit" property="weightUnit" />
+       <result column="size_unit" property="sizeUnit" />
+       <result column="measure_source" property="measureSource" />
+    </resultMap>
+
+    <!--查询已装箱数量-->
+    <select id="listPackingQtyByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingQtyDTO">
+        SELECT
+        wcs.main_id as id,
+        wcd.sku_id,
+        wcd.sku_no,
+        SUM(wcd.pack_qty) AS packQty,
+        SUM(wcs.box_qty) AS boxQty
+        FROM wms_carton_spec wcs
+        LEFT JOIN wms_carton wc ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
+        LEFT JOIN wms_carton_detail wcd ON wc.id = wcd.main_id AND wcd.is_deleted = FALSE
+        WHERE wcs.is_deleted = FALSE AND wcd.sku_id is not null
+        <if test="mainId != null and mainId != ''">
+            AND wcs.main_id = #{mainId}
+        </if>
+        <if test="boxSpecNo != null and boxSpecNo != ''">
+            AND wcs.box_spec_no = #{boxSpecNo}
+        </if>
+        GROUP BY wcs.main_id,
+        wcd.sku_id,
+        wcd.sku_no
+    </select>
+    <select id="listPackingQtyByMainIds" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingQtyDTO">
+        SELECT
+        wcs.main_id as id,
+        wcd.sku_id,
+        wcd.sku_no,
+        SUM(wcd.pack_qty) AS packQty,
+        SUM(wcs.box_qty) AS boxQty
+        FROM wms_carton_spec wcs
+        LEFT JOIN wms_carton wc ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
+        LEFT JOIN wms_carton_detail wcd ON wc.id = wcd.main_id AND wcd.is_deleted = FALSE
+        WHERE wcs.is_deleted = FALSE
+          <if test="mainIds != null and mainIds.size > 0">
+              AND wcs.main_id in
+              <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
+                  #{item}
+              </foreach>
+          </if>
+        GROUP BY wcs.main_id,
+        wcd.sku_id,
+        wcd.sku_no
+    </select>
+
+    <!--根据来源Id查询包装信息-->
+    <select id="listPackDateByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackDateDTO">
+        SELECT
+            wcs.id,
+            wcs.main_id as taskId,
+            wcd.sku_id,
+            wcd.sku_no,
+            SUM(wcd.pack_qty) AS packQty,
+            SUM(wcd.gross_weight) AS grossWeight,
+            SUM(wcs.box_qty) AS boxQty,
+            wcs.box_spec_no,
+            wc.box_no
+        FROM wms_carton_spec wcs
+        LEFT JOIN wms_carton wc ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
+        LEFT JOIN wms_carton_detail wcd ON wc.id = wcd.main_id AND wcd.is_deleted = FALSE
+        WHERE wcs.is_deleted = FALSE AND wcd.sku_id is not null
+            <if test="mainId != null and mainId != ''">
+                AND wcs.main_id = #{mainId}
+            </if>
+        GROUP BY wcs.id,
+            wcs.main_id,
+            wcd.sku_id,
+            wcd.sku_no,
+            wcs.box_spec_no,
+            wc.box_no
+    </select>
+    <select id="selectBoxSpecNo" resultType="java.lang.Integer">
+        SELECT
+            MAX( wcs.box_spec_no )
+        FROM
+            wms_carton_spec wcs
+        WHERE
+            wcs.is_deleted = FALSE
+          AND wcs.main_id = #{taskId}
+    </select>
+</mapper>

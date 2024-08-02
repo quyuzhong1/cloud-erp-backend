@@ -7,12 +7,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -23,9 +24,9 @@ import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.excel.ExportInitStockExcelDTO;
 import com.erp.model.wms.dto.excel.ImportInitStockExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
@@ -40,7 +41,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.listener.InitStockDetailExcelListener;
 import com.erp.server.wms.mapper.InitStockMapper;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -95,9 +95,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     private OperateLogService operateLogService;
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Autowired
@@ -130,7 +127,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         // 查询期初库存明细信息
         List<InitStockDetailEntity> entityMembers = initStockDetailService.findList(id);
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(entityMembers),()->new ServiceException("未找到期初库存明细信息"));
-
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = entityMembers.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(entity.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         // 其他字段赋值
         InitStockDTO.ViewDTO viewDTO = BeanMapperUtils.map(InitStockDTO.ViewDTO.class, entity);
         // 仓库
@@ -156,7 +154,12 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         List<String> skuIds = members.stream().map(InitStockDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIds);
         Map<String, ProductDetailEntity> productMap = productDetailEntityList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity()));
-        members.stream().forEach(member->member.setProductName(productMap.getOrDefault(member.getSkuId(),new ProductDetailEntity()).getName()));
+        members.stream().forEach(member->{
+            member.setProductName(productMap.getOrDefault(member.getSkuId(),new ProductDetailEntity()).getName());
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getCode().equals(member.getWarehouseLocation()) && e.getWarehouseId().equals(entity.getWarehouseId()))
+                    .findFirst().orElse(new WarehouseLocationEntity());
+            member.setWarehouseLocationName(warehouseLocationEntity.getName());
+        });
         viewDTO.setDetails(members);
 
         return viewDTO;
@@ -355,7 +358,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         });
         // 删除期初库存日志数据
         log.info("删除 开始删除期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的期初库存", commonService.getUserInfo().getUserName(), list.stream().map(InitStockEntity::getCode).collect(Collectors.joining(",")));
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的期初库存", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(InitStockEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "删除操作");
 
@@ -505,7 +508,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
      */
     public void updateForApprove(List<String> ids, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().in(InitStockEntity::getId, ids)
                 .set(InitStockEntity::getApproveUserId, userInfo.getUid())
                 .set(InitStockEntity::getApproveUserName, userInfo.getUserName())
@@ -639,9 +642,10 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
         // 获取SKU产品名称
         List<String> skuIds = list.stream().map(InitStockDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOs =  plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuVOs =  plmTaskFeign.listSkuSaleByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuVOs.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
-
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         list.stream().forEach(data->{
             // 单据状态
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -671,6 +675,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 data.setSaleState(skuVO.getSaleState());
                 data.setSaleStateName(SaleStateEnum.getNameByCode(skuVO.getSaleState()));
             }
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(data.getWarehouseId()) && e.getCode().equals(data.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            data.setWarehouseLocationName(warehouseLocationEntity.getName());
         });
     }
 }

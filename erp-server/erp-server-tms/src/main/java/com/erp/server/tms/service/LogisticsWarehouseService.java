@@ -44,4 +44,11 @@ public interface LogisticsWarehouseService extends SuperService<LogisticsWarehou
      */
     List<LogisticsWarehouseEntity> listByLogisticsSupplierId(String logisticsSupplierId);
 
+    /**
+     * 根据物流商ids获取仓库列表
+     * @param logisticsSupplierIds
+     * @return
+     */
+    List<LogisticsWarehouseEntity> listByLogisticsSupplierIds(List<String> logisticsSupplierIds);
+
 }

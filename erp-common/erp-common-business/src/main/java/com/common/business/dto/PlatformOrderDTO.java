@@ -1,6 +1,5 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -9,6 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 订单DTO 所有平台订单通用数据，转换为此类后发送mq统一消费处理
@@ -42,7 +42,7 @@ public class PlatformOrderDTO extends UniqueDto {
     private String shopId;
 
     /**
-     * 作废状态（false未作废，true已作废）
+     * 作废状态（false未作废，true已作废）a
      */
     private Boolean invalidStatus;
 
@@ -199,9 +199,18 @@ public class PlatformOrderDTO extends UniqueDto {
     private String downloadTime;
 
     /**
+     * 卖家订单编号
+     */
+    private String sellerOrderCode;
+    /**
      * 订单明细
      */
     private List<PlatformOrderDetailDTO> details;
+
+    /**
+     * 发货明细
+     */
+    private List<PlatformDeliveryDetailDTO> deliveryDetailDTOList;
 
     /**
      * 订单财务信息
@@ -234,4 +243,38 @@ public class PlatformOrderDTO extends UniqueDto {
      * 平台是否取消
      */
     private Boolean isCancel;
+
+    /**
+     * 检查订单新增作废状态
+     */
+    public Boolean checkInsertInvalidStatus() {
+        // Shopify全退款的订单新增自动作废
+        if ("Shopify".equalsIgnoreCase(this.dictPlatform) && "refunded".equalsIgnoreCase(this.platformOrderStatus)){
+            return true;
+        }
+        // 默认来源状态
+        return this.invalidStatus;
+    }
+
+    /**
+     * 明细平台SKU列表
+     */
+    public List<String> convertPlatformSkuList() {
+        return this.getDetails()
+                .stream()
+                .map(PlatformOrderDetailDTO::getPlatformSkuNo)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 明细平台SPU列表
+     */
+    public List<String> convertPlatformSpuList() {
+        return this.getDetails()
+                .stream()
+                .map(PlatformOrderDetailDTO::getPlatformSpuNo)
+                .distinct()
+                .collect(Collectors.toList());
+    }
 }

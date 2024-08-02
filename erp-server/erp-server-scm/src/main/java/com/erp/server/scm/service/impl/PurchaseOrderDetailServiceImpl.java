@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -30,15 +31,18 @@ import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.*;
@@ -90,9 +94,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     private ModuleOperateLogService moduleOperateLogService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
     @Resource
@@ -109,6 +110,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Resource
     private InventoryFeign inventoryFeign;
+    @Resource
+    private WarehouseLocationFeign warehouseLocationFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -263,7 +266,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         //产品信息
         List<String> skuIds = newList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuLogisticsByIds(skuIds);
 
         for (PurchaseOrderDetailEntity entity : newList) {
             //赠品单价默认0
@@ -325,22 +328,26 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
      */
     private void checkPurchasePrice (List<PurchaseOrderDetailDTO.AddDTO> details,String purchaseOrderId) {
 
-        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
-        if (ObjectUtils.isEmpty(supplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_98036);
-        }
-        //验证录入的SKU明细报价信息是否正确
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !Boolean.TRUE.equals(obj.getIsGift())).map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(priceList)) {
-            return;
-        }
         PurchaseOrderEntity entity = purchaseOrderService.getById(purchaseOrderId);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
 
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        //验证录入的SKU明细报价信息是否正确
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !Boolean.TRUE.equals(obj.getIsGift()))
+                .map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId(),entity.getPurchaseOrgId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(priceList)) {
+            return;
+        }
+
         for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = priceList.stream().filter(obj -> obj.getSkuId().equals(addDTO.getSkuId()) && MathUtil.compareTo(addDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO).findFirst().orElse(null);
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = priceList.stream().filter(obj -> obj.getSkuId().equals(addDTO.getSkuId()) && MathUtil.compareTo(addDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO)
+                    .findFirst().orElse(null);
             if (ObjectUtils.isEmpty(priceDTO)) {
                 continue;
             }
@@ -418,13 +425,16 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<PoInstockDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailByPodIds(purchaseDetailIds);
 
         List<String> skuIdList = list.stream().map(PurchaseOrderDetailDTO.ViewProductDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
 
         List<String> supplierIdList = skuList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(SkuVO::getSupplierId).collect(Collectors.toList());
         List<SupplierEntity> supplierList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(supplierList)) {
             supplierList = supplierService.listByIds(supplierIdList);
         }
+        //仓位信息查询
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getDeliveryWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationFeign.listByWarehouseIdAndCode(paramList);
 
         for (PurchaseOrderDetailDTO.ViewProductDTO viewProductDTO : list) {
 
@@ -479,6 +489,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             viewProductDTO.setEffectiveStockInQty(effectiveStockInQty);
             //未入库数量
             viewProductDTO.setUnStockInQty(viewProductDTO.getPurchaseQty() - effectiveStockInQty + returnQty );
+            //仓位名称填充
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(viewProductDTO.getDeliveryWarehouseId()) && e.getCode().equals(viewProductDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewProductDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
         }
         return list;
     }
@@ -598,7 +611,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (CollectionUtils.isEmpty(detailIdList)) {
             return;
         }
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         lambdaUpdate().in(PurchaseOrderDetailEntity::getId,detailIdList)
                 .set(PurchaseOrderDetailEntity::getExecutionStatus, typeEnum.getCode())
                 .set(PurchaseOrderDetailEntity::getConfirmRemark,remark)

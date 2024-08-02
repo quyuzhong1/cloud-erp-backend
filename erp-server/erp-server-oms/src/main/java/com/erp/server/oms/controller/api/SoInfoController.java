@@ -1,12 +1,13 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -17,10 +18,9 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
-import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.server.oms.query.SoInfoQueryHandler;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
@@ -38,7 +38,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -208,6 +207,24 @@ public class SoInfoController extends BaseController {
     )
     public ApiResult<SoInfoDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         SoInfoDTO.ViewDTO view = soInfoService.view(dto.getId());
+        return success(view);
+    }
+    /**
+     * 打印拣货单
+     *
+     * @param dto
+     * @return
+     */
+    @LogViewService
+    @PostMapping("/printPickingView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:so:printPickingView",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<SoInfoDTO.ViewDTO> printPickingView(@RequestBody @Validated BaseIdDTO dto) {
+        SoInfoDTO.ViewDTO view = soInfoService.printPickingView(dto.getId());
         return success(view);
     }
 
@@ -654,5 +671,100 @@ public class SoInfoController extends BaseController {
         Boolean result =  soInfoService.generateMachineInfo(dto.getIds());
         return result ? success():failure();
     }
+
+    /**
+     * 下推销售出库订单-列表查询 入参id为明细Id
+     **/
+    @PostMapping("/generateSoOutView")
+    public ApiResult<List<SoInfoDTO.GenerateSoOutView>> generateSoOutView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SoInfoDTO.GenerateSoOutView> list = soInfoService.generateSoOutView(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 下推销售出库订单
+     **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推销售出库订单,id={soId}")
+    @PostMapping("/generateSoOut")
+    public ApiResult<List<BatchResultDTO>> generateSoOut(@RequestBody @Validated List<SoInfoDTO.GenerateSoOutView> generateSoOutViewList) {
+        List<BatchResultDTO> resultDTOS = soInfoService.generateSoOut(generateSoOutViewList);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 单个锁定查询
+     * @author will
+     * @date 2024/7/15 11:11
+     * @param id
+     * @return ApiResult<SoInfoDTO.LockVirtualInventoryDTO>
+     */
+    @GetMapping("/viewLockVirtualInventory")
+    public ApiResult<SoInfoDTO.LockVirtualInventoryDTO> viewLockVirtualInventory(@RequestParam(value = "id") String id) {
+        return success(soInfoService.viewLockVirtualInventory(id));
+    }
+    
+    /**
+     * 批量锁定查询
+     * @author will
+     * @date 2024/7/15 15:03
+     * @param dto 
+     * @return ApiResult<List<SoInfoDTO.BatchLockVirtualInventoryDTO>>
+     */
+    @PostMapping("/viewBatchLockVirtualInventory")
+    public ApiResult<List<SoInfoDTO.BatchLockVirtualInventoryDTO>> viewBatchLockVirtualInventory(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        return success(soInfoService.viewBatchLockVirtualInventory(dto.getDetailIdList()));
+    }
+
+    /**
+     * 锁定库存保存
+     * @author will
+     * @date 2024/7/15 16:00
+     * @param list
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "锁定库存",keyIdName = "detailId")
+    @PostMapping("/saveLockVirtualInventory")
+    public ApiResult<List<BatchResultDTO>> saveLockVirtualInventory(@RequestBody @Validated List<SoInfoDTO.LockVirtualInventorySaveDTO> list) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        for (SoInfoDTO.LockVirtualInventorySaveDTO saveDTO : list) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soDetailService.saveLockVirtualInventory(saveDTO);
+            }catch (Exception e){
+                log.error("销售订单明细释放库存失败",e);
+                SoDetailEntity entity = soDetailService.getById(saveDTO.getDetailId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(saveDTO.getDetailId(), saveDTO.getDetailId(), "销售订单明细不存在, 锁定库存失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                SoInfoEntity soInfoEntity = soInfoService.getById(entity.getMainId());
+                if (ObjectUtil.isEmpty(soInfoEntity)) {
+                    resultDTO = BatchResultDTO.fail(saveDTO.getDetailId(), saveDTO.getDetailId(), "销售订单不存在, 锁定库存失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), StrUtil.format("【{}】{}",soInfoEntity.getCode(),entity.getSkuNo()), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 单个释放锁定库存
+     * @author will
+     * @date 2024/7/15 17:24
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "释放库存")
+    @PostMapping("/unLockVirtualInventory")
+    public ApiResult unLockVirtualInventory(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = soInfoService.unLockVirtualInventory(dto.getId());
+        return result ? success():failure();
+    }
+
+
 
 }

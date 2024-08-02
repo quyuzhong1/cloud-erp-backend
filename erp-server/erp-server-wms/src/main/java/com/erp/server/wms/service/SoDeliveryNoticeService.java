@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -101,19 +102,19 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param approveOneDTO
      * @return java.lang.Boolean
      **/
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(ApproveOneDTO approveOneDTO);
 
     /**
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param ids ids
+     * @param id id
      * @return java.lang.Boolean
      **/
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(String id);
 
     /**
      * 取消流程
@@ -157,12 +158,10 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
 
     /**
      * 下推销售出库单-保存
-     * @Author Luo_WG
-     * @Date 2023/5/11 11:11
-     * @param idList
+     * @param id id
      * @return void
      **/
-    Boolean generateSoDeliverySave(List<String> idList);
+    BatchResultDTO generateSoDeliverySave(String id);
 
     /**
      * 下推发货通知单-保存
@@ -239,4 +238,31 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return
      */
     SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(String sourceId);
+    /**
+     * 生成拣货单
+     * @param picking 参数
+     */
+    void generatePickingList(SoDeliveryNoticeDTO.GeneratePickingDTO picking);
+
+    /**
+     * 生成拣货单的弹窗
+     * @param page 要货单id
+     */
+    PagingVO<SoDeliveryNoticeDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page);
+
+
+    void writeBackData(List<String> sourceDetailIds);
+
+    /**
+     * 根据记录更新状态
+     * @param id
+     * @param packingStatus
+     */
+    void updatePackingStatus(String id, String packingStatus);
+
+    BatchResultDTO generatePackingTask(SoDeliveryNoticeEntity entity);
+
+    SoDeliveryNoticeEntity getByCode(String key);
+
+    List<SoDeliveryNoticeEntity> listByCodes(List<String> codes);
 }

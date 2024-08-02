@@ -16,6 +16,7 @@ public enum BusinessTypeEnum implements EnumMessage {
     REGISTER_TRACK("registerTrack", "注册物流单"),
     GET_LABEL_LIST("getLabelList", "批量获取标签"),
     GET_CHANEL_LIST("getChanelList", "批量渠道列表"),
+    UPDATE_WEIGHT("updateWeight", "更新重量"),
     CANCEL_ORDER("cancelOrder", "取消订单")
     ;
 

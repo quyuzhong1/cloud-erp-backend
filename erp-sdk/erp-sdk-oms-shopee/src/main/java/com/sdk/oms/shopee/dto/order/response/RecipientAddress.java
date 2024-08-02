@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.order.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.ToString;
 
@@ -27,7 +27,7 @@ public class RecipientAddress implements Serializable {
     private String region;
     private String zipcode;
 
-    @JSONField(name = "full_address")
+    @Alias("full_address")
     private String fullAddress;
 
 

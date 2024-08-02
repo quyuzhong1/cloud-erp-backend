@@ -1,5 +1,6 @@
 package com.sdk.tms.track123.handler;
 
+import cn.hutool.core.collection.ListUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -7,10 +8,12 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractLogisticsTrackHandler;
 import com.common.business.vo.PagingVO;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -86,34 +89,38 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
     }
 
     private void getTrackData(LogisticsBillDetailQueryDTO query, List<ResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
-        PagingVO<LogisticsBillDetailEntity> page = logisticsBillFeign.getLogisticsBillDetails(query);
-        if (Objects.isNull(page) || CollectionUtils.isEmpty(page.getList())) return;
-        ResponseData responseData = processTrackData((List<LogisticsBillDetailEntity>) page.getList(), cfgAppClient);
-        if (Objects.isNull(responseData)) return;
-        //业务处理
-        responseDataList.add(responseData);
-        long pages = page.getTotalPage();
-        if (pages > page.getCurrPage()) {
-            //下一页
-            query.setCurrent(page.getCurrPage() + 1);
-            getTrackData(query, responseDataList, cfgAppClient);
-        } else {
-            //无数据
-            log.info("========同步物流轨迹数据完成==========");
+        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
+        if (list.size() > MathUtil.NUMBER_100){
+            //列表数据较多情况下，进行分割集合
+            List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+            //物流商数据处理
+            partition.forEach(e -> {
+                ResponseData responseData = this.processTrackData(e, cfgAppClient);
+                if (Objects.nonNull(responseData)){
+                    responseDataList.add(responseData);
+                }
+            });
+        }else {
+            //物流商数据处理
+            ResponseData responseData = this.processTrackData(list, cfgAppClient);
+            if (Objects.nonNull(responseData)){
+                responseDataList.add(responseData);
+            }
         }
+        log.info("========同步物流轨迹数据完成==========");
     }
 
-    private ResponseData processTrackData(List<LogisticsBillDetailEntity> records, CfgAppClientEntity cfgAppClient) {
+    private ResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {
         if (CollectionUtils.isNotEmpty(records)) {
             String token = cfgAppClient.getClientSecret();
             TrackRequest trackRequest = TrackRequest.builder()
-                    .trackNos(records.stream().map(LogisticsBillDetailEntity::getTrackNo).collect(Collectors.toList()))
+                    .trackNos(records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo).collect(Collectors.toList()))
                     .cursor("")
                     .queryPageSize(100)
                     .build();
             try {
                 TrackResponse track = trackShipperService.getTrack(token, trackRequest);
-                return track.getData();
+                return Objects.isNull(track) ? null : track.getData();
             } catch (Exception e) {
                 log.error("获取Track123物流轨迹查询异常：{}", e.getMessage());
                 return null;

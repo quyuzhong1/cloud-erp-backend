@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
@@ -137,4 +138,12 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @return Integer
      */
     Integer countTotalNotQc(@Param("params") QcEffectivenessDTO.CountQcParamDTO params);
+    /**
+     * @description: 查询tab列表数量
+     * @author Will
+     * @date: 2024/4/29 9:04
+     * @param searchParamDTO
+     * @return Integer
+     */
+    Integer listCount(@Param("params") PurchaseOrderDTO.SearchParamDTO searchParamDTO);
 }

@@ -6,14 +6,14 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.tms.entity.LogisticsServicePlatformEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.convert.LogisticsServiceConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
+import com.erp.server.tms.service.LogisticsSaleChannelService;
 import com.erp.server.tms.service.LogisticsService;
-import com.erp.server.tms.service.LogisticsServicePlatformService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -23,7 +23,6 @@ import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -50,11 +49,11 @@ public class LogisticsServiceSyncJob {
     private LogisticsRegistry logisticsRegistry;
 
     @Resource
-    private LogisticsServicePlatformService logisticsServicePlatformService;
+    private LogisticsSaleChannelService logisticsSaleChannelService;
 
 
     /**
-     * 同步物流服务商
+     * 同步物流服务商（OMS）
      */
     @XxlJob("syncLogisticsService")
     public void syncLogisticsService() {
@@ -83,13 +82,16 @@ public class LogisticsServiceSyncJob {
                 ApiResult<List<LogisticsServiceResponseVO>> apiResult = logisticsService.listLogisticsService(map);
                 if (apiResult.isSuccess()) {
                     List<LogisticsServiceResponseVO> responseList = apiResult.getData();
-                    List<LogisticsServicePlatformEntity> dbList = logisticsServicePlatformService.listByPlatform(logisticsPlatform);
-                    List<String> serviceNameList = dbList.stream().map(LogisticsServicePlatformEntity::getServiceName).collect(Collectors.toList());
+                    List<LogisticsSaleChannelEntity> dbList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform,"oms");
+                    List<String> serviceNameList = dbList.stream().map(LogisticsSaleChannelEntity::getCode).collect(Collectors.toList());
                     List<LogisticsServiceResponseVO> needList = responseList.stream().
                             filter(r -> !serviceNameList.contains(r.getServiceName())).collect(Collectors.toList());
-                    List<LogisticsServicePlatformEntity> addList = LogisticsServiceConverter.INSTANCE.convertLogisticsService(needList);
-                    addList.forEach(obj->obj.setLogisticsPlatform(logisticsPlatform));
-                    logisticsServicePlatformService.saveBatch(addList);
+                    List<LogisticsSaleChannelEntity> addList = LogisticsServiceConverter.INSTANCE.convertLogisticsService(needList);
+                    addList.forEach(obj->{
+                        obj.setServicePlatform("oms");
+                        obj.setLogisticsPlatform(logisticsPlatform);
+                    });
+                    logisticsSaleChannelService.saveBatch(addList);
                 }
 
             } catch (Exception e) {

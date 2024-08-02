@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -20,6 +21,7 @@ import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.server.tms.query.TmsTransferDeclareQueryHandler;
 import com.erp.server.tms.service.TransferDeclareDetailService;
 import com.erp.server.tms.service.TransferDeclareService;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +61,7 @@ public class TransferDeclareController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.tms.dto.TransferDeclareDTO.ListDTO>>
      **/
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = TmsTransferDeclareQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:transferDeclare:paging",
@@ -241,6 +244,7 @@ public class TransferDeclareController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = TmsTransferDeclareQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:transferDeclare:paging",
@@ -251,41 +255,6 @@ public class TransferDeclareController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-    /**
-     * 重试订单预报
-     * @Author Luo_WG
-     * @Date 2024/1/25 9:54
-     * @param dto  这里的id是 so_id列表
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @LogViewService
-    @PostMapping(value = "/retryOrderForecast")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:transferDeclare:upload",
-            tableAlias = "td"
-    )
-    public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            List<BatchResultDTO> result = new ArrayList<>();
-            try {
-                result = transferDeclareService.retryOrderForecast(id);
-            } catch (Exception e) {
-                log.error("上传报关单失败", e);
-                TransferDeclareEntity entity = transferDeclareService.getBySoId(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result.add(BatchResultDTO.fail(id, id, "报关单不存在, 上传报关单失败"));
-                    resultDTOS.addAll(result);
-                    continue;
-                }
-                result.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
-            }
-            resultDTOS.addAll(result);
-
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
     /**
      * 入库预报
      * @Author zdy

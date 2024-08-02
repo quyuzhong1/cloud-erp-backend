@@ -1,13 +1,11 @@
 package com.erp.model.tms.dto;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.OperationTypeEnum;
-import com.erp.model.oms.dto.TransferDeclareProductDTO;
+import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
+import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,10 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * <p>
@@ -40,6 +35,23 @@ import java.util.Objects;
 public class TransferDeclareDTO implements Serializable {
 
 
+    /**
+     * 取消订单预报实体
+     */
+    @Data
+    @AllArgsConstructor
+    @Builder
+    @NoArgsConstructor
+    public static class CancelOrderForecastDTO {
+
+        /**
+         * 中转物流商id
+         */
+        private String transferLogisticsSupplierId;
+
+        private TransferCancelOrderReq transferCancelOrderReq;
+
+    }
     /**
      * B2C订单预报实体
      */
@@ -62,7 +74,7 @@ public class TransferDeclareDTO implements Serializable {
         private ShopInfoEntity shopInfoEntity;
 
         @NotEmpty(message = "b2c销售订单商品信息不能为空")
-        private List<TransferDeclareProductDTO> transferDeclareProductDTOList;
+        private List<SplitSkuDTO> transferDeclareProductDTOList;
 
     }
 
@@ -225,6 +237,16 @@ public class TransferDeclareDTO implements Serializable {
     @Data
     public static class PagingParamDTO extends SortDTO {
         /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
          * ids
          */
         private List<String> ids;
@@ -318,7 +340,7 @@ public class TransferDeclareDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
-         * 主键id
+         * 主键id[可排序]
          */
         private String id;
         /**
@@ -326,23 +348,23 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String detailId;
         /**
-         * 中转报关单号
+         * 中转报关单号[可排序]
          */
         private String code;
         /**
-         * 预计中转时间
+         * 预计中转时间[可排序]
          */
         private String planTransferDate;
         /**
-         * 入库预报日期（推送保宏入库预报成功的日期）
+         * 入库预报日期（推送保宏入库预报成功的日期）[可排序]
          */
         private String instockForecastDate;
         /**
-         * 上传状态(批次)
+         * 上传状态(批次)[可排序]
          */
         private String uploadBatchStatus;
         /**
-         * 入库预报状态
+         * 入库预报状态[可排序]
          */
         private String instockForecastStatus;
         /**
@@ -350,11 +372,11 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String instockForecastStatusName;
         /**
-         * 入库预报异常原因
+         * 入库预报异常原因[可排序]
          */
         private String instockForecastRemark;
         /**
-         * 总件数（页面录入）
+         * 总件数（页面录入）[可排序]
          */
         private Integer totalQty;
         /**
@@ -430,13 +452,17 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String failureReason;
         /**
-         * 创建人
+         * 创建人[可排序]
          */
         private String createUserName;
         /**
-         * 创建时间
+         * 创建时间[可排序]
          */
         private LocalDateTime createTime;
+        /**
+         * 明细记录
+         */
+        private List<TransferDeclareDetailEntity> detailEntityList;
     }
 
     /**
@@ -602,5 +628,129 @@ public class TransferDeclareDTO implements Serializable {
          * 状态
          */
         private String status;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ExportListDTO {
+        /**
+         * 主键id[可排序]
+         */
+        private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 中转报关单号[可排序]
+         */
+        private String code;
+        /**
+         * 预计中转时间[可排序]
+         */
+        private String planTransferDate;
+        /**
+         * 入库预报日期（推送保宏入库预报成功的日期）[可排序]
+         */
+        private String instockForecastDate;
+        /**
+         * 上传状态(批次)[可排序]
+         */
+        private String uploadBatchStatus;
+        /**
+         * 入库预报状态[可排序]
+         */
+        private String instockForecastStatus;
+        /**
+         * 入库预报状态中文
+         */
+        private String instockForecastStatusName;
+        /**
+         * 入库预报异常原因[可排序]
+         */
+        private String instockForecastRemark;
+        /**
+         * 总件数（页面录入）[可排序]
+         */
+        private Integer totalQty;
+        /**
+         * 上传状态（批次）中文
+         */
+        private String uploadBatchStatusName;
+        /**
+         * 发货物流商中文
+         */
+        private String deliveryLogisticsSupplierName;
+        /**
+         * 中转物流商中文
+         */
+        private String transferLogisticsSupplierName;
+        /**
+         * 中转渠道中文
+         */
+        private String transferChannelName;
+        /**
+         * 包裹总数量
+         */
+        private String packageTotalQty;
+        /**
+         * 包裹总重量
+         */
+        private String packageTotalWeight;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+        /**
+         * 销售单id
+         */
+        private String soId;
+        /**
+         * 销售单号
+         */
+        private String soCode;
+        /**
+         * 物流渠道中文
+         */
+        private String logisticsChannelName;
+        /**
+         * 物流跟踪号
+         */
+        private String trackNo;
+        /**
+         * 上传状态(订单)
+         */
+        private String uploadOrderStatus;
+        /**
+         * 上传状态(订单)中文
+         */
+        private String uploadOrderStatusName;
+        /**
+         * 出库状态
+         */
+        private String outstockStatus;
+        /**
+         * 出库状态中文
+         */
+        private String outstockStatusName;
+        /**
+         * 中转状态
+         */
+        private String transferStatus;
+        /**
+         * 中转状态中文
+         */
+        private String transferStatusName;
+        /**
+         * 失败原因
+         */
+        private String failureReason;
+        /**
+         * 创建人[可排序]
+         */
+        private String createUserName;
+        /**
+         * 创建时间[可排序]
+         */
+        private LocalDateTime createTime;
     }
 }

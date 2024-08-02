@@ -2,13 +2,13 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.100.10
+        server-addr: 172.16.100.17
         namespace: uat
       config:
-        server-addr: 172.16.100.10
+        server-addr: 172.16.100.17
         namespace: uat
         file-extension: yml
-        shared-configs: gateway.yml,common.yml
+        shared-configs: gateway.yml,common.yml,db-gateway.yml
 #    gateway:
 #      routes:
 #        - id: admin_route

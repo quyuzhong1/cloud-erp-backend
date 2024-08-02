@@ -2,7 +2,6 @@ package com.erp.server.dmp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -20,13 +19,12 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
 import com.erp.server.dmp.mapper.CfgAppClientMapper;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.server.dmp.service.CfgSettingService;
-import com.google.gson.annotations.SerializedName;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -37,10 +35,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -144,6 +139,8 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         if (shopInfo.getDisabled()){
             throw new ServiceException(ApiError.ERROR_MARKETPLACE_UNAUTHORIZED, shopInfo.getId());
         }
+        // 相同账号的关联店铺
+        List<ShopInfoEntity> relatedshopInfoList = shopInfoFeign.getRelatedShopById(shopInfo);
 
         AppClientEnum appClient = AppClientEnum.AMAZON_ACCESS_TOKEN;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
@@ -156,7 +153,7 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         // 查询授权信息
         Map<SettingEnum, String> configMap = cfgSettingService.getMap(SettingEnum.AMAZON_SP_API_CONFIG);
         // 添加token信息到缓存并按失效时间消失
-        AmazonShopInfoDTO redisShopInfoDTO = initShopInfoDTO(shopInfo, configMap, cfgAppClient);
+        AmazonShopInfoDTO redisShopInfoDTO = initShopInfoDTO(shopInfo, configMap, cfgAppClient, relatedshopInfoList);
 
         AmazonTokenDTO tokenDTO = this.requestAmzAndAuth(shopInfo, cfgAppClient);
         // token添加到redis
@@ -222,7 +219,7 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
     /**
      * 亚马逊 Entity 转换DTO
      */
-    private AmazonShopInfoDTO initShopInfoDTO(ShopInfoEntity shopInfo, Map<SettingEnum, String> config, CfgAppClientEntity cfgAppClient) {
+    private AmazonShopInfoDTO initShopInfoDTO(ShopInfoEntity shopInfo, Map<SettingEnum, String> config, CfgAppClientEntity cfgAppClient, List<ShopInfoEntity> relatedshopInfoList) {
         // 亚马逊SP-API用户
         String spApiUser = config.getOrDefault(SettingEnum.AMAZON_SP_API_USER, "");
         String accessKeyId = config.getOrDefault(SettingEnum.AMAZON_SP_API_ACCESS_KEY_ID, "");
@@ -236,7 +233,21 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         ) {
             throw new ServiceException("亚马逊SP-API配置缺失");
         }
-
+       //当前亚马逊账号所有已授权的站点map(包含自身)
+       // Map<marketplaceId, shopId>
+        Map<String, AmazonShopInfoDTO.ShopNameDTO> marketplaceShopIdMap = new HashMap<>();
+        // 当前店铺站点
+        marketplaceShopIdMap.put(
+                AmazonMarketplaceEnum.getByCountryCode(shopInfo.getDictCountryCode()).getMarketplaceId(),
+                new AmazonShopInfoDTO.ShopNameDTO(shopInfo.getId(), shopInfo.getName()));
+        // 其他站点
+        if (!CollectionUtils.isEmpty(relatedshopInfoList)){
+            Map<String, AmazonShopInfoDTO.ShopNameDTO> relatedMap = relatedshopInfoList
+                    .stream()
+                    .collect(Collectors.toMap(e -> AmazonMarketplaceEnum.getByCountryCode(e.getDictCountryCode()).getMarketplaceId(),
+                            e -> new AmazonShopInfoDTO.ShopNameDTO(e.getId(), e.getName())));
+            marketplaceShopIdMap.putAll(relatedMap);
+        }
         return new AmazonShopInfoDTO()
                 // 店铺ID
                 .setId(shopInfo.getId())
@@ -266,6 +277,10 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
                 .setUserStr(spApiUser)
                 // 授权地址
                 .setAuthUrl(cfgAppClient.getUrl())
+                // 亚马逊账号ID
+                .setPlatformShopCode(shopInfo.getPlatformShopCode())
+                // 亚马逊账号授权的所有站点
+                .setMarketplaceShopIdMap(marketplaceShopIdMap)
                 ;
     }
 

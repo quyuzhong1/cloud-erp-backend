@@ -55,7 +55,7 @@ public enum ModuleTypeEnum {
     SHIPPING_TEMPLATE("53", "运费模板"),
     LOGISTICS_BILL_COST("52", "自发货费用"),
     THIRD_WAREHOUSE("53", "第三方仓"),
-    OVERSEAS_DELIVERY_PLAN("54", "海外发货计划"),
+    DELIVERY_PLAN("54", "发货计划"),
     REQUISITION_APPLICATION("55", "要货申请"),
     OVERSEAS_PROVIDER("56", "仓库设置"),
     OVERSEAS_WAREHOUSE_INBOUND("57", "海外仓入库单"),
@@ -80,6 +80,29 @@ public enum ModuleTypeEnum {
     TMS_B2C_DECLARE_RECONCILIATION("69", "B2C报关账单"),
     TMS_FIRST_MILE_RECONCILIATION("70", "头程对账单"),
     CFG_FIELD_RECONCILIATION("71", "字段配置"),
+    RULE_DECLARE("72", "申报规则"),
+    CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
+    SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
+
+    SO_MULTI_CHANNEL("75", "多渠道订单"),
+    DMP_THIRD_WAREHOUSE("76", "第三方仓库"),
+    DMP_THIRD_SHOP("77", "第三方店铺"),
+    DMP_THIRD_MAPPING("78", "第三方映射"),
+    WAREHOUSE_AREA("80", "库区"),
+    PICKING_STRATEGY("81", "拣货策略"),
+    WAREHOUSE_LOCATION("90", "仓位"),
+
+
+
+    VIRTUAL_WAREHOUSE("82", "虚拟仓设置"),
+    VIRTUAL_WAREHOUSE_ALLOCATION("83", "分货单"),
+    PACKING_TASK("82", "装箱任务"),
+    CARTON_SPC("83", "装箱箱规"),
+    CARTON("84", "装箱信息"),
+    CARTON_DETAIL("85", "装箱明细"),
+    PICKING_LISTS("91", "拣货单"),
+    CFG_RULE_WAVE("92", "波次规则"),
+    WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
     ;
 
 

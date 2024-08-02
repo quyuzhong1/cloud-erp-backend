@@ -47,15 +47,6 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     private ScmTaskFeign scmTaskFeign;
 
     @Resource
-    private SysUserFeign sysUserFeign;
-
-    @Resource
-    private WarehouseService warehouseService;
-
-    @Resource
-    private CommonService commonService;
-
-    @Resource
     private PoReturnDetailService poReturnDetailService;
 
     @Resource
@@ -344,5 +335,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
                     .eq(WarehouseReceiveDetailEntity::getId, detailId)
                     .update();
         }
+    }
+
+    @Override
+    public void updateInfo(WarehouseReceiveDetailEntity wrd) {
+        baseMapper.updateInfo(wrd.getId(),wrd.getInStockStatus());
     }
 }

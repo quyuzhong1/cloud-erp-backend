@@ -158,7 +158,7 @@ public class RocketMqConsumerGroup {
     /**
      * 订单 oms推送到dmp
      */
-    public static final String SYNC_OMS_RETURN_TO_DMP_ORDER = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer";
+    public static final String SYNC_OMS_RETURN_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_oms_return_to_dmp";
 
     /**
      * 委外订单
@@ -276,6 +276,11 @@ public class RocketMqConsumerGroup {
     public static final String SYNC_ERP_SO_B2C_DELIVERY_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_erp_so_b2c_delivery_to_dmp";
 
     /**
+     * ERP 销售出库单->DMP发货详情
+     */
+    public static final String SYNC_SO_OUTSTOCK_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_so_outstock_to_dmp";
+
+    /**
      * 亚马逊创建报告
      */
     public static final String SYNC_AMZ_REPORT_CREATE = "${spring.cloud.nacos.discovery.namespace}-sync_amz_report_create_consumer";
@@ -303,4 +308,25 @@ public class RocketMqConsumerGroup {
      * 异步获取平台打印面单标签
      */
     public static final String ASYNC_GET_PLATFORM_LABEL_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-async_get_platform_label_consumer";
+
+    /**
+     * 异步组包发货
+     */
+    public static final String ASYNC_MERGE_PACKAGE_DELIVERY_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-async_merge_package_delivery_consumer";
+
+
+    //---------------------------------------------------wangdian---------------------------------------------------------------------------------------------
+    /**
+     * 旺店通推送货品资料
+     */
+    public static final String SYNC_WDT_PRODUCT_DETAIL = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_product_detail";
+
+    public static final String SYNC_WDT_OUT_STOCK_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_out_stock_to_wms";
+
+    public static final String SYNC_WDT_OTHER_IN_STOCK = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_other_in_stock";
+
+    public static final String SYNC_WDT_OTHER_OUT_STOCK = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_other_out_stock";
+    public static final String SYNC_WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL = "${spring.cloud.nacos.discovery.namespace}-sync_wdt_virtual_allocation_handle_detail";
+
+
 }

@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.validator.AddGroup;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -146,6 +147,11 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
+         * 第三方仓SKU
+         */
+        private String thirdWarehouseSku;
+
+        /**
          * sku id
          */
         private String skuId;
@@ -176,9 +182,24 @@ public class SoDetailDTO implements Serializable {
         private Integer scarceQty;
 
         /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * 虚拟仓缺货数量
+         */
+        private Integer virtualScarceQty;
+
+        /**
          * 可出数量
          */
         private Integer availableQty;
+
+        /**
+         * 虚拟仓可出数量
+         */
+        private Integer virtualAvailableQty;
 
         /**
          * 已经出库数量
@@ -662,9 +683,19 @@ public class SoDetailDTO implements Serializable {
         private Integer scarceQty;
 
         /**
+         * 虚拟仓缺货数量
+         */
+        private Integer virtualScarceQty;
+
+        /**
          * 可出数量
          */
         private Integer availableQty;
+
+        /**
+         * 虚拟仓可出数量
+         */
+        private Integer virtualAvailableQty;
 
         /**
          * 已经出库数量
@@ -775,8 +806,6 @@ public class SoDetailDTO implements Serializable {
          */
         @NotBlank(message = "仓库不能为空")
         private String warehouseId;
-
-
     }
 
 
@@ -1367,4 +1396,24 @@ public class SoDetailDTO implements Serializable {
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateFrozenQtyDTO {
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+
+        /**
+         * 冻结数量
+         */
+        @NotBlank(message = "冻结数量不能为空")
+        private Integer frozenQty;
+    }
 }

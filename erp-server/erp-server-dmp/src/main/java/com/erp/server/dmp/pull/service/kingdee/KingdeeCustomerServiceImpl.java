@@ -17,18 +17,18 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.KingdeeShopMongoDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.kingdee.KingdeeShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -53,12 +53,12 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
     @Resource
     private MongoService mongoService;
     @Resource
-    private MQProducerService<DmpShopInfoEntity> mqProducerService;
+    private MQProducerService<BiShopInfoEntity> mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto)  {
         List<KingdeeShopEntity> skuEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(skuEntityList)){
@@ -82,7 +82,7 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
             }
             KingdeeShopEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -98,7 +98,7 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
             return;
         }
         // 构造订单结构
-        List<DmpShopInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<BiShopInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -132,9 +132,9 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(KingdeeShopEntity mongoDatum) {
-        DmpShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
+        BiShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
         if(null == shopInfo){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -151,36 +151,36 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
         }
     }
 
-    private DmpShopInfoEntity initOrderInfoEntity(KingdeeShopEntity shopEntity) {
+    private BiShopInfoEntity initOrderInfoEntity(KingdeeShopEntity shopEntity) {
 //        if (!"1".equals(shopEntity.getFUseOrgId())) {
 //            return;
 //        }
-        DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
+        BiShopInfoEntity biShopInfoEntity = new BiShopInfoEntity();
         //平台店铺编号
-        dmpShopInfoEntity.setPlatformShopNo(shopEntity.getFNumber());
+        biShopInfoEntity.setPlatformShopNo(shopEntity.getFNumber());
         //平台店铺账户
-        dmpShopInfoEntity.setAccountUserName(shopEntity.getFName());
+        biShopInfoEntity.setAccountUserName(shopEntity.getFName());
         //平台店铺标识
-        dmpShopInfoEntity.setAccountStoreName(shopEntity.getFName());
+        biShopInfoEntity.setAccountStoreName(shopEntity.getFName());
         //店铺名称
-        dmpShopInfoEntity.setName(shopEntity.getFName());
+        biShopInfoEntity.setName(shopEntity.getFName());
         //平台名称
-        dmpShopInfoEntity.setPlatformName(shopEntity.getF_ulz_Assistant_FDataValue());
+        biShopInfoEntity.setPlatformName(shopEntity.getF_ulz_Assistant_FDataValue());
         String orgName = shopEntity.getFUseOrgId_FName();
         if(StrUtil.isNotBlank(orgName)){
-            dmpShopInfoEntity.setIsVijim(Boolean.TRUE);
+            biShopInfoEntity.setIsVijim(Boolean.TRUE);
             if (orgName.contains("优至胜") || orgName.contains("小隼")) {
-                dmpShopInfoEntity.setIsVijim(Boolean.FALSE);
+                biShopInfoEntity.setIsVijim(Boolean.FALSE);
             }
         }
-        dmpShopInfoEntity.setUseOrgId(Integer.parseInt(shopEntity.getFUseOrgId()));
-        dmpShopInfoEntity.setUseOrgName(orgName);
+        biShopInfoEntity.setUseOrgId(Integer.parseInt(shopEntity.getFUseOrgId()));
+        biShopInfoEntity.setUseOrgName(orgName);
         //平台标识
-        dmpShopInfoEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
-        dmpShopInfoEntity.setCountry(shopEntity.getFCOUNTRY_FNumber());
-        dmpShopInfoEntity.setCustomerId(shopEntity.getFCustId());
-        dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
-        return dmpShopInfoEntity;
+        biShopInfoEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
+        biShopInfoEntity.setCountry(shopEntity.getFCOUNTRY_FNumber());
+        biShopInfoEntity.setCustomerId(shopEntity.getFCustId());
+        biShopInfoEntity.setCreateTime(LocalDateTime.now());
+        return biShopInfoEntity;
     }
     /**
      * 请求金蝶云星空客户列表接口
@@ -205,7 +205,7 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
         //读取配置，初始化SDK
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(5)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(8)),sdf.format(nextTime)));
         // 客户类型为店铺
 //        queryFilters.add(String.format("FCustTypeId.FNumber = '%s'", "KHLB004_SYS"));
         String filterStr = String.join(" and ", queryFilters);

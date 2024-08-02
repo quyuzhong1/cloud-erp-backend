@@ -52,6 +52,22 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("approve_status")
     private ApproveStatusEnum approveStatus;
     /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+    /**
+     * 审核人id
+     */
+    @TableField(value = "approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 审核人名称
+     */
+    @TableField(value = "approve_user_name")
+    private String approveUserName;
+    /**
      * 平台订单号
      */
     @TableField("platform_code")
@@ -195,26 +211,10 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private Boolean isNotMerge;
 
     /**
-     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-     */
-    @TableField("sync_kingdee_status")
-    private String syncKingdeeStatus;
-    /**
-     * 同步时间
-     */
-    @TableField("sync_kingdee_time")
-    private LocalDateTime syncKingdeeTime;
-    /**
      * 金蝶数据id
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
-    /**
-     * 同步操作
-     */
-    @TableField("sync_operate")
-    private String syncOperate;
-
 
     /**
      * 是否匹配订单规则
@@ -270,12 +270,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private String extendData;
 
     /**
-     * 是否匹配仓库规则
-     */
-    @TableField("is_match_warehouse_rule")
-    private Boolean isMatchWarehouseRule;
-
-    /**
      * 平台订单状态
      */
     @TableField("platform_order_status")
@@ -286,6 +280,23 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     @TableField("is_cancel")
     private Boolean isCancel;
+    /**
+     * 是否地址修改
+     */
+    @TableField("is_change_receiver_address")
+    private Boolean isChangeReceiverAddress;
+
+    /**
+     * 卖家订单编号
+     */
+    @TableField("seller_order_code")
+    private String sellerOrderCode;
+
+    /**
+     * 冻结类型（manual手动冻结，automatic自动冻结）
+     */
+    @TableField("frozen_type")
+    private String frozenType;
 
     public static final String CODE = "code";
 
@@ -341,13 +352,8 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
 
     public static final String ABNORMAL_TYPE = "abnormal_type";
 
-    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
-
-    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
-
     public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
 
-    public static final String SYNC_OPERATE = "sync_operate";
 
     @Override
     public String toString() {
@@ -382,7 +388,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
-                Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsAliexpressPlatformWarehouseOrder();
+                Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
                 if (Objects.nonNull(isAliexpressPlatformWarehouseOrder)) {
                     return isAliexpressPlatformWarehouseOrder;
                 }
@@ -393,11 +399,20 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
         if (PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(this.dictPlatform)) {
             return true;
         }
+        //沃尔玛
         if (PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
                 //FBA
                 return "WFSFulfilled".equalsIgnoreCase(labelJsonDTO.getShipNodeType()) || "3PLFulfilled".equalsIgnoreCase(labelJsonDTO.getShipNodeType());
+            }
+        }
+        //美客多
+        if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(this.dictPlatform)) {
+            if (StrUtil.isNotBlank(this.labelJson)) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
+                //平台仓发货
+                return "fulfillment".equalsIgnoreCase(labelJsonDTO.getLogisticType());
             }
         }
         return false;
@@ -413,5 +428,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 SoB2cBillStatusEnum.ENUM_SHIPPED.getCode(),
                 SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode()
         ).contains(this.billStatus) && !this.hasPlatformWarehouseOrder() ;
+    }
+
+    /**
+     * 提交平台的唯一key:{平台代号}_{平台单号}_{店铺ID}
+     */
+    public String convertSubmitPlatformUniqueKey() {
+        return StrUtil.format("{}_{}_{}", this.dictPlatform, this.shopId, this.platformCode);
     }
 }

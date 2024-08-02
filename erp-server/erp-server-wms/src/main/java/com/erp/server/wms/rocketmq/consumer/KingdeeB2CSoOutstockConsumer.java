@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
@@ -37,8 +38,13 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<Object> {
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
+    @Resource
+    private RedisUtil redisUtil;
+
     @Override
     public void onMessage(Object ext) {
+
+
         //json字符串
         String jsonStr = JSONUtil.toJsonStr(ext);
         //json数据
@@ -47,24 +53,26 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<Object> {
 
         DmpSyncMqDTO.ParamDTO paramDTO = new DmpSyncMqDTO.ParamDTO();
         paramDTO.setDmpSyncTaskId(dmpSyncTaskId);
+
+        //由于实体对象上有别名，所以转对象无法用hutool,需要用fastjson
+        KingdeeDeliveryDetailEntity entity = JSONUtil.toBean(jsonStr, KingdeeDeliveryDetailEntity.class);
+
         try {
             log.info("监听到金蝶B2C销售出库单要同步：entity>>>>>{}", ext);
-            //由于实体对象上有别名，所以转对象无法用hutool,需要用fastjson
-            KingdeeDeliveryDetailEntity entity= JSONUtil.toBean(jsonStr,KingdeeDeliveryDetailEntity.class);
             syncB2CSoOutstockService.syncKingdeeSoOutstock(entity);
             //同步成功
             paramDTO.setSyncStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
             paramDTO.setResponseMsg("同步成功");
             dmpTaskFeign.updateSyncInfo(paramDTO);
-        }catch (Exception e){
-            log.error("金蝶B2C销售出库单同步失败，msg = {}",StringUtils.isBlank(e.getMessage())?e:e.getMessage());
+        } catch (Exception e) {
+            log.error("金蝶B2C销售出库单同步失败，msg = {}", StringUtils.isBlank(e.getMessage()) ? e : e.getMessage());
             //同步失败
             paramDTO.setSyncStatus(SyncStatusEnum.FAILED_SYNC.getCode());
-            paramDTO.setResponseMsg(StringUtils.isBlank(e.getMessage())? ExceptionUtil.stacktraceToOneLineString(e,10):e.getMessage());
+            paramDTO.setResponseMsg(StringUtils.isBlank(e.getMessage()) ? ExceptionUtil.stacktraceToOneLineString(e, 10) : e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
             //错误预警
             dmpTaskFeign.sendWarnMsg(dmpSyncTaskId);
         }
-
     }
+
 }

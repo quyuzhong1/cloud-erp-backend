@@ -2,13 +2,16 @@ package com.common.core.controller.vo;
 
 
 
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.io.Serializable;
 import java.util.Objects;
+
+import org.slf4j.MDC;
+
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 数据结果返回的封装
@@ -29,12 +32,16 @@ public class ApiResult<T>  implements Serializable {
      */
     private Integer code;
 
+    /**
+     * 分布式链路id
+     */
+    private String traceId = MDC.get("traceId");
 
     /**
      * 请求或响应body
      */
     protected T data;
-
+    
 
     /**
      * 是否成功
@@ -92,6 +99,22 @@ public class ApiResult<T>  implements Serializable {
         return apiResult;
     }
 
+    public static <T> ApiResult<T> error(String msg) {
+        ApiResult<T> apiResult = new ApiResult<>();
+        apiResult.setCode(500);
+        apiResult.setMsg(msg);
+        return apiResult;
+    }
+
+    public static <T> ApiResult<T> error(String msg, T data) {
+        ApiResult<T> apiResult = new ApiResult<>();
+        apiResult.setCode(500);
+        apiResult.setMsg(msg);
+        apiResult.setData(data);
+        return apiResult;
+    }
+
+
     public static <T> ApiResult<T> error(Integer code, String msg) {
         ApiResult<T> apiResult = new ApiResult<>();
         apiResult.setCode(code);
@@ -111,6 +134,12 @@ public class ApiResult<T>  implements Serializable {
      */
     public static <T> ApiResult<T> success(T data) {
         return new ApiResult<>(200, "操作成功", data);
+    }
+    /**
+     * 成功时候的调用
+     */
+    public static <T> ApiResult<T> success(String msg,T data) {
+        return new ApiResult<>(200, msg, data);
     }
     /**
      * 成功时候的调用

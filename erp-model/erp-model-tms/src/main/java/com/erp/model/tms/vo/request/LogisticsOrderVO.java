@@ -5,8 +5,10 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -22,6 +24,8 @@ import java.util.Map;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class LogisticsOrderVO implements Serializable {
     /**
      * 速卖通 ISV用户唯一标识，一般为userId,最大长度为16个字符
@@ -37,6 +41,10 @@ public class LogisticsOrderVO implements Serializable {
     private String monthlyCard;
     //订单来源
     private String orderSource;
+    /**
+     * 订单来源 取值 so_b2c.source_type
+     */
+    private String orderType;
 
     /**
      * 预约时间，格式为：yyyy-MM-dd
@@ -61,7 +69,7 @@ public class LogisticsOrderVO implements Serializable {
     private Boolean isTaxed;
 
     //运费
-    private Number transportCost;
+    private Integer transportCost;
 
     //护照号
     private String passportNumber;

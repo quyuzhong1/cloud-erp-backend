@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.feign;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
@@ -11,6 +12,7 @@ import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
@@ -19,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -156,6 +159,20 @@ public class ProductSkuFeignController {
     @PostMapping("/getSkuInfoByIds")
     public List<SkuVO> getSkuInfoBySkuIds(@RequestBody List<String> skuIds) {
         List<SkuVO> skuList = productDetailService.getSkuInfoBySkuIds(skuIds);
+        return skuList;
+    }
+
+    /**
+     * 根据skuid 集合获取到sku 信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuPurchaseBySkuIds")
+    public List<SkuVO> listSkuPurchaseBySkuIds(@RequestBody List<String> skuIds) {
+        List<SkuVO> skuList = productDetailService.listSkuPurchaseBySkuIds(skuIds);
         return skuList;
     }
 
@@ -454,23 +471,127 @@ public class ProductSkuFeignController {
     public List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@RequestBody List<String> skuIds){
         return productDetailService.getSimpleSkuInfoByIds(skuIds);
     }
-
     /**
-     * 根据skuid 集合获取到sku基础信息
+     * 根据skuid 集合获取到sku采购信息（基础信息+产品采购信息+产品采购含税单价）
      *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
-     * @author yl
+     * @author zdy
      * @date 2023-03-21 12:06
      */
-    @PostMapping("/getSkuBaseByIds")
-    public List<SkuVO> getSkuBaseByIds(@RequestBody List<String> skuIds) {
-        List<SkuVO> skuList = productDetailService.getSkuBaseByIds(skuIds);
+    @PostMapping("/listSkuCostByIds")
+    public List<SkuVO> listSkuCostByIds(@RequestBody List<String> skuIds) {
+        List<SkuVO> skuList = productDetailService.listSkuCostByIds(skuIds);
         return skuList;
     }
 
-    @PostMapping("/getProductDetailExportData")
-    List<ProductDetailExcelDTO> getProductDetailExportData(@RequestBody String metaInfo){
-       return productDetailService.getProductDetailExportData(metaInfo);
+    /**
+     * 根据skuid 集合获取到sku产品信息（基础信息+产品信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuProductByIds")
+    public List<SkuVO> listSkuProductByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuProductByIds(skuIds);
+        return skuList;
     }
+
+    /**
+     * 缓存sku信息接口（基础信息+产品信息+包装信息+销售信息+物流信息+采购信息+成本信息+产品分类）
+     * @param skuIds
+     * @return
+     */
+    @PostMapping("/listSkuAllAttributeByIds")
+    List<SkuVO> listSkuAllAttributeByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuAllAttributeByIds(skuIds);
+        return skuList;
+    }
+
+    /**
+     * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuPackByIds")
+    public List<SkuVO> listSkuPackByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuPackByIds(skuIds);
+        return skuList;
+    }
+    /**
+     * 根据skuid 集合获取到sku销售信息 （基础信息+产品信息+销售信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuSaleByIds")
+    public List<SkuVO> listSkuSaleByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuSaleByIds(skuIds);
+        return skuList;
+    }
+    /**
+     * 根据skuid 集合获取到sku物流信息 （基础信息+产品信息+物流信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuLogisticsByIds")
+    public List<SkuVO> listSkuLogisticsByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuLogisticsByIds(skuIds);
+        return skuList;
+    }
+
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+分类信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @PostMapping("/listSkuCategoryByIds")
+    public List<SkuVO> listSkuCategoryByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuCategoryByIds(skuIds);
+        return skuList;
+    }
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+采购信息）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2024-04-25 12:06
+     */
+    @PostMapping("/listSkuPurchaseByIds")
+    public List<SkuVO> listSkuPurchaseByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuPurchaseByIds(skuIds);
+        return skuList;
+    }
+
+    /**
+     * 根据sku查询sku信息
+     */
+    @GetMapping("/listSkuPurchaseByIds")
+    ProductDetailEntity getBySkuNoOrEan(String skuCode){
+        return productDetailService.getBySkuNoOrEan(skuCode);
+    }
+
+    /**
+     *  品质测量更新产品尺寸重量
+     *
+     */
+    @PostMapping("/dimensionalWeightMeasure")
+    public String dimensionalWeightMeasure(@RequestBody DimensionalWeightDTO dto){
+        return productDetailService.dimensionalWeightMeasure(dto);
+    }
+
 }

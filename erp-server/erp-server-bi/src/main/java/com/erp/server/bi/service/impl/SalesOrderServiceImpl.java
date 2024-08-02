@@ -21,8 +21,8 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.enums.*;
 import com.erp.model.bi.vo.*;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.BiOrderInfoEntity;
+import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.SkuDTO;
@@ -49,7 +49,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -72,14 +71,14 @@ import java.util.stream.IntStream;
  * @Created by yl
  */
 @Service
-public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, DmpOrderInfoEntity>
+public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, BiOrderInfoEntity>
         implements SalesOrderService {
 
     @Resource
     private BiProductDetailService productDetailService;
 
     @Resource
-    private DmpShopInfoService shopInfoService;
+    private BiShopInfoService shopInfoService;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -707,7 +706,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setEndTime(paramsEndTime, 1);
         List<Map<String, Object>> resultList = baseMapper.byTopShop(dto, settleRate);
         List<String> shopNoList = resultList.stream().map(obj -> obj.get(shopNo).toString()).collect(Collectors.toList());
-        List<DmpShopInfoEntity> shopList = shopInfoService.getByShopNoList(shopNoList);
+        List<BiShopInfoEntity> shopList = shopInfoService.getByShopNoList(shopNoList);
         for (Map<String, Object> item : resultList) {
             if (item.containsKey(shopNo)) {
                 String shopNoFlag = item.get(shopNo).toString();
@@ -1015,9 +1014,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
         String cn = BiConstant.CN;
-        List<DmpShopInfoEntity> shopInfoList=shopInfoService.listByStoreSign();
+        List<BiShopInfoEntity> shopInfoList=shopInfoService.listByStoreSign();
         List<String> cnShopNoList=shopInfoList.stream().filter(s->cn.equals(s.getStoreSign())).
-                map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList());
+                map(BiShopInfoEntity::getPlatformShopNo).collect(Collectors.toList());
 
         List<SalesCountVO> resultList = baseMapper.byHomeAndAbroad(dto, settleRate);
         StatisticalDataVO statistical = new StatisticalDataVO();
@@ -1157,7 +1156,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         List<String> shopNoList = shopSalesList.stream().map(ShopSalesVO::getShopNo).collect(Collectors.toList());
 
-        List<DmpShopInfoEntity> shopList = shopInfoService.getByShopNoList(shopNoList);
+        List<BiShopInfoEntity> shopList = shopInfoService.getByShopNoList(shopNoList);
 
         int initSize = shopSalesList.size();
         List<ShopNewAndOldSalesVO> resultList = new ArrayList<>(initSize);
@@ -3210,8 +3209,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //店铺id
         List<String> shopNameList = dto.getShopName();
         if (CollectionUtils.isNotEmpty(shopNameList)) {
-            List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
-            List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
+            List<BiShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
+            List<String> shopIdList = shopInfoList.stream().map(BiShopInfoEntity::getId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(shopIdList)) {
                 strategy = context.getBean(ShopTargetValueStrategy.class);
                 if (Objects.nonNull(strategy)) {

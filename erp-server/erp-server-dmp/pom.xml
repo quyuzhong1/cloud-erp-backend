@@ -245,6 +245,28 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-oms-mercado</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-oms-tiktok</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-third-wangdian</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-third-qimen</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <profiles>

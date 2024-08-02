@@ -5,6 +5,7 @@ import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.server.dmp.service.AmzBusinessHandleService;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.server.dmp.service.AmzReportHandleService;
@@ -23,7 +24,7 @@ import javax.validation.Valid;
 @Slf4j
 @RestController
 @RequestMapping("feign/dmp")
-public class DmpAmazonFeignController {
+public class DmpAmazonFeignController implements DmpAmazonFeign {
     @Resource
     private AmzReportHandleService amzReportHandleService;
     @Resource

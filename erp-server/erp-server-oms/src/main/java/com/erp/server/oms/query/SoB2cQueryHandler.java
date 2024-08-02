@@ -84,6 +84,9 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     if(valueStr.equals("leadTenTime")){
                         sb.append(" sb2c.label_json ~ 'leadTimeTag#10' ");
                     }
+                    if(valueStr.equals("refunded")){
+                        sb.append(" sb2c.label_json::json->>'isRefunded' = 'true' ");
+                    }
                     isFirst = false;
                 }
             }
@@ -136,6 +139,12 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         if("warehouse".equals(field)){
             return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id and sbd.warehouse_id "+ compareCodeSplicingValueSql +" ) ";
         }
+
+        if("deliveryTime".equals(field)){
+            compareCodeSplicingValueSql = compareCodeSplicingValueSql.replace("deliveryTime","sout.bill_date");
+            return " EXISTS (SELECT 1 from so_outstock sout where sout.so_id = sb2c.id and sout.is_deleted = false and sout.bill_date "+compareCodeSplicingValueSql+" )";
+        }
+
         //是否缺货 （待配货和配货中且sku数量大于可用库存且不是忽略库存计算SKU） 因为需要查询PLM系统和WMS系统，所以无法在这里直接处理
         if("isOutStock".equals(field)){
             Boolean bool = (Boolean) value;
@@ -144,6 +153,53 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             }else {
                 return getQueryAllSql();
             }
+        }
+
+        if("orderDeliveryType".equals(field)){
+            QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+            List<String> valueList = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
+            StringBuilder sb = new StringBuilder();
+            //是否是第一个，否则需要加连接符
+            boolean isFirst = true;
+            sb.append(" ( ");
+            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) ){
+                for(String valueStr : valueList) {
+                    if (!isFirst) {
+                        sb.append(" or ");
+                    }
+                    isFirst = false;
+                    if (valueStr.equals("platformWarehouseDelivery")) {
+                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment')");
+                    }
+                    if (valueStr.equals("transitWarehouseDelivery")) {
+                        sb.append(" (sb2c.label_json ~ 'drop_off' or sb2c.label_json ~ 'cross_docking')");
+                    }
+                    if (valueStr.equals("selfDelivery")) {
+                        sb.append(" (sb2c.label_json !~ 'AFN' and sb2c.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.label_json !~ 'WFSFulfilled' and sb2c.label_json !~ '3PLFulfilled' and sb2c.label_json !~ 'fulfillment')");
+                    }
+                }
+            }
+
+            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) ){
+                for(String valueStr : valueList) {
+                    if (!isFirst) {
+                        sb.append(" and ");
+                    }
+                    isFirst = false;
+                    if (valueStr.equals("platformWarehouseDelivery")) {
+                        sb.append(" (sb2c.label_json !~ 'AFN' and sb2c.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.label_json !~ 'WFSFulfilled' and sb2c.label_json !~ '3PLFulfilled' and sb2c.label_json !~ 'fulfillment')");
+                    }
+                    if (valueStr.equals("transitWarehouseDelivery")) {
+                        sb.append(" (sb2c.label_json !~ 'drop_off' and sb2c.label_json !~ 'cross_docking')");
+                    }
+                    if (valueStr.equals("selfDelivery")) {
+                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment')");
+                    }
+                }
+            }
+
+            sb.append(" ) ");
+            return sb.toString();
         }
         /**
          * B2C订单待处理类型归类,SoB2cWaitHandleTypeEnum枚举
@@ -171,8 +227,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             }
             //仓库规则不通过
             if (SoB2cWaitHandleTypeEnum.WAREHOUSE_RULE_REJECT.getCode().equals(value)) {
-                super.buildSplicingSQLDTO("sb2c.is_match_warehouse_rule", QueryConditionEnum.EQ,Boolean.FALSE, QueryDataTypeEnum.BOOLEAN);
-                super.buildDefaultDTO("sb2c.abnormal_type", Arrays.asList(SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT.getCode()));
+                super.buildSplicingSQLDTO("sb2cd.is_match_warehouse_rule", QueryConditionEnum.EQ,Boolean.FALSE, QueryDataTypeEnum.BOOLEAN);
             }
             //物流规则不通过
             if (SoB2cWaitHandleTypeEnum.LOGISTICS_RULE_REJECT.getCode().equals(value)) {
@@ -209,7 +264,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
         //待处理
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(value)) {
-            return "sb2c.invalid_status = false and sb2c.pay_status = 'paid' and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))";
+            return "sb2c.bill_status != 'frozen' and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))";
         }
         //审核中
         if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(value)) {

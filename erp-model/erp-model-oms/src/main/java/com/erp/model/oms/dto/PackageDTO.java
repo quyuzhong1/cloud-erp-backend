@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,6 +21,36 @@ import java.util.List;
 @NoArgsConstructor
 public class PackageDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class WeightParamDTO {
+        /**
+         * 单号
+         */
+        @NotBlank(message = "单号不能为空")
+        private String code;
+    }
+
+    /**
+     * 查询重量
+     * @author will
+     * @date 2024/7/1 10:32
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WeightDTO {
+
+        /**
+         * 重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+    }
 
     /**
      * 扫描结果
@@ -49,7 +78,20 @@ public class PackageDTO implements Serializable {
          * 销售订单code
          */
         private String soCode;
-
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 是否是组包的物流商 根据wms组包配置 判断是否是已配置组包物流商
+         * true 发货物流商+中转物流商+中转渠道+店铺
+         * false 发货物流商+中转物流商+中转渠道
+         */
+        private Boolean isPackageSupplier;
+        /**
+         * 唯一值拼接 用于 isPackageSupplier
+         */
+        private String uniqueId;
         /**
          * 包裹重量
          */
@@ -121,7 +163,7 @@ public class PackageDTO implements Serializable {
         /**
          * 预报状态
          */
-        private String forcastStatus;
+        private String transferStatus;
 
         /**
          * 中转商渠道id
@@ -224,7 +266,20 @@ public class PackageDTO implements Serializable {
          * 销售订单code
          */
         private String soCode;
-
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 是否是组包的物流商 根据wms组包配置 判断是否是已配置组包物流商
+         * true 发货物流商+中转物流商+中转渠道+店铺
+         * false 发货物流商+中转物流商+中转渠道
+         */
+        private Boolean isPackageSupplier;
+        /**
+         * 唯一值拼接 用于 isPackageSupplier
+         */
+        private String uniqueId;
         /**
          * 包裹重量
          */

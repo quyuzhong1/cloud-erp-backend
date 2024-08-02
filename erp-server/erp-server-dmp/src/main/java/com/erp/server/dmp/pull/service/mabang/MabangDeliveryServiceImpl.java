@@ -35,6 +35,7 @@ import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpBomService;
 import com.erp.server.dmp.service.DmpWarehouseMappingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -79,7 +80,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
      * 拉去数据
      * @param dto
      */
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     @Override
     public void pullDataSave(RequestDTO dto) {
         log.warn("开始拉取马帮FBA发货单数据，拉取的条件：【{}】", JSONObject.toJSONString(dto));
@@ -107,7 +108,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
             }
             DeliveryEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同（已经拉取过）
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 log.warn("发货单号：{}本次拉取数据相同，不做更新", mongoDatum.getDelivery_no());
                 continue;
             }
@@ -169,7 +170,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         }
     }
 
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     @Override
     public void updateAndSaveDb(DeliveryEntity mongoDatum) {
         DmpFbaDeliveryEntity dmpDeliveryEntity = initDeliveryEntity(mongoDatum);

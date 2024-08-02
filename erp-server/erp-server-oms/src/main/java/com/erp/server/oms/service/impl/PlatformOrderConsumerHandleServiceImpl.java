@@ -3,9 +3,9 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
@@ -24,10 +24,10 @@ import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.oms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,12 +74,18 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private SysDictFeign sysDictFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
-
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
-
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private OperateLogService operateLogService;
+    @Resource
+    private SkuMappingService skuMappingService;
+    @Lazy
+    @Resource
+    private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
+
 
 
 
@@ -95,18 +101,16 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //            log.warn("已存在对应销售出库单不新增：单号={}", dto.getPlatformCode());
 //            return;
 //        }
-        // 亚马逊, 跳过MFN时，地址为空的订单
-        // 已作废的MFN订单, 地址允许为空
-        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())
-                && this.checkHasMfnOrderAndNoAddress(dto)
+        // 跳过未作废的自发货无地址的订单
+        if ( notPlatformOrderNotExistAddress(dto)
                 && null != dto.getInvalidStatus()
                 && !dto.getInvalidStatus()
         ) {
-            log.warn("亚马逊卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
+            log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
             return;
         }
 
-        SoB2cDTO.PullOrderResultDTO resultDTO = this.checkAndSaveAll(dto);
+        SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单
         Boolean hasPlatformWarehouse = mainEntity.hasPlatformWarehouseOrder();
@@ -122,15 +126,52 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
             }
         }
-        // 规则处理(分平台)
-        SoB2cHandler.handleRule(mainEntity);
+        // 平台仓订单不走任何规则
+        // 取消订单不走规则
+        if (!mainEntity.hasPlatformWarehouseOrder()
+                && !mainEntity.getIsCancel()
+                && !ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())
+        ) {
+            // 已审核过的订单不走规则
+            Integer count = operateLogService.lambdaQuery()
+                    .eq(OperateLogEntity::getBusinessId, mainEntity.getId())
+                    .eq(OperateLogEntity::getOperation, "审核操作")
+                    .count();
+            if (0 == count){
+                // 规则处理(分平台)
+                SoB2cHandler.handleRule(mainEntity);
+            }
+        }
 
         // 销售出库单处理(分平台)
         SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
+
+        //平台取消订单后自动取消预报
+        if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
+            soB2cService.autoCancelOrderForecast(mainEntity);
+        }
+
+        // 非平台
+        if (!mainEntity.hasPlatformWarehouseOrder()
+                && resultDTO.isUpdateCancel()
+                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
+                && !mainEntity.getIsIntercept()
+        ){
+            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+        }
+
+
+        //走过订单规则审核的不需要重复推送DMP，规则审核时已经推送过
+        Integer count = operateLogService.lambdaQuery()
+                .eq(OperateLogEntity::getBusinessId, mainEntity.getId())
+                .eq(OperateLogEntity::getOperation, "审核操作")
+                .count();
+        if (0 == count) {
+            //推送到DMP
+            soB2cService.syncOrderToDmp(mainEntity.getId(), SyncOperateEnum.OPERATE_UPDATE.getCode());
+        }
+
     }
-
-
-
 
 
     /**
@@ -151,8 +192,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
     public void handleRule(SoB2cEntity mainEntity) {
         //订单状态
         String billStatus = mainEntity.getBillStatus();
@@ -184,23 +225,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Transactional(rollbackFor = Exception.class)
     public SoB2cDTO.PullOrderResultDTO checkAndSaveAll(PlatformOrderDTO dto) {
         // 查询关联关系
-        List<String> platformSkuList = dto.getDetails()
-                .stream()
-                .map(PlatformOrderDetailDTO::getPlatformSkuNo)
-                .distinct()
-                .collect(Collectors.toList());
+        List<String> platformSkuList = dto.convertPlatformSkuList();
 
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         List<String> platformSpuList = new LinkedList<>();
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())){
-            platformSpuList = dto.getDetails()
-                    .stream()
-                    .map(PlatformOrderDetailDTO::getPlatformSpuNo)
-                    .distinct()
-                    .collect(Collectors.toList());
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
+            platformSpuList = dto.convertPlatformSpuList();
         }
 
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, platformSpuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), null);
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = skuMappingService.mapListingByPlatformSkuNo(platformSkuList, platformSpuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), null);
 
         // 查询当前店铺信息
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
@@ -234,9 +269,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         resultDTO.setShopWarehouseId(shopInfo.getWarehouseId());
         // 详情更新或保存
         List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo, skuList);
+
         Boolean isWarehouseEmpty = detailList.stream().filter(d -> StringUtils.isBlank(d.getWarehouseId())).count() > 0;
         resultDTO.setIsWarehouseEmpty(isWarehouseEmpty);
         resultDTO.setWarehouseName(detailList.get(MathUtil.ZERO).getWarehouseName());
+
+        if (CollectionUtils.isEmpty(detailList)){
+            // 拆分后无平台来源明细不更新
+            log.warn("[B2C订单消费] 平台订单【{}】：拆分后无平台来源明细不更新", dto.getPlatformCode());
+            return resultDTO;
+        }
+
         // 毛重(捆绑商品按拆分后计算)
         BigDecimal allNetWeight = BigDecimal.ZERO;
         //长宽高计算
@@ -245,17 +288,18 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         BigDecimal totalHeight = BigDecimal.ZERO;
         if (CollectionUtils.isNotEmpty(skuList)){
             //拆分明细
-            List<SplitSkuDTO> splitSkuDTOS = soB2cService.splitBySoDetail(detailList, skuList);
+            List<SplitSkuDTO> splitSkuDTOS = soB2cService.splitBySoDetail(detailList, skuIds, mainEntity.getCode(), true);
             //根据sku进行计算
             List<String> keyList = new ArrayList<>();
             keyList.add(CalculateSizeEnum.LENGTH.getCode());
             keyList.add(CalculateSizeEnum.WIDTH.getCode());
             keyList.add(CalculateSizeEnum.HEIGHT.getCode());
+            keyList.add(CalculateSizeEnum.GROSS_WEIGHT.getCode());
             List<DictBasicEntity> byKeyList = dictBasicService.getByKeyList(keyList);
             Map<String, String> collect = byKeyList.stream().collect(Collectors.toMap(DictBasicEntity::getType, DictBasicEntity::getValue));
-            maxLength = soB2cService.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
-            maxWidth = soB2cService.calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode()));
-            totalHeight = soB2cService.calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode()));
+            maxLength = SplitSkuDTO.calculateSplitSkuDTOLength(splitSkuDTOS,collect.get(CalculateSizeEnum.LENGTH.getCode()));
+            maxWidth = SplitSkuDTO.calculateSplitSkuDTOWidth(splitSkuDTOS,collect.get(CalculateSizeEnum.WIDTH.getCode()));
+            totalHeight = SplitSkuDTO.calculateSplitSkuDTOHeight(splitSkuDTOS,collect.get(CalculateSizeEnum.HEIGHT.getCode()));
             allNetWeight = SplitSkuDTO.calculateSplitSkuDTOGrossWeight(splitSkuDTOS, collect.get(CalculateSizeEnum.GROSS_WEIGHT.getCode()));
         }
         //物流信息更新保存
@@ -267,10 +311,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity, logisticsEntity, detailList);
 
         //客户信息
-        // 根据平台和名称判断
-        CustomerB2cEntity customerB2cEntity = customerB2cService.findByPlatformAndName(dto.getDictPlatform(), receiverEntity.getName(), SourceTypeEnum.SO_B2C.getCode());
-
-        customerB2cEntity = customerB2cService.saveOrUpdateEntity(customerB2cEntity, dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
+        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
 
         customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
 
@@ -333,5 +374,36 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             }
         });
         return splitSkuDTOS;
+    }
+
+    /**
+     * 自发货订单不存在地址
+     */
+    private boolean notPlatformOrderNotExistAddress(PlatformOrderDTO dto) {
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            return this.checkHasMfnOrderAndNoAddress(dto);
+        }
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            return this.aliExpressNotPlatformOrderNotExistAddress(dto);
+        }
+        return false;
+    }
+
+    /**
+     * 速卖通自发货订单未解密地址
+     */
+    private boolean aliExpressNotPlatformOrderNotExistAddress(PlatformOrderDTO dto) {
+        if (StrUtil.isNotBlank(dto.getLabelJson())) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
+            if (isAliexpressPlatformWarehouseOrder){
+                return false;
+            }
+            if (null == dto.getReceiver()){
+                return false;
+            }
+            return StringUtils.isNotBlank(dto.getReceiver().getFullAddress()) && dto.getReceiver().getFullAddress().contains("***");
+        }
+        return false;
     }
 }

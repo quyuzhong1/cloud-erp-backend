@@ -1,6 +1,7 @@
 package com.sdk.oms.shopify.dto;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
@@ -16,7 +17,7 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -108,9 +109,6 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setShopId(dto.getShopId());
         // 平台订单原始状态
         orderDTO.setPlatformOrderStatus(sourceOrder.getFulfillmentStatus());
-        // 平台订单原始取消状态
-        orderDTO.setIsCancel(sourceOrder.convertInvalidStatus());
-
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(sourceOrder.convertInvalidStatus());
         // 作废类型（manual手动作废，automatic自动作废）
@@ -174,8 +172,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setSourceId(sourceOrder.getOrderId());
         // 来源编码
         orderDTO.setSourceCode("");
-        // 标签json
-        orderDTO.setLabelJson("{}");
+
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
@@ -186,33 +183,55 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         List<PlatformOrderDetailDTO> details = parseDetailDto(sourceOrder);
         orderDTO.setDetails(details);
 
+        // 明细是否退款
+        boolean detailRefund = details.stream().anyMatch(PlatformOrderDetailDTO::getIsDetailRefund);
+        // 平台是否取消(全退款/明细退款视为平台取消(暂不包含部分退款)
+        Boolean isCancel = sourceOrder.convertIsCancel(detailRefund);
+        // 平台订单原始取消状态(已退款,部分退款)
+        orderDTO.setIsCancel(isCancel);
+
+        // 标签json
+        Map<String, Object> lableMap = new HashMap<>();
+        if (isCancel) {
+            lableMap.put("isRefunded", true);
+        } else {
+            lableMap.put("isRefunded", false);
+        }
+        orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+
+
         // 订单买家信息
         ShopifyCustomer customer = dto.getShopifyOrder().getCustomer();
         ShopifyAddress shippingAddress = dto.getShopifyOrder().getShippingAddress();
+        PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if (null != customer) {
-            PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
-            receiverDTO.setName(
+                    receiverDTO.setName(
                     (StringUtils.isBlank(customer.getFirstName()) ? "" : customer.getFirstName()) +
                             (StringUtils.isBlank(customer.getFirstName()) ? "" : " " + customer.getLastname())
             );
             receiverDTO.setCustomerId(StringUtils.isBlank(customer.getId())? "" : customer.getId());
-            receiverDTO.setReceiverTelNumber(StringUtils.isBlank(customer.getPhone()) ? "" :customer.getPhone());
             receiverDTO.setTelNumber(StringUtils.isBlank(customer.getPhone())? "" : customer.getPhone());
             receiverDTO.setEmail(StringUtils.isBlank(customer.getEmail()) ? "" : customer.getEmail());
-            if (null != shippingAddress){
-                receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getProvince()) ? "" : shippingAddress.getProvince());
-                receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddress1()) ? "" : shippingAddress.getAddress1());
-                receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddress2()) ? "" : shippingAddress.getAddress2());
-
-                receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
-//                receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
-                receiverDTO.setCountry(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
-                receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
-                receiverDTO.setFullAddress("");
-                receiverDTO.setPostCode(shippingAddress.getZip());
-            }
             orderDTO.setReceiver(receiverDTO);
         }
+
+        if (null != shippingAddress){
+            if (StringUtils.isBlank(receiverDTO.getName())){
+                receiverDTO.setName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
+            }
+            receiverDTO.setProvinceName(StringUtils.isBlank(shippingAddress.getProvince()) ? "" : shippingAddress.getProvince());
+            receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddress1()) ? "" : shippingAddress.getAddress1());
+            receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddress2()) ? "" : shippingAddress.getAddress2());
+
+            receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
+//                receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
+            receiverDTO.setReceiverTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" :shippingAddress.getPhone());
+            receiverDTO.setCountry(StringUtils.isBlank(shippingAddress.getCountryCode()) ? "" : shippingAddress.getCountryCode());
+            receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
+            receiverDTO.setFullAddress("");
+            receiverDTO.setPostCode(shippingAddress.getZip());
+        }
+        orderDTO.setReceiver(receiverDTO);
 
         // 订单财务信息
 
@@ -230,6 +249,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setFinances(financeDTO);
         // 设置下载其他详情
         orderDTO.setDownloadStatus(0);
+        //卖家订单编号
+        orderDTO.setSellerOrderCode(sourceOrder.getName());
         return orderDTO;
 
     }
@@ -238,15 +259,31 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
      * 批量转换明细
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(ShopifyOrder sourceOrder) {
+        // 存在退款的明细ID
+        Set<String> refundedLineItemIds = new HashSet<>();
+        List<ShopifyRefund> refunds = sourceOrder.getRefunds();
+        if (!CollectionUtils.isEmpty(refunds)){
+            List<ShopifyRefundLineItem> refundLineItem = refunds.stream().map(ShopifyRefund::getRefundLineItems)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(refundLineItem)){
+                List<String> sourceFundedLineItemIds = refundLineItem.stream()
+                        .map(ShopifyRefundLineItem::getLineItemId)
+                        .distinct()
+                        .collect(Collectors.toList());
+                refundedLineItemIds.addAll(sourceFundedLineItemIds);
+            }
+        }
+
         return sourceOrder.getLineItems().stream()
-                .map(e -> intPlatformOrderDetailDTO(e, sourceOrder))
+                .map(e -> intPlatformOrderDetailDTO(e, sourceOrder, refundedLineItemIds))
                 .collect(Collectors.toList());
     }
 
     /**
      * 转换明细
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(ShopifyLineItem item, ShopifyOrder sourceOrder) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(ShopifyLineItem item, ShopifyOrder sourceOrder, Set<String> refundedLineItemIds) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
         // 图片URL
         detailDTO.setImageUrl("");
@@ -258,7 +295,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 平台sku编号
         detailDTO.setPlatformSkuNo(item.getSku());
         //平台产品id
-        detailDTO.setPlatformSpuNo(item.getVariantId());
+        detailDTO.setPlatformSpuNo(item.getProductId());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
@@ -290,6 +327,15 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseOrgName("");
         // 库位
         detailDTO.setWarehouseLocation("");
+        // 当前明细标签
+        Map<String, Object> lableMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(item.getLineItemId())) {
+            lableMap.put("isRefunded", true);
+            detailDTO.setIsDetailRefund(true);
+        } else {
+            lableMap.put("isRefunded", false);
+        }
+        detailDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
         return detailDTO;
     }
 }

@@ -2,6 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -11,13 +12,17 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -46,7 +51,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 同步金蝶采购退货单
+ * 退货入库单同步金蝶采购退货单
  * @Author Luo_WG
  * @Date 2023/4/24 11:22
  **/
@@ -85,11 +90,11 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void syncDataToKingdee(PoReturnEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(PoReturnEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
             resultMap.put("returnType", ReturnOrderSourceEnum.QC.getKingdeeCode());
-            return;
+            return null;
         } else {
             resultMap.put("returnType", ReturnOrderSourceEnum.OTHER.getKingdeeCode());
         }
@@ -117,8 +122,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
+            return saveTask(entity,operate,resultMap);
         }
 
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReturnOrgId(),entity.getPurchaseOrgId()));
@@ -193,10 +197,13 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //退货原因
         resultMap.put("purchaseOrderCode", entity.getPurchaseOrderCode());
 
+        //采购订单如果是委外采购订单则推送委外退货订单
+        resultMap.put("orderType",purchaseOrderEntity.getType());
+
         //退货单明细
         List<PoReturnDetailEntity> detailList = poReturnDetailService.getDetailByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
-            return;
+            throw new ServiceException("未找到采购退货明细");
         }
 
         //获取sku的id集合
@@ -207,7 +214,12 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = detailList.stream().map(PoReturnDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+        
+        //委外订单查询
+        List<String> subDetailIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(subDetailIdList);
+
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getReturnWarehouseId());
         List<JSONObject> list = new ArrayList<>();
@@ -231,7 +243,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             jsonObject.set("returnWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
             //退货备注
             jsonObject.set("remark", detail.getRemark());
-            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
             //采购数量
             jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
             //退款单价
@@ -240,6 +252,17 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
             //采购单号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
+
+            //委外订单信息
+            if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(purchaseOrderEntity.getType())) {
+                //委外订单单号
+                jsonObject.set("subCode", purchaseOrderEntity.getSourceCode());
+
+                //金蝶明细id
+                String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(purchaseOrderDetailEntity.getSourceDetailId(), obj.getId())).map(SubcontractOrderDetailEntity::getKingdeeDetailId).findFirst().orElse("");
+                jsonObject.set("subKingdeeDetailId", subKingdeeDetailId);
+            }
+
             if (StringUtils.isNotBlank(entity.getPurchaseOrderCode())) {
                 List<Map<String,Object>> mapList = new ArrayList<>();
                 Map<String,Object> entityMap = new HashMap<>();
@@ -256,7 +279,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         resultMap.put("list",list);
 
         //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,resultMap);
     }
 
     /**
@@ -267,7 +290,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (PoReturnEntity entity, String operate, Map<String, Object> resultMap) {
+    private DmpPushTaskEntity saveTask (PoReturnEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
         dmpSyncTaskDTO.setSourceId(entity.getId());
@@ -280,6 +303,6 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
         dmpSyncTaskDTO.setParentId(entity.getPurchaseOrderId());
-        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
     }
 }

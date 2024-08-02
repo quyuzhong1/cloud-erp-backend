@@ -129,7 +129,6 @@
         FROM warehouse_location_move_detail wlmd
         INNER JOIN warehouse_location_move wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
         WHERE wlmi.is_deleted = FALSE
-        AND wlmi.invalid_status = FALSE
         <if test="id != null and id != ''">
             and wlmd.main_id = #{id}
         </if>
@@ -145,7 +144,8 @@
         wlmi.approve_user_name,
         wlmi.create_user_name,
         wlmi.create_time,
-        wlmi.approve_time
+        wlmi.approve_time,
+        wlmi.warehouse_id
         FROM warehouse_location_move wlmi
         WHERE wlmi.is_deleted = FALSE
         <if test="id != null and id != ''">

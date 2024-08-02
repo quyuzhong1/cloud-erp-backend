@@ -46,5 +46,25 @@
         group by ol.module_type,ol.business_id,ol.create_time,ol.field_name
         order by ol.create_time desc
     </select>
+    <select id="listLastLogBySoIds" resultType="com.erp.model.oms.entity.OperateLogEntity">
+        SELECT *
+        FROM (
+                 SELECT *,
+                        ROW_NUMBER() OVER (PARTITION BY business_id ORDER BY create_time DESC) AS row_num
+                 FROM operate_log
+                 WHERE
+                    is_deleted = false
+                    <if test="soIds != null and soIds.size > 0">
+                        and business_id in
+                        <foreach collection="soIds" item="item" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>
+                    </if>
+                    <if test="operation !=null and operation != ''">
+                        and operation = #{operation}
+                    </if>
+             ) AS subquery
+        WHERE row_num = 1
+    </select>
 
 </mapper>

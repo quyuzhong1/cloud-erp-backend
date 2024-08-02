@@ -113,7 +113,7 @@ public class ImlLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     private void logAndReturnSuccess(ChanelQueryVO chanelQueryVO, RequestStatusEnums status,
                                      ImlResponse<?> imlResponse) {
-        logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+        logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                 chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(),
                 getPlatForm().getCode(), status.getCode(), JSONUtil.toJsonStr(chanelQueryVO),
                 JSONUtil.toJsonStr(imlResponse));
@@ -121,7 +121,7 @@ public class ImlLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     private void logAndReturnFailure(ChanelQueryVO chanelQueryVO, RequestStatusEnums status,
                                      Object failureDetails) {
-        logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+        logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                 chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(),
                 getPlatForm().getCode(), status.getCode(), JSONUtil.toJsonStr(chanelQueryVO),
                 JSONUtil.toJsonStr(failureDetails));

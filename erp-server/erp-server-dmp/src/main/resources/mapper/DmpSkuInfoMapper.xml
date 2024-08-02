@@ -1,14 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.dmp.pull.mapper.DmpSkuInfoMapper">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpSkuInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpSkuInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="platform_create_time" property="platformCreateTime" />
+       <result column="platform_update_time" property="platformUpdateTime" />
+       <result column="spu_id" property="spuId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="name" property="name" />
+       <result column="default_cost" property="defaultCost" />
+       <result column="status" property="status" />
+       <result column="brand_name" property="brandName" />
+       <result column="parent_category_name" property="parentCategoryName" />
+       <result column="category_name" property="categoryName" />
+       <result column="sell_price" property="sellPrice" />
+       <result column="declare_price" property="declarePrice" />
+       <result column="charge_id" property="chargeId" />
+       <result column="charge_name" property="chargeName" />
+       <result column="company_id" property="companyId" />
+       <result column="company_name" property="companyName" />
+       <result column="prodcut_property" property="prodcutProperty" />
+       <result column="gross_weight" property="grossWeight" />
+       <result column="package_height" property="packageHeight" />
+       <result column="package_width" property="packageWidth" />
+       <result column="package_length" property="packageLength" />
+       <result column="main_id" property="mainId" />
+       <result column="image_urls" property="imageUrls" />
+       <result column="input_task_id" property="inputTaskId" />
+       <result column="convert_id" property="convertId" />
+       <result column="next_level_id" property="nextLevelId" />
+       <result column="unique_encrypt" property="uniqueEncrypt" />
+       <result column="data_encrypt" property="dataEncrypt" />
+    </resultMap>
 
+    <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,sku_no,name_cn,
-        name_en,default_cost,status,
-        sku_create_time,sku_update_time,brand_name,
-        parent_category_name,category_name,sale_price,
-        declare_price,developer_id,developer_name
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        platform_create_time, platform_update_time, spu_id, sku_id, sku_no, name, default_cost, status, brand_name, parent_category_name, category_name, sell_price, declare_price, charge_id, charge_name, company_id, company_name, prodcut_property, gross_weight, package_height, package_width, package_length, main_id, image_urls, input_task_id, convert_id, next_level_id, unique_encrypt, data_encrypt
     </sql>
+
+
 </mapper>

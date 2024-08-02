@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.anno.LogSystemModule;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
@@ -13,6 +14,7 @@ import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -121,12 +123,6 @@ public class LogisticsFeignController {
         return logisticsChannelService.listChannelInfoById(channelIds);
     }
 
-
-    @PostMapping("/getSignShipInfoByChannelById")
-    public LogisticsChannelDTO.SignShipDTO getSignShipInfoByChannelById(@RequestBody String channelId) {
-        return logisticsChannelService.getSignShipInfoByChannelId(channelId);
-    }
-
     @GetMapping("/getLogisticsChannelConstraint")
     public LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(@RequestParam(value = "channelId")String channelId, @RequestParam(value = "country")String country) {
         return logisticsChannelService.getLogisticsChannelConstraint(channelId,country);
@@ -149,5 +145,14 @@ public class LogisticsFeignController {
                                                                          @RequestParam("dictPlatform") String dictPlatform
     ) {
         return logisticsChannelService.getScaleChannelByChannelById(logisticsChannelId, dictPlatform);
+    }
+    /**
+     * 根据地址类型获取地址列表
+     *
+     * @return
+     */
+    @PostMapping("/listAddressByType")
+    public List<LogisticsAddressDTO.ListDTO> listAddressByType(@RequestBody @Validated LogisticsAddressDTO.AddressByTypeDTO dto) {
+        return logisticsAddressService.listAddressByType(dto);
     }
 }

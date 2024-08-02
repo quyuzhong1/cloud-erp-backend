@@ -1,11 +1,16 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
 
 /**
@@ -19,12 +24,18 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
     /**
      * 处理状态：
      * -1=无需处理(已有订单直接处理)
-     * 0=待下载订单(检查订单下载处理)
-     * 1=待处理销售出库单(订单已下载处理)
-     * 2=已处理
+     * 0=待下载主订单(检查主订单下载处理)
+     * 1=待处理下载订单明细(订单主体已下载处理)
+     * 2=待处理销售出库单(订单所有信息已下载处理)
+     * 3=已处理
      */
     @Panno(findType = PannoEnum.EQ,field = "handleStatus")
     private String handleStatus;
+
+    /**
+     * 依赖订单的下载状态:0=未下载, 1=已下载
+     */
+    private Integer downloadStatus;
 
     @Panno(findType = PannoEnum.EQ,field = "amazonOrderId")
     private String amazonOrderId;
@@ -131,4 +142,57 @@ public class PlatformAmazonFulfilledShipmentsDTO extends CleanBaseDTO {
     private String fulfillmentChannel;
 
     private String salesChannel;
+    /**
+     * 亚马逊账号代号
+     */
+    @Panno(findType = PannoEnum.EQ, field = "platformShopCode")
+    private String platformShopCode;
+
+    /**
+     * 仓库id
+     */
+    @Panno(findType = PannoEnum.EQ,field = "warehouseId")
+    private String warehouseId;
+
+    /**
+     * 仓库名称
+     */
+    @Panno(findType = PannoEnum.EQ,field = "warehouseName")
+    private String warehouseName;
+
+    /**
+     * 库存组织ID
+     */
+    @Panno(findType = PannoEnum.EQ,field = "warehouseOrgId")
+    private String warehouseOrgId;
+
+    /**
+     * 库存组织名称
+     */
+    @Panno(findType = PannoEnum.EQ,field = "warehouseOrgName")
+    private String warehouseOrgName;
+
+
+    public void checkAndSetAllDateLocale(String timeZone) {
+        if (StringUtils.isBlank(timeZone)){
+            return;
+        }
+        if (StringUtils.isNotBlank(this.shipmentDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.shipmentDate);
+            this.setShipmentDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
+        }
+        if (StringUtils.isNotBlank(this.paymentsDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.paymentsDate);
+            this.setPaymentsDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
+        }
+        if (StringUtils.isNotBlank(this.purchaseDate)){
+            OffsetDateTime parseDate = OffsetDateTime.parse(this.purchaseDate);
+            this.setPurchaseDateLocale(parseDate.atZoneSameInstant(ZoneId.of(timeZone)).toString());
+        }
+    }
+
+
+    public String convertOrderIdWithPlatformShopCode(){
+        return StrUtil.format("{}_{}", this.amazonOrderId, this.platformShopCode);
+    }
 }

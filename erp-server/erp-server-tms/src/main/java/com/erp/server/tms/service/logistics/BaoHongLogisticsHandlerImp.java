@@ -23,7 +23,6 @@ import com.sdk.tms.baohong.api.order.SmRow;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -47,16 +46,6 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     private LogisticsOperateService logisticsOperateService;
 
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
-        return super.getLogisticsAuthConfig(authId);
-    }
-
-    @Override
-    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(String platform) {
-        return super.getLogisticsAuthConfigByPlatform(platform);
-    }
-
-    @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
         //主信息
@@ -75,7 +64,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
                 responseVO.failure(LogisticsPlatformEnum.BAO_HONG.getName(), logisticsOrderVO.getDeliveryNo(), result.getMessage());
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO),result.getMessage() );
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO),result.getMessage(), false);
 
                 return failure(responseVO);
             }else{
@@ -88,7 +77,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
 
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(""));
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(""), false);
                 return success(responseVO);
             }
 
@@ -97,7 +86,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
             log.error("保宏创建订单异常：{}", e.getMessage());
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e), true);
 
             return failure(responseVO);
         }
@@ -137,7 +126,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
             for(LogisticsGetLabelVO logisticsGetLabelVO : logisticsQueryVOList){
                 BaoHongResponse<String> response = baoHongService.printLabel(logisticsGetLabelVO.getDeliveryNo());
                 if(isFailure(response)){
-                    logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                    logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                             logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(response));
                     return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,response.getMessage());
@@ -148,7 +137,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
                 logisticsPrintLabelResponse.setTransportNoList(Collections.singletonList(logisticsGetLabelVO.getTransportNo()));
                 logisticsPrintLabelResponse.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
                 resultList.add(logisticsPrintLabelResponse);
-                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(response));
             }
@@ -170,12 +159,12 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
 
             BaoHongResponse<List<SmRow>> response = baoHongService.getShippingMethodList();
             if (isFailure(response)) {
-                logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(response));
                 return failure("授权失败:" + response.getMessage());
             } else {
-                logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.BAO_HONG.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(response));
                 List<LogisticsSaleChannelEntity> channelEntityList = BaoHongConverter.INSTANCE.channelConvert(response.getData());

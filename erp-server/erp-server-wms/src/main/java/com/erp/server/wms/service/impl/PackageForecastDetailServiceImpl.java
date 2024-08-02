@@ -8,6 +8,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.tms.entity.SettingForecastEntity;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -100,15 +102,6 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         List<PackageForecastDetailEntity> dbList = this.listDbByMainId(mainId);
         //删除的信息
         List<PackageForecastDetailEntity> deleteList = dbList.stream().filter(s -> !idList.contains(s.getId())).collect(Collectors.toList());
-        //删除的销售订单id 集合
-        List<String> deleteSoIdList = deleteList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockList = soOutstockService.listBySoIds(deleteSoIdList);
-        String soCode= soOutstockList.stream ().filter(s->ApproveStatusEnum.APPROVE.equals(s.getApproveStatus())).
-                map(SoOutstockEntity::getSoCode).collect(Collectors.joining(","));
-        if (StringUtils.isNotBlank(soCode)) {
-            throw new ServiceException(soCode + "销售订单已出库,不能删除");
-        }
-
         //删除的id
         List<String> deleteIdList = deleteList.stream().map(PackageForecastDetailEntity::getId).collect(Collectors.toList());
         this.removeByIds(deleteIdList);
@@ -292,16 +285,24 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     }
 
     @Override
-    public List<PackageForecastDetailEntity> listBySoIdList(List<String> soIdList) {
+    public List<PackageForecastDTO.ExportViewDTO> listPackageForecastBySoIdList(List<String> soIdList) {
         if (CollectionUtils.isEmpty(soIdList)) {
-            return  Collections.EMPTY_LIST;
+            return  Collections.emptyList();
         }
-        return  lambdaQuery().in(PackageForecastDetailEntity::getSoId,soIdList).list();
+        return baseMapper.listPackageForecastBySoIdList(soIdList);
     }
 
     @Override
     public List<PackageForecastDetailEntity> listDbByMainId(String mainId) {
         return this.lambdaQuery().eq(PackageForecastDetailEntity::getMainId, mainId).list();
+    }
+
+    @Override
+    public List<PackageForecastDetailEntity> listDbByMainIds(List<String> mainIds) {
+        if(CollectionUtils.isEmpty(mainIds)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(PackageForecastDetailEntity::getMainId, mainIds).list();
     }
 
 

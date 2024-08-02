@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -22,7 +23,10 @@ import com.erp.model.wms.enums.SubcontractIssueTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.SubcontractIssueDetailMapper;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.SubcontractIssueDetailService;
+import com.erp.server.wms.service.SubcontractIssueService;
+import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -49,10 +53,6 @@ import java.util.stream.Collectors;
 public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<SubcontractIssueDetailMapper, SubcontractIssueDetailEntity> implements SubcontractIssueDetailService {
     @Autowired
     private OperateLogService operateLogService;
-
-    @Autowired
-    private CommonService commonService;
-
     @Autowired
     private WarehouseService warehouseService;
 
@@ -91,7 +91,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
             throw new ServiceException("委外发料明细单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "委外发料明细单" , mainId);
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外发料明细单" , mainId);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), mainId, "新增操作");
     }
 

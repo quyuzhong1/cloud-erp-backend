@@ -13,11 +13,9 @@ import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 销售订单工具类
@@ -288,6 +286,7 @@ public class SoUtils {
         headMap.put("platformSkuNo", "客户SKU");
         headMap.put("qty", "销售数量");
         headMap.put("scarceQty", "缺货数量");
+        headMap.put("virtualScarceQty", "虚拟仓缺货数量");
         headMap.put("availableQty", "可出数量");
         headMap.put("deliveryQty", "已出库数量");
         headMap.put("waitQty", "剩余未出数量");

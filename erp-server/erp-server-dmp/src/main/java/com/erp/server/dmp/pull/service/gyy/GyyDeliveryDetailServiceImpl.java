@@ -19,8 +19,8 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -28,6 +28,7 @@ import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -56,13 +57,13 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     private MongoService mongoService;
 
     @Resource
-    private MQProducerService<DmpDeliveryDetailInfoEntity> mqProducerService;
+    private MQProducerService<BiDeliveryDetailInfoEntity> mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<GyyDeliveryDetailEntity> gyyDeliveryDetailEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(gyyDeliveryDetailEntityList)) {
@@ -83,7 +84,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             }
             GyyDeliveryDetailEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(deliveryEntity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , deliveryEntity)) {
                 log.warn("管易发货订单 mongo数据无变化无需更新 deliveryEntity={}", JSONUtil.toJsonStr(deliveryEntity));
                 continue;
             }
@@ -119,9 +120,9 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(GyyDeliveryDetailEntity deliveryEntity) {
-        DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(deliveryEntity);
+        BiDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(deliveryEntity);
         OrderMongoDTO updateDto = new OrderMongoDTO(deliveryEntity.get_id());
         if(null == deliveryDetailInfo){
             deliveryEntity.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -178,11 +179,11 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    public DmpDeliveryDetailInfoEntity initOrderInfoEntity(GyyDeliveryDetailEntity gyyDeliveryDetailEntity){
+    public BiDeliveryDetailInfoEntity initOrderInfoEntity(GyyDeliveryDetailEntity gyyDeliveryDetailEntity){
         if (GyyOrderInfoServiceImpl.assertOrgIsVijim(gyyDeliveryDetailEntity.getShopName())){
             return null;
         }
-        DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
+        BiDeliveryDetailInfoEntity deliveryDetailInfoEntity = new BiDeliveryDetailInfoEntity();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //单据编号
         deliveryDetailInfoEntity.setBillNo(gyyDeliveryDetailEntity.getCode());
@@ -284,10 +285,10 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     /**
      * 解析出库详情商品数据
      **/
-    public List<DmpDeliveryDetailItemEntity> initOrderItem(GyyDeliveryDetailEntity gyyDeliveryDetailEntity) {
-        List<DmpDeliveryDetailItemEntity> orderItemList = new ArrayList<>();
+    public List<BiDeliveryDetailItemEntity> initOrderItem(GyyDeliveryDetailEntity gyyDeliveryDetailEntity) {
+        List<BiDeliveryDetailItemEntity> orderItemList = new ArrayList<>();
         gyyDeliveryDetailEntity.getDetails().stream().forEach(itemEntity -> {
-            DmpDeliveryDetailItemEntity dmpReturnOrderItemEntity = new DmpDeliveryDetailItemEntity();
+            BiDeliveryDetailItemEntity dmpReturnOrderItemEntity = new BiDeliveryDetailItemEntity();
             //商品id
             dmpReturnOrderItemEntity.setItemId(itemEntity.getItemId());
             //平台sku

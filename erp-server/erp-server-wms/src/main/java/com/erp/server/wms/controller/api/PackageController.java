@@ -1,10 +1,10 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.PackageDTO;
 import com.erp.server.wms.service.PackageService;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +36,20 @@ public class PackageController extends BaseController {
 
 
     /**
+     * 查询发货单的称重重量
+     * @author will
+     * @date 2024/7/1 10:35
+     * @param dto
+     * @return ApiResult<WeightDTO>
+     */
+    @PostMapping("/getOrderWeight")
+    public ApiResult<PackageDTO.WeightDTO> getOrderWeight(@RequestBody @Validated PackageDTO.WeightParamDTO dto) {
+        PackageDTO.WeightDTO weightDTO = packageService.getOrderWeight(dto);
+        return success(weightDTO);
+    }
+
+
+    /**
      * 扫描
      * @param
      * @return
@@ -56,6 +70,7 @@ public class PackageController extends BaseController {
      * @return
      */
     @PostMapping("/merge")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "组包合并出库，ids:{dto.ids}")
     public ApiResult<List<BatchResultDTO>> merge(@RequestBody @Validated PackageDTO.MergePackageDTO dto) {
         List<BatchResultDTO> result = packageService.mergePackage(dto);
         return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);

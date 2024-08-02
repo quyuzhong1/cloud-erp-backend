@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -11,11 +12,15 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cRefCategoryEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.SoB2cRefCategoryMapper;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.OrderCategoryDetailService;
+import com.erp.server.oms.service.SoB2cRefCategoryService;
+import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -39,9 +44,7 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
     @Resource
     private OperateLogService operateLogService;
 
-    @Resource
-    private CommonService commonService;
-
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
 
@@ -58,6 +61,7 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(List<String> categoryIdList, String mainId) {
         List<SoB2cRefCategoryEntity> categoryList = this.listByMainIds(Arrays.asList(mainId));
         //删除原有分类
@@ -80,7 +84,7 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
         String oldValue = categoryList.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
         String newValue = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
         if (!StrUtil.equals(oldValue,newValue)) {
-            operateLogService.addModuleOperateLog(StrUtil.format("用户【{}】编辑单号为【{}】的【B2C销售订单表】单据编辑了【分类信息】由[{}]变更为[{}]", commonService.getUserInfo().getUserName(), soB2cEntity.getCode(), oldValue, newValue), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "编辑操作");
+            operateLogService.addModuleOperateLog(StrUtil.format("用户【{}】编辑单号为【{}】的【B2C销售订单表】单据编辑了【分类信息】由[{}]变更为[{}]", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), oldValue, newValue), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "编辑操作");
         }
         return update;
     }

@@ -7,8 +7,10 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -79,10 +81,10 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
 
     /**
      * 入库预报
-     * @param id
+     * @param  ids
      * @return
      */
-    BatchResultDTO instockForcast(String id);
+    List<BatchResultDTO> instockForcast(List<String> ids);
 
     /**
      * 导出
@@ -126,7 +128,7 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @param logisticsPlatform
      * @return
      */
-    PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform);
+    PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform, String shopId);
 
     /**
      * 获取组包订单 更新订单明细
@@ -137,8 +139,18 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
     /**
      * 更新订单状态信息
      * @param packageForecastEntity
-     * @param alExpressHandoverBase
      */
-    void queryAliExpressInfo(PackageForecastEntity packageForecastEntity, PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase);
+    void queryAliExpressInfo(PackageForecastEntity packageForecastEntity);
 
+    /**
+     * 组包更新其他信息
+     */
+    void handleMergePackageDeliveryOther(String soId, SoB2cDeliveryEntity curDeliveryEntity);
+
+    /**
+     * 根据组包id获取揽收地址
+     * @param ids
+     * @return
+     */
+    List<LogisticsAddressDTO.ListDTO> listAddressByForecastIds(List<String> ids);
 }

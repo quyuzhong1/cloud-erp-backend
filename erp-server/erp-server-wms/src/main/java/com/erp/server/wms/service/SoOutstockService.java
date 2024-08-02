@@ -1,24 +1,28 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -129,7 +133,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     Boolean delete(List<String> ids);
 
-    
+
     /**
      * 作废
      * @author yl
@@ -196,7 +200,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param resultList
      * @return java.lang.Boolean
      */
-    Boolean addPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList);
+    Boolean addB2bPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList);
 
     
     /**
@@ -279,6 +283,17 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return void
      */
     void handleKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId);
+
+    /**
+     * 金蝶同步到系统，不单独事务
+     * @author yl
+     * @date 2023-07-21 14:44
+     * @param soOutstock 销售出库单
+     * @param detailList 销售出库详情
+     * @param flagId  已存在的flagId
+     * @return void
+     */
+    void handleNewKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId);
 
     /**
      * PDA:分页列表
@@ -412,8 +427,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
     List<SoOutstockEntity> listByAdvanceQuery(AdvanceQueryContainer container);
 
+
     /**
      * 检查和生成销售出库单
+     *
+     * @param generateB2cDTO 根据销售订单生成的销售出库单DTO != 平台的销售出库单
+     * @param dto 平台销售出库单信息
+     * @param soB2cEntity B2C 销售订单
      *
      * @author Jim
      * @date 2024-03-07
@@ -428,66 +448,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     Boolean defaultHandleRetry(SoB2cEntity soB2c, List<SoB2cEntity> instantList);
 
-
-
-    /**
-     * 装箱
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:52
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-    String packingSave(WmsCartonDTO.WmsCartonAdd dto);
-
-    /**
-     * 装箱详情
-     * @Author Luo_WG
-     * @Date 2023/11/28 17:44
-     * @param id
-     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
-     **/
-    WmsCartonDTO.WmsCartonView packingView(String id);
-
-    /**
-     * 装箱清单
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:52
-     * @param id
-     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
-     **/
-    WmsCartonDTO.ListPackingDTO listPacking(String id);
-
-    /**
-     * 导出装箱清单Excel
-     * @param dto
-     * @param response
-     */
-    void exportPacking(SoOutstockDTO.ExportDTO dto, HttpServletResponse response);
-
-    /**
-     * 下载装箱模板
-     * @param response
-     */
-    void downloadPackingTemplate(HttpServletResponse response);
-
-    /**
-     * 导入装箱数据
-     * @param excelFile
-     * @param response
-     * @return
-     */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
-
-    /**
-     * 据主表id分组查询发货单已包装发货及待装箱数
-     * @description
-     * @param id
-     * @return
-     * @date 2024-03-26 14:10
-     * @author Lambda
-     */
-    List<WmsCartonDTO.GroupSkuDTO> listGroupSkuById(String id);
-
     List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
@@ -495,6 +455,8 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto);
 
     List<SoOutstockEntity> listByCodes(List<String> codes);
+
+    Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
     /**
      * @description: 重新生成销售出库单
      * @author Will
@@ -503,4 +465,69 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return Boolean
      */
     Boolean afreshGenerateB2cOutstock(List<String> ids);
+
+    void updateRemarkBySoId(String id,String remark);
+
+    /**
+     * 检查销售订单是否已生成销售出库单
+     * @param soCode 销售单号
+     * @param sourceType 来源类型
+     * @param orderType 订单类型
+     * @return true=已存在
+     */
+    boolean checkExist(String soCode, String sourceType, String orderType);
+
+    /**
+     * 第三方仓生成销售出库单
+     */
+    void thirdWarehouseCheckAndGenerate(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformOutboundDTO dto);
+
+
+    /**
+     * 新增平台仓B2C销售出库单
+     */
+    Boolean generatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> generateSourceDetailList);
+
+    /**
+     * 更新平台仓B2C销售出库单
+     */
+
+    Boolean updatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO,
+                                   PlatformSoOutStockDTO dto,
+                                   SoB2cEntity soB2cEntity,
+                                   Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList,
+                                   Map<String, SoOutstockEntity> mainEntityMap,
+                                   Map<String, SoOutstockDetailEntity> detailEntityListMap
+    );
+
+    /**
+     * 检查清理历史销售出库单异常信息
+     */
+    void checkAndDeletePlatformB2cOutStock(List<PlatformSoOutStockDetailDTO> existSourceDetailList, SoB2cEntity soB2cEntity, Collection<SoOutstockDetailEntity> detailEntityList);
+
+    /**
+     * 停止更新销售出库单数据的日期
+     */
+    LocalDate getStopSoOutStockDate();
+
+    /**
+     * 更新主表和明细
+     */
+    void updateMainAndDetail(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> list);
+    /**
+     * 根据来源id获取未作废且未删除的数据
+     *
+     * @param id id
+     * @return
+     */
+    int countNotVoided(String id);
+
+    /**
+     * 删除直接调拨单
+     * @author will
+     * @date 2024/7/22 11:27
+     * @param list
+     */
+    void deleteTransferInfo(List<SoOutstockEntity> list);
+
 }

@@ -3,6 +3,7 @@ package com.erp.model.tms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -68,8 +69,13 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
     /**
     * 出库状态 dict_basic：type=transferOutstockStatus
     */
-    @TableField("outstock_status")
-    private String outstockStatus;
+//    @TableField("outstock_status")
+//    private String outstockStatus;
+    /**
+     * 出库状态名称
+     */
+    @TableField(exist = false)
+    private String outstockStatusName;
     /**
     * 中转状态 dict_basic：type=transferStatus
      * enum :TransferLogisticsStatusEnum
@@ -77,10 +83,20 @@ public class TransferDeclareDetailEntity extends BaseEntity<TransferDeclareDetai
     @TableField("transfer_status")
     private String transferStatus;
     /**
+     * 中转状态名称
+     */
+    @TableField(exist = false)
+    private String transferStatusName;
+    /**
      * 上传状态（订单）dict_basic：type=transferDeclareUploadStatus
      */
     @TableField("order_upload_status")
     private String orderUploadStatus;
+    /**
+     * 上传状态名称
+     */
+    @TableField(exist = false)
+    private String orderUploadStatusName;
     /**
      * 失败原因
      */

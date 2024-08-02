@@ -2,12 +2,12 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
@@ -31,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -47,19 +46,12 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
     private SrmDeliveryOrderFeign srmDeliveryFeign;
 
     @Resource
-    private SupplierFeign supplierFeign;
-
-    @Resource
-    private CommonService commonService;
-
-    @Resource
     private WarehouseReceiveService warehouseReceiveService;
 
     @Resource
     private SysUserFeign sysUserFeign;
     @Override
     public Boolean export(DeliveryOrderDTO.ParamDTO dto, HttpServletResponse response) {
-        dto.setSupplierIdList(supplierFeign.listByPurchaseUserId(commonService.getUserInfo().getUid()).stream().map(BaseEntity::getId).collect(Collectors.toList()));
         List<DeliveryOrderExportExcelDTO> resultList = srmDeliveryFeign.getExportList(dto);
         String fileName = "供应商送货单";
         try {
@@ -73,7 +65,6 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> generateReceive(DeliveryOrderDTO.GenerateDTO dto) {
         List<DeliveryOrderDTO.GenerateReceiveDTO> generateReceiveDTOList = dto.getGenerateReceiveDTOList();
         Map<String,List<DeliveryOrderDTO.GenerateReceiveDTO>> generateReceiveDTOMap = generateReceiveDTOList.stream().collect(Collectors.groupingBy(DeliveryOrderDTO.GenerateReceiveDTO::getId));
@@ -87,6 +78,7 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
         Map<String,List<DeliveryOrderDetailEntity>> detailEntityGroupMap = detailEntityList.stream().collect(Collectors.groupingBy(DeliveryOrderDetailEntity::getMainId));
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         //遍历生成采购收货单
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         generateReceiveDTOMap.forEach((key,value)->{
             DeliveryOrderDTO.GenerateReceiveDTO firstDTO = value.get(0);
             BatchResultDTO resultDTO = new BatchResultDTO();
@@ -94,37 +86,35 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
             DeliveryOrderEntity deliveryOrderEntity = deliveryOrderMap.get(key);
             resultDTO.setCode(deliveryOrderEntity.getCode());
             resultDTO.setId(deliveryOrderEntity.getId());
-            if(StringUtils.isNotBlank(deliveryOrderEntity.getReceiptStatus())){
-                resultDTO.setSuccess(false);
-                resultDTO.setMsg("收货状态不为空，不可下推收货单");
-                return;
-            }
             //设置收货数量和赠品数量
             for(DeliveryOrderDTO.GenerateReceiveDTO generateReceiveDTO : value){
                 DeliveryOrderDetailEntity detailEntity = detailEntityMap.get(generateReceiveDTO.getDetailId());
                 detailEntity.setReceiveQty(generateReceiveDTO.getReceiveQty());
                 detailEntity.setGiftReceiveQty(generateReceiveDTO.getGiftReceiveQty());
+
                 if(detailEntity.getReceiveQty() > detailEntity.getDeliveryQty() || detailEntity.getGiftReceiveQty() > detailEntity.getGiftQty()){
                     resultDTO.setSuccess(false);
                     resultDTO.setMsg(StrUtil.format("sku:【{}】，收货数量不可超过发货数量",detailEntity.getSkuNo()));
                     return;
                 }
+                if(StringUtils.isNotBlank(detailEntity.getReceiptStatus())){
+                    resultDTO.setSuccess(false);
+                    resultDTO.setMsg(StrUtil.format("sku:{}，收货状态不为空，不可下推收货单",detailEntity.getSkuNo()));
+                    return;
+                }
+                detailEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode());
+                detailEntity.setReceiveUserId(loginUser.getUid());
+                detailEntity.setReceiveUserName(loginUser.getUserName());
             }
-            LoginUser loginUser = commonService.getUserInfo();
-            deliveryOrderEntity.setReceiveUserId(loginUser.getUid());
-            deliveryOrderEntity.setReceiveUserName(loginUser.getUserName());
-            deliveryOrderEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode());
             //新增采购收货
-            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(deliveryOrderEntity.getReceiveUserId());
+            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(loginUser.getUid());
             List<DeliveryOrderDetailEntity> detailEntityGroupList = detailEntityGroupMap.get(key);
             WarehouseReceiveDTO.AddDTO addDTO = SupplierDeliveryConverter.INSTANCE.deliveryToReceiveConvert(deliveryOrderEntity,detailEntityGroupList);
             addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
             addDTO.setGenerateByDelivery(true);
+            addDTO.setReceiveUserId(loginUser.getUid());
             if(StringUtils.isNotBlank(firstDTO.getReceiveDeptId())){
                 addDTO.setReceiveDeptId(firstDTO.getReceiveDeptId());
-            }
-            if(StringUtils.isNotBlank(firstDTO.getReceiveUserId())){
-                addDTO.setReceiveUserId(firstDTO.getReceiveUserId());
             }
             if(Objects.nonNull(firstDTO.getBillDate())){
                 addDTO.setBillDate(firstDTO.getBillDate());
@@ -137,8 +127,7 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
             }
             //回写送货单的 收货单号 receive_user_id receive_user_name receipt_status 明细的 收货数量  赠品收货数量
             WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveService.getById(id);
-            deliveryOrderEntity.setReceiveCode(warehouseReceiveEntity.getCode());
-            srmDeliveryFeign.updateDeliveryOrder(deliveryOrderEntity);
+            detailEntityGroupList.forEach(v->v.setReceiveCode(warehouseReceiveEntity.getCode()));
             srmDeliveryFeign.updateDeliveryDetail(detailEntityGroupList);
             resultDTO.setSuccess(true);
         });

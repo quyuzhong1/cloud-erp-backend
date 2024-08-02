@@ -15,7 +15,7 @@ public class OceanRegisterRequest implements Serializable {
      * 物流单号
      */
     @NotBlank(message = "跟踪单号不能为空")
-    private String trackNo;
+    private String trackingNo;
 
     /**
      * 单号类型（1.订舱号 2.提单号 3.箱号）

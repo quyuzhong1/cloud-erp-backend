@@ -24,6 +24,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.mabang.ComboSkuInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -54,7 +55,7 @@ public class MabangComboSkuInfoServiceImpl implements IReportSaveService<ComboSk
     private MQProducerService<ComboSkuInfoEntity> mqProducerService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<ComboSkuInfoEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -76,7 +77,7 @@ public class MabangComboSkuInfoServiceImpl implements IReportSaveService<ComboSk
             }
             ComboSkuInfoEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+            if (DataCompareUtil.compareObject(mongoDatum , entity)) {
                 continue;
             }
             pushToMqList.add(entity);
@@ -125,7 +126,7 @@ public class MabangComboSkuInfoServiceImpl implements IReportSaveService<ComboSk
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(ComboSkuInfoEntity mongoDatum) {
         ComboSkuInfoEntity comboSkuInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());

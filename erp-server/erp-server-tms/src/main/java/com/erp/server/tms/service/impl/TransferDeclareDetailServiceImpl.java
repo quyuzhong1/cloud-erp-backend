@@ -9,6 +9,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -53,8 +55,6 @@ import java.util.stream.Collectors;
 public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferDeclareDetailMapper, TransferDeclareDetailEntity> implements TransferDeclareDetailService {
     @Autowired
     private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
     @Autowired
     private LogisticsChannelService logisticsChannelService;
     @Autowired
@@ -164,6 +164,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     public List<TransferDeclareDetailEntity> listWaitSyncTransferStatus() {
         return lambdaQuery().eq(TransferDeclareDetailEntity::getOrderUploadStatus, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode())
                 .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.DELETED.getCode())
+                .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.OUTSTOCK.getCode())
                 .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.SIGNED.getCode()).list();
     }
 
@@ -195,17 +196,17 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         return this.lambdaQuery().eq(TransferDeclareDetailEntity::getSoId, soId).last("LIMIT 1").one();
     }
 
-    @Override
-    public Boolean updateOutstockStatus(TransferDeclareDTO.UpdateOutstockStatusDTO dto) {
-        if (CollectionUtils.isEmpty(dto.getSoIds())) {
-            return Boolean.FALSE;
-        }
-
-        return lambdaUpdate()
-                .set(TransferDeclareDetailEntity::getOutstockStatus, dto.getStatus())
-                .in(TransferDeclareDetailEntity::getSoId, dto.getSoIds())
-                .update();
-    }
+//    @Override
+//    public Boolean updateOutstockStatus(TransferDeclareDTO.UpdateOutstockStatusDTO dto) {
+//        if (CollectionUtils.isEmpty(dto.getSoIds())) {
+//            return Boolean.FALSE;
+//        }
+//
+//        return lambdaUpdate()
+//                .set(TransferDeclareDetailEntity::getOutstockStatus, dto.getStatus())
+//                .in(TransferDeclareDetailEntity::getSoId, dto.getSoIds())
+//                .update();
+//    }
 
     @Override
     public List<TransferDeclareDetailEntity> listByLogisticsChannelIdList(List<String> logisticsChannelIdList) {
@@ -244,20 +245,20 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
 
         List<String> soIds = list.stream().map(req -> req.getSoId()).collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIds);
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
 
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : list) {
             transferDeclareDetailEntity.setMainId(mainId);
-            //出库状态中文
-            SoOutstockEntity soOutstockEntity = soOutstockEntities.stream()
-                    .filter(req -> req.getSoId().equals(transferDeclareDetailEntity.getSoId())
-                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus().getStatus()))
-                    .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
-                transferDeclareDetailEntity.setOutstockStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
-            } else {
-                transferDeclareDetailEntity.setOutstockStatus(TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
-            }
+//            //销售订单
+//            SoB2cEntity soB2cEntity = soB2cEntityList.stream()
+//                    .filter(req -> req.getId().equals(transferDeclareDetailEntity.getSoId())
+//                            && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
+//                    .findFirst().orElse(null);
+//            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+//                transferDeclareDetailEntity.setOutstockStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
+//            } else {
+//                transferDeclareDetailEntity.setOutstockStatus(TransferOutstockStatusEnum.UN_OUTSTOCK.getCode());
+//            }
 
             //渠道名称
             LogisticsChannelEntity channelEntity = logisticsChannelEntities.stream().filter(req -> transferDeclareDetailEntity.getLogisticsChannelId().equals(req.getId())).findFirst().orElse(null);
@@ -275,6 +276,19 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             return Collections.emptyList();
         }
         return lambdaQuery().in(TransferDeclareDetailEntity::getMainId, mainIds).list();
+    }
+    /**
+     * 用于分页查询 子查询关联过滤
+     * @param mainIds
+     * @param params
+     * @return
+     */
+    @Override
+    public List<TransferDeclareDetailEntity> listByCondition(List<String> mainIds, TransferDeclareDTO.PagingParamDTO params) {
+        if (CollectionUtils.isEmpty(mainIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByCondition(mainIds,params);
     }
 
     @Override

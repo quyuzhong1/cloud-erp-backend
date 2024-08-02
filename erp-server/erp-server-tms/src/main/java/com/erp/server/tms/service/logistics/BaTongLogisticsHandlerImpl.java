@@ -1,15 +1,13 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.FileUtil;
-import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
@@ -35,16 +33,15 @@ import com.erp.tms.batong.model.order.request.*;
 import com.erp.tms.batong.model.order.response.OrderResponse;
 import com.erp.tms.batong.model.order.response.TrackBase;
 import com.erp.tms.batong.service.BaTongService;
-import com.sdk.tms.yanwen.dto.response.YanWenChannel;
-import com.sdk.tms.yanwen.dto.response.YanWenResponse;
-import com.sdk.tms.yanwen.server.YanWenService;
+import com.sdk.tms.tongyou.dto.request.TongYouUpdateWeightRequest;
+import com.sdk.tms.tongyou.dto.response.TongYouResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 /**
@@ -113,20 +110,20 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
                 logisticsOperateService.pushOperateLog(logisticsOrder.getSourceId(),
                         logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(""));
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(""), false);
             }else{
                 success = false;
                 responseVO.failure(LogisticsPlatformEnum.BaTong.getName(), logisticsOrder.getDeliveryNo(), result.getCnMessage());
                 logisticsOperateService.pushOperateLog(logisticsOrder.getSourceId(),
                         logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrder),result.getCnMessage() );
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrder),result.getCnMessage(), false);
             }
 
         } catch (Exception e) {
             log.error("巴通创建订单异常：{}", e.getMessage());
             logisticsOperateService.pushOperateLog(logisticsOrder.getSourceId(),
                     logisticsOrder.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(e));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrder), JSONUtil.toJsonStr(e), true);
             success = false;
         }
 
@@ -149,7 +146,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 return success(list);
             }
             list = LogisticsChannelConverter.INSTANCE.channelConvertByBaTong(baseList);
-            logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseList));
             return success(list);
@@ -194,20 +191,20 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     responseVO.failure(getPlatForm().getName(),item.getDeliveryNo(),cancelResult.getCnMessage());
                     logisticsOperateService.pushOperateLog(item.getOrderId(),
                             item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
-                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(cancelResult));
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(cancelResult), false);
                 }else{
                     //成功
                     responseVO.success();
                     logisticsOperateService.pushOperateLog(item.getOrderId(),
                             item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
-                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(responseVO), JSONUtil.toJsonStr(cancelResult));
+                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(responseVO), JSONUtil.toJsonStr(cancelResult), false);
                 }
             } catch (Exception e) {
                 isSuccess = false;
                 responseVO.failure(getPlatForm().getName(),item.getDeliveryNo(),e.getMessage());
                 logisticsOperateService.pushOperateLog(item.getOrderId(),
                         item.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(e));
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(e), true);
             }
 
             result.add(responseVO);
@@ -217,6 +214,38 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
 
+    /**
+     * 更新重量
+     *
+     * @return
+     */
+    @Override
+    public ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO) {
+        try {
+            BaTongUpdateWeightReq request = BaTongUpdateWeightReq.builder()
+                    .referenceNo(logisticsUpdateWeightVO.getDeliveryNo())
+                    .orderWeight(logisticsUpdateWeightVO.getWeight().divide(new BigDecimal(1000),4, RoundingMode.HALF_UP).toString())
+                    .build();
+            ValidatorUtil.validateEntity(request);
+            BaseResult response = baTongService.updateWeight(logisticsUpdateWeightVO.getAuthMap(), request);
+
+            if (!BaTongConstants.SUCCESS.equals(response.getSuccess())) {
+                logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                        logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,response.getCnMessage());
+            }
+            logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                    logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(response),false);
+            return success();
+        }catch (Exception e){
+            logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
+                    logisticsUpdateWeightVO.getDeliveryNo(), BusinessTypeEnum.UPDATE_WEIGHT.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsUpdateWeightVO), JSONUtil.toJsonStr(e),true);
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        }
+    }
 
 
     /**
@@ -275,7 +304,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
                     response.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), result.getCnMessage());
                     responseList.add(response);
-                    logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                    logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                             logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(result));
                     isSuccess = false;
@@ -298,13 +327,13 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 String base64 = FileUtil.convertPdfUrlToBase64(labelUrl);
                 labelResponse.setBase64(base64);
                 response.setBase64(base64);
-                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(labelResponse));
 
                 responseList.add(response);
             } catch (Exception e) {
-                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(item), JSONUtil.toJsonStr(e));
                 return failure(getPlatForm().getName() + ":" + e.getMessage());
@@ -339,7 +368,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         trackNo(trackBase.getShippingMethodNo()).build();
                 resultList.add(responseVO);
             } catch (Exception e) {
-                logisticsOperateService.pullOperateLog(item.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(item.getOrderId(),
                         item.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.BaTong.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(e));
                 return failure(getPlatForm().getName() + ":" + e.getMessage());

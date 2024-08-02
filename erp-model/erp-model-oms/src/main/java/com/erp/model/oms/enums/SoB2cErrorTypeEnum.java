@@ -2,6 +2,7 @@ package com.erp.model.oms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -10,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
  * @description: B2C销售订单作废类型枚举
  * @date 2023/12/20 10:27
  */
+@Getter
 public enum SoB2cErrorTypeEnum {
 
     SUBMIT_DELIVERY("submitDelivery",  "提交发货异常"),
@@ -20,6 +22,7 @@ public enum SoB2cErrorTypeEnum {
     ORDER_FORECAST("orderForecast",  "订单预报失败"),
     INSTOCK_FORECAST("instockForecast",  "入库预报失败"),
     CANCEL_ORDER_FORECAST("cancelOrderForecast",  "取消订单预报失败"),
+    THIRD_WAREHOUSE_OUT_EXCEPTION("thirdWarehouseOutException",  "第三方仓出库异常"),
     ;
     /**
      * 类型
@@ -36,14 +39,6 @@ public enum SoB2cErrorTypeEnum {
     SoB2cErrorTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public static String getName(String code) {

@@ -1,13 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -59,6 +59,12 @@ public class RequisitionApplicationDetailEntity extends BaseEntity<RequisitionAp
     */
     @TableField("picking_qty")
     private Integer pickingQty;
+
+    /**
+     * 虚拟仓冻结数量
+     */
+    @TableField("virtual_frozen_qty")
+    private Integer virtualFrozenQty;
     /**
      * 来源详情id
      */
@@ -84,6 +90,16 @@ public class RequisitionApplicationDetailEntity extends BaseEntity<RequisitionAp
      */
     @TableField("from_warehouse_name")
     private String fromWarehouseName;
+    /**
+     * 调出仓库id
+     */
+    @TableField("from_virtual_warehouse_id")
+    private String fromVirtualWarehouseId;
+    /**
+     * 调出仓库中文名
+     */
+    @TableField("from_virtual_warehouse_name")
+    private String fromVirtualWarehouseName;
     /**
      * 要货仓位
      */

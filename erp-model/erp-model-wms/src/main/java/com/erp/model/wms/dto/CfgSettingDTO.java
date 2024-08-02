@@ -76,6 +76,23 @@ public class CfgSettingDTO implements Serializable {
          * 飞书通知配置
          */
         private CfgSettingValueDTO.FsQcNoticeDTO fsQcNoticeDTO;
+        /**
+         * 发货拦截设置
+         */
+        private CfgSettingValueDTO.B2cDeliveryInterceptDTO b2cDeliveryInterceptDTO;
+        /**
+         * 组包设置
+         */
+        private CfgSettingValueDTO.PackageSettingDTO packageSettingDTO;
+
+        /**
+         * 中转设置
+         */
+        private CfgSettingValueDTO.TransitSettingDTO transitSettingDTO;
+        /**
+         * 装箱完成通知
+         */
+        private CfgSettingValueDTO.FinishPackingNoticeDTO finishPackingNoticeDTO;
     }
 
 

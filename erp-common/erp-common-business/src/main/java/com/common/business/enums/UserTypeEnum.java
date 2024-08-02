@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum UserTypeEnum implements EnumMessage {
     ERP("erp","ERP系统"),
     SRM("srm","SRM系统"),
+    PDA("pda","PDA系统"),
     ;
 
     UserTypeEnum(String code, String name) {

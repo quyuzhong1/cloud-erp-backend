@@ -1,8 +1,11 @@
 package com.erp.model.wms.dto;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -483,14 +486,32 @@ public class SoOutstockDTO implements Serializable {
          */
         private String customerOrderNo;
 
+
+        /**
+         * 批次号，发货单下推时生成
+         */
+        private String batchNo;
+
         /**
          * 详情
          */
         @Valid
         @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetailDTO.AddDTO> detailList;
-
-
+        public void buildAddDTO(SoDeliveryNoticeEntity entity) {
+            this.soId = entity.getSourceId();
+            this.sourceId = entity.getId();
+            this.sourceCode = entity.getCode();
+            this.sourceType = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+            this.planDeliveryDate = entity.getPlanDeliveryDate();
+            if (ObjectUtil.isNotEmpty(entity.getActualDeliveryDate())) {
+                this.actualDeliveryDate = entity.getActualDeliveryDate().atStartOfDay();
+            }
+            this.trackNo = entity.getTrackNo();
+            this.carrierId = entity.getCarrierId();
+            this.sellerId = entity.getSellerId();
+            this.customerId = entity.getCustomerId();
+        }
     }
 
 
@@ -998,6 +1019,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
         @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetailDTO.UpdateDTO> detailList;
 
@@ -1393,6 +1415,11 @@ public class SoOutstockDTO implements Serializable {
     public static class GenerateB2cDTO {
 
         /**
+         * 批次号
+         */
+        private String batchNo;
+
+        /**
          * 销售订单id
          */
         private String soId;
@@ -1421,6 +1448,12 @@ public class SoOutstockDTO implements Serializable {
          */
         private String carrierId;
 
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelId;
+
+
         private LocalDate billDate;
 
         /**
@@ -1434,12 +1467,15 @@ public class SoOutstockDTO implements Serializable {
          */
         private String salesOrgName;
 
-
-
         /**
          * 预计发货日期
          */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 实际发货日期
+         */
+        private LocalDateTime actualDeliveryDate;
 
         /**
          * 来源id
@@ -1520,6 +1556,12 @@ public class SoOutstockDTO implements Serializable {
          * 明细
          */
         private LinkedList<SoOutstockDetailDTO.AddDTO> detailList;
+
+
+        /**
+         * 是否检查sku历史映射
+         */
+        private boolean checkSkuHistory = true;
 
     }
 

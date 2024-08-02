@@ -6,8 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.SeriesVO;
 import com.common.core.enums.ApiError;
@@ -17,14 +16,10 @@ import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringTableDTO;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
-import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.vo.BiSalesMonitoringTableVO;
-import com.erp.model.plm.entity.BasicCategoryEntity;
-import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.BiCompareEnum;
-import com.erp.server.bi.enums.DateTypeEnum;
 import com.erp.server.bi.enums.SalesMonitoringTypeEnum;
 import com.erp.server.bi.mapper.BiSalesMonitoringMapper;
 import com.erp.server.bi.service.BiSalesMonitoringService;
@@ -66,7 +61,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         }
         List<BiSalesMonitoringEntity> entityList = new ArrayList<>();
         //当前登录人
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
@@ -90,7 +85,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     @Override
     public void batchUpdate(List<BiSalesMonitoringDTO> list) {
         //当前登录人
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
@@ -105,7 +100,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     public List<BiSalesMonitoringDTO> listBiSalesMonitoring() {
         List<BiSalesMonitoringDTO> resultList = new ArrayList<>();
         //当前登录人
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
@@ -119,7 +114,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     @Override
     public LinkedHashMap<String,Object> listBiSalesMonitoringView(BiSalesMonitoringSearchDTO.ParamDTO dto) {
         //当前登录人
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_403);
         }

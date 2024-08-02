@@ -3,6 +3,9 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -10,21 +13,26 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
+import com.common.business.constant.DictKindgeeConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
@@ -32,15 +40,13 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.excel.OtherInStockImportExcelDTO;
 import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -52,18 +58,22 @@ import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.wms.convert.OtherInStockConverter;
 import com.erp.server.wms.convert.OtherOutStockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherOutstockService;
 import com.erp.server.wms.listener.OtherOutStockExcelListener;
 import com.erp.server.wms.mapper.OtherOutstockMapper;
 import com.erp.server.wms.query.OtherOutstockQueryHandler;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -74,6 +84,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -81,6 +93,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -114,9 +127,6 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     private OtherOutstockDetailService otherOutstockDetailService;
 
     @Resource
-    private CommonService commonService;
-
-    @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource
@@ -145,6 +155,20 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
+
+    @Resource
+    private SyncWdtOtherInStockService syncWdtOtherInStockService;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private SysDictFeign sysDictFeign;
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
@@ -317,7 +341,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
         //库存方向
         viewDTO.setInventoryDirectionName(InventoryDirectionEnum.getName(viewDTO.getInventoryDirection()));
-        viewDTO.setTypeName(OutstockTypeEnum.getByCode(entity.getType()));
+        viewDTO.setTypeName(this.getTypeNameByCode(viewDTO.getType()));
+        viewDTO.setOutTypeName(this.getOutTypeNameByCode(viewDTO.getOutTypeName()));
         //客户信息
         OtherOutstockCustomerEntity customerEntity = otherOutstockCustomerService.getByMainId(id);
         if (ObjectUtils.isEmpty(customerEntity)) {
@@ -336,7 +361,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
         //产品信息
         List<String> skuIds = detailList.stream().map(OtherOutstockDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getWarehouseId()));
 
         //组织
@@ -350,12 +375,14 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         for (OtherOutstockDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
-                SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).findFirst().orElse(null);
+                SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).findFirst().orElse(new SkuVO());
                 viewDetailDTO.setProductName(skuVO.getSkuName());
                 viewDetailDTO.setVariantProperty(skuVO.getVariantProperty());
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = inventoryInfoList.stream().filter(obj -> obj.getSkuId().equals(viewDetailDTO.getSkuId()) && InventoryStatusEnum.USABLE.getCode().equals(obj.getDictInventoryStatus()))
+            Integer curInventoryQty = inventoryInfoList.stream().filter(obj -> obj.getSkuId().equals(viewDetailDTO.getSkuId())
+                            && InventoryStatusEnum.USABLE.getCode().equals(obj.getDictInventoryStatus())
+                    && obj.getWarehouseLocation().equals(viewDetailDTO.getWarehouseLocation()))
                     .map(InventoryEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(viewDetailDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
@@ -383,11 +410,12 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //删除明细数据
         otherOutstockDetailService.removeByMainIds(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的其他出库单", commonService.getUserInfo().getUserName(), list.stream().map(OtherOutstockEntity::getCode).collect(Collectors.joining(",")));
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的其他出库单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(OtherOutstockEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), pairList, "删除操作");
+
         //发送金蝶
-        list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除主表数据
         return this.removeByIds(ids);
     }
@@ -416,8 +444,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .update();
 
         //发送金蝶
-        list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
-
+        sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个其他出库单【%s】，作废原因：".concat(reason), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), pairList, "作废操作");
@@ -449,8 +476,15 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
             updateInventoryTransCore(entity);
+
             //发送金蝶
-            syncKingdeeOtherOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //同步旺店通
+            if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
+                syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            }else {
+                syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            }
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他出库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //中止当前审核流程
@@ -489,7 +523,14 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //发送金蝶
-        syncKingdeeOtherOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+
+        //发送旺店通
+        if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
+            syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        }else {
+            syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        }
 
         //操作日志
         operateLogService.addModuleOperateLog(StrUtil.format("反审核了一个其他出库单【{}】",entity.getCode()), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "反审核操作");
@@ -603,13 +644,19 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         List<String> ids = records.stream().map(OtherOutstockDTO.ListDTO::getSkuId).collect(Collectors.toList());
         //产品信息
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
-
+        List<DictKingdeeDTO.ListDTO> typeList = this.kingdeeTypeListByTypeName(DictKindgeeConstant.OTHER_TYPE_NAME);
+        List<DictKingdeeDTO.ListDTO> outTypeList = this.kingdeeTypeListByTypeName(DictKindgeeConstant.OTHER_OUT_TYPE_NAME);
         for (OtherOutstockDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
             obj.setProductName(productName);
 
-            obj.setTypeName(OutstockTypeEnum.getByCode(obj.getType()));
+            obj.setTypeName(typeList.stream().filter(v->v.getCode().equals(obj.getType())).findFirst().orElse(new DictKingdeeDTO.ListDTO()).getName());
+            if(StringUtils.isBlank(obj.getTypeName())){
+                //历史数据
+                obj.setTypeName(EnumMessage.getNameByCode(OutstockTypeEnum.class,obj.getType()));
+            }
+            obj.setOutTypeName(outTypeList.stream().filter(v->v.getCode().equals(obj.getOutType())).findFirst().orElse(new DictKingdeeDTO.ListDTO()).getName());
             //库存方向名称
             obj.setInventoryDirectionName(InventoryDirectionEnum.getName(obj.getInventoryDirection()));
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
@@ -687,7 +734,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
      */
     private void updateApproveStatusForApprove(List<String> ids, String approveStatus) {
         //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
 
         this.lambdaUpdate().in(OtherOutstockEntity::getId, ids)
                 .set(OtherOutstockEntity::getApproveUserId, userInfo.getUid())
@@ -756,11 +803,11 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             Integer count = MathUtil.ZERO;
             if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
                 List<LocalDate> dateList = new ArrayList<>();
@@ -768,7 +815,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 dateList.add(endDate);
                 pagingParamDTO.setBillDateList(dateList);
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());
@@ -818,8 +865,18 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //部门
         SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO =  sysUserFeign.getDeptByUserId(userId);
         addDTO.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
-        //出库类型：报损
-        addDTO.setType(OutstockTypeEnum.REPORT_LOSSES.getCode());
+        //处理类型
+        List<DictKingdeeDTO.ListDTO> typeList = sysDictFeign.listByTypeName(DictKindgeeConstant.OTHER_TYPE_NAME);
+        List<DictKingdeeDTO.ListDTO> outTypeList = sysDictFeign.listByTypeName(DictKindgeeConstant.OTHER_OUT_TYPE_NAME);
+        DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(DictKindgeeConstant.OTHER_OUT_INVENTORY_ADJUSTMENTS)).findFirst().orElse(new DictKingdeeDTO.ListDTO());
+        // 业务类型
+        addDTO.setType(typeDTO.getCode());
+        addDTO.setTypeName(typeDTO.getName());
+        //出库类型
+        DictKingdeeDTO.ListDTO outTypeDTO = outTypeList.stream().filter(v->v.getName().equals(DictKindgeeConstant.OTHER_OUT_RECEIVE_THE_DIFFERENCE)).findFirst().orElse(new DictKingdeeDTO.ListDTO());
+        addDTO.setOutType(outTypeDTO.getCode());
+        addDTO.setOutTypeName(outTypeDTO.getName());
+
         addDTO.setReceiveOrgId(warehouse.getOrgId());
         return addDTO;
     }
@@ -894,9 +951,6 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             return;
         }
         List<String> skuNoList = successList.stream().map(OtherOutStockImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
-        // 库存类型Map
-        Map<String, OutstockTypeEnum> outStockTypeMap = Arrays.stream(OutstockTypeEnum.values())
-                .collect(Collectors.toMap(OutstockTypeEnum::getName, Function.identity()));
 
         // 库存方向Map
         Map<String, InventoryDirectionEnum> inventoryDirectionMap = Arrays.stream(InventoryDirectionEnum.values())
@@ -973,11 +1027,12 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         // 可保存处理的列表
         List<OtherOutstockEntity> canHandleList = new ArrayList<>();
 
-
+        List<DictKingdeeDTO.ListDTO> typeList = this.kingdeeTypeListByTypeName(DictKindgeeConstant.OTHER_TYPE_NAME);
+        List<DictKingdeeDTO.ListDTO> outTypeList = this.kingdeeTypeListByTypeName(DictKindgeeConstant.OTHER_OUT_TYPE_NAME);
         // 校验和处理
         for (OtherOutStockImportExcelDTO importExcelDTO : successList) {
-            // 库存类型Map
-            OutstockTypeEnum outstockTypeEnum = outStockTypeMap.get(importExcelDTO.getType());
+            DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(importExcelDTO.getType())).findFirst().orElse(new DictKingdeeDTO.ListDTO());
+            DictKingdeeDTO.ListDTO outTypeDTO = outTypeList.stream().filter(v->v.getName().equals(importExcelDTO.getOutType())).findFirst().orElse(new DictKingdeeDTO.ListDTO());
 
             Integer actualQty = Integer.valueOf(importExcelDTO.getActualQtyStr());
 
@@ -1101,7 +1156,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
                 OtherOutstockEntity entity = OtherOutStockConverter.INSTANCE.combineAddEntity(
                         importExcelDTO,
-                        outstockTypeEnum,
+                        typeDTO.getCode(),
+                        outTypeDTO.getCode(),
                         billDate,
                         inventoryDirectionEnum,
                         warehouseDTO,
@@ -1183,6 +1239,151 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         if (!otherOutstockCustomerService.saveBatch(customerEntityList)){
             throw new ServiceException("客户信息批量保存失败");
         }
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<OtherOutstockEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeOtherOutstockService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
+
+    private void syncApproveInfoToWdt(OtherOutstockEntity entity, String operateCode) {
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
+
+        List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(OtherOutstockDetailEntity::getActualQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
+
+        //填充SKU明细
+        List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>();
+        skuMap.forEach((key, value) -> {
+            CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            goodsList.add(goods);
+        });
+
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, true);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+            }
+        });
+    }
+
+    /**
+     * 将其他出库单的反审核操作转换为其他入库单推送到旺店通
+     * @param entity 其他出库单
+     * @return void
+     * @date: 2024-05-20
+     * @author: tanmujin
+     */
+    private void syncDisApproveInfoToWdt(OtherOutstockEntity entity, String operateCode) {
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
+
+        List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
+        HashMap<String, BigDecimal> skuMap = new HashMap<>();
+        detailList.stream()
+                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
+                .forEach((key, list) -> {
+                    int collect = list.stream().mapToInt(OtherOutstockDetailEntity::getActualQty).sum();
+                    skuMap.put(key, BigDecimal.valueOf(collect));
+                });
+
+        List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
+        skuMap.forEach((key, value) -> {
+            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
+            String[] split = key.split("@");
+            goods.setSpecNo(split[0]);
+            goods.setNum(value);
+            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            goodsList.add(goods);
+        });
+
+        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), inCode, thirdWarehouseCode, false);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+            }
+        });
+    }
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void checkAndAdd(OtherOutstockDTO.AddDTO generateDTO) {
+        List<String> uniqueIds = generateDTO.getDetailList().stream().map(OtherOutstockDetailDTO.AddDTO::getRemark)
+                .distinct()
+                .collect(Collectors.toList());
+        // 已存在不新增
+        Integer count = otherOutstockDetailService.lambdaQuery()
+                .in(OtherOutstockDetailEntity::getRemark, uniqueIds)
+                .count();
+        if (count > 0){
+            log.warn("【{}】已生成其他出库单跳过", uniqueIds);
+            return;
+        }
+        this.addAndApprove(generateDTO);
+    }
+
+    private String getTypeNameByCode(String code){
+        if(StringUtils.isBlank(code)){
+            return "";
+        }
+        DictKingdeeDTO.ListDTO listDTO =  sysDictFeign.getByCode(DictKindgeeConstant.OTHER_TYPE_NAME,code);
+        if(StringUtils.isBlank(listDTO.getName())){
+            //历史数据
+            return EnumMessage.getNameByCode(OutstockTypeEnum.class,code);
+        }
+        return listDTO.getName();
+    }
+
+    private List<DictKingdeeDTO.ListDTO> kingdeeTypeListByTypeName(String typeName){
+        if(StringUtils.isBlank(typeName)){
+            return new ArrayList<>();
+        }
+        List<DictKingdeeDTO.ListDTO> list = sysDictFeign.listByTypeName(typeName);
+        return list;
+    }
+
+    private String getOutTypeNameByCode(String code){
+        if(StringUtils.isBlank(code)){
+            return "";
+        }
+        DictKingdeeDTO.ListDTO listDTO =  sysDictFeign.getByCode(DictKindgeeConstant.OTHER_OUT_TYPE_NAME,code);
+        return listDTO.getName();
     }
 
 }

@@ -1,6 +1,8 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -13,6 +15,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
@@ -24,11 +27,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.RedisService;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.CommonConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -37,7 +41,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -54,10 +58,12 @@ import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.workflow.dto.StartProcessDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
@@ -68,6 +74,7 @@ import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -75,11 +82,14 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.util.ListUtils;
 
@@ -92,8 +102,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
+import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_SERVICE;
 
 /**
  * @Description: 产品明细信息服务类
@@ -211,7 +225,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private ProductCustomsService productCustomsService;
 
     @Autowired
-    private MQProducerService mQProducerService;
+    private DmpMqFeign dmpMqFeign;
 
     @Autowired
     private SupplierFeign supplierFeign;
@@ -230,6 +244,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private NoticeMessageService noticeMessageService;
+
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
+
 
 
     //变更财务人员审核
@@ -253,7 +271,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //待审核查询分配给自己的数据
         if (MathUtil.ONE.toString().equals(pagingDTO.getParams().getType())) {
             //TODO 2023-03-30 暂时取消审核流程 只改状态
-/*             LoginUser loginUser = CommonInterceptor.threadLocal.get();
+/*             LoginUser loginUser = UserContext.getLoginUser();
             List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(loginUser.getUid());
             //无待办则直接返回
             if (CollectionUtils.isEmpty(workflowList)) {
@@ -479,6 +497,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
             }
+            if(StringUtils.isEmpty(req.getToCurrency())){
+                req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+            }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
         return productNoSpecDetailAllDTO;
@@ -487,13 +509,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public ProductNoSpecDetailAllDTO getNoSpecDetailBySkuId(String skuId) {
 
+        ProductDetailEntity productDetailEntity = this.getById(skuId);
+        String productId = productDetailEntity.getProductId();
+        ProductInfoEntity infoEntity = productInfoService.getById(productId);
+        if (ObjectUtil.isNotEmpty(infoEntity)) {
+            if (infoEntity.getSpecType() == 2) {
+                return getNoSpecDetailById(productId);
+            }
+        }
+
         ProductNoSpecDetailAllDTO productNoSpecDetailAllDTO = new ProductNoSpecDetailAllDTO();
         //无规格产品信息明细
         ProductNoDetailDTO noSpecDetailById = productDetailMapper.getNoSpecDetailBySkuId(skuId);
+
         if (ObjectUtils.isNotEmpty(noSpecDetailById)) {
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
             noSpecDetailById.setCategoryIdList(categoryIdList);
+
         }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
@@ -592,6 +625,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
+            }
+            if(StringUtils.isEmpty(req.getToCurrency())){
+                req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
             }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
@@ -827,6 +864,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
                 req.setCountryName(countryName);
             }
+            if(StringUtils.isEmpty(req.getToCurrency())){
+                req.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                req.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+            }
         });
 
         productManyDetail.setProductCustomsList(productCustomsEntityList);
@@ -942,17 +983,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
+        ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
+        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+        // 添加默认spu
+        productSpuBaseInfoDTO.setSpuNo(Optional.ofNullable(productSpuBaseInfoDTO.getSpuNo()).orElse(productSkuBaseInfoDTO.getSkuNo()));
         //检查spu编号是否重复
-        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getSpuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
+        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getSpuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
         }
         //检查sku编号是否重复
         if (this.checkSkuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95015);
         }
-
-        ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
-        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+        ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
+        checkSizeAndWeight(productPackDTO);
         productSpuBaseInfoDTO.setSpecType(1);
         //产品等级
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
@@ -1061,7 +1106,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //7.修改/新增 包装信息
-        ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
+
         if (ObjectUtils.isNotEmpty(productPackDTO)) {
             productPackDTO.setSkuId(skuId);
             //SKU操作日志
@@ -1107,12 +1152,49 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 ProductCustomsEntity customsEntity = new ProductCustomsEntity();
                 BeanMapper.copy(customsDTO, customsEntity);
                 customsEntity.setSkuId(skuId);
+                if (StringUtils.isNotEmpty(customsEntity.getToCurrency())){
+                    customsEntity.setToCurrencySymbol(CurrencyEnum.getSymbolByCode(customsDTO.getToCurrency()));
+                }else {
+                    customsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    customsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                }
                 customsEntityList.add(customsEntity);
             }
             addProductCustomsLog(productCustomsDTO, id);
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
+        //增加默认记录
+        productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
         return true;
+    }
+
+    private void checkSizeAndWeight(ProductPackDTO productPackDTO) {
+        if (ObjectUtils.isNotEmpty(productPackDTO)) {
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            //毛重大于等于净重
+            compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
+        }
+    }
+
+    /**
+     * 比较尺寸
+     *
+     * @author hyj
+     * @date 2024/5/10 9:05
+     * @param larger   大尺寸
+     * @param smaller  小尺寸
+     * @param apiError 报错信息
+     */
+    @Override
+    public void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError) {
+        if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
+                && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0) {
+            if (larger.compareTo(smaller) < 0) {
+                throw new ServiceException(apiError);
+            }
+        }
     }
 
 
@@ -1186,6 +1268,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 throw new ServiceException(ApiError.ERROR_95015.code, ApiError.ERROR_95015.msg + " 第" + (i + 1) + "行");
             }
         }
+
+        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+        productManySpecDTO.getProductPackList().stream().forEach(productPackDTO->{
+            checkSizeAndWeight(productPackDTO);
+        });
+
         //1.修改产品表 主表信息
         ProductInfoDTO productInfoDTO = productManySpecDTO.getProductInfoDTO();
         productInfoDTO.setSpecType(2);
@@ -1297,11 +1385,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             for (ProductCustomsDTO customsDTO : productCustomsDTO) {
                 ProductCustomsEntity customsEntity = new ProductCustomsEntity();
                 BeanMapper.copy(customsDTO, customsEntity);
+                if (StringUtils.isNotEmpty(customsEntity.getToCurrency())){
+                    customsEntity.setToCurrencySymbol(CurrencyEnum.getSymbolByCode(customsDTO.getToCurrency()));
+                }else {
+                    customsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    customsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                }
                 customsEntityList.add(customsEntity);
             }
             addProductCustomsLog(productCustomsDTO, productInfoDTO.getId());
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
+        //增加默认记录
+        productCustomsService.addDefaultCustoms(productDetailLists.stream().map(ProductDetailDTO::getId).collect(Collectors.toList()));
         return true;
     }
 
@@ -1449,10 +1545,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         boolean bool = this.saveBatch(list);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
 
         if (!bool) {
             throw new ServiceException(1, "新增sku明细失败！");
@@ -1539,11 +1631,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() == null) {
                     ProductInfoEntity infoEntity = productInfoService.getById(productInfoEntity.getId());
                     infoEntity.setIsDeleted(Boolean.TRUE);
-                    //同步到SCM
-//                    mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), infoEntity, IdUtil.simpleUUID());
-                    //同步到WMS
-//                    mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), infoEntity, IdUtil.simpleUUID());
-
                     productInfoService.removeById(productInfoEntity.getId());
                 }
                 //添加操作日志
@@ -1553,13 +1640,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         ProductDetailEntity entity = lambdaQuery().eq(ProductDetailEntity::getId, skuId).one();
         entity.setIsDeleted(Boolean.TRUE);
-        //更新金蝶
-        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
 
+        //发送金蝶
+        sendPushTask(Arrays.asList(detailEntity),SyncOperateEnum.OPERATE_DELETE.getCode());
         return this.remove(queryWrapper);
     }
 
@@ -1588,10 +1671,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (list.size() != sign) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
-        list.forEach(req -> {
-            //更新金蝶
-            syncKingdeeProductDetailService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DELETE.getCode());
-        });
+
+        //发送金蝶
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+
         List<String> skuIds = list.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //1.删除证书信息
         productCertificateService.deleteBySkuIdList(skuIds);
@@ -1607,11 +1690,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productCostService.removeCost(skuIds);
         //7.删除目的国海关编码
         productCustomsService.removeBySkuId(skuIds);
-        List<ProductDetailEntity> entityList = lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), entityList, IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), entityList, IdUtil.simpleUUID());
 
         return this.remove(queryWrapper);
     }
@@ -1678,7 +1756,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean checkSpuNo(String spuNo, String id) {
-        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductInfoEntity::getSpuNo, spuNo);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProductInfoEntity::getId, id);
@@ -2055,7 +2133,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
 
@@ -2090,23 +2168,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //发送通知
         noticeMessageService.approveProductNotice(userName, entity);
 
-        //审核通过后发送到金蝶系统
-        syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        //发送金蝶
+        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+        if (isCheck) {
+            syncWangDianProductDetailService.syncDataToWangDian(entity);
+        }
+        //增加缓存清除
+        redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, entity.getId());
         return true;
     }
 
+    /**
+     * 重算目的国申报价
+     * @param details
+     */
     @Override
     public void recalDestDeclarePrice(List<ProductDetailEntity> details) {
         log.info("recalDestDeclarePrice start======{}",details.size());
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
-        List<String> skuIds = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getId).collect(Collectors.toList());
-        List<String> skuNoList = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
-        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIds);
-        if (Objects.isNull(productLogisticsList)) {
+        List<String> skuIds = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<String> skuNoList = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(skuIds)) {
             return;
         }
+        //目的国申报信息
+        List<ProductCustomsEntity> customsEntityList = productCustomsService.listBySkuIds(skuIds, CommonConstants.DEFAULT);
         //系统配置
         CfgSettingEntity setting = cfgSettingFeign.getByKey(CfgSettingEnum.LOGISTICS_PRODUCT_DEST_DECLARE_PRICE.getCode());
         if (Objects.isNull(setting) || Objects.isNull(setting.getDataJson()) || CollectionUtils.isEmpty(setting.getDataJson().getJSONArray("data"))) {
@@ -2120,13 +2208,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (Objects.isNull(usdRate)) {
             return;
         }
-        List<ProductLogisticsEntity> updateList = new ArrayList<>();
-        for(ProductLogisticsEntity productLogistics : productLogisticsList){
-            log.info("recalDestDeclarePrice : skuId:{},destDeclarePrice:{}", productLogistics.getSkuId(),productLogistics.getDestDeclarePrice());
+        List<ProductCustomsEntity> addList = new ArrayList<>();
+        List<ProductCustomsEntity> updateList = new ArrayList<>();
+        for(String skuId : skuIds){
+            //目的国申报信息 默认
+            ProductCustomsEntity customs = customsEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(skuId)).findFirst().orElse(new ProductCustomsEntity());
+
+            log.info("recalDestDeclarePrice : skuId:{},destDeclarePrice:{}", skuId,customs.getToDeclarePrice());
             //是否重算目的国申报价
-            BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
-            if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
-                DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(productLogistics.getSkuId())).findFirst().orElse(null);
+            BigDecimal destDeclarePrice = Objects.isNull(customs.getToDeclarePrice()) ? BigDecimal.ZERO: customs.getToDeclarePrice();
+            if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+                DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
                 log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
                 if (Objects.isNull(skuCostDTO)) {
                     continue;
@@ -2147,20 +2239,173 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
                 log.info("resultDestDeclarePrice: {}", resultDestDeclarePrice);
-                productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
-                productLogistics.setDestCurrency(CurrencyEnum.USD.getCurrencyCode());
-                productLogistics.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-                updateList.add(productLogistics);
+                customs.setToDeclarePrice(resultDestDeclarePrice);
+                customs.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                customs.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                if (Objects.isNull(customs.getId())){
+                    customs.setCountry(CommonConstants.DEFAULT);
+                    addList.add(customs);
+                }else {
+                    updateList.add(customs);
+                }
+
                 log.info("更新目的国申报价 sku:{},目的国申报价：{}",skuCostDTO.getSkuNo(), resultDestDeclarePrice);
             }
         }
         if (CollectionUtils.isNotEmpty(updateList)){
             log.info("updateList: {}", JSONUtil.toJsonStr(updateList));
-            productLogisticsService.updateBatchById(updateList);
+            productCustomsService.updateBatchById(updateList);
+        }
+        if (CollectionUtils.isNotEmpty(addList)){
+            log.info("addList: {}", JSONUtil.toJsonStr(addList));
+            productCustomsService.saveBatch(addList);
         }
         log.info("recalDestDeclarePrice end======");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void initProductCustom(List<String> skuIds) {
+        //有传值 按照传值进行sku同步 没有则同步全量
+        List<ProductDetailEntity> list = null;
+        if (CollectionUtil.isEmpty(skuIds)){
+            list = lambdaQuery().select(ProductDetailEntity::getId).list();
+        }else {
+            list = lambdaQuery().select(ProductDetailEntity::getId).in(ProductDetailEntity::getId, skuIds).list();
+        }
+        if (CollectionUtil.isEmpty(list)){
+            log.info("需要同步的sku列表为空：{}", skuIds);
+            return;
+        }
+        log.info("同步的sku列表数量：{}", list.size());
+        //当list过大时 切割处理
+        if (list.size() > 100){
+            List<List<ProductDetailEntity>> partition = ListUtil.partition(list, 100);
+            for (List<ProductDetailEntity> list1 : partition){
+                customDataProcess(list1);
+            }
+        }else {
+            customDataProcess(list);
+        }
+
+    }
+
+    @Override
+    public List<SkuVO> listSkuPurchaseBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPurchaseBySkuIds(skuIds);
+        if (CollUtil.isNotEmpty(skuList)) {
+            //供应商信息
+            List<String> supplierIdList = skuList.stream().map(SkuVO::getSupplierId).collect(Collectors.toList());
+            List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+            for (SkuVO skuVO : skuList) {
+                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
+                    //含税价
+                    skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+                }
+            }
+        }
+        return skuList;
+
+    }
+    @Override
+    public PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        SkuVO.SelectDTO params = dto.getParams();
+        IPage<SkuVO> pagResult = baseMapper.pagingSelect(query, params);
+        return new PagingVO<>(pagResult);
+
+    }
+    private void customDataProcess(List<ProductDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        List<String> skuIds = list.stream().map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIds)){
+            return;
+        }
+        //根据sku获取sku物流信息
+        List<ProductLogisticsEntity> logisticsList = productLogisticsService.listBySkuIdList(skuIds);
+        //根据sku获取默认目的国申报信息
+        List<ProductCustomsEntity> customsList = productCustomsService.listBySkuIds(skuIds, CommonConstants.DEFAULT);
+        List<ProductCustomsEntity> addCustomsList = new ArrayList<>();
+        List<ProductCustomsEntity> updateCustomsList = new ArrayList<>();
+        //查询
+        list.forEach(productDetailEntity -> {
+            //查询sku product_logistics 目的国申报价不为o 时同步
+            ProductLogisticsEntity logistics = logisticsList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(e.getSkuId())
+                                    && e.getSkuId().equals(productDetailEntity.getId())).findFirst().orElse(new ProductLogisticsEntity());
+            //查询是否存在默认 product_customs 不存在则赋值 新增，存在则更新
+            ProductCustomsEntity customs = customsList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(e.getSkuId())
+                    && e.getSkuId().equals(productDetailEntity.getId())).findFirst().orElse(new ProductCustomsEntity());
+            if (StringUtils.isEmpty(customs.getId())){
+                //新增默认
+                addCustomsList.add(new ProductCustomsEntity()
+                        .setSkuId(productDetailEntity.getId())
+                        .setCountry(CommonConstants.DEFAULT)
+                        .setToDeclarePrice(logistics.getDestDeclarePrice())
+                        .setToCurrency(logistics.getDestCurrency())
+                        .setToCurrencySymbol(logistics.getDestCurrencySymbol()));
+            }else if (Objects.nonNull(logistics.getDestDeclarePrice()) && logistics.getDestDeclarePrice().compareTo(BigDecimal.ZERO) != 0){
+                customs.setToCurrency(logistics.getDestCurrency());
+                customs.setToDeclarePrice(logistics.getDestDeclarePrice());
+                customs.setToCurrencySymbol(logistics.getDestCurrencySymbol());
+                customs.setCountry(CommonConstants.DEFAULT);
+                updateCustomsList.add(customs);
+            }
+        });
+        //批量操作
+        if (CollectionUtil.isNotEmpty(addCustomsList)){
+            productCustomsService.saveBatch(addCustomsList);
+        }
+        if (CollectionUtil.isNotEmpty(updateCustomsList)){
+            productCustomsService.updateBatchById(updateCustomsList);
+        }
+    }
+
+    @Override
+    public void initProductToWangDian(List<String> ids) {
+        int count = productInfoService.count();
+        int pageSize = 50;
+        int pageCount = count / pageSize + 1;
+        for (int i = 0; i < pageCount; i++) {
+            Page<ProductInfoEntity> page = productInfoService.page(new Page<>(i, pageSize), Wrappers.<ProductInfoEntity>lambdaQuery().in(CollectionUtil.isNotEmpty(ids), ProductInfoEntity::getId, ids));
+            List<ProductInfoEntity> records = page.getRecords();
+            if (CollectionUtils.isEmpty(records)) {
+                return;
+            }
+            List<String> infoIds = records.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            List<ProductDetailEntity> detailEntities = list(Wrappers.<ProductDetailEntity>lambdaQuery()
+                    .eq(ProductDetailEntity::getStatus, 2)
+                    .in(ProductDetailEntity::getProductId, infoIds));
+            for (ProductDetailEntity entity : detailEntities) {
+                RateLimiter limiter = RateLimiter.create(60, 1, TimeUnit.MINUTES);
+                if (limiter.tryAcquire()) {
+                    try {
+                        syncWangDianProductDetailService.syncDataToWangDian(entity);
+                    } catch (Exception e) {
+                        log.error("推送旺店通失败:{}", e.getMessage(), e);
+                    }
+                }
+            }
+        }
+    }
+
+    private int getGoodsType(String saleMethod, String property){
+        SaleMethodEnum saleMethodEnum = SaleMethodEnum.getEnumByType(saleMethod);
+        if (org.springframework.util.ObjectUtils.isEmpty(saleMethodEnum)){
+            return 0;
+        }
+        switch (saleMethodEnum){
+            case GOODS:return (PRODUCT_PROPERTY_COST.equals(property) || PRODUCT_PROPERTY_SERVICE.equals(property)) ? 5 : 1;
+            case PACKAGING_MATERIALS: return 3;
+            case SEMI_FINISHED:return 2;
+            default: return 0;
+        }
+    }
     @Override
     @Transactional
     public Boolean approvalReject(ProductDetailOperateDTO dto) {
@@ -2174,7 +2419,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95046);
         }
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         //TODO 2023-03-30 暂时取消审核流程 只改状态
@@ -2215,7 +2460,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean updateApprover(ProductDetailApproveParamDTO dto) {
         ProductDetailApproverEntity entity = new ProductDetailApproverEntity();
         BeanMapperUtils.copy(dto, entity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = UserContext.getLoginUser();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         entity.setCreateUserId(userId);
@@ -2226,7 +2471,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean productDetailProcessPass(String processId) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductDetailEntity::getProcessId, processId);
         queryWrapper.last("LIMIT 1");
@@ -2241,11 +2486,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
-
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
 
         return this.updateById(entity);
     }
@@ -2264,18 +2504,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95086);
         }
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
         LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper();
         updateWrapper.set(ProductDetailEntity::getIsChange, IsConstant.YES);
         updateWrapper.set(ProductDetailEntity::getUpdateUserId, loginUser.getUid());
         updateWrapper.set(ProductDetailEntity::getUpdateUserName, loginUser.getUserName());
         updateWrapper.eq(ProductDetailEntity::getId, id);
         boolean flag = this.update(updateWrapper);
-        ProductDetailEntity detailEntity = this.getById(id);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
 
         if (flag) {
             //新增操作日志
@@ -2305,16 +2540,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setStatus(ProductDetailStatusEnum.WAIT_COMMIT.getCode());
         //反审核后更新是否申请变更
         entity.setIsChange(IsConstant.NO);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                 .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
-        //反审核发送到金蝶系统
-        syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+
+        //发送金蝶
+        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return this.updateById(entity);
     }
 
@@ -2333,11 +2564,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("重启审核流程").setContent("SKU[" + entity.getSkuNo() + "]重启审核流程"));
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-
         //反审核后用新的流程审核人员审核
         return this.updateById(entity);
     }
@@ -2372,7 +2598,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         Integer skuStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        return baseMapper.getSkuBySkuNos(skuNoList, skuStatus);
+        List<SkuVO> skuList = baseMapper.getSkuBySkuNos(skuNoList, skuStatus);
+        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
+        for (SkuVO skuVO : skuList) {
+            if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
+                skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
+                skuVO.setNotTaxCostPrice(dmpSkuCost.getNotTaxCostPrice());
+            }
+        }
+        return skuList;
     }
 
     /**
@@ -2409,11 +2644,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         updateWrapper.eq(ProductDetailEntity::getProductId, productId);
         updateWrapper.set(ProductDetailEntity::getProductState, state);
         this.update(updateWrapper);
-        ProductDetailEntity detailEntity = lambdaQuery().eq(ProductDetailEntity::getProductId, productId).one();
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
     }
 
 
@@ -2601,11 +2831,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //启动流程
 //        productDetailStartProcess(productDetailEntity);
         productDetailEntity.setStatus(ProductDetailStatusEnum.APPROVAL_ING.getCode());
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(productDetailEntity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(productDetailEntity), IdUtil.simpleUUID());
-
         return this.updateById(productDetailEntity);
     }
 
@@ -2628,15 +2853,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productDetailEntity.setProcessId("");
         //更新审核状态
         productDetailEntity.setStatus(ProductDetailStatusEnum.WAIT_COMMIT.getCode());
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(productDetailEntity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(productDetailEntity), IdUtil.simpleUUID());
-
         return this.updateById(productDetailEntity);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean sendKingDeeData(String id) {
         ProductDetailEntity productDetailEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productDetailEntity)) {
@@ -2645,7 +2866,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95126);
         }
-        syncKingdeeProductDetailService.syncDataToKingdee(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+        //发送金蝶
+        sendPushTask(Arrays.asList(productDetailEntity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         return Boolean.TRUE;
     }
 
@@ -2685,11 +2908,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
         if (CollectionUtils.isNotEmpty(resultList)) {
             this.updateBatchById(resultList);
-            //同步到SCM
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), resultList, IdUtil.simpleUUID());
-            //同步到WMS
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), resultList, IdUtil.simpleUUID());
-
         }
 
     }
@@ -2711,12 +2929,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .eq(ProductDetailEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), ProductDetailEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
-        ProductDetailEntity byId = this.getById(id);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(byId), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(byId), IdUtil.simpleUUID());
-
         return flag;
     }
 
@@ -2734,108 +2946,32 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(skuIds)) {
             return Collections.emptyList();
         }
-        List<SkuVO> skuList = baseMapper.getSkuBaseBySkuIds(skuIds);
+        List<SkuVO> skuList = baseMapper.getSkuInfoBySkuIds(skuIds);
         if (CollUtil.isNotEmpty(skuList)) {
             List<ProductPackEntity> productPackList = productPackService.findBySkuIds(skuIds);
             Map<String, List<ProductPackEntity>> productPackMap = Maps.newHashMap();
             if (CollUtil.isNotEmpty(productPackList)) {
                 productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
             }
-            //产品信息
-            List<String> productIds = skuList.stream().map(SkuVO::getProductId).distinct().collect(Collectors.toList());
-            Map<String, ProductInfoEntity> productMap = Maps.newHashMap();
-            if (CollectionUtils.isNotEmpty(productIds)){
-                List<ProductInfoEntity> productInfos = productInfoService.listByIds(productIds);
-                if (CollectionUtils.isNotEmpty(productInfos)){
-                    productMap = productInfos.stream().collect(Collectors.toMap(ProductInfoEntity::getId, Function.identity()));
-                }
-            }
-
-            //产品销售状态
-            List<ProductSaleEntity> productSales = productSaleService.listBySkuIds(skuIds);
-            Map<String, List<ProductSaleEntity>> productSaleMap = Maps.newHashMap();
-            if (CollUtil.isNotEmpty(productSales)) {
-                productSaleMap = productSales.stream().collect(Collectors.groupingBy(ProductSaleEntity::getSkuId));
-            }
-            //产品物流信息
-            List<ProductLogisticsEntity> productLogistics = productLogisticsService.listBySkuIdList(skuIds);
-            Map<String, List<ProductLogisticsEntity>> logisticsMap = Maps.newHashMap();
-            if (CollectionUtils.isNotEmpty(productLogistics)){
-                logisticsMap = productLogistics.stream().collect(Collectors.groupingBy(ProductLogisticsEntity::getSkuId));
-            }
-            //产品采购信息表
-            List<ProductPurchaseEntity> productPurchaseEntities = productPurchaseService.listBySkuIds(skuIds);
-            Map<String, List<ProductPurchaseEntity>> productPurchaseMap = Maps.newHashMap();
-            if (CollectionUtils.isNotEmpty(productPurchaseEntities)){
-                productPurchaseMap = productPurchaseEntities.stream().collect(Collectors.groupingBy(ProductPurchaseEntity::getSkuId));
-            }
-            //产品成本
-            List<ProductCostEntity> productCosts = productCostService.listBySkuIds(skuIds);
-            Map<String, List<ProductCostEntity>> productCostMap = Maps.newHashMap();
-            if (CollectionUtils.isNotEmpty(productCosts)){
-                productCostMap = productCosts.stream().collect(Collectors.groupingBy(ProductCostEntity::getSkuId));
-            }
             //供应商信息
             List<String> supplierIdList = skuList.stream().map(SkuVO::getSupplierId).collect(Collectors.toList());
             List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+
             //产品分类
             List<String> categoryIdList = skuList.stream().map(SkuVO::getCategoryId).distinct().collect(Collectors.toList());
             List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listByIds(categoryIdList);
 
             for (SkuVO skuVO : skuList) {
-                //产品信息
-                if (productMap.containsKey(skuVO.getProductId())&& Objects.nonNull(productMap.get(skuVO.getProductId()))){
-                    ProductInfoEntity productInfo = productMap.get(skuVO.getProductId());
-                    skuVO.setSpuNo(productInfo.getSpuNo());
-                    skuVO.setSpuName(productInfo.getName());
-                    skuVO.setMaterials(productInfo.getMaterials());
-                    skuVO.setFunctionDesc(productInfo.getFunctionDesc());
-                    skuVO.setProductGrade(productInfo.getGrade());
-                    skuVO.setBrandName(productInfo.getBrandName());
-                    skuVO.setCategoryId(productInfo.getCategoryId());
-                    skuVO.setSaleMethod(productInfo.getSaleMethod());
-                    skuVO.setSpecType(productInfo.getSpecType());
-                }
                 if (productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId()))) {
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
-                    skuVO.setGrossWeight(packEntity.getGrossWeight());
-                    skuVO.setProductLength(packEntity.getProductLength());
-                    skuVO.setProductWidth(packEntity.getProductWidth());
-                    skuVO.setProductHeight(packEntity.getProductHeight());
-                    skuVO.setNetWeight(packEntity.getNetWeight());
                 }
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
                     //含税价
                     skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
                 }
-                //物流报关信息
-                if (logisticsMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(logisticsMap.get(skuVO.getSkuId()))){
-                    ProductLogisticsEntity logisticsEntity = logisticsMap.get(skuVO.getSkuId()).get(0);
-                    skuVO.setDeclareName(logisticsEntity.getDeclareChineseName());
-                    skuVO.setDeclareModel(logisticsEntity.getDeclareModel());
-                    skuVO.setProductPropertyId(logisticsEntity.getProductPropertyId());
-                }
-                //产品销售信息
-                if (productSaleMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productSaleMap.get(skuVO.getSkuId()))){
-                    ProductSaleEntity saleEntity = productSaleMap.get(skuVO.getSkuId()).get(0);
-                    skuVO.setSaleState(saleEntity.getSaleState());
-                }
-                //产品采购信息表
-                if (productPurchaseMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPurchaseMap.get(skuVO.getSkuId()))){
-                    ProductPurchaseEntity productPurchase = productPurchaseMap.get(skuVO.getSkuId()).get(0);
-                    skuVO.setMoq(productPurchase.getMoq());
-                    skuVO.setSupplierId(productPurchase.getMainSupplier());
-                    skuVO.setEan(productPurchase.getEan());
-                }
-                //产品成本
-                if (productCostMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productCostMap.get(skuVO.getSkuId()))){
-                    ProductCostEntity productCost = productCostMap.get(skuVO.getSkuId()).get(0);
-                    skuVO.setActualTaxCost(productCost.getActualTaxCost());
-                    skuVO.setTargetTaxCost(productCost.getTargetTaxCost());
-                    skuVO.setRetailPrice(productCost.getRetailPrice());
-                }
+
                 //产品分类
                 String categoryName = basicCategoryList.stream().filter(obj -> obj.getId().equals(skuVO.getCategoryId())).map(BasicCategoryEntity::getName).findFirst().orElse("");
                 skuVO.setCategoryName(categoryName);
@@ -3019,7 +3155,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
-        productCustomsEntityList.forEach(req -> {
+        List<ProductCustomsEntity> productCUstomsList = productCustomsEntityList.stream().filter(e -> e.getSkuId().equals(skuId))
+                .collect(Collectors.toList());
+        productCUstomsList.forEach(req -> {
             if (StringUtils.isNotBlank(req.getCountry())) {
                 String[] split = req.getCountry().split(",");
                 List<String> countryIdList = Arrays.asList(split);
@@ -3028,7 +3166,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 req.setCountryName(countryName);
             }
         });
-        result.setProductCustomsList(productCustomsEntityList);
+        result.setProductCustomsList(productCUstomsList);
 
         //产品包装辅料
         List<ProductAccessoriesDTO> accessoriesList = productAccessoriesService.getByProductId(productId);
@@ -3098,11 +3236,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //2.修改/新增 sku信息
         if (detailEntity != null) {
             this.updateById(detailEntity);
-            //同步到SCM
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
-            //同步到WMS
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
-
         }
         //3.修改/新增 成本信息
         ProductCostShowDTO costShowDTO = skuDTO.getProductCostShowDTO();
@@ -3203,8 +3336,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
 
-        //编辑通过后发送金蝶
-        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        //发送金蝶
+        sendPushTask(Arrays.asList(detailEntity),SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
 
 
@@ -3284,12 +3417,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         updateWrapper.set(ProductDetailEntity::getUpdateUserName, userName);
         updateWrapper.eq(ProductDetailEntity::getId, id);
         Boolean flag = this.update(updateWrapper);
-        ProductDetailEntity entity = this.getById(id);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-
         return flag;
     }
 
@@ -3313,7 +3440,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
         if (!Objects.isNull(processEntity)) {
             StartProcessDTO startProcess = new StartProcessDTO();
-            LoginUser loginUser = commonService.getUserInfo();
+            LoginUser loginUser = UserContext.getDefaultLoginUser();
             startProcess.setBusinessKey(processEntity.getBusinessKey());
             startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
             startProcess.setUserId(loginUser.getUid());
@@ -3525,12 +3652,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isNotEmpty(productIds)) {
             this.lambdaUpdate().in(ProductDetailEntity::getProductId, productIds).
                     set(ProductDetailEntity::getProductState, productState).update();
-            //同步到SCM
-            List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getProductId, productIds).list();
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
-            //同步到WMS
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
-
         }
     }
 
@@ -3601,13 +3722,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
                 .in(ProductDetailEntity::getId, ids)
                 .update();
-        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
-        //启动流程
-//        productDetailStartProcess(productDetailEntity);
         return flag;
     }
 
@@ -3630,7 +3744,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95038);
         }
 
-        LoginUser userInfo = commonService.getUserInfo();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //TODO 待加审核流程
 
         Integer approveStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
@@ -3640,13 +3754,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //workflowFeign.taskPass(approveProcess);
             entityList.forEach(obj -> {
                 //发送通知
-                noticeMessageService.approveProductNotice(CommonInterceptor.threadLocal.get().getUserName(), obj);
+                noticeMessageService.approveProductNotice(UserContext.getLoginUser().getUserName(), obj);
                 //新增操作日志
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                         .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + baseApproveParamDTO.getComment()));
-                //审核通过发送金蝶
-                syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
             });
+            //发送金蝶
+            sendPushTask(entityList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            syncWangDianProductDetailService.syncDataToWangDian(entityList);
         } else {
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
             //新增审核不通过意见
@@ -3667,11 +3782,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .set(ProductDetailEntity::getUpdateUserName, userInfo.getUserName())
                 .in(ProductDetailEntity::getId, ids)
                 .update();
-        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
         return flag;
     }
 
@@ -3701,14 +3811,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .in(ProductDetailEntity::getIsChange, IsConstant.NO)
                 .in(ProductDetailEntity::getId, ids)
                 .update();
-        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
 
-        //反审核发送到金蝶系统
-        entityList.forEach(obj -> syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //发送金蝶
+        sendPushTask(entityList,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return flag;
     }
 
@@ -3756,10 +3861,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (entityListt.size() != sign) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
-        entityListt.forEach(req -> {
-            //更新金蝶
-            syncKingdeeProductDetailService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DELETE.getCode());
-        });
+        //发送金蝶
+        sendPushTask(entityListt,SyncOperateEnum.OPERATE_DELETE.getCode());
+
         //1.删除证书信息
         productCertificateService.deleteBySkuIdList(ids);
         //2.删除包装信息
@@ -3892,7 +3996,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!flag) {
             throw new ServiceException(ApiError.ERROR_95243);
         }
-        List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, dto.getIds()).list();
+        productLogisticsService.saveOrUpdateParentPropertyIdByChildSkuId(dto.getIds());
         //同步到SCM
 //        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
         //同步到WMS
@@ -4037,6 +4141,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //没有子集获取父级
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomBySkuIds(Arrays.asList(skuId));
         List<String> skuIds = bomChildrenSkuDTOS.stream().map(req -> req.getParentSkuId()).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
         List<SkuVO> skuInfoBySkuIds = baseMapper.getSkuBaseBySkuIds(skuIds);
         if (CollectionUtils.isNotEmpty(skuInfoBySkuIds)) {
             List<String> parentSkuIds = skuInfoBySkuIds.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
@@ -4063,6 +4170,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
         //已存在数据
         skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        List<String> saleMethodList = skuParamDTO.getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            skuParamDTO.setSaleMethod(StringUtils.join(saleMethodParams, ","));
+        }
         List<ProductSearchDTO.SkuListDTO> list = this.baseMapper.listSkuBySkuNos(skuParamDTO);
 
         List<String> supplierIdList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplier())).map(ProductSearchDTO.SkuListDTO::getMainSupplier).distinct().collect(Collectors.toList());
@@ -4092,10 +4207,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean updateWarehouseLocationById(String id, String warehouseLocation) {
+    public Boolean updateWarehouseLocationById(String id, String warehouseLocation, String warehouseLocationLarge) {
         boolean flag = lambdaUpdate()
                 .eq(ProductDetailEntity::getId, id)
                 .set(ProductDetailEntity::getWarehouseLocation, warehouseLocation)
+                .set(ProductDetailEntity::getWarehouseLocationLarge, warehouseLocationLarge)
                 .update();
 
         List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, id).list();
@@ -4277,7 +4393,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 productSkuBaseInfoDTO.setId(productBy.getId());
                 productInfoDTO.setId(productBy.getProductId());
-
+                //设置推荐仓位（大货区/小货区）
+                if (StringUtils.isEmpty(dto.getWarehouseLocationLarge())) {
+                    dto.setWarehouseLocationLarge(productBy.getWarehouseLocationLarge());
+                }
+                if (StringUtils.isEmpty(dto.getWarehouseLocation())) {
+                    dto.setWarehouseLocation(productBy.getWarehouseLocation());
+                }
             } else {
                 //sku重复
                 if (ObjectUtil.isNotEmpty(productBy)) {
@@ -4529,7 +4651,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productInfoDTO.setSalesChannel(dto.getSalesChannel());
             productInfoDTO.setMoldCost(MathUtil.valueOf(dto.getMoldCost()));
             productInfoDTO.setEntrustedDevelopCost(MathUtil.valueOf(dto.getEntrustedDevelopCost()));
-
+            // 添加默认spu
+            productInfoDTO.setSpuNo(Optional.ofNullable(dto.getSpuNo()).orElse(dto.getSkuNo()));
+            //检查spu编号是否重复
+            if (Boolean.TRUE.equals(this.checkSpuNo(productInfoDTO.getSpuNo(), productInfoDTO.getId()))) {
+                throw new ServiceException(ApiError.ERROR_95017);
+            }
             //sku信息
             BeanMapper.copy(dto, productSkuBaseInfoDTO);
             if (StringUtils.isNotBlank(dto.getPlanListingTime())) {
@@ -4830,6 +4957,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if(StringUtils.isEmpty(pagingDTO.getParams().getRemoteSearchSku())){
             return new PagingVO<>();
         }
+        List<String> saleMethodList = pagingDTO.getParams().getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            pagingDTO.getParams().setSaleMethod(StringUtils.join(saleMethodParams, ","));
+        }
         Page<ProductDetailDTO.SkuDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailDTO.SkuDTO> pageData=  baseMapper.listSku(query, pagingDTO.getParams());
         return new PagingVO<>(pageData);
@@ -4916,6 +5051,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return baseMapper.getProductDetailByDestDeclarePrice();
     }
 
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 采购信息（产品采购信息+产品采购含税单价）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
     @Override
     public List<ProductDetailExcelDTO> getProductDetailExportData(String metaInfo) {
         ProductSkuExcelDTO productSkuExcelDTO = JSON.parseObject(metaInfo, ProductSkuExcelDTO.class);
@@ -5058,5 +5201,209 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         return baseMapper.getSkuBaseBySkuIds(skuIds);
+    }
+
+    /**
+     * @description: 推送金蝶
+     * @author Will
+     * @date: 2024/5/20 12:41
+     * @param list
+     */
+    private void sendPushTask (List<ProductDetailEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
+    }
+    /**
+     * 根据skuid 集合获取到sku基础信息 + 采购信息（产品采购信息+产品采购含税单价）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author zdy
+     * @date 2023-03-21 12:06
+     */
+    @Override
+    public List<SkuVO> listSkuCostByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuCostByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)){
+            return Collections.emptyList();
+        }
+        List<String> skuNoList = skuList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuNo())).map(SkuVO::getSkuNo).distinct().collect(Collectors.toList());
+        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
+        for (SkuVO skuVO : skuList) {
+            if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
+                skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
+                skuVO.setNotTaxCostPrice(dmpSkuCost.getNotTaxCostPrice());
+            }
+        }
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuProductByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuProductByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuAllAttributeByIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuVOS = redisUtil.multiGet(RedisKeyConstant.LIST_SKU_INFO, skuIds);
+        //过滤空数据
+        skuVOS = skuVOS.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        //汇总已查询到的sku
+        List<String> existSkuIds = skuVOS.stream().filter(Objects::nonNull).map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<String> noExistSkuIds = skuIds.stream().filter(e -> CollectionUtils.isEmpty(existSkuIds)
+                || !existSkuIds.contains(e)).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(noExistSkuIds)){
+            return skuVOS;
+        }
+        List<SkuVO> skuInfos = this.getSkuInfoBySkuIds(noExistSkuIds);
+        if (CollectionUtils.isEmpty(skuInfos)){
+            return skuVOS;
+        }
+        redisUtil.putAllHashMap(RedisKeyConstant.LIST_SKU_INFO, skuInfos.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity())));
+        if (CollectionUtils.isEmpty(skuVOS)){
+            skuVOS = skuInfos;
+        }else {
+            skuVOS.addAll(skuInfos);
+        }
+        return skuVOS;
+    }
+
+    @Override
+    public List<SkuVO> listSkuPackByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPackByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuSaleByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuSaleByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuLogisticsByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuLogisticsByIds(skuIds);
+        this.handleProperty(skuList);
+        return skuList;
+    }
+
+    private void handleProperty(List<SkuVO> skuList) {
+        List<BasicDictEntity> allBasicDictEntities = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+        skuList.forEach(v->{
+            SkuVO.PropertyDTO propertyDTO =new SkuVO.PropertyDTO();
+            v.setPropertyDTO(propertyDTO);
+            if(StringUtils.isBlank(v.getProductPropertyId())){
+                return;
+            }
+            List<String> propertyIds = Arrays.asList(v.getProductPropertyId().split(","));
+            List<String> propertyNameList = allBasicDictEntities.stream().filter(t->propertyIds.contains(t.getId())).map(BasicDictEntity::getName).collect(Collectors.toList());
+            propertyDTO.setIsElectric(propertyNameList.stream().anyMatch(t->t.contains("电") && !t.contains("充电盒")));
+            propertyDTO.setElectricName(propertyNameList.stream().filter(t->t.contains("电") && !t.contains("充电盒")).collect(Collectors.joining(",")));
+            propertyDTO.setIsMagnetism(propertyNameList.stream().anyMatch(t->t.contains("磁")));
+            propertyDTO.setMagnetismName(propertyNameList.stream().filter(t->t.contains("磁")).collect(Collectors.joining(",")));
+            propertyDTO.setIsLiquid(propertyNameList.stream().anyMatch(t->t.contains("液体")));
+            propertyDTO.setLiquidName(propertyNameList.stream().filter(t->t.contains("液体")).collect(Collectors.joining(",")));
+            propertyDTO.setIsWood(propertyNameList.stream().anyMatch(t->t.contains("木")));
+            propertyDTO.setWoodName(propertyNameList.stream().filter(t->t.contains("木")).collect(Collectors.joining(",")));
+            propertyDTO.setIsPowder(propertyNameList.stream().anyMatch(t->t.contains("粉末")));
+            propertyDTO.setPowderName(propertyNameList.stream().filter(t->t.contains("粉末")).collect(Collectors.joining(",")));
+            propertyDTO.setIsPlaster(propertyNameList.stream().anyMatch(t->t.contains("膏体")));
+            propertyDTO.setPlasterName(propertyNameList.stream().filter(t->t.contains("膏体")).collect(Collectors.joining(",")));
+            propertyDTO.setIsCuttingTool(propertyNameList.stream().anyMatch(t->t.contains("刀具")));
+            propertyDTO.setCuttingToolName(propertyNameList.stream().filter(t->t.contains("刀具")).collect(Collectors.joining(",")));
+            propertyDTO.setIsOther(propertyNameList.stream().anyMatch(t->t.contains("CCC")));
+            propertyDTO.setOtherName(propertyNameList.stream().filter(t->t.contains("CCC")).collect(Collectors.joining(",")));
+        });
+    }
+
+    @Override
+    public List<SkuVO> listSkuCategoryByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuCategoryByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuPurchaseByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPurchaseByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public ProductDetailEntity getBySkuNoOrEan(String skuCode) {
+
+        ProductDetailEntity entity = getOne(Wrappers.<ProductDetailEntity>lambdaQuery().eq(ProductDetailEntity::getSkuNo, skuCode));
+        if (ObjectUtil.isEmpty(entity)) {
+            ProductPurchaseEntity purchaseEntity = productPurchaseService.getOne(Wrappers.<ProductPurchaseEntity>lambdaQuery()
+                    .eq(ProductPurchaseEntity::getEan, skuCode)
+                    .last("LIMIT 1")
+            );
+            if (ObjectUtil.isNotEmpty(purchaseEntity)) {
+                entity = getById(purchaseEntity.getSkuId());
+            }
+        }
+        return entity;
+    }
+
+    @Override
+    public String dimensionalWeightMeasure(DimensionalWeightDTO dto) {
+        ProductDetailEntity purchaseEntity = this.getBySkuNoOrEan(dto.getBarCode());
+        if(Objects.isNull(purchaseEntity)){
+            throw new ServiceException("编码不存在");
+        }
+        ProductPackEntity productPackEntity = productPackService.getBySkuId(purchaseEntity.getId());
+        if(Objects.isNull(productPackEntity)){
+            throw new ServiceException("包装信息不存在");
+        }
+        BigDecimal length = LengthConverterUtil.cmToMm(dto.getLength());
+        BigDecimal width = LengthConverterUtil.cmToMm(dto.getWidth());
+        BigDecimal height = LengthConverterUtil.cmToMm(dto.getHeight());
+        BigDecimal weight = dto.getWeight().multiply(new BigDecimal("1000"));
+        String logContent = StrUtil.format("更新【包装尺寸长】从{}更新为{}，【包装尺寸宽】从{}更新为{}，【包装尺寸高】从{}更新为{}，【毛重】从{}更新为{}",productPackEntity.getProductLength(),length,productPackEntity.getProductWidth(),width,productPackEntity.getProductHeight(),height,productPackEntity.getGrossWeight(),weight);
+        productPackEntity.setProductLength(length);
+        productPackEntity.setProductWidth(width);
+        productPackEntity.setProductHeight(height);
+        productPackEntity.setGrossWeight(weight);
+        productPackService.updateById(productPackEntity);
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
+                .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent));
+
+        return "操作成功";
     }
 }

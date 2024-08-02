@@ -8,6 +8,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.dto.DmpTaskMsgDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -29,7 +30,22 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      *
      * @param dto
      */
-    void sendMqAndSaveTask(DmpPushTaskFeignDTO dto);
+    DmpPushTaskEntity saveTask(DmpPushTaskFeignDTO dto);
+
+    /**
+     * 批量保存
+     * @param dtos
+     * @return
+     */
+//    List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos);
+
+    /**
+     * 根据id推送任务
+     * @author Will
+     * @date: 2024/5/14 9:35
+     * @param list
+     */
+    void sendTask(List<DmpPushTaskEntity> list);
 
     /**
      * 更新同步
@@ -117,6 +133,14 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @date 2024/4/11 16:51
      */
     Boolean batchNoNeedSync(List<String> ids);
+    /**
+     * @param sourceIds
+     * @return Boolean
+     * @description: 根据sourceId批量修改无需同步
+     * @author hyj
+     * @date 2024/4/11 16:51
+     */
+    Boolean batchNoNeedSyncBySourceId(List<String> sourceIds);
 
     /**
      * @param syncTaskId
@@ -148,4 +172,29 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      */
     void deleteByIds(List<String> ids);
 
+    List<DmpPushTaskEntity> listByCodeParam(DmpSyncTaskDTO.ListCodeDTO listCodeDTO);
+
+    /**
+     * 批量保存旺店通任务!
+     */
+    List<DmpPushTaskEntity> saveWdtTaskList(List<DmpPushTaskFeignDTO> dtoList);
+    /**
+     * 根据sourceId重新同步
+     * @param sourceIds
+     * @return
+     */
+    Boolean batchSyncBySourceId(List<String> sourceIds);
+
+    /**
+     * 获取飞书预警信息需要推送的(PushTask任务记录)
+     * @return
+     */
+    List<DmpPushTaskEntity> getWarnPushTaskList(List<String> statusList);
+
+    /**
+     * 获取飞书预警信息需要推送的(Task汇总报告)
+     * @param statusList
+     * @return
+     */
+    List<DmpTaskMsgDTO> getWarnTaskReport(List<String> statusList);
 }

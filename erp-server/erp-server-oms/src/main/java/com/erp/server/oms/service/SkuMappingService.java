@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -226,7 +228,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO> dto);
 
 
-    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode,String warehouseId);
+    List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode,String warehouseId,String shopId);
 
     List<ListingAdvanceQueryDTO> advanceQuerySku(AdvanceQueryContainer advanceQueryContainer);
 
@@ -234,4 +236,35 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * 检查历史映射关系
      */
     void checkHistory(String id, String listingId, String shopId, String productSkuId);
+
+    /**
+     * 通过platformSkuNo查询关联关系
+     *
+     * @Author Jim
+     * @since 2023-11-28
+     * @param platformSkuList 平台SKU列表
+     * @param dictPlatform 平台代码
+     * @param shopId 店铺ID
+     * @param platformOrderCreateTime 生效日期（查询所有=传空）
+     * @param isExpire 是否过期（查询所有=传空）
+     * @return Map<平台SKU, SKU映射和Listing列表>
+     */
+    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, List<String> platformSpuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime, Boolean isExpire);
+
+    /**
+     * 检查和获取映射关系
+     *
+     * @Author Jim
+     * @since 2023-11-28
+     **/
+    ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform);
+
+    /**
+     * 根据平台sku记录获取变更历史记录
+     * @param id
+     * @return
+     */
+    List<SkuMappingEntity> listHistoryByListingId(String id);
+    List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(String warehouseId,List<String> platformSkuNoList);
+
 }

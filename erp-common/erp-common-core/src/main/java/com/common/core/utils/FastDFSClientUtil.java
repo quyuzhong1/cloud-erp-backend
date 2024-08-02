@@ -102,8 +102,11 @@ public class FastDFSClientUtil {
 	 */
 	public synchronized static String uploadFile(File file, String fileName, Map<String, String> metaList) {
 		try {
-			byte[] buff = IOUtils.toByteArray(new FileInputStream(file));
-			return uploadFile(fileName, metaList, buff);
+			FileInputStream input = new FileInputStream(file);
+			byte[] buff = IOUtils.toByteArray(input);
+			String uploadFile = uploadFile(fileName, metaList, buff);
+			input.close();
+			return uploadFile;
 
 		} catch (Exception e) {
 			log.error("uploadFile  ",e);

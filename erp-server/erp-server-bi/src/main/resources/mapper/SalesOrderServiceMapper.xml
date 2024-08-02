@@ -534,7 +534,7 @@
     </select>
 
     <select id="getCountryList" resultType="com.erp.model.bi.vo.CountryCountVO">
-        SELECT country_name_cn AS name,count(*) AS orderCount FROM dmp_order_info
+        SELECT country_name_cn AS name,count(*) AS orderCount FROM bi_order_info
         WHERE country_name_cn!=null or country_name_cn!=''
         GROUP BY  country_name_cn
     </select>
@@ -1465,7 +1465,7 @@
     </select>
 
     <select id="getSkuItemName" resultType="com.erp.model.bi.vo.SkuItemVO">
-        select sku_no,min(item_name) AS itemName from dmp_order_item  GROUP BY sku_no
+        select sku_no,min(item_name) AS itemName from bi_order_item_split  GROUP BY sku_no
     </select>
 
 

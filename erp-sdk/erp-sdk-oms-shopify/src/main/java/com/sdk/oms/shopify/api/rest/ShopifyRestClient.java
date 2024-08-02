@@ -738,13 +738,16 @@ public class ShopifyRestClient {
                                                                    final OffsetDateTime maximumCreatedAtDate,
                                                                    final String pageInfo,
                                                                    final int pageSize) {
-        final Response response = get(buildOrdersEndpoint()
+        WebTarget webTarget = buildOrdersEndpoint()
                 .queryParam(STATUS_QUERY_PARAMETER, ANY_STATUSES)
                 .queryParam(PAGE_INFO_QUERY_PARAMETER, pageInfo)
                 .queryParam(LIMIT_QUERY_PARAMETER, pageSize)
                 .queryParam(UPDATED_AT_MIN_QUERY_PARAMETER, minimumUpdatedAtDate.toString())
-                .queryParam(UPDATED_AT_MAX_QUERY_PARAMETER, maximumUpdatedAtDate.toString())
-                .queryParam(CREATED_AT_MAX_QUERY_PARAMETER, maximumCreatedAtDate.toString()));
+                .queryParam(UPDATED_AT_MAX_QUERY_PARAMETER, maximumUpdatedAtDate.toString());
+        if (null != maximumCreatedAtDate){
+            webTarget.queryParam(CREATED_AT_MAX_QUERY_PARAMETER, maximumCreatedAtDate.toString());
+        }
+        final Response response = get(webTarget);
         return getOrders(response);
     }
 
