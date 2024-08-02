@@ -3270,18 +3270,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(existSourceDetailList) || CollectionUtils.isEmpty(detailEntityList) ) {
             return;
         }
-        List<String> existPlatformDetailIds = detailEntityList.stream().map(SoOutstockDetailEntity::getPlatformDetailId).distinct().collect(Collectors.toList());
-        log.warn("所有明细已生成销售出库单忽略处理, B2C销售订单={}, 来源明细IDS={}", soB2cEntity.getPlatformCode(), existPlatformDetailIds);
+        List<String> existSoDetailIds = detailEntityList.stream().map(SoOutstockDetailEntity::getSoDetailId).distinct().collect(Collectors.toList());
+        log.warn("所有明细已生成销售出库单忽略处理, B2C销售订单={}, 来源明细IDS={}", soB2cEntity.getPlatformCode(), existSoDetailIds);
         String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
         SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
         deleteDTO.setMainId(soB2cEntity.getId());
         deleteDTO.setType(type);
-        List<String> detailIds = detailEntityList
-                .stream()
-                .filter(e -> existPlatformDetailIds.contains(e.getPlatformDetailId()))
-                .map(BaseEntity::getId)
-                .collect(Collectors.toList());
-        deleteDTO.setDetailIdList(detailIds);
+        deleteDTO.setDetailIdList(existSoDetailIds);
         soB2cFeign.checkAndDeleteAllError(deleteDTO);
     }
 
