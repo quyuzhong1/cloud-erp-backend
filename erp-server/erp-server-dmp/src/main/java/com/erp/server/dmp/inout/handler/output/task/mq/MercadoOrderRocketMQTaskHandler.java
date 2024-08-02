@@ -1,13 +1,11 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -32,7 +30,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Scope("prototype")
-public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -264,16 +262,13 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         // 当前明细标签
         Map<String, Object> lableMap = new HashMap<>();
         JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
-        if (jsonObject.get("refundedLineItemIds") != null) {
-            Set<String> refundedLineItemIds = (Set<String>) jsonObject.get("refundedLineItemIds");
-            if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(soDetailEntity.getThirdDetailId())) {
-                lableMap.put("isRefunded", true);
-                detailDTO.setIsDetailRefund(true);
-            } else {
-                lableMap.put("isRefunded", false);
-            }
+        Set<String> refundedLineItemIds = (Set<String>) jsonObject.get("refundedLineItemIds");
+        if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(soDetailEntity.getThirdDetailId())) {
+            lableMap.put("isRefunded", true);
+            detailDTO.setIsDetailRefund(true);
+        } else {
+            lableMap.put("isRefunded", false);
         }
-
         detailDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
 
         // 库存组织id
@@ -333,19 +328,20 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             return Collections.emptyList();
         }
 
-        String name = "";
         BigDecimal cost = BigDecimal.ZERO;
-
-
+        JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
+        if (jsonObject.get("cost") != null) {
+            cost = MathUtil.valueOf(jsonObject.get("cost"));
+        }
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
                 .code(dmpSoInfoEntity.getLogisticsCode())
-                .name(name)
+                .name(dmpSoInfoEntity.getLogisticsName())
                 .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
                 .logisticsChannelId(dmpSoInfoEntity.getLogisticsChannelId())
                 .logisticsChannelName(dmpSoInfoEntity.getLogisticsChannelName())
                 .estimatedShippingCost(cost)
-                .actualShippingCost(BigDecimal.ZERO)
+                .actualShippingCost(dmpSoInfoEntity.getShippingAmount())
                 .accessoriesCostCurrency("")
                 .actualShippingCurrency("")
                 .estimatedShippingCurrency("")
@@ -363,9 +359,16 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
      * @return java.util.List<com.common.business.dto.PlatformOrderFinanceDTO>
      **/
     private static PlatformOrderFinanceDTO parseFinances(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntities) {
+        JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
+
+        BigDecimal taxesAmount = BigDecimal.ZERO;
+        if (jsonObject.get("taxesAmount") != null) {
+            taxesAmount = MathUtil.valueOf(jsonObject.get("taxesAmount"));
+        }
         return PlatformOrderFinanceDTO.builder()
                 .currency(dmpSoInfoEntity.getCurrencyCode())
                 .shippingCost(dmpSoInfoEntity.getShippingAmount())
+                .vatRate(taxesAmount)
                 .build();
     }
 }
