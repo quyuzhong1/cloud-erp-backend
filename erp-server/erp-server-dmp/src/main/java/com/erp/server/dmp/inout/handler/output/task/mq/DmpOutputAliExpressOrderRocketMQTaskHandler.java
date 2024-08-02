@@ -387,11 +387,12 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
             receiverDTO.setCityName(dmpSoReceiverEntity.getCity());
             receiverDTO.setProvinceName(dmpSoReceiverEntity.getProvince());
             receiverDTO.setReceiverName(dmpSoReceiverEntity.getReceiverName());
-            receiverDTO.setReceiverTelNumber(dmpSoReceiverEntity.getReceiverTelNumber());
+            String mainPhone = dmpSoReceiverEntity.getMainPhone();
+			receiverDTO.setReceiverTelNumber(mainPhone);
             receiverDTO.setPostCode(dmpSoReceiverEntity.getPostCode());
             receiverDTO.setReceiverTaxNo(dmpSoReceiverEntity.getReceiverTaxNo());
             // 买家电话
-            receiverDTO.setTelNumber(dmpSoReceiverEntity.getMainPhone());
+            receiverDTO.setTelNumber(mainPhone);
             
             String buyerId = dmpSoReceiverEntity.getBuyerId();
 			receiverDTO.setLoginId(buyerId);
@@ -413,7 +414,6 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         receiverDTO.setEmail("");
         receiverDTO.setCountryName("");
         receiverDTO.setDistrictName("");
-        receiverDTO.setTelNumber("");
         
         orderDTO.setReceiver(receiverDTO);
         
