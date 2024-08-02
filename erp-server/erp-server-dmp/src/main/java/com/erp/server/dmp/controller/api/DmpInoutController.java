@@ -80,7 +80,7 @@ public class DmpInoutController extends BaseController {
     		String id = dmpCfgInputConvertEntity.getId();
     		convertMappingCache.put(id, dmpHandlerCache.getDmpCfgInputConvertMapping(id));
     	}
-    	typeCacheMap.put("dmpCfgInputConvert" , convertMappingCache);
+    	typeCacheMap.put("dmpCfgInputConvertMapping" , convertMappingCache);
     	
     	typeCacheMap.put("dmpCfgInputDetail", dmpHandlerCache.getDmpCfgInputDetailEntityList(d -> true));
     	typeCacheMap.put("dmpCfgInput", dmpHandlerCache.getDmpCfgInputEntityList(d -> true));
