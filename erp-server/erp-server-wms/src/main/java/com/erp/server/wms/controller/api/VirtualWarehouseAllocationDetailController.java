@@ -29,6 +29,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -143,11 +145,12 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
     )
-    public ApiResult<BatchResultDTO> sync(@RequestParam(value = "detailId") String detailId) {
+    public ApiResult<List<BatchResultDTO>> sync(@RequestParam(value = "detailId") String detailId) {
         String id = detailId;
         //已处理状态且同步失败状态
         String handleStatus = VirtualWarehouseAllocationStatusEnum.HANDLE.getCode();
         String failedSyncStatus = VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
         BatchResultDTO submit;
         String flagCode = id;
         try {
@@ -179,7 +182,9 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
             log.error("手动同步分货单失败>>>>{}", e);
             submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
         }
-        return submit.getSuccess() ? success(submit) : failure(submit);
+        resultDTOS.add(submit);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
     }
 
     /**
