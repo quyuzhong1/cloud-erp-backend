@@ -65,7 +65,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
      * 是否取消（false未取消，true已取消）
      */
     @TableField("is_cancel")
-    private Boolean isCancel;
+    private Boolean isCancel = Boolean.FALSE;
     /**
     * 订单状态 waitSubmit.待提交 approveIng.审核中 reject.审核不通过 approve.已审核
     */
@@ -110,7 +110,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 支付时间
     */
     @TableField("pay_time")
-    private LocalDateTime payTime;
+    private LocalDateTime payTime = null;
     /**
     * 付款状态 （false未付款，true已付款）
     */
