@@ -23,7 +23,7 @@
        <result column="to_currency_symbol" property="toCurrencySymbol" />
     </resultMap>
 
-    <select id="listByProductId" resultType="com.erp.model.plm.entity.ProductCustomsEntity">
+    <select id="listBySkuIds" resultType="com.erp.model.plm.entity.ProductCustomsEntity">
         SELECT
         pc.id,
         pd.id AS skuId,
@@ -37,9 +37,13 @@
         pc.customs_code,
         pc.tax_rate,
         pc.type
-        FROM product_detail pd
-        LEFT JOIN product_customs pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
-        WHERE pd.product_id = #{productId} AND pd.is_deleted = FALSE
+        FROM product_customs pc
+        LEFT JOIN product_detail pd ON pc.sku_id = pd."id" AND pd.is_deleted = FALSE
+        WHERE pc.is_deleted = FALSE
+        and pc.sku_id in
+        <foreach collection="skuIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
         ORDER BY pc.update_time
     </select>
 
