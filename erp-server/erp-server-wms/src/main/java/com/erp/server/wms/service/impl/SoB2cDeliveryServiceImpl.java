@@ -1226,6 +1226,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         generateB2cDTO.setSourceId(entity.getId());
         generateB2cDTO.setSourceCode(entity.getCode());
         generateB2cDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        generateB2cDTO.setBatchNo(entity.getBatchNo());
         List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
         for (SoOutstockDetailDTO.AddDTO item : detailList) {
@@ -1864,7 +1865,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 操作日志
         String msg = StrUtil.format("用户【{}】重新出库单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "重新出库");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "重新出库");
+        return BatchResultDTO.success(entity.getBatchNo(), entity.getCode(), "重新出库");
     }
 
     @Override
