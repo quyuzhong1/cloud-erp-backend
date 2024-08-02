@@ -297,7 +297,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
     /**
      * 展示作废信息
      *
-     * @param detailId
+     * @param id
      * @return
      */
     @LogAction(value = LogActionEnum.SUBMIT, desc = "展示作废信息")

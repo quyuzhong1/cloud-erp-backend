@@ -496,6 +496,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String thirdCode;
         /**
+         * 完结说明
+         */
+        private String finishDescription;
+        /**
          * 同步状态
          */
         private String syncStatus;

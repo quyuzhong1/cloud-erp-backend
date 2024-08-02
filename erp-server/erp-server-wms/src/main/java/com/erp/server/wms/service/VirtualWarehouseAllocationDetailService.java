@@ -84,4 +84,9 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * 更新备注
      */
     Boolean updateRemark(VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO);
+
+    /**
+     * 初始化第三方编码存在异常的数据
+     */
+    void initFailThirdCode(String errorMsg);
 }

@@ -376,12 +376,15 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
         }
-        List<DmpPushTaskEntity> noNeedSyncIds = list.stream().filter(obj ->
+        List<String> noNeedSyncIds = list.stream().filter(obj ->
                         (!SyncStatusEnum.IN_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())))
-                .collect(Collectors.toList());
-        noNeedSyncIds.forEach(dmpPushTaskEntity -> dmpPushTaskEntity.setStatus(SyncStatusEnum.NO_NEED_SYNC.getCode()));
+                .map(DmpPushTaskEntity::getId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(noNeedSyncIds)) {
-            updateBatchById(noNeedSyncIds, 500);
+            //http://pm.ulanzi.cn:8020/browse/ERP-3637?filter=-1  手动标记分货单同步完结时注意，同时修改dmp_push_task表中的状态为同步成功。
+            this.lambdaUpdate().in(DmpPushTaskEntity::getId, noNeedSyncIds)
+                    .set(DmpPushTaskEntity::getStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
+                    .set(DmpPushTaskEntity::getReturnMsg,"")
+                    .update();
         }
         return Boolean.TRUE;
     }
