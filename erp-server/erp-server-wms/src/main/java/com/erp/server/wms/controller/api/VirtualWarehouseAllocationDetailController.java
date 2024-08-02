@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -163,8 +164,14 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                     if (!Objects.equals(handleStatus, vmAllocationEntity.getStatus()) || !Objects.equals(failedSyncStatus, vmAllocationDetailEntity.getSyncStatus())) {
                         submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_SYNC_ERROR.msg);
                     } else {
-                        flagCode = vmAllocationEntity.getCode();
-                        submit = virtualWarehouseAllocationDetailService.sync(vmAllocationDetailEntity, vmAllocationEntity);
+                        String thirdCode = vmAllocationDetailEntity.getThirdCode();
+                        if (StringUtils.isBlank(thirdCode)){
+                            flagCode = vmAllocationEntity.getCode();
+                            submit = virtualWarehouseAllocationDetailService.sync(vmAllocationDetailEntity, vmAllocationEntity);
+                        }else {
+                            submit = BatchResultDTO.fail(id, id, "分货单明细已存在第三方编码不能重复同步");
+                        }
+
                     }
                 }
             }
@@ -234,6 +241,14 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
     @PostMapping("/updateRemark")
     public ApiResult<Boolean> updateRemark(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO){
         return success(virtualWarehouseAllocationDetailService.updateRemark(updateRemarkDTO));
+    }
+    /**
+     * 处理推送失败的第三方编码问题
+     */
+    @PostMapping("/initFailThirdCode")
+    public ApiResult initFailThirdCode(@RequestBody String errorMsg){
+        virtualWarehouseAllocationDetailService.initFailThirdCode(errorMsg);
+        return success();
     }
 
 }
