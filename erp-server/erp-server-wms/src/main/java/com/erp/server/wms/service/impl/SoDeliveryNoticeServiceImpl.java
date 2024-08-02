@@ -931,9 +931,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoOutstockDTO.AddDTO addDTO = new SoOutstockDTO.AddDTO();
         String batchNo = "";
         String warehouseId;
-        if (isTransit) {
+        boolean transit = Boolean.TRUE.equals(isTransit);
+        if (transit) {
             batchNo = IdUtil.getSnowflake().nextIdStr();
-            warehouseId = generateTransferInfo(entity, batchNo, entityList, warehouseStagingList, noInventorySkuIds);
+            warehouseId = generateTransferInfo(entity, batchNo, entityList, warehouseStagingList, noInventorySkuIds, allNoInventorySku);
         }else {
             warehouseId = entity.getWarehouseId();
         }
@@ -988,7 +989,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return BatchResultDTO.success(outId, "", "下推成功");
     }
 
-    private String generateTransferInfo(SoDeliveryNoticeEntity entity, String batchNo, List<SoDeliveryNoticeDetailEntity> entityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds) {
+    private String generateTransferInfo(SoDeliveryNoticeEntity entity, String batchNo, List<SoDeliveryNoticeDetailEntity> entityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, boolean allNoInventorySku) {
         String warehouseId;
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
         if (ObjectUtil.isEmpty(cfgSettingEntity)) {
@@ -1003,6 +1004,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取仓库信息
         if (ObjectUtil.isEmpty(warehouse)) {
             throw new ServiceException(ApiError.ERROR_99002);
+        }
+        if (Boolean.TRUE.equals(allNoInventorySku)) {
+            return warehouseId;
         }
         TransferInfoDTO.AddDTO transferDto = new TransferInfoDTO.AddDTO();
         transferDto.setType(TransferTypeEnum.CROSS_ORG.getCode());
