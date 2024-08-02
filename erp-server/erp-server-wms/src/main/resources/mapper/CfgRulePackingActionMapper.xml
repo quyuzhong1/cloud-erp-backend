@@ -33,6 +33,8 @@
         INNER JOIN cfg_rule_picking_action crpa ON crpa.is_deleted = FALSE AND crpa.rule_id = crp.id
         INNER JOIN inventory inv ON inv.is_deleted = FALSE and inv.warehouse_id = crpa.warehouse_id AND
         inv.dict_inventory_status = 'usable' AND inv.qty > 0
+        INNER JOIN warehouse_location wl on wl.parent_id = crpa.warehouse_area_id and inv.warehouse_location = wl.code
+        and crpa.warehouse_id = wl.warehouse_id
         WHERE crp.is_deleted = FALSE
         AND crp.id IN
         <foreach collection="ruleIds" item="ruleId" open="(" close=")" separator=",">
