@@ -62,7 +62,7 @@ public class DmpInputAliExpressOrderReceiverDmpHandler extends DmpInputAliExpres
 					dmpInputMongoChild.put("receiverTaxNo", receipt_address.get("cpf_no"));
 				}
 				dmpInputMongoChild.put("buyerId", order.get("buyer_login_id"));
-				dmpInputMongoChild.put("buyerName", dmpInputMongoChild.get("buyer_signer_fullname"));
+				dmpInputMongoChild.put("buyerName", order.get("buyer_signer_fullname"));
 				dmpInputMongoChild.put("receiverName", dmpInputMongoChild.get("contact_person"));
 				dmpInputMongoChild.put("receiverTelNumber", dmpInputMongoChild.get("phone_number"));
 				dmpInputMongoChild.put("fullAddress", dmpInputMongoChild.get("detail_address"));
