@@ -113,22 +113,6 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         saveOrUpdateDmpSyncTask(entity);
         return entity;
     }
-
-    /**
-     * 批量保存
-     * @param dtos
-     * @return
-     */
-//    @Override
-//    @Transactional(rollbackFor = Exception.class)
-//    public List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos) {
-//        List<DmpPushTaskEntity> dmpPushTaskEntityList=new ArrayList<>();
-//        dtos.forEach(dto->{
-//            dmpPushTaskEntityList.add(dmpPushTaskService.saveTask(dto));
-//        });
-//        return dmpPushTaskEntityList;
-//    }
-
     @Override
     public void sendTask(List<DmpPushTaskEntity> dmpPushTaskEntityList) {
         if (CollectionUtils.isEmpty(dmpPushTaskEntityList)) {
