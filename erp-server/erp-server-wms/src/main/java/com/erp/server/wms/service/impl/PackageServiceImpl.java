@@ -169,12 +169,11 @@ public class PackageServiceImpl implements PackageService {
                 soB2cFeign.updateWeight(scanResult.getSoId(),scanResult.getLogisticsId(),weightByG);
             }
             //查询订单物流信息获取跟踪号
-            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(entity.getId()));
-            if(CollectionUtils.isEmpty(soB2cLogisticsEntities)){
-                throw new ServiceException("订单物流信息为空");
-            }
-            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.get(0);
-
+            SoB2cLogisticsEntity soB2cLogisticsEntity = new SoB2cLogisticsEntity();
+            soB2cLogisticsEntity.setCode(scanResult.getTransportNo());
+            soB2cLogisticsEntity.setLogisticsChannelId(scanResult.getLogisticsChannelId());
+            soB2cLogisticsEntity.setTrackNo(scanResult.getTrackNo());
+            soB2cLogisticsEntity.setWeight(weightByG);
             // 更新发货单重量
             SoB2cDeliveryDTO.UpdateWeightDTO dto = SoB2cDeliveryDTO.UpdateWeightDTO.builder()
                     .soId(scanResult.getSoId())
@@ -183,6 +182,7 @@ public class PackageServiceImpl implements PackageService {
                     .build();
             soB2cDeliveryService.updateB2cDeliveryWeightBySoId(dto);
             scanResult.setWeight(weightByG);
+
             //更新物流商重量
             if(StringUtils.isNotBlank(soB2cLogisticsEntity.getCode()) && StringUtils.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
                 LogisticsBillDTO.UpdateWeight updateWeight = LogisticsBillDTO.UpdateWeight.builder()
