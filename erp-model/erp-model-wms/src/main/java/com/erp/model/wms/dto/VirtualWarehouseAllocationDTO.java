@@ -1,25 +1,23 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -331,6 +329,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private String warehouseName;
 
         /**
+         * 实体参可分配数量
+         */
+        private Integer unDistributionQty;
+
+        /**
          * 调出虚拟仓id
          */
         private String fromVirtualWarehouseId;
@@ -339,6 +342,16 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 调出虚拟仓名称
          */
         private String fromVirtualWarehouseName;
+
+        /**
+         * 调出虚拟仓可用数量
+         */
+        private Integer fromVirtualWarehouseUsableQty;
+
+        /**
+         * 是否缺货（true是，false否）
+         */
+        private Boolean isVirtualScarce;
 
         /**
          * 调出数量/调拨数量
@@ -354,6 +367,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 调入虚拟仓名称
          */
         private String toVirtualWarehouseName;
+
+        /**
+         * 调入虚拟仓可用数量
+         */
+        private Integer toVirtualWarehouseUsableQty;
 
         /**
          * 完结说明
@@ -703,5 +721,83 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    /**
+     * 查询库存参数
+     */
+    @Data
+    public static class VirtualInventoryQtyParamDTO{
+        /**
+         * sku
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        /**
+         * 仓库Id
+         */
+        @NotBlank(message = "仓库ID不能为空")
+        private String warehouseId;
+
+        /**
+         * 调出仓
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 调入仓
+         */
+        private String toVirtualWarehouseId;
+
+    }
+    /**
+     * 查询库存
+     */
+    @Data
+    public static class VirtualInventoryQtyDTO{
+
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+
+        /**
+         * 调出仓
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 调入仓
+         */
+        private String toVirtualWarehouseId;
+
+        /**
+         * 实体仓可用数量
+         */
+        private Integer warehouseUsableQty;
+
+        /**
+         * 实体仓已分配数
+         */
+        private Integer distributionQty;
+        /**
+         * 实体仓未分配数
+         */
+        private Integer unDistributionQty;
+
+        /**
+         * 调出虚拟仓可用数量
+         */
+        private Integer fromVirtualWarehouseUsableQty;
+
+        /**
+         * 调入虚拟仓可用数量
+         */
+        private Integer toVirtualWarehouseUsableQty;
+
     }
 }
