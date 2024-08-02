@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -187,6 +188,7 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
             }
 
         } catch (Exception e) {
+            log.error("[销售出库销售消费服务]:查询销售出库单的基础信息异常：单号={}, error={}", dto.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
             // 生成明细异常记录
             List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
             if (CollectionUtils.isEmpty(detailList)){
