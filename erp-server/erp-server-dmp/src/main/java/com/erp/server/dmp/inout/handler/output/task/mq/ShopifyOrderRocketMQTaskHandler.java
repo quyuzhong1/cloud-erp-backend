@@ -264,13 +264,16 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         // 当前明细标签
         Map<String, Object> lableMap = new HashMap<>();
         JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
-        Set<String> refundedLineItemIds = (Set<String>) jsonObject.get("refundedLineItemIds");
-        if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(soDetailEntity.getThirdDetailId())) {
-            lableMap.put("isRefunded", true);
-            detailDTO.setIsDetailRefund(true);
-        } else {
-            lableMap.put("isRefunded", false);
+        if (jsonObject.get("refundedLineItemIds") != null) {
+            Set<String> refundedLineItemIds = (Set<String>) jsonObject.get("refundedLineItemIds");
+            if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(soDetailEntity.getThirdDetailId())) {
+                lableMap.put("isRefunded", true);
+                detailDTO.setIsDetailRefund(true);
+            } else {
+                lableMap.put("isRefunded", false);
+            }
         }
+
         detailDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
 
         // 库存组织id
