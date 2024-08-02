@@ -215,7 +215,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 物流类型
     */
     @TableField("logistic_type")
-    private String logisticType;
+    private String logisticType = "";
     /**
     * 渠道id
     */
