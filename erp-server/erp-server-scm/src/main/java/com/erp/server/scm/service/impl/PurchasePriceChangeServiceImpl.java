@@ -484,7 +484,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         BatchResultDTO resultDTO = approveProcess(entity, type, comment, isNeedProcess);
         if (resultDTO.getSuccess()){
             //添加日志
-            moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购价目", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), entity.getId(), "审核操作");
+            moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购价目【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), entity.getId(), "审核操作");
         }
         return resultDTO;
     }

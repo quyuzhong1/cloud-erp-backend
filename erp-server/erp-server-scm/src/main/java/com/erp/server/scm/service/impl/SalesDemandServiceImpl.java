@@ -239,7 +239,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
             updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个备货申请单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SALES_DEMAND.getCode(), entity.getId(), "审核操作");
+        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个备货申请单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SALES_DEMAND.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -292,7 +292,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //更新单据为待提交
         updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
-        moduleOperateLogService.addModuleOperateLog("反审核了一个备货申请单【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(), entity.getId(), "反审核操作");
+        moduleOperateLogService.addModuleOperateLog(String.format("反审核了一个备货申请单【%s】", entity.getCode()), ModuleTypeEnum.SALES_DEMAND.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 

@@ -466,7 +466,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         //调用审核流程
         approveProcess(entity, type, comment, isNeedProcess);
         //添加日志
-        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购价目", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_PRICE.getCode(), entity.getId(), "审核操作");
+        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购价目【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_PRICE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 

@@ -486,7 +486,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     .update();
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -608,7 +608,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 .eq(SoReturnReceiveEntity::getId, entity.getId())
                 .update();
         //操作日志
-        operateLogService.addModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(String.format("反审核了一个销售退货通知单【%s】",entity.getCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 

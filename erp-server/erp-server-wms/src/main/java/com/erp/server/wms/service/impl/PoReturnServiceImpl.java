@@ -707,7 +707,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         checkInventoryQty(Collections.singletonList(entity));
         List<PoReturnEntity> poReturnEntityList = Arrays.asList(entity);
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购退货单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "审核操作");
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
@@ -962,7 +962,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         unApproveInventory(Collections.singletonList(entity)); // 库存反审核操作
 
         //操作日志
-        operateLogService.addModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(String.format("反审核了一个采购退货单【%s】", entity.getCode()), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "反审核操作");
 
         //发送旺店通
         poReturnEntityList.forEach(obj -> syncDisApprovePoReturnToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));

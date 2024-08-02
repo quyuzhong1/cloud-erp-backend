@@ -661,7 +661,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //推送到DMP
         this.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         //操作日志
-        operateLogService.addModuleOperateLog("反审核销售退货订单", ModuleTypeEnum.SO_RETURN.getCode(),entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(String.format("反审核销售退货订单【%s】", entity.getCode()), ModuleTypeEnum.SO_RETURN.getCode(),entity.getId(), "反审核操作");
         return BatchResultDTO.success();
     }
 

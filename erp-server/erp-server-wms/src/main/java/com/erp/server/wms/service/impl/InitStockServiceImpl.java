@@ -336,7 +336,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         updateForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus()); // 修改单据状态
         //操作日志
         log.info("审核 开始修改期初库存日志数据，id集合：【{}】", entity.getId());
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个期初库存", ApproveTypeEnum.getName(type)).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.INIT_STOCK.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个期初库存【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.INIT_STOCK.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -379,7 +379,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
 
         log.info("反审核 开始记录操作日志，id集合：【{}】", entity.getId());
         // 操作日志
-        operateLogService.addModuleOperateLog("反审核了一个期初库存【%s】", ModuleTypeEnum.INIT_STOCK.getCode(), entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(String.format("反审核了一个期初库存【%s】", entity.getCode()), ModuleTypeEnum.INIT_STOCK.getCode(), entity.getId(), "反审核操作");
         // 库存交易反审核
         inventoryTransCoreService.unApprove(new InventoryUnApproveDTO(InventorySourceTypeEnum.INIT_STOCK, entity.getId()));
         // TODO 流程

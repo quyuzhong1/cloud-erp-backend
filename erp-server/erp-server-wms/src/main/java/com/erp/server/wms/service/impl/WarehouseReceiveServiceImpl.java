@@ -582,7 +582,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     .update();
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个收货单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个收货单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -790,7 +790,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             srmDeliveryOrderFeign.unConfirmReceiveStatus(Collections.singletonList(entity.getSourceId()));
         }
         //操作日志
-        operateLogService.addModuleOperateLog("反审核了一个收货单【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(String.format("反审核了一个收货单【%s】",entity.getCode()), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
