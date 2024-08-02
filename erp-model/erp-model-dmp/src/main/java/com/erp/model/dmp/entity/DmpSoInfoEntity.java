@@ -60,7 +60,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 作废状态（false未作废，true已作废）
     */
     @TableField("invalid_status")
-    private Boolean invalidStatus;
+    private Boolean invalidStatus = Boolean.FALSE;
     /**
      * 是否取消（false未取消，true已取消）
      */
