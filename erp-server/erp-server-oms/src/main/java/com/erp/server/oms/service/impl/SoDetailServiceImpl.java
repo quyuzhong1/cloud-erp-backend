@@ -1638,7 +1638,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         //无虚拟仓库
         if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
-            throw new ServiceException("释放库存虚拟仓库不能为空");
+            return new BatchResultDTO(old.getId(),soInfoEntity.getCode(),"无虚拟仓，不支持锁定库存",Boolean.TRUE);
         }
         //无锁定库存
         if (MathUtil.compareTo(old.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {

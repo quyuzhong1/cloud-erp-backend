@@ -164,6 +164,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     public List<TransferDeclareDetailEntity> listWaitSyncTransferStatus() {
         return lambdaQuery().eq(TransferDeclareDetailEntity::getOrderUploadStatus, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode())
                 .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.DELETED.getCode())
+                .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.OUTSTOCK.getCode())
                 .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.SIGNED.getCode()).list();
     }
 

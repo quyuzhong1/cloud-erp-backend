@@ -3,6 +3,7 @@ package com.erp.server.tms.handler;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -12,6 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -97,7 +99,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
 
     @Override
     public ApiResult<ProductRegistrationEntity> getProductBySku(String skuNo,String authId) {
-        return handleAndRemoveContext(() -> getProductBySku(skuNo), authId, SourceTypeEnum.TRANSFER_LOGISTICS_GET_ORDER_BY_CODE,skuNo);
+        return handleAndRemoveContext(() -> getProductBySku(skuNo), authId, SourceTypeEnum.TRANSFER_LOGISTICS_GET_ALL_PRODUCT_INFO,skuNo);
     }
     @Override
     public ApiResult<String> createInbound(TransferLogisticsCreateInboundReq createInboundReq, String authId) {
@@ -138,7 +140,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
             handleAuthInfo(authId);
             //执行逻辑
             ApiResult<T> result = handler.handle();
-            TransferLogisticsContext.setMsg(result.getMsg());
+            TransferLogisticsContext.setMsg(JSONUtil.toJsonStr(result));
             //记录日志
             pushOperateLog(businessType,result.getCode(),erpBusinessCode);
             return result;
@@ -159,17 +161,46 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
     }
 
     private void pushOperateLog(SourceTypeEnum businessType, Integer status, String erpBusinessCode) {
-        DmpPushTaskEntity dmpPushTaskEntity = buildDmpPushTaskEntity(businessType, status, erpBusinessCode);
-        try {
-            String id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
-            //增加异常预警
-            if (!ApiResult.success().getCode().equals(status)) {
-                dmpPushTaskEntity.setId(id);
-                sendPushWarnMsg(dmpPushTaskEntity);
+        if("dmp_pull_task".equals(businessType.getTableName())){
+            DmpPullTaskEntity dmpPullTaskEntity = buildDmpPullTaskEntity(businessType, status, erpBusinessCode);
+            try {
+                String id = dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
+                //增加异常预警
+                if (!ApiResult.success().getCode().equals(status)) {
+                    dmpPullTaskEntity.setId(id);
+                    sendPullWarnMsg(dmpPullTaskEntity);
+                }
+            } catch (Exception e) {
+                log.error("saveOrUpdateDmpPullTask:记录操作日志失败",e);
             }
-        } catch (Exception e) {
-            log.error("saveOrUpdateDmpPushTask:记录操作日志失败",e);
+        }else if ("dmp_push_task".equals(businessType.getTableName())){
+            DmpPushTaskEntity dmpPushTaskEntity = buildDmpPushTaskEntity(businessType, status, erpBusinessCode);
+            try {
+                String id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
+                //增加异常预警
+                if (!ApiResult.success().getCode().equals(status)) {
+                    dmpPushTaskEntity.setId(id);
+                    sendPushWarnMsg(dmpPushTaskEntity);
+                }
+            } catch (Exception e) {
+                log.error("saveOrUpdateDmpPushTask:记录操作日志失败",e);
+            }
         }
+    }
+
+    private DmpPullTaskEntity buildDmpPullTaskEntity(SourceTypeEnum businessType, Integer status, String erpBusinessCode) {
+        DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
+        dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.ERP_TMS.getDesc());
+        dmpPullTaskEntity.setSourceType(businessType.getCode());
+        dmpPullTaskEntity.setSourceId(erpBusinessCode);
+        dmpPullTaskEntity.setSourceCode(erpBusinessCode);
+        dmpPullTaskEntity.setTargetPlatformName(getPlatForm().getName());
+        dmpPullTaskEntity.setStatus(status.equals(ApiResult.success().getCode()) ? SyncStatusEnum.SUCCESS_SYNC.getCode() : SyncStatusEnum.NO_NEED_SYNC.getCode());
+        dmpPullTaskEntity.setMqTopic("");
+        dmpPullTaskEntity.setMqTag("");
+        dmpPullTaskEntity.setMqData(TransferLogisticsContext.getRequestJson());
+        dmpPullTaskEntity.setReturnMsg(TransferLogisticsContext.getMsg());
+        return dmpPullTaskEntity;
     }
 
     private DmpPushTaskEntity buildDmpPushTaskEntity(SourceTypeEnum businessType, Integer status, String erpBusinessCode) {
@@ -193,6 +224,25 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         }
         WarnMsgInfoDTO warnMsgInfo = buildWarnMsgInfoDTO(entity);
         mqProducerService.sendWarnMsg(warnMsgInfo);
+    }
+
+    private void sendPullWarnMsg(DmpPullTaskEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return;
+        }
+        WarnMsgInfoDTO warnMsgInfo = buildPullWarnMsgInfoDTO(entity);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
+    }
+    private WarnMsgInfoDTO buildPullWarnMsgInfoDTO(DmpPullTaskEntity entity) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
+        warnMsgInfo.setTitle(StrUtil.format("ERP拉取物流报关商【{}】数据从{}拉取至{}失败", entity.getSourceCode(),  entity.getTargetPlatformName(),entity.getSourcePlatformName()));
+        warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
+        warnMsgInfo.setTableId(entity.getSourceId());
+        warnMsgInfo.setKeyInfo(StringUtils.isEmpty(TransferLogisticsContext.getMsg())?"":TransferLogisticsContext.getMsg());
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        return warnMsgInfo;
     }
 
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPushTaskEntity entity) {

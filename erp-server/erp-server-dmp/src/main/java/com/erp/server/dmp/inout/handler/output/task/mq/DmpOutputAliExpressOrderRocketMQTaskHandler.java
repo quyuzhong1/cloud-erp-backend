@@ -170,7 +170,10 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 			List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList = new ArrayList<>();
 			if(CollUtil.isNotEmpty(dmpSoOutstockEntityList)) {
 				for(DmpSoOutstockEntity dmpSoOutstockEntity : dmpSoOutstockEntityList) {
-					dmpSoOutstockDetailEntityList.addAll(dmpSoOutstockDetailEntityMap.get(dmpSoOutstockEntity.getId()));
+					List<DmpSoOutstockDetailEntity> list = dmpSoOutstockDetailEntityMap.get(dmpSoOutstockEntity.getId());
+					if(CollUtil.isNotEmpty(list)) {
+						dmpSoOutstockDetailEntityList.addAll(list);
+					}
 				}
 			}
 			PlatformOrderDTO orderDTO = this.convert(dmpSoInfoEntityMap.get(changId), dmpSoDetailEntityMap.get(changId) 
@@ -384,11 +387,12 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
             receiverDTO.setCityName(dmpSoReceiverEntity.getCity());
             receiverDTO.setProvinceName(dmpSoReceiverEntity.getProvince());
             receiverDTO.setReceiverName(dmpSoReceiverEntity.getReceiverName());
-            receiverDTO.setReceiverTelNumber(dmpSoReceiverEntity.getReceiverTelNumber());
+            String mainPhone = dmpSoReceiverEntity.getMainPhone();
+			receiverDTO.setReceiverTelNumber(mainPhone);
             receiverDTO.setPostCode(dmpSoReceiverEntity.getPostCode());
             receiverDTO.setReceiverTaxNo(dmpSoReceiverEntity.getReceiverTaxNo());
             // 买家电话
-            receiverDTO.setTelNumber(dmpSoReceiverEntity.getMainPhone());
+            receiverDTO.setTelNumber(mainPhone);
             
             String buyerId = dmpSoReceiverEntity.getBuyerId();
 			receiverDTO.setLoginId(buyerId);
@@ -410,7 +414,6 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         receiverDTO.setEmail("");
         receiverDTO.setCountryName("");
         receiverDTO.setDistrictName("");
-        receiverDTO.setTelNumber("");
         
         orderDTO.setReceiver(receiverDTO);
         
