@@ -428,7 +428,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                 List<VirtualWarehouseAllocationDTO.DetailDto> detailDtos = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailList);
                 //获取所有的sku信息
                 List<String> skuIds = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-                List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+                List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
                 detailDtos.forEach(detailDto -> {
                     SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())).findFirst().orElse(null);
                     if (Objects.nonNull(skuVO)) {
