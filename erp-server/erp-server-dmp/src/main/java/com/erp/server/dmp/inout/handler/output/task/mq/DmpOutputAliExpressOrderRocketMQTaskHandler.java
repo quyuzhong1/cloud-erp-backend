@@ -170,7 +170,10 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 			List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList = new ArrayList<>();
 			if(CollUtil.isNotEmpty(dmpSoOutstockEntityList)) {
 				for(DmpSoOutstockEntity dmpSoOutstockEntity : dmpSoOutstockEntityList) {
-					dmpSoOutstockDetailEntityList.addAll(dmpSoOutstockDetailEntityMap.get(dmpSoOutstockEntity.getId()));
+					List<DmpSoOutstockDetailEntity> list = dmpSoOutstockDetailEntityMap.get(dmpSoOutstockEntity.getId());
+					if(CollUtil.isNotEmpty(list)) {
+						dmpSoOutstockDetailEntityList.addAll(list);
+					}
 				}
 			}
 			PlatformOrderDTO orderDTO = this.convert(dmpSoInfoEntityMap.get(changId), dmpSoDetailEntityMap.get(changId) 
