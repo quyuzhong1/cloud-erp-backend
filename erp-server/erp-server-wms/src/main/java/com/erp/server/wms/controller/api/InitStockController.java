@@ -176,8 +176,8 @@ public class InitStockController extends BaseController {
             serviceClass = InitStockService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<InitStockEntity> entityList = initStockService.listByIds(ids);
         for (String id : ids) {
             InitStockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
@@ -208,9 +208,10 @@ public class InitStockController extends BaseController {
             serviceClass = InitStockService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<InitStockEntity> entityList = initStockService.listByIds(dto.getIds());
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             InitStockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
                 resultDTOS.add(BatchResultDTO.fail(id,id,"初期库存记录不存在"));
