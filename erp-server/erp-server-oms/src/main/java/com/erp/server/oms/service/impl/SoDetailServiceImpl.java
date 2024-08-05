@@ -1609,7 +1609,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         //发货通知单下推数量
         Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                        && StrUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus()))
+                        && StrUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
+                        && StrUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId())
+                )
                 .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
         if (frozenQty + totalNoticeQty > soDetailEntity.getQty()) {
             throw new ServiceException(StrUtil.format("销售订单【{}】SKU【{}】“销售数量【{}】不得小于锁定数量与发货通知单审核数量之和【{}】",soInfoEntity.getCode(),soDetailEntity.getSkuNo(),soDetailEntity.getQty(),totalNoticeQty + frozenQty));
