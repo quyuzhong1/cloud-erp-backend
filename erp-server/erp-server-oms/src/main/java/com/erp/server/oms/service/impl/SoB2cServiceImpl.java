@@ -3950,7 +3950,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .eq(SoB2cErrorEntity::getMainId, id)
                 .in(SoB2cErrorEntity::getType, Arrays.asList(
                         SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode(),
-                        SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode()
+                        SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode(),
+                        SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode(),
+                        SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode()
                 ))
                 .last("LIMIT 1")
                 .one();

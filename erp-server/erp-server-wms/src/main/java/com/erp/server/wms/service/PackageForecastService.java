@@ -145,7 +145,7 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
     /**
      * 组包更新其他信息
      */
-    void handleMergePackageDeliveryOther(String soId, SoB2cDeliveryEntity curDeliveryEntity);
+    Boolean handleMergePackageDeliveryOther(String soId, SoB2cDeliveryEntity curDeliveryEntity);
 
     /**
      * 根据组包id获取揽收地址
