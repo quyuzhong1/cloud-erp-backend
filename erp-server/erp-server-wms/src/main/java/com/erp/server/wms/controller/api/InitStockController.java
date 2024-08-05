@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 期初库存管理
@@ -176,7 +177,8 @@ public class InitStockController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        List<InitStockEntity> entityList = initStockService.listByIds(dto.getIds());
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<InitStockEntity> entityList = initStockService.listByIds(ids);
         for (String id : dto.getIds()) {
             InitStockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
