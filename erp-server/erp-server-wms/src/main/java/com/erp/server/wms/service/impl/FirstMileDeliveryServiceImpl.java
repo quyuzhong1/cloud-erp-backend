@@ -1977,6 +1977,21 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     /**
+     * 获取中转仓配置
+     */
+    private CfgSettingValueDTO.TransitSettingDTO getTransitSettingDTO() {
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+        if(Objects.isNull(cfgSetting)){
+            throw new ServiceException("没有找到优蓝子中转仓配置");
+        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
+        return transitSettingDTO;
+    }
+
+    /**
      * 生成直接调拨单：优蓝子中转仓->目的仓在途仓
      */
     private String generateTransferFromUlanzi(FirstMileDeliveryEntity entity, List<FirstMileDeliveryDetailEntity> detailEntityList) {

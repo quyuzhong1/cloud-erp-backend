@@ -1029,10 +1029,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 回写数量，处理组合数据
         List<String> skuIds = detailEntities.stream().map(RequisitionApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         for (RequisitionApplicationDetailEntity detailEntity : detailEntities) {
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
+                            && req.getBomVersion().equals(detailEntity.getBomVersion())
                             && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).findFirst().orElse(null);
             if (!ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
@@ -1436,6 +1437,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             detail.setSkuNo(detailEntity.getSkuNo());
             detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
             detail.setSourceDetailId(detailEntity.getId());
+            detail.setBomVersion(detailEntity.getBomVersion());
             detailList.add(detail);
             detailEntity.setPickingQty(detailEntity.getApproveQty());
             updateDetails.add(detailEntity);

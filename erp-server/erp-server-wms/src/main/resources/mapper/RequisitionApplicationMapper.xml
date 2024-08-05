@@ -28,6 +28,7 @@
        <result column="handle_user_id" property="handleUserId" />
        <result column="handle_user_name" property="handleUserName" />
        <result column="handle_time" property="handleTime" />
+       <result column="fba_shipment_code" property="fbaShipmentCode" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -239,7 +240,8 @@
         ra.source_id as deliveryPlanId,
         rad.source_detail_id as deliveryPlanDetailId,
         rad.platform_fn_sku as fnSku,
-        rad.platform_spu as platformSpuNo
+        rad.platform_spu as platformSpuNo,
+        ra.fba_shipment_code
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
         where ra.is_deleted = false

@@ -368,6 +368,11 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private LocalDateTime approveTime;
 
+        /**
+         * FBA货件编码
+         */
+        private String fbaShipmentCode;
+
     }
 
     /**
