@@ -225,7 +225,11 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
 //                transactionDTO.setId(flow.getId());
                 transactionDTO.setTransactionNo(transactionNo);
                 transactionDTO.setTransactionRuleId(rule.getId());
-
+                // 待检，在途，冻结无库位设置默认空库位
+                boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(flow.getInventoryStatus()) && ObjectUtil.isEmpty(flow.getWarehouseLocation());
+                if (qcTransitNotLocation){
+                    flow.setWarehouseLocation("");
+                }
                 // 库存基础信息
                 InventoryStockBaseDTO stockBaseDTO = new InventoryStockBaseDTO();
                 stockBaseDTO.setSkuId(flow.getSkuId());
@@ -251,7 +255,14 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 // 设置冗余信息部分
                 transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
-                transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),stockBaseDTO.getWarehouseLocation()));
+                if(ObjectUtil.isNotNull(flow.getWarehouseLocation())){
+                    // 在途,待检空库位跳过校验
+                    if(qcTransitNotLocation){
+                        transactionDTO.setWarehouseLocationName("空仓位");
+                    }else {
+                        transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),stockBaseDTO.getWarehouseLocation()));
+                    }
+                }
                 transactionDTO.setInventoryStatusName(stockBaseDTO.getInventoryStatus().getName());
 
                 // 交易时间 & 单据类型
@@ -336,7 +347,9 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 // 设置冗余信息部分
                 transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
+
                 transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),stockBaseDTO.getWarehouseLocation()));
+
                 transactionDTO.setInventoryStatusName(stockBaseDTO.getInventoryStatus().getName());
 
                 // 交易时间 & 单据类型
@@ -377,7 +390,11 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
 
         transactionFlowList.forEach(flow->{
             InventoryTransactionDTO transactionDTO = new InventoryTransactionDTO();
-
+            // 待检，在途，冻结无库位设置默认空库位
+            boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(InventoryStatusEnum.getByCode(flow.getDictInventoryStatus())) && ObjectUtil.isEmpty(flow.getWarehouseLocation());
+            if (qcTransitNotLocation){
+                flow.setWarehouseLocation("");
+            }
             // 交易头部信息
             transactionDTO.setId(flow.getId());
             transactionDTO.setTransactionNo(flow.getTransactionNo());
@@ -394,7 +411,14 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
 
             transactionDTO.setOrgName(getOrgName(orgList,flow.getOrgId()));
             transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,flow.getWarehouseId()).getName());
-            transactionDTO.setWarehouseLocationName(getWarehouseLocationName(flow.getWarehouseId(),flow.getWarehouseLocation()));
+            if(ObjectUtil.isNotNull(flow.getWarehouseLocation())){
+                // 在途,待检空库位跳过校验
+                if(qcTransitNotLocation){
+                    transactionDTO.setWarehouseLocationName("空仓位");
+                }else {
+                    transactionDTO.setWarehouseLocationName(getWarehouseLocationName(flow.getWarehouseId(),flow.getWarehouseLocation()));
+                }
+            }
             transactionDTO.setInventoryStatusName(InventoryStatusEnum.getByCode(flow.getDictInventoryStatus()).getName());
 
             // 交易时间 & 单据类型
