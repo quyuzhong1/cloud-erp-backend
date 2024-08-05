@@ -1,10 +1,12 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.enums.MabangOriginalOrderStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
@@ -138,9 +140,22 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
 
                 //退款
                 Object refundsObj = dmpDataMap.get("refunds");
-                if (taxLinesObj != null) {
+                if (ObjectUtil.isNotEmpty(refundsObj)) {
                     // 存在退款的明细ID
                     Set<String> refundedLineItemIds = new HashSet<>();
+
+                    Map<String, Object> refundsMap = (Map<String, Object>) refundsObj;
+                    Object refundLineItems = refundsMap.get("refundLineItems");
+                    if (ObjectUtil.isNotEmpty(refundLineItems)) {
+                        List<Map<String, Object>> refundLineItemsList = (List<Map<String, Object>>) refundLineItems;
+                        List<String> sourceFundedLineItemIds = refundLineItemsList.stream()
+                                .map(req -> req.get("lineItemId").toString())
+                                .distinct()
+                                .collect(Collectors.toList());
+                        refundedLineItemIds.addAll(sourceFundedLineItemIds);
+
+                    }
+
                     List<ShopifyRefund> refunds = JSON.parseArray(JSON.toJSONString(refundsObj), ShopifyRefund.class);
                     if (!CollectionUtils.isEmpty(refunds)) {
                         List<ShopifyRefundLineItem> refundLineItem = refunds.stream().map(ShopifyRefund::getRefundLineItems)
