@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -871,16 +872,13 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     public VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO getVirtualInventory(VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO dto) {
         VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO resultDTO = new VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO();
         BeanMapperUtils.copy(dto,resultDTO);
-        if (StrUtil.isNotBlank(dto.getToVirtualWarehouseId()) || StrUtil.isNotBlank(dto.getFromVirtualWarehouseId())) {
-            return resultDTO;
-        }
         //实体仓可用库存
         Integer warehouseUsableQty = inventoryService.getUsableInventoryTotal(dto.getWarehouseId(), dto.getSkuId());
         resultDTO.setWarehouseUsableQty(warehouseUsableQty);
         //分配数量
         Integer distributionQty = virtualInventoryService.getInventoryQtyByWarehouseId(dto.getWarehouseId(), dto.getSkuId());
-        resultDTO.setDistributionQty(distributionQty);
-        resultDTO.setUnDistributionQty(warehouseUsableQty - distributionQty);
+        resultDTO.setDistributionQty(ObjectUtil.isEmpty(distributionQty) ? MathUtil.ZERO : distributionQty);
+        resultDTO.setUnDistributionQty(warehouseUsableQty - resultDTO.getDistributionQty());
 
         //虚拟仓可用库存
         VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
