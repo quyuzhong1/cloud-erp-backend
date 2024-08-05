@@ -1781,7 +1781,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //如果发货通知单没改sku，并且数量大于0再校验
-            if (skuIdList.size() == 1 && StrUtil.equals(skuIdList.get(0),soDetailEntity.getSkuId())  && MathUtil.compareTo(noticeApproveQty,MathUtil.ZERO) > MathUtil.ZERO) {
+            if ((skuIdList.size() == 1 && StrUtil.equals(skuIdList.get(0),soDetailEntity.getSkuId()) && MathUtil.compareTo(noticeApproveQty,MathUtil.ZERO) > MathUtil.ZERO)|| CollectionUtils.isEmpty(skuIdList)) {
                 if (noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
                     throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
                 }
