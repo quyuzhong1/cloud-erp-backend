@@ -764,7 +764,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<QcInfoEntity> qcList = qcInfoService.listQCBySourceId(entity.getId());
         if (CollectionUtils.isNotEmpty(qcList)) {
             String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_99042.msg, codes));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format(ApiError.ERROR_99042.msg, codes));
         }
         //修改状态为待提交
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
