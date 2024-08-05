@@ -288,6 +288,7 @@ public class WarehouseDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+
         /**
          * 审核状态
          */
@@ -296,6 +297,7 @@ public class WarehouseDTO implements Serializable {
          * 启用状态
          */
         private Boolean disabled;
+
     }
 
     @Data

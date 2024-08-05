@@ -84,11 +84,6 @@ public class CfgSettingDTO implements Serializable {
          * 组包设置
          */
         private CfgSettingValueDTO.PackageSettingDTO packageSettingDTO;
-
-        /**
-         * 中转设置
-         */
-        private CfgSettingValueDTO.TransitSettingDTO transitSettingDTO;
         /**
          * 装箱完成通知
          */
@@ -97,6 +92,12 @@ public class CfgSettingDTO implements Serializable {
          * 打印配置
          */
         private CfgSettingValueDTO.CfgPrint cfgPrint = new CfgSettingValueDTO.CfgPrint();
+
+        /**
+         * 中转设置
+         */
+        private CfgSettingValueDTO.TransitSettingDTO transitSettingDTO;
+
     }
 
 
