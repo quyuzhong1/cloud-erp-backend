@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.stream.CollectorUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -476,19 +475,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public void exportExcel(InventoryDTO.ExportSearchParamDTO param, HttpServletResponse response) {
         // 如果是否选导出处理
-        if (CollUtil.isNotEmpty(param.getCheckData())) {
-            List<InventoryDTO.ExportInvParamDTO> checkData = param.getCheckData();
-            List<String> warehouseIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
-            List<String> orgIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getOrgId).distinct().collect(Collectors.toList());
-            List<String> skuIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getSkuId).distinct().collect(Collectors.toList());
-            List<String> areaNameList = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseAreaCode).filter(item -> !StringUtils.isBlank(item)).distinct().collect(Collectors.toList());
-            List<String> locationNameList = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseLocationCode).filter(item -> !StringUtils.isBlank(item)).distinct().collect(Collectors.toList());
-            param.setWarehouseIdList(warehouseIds);
-            param.setOrgIdList(orgIds);
-            param.setSkuIdList(skuIds);
-            param.setWarehouseAreaCodeList(areaNameList);
-            param.setWarehouseLocationCodeList(locationNameList);
-        }
+        dealExportParams(param);
         InventoryDTO.SearchParamDTO searchParamDTO = BeanMapperUtils.map(InventoryDTO.SearchParamDTO.class, param);
         List<InventoryDTO.PagingViewDTO> dataList = new ArrayList<>();
         String excelPath = "";
@@ -543,6 +530,22 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }*/
+    }
+
+    private static void dealExportParams(InventoryDTO.ExportSearchParamDTO param) {
+        if (CollUtil.isNotEmpty(param.getCheckData())) {
+            List<InventoryDTO.ExportInvParamDTO> checkData = param.getCheckData();
+            List<String> warehouseIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
+            List<String> orgIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getOrgId).distinct().collect(Collectors.toList());
+            List<String> skuIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getSkuId).distinct().collect(Collectors.toList());
+            List<String> areaNameList = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseAreaCode).filter(item -> !StringUtils.isBlank(item)).distinct().collect(Collectors.toList());
+            List<String> locationNameList = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseLocationCode).filter(item -> !StringUtils.isBlank(item)).distinct().collect(Collectors.toList());
+            param.setWarehouseIdList(warehouseIds);
+            param.setOrgIdList(orgIds);
+            param.setSkuIdList(skuIds);
+            param.setWarehouseAreaCodeList(areaNameList);
+            param.setWarehouseLocationCodeList(locationNameList);
+        }
     }
 
     @Override
@@ -1360,6 +1363,36 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
         List<InventoryDTO.InventoryViewQtyDTO> list=baseMapper.getUsableQtyBySkuIdsAndWarehouseIds(paramDTO);
         return list;
+    }
+
+    @Override
+    public PagingVO<InventoryDTO.PagingViewDTO> getInventoryPageData(PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
+        // 如果是否选导出处理
+        dealExportParams(dto.getParams());
+        InventoryDTO.SearchParamDTO searchParamDTO = BeanMapperUtils.map(InventoryDTO.SearchParamDTO.class, dto.getParams());
+        Page<InventoryDTO.PagingViewDTO> dataList = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        if (dto.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
+            dataList = inventoryMapper.exportByWarehouse(dataList ,searchParamDTO);
+        }
+        if (dto.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())) {
+            dataList = inventoryMapper.exportByArea( dataList, searchParamDTO, dto.getParams().getWarehouseAreaCodeList());
+        }
+        if (dto.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
+            if(StringUtils.isNotBlank(dto.getParams().getWarehouseLocationName())){
+                List<WarehouseLocationEntity> list = warehouseLocationService.listByLocationName(dto.getParams().getWarehouseLocationName());
+                if(! list.isEmpty()){
+                    List<String> codeList = list.stream().map(WarehouseLocationEntity::getCode).distinct().collect(Collectors.toList());
+                    dataList = this.baseMapper.exportByLocation(dataList,searchParamDTO, codeList);
+                }
+            }else {
+                dataList = this.baseMapper.exportByLocation(dataList,searchParamDTO, dto.getParams().getWarehouseLocationCodeList());
+            }
+        }
+        if (CollUtil.isEmpty(dataList.getRecords())) {
+            return new PagingVO<>(dataList);
+        }
+        fillInventoryPageData(dataList.getRecords());
+        return new PagingVO<>(dataList);
     }
 
     @Override

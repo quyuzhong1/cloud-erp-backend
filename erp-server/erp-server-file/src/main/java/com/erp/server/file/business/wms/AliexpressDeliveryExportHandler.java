@@ -1,6 +1,7 @@
 package com.erp.server.file.business.wms;
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -34,12 +35,7 @@ public class AliexpressDeliveryExportHandler extends AbstractPageFileEventHandle
 
 
     @Override
-    protected List<AliexpressDeliveryDTO.ListDTO> getPageData(PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto) {
+    protected PagingVO<AliexpressDeliveryDTO.ListDTO> getPageData(PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto) {
         return null;
-    }
-
-    @Override
-    protected int count(AliexpressDeliveryDTO.SearchParamDTO searchParamDTO) {
-        return 0;
     }
 }

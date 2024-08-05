@@ -12,6 +12,7 @@ public enum FileTaskEventEnum implements EnumMessage {
 
 
     //wms
+    INVENTORY_EXPORT("INVENTORY_EXPORT","即时库存"),
     ALIEXPRESS_DELIVERY_EXPORT("ALIEXPRESS_DELIVERY_EXPORT", ""),
     B2C_DELIVERY_ORDER_EXPORT("B2C_DELIVERY_ORDER_EXPORT", ""),
     //workflow

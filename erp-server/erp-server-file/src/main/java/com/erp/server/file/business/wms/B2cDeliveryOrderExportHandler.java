@@ -1,6 +1,7 @@
 package com.erp.server.file.business.wms;
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -33,12 +34,7 @@ public class B2cDeliveryOrderExportHandler extends AbstractPageFileEventHandler<
     }
 
     @Override
-    protected int count(SoB2cDeliveryDTO.PagingParamDTO pagingParamDTO) {
-        return 0;
-    }
-
-    @Override
-    protected List<SoB2cDeliveryDTO.ListDTO> getPageData(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
+    protected PagingVO<SoB2cDeliveryDTO.ListDTO> getPageData(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
         return null;
     }
 }

@@ -41,7 +41,7 @@ public class FileTask extends BaseEntity<FileTask> {
     /**
      * 任务的备注信息
      */
-    private String remarks;
+    private String remark;
     /**
      * 任务开始时间
      */

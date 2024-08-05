@@ -10,6 +10,7 @@ import com.erp.server.file.dto.FileTaskDTO;
 import com.erp.server.file.dto.FileTaskParamsDTO;
 import com.erp.server.file.entity.FileTask;
 import com.erp.server.file.enums.FileTaskStatusEnum;
+import com.erp.server.file.enums.FileTaskTypeEnum;
 import com.erp.server.file.repository.IFileTaskRepository;
 import com.erp.server.file.utils.ExceptionUtils;
 import com.erp.server.file.vo.FileTaskVO;
@@ -51,6 +52,7 @@ public class FileTaskContext {
         // 创建文件任务
         FileTask fileTask = FileTask.create(fileTaskDTO.getEvent(), fileTaskDTO.getFileName(), writeValueAsString(fileTaskDTO.getMetaInfo()));
         LoginUser loginUser = UserContext.getLoginUser();
+        fileTask.setType(FileTaskTypeEnum.MANUAL.getCode());
         // 保存文件任务
         fileTaskRepository.save(fileTask);
         log.info("文件任务[{}]创建成功,类型为[{}],状态[PENDING]", fileTask.getId(), fileTaskDTO.getEvent());
@@ -58,9 +60,7 @@ public class FileTaskContext {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                CompletableFuture.runAsync(() -> {
-                    process(fileTask.getId(), loginUser);
-                }, threadPoolTaskExecutor);
+                CompletableFuture.runAsync(() -> process(fileTask.getId(), loginUser), threadPoolTaskExecutor);
                 log.info("文件任务[{}]消息已投递,事务已提交", fileTask.getId());
             }
         });
@@ -119,7 +119,7 @@ public class FileTaskContext {
                 log.error("文件任务[{}]处理失败", fileTask.getId(), e);
                 // 更新任务状态为失败
                 fileTask.setStatus(FileTaskStatusEnum.FAIL.name());
-                fileTask.setRemarks(String.format("文件任务[%s]失败: %s", fileTask.getId(), e.getMessage()));
+                fileTask.setRemark(String.format("文件任务[%s]失败: %s", fileTask.getId(), e.getMessage()));
                 fileTaskRepository.updateById(fileTask);
             } finally {
                 // 设置任务完成时间

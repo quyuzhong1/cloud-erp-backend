@@ -1,6 +1,7 @@
 package com.erp.server.file.business.workflow;
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -34,12 +35,7 @@ public class ProcessManagementExportHandler extends AbstractPageFileEventHandler
     }
 
     @Override
-    protected int count(ProcessManagementDTO.ExportDTO exportDTO) {
-        return 0;
-    }
-
-    @Override
-    protected List<ProcessManagementDTO.PagingResultDTO> getPageData(PagingDTO<ProcessManagementDTO.ExportDTO> dto) {
+    protected PagingVO<ProcessManagementDTO.PagingResultDTO> getPageData(PagingDTO<ProcessManagementDTO.ExportDTO> dto) {
         return null;
     }
 }

@@ -1,6 +1,7 @@
 package com.erp.server.file.business.plm;
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProductDetailExcelDTO;
 import com.erp.model.plm.dto.ProductSkuExcelDTO;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
@@ -36,12 +37,7 @@ public class ProductDetailExportHandler extends AbstractPageFileEventHandler<Pro
     }
 
     @Override
-    protected int count(ProductSkuExcelDTO o) {
-        return 0;
-    }
-
-    @Override
-    protected List<ProductDetailExcelDTO> getPageData(PagingDTO<ProductSkuExcelDTO> dto) {
+    protected PagingVO<ProductDetailExcelDTO> getPageData(PagingDTO<ProductSkuExcelDTO> dto) {
         return null;
     }
 }
