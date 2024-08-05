@@ -2,6 +2,7 @@ package com.erp.server.file.controller.api;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -13,6 +14,7 @@ import com.erp.server.file.dto.FileTaskDTO;
 import com.erp.server.file.dto.FileTaskParamsDTO;
 import com.erp.server.file.entity.FileTask;
 import com.erp.server.file.vo.FileTaskVO;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -63,7 +65,8 @@ public class FileTaskController extends BaseController {
             menuCode = "file:task:paging"
     )
     @PostMapping("/paging")
-    public ApiResult<PagingVO<FileTaskVO>> paging(@RequestBody PagingDTO<FileTaskParamsDTO> dto) {
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<FileTaskVO>> paging(@RequestBody @Validated PagingDTO<FileTaskParamsDTO> dto) {
         IPage<FileTaskVO> fileTasks = fileTaskContext.paging(dto);
         return ApiResult.success(new PagingVO<>(fileTasks));
     }

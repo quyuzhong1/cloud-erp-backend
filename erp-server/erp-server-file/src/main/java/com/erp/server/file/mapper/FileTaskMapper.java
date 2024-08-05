@@ -11,5 +11,5 @@ import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface FileTaskMapper extends BaseMapper<FileTask> {
-    IPage<FileTaskVO> getFileTasks(@Param("page") Page<FileTaskVO> page, @Param("dto") FileTaskParamsDTO dto);
+    IPage<FileTaskVO> getFileTasks(@Param("page") Page<FileTaskVO> page, @Param("params") FileTaskParamsDTO params);
 }

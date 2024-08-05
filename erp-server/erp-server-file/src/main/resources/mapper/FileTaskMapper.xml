@@ -12,17 +12,20 @@
         update_user_name,
         update_time,
         event,
+        meta_info,
         file_name,
         file_url,
         status,
         remarks,
         start_time,
-        finish_time
+        finish_time,
+        type
         from file_task
-        where is_deleted = false
+        where ${params.sqlMap.default} and is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        order by id desc,
     </select>
 </mapper>

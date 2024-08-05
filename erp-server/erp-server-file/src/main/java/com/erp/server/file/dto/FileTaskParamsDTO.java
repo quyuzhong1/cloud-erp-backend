@@ -1,18 +1,26 @@
 package com.erp.server.file.dto;
 
-import com.erp.server.file.enums.FileTaskEventEnum;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+import java.util.Map;
+
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = false)
-public class FileTaskParamsDTO {
+public class FileTaskParamsDTO extends SortDTO {
 
     /**
-     * 事件类型
-     * @see FileTaskEventEnum
+     * 页面高级查询
      */
-    private String event;
+    private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+    /**
+     * sqlMap 默认key default
+     */
+    private Map<String, String> sqlMap;
 }
