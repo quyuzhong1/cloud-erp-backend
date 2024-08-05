@@ -337,7 +337,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
         }
-        return BatchResultDTO.success();
+        return BatchResultDTO.success(transferInEntity.getId(),transferInEntity.getCode(),"审核成功");
     }
 
     /**
