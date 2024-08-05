@@ -190,20 +190,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     BatchResultDTO delivery(String id, String deliveryType);
 
     /**
-     * 扣减冻结库存（库存不够生成异常）
-     * @author will
-     * @date 2024/7/21 9:47
-     * @param entity
-     */
-    Boolean generateOutFreezeError (SoB2cDeliveryEntity entity);
-
-    /**
      * 扣减冻结库存
      * @author will
      * @date 2024/7/21 9:47
      * @param entity
      */
-    Boolean outFreezeVirtualInventory (SoB2cDeliveryEntity entity);
+    void outFreezeVirtualInventory (SoB2cDeliveryEntity entity);
 
     /**
      * 生成销售出库单
@@ -214,7 +206,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @author Lambda
      * @create 2024-01-26 10:17
      */
-    Boolean generateB2cSoOutstock(SoB2cDeliveryEntity entity);
+    void generateB2cSoOutstock(SoB2cDeliveryEntity entity);
 
     Boolean updateB2cDeliveryWeightBySoId(SoB2cDeliveryDTO.UpdateWeightDTO dto);
 
@@ -362,31 +354,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      */
     BatchResultDTO cancelShipment(String id, List<SoB2cDeliveryDTO.CancelShipmentDTO> detail);
     /**
-     * 发货生成直接调拨单
+     * 发货出库
      * @author will
      * @date 2024/7/11 10:42
      * @param entity
      * @return Boolean
      */
     Boolean pushTransferInfo(SoB2cDeliveryEntity entity);
-
-    /**
-     * 发货生成直接调拨单
-     * @author will
-     * @date 2024/7/11 10:42
-     * @param entity
-     * @return Boolean
-     */
-    Boolean pushTransferInfoError(SoB2cDeliveryEntity entity);
-
-    /**
-     * 重试生成直接调拨单
-     * @author will
-     * @date 2024/8/1 10:00
-     * @param soId
-     * @return Boolean
-     */
-    Boolean afreshPushTransferInfo(String soId);
     /**
      * 重新出库
      * @author will
@@ -403,12 +377,4 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return BatchResultDTO
      */
     BatchResultDTO handleErrorData(String id);
-    /**
-     * 重试发货虚拟仓库存扣减
-     * @author will
-     * @date 2024/8/1 10:37
-     * @param soId
-     * @return Boolean
-     */
-    Boolean afreshOutFreezeVirtualInventory(String soId);
 }

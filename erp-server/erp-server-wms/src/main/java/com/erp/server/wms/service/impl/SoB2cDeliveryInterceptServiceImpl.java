@@ -448,6 +448,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
                 //扣减冻结库存
                 soB2cDeliveryService.outFreezeVirtualInventory(soB2cDelivery);
+
                 //生成直接调拨单
                 Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
                 if (isPush) {

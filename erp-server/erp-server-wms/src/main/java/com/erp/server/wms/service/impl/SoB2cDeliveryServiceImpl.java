@@ -46,14 +46,12 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -203,9 +201,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private TransferInfoService transferInfoService;
 
 
-    @Resource
-    @Lazy
-    private SoB2cDeliveryService soB2cDeliveryService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1226,7 +1221,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public Boolean generateB2cSoOutstock(SoB2cDeliveryEntity entity) {
+    public void generateB2cSoOutstock(SoB2cDeliveryEntity entity) {
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(entity.getSourceId());
         generateB2cDTO.setSourceId(entity.getId());
         generateB2cDTO.setSourceCode(entity.getCode());
@@ -1239,7 +1234,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     map(SoB2cDeliveryDetailEntity::getId).findFirst().orElse("");
             item.setSourceDetailId(sourceDetailId);
         }
-       return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+        soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+
     }
 
     @Override
@@ -1821,36 +1817,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
        return lambdaQuery().eq(SoB2cDeliveryEntity::getSoCode,soCode).last("limit 1").one();
     }
 
-
-
-    @Override
-    @Transactional(rollbackFor =  Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean pushTransferInfoError(SoB2cDeliveryEntity entity) {
-        try {
-            pushTransferInfo(entity);
-        } catch (Exception e) {
-            String soB2cId = entity.getSourceId();
-            String type = SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode();
-            String paramJson = JSONUtil.toJsonStr(entity);
-            String message = e.getMessage();
-            log.error("创建直接调拨单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-            addError.setType(type);
-            addError.setMainId(soB2cId);
-            addError.setMessage(message);
-            addError.setParamJson(paramJson);
-            soB2cFeign.addSoB2cError(addError);
-            return Boolean.FALSE;
-        }
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setMainId(entity.getSourceId());
-        deleteDTO.setType(SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode());
-        soB2cFeign.deleteError(deleteDTO);
-        return Boolean.TRUE;
-    }
-
-
     @Override
     @Transactional(rollbackFor =  Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -1863,7 +1829,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //发货单明细
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"发货明细");
+            throw new ServiceException("发货单明细不能为空");
         }
 
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, entity.getSourceId()).list();
@@ -1880,21 +1846,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             generateTransferInfo(entity,resultDTO.getTransitWarehouseId());
         }
         return Boolean.TRUE;
-    }
-
-    @Override
-    public Boolean afreshPushTransferInfo(String soId) {
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySourceIds(Arrays.asList(soId));
-        if (CollectionUtil.isEmpty(soB2cDeliveryList)) {
-            return Boolean.FALSE;
-        }
-        //生成直接调拨单
-         Boolean  isPush =  soB2cDeliveryService.pushTransferInfoError(soB2cDeliveryList.get(0));
-        //推送成功则继续自动下推销售出库
-        if (isPush) {
-            soB2cDeliveryService.generateB2cSoOutstock(soB2cDeliveryList.get(0));
-        }
-        return isPush;
     }
 
     @Override
@@ -2328,32 +2279,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         virtualInventoryTransCoreService.approve(dto);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean generateOutFreezeError (SoB2cDeliveryEntity entity) {
-        try {
-            outFreezeVirtualInventory(entity);
-        } catch (Exception e) {
-            String soB2cId = entity.getSourceId();
-            String type = SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode();
-            String paramJson = JSONUtil.toJsonStr(entity);
-            String message = e.getMessage();
-            log.error("创建直接调拨单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-            addError.setType(type);
-            addError.setMainId(soB2cId);
-            addError.setMessage(message);
-            addError.setParamJson(paramJson);
-            soB2cFeign.addSoB2cError(addError);
-            return Boolean.FALSE;
-        }
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setMainId(entity.getSourceId());
-        deleteDTO.setType(SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode());
-        soB2cFeign.deleteError(deleteDTO);
-        return  Boolean.TRUE;
-    }
 
     /**
      * 虚拟仓从冻结出库
@@ -2362,10 +2287,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @param entity
      */
     @Override
-    public Boolean outFreezeVirtualInventory (SoB2cDeliveryEntity entity) {
+    public void outFreezeVirtualInventory (SoB2cDeliveryEntity entity) {
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"发货明细");
+            throw new ServiceException("为找到发货单明细");
         }
         List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
@@ -2387,7 +2312,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         //无虚拟仓库不扣虚拟库存
         if (CollectionUtils.isEmpty(paramList)) {
-            return Boolean.TRUE;
+            return;
         }
         //减少冻结
         VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
@@ -2395,24 +2320,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
         //更新库存
         virtualInventoryTransCoreService.approve(dto);
-        return  Boolean.TRUE;
     }
-
-    @Override
-    public Boolean afreshOutFreezeVirtualInventory(String soId) {
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySourceIds(Arrays.asList(soId));
-        if (CollectionUtil.isEmpty(soB2cDeliveryList)) {
-            return Boolean.TRUE;
-        }
-        Boolean isOutVirtual = soB2cDeliveryService.generateOutFreezeError(soB2cDeliveryList.get(0));
-        if (isOutVirtual) {
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDeliveryList.get(0));
-            if (isPush) {
-                soB2cDeliveryService.generateB2cSoOutstock(soB2cDeliveryList.get(0));
-            }
-        }
-        return Boolean.TRUE;
-    }
-
 
 }

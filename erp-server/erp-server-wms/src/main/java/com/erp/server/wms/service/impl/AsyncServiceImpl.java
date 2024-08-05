@@ -202,16 +202,14 @@ public class AsyncServiceImpl implements AsyncService {
         soB2cDeliveryService.updateById(entity);
 
         //扣减冻结库存
-        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
-        if (isOut) {
-            //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
-            if (isPush) {
-                //出库
-                soB2cDeliveryService.generateB2cSoOutstock(entity);
-            }
-        }
+        soB2cDeliveryService.outFreezeVirtualInventory(entity);
 
+        //生成直接调拨单
+        Boolean isPush = soB2cDeliveryService.pushTransferInfo(entity);
+        if (isPush) {
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
+        }
     }
 
     @Override
