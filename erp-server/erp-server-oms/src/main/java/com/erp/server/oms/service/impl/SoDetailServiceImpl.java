@@ -1764,10 +1764,16 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //冻结数量
-            if (noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
-                throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
-            }
+            List<String> skuIdList = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId())
+                            && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
+                    .map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
 
+            //如果发货通知单没改sku，并且数量大于0再校验
+            if (skuIdList.size() == 1 && StrUtil.equals(skuIdList.get(0),soDetailEntity.getSkuId())  && MathUtil.compareTo(noticeApproveQty,MathUtil.ZERO) > MathUtil.ZERO) {
+                if (noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
+                    throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
+                }
+            }
             //有更新sku则需要释放库存
             if (!StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
                 unLockIdList.add(soDetailEntity.getId());
