@@ -641,8 +641,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
 
         List<String> sourceDetailIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+
         //拣货明细信息
-        List<PickingDetailEntity> detailList = pickingDetailService.listByIds(sourceDetailIds);
+        List<TransferApplicationDetailEntity> detailList = transferApplicationDetailService.listByIds(sourceDetailIds);
 
         //直接调拨明细
         List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listSourceDetailIds(sourceDetailIds);
@@ -714,14 +715,14 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @param transferOutDetailList
      * @param dto
      */
-    private void checkGenerateTransfer (List<TransferInfoDetailEntity> transferInfoDetailList,List<TransferOutDetailEntity> transferOutDetailList,List<PickingDetailEntity> detailList,TransferApplicationDTO.GenerateTransferInfoDTO dto) {
+    private void checkGenerateTransfer (List<TransferInfoDetailEntity> transferInfoDetailList,List<TransferOutDetailEntity> transferOutDetailList,List<TransferApplicationDetailEntity> detailList,TransferApplicationDTO.GenerateTransferInfoDTO dto) {
         //来源明细id
         String sourceDetailId = dto.getSourceDetailId();
         //sku编码
         String skuNo = dto.getSkuNo();
 
         //拣货数量
-        Integer pickingQty = detailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).map(PickingDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
+        Integer pickingQty = detailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).map(TransferApplicationDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
 
         //直接调拨数量
        Integer transferInfoQty = MathUtil.ZERO;

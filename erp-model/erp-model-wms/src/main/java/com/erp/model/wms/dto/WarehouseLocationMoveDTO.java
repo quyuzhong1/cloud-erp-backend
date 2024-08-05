@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -391,6 +392,21 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 是否是pc端访问
          */
         private Boolean pcShow = false;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     /**

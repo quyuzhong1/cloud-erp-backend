@@ -270,7 +270,7 @@ public class ProductDetailController extends BaseController {
     )*/
     //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
     public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailById(@RequestBody ProductManySpecUpdateDTO dto) {
-        ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailById(dto.getProductId());
+        ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailBySkuId(dto.getId());
         return this.success(list);
     }
 

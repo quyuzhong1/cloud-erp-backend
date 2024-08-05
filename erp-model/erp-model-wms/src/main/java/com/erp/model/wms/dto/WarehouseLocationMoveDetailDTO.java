@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -184,8 +185,12 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
          */
         private String remark;
 
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
 
-        public static WarehouseLocationMoveDetailDTO.AddDTO getLocationMoveDTO(String skuId, String skuNo, String outWarehouseLocation, String inWarehouseLocation, Integer qty, String warehouseId) {
+        public static WarehouseLocationMoveDetailDTO.AddDTO getLocationMoveDTO(String skuId, String skuNo, String outWarehouseLocation, String inWarehouseLocation, Integer qty, String warehouseId, String sourceDetailId) {
             WarehouseLocationMoveDetailDTO.AddDTO addDTO = new WarehouseLocationMoveDetailDTO.AddDTO();
             addDTO.setSkuId(skuId);
             addDTO.setSkuNo(skuNo);
@@ -193,6 +198,7 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
             addDTO.setInWarehouseLocation(inWarehouseLocation);
             addDTO.setQty(qty);
             addDTO.setWarehouseId(warehouseId);
+            addDTO.setSourceDetailId(sourceDetailId);
             return addDTO;
         }
     }

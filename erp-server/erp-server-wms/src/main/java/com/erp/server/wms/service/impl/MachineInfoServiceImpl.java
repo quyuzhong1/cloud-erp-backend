@@ -138,6 +138,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Resource
+    private SoDeliveryNoticeService soDeliveryNoticeService;
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -765,7 +767,12 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setParamList(inOutStockList);
         if (WorkTypeEnum.ASSEMBLE.getCode().equals(entity.getWorkType())) {
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT.getCode());
+            SoDeliveryNoticeEntity notice = soDeliveryNoticeService.getDeliveryNoticeBySourceId(entity.getSourceId());
+            if ((SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType()) && ObjectUtils.isNotEmpty(notice))|| SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(entity.getSourceType())) {
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT_FREEZE.getCode());
+            }else {
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT.getCode());
+            }
         } else {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.DISASSEMBLE_IN_PARENT.getCode());
         }
@@ -809,7 +816,12 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setParamList(inOutStockList);
         if (WorkTypeEnum.ASSEMBLE.getCode().equals(entity.getWorkType())) {
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILDD.getCode());
+            SoDeliveryNoticeEntity notice = soDeliveryNoticeService.getDeliveryNoticeBySourceId(entity.getSourceId());
+            if ((SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType()) && ObjectUtils.isNotEmpty(notice))|| SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(entity.getSourceType())) {
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILD_FREEZE.getCode());
+            }else {
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILDD.getCode());
+            }
         } else {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.DISASSEMBLE_IN_CHILD.getCode());
         }

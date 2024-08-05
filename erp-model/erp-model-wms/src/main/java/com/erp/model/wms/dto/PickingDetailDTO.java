@@ -301,6 +301,10 @@ public class PickingDetailDTO implements Serializable {
          * 来源明细id
          */
         private String sourceDetailId;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
 
         public static PickingDetailDTO.AddDTO getAddDTO(PickingDetailDTO.AddDTO detailAdd, String skuId, String skuNo, int qty) {
             PickingDetailDTO.AddDTO detail = new PickingDetailDTO.AddDTO();

@@ -150,7 +150,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "仓位移动主单" , warehouseLocationMoveEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveEntity.getId(), "新增操作");
         // 新增明细
-        warehouseLocationMoveDetailService.add(addDTO, warehouseLocationMoveEntity.getId());
+        warehouseLocationMoveDetailService.add(addDTO, warehouseLocationMoveEntity);
         return warehouseLocationMoveEntity.getId();
     }
 
@@ -194,7 +194,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             addDTO.setWarehouseId(viewDTO.getWarehouseId());
             addDTO.setPcShow(true);
             // 新增明细
-            warehouseLocationMoveDetailService.add(addDTO, warehouseLocationMoveEntity.getId());
+            warehouseLocationMoveDetailService.add(addDTO, warehouseLocationMoveEntity);
         });
         return warehouseLocationMoveEntity.getId();
     }
@@ -220,7 +220,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             throw new ServiceException("仓位移动主单保存失败");
         }
         // 修改明细数据（包含增删改）
-        warehouseLocationMoveDetailService.update(updateDTO, warehouseLocationMoveEntity.getId());
+        warehouseLocationMoveDetailService.update(updateDTO, warehouseLocationMoveEntity);
         // 记录主单操作日志
         log.info("编辑 开始记录仓位移动主单日志数据，单号：【{}】", warehouseLocationMoveEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), warehouseLocationMoveEntity.getCode(), "仓位移动主单");
@@ -279,7 +279,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         updateDto.setDetailList(detailList);
 //        updateDto.setWarehouseId(detail.getWarehouseId());
         updateDto.setPcShow(true);
-        warehouseLocationMoveDetailService.update(updateDto, warehouseLocationMoveEntity.getId());
+        warehouseLocationMoveDetailService.update(updateDto, warehouseLocationMoveEntity);
 
         return Boolean.TRUE;
     }
@@ -710,6 +710,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        if (SourceTypeEnum.pickingLists().contains(entity.getSourceType())) {
+            throw new ServiceException(ApiError.ERROR_99141);
+        }
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
@@ -768,7 +771,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        InventoryTransferRuleDTO ruleDTO = new InventoryTransferRuleDTO();
+
         if (ApproveType.PASS.equals(dto.getType())) {
             WarehouseLocationMoveEntity infoEntity = this.getById(entity.getId());
             List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(infoEntity.getId()));
@@ -797,14 +800,25 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
 
             List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
-            transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
-            transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
-            ruleDTO.setParamList(transferDTOList);
-            ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
-            ruleDTO.setRules(transactionRuleDTOList);
-            inventoryTransCoreService.approveByRule(ruleDTO);
-
-
+            if (SourceTypeEnum.PICKING_LISTS_ADD.getCode().equals(entity.getSourceType())) {
+                InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+                inventoryTransferDTO.setParamList(transferDTOList);
+                inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO_ADD.getCode());
+                inventoryTransCoreService.approveByType(inventoryTransferDTO);
+            }else if (SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode().equals(entity.getSourceType())) {
+                InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+                inventoryTransferDTO.setParamList(transferDTOList);
+                inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO_SUBTRACT.getCode());
+                inventoryTransCoreService.approveByType(inventoryTransferDTO);
+            }else {
+                transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
+                transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
+                InventoryTransferRuleDTO ruleDTO = new InventoryTransferRuleDTO();
+                ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
+                ruleDTO.setRules(transactionRuleDTOList);
+                ruleDTO.setParamList(transferDTOList);
+                inventoryTransCoreService.approveByRule(ruleDTO);
+            }
             //发送旺店通
             syncDisApproveInfoToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
         }

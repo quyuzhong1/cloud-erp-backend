@@ -879,8 +879,10 @@ public enum ApiError implements Serializable {
     ERROR_99127(99127,"发货通知单【{}】总数量不能大于销售数量"),
     ERROR_99128(99128,"组合产品【{}】的拣货数量与bom用量比例不一致，无法修改"),
     ERROR_99129(99129,"已下推销售出库单，不能重复下推"),
+    ERROR_99130(99130,"要货申请完成后，不能删除拣货单"),
 
     ERROR_99140(99140,"已生成拣货单，不能修改发货通知单"),
+    ERROR_99141(99141,"拣货单下推的发货单，不能修改仓位移动单"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -907,6 +909,7 @@ public enum ApiError implements Serializable {
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
     LOCATION_MOVE_DETAIL_ADD(99091 , "仓位移动明细单保存失败"),
     LOCATION_MOVE_QTY_ERROR(99091 , "sku【{}】仓位移动数量不能大于可用库存数量"),
+    LOCATION_MOVE_FROZEN_QTY_ERROR(99091 , "sku【{}】仓位移动数量不能大于冻结库存数量"),
     SO_RETURN_RECEIVE_SKU_NOT_EXIST(99092 , "sku【{}】在退货签收单中不存在"),
     CURRENT_TARGET_WAREHOUSE_SAME(99039,"仓位移动当前仓和目的仓必须相同"),
     PURCHASE_SKU_NOT_EXIST(99092 , "sku【{}】在采购单中不存在"),

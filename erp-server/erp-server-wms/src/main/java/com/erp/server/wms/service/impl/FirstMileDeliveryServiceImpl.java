@@ -405,11 +405,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             List<String> skuNos = isCombinationList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
             List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
 
-            //校验组合SKU库存量是否满足调出，否则无法审核通过，提示：SKU【SKU编码】【发货仓】可用库存不足，无法审核发货单
+            //校验组合SKU库存量是否满足调出，否则无法审核通过，提示：SKU【SKU编码】【发货仓】冻结库存不足，无法审核发货单
             for (FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity : isCombinationList) {
                 //及时库存
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(firstMileDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
-                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), skuVO.getSkuId(), firstMileDeliveryDetailEntity.getWarehouseLocation());
+                Integer usableInventoryTotal = inventoryService.getInventoryTotal(entity.getInventoryOrgId() ,entity.getDeliveryWarehouseId(), skuVO.getSkuId(), firstMileDeliveryDetailEntity.getWarehouseLocation(), InventoryStatusEnum.FROZEN.getCode());
                 if (firstMileDeliveryDetailEntity.getDeliveryQty() > usableInventoryTotal) {
                     throw new ServiceException(ApiError.FBA_DELIVERY_INVENTORY_INSUFFICIENT, firstMileDeliveryDetailEntity.getSkuNo(), entity.getDeliveryWarehouseName());
                 }
@@ -795,13 +795,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 overseasWarehouseInboundService.updateInstockStatus(Arrays.asList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
             }
 
-            //判断是否中转
+            //匹配中转配置
             CfgRuleOutDTO.MatchTransferRuleDTO matchRuleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
             matchRuleDTO.setType(StockOutTransferTypeEnum.FIRST_MILE.getCode());
             matchRuleDTO.setReceiveCountry(entity.getCountryId());
             matchRuleDTO.setDestWarehouse(entity.getDestWarehouseId());
-            Boolean isMatch = cfgRuleOutService.matchTransferRule(matchRuleDTO);
-            if (isMatch){
+            Boolean isMatchRule = cfgRuleOutService.matchTransferRule(matchRuleDTO);
+            //发货仓与中转仓一致
+            CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = getTransitSettingDTO();
+            boolean isEqual = transitSettingDTO.getWarehouseId().equals(entity.getDeliveryWarehouseId());
+            if (isMatchRule && !isEqual){
                 //中转
                 String transferToUlanziId = generateTransferToUlanzi(entity, detailEntityList);
                 submitAndApprove(transferToUlanziId);
@@ -1887,14 +1890,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(deliveryEntity.getDestWarehouseId(), deliveryEntity.getDeliveryWarehouseId()));
 
         //优蓝子中转仓
-        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
-        if(Objects.isNull(cfgSetting)){
-            throw new ServiceException("没有找到优蓝子中转仓配置");
-        }
-        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
-        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
-            throw new ServiceException("中转设置仓库不能为空");
-        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = getTransitSettingDTO();
         WarehouseEntity warehouseEntity = warehouseService.getOne(new LambdaQueryWrapper<WarehouseEntity>()
                 .eq(WarehouseEntity::getId, transitSettingDTO.getWarehouseId())
                 .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()));
@@ -1972,6 +1968,21 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         addDTO.setDetailList(detailAddDtoList);
         return transferInfoService.add(addDTO);
+    }
+
+    /**
+     * 获取中转仓配置
+     */
+    private CfgSettingValueDTO.TransitSettingDTO getTransitSettingDTO() {
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+        if(Objects.isNull(cfgSetting)){
+            throw new ServiceException("没有找到优蓝子中转仓配置");
+        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
+        return transitSettingDTO;
     }
 
     /**
