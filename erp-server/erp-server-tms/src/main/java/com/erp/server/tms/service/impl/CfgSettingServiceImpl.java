@@ -16,7 +16,9 @@ import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
+import com.erp.model.tms.enums.CostAllocationEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.WeightAllocationEnum;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.server.tms.mapper.CfgSettingMapper;
 import com.erp.server.tms.service.CfgSettingService;
@@ -125,10 +127,38 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.BillAutoAddDTO.class);
                 viewDTO.setBillAutoAddDTO(billAutoAddDTO);
                 break;
+            case ALLOCATION_SETTING:
+                //无值时默认给null
+                if (ObjectUtil.isEmpty(cfgSetting.getDataJson())) {
+                    //默认按照原型展示默认值
+                    viewDTO.setAllocationSettingDTO(getDefaultAllocationSetting());
+                    break;
+                }
+                CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.AllocationSettingDTO.class);
+                viewDTO.setAllocationSettingDTO(allocationSettingDTO);
+                break;
             default:
                 break;
         }
     }
+
+    private CfgSettingValueDTO.AllocationSettingDTO getDefaultAllocationSetting() {
+        CfgSettingValueDTO.AllocationSettingDTO dto = new CfgSettingValueDTO.AllocationSettingDTO();
+
+        dto.setWeightFirstAllocation(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode());
+        dto.setWeightPackageAllocation(WeightAllocationEnum.SUPPLIER_CHARGED_WEIGHT.getCode());
+
+        dto.setFirstShippingCost(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
+        dto.setFirstTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
+        dto.setFirstOtherTaxFee(CostAllocationEnum.COST_ALLOCATION.getCode());
+        dto.setFirstOtherFee(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
+
+        dto.setPackageShippingCost(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
+        dto.setPackageTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
+        dto.setPackageOtherFee(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
+        return dto;
+    }
+
     @Override
     public CfgSettingEntity getByKey(String key) {
         if (StringUtils.isBlank(key)) {
@@ -196,6 +226,15 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 break;
             case BILL_AUTO_ADD:
                 jsonObject = JSONUtil.parseObj(addDTO.getBillAutoAddDTO());
+                break;
+            case ALLOCATION_SETTING:
+                //无值时默认给null
+                CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = addDTO.getAllocationSettingDTO();
+                if (ObjectUtil.isEmpty(allocationSettingDTO)) {
+                    //默认按照原型展示默认值
+                    allocationSettingDTO = getDefaultAllocationSetting();
+                }
+                jsonObject = JSONUtil.parseObj(allocationSettingDTO);
                 break;
             default:
                 break;

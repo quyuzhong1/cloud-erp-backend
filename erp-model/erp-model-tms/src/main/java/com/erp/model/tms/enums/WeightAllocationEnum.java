@@ -4,13 +4,13 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum CfgSettingEnum implements EnumMessage {
-    LOGISTICS_PRODUCT_DEST_DECLARE_PRICE("logisticsProductDestDeclarePrice","物流产品信息-目的国申报价"),
-    NOTIC("notic","通知管理"),
-    RECONCILIATION_CYCLE("reconciliationCycle","生成设置"),
-    BILL_AUTO_ADD("billAutoAdd","单据生成"),
-    ALLOCATION_SETTING("allocationSetting","分摊设置"),
-
+/**
+ * 重量分摊
+ */
+public enum WeightAllocationEnum implements EnumMessage {
+    OUTSTOCK_CHARGED_WEIGHT("outstockChargedWeight","按照出库计费重"),
+    SUPPLIER_CHARGED_WEIGHT("supplierChargedWeight","按照物流商计费重"),
+    SINGLE_PRODUCT_WEIGHT("singleProductWeight","按照产品管理-单产品重量"),
     ;
 
     /**
@@ -25,7 +25,7 @@ public enum CfgSettingEnum implements EnumMessage {
     private String name;
 
 
-    CfgSettingEnum(String code, String name) {
+    WeightAllocationEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -41,7 +41,7 @@ public enum CfgSettingEnum implements EnumMessage {
     }
 
     public static String getName(String code) {
-        for (CfgSettingEnum settingEnum : CfgSettingEnum.values()) {
+        for (WeightAllocationEnum settingEnum : WeightAllocationEnum.values()) {
             if (code.equals(settingEnum.getCode())) {
                 return settingEnum.getName();
             }
@@ -49,8 +49,8 @@ public enum CfgSettingEnum implements EnumMessage {
         return "";
     }
 
-    public static CfgSettingEnum getEnum(String code) {
-        for (CfgSettingEnum settingEnum : CfgSettingEnum.values()) {
+    public static WeightAllocationEnum getEnum(String code) {
+        for (WeightAllocationEnum settingEnum : WeightAllocationEnum.values()) {
             if (code.equals(settingEnum.getCode())) {
                 return settingEnum;
             }

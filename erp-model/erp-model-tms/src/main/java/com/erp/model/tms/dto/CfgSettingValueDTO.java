@@ -93,7 +93,7 @@ public class CfgSettingValueDTO implements Serializable {
     }
 
     /**
-     * 对账周期
+     * 生成设置
      */
     @Data
     @NoArgsConstructor
@@ -120,6 +120,27 @@ public class CfgSettingValueDTO implements Serializable {
          * 报关对账日期
          */
         private Integer declareReconciliationDate;
+        /**
+         * 头程分摊类型，/wms/dict/drop/down?type=reconciliationType
+         */
+        @NotBlank(message = "报关对账类型不能为空")
+        private String firstAllocationType;
+
+        /**
+         * 头程分摊日期
+         */
+        private Integer firstAllocationDate;
+
+        /**
+         * 小包分摊类型，/wms/dict/drop/down?type=reconciliationType
+         */
+        @NotBlank(message = "报关对账类型不能为空")
+        private String packageAllocationType;
+
+        /**
+         * 小包分摊日期
+         */
+        private Integer packageAllocationDate;
     }
 
     /**
@@ -158,5 +179,40 @@ public class CfgSettingValueDTO implements Serializable {
          * B2B报关生成时机，/tms/drop/down/dict/list?key=billGenerateTiming
          */
         private String b2BDeclareGenerateTiming;
+    }
+
+    /**
+     * 分摊设置
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AllocationSettingDTO {
+        /**
+         * 重量分摊
+         */
+        //头程费用配置
+        private String weightFirstAllocation;
+        //小包费用配置
+        private String weightPackageAllocation;
+        /**
+         * 费用分摊-头程
+         */
+        //运费
+        private String firstShippingCost;
+        //关税费用
+        private String firstTariffFee;
+        //其他税费
+        private String firstOtherTaxFee;
+        //其他费用
+        private String firstOtherFee;
+        /**
+         * 费用分摊-小包
+         */
+        //运费
+        private String packageShippingCost;
+        //关税费用
+        private String packageTariffFee;
+        //其他费用
+        private String packageOtherFee;
     }
 }

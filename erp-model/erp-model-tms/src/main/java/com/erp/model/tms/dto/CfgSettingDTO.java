@@ -41,7 +41,7 @@ public class CfgSettingDTO implements Serializable {
         private CfgSettingValueDTO.NoticeDTO noticeDTO;
 
         /**
-         * 对账周期
+         * 生成设置
          */
         @Valid
         private CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO;
@@ -52,6 +52,11 @@ public class CfgSettingDTO implements Serializable {
          */
         @Valid
         private CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO;
+        /**
+         * 分摊设置
+         */
+        @Valid
+        private CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO;
     }
 
     /**
@@ -96,7 +101,7 @@ public class CfgSettingDTO implements Serializable {
         private CfgSettingValueDTO.NoticeDTO noticeDTO;
 
         /**
-         * 对账周期
+         * 生成设置
          */
         @Valid
         private CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO;
@@ -107,6 +112,11 @@ public class CfgSettingDTO implements Serializable {
          */
         @Valid
         private CfgSettingValueDTO.BillAutoAddDTO billAutoAddDTO;
+        /**
+         * 费用分摊
+         */
+        @Valid
+        private CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO;
     }
 
 
