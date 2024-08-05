@@ -1754,8 +1754,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 throw new ServiceException(ApiError.ERROR_92015);
             }
 
-            List<String> skuIdList = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId())
-                            && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
+            List<String> skuIdList = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))
                     .map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
 
             //有效数量
