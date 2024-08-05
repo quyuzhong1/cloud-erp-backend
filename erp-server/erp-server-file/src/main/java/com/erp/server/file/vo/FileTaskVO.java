@@ -31,9 +31,10 @@ public class FileTaskVO {
     /**
      * 创建时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
     /**
-     * 任务事件名称
+     * 任务事件
      * @see FileTaskEventEnum
      */
     @Dict(enumClass = FileTaskEventEnum.class)
