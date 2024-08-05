@@ -63,7 +63,7 @@ public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
 			findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
 		}
-		if (findMongoData == null) {
+		if (CollectionUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}
 
