@@ -497,6 +497,7 @@ public class SoB2cDeliveryController extends BaseController {
                 resultDTO = soB2cDeliveryService.retryOutstock(id);
                 if (resultDTO.getSuccess()) {
                     SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
+                    entity.setBatchNo(resultDTO.getId());
                     soB2cDeliveryService.generateB2cSoOutstock(entity);
                 }
             }catch (Exception e){
