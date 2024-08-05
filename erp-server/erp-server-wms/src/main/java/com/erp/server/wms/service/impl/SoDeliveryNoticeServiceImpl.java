@@ -934,7 +934,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         String warehouseId;
         if (Boolean.TRUE.equals(resultDTO.getIsTransit())) {
             batchNo = IdUtil.getSnowflake().nextIdStr();
-            generateTransferInfo(entity, batchNo, entityList, warehouseStagingList, noInventorySkuIds, resultDTO.getTransitWarehouseId());
+            if (Boolean.FALSE.equals(allNoInventorySku)) {
+                generateTransferInfo(entity, batchNo, entityList, warehouseStagingList, noInventorySkuIds, resultDTO.getTransitWarehouseId());
+            }
             warehouseId = resultDTO.getTransitWarehouseId();
         }else {
             warehouseId = entity.getWarehouseId();
