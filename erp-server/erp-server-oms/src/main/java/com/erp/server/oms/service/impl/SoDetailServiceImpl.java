@@ -1742,6 +1742,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //发货通知单
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(updateDetailIdList);
 
+        //需要释放库存的明细
+        List<String> unLockIdList = new ArrayList<>();
+
         for (SoDetailDTO.UpdateDTO updateDTO : updateList) {
             //明细
             SoDetailEntity soDetailEntity = dbList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateDTO.getId())).findFirst().orElse(null);
@@ -1764,6 +1767,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
                 throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
             }
+
+            //有更新sku则需要释放库存
+            if (!StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
+                unLockIdList.add(soDetailEntity.getId());
+            }
         }
         for (SoDetailEntity soDetailEntity : removeList) {
             //下推数量
@@ -1772,9 +1780,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (count > 0) {
                 throw new ServiceException(StrUtil.format("SKU【{}】以下推发货通知单不支持删除",soDetailEntity.getSkuNo()));
             }
+            //删除明细释放库存
             if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
-                throw new ServiceException(StrUtil.format("SKU【{}】存在冻结数量【{}】不支持删除",soDetailEntity.getSkuNo(),soDetailEntity.getFrozenQty()));
+                unLockIdList.add(soDetailEntity.getId());
             }
+        }
+
+        //释放冻结库存
+        if (CollectionUtils.isNotEmpty(unLockIdList)) {
+            unLockIdList.forEach(obj -> batchUnLockVirtualInventory(obj));
         }
     }
 }
