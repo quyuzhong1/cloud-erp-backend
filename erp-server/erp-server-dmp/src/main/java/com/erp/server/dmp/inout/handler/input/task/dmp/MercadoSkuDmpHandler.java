@@ -11,7 +11,10 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -40,8 +43,8 @@ public class MercadoSkuDmpHandler extends DmpInputDoChildDmpHandler {
                     List<Map<String, Object>> skuList = (List<Map<String, Object>>) skuObj;
 
                     skuList.forEach(l -> {
-                        l.put("platformCreateTime", dmpInputMongoChild.get("createTime"));
-                        l.put("platformUpdateTime", dmpInputMongoChild.get("updateTime"));
+                        l.put("platformCreateTime", dmpInputMongoChild.get("dateCreated"));
+                        l.put("platformUpdateTime", dmpInputMongoChild.get("lastUpdated"));
                         l.put("spuId", dmpInputMongoChild.get("fid"));
 
                         if (ObjectUtil.isNotEmpty(dmpInputMongoChild.get("pictures"))) {
@@ -62,25 +65,6 @@ public class MercadoSkuDmpHandler extends DmpInputDoChildDmpHandler {
                                 l.put("status", "3");
                             }
                         }
-//                        attributes
-
-                        //品牌
-                        Object brandObj = dmpInputMongoChild.get("brand");
-                        if (brandObj != null) {
-                            Map<String, String> brandMap = (Map<String, String>) brandObj;
-                            l.put("brandName", brandMap.get("name"));
-                        }
-
-                        //类目
-                        Object categoryChainsObj = dmpInputMongoChild.get("categoryChains");
-                        if (categoryChainsObj != null) {
-                            List<Map<String, String>> categoryChainsList = (List<Map<String, String>>) categoryChainsObj;
-                            if (CollectionUtil.isNotEmpty(categoryChainsList)) {
-                                l.put("parent_category_name", categoryChainsList.get(0).get("localName"));
-                                l.put("category_name", categoryChainsList.get(1).get("localName"));
-                            }
-                        }
-
 
                         //规格属性
                         Object attributesObj = dmpInputMongoChild.get("attributes");
@@ -94,31 +78,37 @@ public class MercadoSkuDmpHandler extends DmpInputDoChildDmpHandler {
                                     }
 
                                     if ("PACKAGE_LENGTH".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
-                                        String valueName = String.valueOf(map.get("valueName"));
+                                        List<Map<String, Object>> valuesList = (List<Map<String, Object>>) map.get("values");
+                                        if (CollectionUtils.isNotEmpty(valuesList)) {
+                                            Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
+                                            l.put("packageLength", structMap.get("number"));
+                                        }
+                                    }
+                                    if ("PACKAGE_WIDTH".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
+                                        List<Map<String, Object>> valuesList = (List<Map<String, Object>>) map.get("values");
+                                        if (CollectionUtils.isNotEmpty(valuesList)) {
+                                            Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
+                                            l.put("packageWidth", structMap.get("number"));
+                                        }
+                                    }
+                                    if ("PACKAGE_HEIGHT".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
+                                        List<Map<String, Object>> valuesList = (List<Map<String, Object>>) map.get("values");
+                                        if (CollectionUtils.isNotEmpty(valuesList)) {
+                                            Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
+                                            l.put("packageHeight", structMap.get("number"));
+                                            l.put("packageUnit", structMap.get("unit"));
+                                        }
+                                    }
 
-                                        l.put("brandName", map.get("valueName"));
+                                    if ("PACKAGE_WEIGHT".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
+                                        List<Map<String, Object>> valuesList = (List<Map<String, Object>>) map.get("values");
+                                        if (CollectionUtils.isNotEmpty(valuesList)) {
+                                            Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
+                                            l.put("grossWeight", structMap.get("number"));
+                                        }
                                     }
                                 }
                             }
-
-                        }
-
-                        //包装信息
-                        Object packageDimensionsObj = dmpInputMongoChild.get("packageDimensions");
-                        if (packageDimensionsObj != null) {
-                            Map<String, String> packageDimensionsMap = (Map<String, String>) packageDimensionsObj;
-                            l.put("packageLength", packageDimensionsMap.get("length"));
-                            l.put("packageWidth", packageDimensionsMap.get("width"));
-                            l.put("packageHeight", packageDimensionsMap.get("height"));
-                            l.put("packageUnit", packageDimensionsMap.get("unit"));
-                        }
-
-                        //产品重量
-                        Object packageWeightObj = dmpInputMongoChild.get("packageWeight");
-                        if (packageWeightObj != null) {
-                            Map<String, String> packageWeightMap = (Map<String, String>) packageWeightObj;
-                            l.put("grossWeight", packageWeightMap.get("value"));
-                            l.put("packageUnit", packageWeightMap.get("unit"));
                         }
                         l.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
                         l.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
