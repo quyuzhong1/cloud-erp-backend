@@ -1192,16 +1192,6 @@ public class SoB2cDTO implements Serializable {
         private Boolean isCover;
 
         /**
-         * 物流渠道id
-         */
-        private String logisticsChannelId;
-
-        /**
-         * 仓库 http://172.16.100.11:3002/project/92/interface/api/22930
-         */
-        private String warehouseId;
-
-        /**
          * 明细数据
          */
         @Valid

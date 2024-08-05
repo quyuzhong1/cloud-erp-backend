@@ -45,6 +45,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -123,18 +126,23 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     @Override
     public void add(PickingListsDTO.AddDTO dto) {
         generatePicking(dto);
+        // 获取所有拣货暂存配置
         List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
         Map<String, String> warehouseMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getWarehouseId, PickingDetailDTO.AddDTO::getWarehouseName, (o1, o2) -> o1));
+        // 拣货明细转换为规则执行数据明细
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = dto.getDetails().stream()
                 .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
         executionData.setBillType(dto.getBillType());
         executionData.setCustomerId(dto.getCustomerId());
         executionData.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());
+        executionData.setSourceCode(dto.getSourceCode());
         executionData.setDetails(details);
+        // 执行拣货规则
         List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+        // 根据仓库分组，生成不同的拣货单
         Map<String, List<LocationInventoryResultDTO>> warehouseResultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
         for (Map.Entry<String, List<LocationInventoryResultDTO>> result : warehouseResultMap.entrySet()) {
             // 生成拣货单主表数据
@@ -194,11 +202,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<PickingDetailDTO.AddDTO> detailList = new ArrayList<>();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         for (PickingDetailDTO.AddDTO detail : dto.getDetails()) {
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detail.getSkuId())
+                            && req.getBomVersion().equals(detail.getBomVersion())
                             && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(sonSkuList)) {
@@ -207,8 +216,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     detailList.add(detailAdd);
                 }
             } else {
-                PickingDetailDTO.AddDTO detailAdd = PickingDetailDTO.AddDTO.getAddDTO(detail, detail.getSkuId(), detail.getSkuNo(), detail.getQty());
-                detailList.add(detailAdd);
+                detailList.add(detail);
             }
         }
         dto.setDetails(detailList);
@@ -518,10 +526,10 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             Map<String, Integer> skuMap = dto.getDetails().stream().filter(v -> v.getSourceDetailId().equals(detailId))
                     .collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getQty, Integer::sum));
             //计算比例
-            int proportion = Optional.ofNullable(skuMap.get(bomChildren.get(0).getSkuNo())).orElse(0) / bomChildren.get(0).getQuantity();
+            BigDecimal proportion = new BigDecimal(Optional.ofNullable(skuMap.get(bomChildren.get(0).getSkuNo())).orElse(0)).divide(new BigDecimal(bomChildren.get(0).getQuantity()), 6, RoundingMode.HALF_UP);
             for (BomChildrenSkuDTO bomChild : bomChildren) {
-                int temp = Optional.ofNullable(skuMap.get(bomChild.getSkuNo())).orElse(0) / bomChild.getQuantity();
-                if (proportion != temp) {
+                BigDecimal temp = new BigDecimal(Optional.ofNullable(skuMap.get(bomChild.getSkuNo())).orElse(0)).divide(new BigDecimal(bomChild.getQuantity()), 6, RoundingMode.HALF_UP);
+                if (proportion.compareTo(temp) != 0) {
                     throw new ServiceException(ApiError.ERROR_99128, String.join(",", skuMap.keySet()));
                 }
             }
@@ -605,11 +613,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     }
 
     @Override
-    public void generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results) {
+    public List<String> generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results) {
         List<String> skuIdList = executionData.getDetails().stream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        Pair<List<LocationInventoryResultDTO>, List<String>> resultData = Pair.create(Collections.emptyList(), Collections.emptyList());
         if (CollectionUtils.isEmpty(results)) {
-            results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+            resultData = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData);
+            results = resultData.getFirst();
         }
         Map<String, List<LocationInventoryResultDTO>> resultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
         for (Map.Entry<String, List<LocationInventoryResultDTO>> entry : resultMap.entrySet()) {
@@ -664,6 +674,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             save(entity);
             pickingDetailService.saveBatch(entities);
         }
+        return resultData.getSecond();
     }
 
     @Override
