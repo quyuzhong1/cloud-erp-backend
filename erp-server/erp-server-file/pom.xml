@@ -8,8 +8,11 @@
         <artifactId>erp-server</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
+    <groupId>com.erp.server</groupId>
     <artifactId>erp-server-file</artifactId>
-
+    <version>0.0.1-SNAPSHOT</version>
+    <name>erp-server-file</name>
+    <description>下载中心系统</description>
     <dependencies>
         <dependency>
             <groupId>com.cloud.erp</groupId>

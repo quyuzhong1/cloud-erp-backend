@@ -8,15 +8,15 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum FileTaskEventEnum implements EnumMessage {
     //plm
-    PRODUCT_DETAIL_EXPORT("PRODUCT_DETAIL_EXPORT", ""),
+    PRODUCT_DETAIL_EXPORT("PRODUCT_DETAIL_EXPORT", "产品明细"),
 
 
     //wms
     INVENTORY_EXPORT("INVENTORY_EXPORT","即时库存"),
-    ALIEXPRESS_DELIVERY_EXPORT("ALIEXPRESS_DELIVERY_EXPORT", ""),
-    B2C_DELIVERY_ORDER_EXPORT("B2C_DELIVERY_ORDER_EXPORT", ""),
+    ALIEXPRESS_DELIVERY_EXPORT("ALIEXPRESS_DELIVERY_EXPORT", "速卖通发货单"),
+    B2C_DELIVERY_ORDER_EXPORT("B2C_DELIVERY_ORDER_EXPORT", "发货单导出"),
     //workflow
-    PROCESS_MANAGEMENT_EXPORT("PROCESS_MANAGEMENT_EXPORT", ""),
+    PROCESS_MANAGEMENT_EXPORT("PROCESS_MANAGEMENT_EXPORT", "流程管理"),
     DEFAULT("DEFAULT", "默认");
     private final String code;
     private final String name;
