@@ -4,11 +4,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
-import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
@@ -83,14 +83,24 @@ public class MercadoSkuDmpHandler extends DmpInputDoChildDmpHandler {
 
 
                         //规格属性
-                        List<Map<String, Object>> salesAttributes = (List<Map<String, Object>>) l.get("salesAttributes");
-                        if (CollectionUtil.isNotEmpty(salesAttributes)) {
-                            String specifics = "";
-                            for (Map<String, Object> salesAttribute : salesAttributes) {
-                                specifics = specifics + salesAttribute.get("name") + ":" + salesAttribute.get("valueName") +" ";
+                        Object attributesObj = dmpInputMongoChild.get("attributes");
+
+                        if (ObjectUtils.isNotEmpty(attributesObj)) {
+                            List<Map<String, Object>> attributesList = (List<Map<String, Object>>) attributesObj;
+                            if (CollectionUtil.isNotEmpty(attributesList)) {
+                                for (Map<String, Object> map : attributesList) {
+                                    if ("BRAND".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
+                                        l.put("brandName", map.get("valueName"));
+                                    }
+
+                                    if ("PACKAGE_LENGTH".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
+                                        String valueName = String.valueOf(map.get("valueName"));
+
+                                        l.put("brandName", map.get("valueName"));
+                                    }
+                                }
                             }
-                            specifics = specifics.trim();
-                            l.put("specifics", specifics);
+
                         }
 
                         //包装信息
