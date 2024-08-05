@@ -1076,6 +1076,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String updateSo(SoInfoDTO.UpdateDTO dto) {
         String id = dto.getId();
         SoInfoEntity soInfo = this.getById(id);
