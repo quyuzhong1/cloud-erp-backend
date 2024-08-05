@@ -21,6 +21,7 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
+import com.sdk.wms.goodcang.dto.request.GoodCangGetOutBoundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.utils.GoodCangUtils;
@@ -34,7 +35,7 @@ import cn.hutool.core.collection.CollUtil;
  */
 @Service
 @Scope("prototype")
-public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
+public class DmpInputGoodCangOutboundInitHandler extends DmpInputInitHandler{
 
 	@Resource
     private DmpHandlerCache dmpHandlerCache;
@@ -45,9 +46,11 @@ public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
         DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
         String apiType = dmpCfgApiEntity.getApiType();
         
-        GoodCangGetSkuReq goodCangGetSkuReq = new GoodCangGetSkuReq();
+        GoodCangGetOutBoundReq goodCangGetOutBoundReq = new GoodCangGetOutBoundReq();
+        goodCangGetOutBoundReq.setModifyDateFrom(dmpInputTaskEntity.getStartTime());
+        goodCangGetOutBoundReq.setModifyDateTo(dmpInputTaskEntity.getEndTime());
+        goodCangGetOutBoundReq.setPageSize(20);
         Integer page = 1;
-        goodCangGetSkuReq.setPageSize(100);
         int currTotal = 0;
         List<Object> allResult = new ArrayList<>();
         List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.GOODCANG.getCode()));
@@ -56,8 +59,8 @@ public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
         }
         ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
         while(true) {
-        	goodCangGetSkuReq.setPage(page);
-        	String response = GoodCangUtils.sendPost(apiType,JSON.toJSONString(goodCangGetSkuReq));
+        	goodCangGetOutBoundReq.setPage(page);
+        	String response = GoodCangUtils.sendPost(apiType,JSON.toJSONString(goodCangGetOutBoundReq));
         	GoodCangResponse<List<?>> result = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<Object>>>() {}.getType());
         	List<?> data = result.getData();
         	int size = data.size();
@@ -74,9 +77,6 @@ public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
         		break;
         	}
         	page = page + 1;
-        	if(page == 3) {
-        		break;
-        	}
         }
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));
