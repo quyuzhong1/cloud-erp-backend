@@ -2,11 +2,13 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
+import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
@@ -42,22 +44,25 @@ public class MercadoSkuDmpHandler extends DmpInputDoChildDmpHandler {
                         l.put("platformUpdateTime", dmpInputMongoChild.get("updateTime"));
                         l.put("spuId", dmpInputMongoChild.get("fid"));
 
-                        List<Map<String, Object>> mainImages = (List<Map<String, Object>>) dmpInputMongoChild.get("mainImages");
-                        if (CollectionUtil.isNotEmpty(mainImages)) {
-                            List<String> urls = (List<String>) mainImages.get(0).get("urls");
-                            l.put("imageUrls", urls.get(0));
+                        if (ObjectUtil.isNotEmpty(dmpInputMongoChild.get("pictures"))) {
+                            List<Map<String, Object>> pictures = (List<Map<String, Object>>) dmpInputMongoChild.get("pictures");
+                            if (CollectionUtil.isNotEmpty(pictures)) {
+                                Object url = pictures.get(0).get("url");
+                                l.put("imageUrls", url);
+                            }
                         }
 
                         //状态
                         Object statusObj = dmpInputMongoChild.get("status");
                         if (statusObj != null) {
                             String status = String.valueOf(statusObj);
-                            if ("ACTIVATE".equalsIgnoreCase(status)) {
+                            if ("active".equalsIgnoreCase(status)) {
                                 l.put("status", "1");
                             } else {
                                 l.put("status", "3");
                             }
                         }
+//                        attributes
 
                         //品牌
                         Object brandObj = dmpInputMongoChild.get("brand");

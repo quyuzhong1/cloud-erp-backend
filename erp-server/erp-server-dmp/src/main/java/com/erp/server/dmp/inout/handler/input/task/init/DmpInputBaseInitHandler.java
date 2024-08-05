@@ -117,32 +117,7 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 					
 					dmpInputKingdeeApiInitRequest.setFieldKeys(parseObject.getString("fieldKeys"));
 				}
-			}else if(DmpBasicSystemCodeEnum.MABANG.getCode().equals(dmpBasicSystemEntity.getCode())){
-				String code = dmpCfgInputEntity.getCode();
-				if ("order".equals(code)) {
-					//销售订单
-					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangOrderApiInitHandler.class);
-				} else if ("orderReturn".equals(code)) {
-					//退货单
-					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangReturnApiInitHandler.class);
-				} else if ("orderRefund".equals(code)) {
-					//退款单
-					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangRefundApiInitHandler.class);
-				} else if ("shop".equals(code)) {
-					//店铺
-					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangShopInfoApiInitHandler.class);
-				} else if ("orderHistory".equals(code)) {
-					//店铺
-					dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), MabangOrderHistoryApiInitHandler.class);
-				}
-
-				DmpInputMabangApiInitRequest dmpInputMabangApiInitRequest = new DmpInputMabangApiInitRequest();
-				dmpInputApiInitRequest = dmpInputMabangApiInitRequest;
-				dmpInputMabangApiInitRequest.setRequestParam(extendJson);
-				dmpInputMabangApiInitRequest.setApiType(dmpCfgApiEntity.getApiType());
-
-
-			}else {
+			} else {
 				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputApiInitHandler.class);
 				dmpInputApiInitRequest = new DmpInputApiInitRequest();
 				dmpInputApiInitRequest.setRequestParam(extendJson);
