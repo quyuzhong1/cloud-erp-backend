@@ -716,7 +716,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         //反审核
         if (result) {
             //添加日志
-            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER_B2C.getCode(), rejectPairList, "状态变更");
             //审核通过发送金蝶
 //            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
