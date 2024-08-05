@@ -116,4 +116,22 @@ public interface SoB2cDeliveryFeign {
      */
     @PostMapping("feign/soB2cDelivery/updateShipmentMark")
     void updateShipmentMark(@RequestParam("ids") List<String> ids,@RequestParam("code") String code);
+    /**
+     * 发货生成直接调拨单
+     * @author will
+     * @date 2024/8/1 9:44
+     * @param soId
+     * @return Boolean
+     */
+    @PostMapping("feign/soB2cDelivery/afreshPushTransferInfo")
+    Boolean afreshPushTransferInfo(@RequestBody String soId);
+    /**
+     * 重试发货虚拟仓库存扣减
+     * @author will
+     * @date 2024/8/1 10:29
+     * @param soId
+     * @return Boolean
+     */
+    @PostMapping("feign/soB2cDelivery/afreshOutFreezeVirtualInventory")
+    Boolean afreshOutFreezeVirtualInventory(@RequestBody String soId);
 }
