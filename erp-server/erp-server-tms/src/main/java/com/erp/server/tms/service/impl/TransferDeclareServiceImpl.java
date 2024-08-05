@@ -364,6 +364,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<PackageForecastDetailEntity> packageForecastDetailEntityList = CollectionUtils.isNotEmpty(soIdList)?FeignQuery.create(PackageForecastDetailEntity.class).in(PackageForecastDetailEntity::getSoId,soIdList).list():new ArrayList<>();
         List<String> packageForecastIds = packageForecastDetailEntityList.stream().map(PackageForecastDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<PackageForecastEntity> packageForecastEntityList = CollectionUtils.isNotEmpty(packageForecastIds)?FeignQuery.create(PackageForecastEntity.class).in(PackageForecastEntity::getId,packageForecastIds).list():new ArrayList<>();
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
         list.forEach(exportListDTO -> {
             PackageForecastDetailEntity mainPackageForecastDetailEntity = packageForecastDetailEntityList.stream().filter(v -> v.getSoCode().equals(exportListDTO.getSoCode())).findFirst().orElse(new PackageForecastDetailEntity());
             PackageForecastEntity mainPackageForecastEntity = packageForecastEntityList.stream().filter(v -> v.getId().equals(mainPackageForecastDetailEntity.getMainId())).findFirst().orElse(new PackageForecastEntity());
@@ -371,8 +372,17 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             exportListDTO.setUploadBatchStatusName(TransferDeclareUploadStatusEnum.getName(exportListDTO.getUploadBatchStatus()));
             exportListDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(exportListDTO.getInstockForecastStatus()));
             exportListDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(exportListDTO.getUploadOrderStatus()));
-            exportListDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(exportListDTO.getOutstockStatus()));
+//            exportListDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(exportListDTO.getOutstockStatus()));
             exportListDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(exportListDTO.getTransferStatus()));
+            SoB2cEntity detailSoB2cEntity = soB2cEntityList.stream()
+                    .filter(req -> req.getId().equals(exportListDTO.getSoId())
+                            && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(detailSoB2cEntity)) {
+                exportListDTO.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
+            } else {
+                exportListDTO.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());
+            }
         });
     }
 
