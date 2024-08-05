@@ -436,7 +436,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO, SoReturnEntity entity) {
-        List<String> ids = baseApproveParamDTO.getIds();
         List<SoReturnEntity> entityList = Arrays.asList(entity);
         //判断是否是审核中的状态
         long count = entityList.stream().filter(v -> !v.getInvalidStatus()
@@ -454,20 +453,20 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     .set(SoReturnEntity::getApproveUserId, userInfo.getUid())
                     .set(SoReturnEntity::getApproveUserName, userInfo.getUserName())
                     .set(SoReturnEntity::getApproveTime, LocalDateTime.now())
-                    .in(SoReturnEntity::getId, ids)
+                    .eq(SoReturnEntity::getId, entity.getId())
                     .update(new SoReturnEntity());
             //增加广播通知
             entityList.forEach(obj -> this.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
-                    .in(SoReturnEntity::getId, ids)
+                    .eq(SoReturnEntity::getId, entity.getId())
                     .update(new SoReturnEntity());
         }
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售退货订单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "审核操作");
-        return BatchResultDTO.success();
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"审核成功");
     }
 
     /**
