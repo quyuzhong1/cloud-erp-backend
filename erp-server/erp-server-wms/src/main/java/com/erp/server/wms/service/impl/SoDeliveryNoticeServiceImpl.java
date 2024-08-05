@@ -1333,17 +1333,19 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailBySourceIds(Collections.singletonList(entity.getSourceId()));
         // 回写数量，处理组合数据
         List<String> skuIds = detailEntities.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        Map<String, Integer> skuQty = soDetailEntities.stream().collect(Collectors.toMap(SoDetailEntity::getSkuId, SoDetailEntity::getQty, Math::addExact));
         //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
-            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream()
-                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
-                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
-                    ).findFirst().orElse(null);
             SoDetailEntity soDetailEntity = soDetailEntities.stream()
                     .filter(v -> v.getId().equals(detailEntity.getSourceDetailId()))
                     .findFirst()
                     .orElse(new SoDetailEntity());
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
+                            && req.getBomVersion().equals(soDetailEntity.getBomVersion())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).findFirst().orElse(null);
             Integer noticeQty = noticeDetailEntities.stream()
                     .filter(v -> !v.getId().equals(detailEntity.getId()))
                     .filter(v -> v.getSkuId().equals(detailEntity.getSkuId()))
@@ -1364,7 +1366,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                         .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty);
             }
-            if (soDetailEntity.getQty() < noticeQty + detailEntity.getPickingQty()) {
+            if (Optional.ofNullable(skuQty.get(detailEntity.getSkuId())).orElse(0) < noticeQty + detailEntity.getPickingQty()) {
                 throw new ServiceException(ApiError.ERROR_99127, detailEntity.getSkuNo());
             }
             if (detailEntity.getDeliveryQty() < detailEntity.getPickingQty()) {
