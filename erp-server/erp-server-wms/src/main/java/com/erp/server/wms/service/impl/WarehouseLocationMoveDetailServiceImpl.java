@@ -74,8 +74,8 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     }
 
     /**
-     * 修改
-     */
+    * 修改
+    */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(WarehouseLocationMoveDTO.UpdateDTO dto, WarehouseLocationMoveEntity warehouseLocationMoveEntity) {
@@ -117,8 +117,8 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     }
 
     /**
-     * 新增修改处理数据
-     */
+    * 新增修改处理数据
+    */
     private void handleData(List<WarehouseLocationMoveDetailEntity> list, WarehouseLocationMoveEntity warehouseLocationMoveEntity, String warehouseId) {
         //获取仓库信息
         WarehouseEntity warehouseEntity = Optional.ofNullable(warehouseService.getById(warehouseId)).orElse(new WarehouseEntity());
@@ -162,8 +162,8 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
         }
     }
     /**
-     * 新增修改处理数据
-     */
+    * 新增修改处理数据
+    */
     private void pcHandleData(List<WarehouseLocationMoveDetailEntity> list, WarehouseLocationMoveEntity warehouseLocationMoveEntity) {
         //获取仓库信息
         for (WarehouseLocationMoveDetailEntity detailEntity : list) {

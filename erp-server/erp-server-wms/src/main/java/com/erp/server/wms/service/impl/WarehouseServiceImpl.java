@@ -181,7 +181,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     private List<WarehouseDTO.ListInventoryQtyDTO> fillListInventoryQty (WarehouseDTO.ListInventoryQtyParamDTO dto, List<WarehouseDTO.ListDTO> list) {
         //sku去重
-        List<String> skuIdList =  dto.getDetailList().stream().map(WarehouseDTO.ListInventoryDetailParamDTO::getSkuId).distinct().collect(Collectors.toList());
+       List<String> skuIdList =  dto.getDetailList().stream().map(WarehouseDTO.ListInventoryDetailParamDTO::getSkuId).distinct().collect(Collectors.toList());
 
         //仓库id集合
         List<String> warehouseIdList = list.stream().map(WarehouseDTO.ListDTO::getId).distinct().collect(Collectors.toList());

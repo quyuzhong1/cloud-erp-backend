@@ -425,7 +425,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
             // 取仓位名称
             String outWarehouseLocationName = warehouseLocationList.stream().filter(r -> Objects.equals(r.getWarehouseId(), viewDetailDTO.getOutWarehouseId())
-                    && Objects.equals(StrUtils.null2EmptyWithTrim(r.getCode()), StrUtils.null2EmptyWithTrim(viewDetailDTO.getOutWarehouseLocation()))).map(o->StrUtils.null2EmptyWithTrim(o.getName())).findFirst().orElse("");
+                        && Objects.equals(StrUtils.null2EmptyWithTrim(r.getCode()), StrUtils.null2EmptyWithTrim(viewDetailDTO.getOutWarehouseLocation()))).map(o->StrUtils.null2EmptyWithTrim(o.getName())).findFirst().orElse("");
             viewDetailDTO.setOutWarehouseLocationName(outWarehouseLocationName);
 
             String inWarehouseLocationName = warehouseLocationList.stream().filter(r -> Objects.equals(r.getWarehouseId(), viewDetailDTO.getInWarehouseId())
@@ -503,7 +503,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess, Boolean isSyncKingDee){
-        //审核中允许审核
+       //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }

@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -12,6 +13,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +57,7 @@ public class WarehouseController extends BaseController {
             menuCode = "wms:warehouse:paging",
             tableAlias = "warehouse"
     )
+    @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
     public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
         PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
         return success(pagingVO);
@@ -330,7 +333,7 @@ public class WarehouseController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/selectPaging")
-    public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody @Validated PagingDTO<WarehouseDTO.SelectDTO> dto) {
+    public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody PagingDTO<WarehouseDTO.SelectDTO> dto) {
         PagingVO<WarehouseDTO.ListDTO> pagingVO = warehouseService.selectPaging(dto);
         return success(pagingVO);
     }

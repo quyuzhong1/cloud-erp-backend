@@ -793,7 +793,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
      * @author Will
      * @date: 2023/10/17 18:24
      */
-    private List<Map<String, Object>> listKingdeeInventory(List<String> skuNoList, List<String> warehouseCodeList, List<String> orgCodeList) {
+    private List<Map<String, Object>> listKingdeeInventory (List<String> skuNoList,List<String> warehouseCodeList,List<String> orgCodeList) {
         DmpSyncKingdeeDTO.ParamDTO paramDTO = new DmpSyncKingdeeDTO.ParamDTO();
         paramDTO.setFormId("STK_Inventory");
         paramDTO.setFieldKeys("FMaterialId.FNumber,FStockId.FNumber,FStockOrgId.FNumber,FBASEQTY,FMaterialid.FSTOREURNOM,FMaterialid.FSTOREURNUM");

@@ -709,9 +709,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         Integer pickingQty = detailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).map(TransferApplicationDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
 
         //直接调拨数量
-        Integer transferInfoQty = MathUtil.ZERO;
+       Integer transferInfoQty = MathUtil.ZERO;
 
-        //分步式调出数量
+       //分步式调出数量
         Integer transferOutQty = MathUtil.ZERO;
 
         //直接调拨
@@ -1168,7 +1168,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
 
-        return this.lambdaUpdate().in(TransferApplicationEntity::getId, ids)
+       return this.lambdaUpdate().in(TransferApplicationEntity::getId, ids)
                 .set(TransferApplicationEntity::getApproveUserId, userInfo.getUid())
                 .set(TransferApplicationEntity::getApproveUserName, userInfo.getUserName())
                 .set(TransferApplicationEntity::getApproveStatus, approveStatus)

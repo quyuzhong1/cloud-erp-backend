@@ -124,7 +124,7 @@
         FROM overseas_provider_warehouse as opw
         LEFT JOIN overseas_provider as op
         ON opw.main_id = op.id
-        WHERE op.is_deleted = FALSE AND opw.is_deleted = FALSE AND opw.disabled = FALSE
+        WHERE op.is_deleted = FALSE AND opw.is_deleted = FALSE AND opw.disabled = FALSE and auth_status = 'already'
         <if test="notEmptyWarehouseId != null and notEmptyWarehouseId ">
             AND opw.warehouse_id != ''
         </if>

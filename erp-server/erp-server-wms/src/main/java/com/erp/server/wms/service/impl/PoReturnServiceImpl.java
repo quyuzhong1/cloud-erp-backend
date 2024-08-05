@@ -774,7 +774,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
 
             //发送旺店通
-            poReturnEntityList.forEach(obj -> syncApprovePoReturnToWdt(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            syncApprovePoReturnToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         } else {
             //审核不通过
             lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -797,6 +797,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @author: tanmujin
      */
     private void syncApprovePoReturnToWdt(PoReturnEntity entity, String operateCode) {
+        if(! "other".equals(entity.getSourceType())){
+            log.info("非库存退货单无需推送旺店通：{}", entity);
+            return;
+        }
         List<PoReturnDetailEntity> detailList = poReturnDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
@@ -828,7 +832,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         });
 
         //发送异步任务
-        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGTH);
+        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
         DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -981,6 +985,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @author: tanmujin
      */
     private void syncDisApprovePoReturnToWdt(PoReturnEntity entity, String operateCode) {
+        if(! "other".equals(entity.getSourceType())){
+            log.info("非库存退货单无需推送旺店通：{}", entity);
+            return;
+        }
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getReturnWarehouseId()), "wdt");
         if(mappingList.isEmpty()){
             return;

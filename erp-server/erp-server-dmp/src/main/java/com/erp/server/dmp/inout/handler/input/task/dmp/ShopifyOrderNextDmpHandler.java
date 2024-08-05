@@ -35,6 +35,7 @@ public class ShopifyOrderNextDmpHandler extends ShopifyOrderGetDetailDmpHandler 
 					BigDecimal quantity = MathUtil.valueOf(quantityObj);
 					//商品售价(折扣后单价)
 					dmpDataMap.put("sellPrice", price.subtract(totalDiscount.divide(quantity, 4, BigDecimal.ROUND_HALF_UP)));
+
 					//折扣后订单总金额
 					dmpDataMap.put("afterAmount", price.multiply(quantity));
 				}

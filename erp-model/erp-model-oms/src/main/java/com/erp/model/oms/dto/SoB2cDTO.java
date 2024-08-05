@@ -2831,4 +2831,5 @@ public class SoB2cDTO implements Serializable {
         @NotBlank(message = "仓库名称不能为空")
         private String warehouseName;
     }
+
 }

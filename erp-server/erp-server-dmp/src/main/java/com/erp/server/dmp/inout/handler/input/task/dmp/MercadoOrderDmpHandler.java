@@ -1,10 +1,12 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
@@ -13,6 +15,12 @@ import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,9 +30,6 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 public class MercadoOrderDmpHandler extends MercadoDmpHandler {
-
-
-
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
@@ -38,10 +43,40 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
         List<ParamData> paramDataList = new ArrayList<>();
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getId()));
         List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibre_shipment_data");
+        //使用 DateTimeFormatter 解析字符串日期
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+
+        String parentTaskId = dmpInputTaskEntity.getParentTaskId();
+        List<DmpInputTaskEntity> parentTaskEntityList = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, parentTaskId).list();
+        if (CollectionUtil.isEmpty(parentTaskEntityList)) {
+            return;
+        }
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+                Map<String, Object> lableMap = new HashMap<>();
+
+                dmpDataMap.put("nextLevelId", parentTaskEntityList.get(0).getNextLevelId());
+                dmpDataMap.put("shopId", parentTaskEntityList.get(0).getNextLevelId());
+
+                //创建时间
+                Object createTimeObj = dmpDataMap.get("dateCreated");
+                if (createTimeObj != null) {
+                    OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(createTimeObj), formatter);
+                    // 转换为 LocalDateTime
+                    dmpDataMap.put("platformCreateTime", offsetDateTime.toLocalDateTime());
+                }
+
+                //修改时间
+                Object updateTimeObj = dmpDataMap.get("lastUpdated");
+                if (updateTimeObj != null) {
+                    OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(updateTimeObj), formatter);
+                    // 转换为 LocalDateTime
+                    dmpDataMap.put("platformUpdateTime", offsetDateTime.toLocalDateTime());
+                }
+
+
                 Map<String, Object> shipmentIdMap = (Map<String, Object>) dmpDataMap.get("shipping");
                 Object shipmentId = shipmentIdMap.get("fid");
                 if (shipmentId != null) {
@@ -127,16 +162,26 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
 
                     }
 
-                    //支付时间
+                    //支付信息
                     Object paymentsObj = dmpDataMap.get("payments");
                     if (paymentsObj != null) {
                         List<Map<String, Object>> feedbackList = (List<Map<String, Object>>) paymentsObj;
                         if (CollectionUtil.isNotEmpty(feedbackList)) {
-                            dmpDataMap.put("payTime", feedbackList.get(0).get("dateCreated"));
+                            OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(feedbackList.get(0).get("dateCreated")), formatter);
+                            // 转换为 LocalDateTime
+                            dmpDataMap.put("payTime", offsetDateTime.toLocalDateTime());
                             dmpDataMap.put("currencyCode", feedbackList.get(0).get("currencyId"));
-                            dmpDataMap.put("payAmount", feedbackList.get(0).get("totalPaidAmount"));
-                            dmpDataMap.put("allAmount", feedbackList.get(0).get("transactionAmount"));
-                            dmpDataMap.put("shippingCost", feedbackList.get(0).get("shippingAmount"));
+                            BigDecimal totalPaidAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("totalPaidAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            dmpDataMap.put("payAmount", totalPaidAmount);
+                            BigDecimal transactionAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("transactionAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            dmpDataMap.put("allAmount", transactionAmount);
+                            BigDecimal shippingAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("shippingAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            dmpDataMap.put("shippingCost", shippingAmount);
+
+                            BigDecimal taxesAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("taxesAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                            lableMap.put("taxesAmount", taxesAmount);
+
                         }
                     }
 
@@ -159,8 +204,13 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                                 Map<String, Object> shippingMethodMap = (Map<String, Object>) shippingMethodObj;
                                 dmpDataMap.put("logisticsName", shippingMethodMap.get("name"));
                             }
+                            Object costObj = leadTimeMap.get("cost");
+                            lableMap.put("cost", costObj);
                         }
+
+
                     }
+                    dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
                 }
             }
         }

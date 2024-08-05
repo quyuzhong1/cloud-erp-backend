@@ -34,7 +34,7 @@ public class WeighingOutboundController extends BaseController {
      * @date: 2023-12-13
      */
     @PostMapping("/scan")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "称重出库扫描",keyIdName = "dto.businessCode")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "称重出库扫描:{businessCode}")
     public ApiResult<WeightingOutboundDTO.ViewDTO> scan(@RequestBody @Validated WeightingOutboundDTO.ScanDTO dto) {
         WeightingOutboundDTO.ViewDTO list = weightingOutboundService.scan(dto);
         return success(list);

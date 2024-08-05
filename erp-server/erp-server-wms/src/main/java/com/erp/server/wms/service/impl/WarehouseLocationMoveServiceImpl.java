@@ -811,12 +811,17 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO_SUBTRACT.getCode());
                 inventoryTransCoreService.approveByType(inventoryTransferDTO);
             }else {
-                transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
-                transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
                 InventoryTransferRuleDTO ruleDTO = new InventoryTransferRuleDTO();
+                TransactionRuleDTO current = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK);
+                current.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+                transactionRuleDTOList.add(current);
+                TransactionRuleDTO target = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK);
+                target.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+                transactionRuleDTOList.add(target);
+                ruleDTO.setParamList(transferDTOList);
                 ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
                 ruleDTO.setRules(transactionRuleDTOList);
-                ruleDTO.setParamList(transferDTOList);
+
                 inventoryTransCoreService.approveByRule(ruleDTO);
             }
             //发送旺店通

@@ -1011,7 +1011,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, String warehouseId, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds) {
-        // 获取仓库暂存区默认配置
+            // 获取仓库暂存区默认配置
         CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                 .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
                 .filter(staging -> staging.getWarehouseId().equals(entity.getWarehouseId()))
