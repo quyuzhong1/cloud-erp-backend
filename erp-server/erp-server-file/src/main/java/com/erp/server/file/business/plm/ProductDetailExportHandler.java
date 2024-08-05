@@ -1,51 +1,47 @@
 package com.erp.server.file.business.plm;
 
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.date.DateUtil;
+import com.common.business.dto.base.PagingDTO;
 import com.erp.model.plm.dto.ProductDetailExcelDTO;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.file.core.FileEventHandler;
+import com.erp.model.plm.dto.ProductSkuExcelDTO;
+import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
 import com.erp.server.file.enums.FileTaskEventEnum;
-import com.erp.server.file.exception.BusinessException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 
 @Component
 @Slf4j
-public class ProductDetailExportHandler implements FileEventHandler {
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
+public class ProductDetailExportHandler extends AbstractPageFileEventHandler<ProductDetailExcelDTO, ProductSkuExcelDTO> {
+
 
     @Override
-    public void handle(FileTask fileTask) {
-
-        List<ProductDetailExcelDTO> list = plmTaskFeign.getProductDetailExportData(fileTask.getMetaInfo());
-        StringBuilder sb = new StringBuilder();
-        String excelPath = "excel/plm/productNoSpecDetailExport.xlsx";
-        String name = fileTask.getFileName();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        sb.append(excelPath.substring(excelPath.lastIndexOf(".")));
-        try {
-            byte[] bytes = new ExcelPrintUtils().patchExport(list, excelPath);
-            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
-            fileTask.setFileUrl(s);
-        } catch (IOException e) {
-            log.error("上传文件失败{}", e.getMessage(), e);
-            throw new BusinessException(e.getMessage());
-        }
+    public String getExcelPath() {
+        return "excel/plm/productNoSpecDetailExport.xlsx";
     }
+    
 
     @Override
     public FileTaskEventEnum getEvent() {
         return FileTaskEventEnum.PRODUCT_DETAIL_EXPORT;
+    }
+
+    @Override
+    protected List<ProductDetailExcelDTO> getData(FileTask fileTask) {
+        ProductSkuExcelDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ProductSkuExcelDTO>() {
+        });
+        return listSeqData(dto);
+    }
+
+    @Override
+    protected int count(ProductSkuExcelDTO o) {
+        return 0;
+    }
+
+    @Override
+    protected List<ProductDetailExcelDTO> getPageData(PagingDTO<ProductSkuExcelDTO> dto) {
+        return null;
     }
 }

@@ -1,28 +1,43 @@
 package com.erp.server.file.enums;
 
-public enum FileTaskStatusEnum {
+import com.common.core.constant.EnumMessage;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
+public enum FileTaskStatusEnum implements EnumMessage {
     /**
-     * 等待中
+     * 待处理
      */
-    PENDING,
+    PENDING("PENDING", "待处理"),
     /**
      * 处理中
      */
-    PROCESS,
+    PROCESS("PROCESS", "处理中"),
     /**
-     * 全部成功
+     * 已完成
      */
-    FINISH,
+    FINISH("FINISH", "已完成"),
     /**
-     * 部分成功
+     * 处理失败
      */
-    PART,
+    FAIL("FAIL", "处理失败"),
     /**
-     * 全部失败
+     * 手动终止
      */
-    FAIL,
-    /**
-     * 已失效
-     */
-    EXPIRED
+    STOP("STOP", "手动终止");
+
+    private final String code;
+    private final String name;
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
 }

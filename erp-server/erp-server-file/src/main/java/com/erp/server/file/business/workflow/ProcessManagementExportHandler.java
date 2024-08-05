@@ -1,0 +1,45 @@
+package com.erp.server.file.business.workflow;
+
+import com.common.business.dto.base.PagingDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.server.file.core.AbstractPageFileEventHandler;
+import com.erp.server.file.entity.FileTask;
+import com.erp.server.file.enums.FileTaskEventEnum;
+import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+import static com.erp.server.file.enums.FileTaskEventEnum.PROCESS_MANAGEMENT_EXPORT;
+
+@Component
+@Slf4j
+public class ProcessManagementExportHandler extends AbstractPageFileEventHandler<ProcessManagementDTO.PagingResultDTO, ProcessManagementDTO.ExportDTO> {
+    @Override
+    public String getExcelPath() {
+        return "excel/workflow/process_management.xlsx";
+    }
+
+    @Override
+    public FileTaskEventEnum getEvent() {
+        return PROCESS_MANAGEMENT_EXPORT;
+    }
+
+    @Override
+    protected List<ProcessManagementDTO.PagingResultDTO> getData(FileTask fileTask) {
+        ProcessManagementDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ProcessManagementDTO.ExportDTO>() {
+        });
+        return listSeqData(dto);
+    }
+
+    @Override
+    protected int count(ProcessManagementDTO.ExportDTO exportDTO) {
+        return 0;
+    }
+
+    @Override
+    protected List<ProcessManagementDTO.PagingResultDTO> getPageData(PagingDTO<ProcessManagementDTO.ExportDTO> dto) {
+        return null;
+    }
+}

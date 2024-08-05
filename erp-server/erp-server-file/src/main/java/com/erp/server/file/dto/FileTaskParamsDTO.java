@@ -15,12 +15,4 @@ public class FileTaskParamsDTO {
      * @see FileTaskEventEnum
      */
     private String event;
-    /**
-     * 是否只查询自己的
-     */
-    private Boolean owner;
-    /**
-     * 当前登录用户
-     */
-    private String createUserId;
 }

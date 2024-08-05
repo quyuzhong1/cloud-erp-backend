@@ -1,6 +1,9 @@
 package com.erp.server.file.vo;
 
+import com.common.business.annotation.Dict;
 import com.erp.server.file.enums.FileTaskEventEnum;
+import com.erp.server.file.enums.FileTaskStatusEnum;
+import com.erp.server.file.enums.FileTaskTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,25 +32,11 @@ public class FileTaskVO {
      * 创建时间
      */
     private LocalDateTime createTime;
-
-    /**
-     * 修改人id
-     */
-    private String updateUserId;
-
-    /**
-     * 修改人名称
-     */
-    private String updateUserName;
-
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
     /**
      * 任务事件名称
      * @see FileTaskEventEnum
      */
+    @Dict(enumClass = FileTaskEventEnum.class)
     private String event;
     /**
      * 文件名称
@@ -58,13 +47,13 @@ public class FileTaskVO {
      */
     private String fileUrl;
     /**
-     * 任务状态
-     * PENDING-等待中
-     * PROCESS-处理中
-     * FINISH 全部成功
-     * PART 部分成功
-     * FAIL 全部失败
+     * 元数据信息
      */
+    private String metaInfo;
+    /**
+     * 任务状态
+     */
+    @Dict(enumClass = FileTaskStatusEnum.class)
     private String status;
     /**
      * 任务的备注信息
@@ -80,4 +69,9 @@ public class FileTaskVO {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime finishTime;
+    /**
+     * 任务类型
+     */
+    @Dict(enumClass = FileTaskTypeEnum.class)
+    private String type;
 }

@@ -32,11 +32,6 @@ public class FileTask extends BaseEntity<FileTask> {
     private String fileUrl;
     /**
      * 任务状态
-     * PENDING-等待中
-     * PROCESS-处理中
-     * FINISH 全部成功
-     * PART 部分成功
-     * FAIL 全部失败
      */
     private String status;
     /**
@@ -57,7 +52,14 @@ public class FileTask extends BaseEntity<FileTask> {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime finishTime;
-
+    /**
+     * 数据总条数
+     */
+    private Integer count;
+    /**
+     * 类型 auto 自动 manual 手动
+     */
+    private String type;
 
     public static FileTask create(String event, String fileName, String metaInfo) {
         FileTask task = new FileTask();

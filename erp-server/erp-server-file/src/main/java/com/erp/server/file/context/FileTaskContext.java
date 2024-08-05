@@ -10,15 +10,13 @@ import com.erp.server.file.dto.FileTaskDTO;
 import com.erp.server.file.dto.FileTaskParamsDTO;
 import com.erp.server.file.entity.FileTask;
 import com.erp.server.file.enums.FileTaskStatusEnum;
-import com.erp.server.file.event.FileTaskCreateEvent;
 import com.erp.server.file.repository.IFileTaskRepository;
 import com.erp.server.file.utils.ExceptionUtils;
 import com.erp.server.file.vo.FileTaskVO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -29,7 +27,7 @@ import javax.annotation.Resource;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 @Slf4j
@@ -42,27 +40,31 @@ public class FileTaskContext {
     private FileTaskFactory fileTaskFactory;
     @Resource
     private FileService fileService;
-    @Resource
-    private ApplicationEventPublisher applicationEventPublisher;
+    @Resource(name = "fileExecutor")
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+
     /**
      * 创建文件任务
      */
     @Transactional(rollbackFor = Exception.class)
-    public void add(FileTaskDTO fileTaskDTO) {
+    public String add(FileTaskDTO fileTaskDTO) {
         // 创建文件任务
         FileTask fileTask = FileTask.create(fileTaskDTO.getEvent(), fileTaskDTO.getFileName(), writeValueAsString(fileTaskDTO.getMetaInfo()));
+        LoginUser loginUser = UserContext.getLoginUser();
         // 保存文件任务
         fileTaskRepository.save(fileTask);
         log.info("文件任务[{}]创建成功,类型为[{}],状态[PENDING]", fileTask.getId(), fileTaskDTO.getEvent());
-        // 完成新增数据事务提交之后,发送MQ消息
+        // 完成新增数据事务提交之后,异步执行
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                // 触发文件任务
-                applicationEventPublisher.publishEvent(new FileTaskCreateEvent(fileTask.getId()));
+                CompletableFuture.runAsync(() -> {
+                    process(fileTask.getId(), loginUser);
+                }, threadPoolTaskExecutor);
                 log.info("文件任务[{}]消息已投递,事务已提交", fileTask.getId());
             }
         });
+        return fileTask.getId();
     }
 
 
@@ -73,7 +75,7 @@ public class FileTaskContext {
     public void delete(String id) {
         FileTask fileTask = fileTaskRepository.getById(id);
         ExceptionUtils.emptyThrow(fileTask, String.format("文件任务不存在[%s],请联系IT检查请求", id));
-        LoginUser currentUser =UserContext.getNonLoginUser();
+        LoginUser currentUser = UserContext.getNonLoginUser();
         ExceptionUtils.conditionThrow(() -> !String.valueOf(fileTask.getCreateUserId()).equals(currentUser.getUid()), "非数据创建人不可删除!");
         // 处于PENDING状态的任务无法被删除
         ExceptionUtils.conditionThrow(fileTask::volatileStatus, String.format("当前任务[%s]正在处理中,无法被删除,请稍后尝试!", id));
@@ -93,7 +95,7 @@ public class FileTaskContext {
      *
      * @param id 文件任务Id
      */
-    public void process(String id) {
+    public void process(String id, LoginUser user) {
         FileTask fileTask = fileTaskRepository.getById(id);
         if (!ObjectUtils.isEmpty(fileTask) && fileTask.isPending()) {
             // 设置任务状态为处理中
@@ -108,6 +110,7 @@ public class FileTaskContext {
                 // 获取文件任务处理器
                 FileEventHandler eventHandler = fileTaskFactory.getFileHandler(fileTask.getEvent());
                 ExceptionUtils.emptyThrow(eventHandler, String.format("事件类型[%s]不存在,请联系IT人员检查配置", fileTask.getEvent()));
+                UserContext.setLoginUser(user);
                 // 处理文件
                 eventHandler.handle(fileTask);
                 // 设置任务状态为 全部成功
@@ -145,9 +148,6 @@ public class FileTaskContext {
      */
     @Transactional(readOnly = true)
     public IPage<FileTaskVO> paging(PagingDTO<FileTaskParamsDTO> dto) {
-        if (Boolean.TRUE.equals(dto.getParams().getOwner())) {
-            dto.getParams().setCreateUserId(UserContext.getLoginUser().getUid());
-        }
         return fileTaskRepository.getFileTasks(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
     }
 
@@ -160,11 +160,11 @@ public class FileTaskContext {
 //    @Scheduled(cron = "0 0 0 * * ?")
     public void removeTasks() {
         // 等待(失效)的任务超过2天 删除
-        removeFileTasks(fileTaskRepository.getExpireByStatuses(LocalDateTime.now().minusDays(2), FileTaskStatusEnum.PENDING, FileTaskStatusEnum.EXPIRED));
+        removeFileTasks(fileTaskRepository.getExpireByStatuses(LocalDateTime.now().minusDays(2), FileTaskStatusEnum.PENDING));
         // 成功的任务保留3天
         removeFileTasks(fileTaskRepository.getExpireByStatuses(LocalDateTime.now().minusDays(3), FileTaskStatusEnum.FINISH));
         // 失败的任务保留5天
-        removeFileTasks(fileTaskRepository.getExpireByStatuses(LocalDateTime.now().minusDays(5), FileTaskStatusEnum.FAIL, FileTaskStatusEnum.PART));
+        removeFileTasks(fileTaskRepository.getExpireByStatuses(LocalDateTime.now().minusDays(5), FileTaskStatusEnum.FAIL));
     }
 
     private void removeFileTasks(List<FileTask> fileTasks) {
@@ -182,38 +182,8 @@ public class FileTaskContext {
         }
     }
 
-    /**
-     * 每隔5分钟 定时扫描  等待10分钟以上的未被处理的任务会失效
-     */
-    @Scheduled(cron = "0 */5 * * * *")
-    public void expireTasks() {
-        // 等待的任务超过10分钟 任务将会失效
-        List<FileTask> expireTasks = fileTaskRepository.getExpireByStatuses(LocalDateTime.now().minusMinutes(10), FileTaskStatusEnum.PENDING);
-        if (!ObjectUtils.isEmpty(expireTasks)) {
-            for (FileTask task : expireTasks) {
-                task.setStatus(FileTaskStatusEnum.EXPIRED.name());
-                task.setRemarks("因网络带宽限制,等待超时,任务已失效,请稍后重试");
-            }
-            log.info("文件任务{}已失效", expireTasks.stream().map(FileTask::getId).collect(Collectors.toList()));
-            fileTaskRepository.updateBatchById(expireTasks);
-        }
-    }
-
-
-    /**
-     * 每隔两天定时扫描  处理超过2天以上的任务会失效
-     */
-    @Scheduled(cron = "0 0 */2 * * * ")
-    public void interruptTasks() {
-        // 等待的任务超过10分钟 任务将会失效
-        List<FileTask> expireTasks = fileTaskRepository.getExpireByStatuses(LocalDateTime.now().minusDays(2), FileTaskStatusEnum.PROCESS);
-        if (!ObjectUtils.isEmpty(expireTasks)) {
-            for (FileTask task : expireTasks) {
-                task.setStatus(FileTaskStatusEnum.EXPIRED.name());
-                task.setRemarks("因系统中断处理失败,任务已失效,请稍后重试");
-            }
-            log.info("文件任务{}已失效", expireTasks.stream().map(FileTask::getId).collect(Collectors.toList()));
-            fileTaskRepository.updateBatchById(expireTasks);
-        }
+    @Transactional(readOnly = true)
+    public FileTask view(String id) {
+        return fileTaskRepository.getById(id);
     }
 }

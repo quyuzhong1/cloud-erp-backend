@@ -19,12 +19,10 @@
         start_time,
         finish_time
         from file_task
-        where true
-        <if test="dto.event != null and dto.event != ''">
-            and event = #{dto.event}
-        </if>
-        <if test="dto.createUserId != null and dto.createUserId != ''">
-            and create_user_id = #{dto.createUserId}
+        where is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
     </select>
 </mapper>
