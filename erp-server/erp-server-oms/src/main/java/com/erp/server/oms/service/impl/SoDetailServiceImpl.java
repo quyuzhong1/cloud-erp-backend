@@ -1752,21 +1752,21 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 throw new ServiceException(ApiError.ERROR_92015);
             }
 
+            List<String> skuIdList = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId())
+                            && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
+                    .map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+
             //有效数量
             Integer noticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (noticeQty > updateDTO.getQty()) {
+            //如果发货通知单没改sku再校验
+            if (skuIdList.size() == 1 && StrUtil.equals(skuIdList.get(0),soDetailEntity.getSkuId()) && noticeQty > updateDTO.getQty()) {
                 throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于发货通知单下推数量",soDetailEntity.getSkuNo()));
             }
             //已审核数量
             Integer noticeApproveQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId())
                             && StrUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-
-            //冻结数量
-            List<String> skuIdList = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId())
-                            && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
-                    .map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
 
             //如果发货通知单没改sku，并且数量大于0再校验
             if (skuIdList.size() == 1 && StrUtil.equals(skuIdList.get(0),soDetailEntity.getSkuId())  && MathUtil.compareTo(noticeApproveQty,MathUtil.ZERO) > MathUtil.ZERO) {
