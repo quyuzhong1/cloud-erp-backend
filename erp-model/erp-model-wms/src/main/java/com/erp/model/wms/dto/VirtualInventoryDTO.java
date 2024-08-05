@@ -199,6 +199,12 @@ public class VirtualInventoryDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 是否过滤0实际库存，默认前端页面勾上不显示0库存
+         */
+        private Boolean hideZeroInventory;
+
     }
 
 

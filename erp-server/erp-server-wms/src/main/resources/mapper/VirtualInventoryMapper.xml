@@ -61,6 +61,9 @@
         <where>
             ${params.sqlMap.default}
             and vi.is_deleted = false
+            <if test="params.hideZeroInventory">
+                and  vi.qty != 0
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
