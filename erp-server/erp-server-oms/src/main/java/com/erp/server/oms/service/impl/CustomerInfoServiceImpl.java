@@ -757,7 +757,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //添加日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个客户信息", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.CUSTOMER.getCode(), pairList, "审核操作");
-        return BatchResultDTO.success();
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
     /**
@@ -840,7 +840,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
-        return BatchResultDTO.success();
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
     /**

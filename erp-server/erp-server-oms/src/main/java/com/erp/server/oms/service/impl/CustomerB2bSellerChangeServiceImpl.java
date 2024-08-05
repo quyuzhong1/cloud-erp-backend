@@ -415,7 +415,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         batchResultDTO.setMsg("审核成功");
         //调用审核流程
         service.approveProcess(entity, baseApproveParamDTO,batchResultDTO,customerInfo);
-        return BatchResultDTO.success();
+        return BatchResultDTO.success(entity.getId(),customerInfo.getCode(),"操作成功");
     }
 
     @Transactional(rollbackFor = Exception.class)

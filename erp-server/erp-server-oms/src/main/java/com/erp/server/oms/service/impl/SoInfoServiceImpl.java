@@ -1358,7 +1358,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
-        return BatchResultDTO.success(entity.getId(),entity.getCode());
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
 

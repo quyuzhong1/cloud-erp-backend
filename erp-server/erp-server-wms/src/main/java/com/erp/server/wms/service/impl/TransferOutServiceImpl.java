@@ -314,7 +314,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<Pair<String, String>> pairList = list.stream().
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "状态变更");
-        return BatchResultDTO.success();
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -412,7 +412,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 库存交易反审核
         inventoryTransCoreService.batchUnApprove(new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_OUT, ids));
         // TODO 流程
-        return BatchResultDTO.success();
+        return BatchResultDTO.success(transferOutEntity.getId(),transferOutEntity.getCode(),"操作成功");
     }
 
     @Override
