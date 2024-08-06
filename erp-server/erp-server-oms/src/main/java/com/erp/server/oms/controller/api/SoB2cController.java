@@ -578,11 +578,15 @@ public class SoB2cController extends BaseController {
             BatchResultDTO result;
             try {
                 result = soB2cService.saveSoB2cDistribution(id, dto);
+                List<String> channelIds = dto.getDetailList().stream().filter(e -> com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getLogisticsChannelId())
+                                && id.equals(e.getId())).map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getLogisticsChannelId)
+                        .distinct().collect(Collectors.toList());
                 //申报信息匹配
                 if (result.getSuccess()){
                     SoB2cEntity entity = soB2cService.getById(id);
                     if (SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
                             && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
+                            && CollectionUtils.isNotEmpty(channelIds)
                     ){
                         soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE, false);
                     }
