@@ -1209,9 +1209,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isNotEmpty(channelIds)){
             logisticsChannelId = channelIds.get(0);
         }
-        if (StringUtils.isNotBlank(existChannelId) && Objects.equals(existChannelId,logisticsChannelId)){
-
-        }
         //获取检查备案结果
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
         String packageStatus = resultDTO.getPackageStatus();
