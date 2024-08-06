@@ -121,6 +121,14 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private Integer usableQty;
         /**
+         * 实体仓冻结库存
+         */
+        private Integer frozenQty;
+        /**
+         * 实体仓实际库存
+         */
+        private Integer realQty;
+        /**
          * 实体仓已分配数
          */
         private Integer distributionQty;
@@ -172,14 +180,19 @@ public class VirtualInventoryDTO implements Serializable {
         private String dictInventoryStatus;
 
         /**
-         * 实体仓数量
-         */
-        private Integer qty;
-
-        /**
          * 虚拟仓数量
          */
         private Integer virtualQty;
+
+        /**
+         * 实体仓可用数量
+         */
+        private Integer usableQty;
+
+        /**
+         * 实体仓冻结数量
+         */
+        private Integer frozenQty;
     }
 
 
