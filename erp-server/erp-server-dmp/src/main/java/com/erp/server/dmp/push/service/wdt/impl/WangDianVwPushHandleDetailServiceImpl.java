@@ -55,14 +55,6 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
     @Resource
     private VirtualWarehouseAllocationDetailFeign allocationDetailFeign;
 
-    @Resource
-    private RedissonClient redissonClient;
-    @Resource
-    private DmpPushTaskService dmpPushTaskService;
-
-    private static final String LOCK = "wdt:push:virtualWarehouseSync:";
-
-
     @Override
     @DataIdempotent(keyIdName = "pushDTOS.virtual_warehouse_no", waitTime = 10)
     public ApiResult<?> executeConsumer(VwPushHandelDetailPushDTO pushDTOS) {
