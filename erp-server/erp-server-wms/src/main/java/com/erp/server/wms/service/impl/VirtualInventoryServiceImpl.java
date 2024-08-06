@@ -19,6 +19,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -27,6 +28,7 @@ import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryMapper;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.VirtualInventoryService;
@@ -64,6 +66,9 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     private VirtualWarehouseService virtualWarehouseService;
     @Resource
     private InventoryService inventoryService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     public PagingVO<VirtualInventoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
@@ -367,8 +372,45 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     }
 
     @Override
-    public List<VirtualInventoryDTO.BomReturnDTO> listBomVirtual(VirtualInventoryDTO.BomParamDTO paramDTO) {
-        return null;
+    public List<VirtualInventoryDTO.BomReturnDTO> listBomVirtual(VirtualInventoryDTO.BomParamDTO bomParamDTO) {
+        List<VirtualInventoryDTO.BomReturnDTO> resultList = new ArrayList<>();
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(bomParamDTO.getSkuId()));
+        if (CollectionUtils.isEmpty(bomChildrenList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> skuIdList = new ArrayList<>();
+        skuIdList.add(bomParamDTO.getSkuId());
+        if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+            List<String> bomSkuIdList = bomChildrenList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getParentSkuId())).distinct().collect(Collectors.toList());
+            skuIdList.addAll(bomSkuIdList);
+        }
+        //虚拟仓库存
+        VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
+        paramDTO.setWarehouseIdList(Arrays.asList(bomParamDTO.getWarehouseId()));
+        paramDTO.setVirtualWarehouseIdList(Arrays.asList(bomParamDTO.getVirtualWarehouseId()));
+        paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setSkuIdList(skuIdList);
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = this.listInventoryQty(paramDTO);
+
+        for (BomChildrenSkuDTO childrenSkuDTO : bomChildrenList) {
+            //子级SKU虚拟库存
+            Integer childVirtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId())
+                            && StrUtil.equals(obj.getVirtualWarehouseId(), bomParamDTO.getVirtualWarehouseId())
+                            && StrUtil.equals(obj.getWarehouseId(), bomParamDTO.getWarehouseId())
+                            && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
+                    .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
+                    .findFirst().orElse(MathUtil.ZERO);
+            //返回信息
+            VirtualInventoryDTO.BomReturnDTO returnDTO = new VirtualInventoryDTO.BomReturnDTO();
+            returnDTO.setSkuId(childrenSkuDTO.getSkuId());
+            returnDTO.setSkuNo(childrenSkuDTO.getSkuNo());
+            returnDTO.setWarehouseId(bomParamDTO.getWarehouseId());
+            returnDTO.setVirtualWarehouseId(bomParamDTO.getVirtualWarehouseId());
+            returnDTO.setVirtualUsableQty(childVirtualUsableQty);
+            resultList.add(returnDTO);
+        }
+        return resultList;
     }
 
     /**

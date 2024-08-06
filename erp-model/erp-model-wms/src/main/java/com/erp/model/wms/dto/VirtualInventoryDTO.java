@@ -541,14 +541,17 @@ public class VirtualInventoryDTO implements Serializable {
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 虚拟仓库id
          */
+        @NotBlank(message = "虚拟仓库不能为空")
         private String virtualWarehouseId;
         /**
          * skuId
          */
+        @NotBlank(message = "SKU不能为空")
         private String skuId;
 
     }
@@ -569,5 +572,14 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private String skuId;
 
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
     }
 }

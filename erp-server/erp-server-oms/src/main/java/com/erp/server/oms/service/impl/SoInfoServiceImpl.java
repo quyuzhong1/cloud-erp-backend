@@ -947,7 +947,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //虚拟仓是否缺货
             Integer childVirtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId())
                             && StrUtil.equals(obj.getVirtualWarehouseId(), item.getVirtualWarehouseId())
-                            && StrUtil.equals(obj.getWarehouseId(), item.getWarehouseId()))
+                            && StrUtil.equals(obj.getWarehouseId(), item.getWarehouseId())
+                            && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
+                    )
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                     .findFirst().orElse(MathUtil.ZERO);
             //已缺货的无需标记
