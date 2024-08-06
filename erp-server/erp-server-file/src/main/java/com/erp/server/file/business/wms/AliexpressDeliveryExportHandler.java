@@ -5,13 +5,13 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.enums.FileTaskEventEnum;
+import com.common.business.enums.FileTaskEventEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.erp.server.file.enums.FileTaskEventEnum.ALIEXPRESS_DELIVERY_EXPORT;
+import static com.common.business.enums.FileTaskEventEnum.ALIEXPRESS_DELIVERY_EXPORT;
 
 @Component
 @Slf4j

@@ -188,10 +188,9 @@ public interface SalesOrderService extends IService<BiOrderInfoEntity> {
     /**
      * 导出sku 销售额
      * @param params
-     * @param response
      * @return
      */
-    Boolean exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response);
+    void exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params);
 
     /**
      * 产品等级销售分析
@@ -250,4 +249,9 @@ public interface SalesOrderService extends IService<BiOrderInfoEntity> {
      * @return
      */
     Map<String, String> getSkuItemName();
+
+    /**
+     * 导出销量数据
+     */
+    PagingVO<SkuSalesDTO.PagingSalesInfoDTO> exportSkuSales(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto);
 }

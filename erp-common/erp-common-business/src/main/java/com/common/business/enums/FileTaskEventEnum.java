@@ -1,4 +1,4 @@
-package com.erp.server.file.enums;
+package com.common.business.enums;
 
 import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
@@ -7,9 +7,11 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum FileTaskEventEnum implements EnumMessage {
+    //bi
+    EXPORT_SKU_SALES("EXPORT_SKU_SALES", "sku销售额"),
+
     //plm
     PRODUCT_DETAIL_EXPORT("PRODUCT_DETAIL_EXPORT", "产品明细"),
-
 
     //wms
     INVENTORY_EXPORT("INVENTORY_EXPORT","即时库存"),

@@ -2,7 +2,7 @@ package com.erp.server.file.core;
 
 
 import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.enums.FileTaskEventEnum;
+import com.common.business.enums.FileTaskEventEnum;
 
 public interface FileEventHandler {
 

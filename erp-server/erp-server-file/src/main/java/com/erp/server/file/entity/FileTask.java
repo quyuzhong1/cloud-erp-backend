@@ -1,7 +1,7 @@
 package com.erp.server.file.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.erp.server.file.enums.FileTaskEventEnum;
+import com.common.business.enums.FileTaskEventEnum;
 import com.erp.server.file.enums.FileTaskStatusEnum;
 import com.common.core.entity.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;

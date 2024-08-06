@@ -7,7 +7,7 @@ import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.rpc.wms.feign.WmsExportFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.enums.FileTaskEventEnum;
+import com.common.business.enums.FileTaskEventEnum;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-import static com.erp.server.file.enums.FileTaskEventEnum.INVENTORY_EXPORT;
+import static com.common.business.enums.FileTaskEventEnum.INVENTORY_EXPORT;
 
 @Component
 @Slf4j
