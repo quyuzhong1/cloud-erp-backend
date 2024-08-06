@@ -27,20 +27,13 @@ public class TikTokProductDmpHandler extends DmpInputDbConvertDmpHandler{
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-        super.afterConvertData(dmpInputDataDmpRelationMaps);
-
-        String parentTaskId = dmpInputTaskEntity.getParentTaskId();
-        List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, parentTaskId).list();
-        if (CollectionUtil.isEmpty(list)) {
-            return;
-        }
         for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
             Map<String, Object> mongoDataMap = mongoDataMaps.get(0);
             for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-                dmpDataMap.put("nextLevelId", list.get(0).getNextLevelId());
-                dmpDataMap.put("shopId", list.get(0).getNextLevelId());
+                dmpDataMap.put("nextLevelId", nextLevelId);
+                dmpDataMap.put("shopId", nextLevelId);
 
                 //创建时间
                 Object createTimeObj = mongoDataMap.get("createTime");
