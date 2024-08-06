@@ -189,9 +189,9 @@
         <if test="params.disabled != null">
             and lc.disabled=#{params.disabled}
         </if>
-        order by lc.disabled asc
+        order by lc.disabled asc,
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            ,case when lc.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            case when lc.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
             when lc.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
             when lc.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
             end , lc.name,
