@@ -9,6 +9,7 @@ import com.common.business.utils.CollectionUtils;
 import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
+import com.common.core.utils.ObjectUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
@@ -28,120 +29,145 @@ import java.util.stream.Collectors;
 
 @Service
 @Scope("prototype")
-public class TikTokSkuDmpHandler extends DmpInputDbConvertDmpHandler {
+public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
 
 
     @Resource
     private DmpProductInfoService dmpProductInfoService;
 
-    @Override
-    protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-        List<String> fidList = new ArrayList<>();
-        for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> listListEntry : dmpInputDataDmpRelationMaps.entrySet()) {
-            List<TreeMap<String, Object>> dmpDataMaps = listListEntry.getValue();
-            List<String> fids = dmpDataMaps.stream().map(req -> req.get("fid").toString()).distinct().collect(Collectors.toList());
-            fidList.addAll(fids);
-        }
-        List<DmpProductInfoEntity> dmpProductInfoEntityList = dmpProductInfoService.lambdaQuery().in(DmpProductInfoEntity::getSpuId, fidList).list();
 
-        for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
-            List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
-            List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
-            Map<String, Object> mongoDataMap = mongoDataMaps.get(0);
+    protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
+        List<Map<String, Object>> dmpInputMongoChildEntityList = new ArrayList<>();
+        List<ParamData> paramDataList = new ArrayList<>();
+        List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).list();
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
+        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, childMongoStorageName);
 
+        if (CollUtil.isNotEmpty(dmpInputMongoChildList)) {
+            for (Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
+                Object skuObj = dmpInputMongoChild.get("skus");
+                if (skuObj != null) {
+                    List<Map<String, Object>> skuList = (List<Map<String, Object>>) skuObj;
+                    //状态
+                    skuList.forEach(l -> {
+                        //创建时间
+                        Object createTimeObj = dmpInputMongoChild.get("createTime");
+                        if (createTimeObj != null) {
+                            // 使用Instant类将Unix时间戳转换为LocalDateTime对象
+                            LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(createTimeObj + "")), ZoneId.systemDefault());
+                            l.put("platformCreateTime", payTime);
+                        }
 
-            for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-                dmpDataMap.put("nextLevelId", nextLevelId);
-                dmpDataMap.put("shopId", nextLevelId);
+                        //修改时间
+                        Object updateTimeObj = dmpInputMongoChild.get("updateTime");
+                        if (updateTimeObj != null) {
+                            // 使用Instant类将Unix时间戳转换为LocalDateTime对象
+                            LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(updateTimeObj + "")), ZoneId.systemDefault());
+                            l.put("platformUpdateTime", payTime);
+                        }
 
-                List<DmpProductInfoEntity> productInfoEntities = dmpProductInfoEntityList.stream().filter(req -> req.getSpuId().equals(dmpDataMap.get("fid").toString())).collect(Collectors.toList());
-                if (CollectionUtil.isEmpty(productInfoEntities)) {
-                    continue;
-                }
-                dmpDataMap.put("mainId", productInfoEntities.get(0).getId());
+                        l.put("spuId", dmpInputMongoChild.get("fid"));
+                        l.put("skuNo", l.get("sellerSku"));
 
-                //创建时间
-                Object createTimeObj = mongoDataMap.get("createTime");
-                if (createTimeObj != null) {
-                    // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(createTimeObj + "")), ZoneId.systemDefault());
-                    dmpDataMap.put("platformCreateTime", payTime);
-                }
+                        Object price = l.get("price");
+                        if (ObjectUtil.isNotEmpty(price)) {
+                            Map<String,Object> priceMap = (Map<String,Object>) price;
+                            l.put("sellPrice", priceMap.get("salePrice"));
+                        }
 
-                //修改时间
-                Object updateTimeObj = mongoDataMap.get("updateTime");
-                if (updateTimeObj != null) {
-                    // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(updateTimeObj + "")), ZoneId.systemDefault());
-                    dmpDataMap.put("platformUpdateTime", payTime);
-                }
+                        l.put("name", dmpInputMongoChild.get("title"));
 
-                dmpDataMap.put("spuId", mongoDataMap.get("fid"));
+                        List<Map<String, Object>> mainImages = (List<Map<String, Object>>) dmpInputMongoChild.get("mainImages");
+                        if (CollectionUtil.isNotEmpty(mainImages)) {
+                            List<String> urls = (List<String>) mainImages.get(0).get("urls");
+                            l.put("imageUrls", urls.get(0));
+                        }
 
-                List<Map<String, Object>> mainImages = (List<Map<String, Object>>) dmpDataMap.get("mainImages");
-                if (CollectionUtil.isNotEmpty(mainImages)) {
-                    List<String> urls = (List<String>) mainImages.get(0).get("urls");
-                    dmpDataMap.put("imageUrls", urls.get(0));
-                }
+                        //状态
+                        Object statusObj = dmpInputMongoChild.get("status");
+                        if (statusObj != null) {
+                            String status = String.valueOf(statusObj);
+                            if ("ACTIVATE".equalsIgnoreCase(status)) {
+                                l.put("status", "1");
+                            } else {
+                                l.put("status", "3");
+                            }
+                        }
 
-                //状态
-                Object statusObj = dmpDataMap.get("status");
-                if (statusObj != null) {
-                    String status = String.valueOf(statusObj);
-                    if ("ACTIVATE".equalsIgnoreCase(status)) {
-                        dmpDataMap.put("status", "1");
-                    } else {
-                        dmpDataMap.put("status", "3");
-                    }
-                }
+                        //品牌
+                        Object brandObj = dmpInputMongoChild.get("brand");
+                        if (brandObj != null) {
+                            Map<String, String> brandMap = (Map<String, String>) brandObj;
+                            l.put("brandName", brandMap.get("name"));
+                        }
 
-                //品牌
-                Object brandObj = dmpDataMap.get("brand");
-                if (brandObj != null) {
-                    Map<String, String> brandMap = (Map<String, String>) brandObj;
-                    dmpDataMap.put("brandName", brandMap.get("name"));
-                }
-
-                //类目
-                Object categoryChainsObj = dmpDataMap.get("categoryChains");
-                if (categoryChainsObj != null) {
-                    List<Map<String, String>> categoryChainsList = (List<Map<String, String>>) categoryChainsObj;
-                    if (CollectionUtil.isNotEmpty(categoryChainsList)) {
-                        dmpDataMap.put("parent_category_name", categoryChainsList.get(0).get("localName"));
-                        dmpDataMap.put("category_name", categoryChainsList.get(1).get("localName"));
-                    }
-                }
+                        //类目
+                        Object categoryChainsObj = dmpInputMongoChild.get("categoryChains");
+                        if (categoryChainsObj != null) {
+                            List<Map<String, String>> categoryChainsList = (List<Map<String, String>>) categoryChainsObj;
+                            if (CollectionUtil.isNotEmpty(categoryChainsList)) {
+                                l.put("parentCategoryName", categoryChainsList.get(0).get("localName"));
+                                l.put("categoryName", categoryChainsList.get(1).get("localName"));
+                            }
+                        }
 
 
-                //规格属性
-                List<Map<String, Object>> salesAttributes = (List<Map<String, Object>>) dmpDataMap.get("salesAttributes");
-                if (CollectionUtil.isNotEmpty(salesAttributes)) {
-                    String specifics = "";
-                    for (Map<String, Object> salesAttribute : salesAttributes) {
-                        specifics = specifics + salesAttribute.get("name") + ":" + salesAttribute.get("valueName") +" ";
-                    }
-                    specifics = specifics.trim();
-                    dmpDataMap.put("specifics", specifics);
-                }
+                        //规格属性
+                        List<Map<String, Object>> salesAttributes = (List<Map<String, Object>>) l.get("salesAttributes");
+                        if (CollectionUtil.isNotEmpty(salesAttributes)) {
+                            String specifics = "";
+                            for (Map<String, Object> salesAttribute : salesAttributes) {
+                                specifics = specifics + salesAttribute.get("name") + ":" + salesAttribute.get("valueName") + " ";
+                            }
+                            specifics = specifics.trim();
+                            l.put("specifics", specifics);
+                        }
 
-                //包装信息
-                Object packageDimensionsObj = dmpDataMap.get("packageDimensions");
-                if (packageDimensionsObj != null) {
-                    Map<String, String> packageDimensionsMap = (Map<String, String>) packageDimensionsObj;
-                    dmpDataMap.put("packageLength", packageDimensionsMap.get("length"));
-                    dmpDataMap.put("packageWidth", packageDimensionsMap.get("width"));
-                    dmpDataMap.put("packageHeight", packageDimensionsMap.get("height"));
-                    dmpDataMap.put("packageUnit", packageDimensionsMap.get("unit"));
-                }
+                        //包装信息
+                        Object packageDimensionsObj = dmpInputMongoChild.get("packageDimensions");
+                        if (packageDimensionsObj != null) {
+                            Map<String, String> packageDimensionsMap = (Map<String, String>) packageDimensionsObj;
+                            l.put("packageLength", packageDimensionsMap.get("length"));
+                            l.put("packageWidth", packageDimensionsMap.get("width"));
+                            l.put("packageHeight", packageDimensionsMap.get("height"));
+                            l.put("packageUnit", packageDimensionsMap.get("unit"));
+                        }
 
-                //产品重量
-                Object packageWeightObj = dmpDataMap.get("packageWeight");
-                if (packageWeightObj != null) {
-                    Map<String, String> packageWeightMap = (Map<String, String>) packageWeightObj;
-                    dmpDataMap.put("grossWeight", packageWeightMap.get("value"));
-                    dmpDataMap.put("packageUnit", packageWeightMap.get("unit"));
+                        //产品重量
+                        Object packageWeightObj = dmpInputMongoChild.get("packageWeight");
+                        if (packageWeightObj != null) {
+                            Map<String, String> packageWeightMap = (Map<String, String>) packageWeightObj;
+                            l.put("grossWeight", packageWeightMap.get("value"));
+                            l.put("weightUnit", packageWeightMap.get("unit"));
+                        }
+                        l.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
+                        l.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
+                    });
+                    dmpInputMongoChildEntityList.addAll(skuList);
                 }
             }
+        }
+        return dmpInputMongoChildEntityList;
+    }
+
+    @Override
+    protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {
+        DmpCfgInputConvertEntity mainConvertId = this.getMainConvertId();
+        String parentStorageName = mainConvertId.getStorageName();
+        ServiceImpl parentServiceImpl = this.getServiceImpl(parentStorageName);
+        QueryWrapper<?> wrapper = new QueryWrapper<>();
+        wrapper.eq(INPUT_TASK_ID, inputTaskId);
+        List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
+        Map<String, String> billNoIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(listMaps)) {
+            for (Map<String, Object> listMap : listMaps) {
+                billNoIdMap.put(listMap.get("spu_id").toString(), listMap.get(BaseEntity.ID).toString());
+            }
+        }
+        for (Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
+            String billNo = dmpInputMongoChildEntity.get("spuId").toString();
+            String dmpId = billNoIdMap.get(billNo);
+            dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
         }
     }
 }
