@@ -751,7 +751,7 @@ public class CustomerB2CDTO implements Serializable {
          */
         private String name;
 
-        private ApproveStatusEnum approveStatus;
+        private String approveStatus;
 
         /**
          * 是否禁用
