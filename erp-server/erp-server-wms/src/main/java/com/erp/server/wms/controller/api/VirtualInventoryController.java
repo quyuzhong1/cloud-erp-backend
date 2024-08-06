@@ -90,6 +90,13 @@ public class VirtualInventoryController extends BaseController {
         return success(virtualInventoryService.getQty(qtyTypeDTO));
     }
 
+    /**
+     * 查询bom虚拟库存信息
+     * @author will
+     * @date 2024/8/6 15:22
+     * @param paramDTO
+     * @return ApiResult<List<BomReturnDTO>>
+     */
     @PostMapping(value = "/listBomVirtual")
     public ApiResult<List<VirtualInventoryDTO.BomReturnDTO>> listBomVirtual(@RequestBody @Validated VirtualInventoryDTO.BomParamDTO paramDTO) {
         return success(virtualInventoryService.listBomVirtual(paramDTO));

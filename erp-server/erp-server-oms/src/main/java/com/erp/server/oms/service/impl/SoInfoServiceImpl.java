@@ -755,6 +755,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 SoInfoDTO.VirtuaParamScarceDTO virtuaParamScarceDTO = new SoInfoDTO.VirtuaParamScarceDTO();
                 BeanMapperUtils.copy(item,virtuaParamScarceDTO);
                 handelVirtualBomScarce(bomChildrenList, virtualInventoryList, virtuaParamScarceDTO,approveNoticeQty);
+                item.setVirtualUsableQty(virtuaParamScarceDTO.getVirtualUsableQty());
+                item.setChildScarceList(virtuaParamScarceDTO.getChildScarceList());
 
                 //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的审核通过数量 ]  - 当前虚拟仓可用库存
                 Integer virtualScarceQty = item.getQty() - approveNoticeQty - item.getVirtualUsableQty();
@@ -955,19 +957,22 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             scarceDTO.setSkuNo(childrenSkuDTO.getSkuNo());
             //针对父级可用数量
             double floor = Math.floor(childVirtualUsableQty / childrenSkuDTO.getQuantity());
-            Integer parentUsableQty = Integer.valueOf(StrUtil.toString(floor));
+            Integer parentUsableQty = Integer.valueOf((int) floor);
             scarceDTO.setParentUsableQty(parentUsableQty);
             //缺货数量
             Integer virtualScarceQty = (item.getQty() * childrenSkuDTO.getQuantity() - approveNoticeQty * childrenSkuDTO.getQuantity()) - childVirtualUsableQty;
             scarceDTO.setChildUsableQty(childVirtualUsableQty);
             scarceDTO.setVirtualScarceQty(MathUtil.compareTo(virtualScarceQty,MathUtil.ZERO) >= MathUtil.ZERO ? virtualScarceQty : MathUtil.ZERO);
             scarceDTO.setSkuId(childrenSkuDTO.getSkuId());
+            childScarceList.add(scarceDTO);
         }
         item.setIsVirtualScarce(isVirtualScarce);
         item.setChildScarceList(childScarceList);
-        //bom最小可用数
-        Integer bomUsableQty = childScarceList.stream().min(Comparator.comparing(SoInfoDTO.VirtualChildScarceDTO::getParentUsableQty)).map(SoInfoDTO.VirtualChildScarceDTO::getParentUsableQty).get();
-        item.setVirtualUsableQty(bomUsableQty);
+        if (CollectionUtils.isNotEmpty(childScarceList)) {
+            //bom最小可用数
+            Integer bomUsableQty = childScarceList.stream().min(Comparator.comparing(SoInfoDTO.VirtualChildScarceDTO::getParentUsableQty)).map(SoInfoDTO.VirtualChildScarceDTO::getParentUsableQty).get();
+            item.setVirtualUsableQty(bomUsableQty);
+        }
     }
 
     @Override
