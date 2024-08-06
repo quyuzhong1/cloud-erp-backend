@@ -1775,6 +1775,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
                 }
             }
+            //仅判断冻结数量
+            if (StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
+                if (soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
+                    throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于冻结数量",soDetailEntity.getSkuNo()));
+                }
+            }
             //有更新sku则需要释放库存
             if (!StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
                 unLockIdList.add(soDetailEntity.getId());
