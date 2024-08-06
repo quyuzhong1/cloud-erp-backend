@@ -20,6 +20,7 @@ public enum ServiceCodeNameEnum implements EnumMessage {
 	SYS("sys","系统"),
     TMS("tms","物流系统"),
     WMS("wms","仓储系统"),
+    FILE("file","文件系统"),
     ;
 
     @EnumValue

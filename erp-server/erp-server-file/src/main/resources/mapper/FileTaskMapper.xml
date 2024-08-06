@@ -16,7 +16,7 @@
         file_name,
         file_url,
         status,
-        remarks,
+        remark,
         start_time,
         finish_time,
         type
@@ -26,6 +26,6 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by id desc,
+        order by id desc
     </select>
 </mapper>
