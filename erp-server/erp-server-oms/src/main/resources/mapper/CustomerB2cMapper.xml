@@ -203,12 +203,6 @@
         from customer_b2c cb
         where
         cb.is_deleted = false
-        <if test="params.approveStatus != null and params.approveStatus != ''">
-        and cb.approve_status=#{params.approveStatus}
-        </if>
-        <if test="params.disabled != null">
-            and cb.disabled=#{params.disabled}
-        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((cb.code = #{params.searchKeyword}) or (cb.id = #{params.searchKeyword})  or cb.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
