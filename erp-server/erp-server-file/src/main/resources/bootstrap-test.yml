@@ -7,5 +7,5 @@ spring:
       config:
         server-addr: 172.16.100.12
         namespace: test
-        shared-configs: common.yml,db-file,druid-common.yml,erp-third-party.yml
+        shared-configs: common.yml,db-file.yml,druid-common.yml,erp-third-party.yml
 
