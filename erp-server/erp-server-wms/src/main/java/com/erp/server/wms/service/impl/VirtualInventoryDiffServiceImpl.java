@@ -208,7 +208,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyList = virtualInventoryService.listInventoryQty(paramDTO);
 
         //查询实际出库可用库存
-        Integer usableInventoryTotalQty = inventoryService.getUsableInventoryTotal(warehouseIdList.get(0), skuIdList.get(0));
+        Integer realInventoryTotalQty = inventoryService.getRealInventoryTotal(warehouseIdList.get(0), skuIdList.get(0));
 
         //虚拟库存总和
         Integer inventoryTotalQty = virtualInventoryQtyList.stream()
@@ -222,7 +222,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
                 .reduce(MathUtil.ZERO, Integer::sum);
 
         //差异数量绝对值
-        Integer diffQty =  Math.abs(usableInventoryTotalQty - inventoryTotalQty);
+        Integer diffQty =  Math.abs(realInventoryTotalQty - inventoryTotalQty);
 
         for (VirtualInventoryDiffDTO.ListSuggestQtyParamDTO qtyParamDTO : list) {
             VirtualInventoryDiffDTO.ListSuggestQtyDTO listSuggestQtyDTO = BeanMapperUtils.map(VirtualInventoryDiffDTO.ListSuggestQtyDTO.class, qtyParamDTO);

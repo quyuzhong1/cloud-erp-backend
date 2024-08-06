@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.stream.CollectorUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -203,6 +202,21 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<InventoryEntity> list = baseMapper.selectList(queryWrapper);
         return CollUtil.isEmpty(list) ? 0 : list.stream().mapToInt(InventoryEntity::getQty).sum();
     }
+
+    @Override
+    public Integer getRealInventoryTotal(String warehouseId, String skuId) {
+        // 查询仓库组织
+        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+        Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException("仓库信息不存在"));
+        LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, warehouseEntity.getOrgId())
+                .eq(InventoryEntity::getSkuId, skuId)
+                .in(InventoryEntity::getDictInventoryStatus,Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+
+        List<InventoryEntity> list = baseMapper.selectList(queryWrapper);
+        return CollUtil.isEmpty(list) ? 0 : list.stream().mapToInt(InventoryEntity::getQty).sum();
+    }
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
