@@ -11,6 +11,7 @@ import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -606,6 +607,22 @@ public class SoB2cFeignController extends BaseController {
         }
     }
 
+    /**
+     * 根据跟踪单号进行物流跟踪号更新
+     * @description
+     * @param trackDTOS
+     * @return
+     * @date 2024-02-26 16:41
+     * @author Lambda
+     */
+    @PostMapping("/updateTrackNoByTransportNo")
+    public Boolean updateTrackNoByTransportNo(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS){
+        if (CollectionUtils.isEmpty(trackDTOS)){
+            return Boolean.TRUE;
+        }
+         soB2cLogisticsService.updateTrackNoByTransportNo(trackDTOS);
+        return Boolean.TRUE;
+    }
     /**
      * 根据销售订单更新跟踪单号
      * @param soId

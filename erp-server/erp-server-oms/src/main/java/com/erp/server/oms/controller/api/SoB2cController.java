@@ -609,9 +609,11 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:47
      */
     @PostMapping("/getLogisticsCode")
+    @LogAction(value = LogActionEnum.GET_LOGISTICS_NO, desc = "获取物流单号")
     public ApiResult<List<BatchResultDTO>> getLogisticsCode(@RequestBody @Validated SoB2cDTO.GetLogisticsCode dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
             BatchResultDTO result;
             try {
                 result = soB2cService.getLogisticsCode(id, dto.getIsDelivery());

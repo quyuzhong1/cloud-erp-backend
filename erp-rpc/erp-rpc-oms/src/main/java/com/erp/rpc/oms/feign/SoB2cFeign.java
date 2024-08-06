@@ -8,6 +8,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -447,6 +448,16 @@ public interface SoB2cFeign {
     Boolean batchUpdateLogistics(@RequestBody List<SoB2cLogisticsEntity> list);
 
     /**
+     * 根据跟踪单号进行物流跟踪号更新
+     * @description
+     * @param trackDTOS
+     * @return
+     * @date 2024-02-26 16:41
+     * @author Lambda
+     */
+    @PostMapping("/feign/soB2c/updateTrackNoByTransportNo")
+    Boolean updateTrackNoByTransportNo(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS);
+    /**
      * 根据平台单号和平台查询B2C销售订单
      *
      * @date 2024-03-07
@@ -473,7 +484,7 @@ public interface SoB2cFeign {
      * 修改速卖通订单仓库
      * @Author Luo_WG
      * @Date 2024/2/1 10:44
-     * @param soId
+     * @param soOutstockDTO
      * @return void
      **/
     @PostMapping("/feign/soB2c/getDataCompareByCondition")

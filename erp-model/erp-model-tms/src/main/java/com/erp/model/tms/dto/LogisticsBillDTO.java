@@ -724,7 +724,7 @@ public class LogisticsBillDTO implements Serializable {
         /**
          * 跟踪单号
          */
-        private List<String> trackNoList;
+        private String trackNo;
 
 
     }
@@ -1053,5 +1053,14 @@ public class LogisticsBillDTO implements Serializable {
          * 物流单
          */
         private List<String> ids;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TrackDTO {
+        private  String transportNo;
+        private  String trackNo;
     }
 }

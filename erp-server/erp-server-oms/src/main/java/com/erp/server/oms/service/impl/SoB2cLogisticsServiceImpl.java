@@ -462,6 +462,14 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
     }
 
+    @Override
+    public void updateTrackNoByTransportNo(List<LogisticsBillDTO.TrackDTO> trackDTOS) {
+        if (CollectionUtils.isEmpty(trackDTOS)){
+            return;
+        }
+        baseMapper.updateTrackNoByTransportNo(trackDTOS);
+    }
+
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
         addDTO.setShopId(mainEntity.getShopId());
