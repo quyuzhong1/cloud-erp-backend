@@ -103,7 +103,7 @@
 
     <!-- 库存差异分页查询 -->
     <select id="diffPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDTO">
-        select diff.warehouseId,diff.skuId,pd.sku_no as skuNo,wh.name as warehouseName,diff.virtualQty,diff.usableQty,diff.frozenQty from (select
+        select diff.warehouseId,diff.skuId,pd.sku_no as skuNo,pd.name as productName,wh.name as warehouseName,diff.virtualQty,diff.usableQty,diff.frozenQty from (select
             vi.warehouse_id as warehouseId,
             vi.sku_id as skuId,
             COALESCE(sum(vi.qty),0) as virtualQty,
