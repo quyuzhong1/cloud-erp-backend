@@ -234,6 +234,11 @@ public class SoB2cDetailDTO implements Serializable {
         */
        private Boolean isVirtualOutStock;
 
+        /**
+         * 子件缺货信息
+         */
+        private List<SoB2cDTO.VirtualChildScarceDTO> childScarceList;
+
        /**
         * 当前是否退款: true=退款, false=未退款
         */

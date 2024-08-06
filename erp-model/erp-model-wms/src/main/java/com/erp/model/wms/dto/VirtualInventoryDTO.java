@@ -534,4 +534,40 @@ public class VirtualInventoryDTO implements Serializable {
         private Integer unDistributionQty;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class BomParamDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class BomReturnDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+    }
+}

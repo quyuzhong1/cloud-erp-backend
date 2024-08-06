@@ -3141,9 +3141,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //缺货订单
                     if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
                             || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))) {
-                        //实体仓缺货
-                        Boolean isVirtualOutStock = isVirtualOutStock(bomChildrenList, virtualInventoryList, detailDTO);
-                        detailLabelDTO.setIsVirtualOutStock(isVirtualOutStock);
+                        //虚拟仓缺货处理
+                        isVirtualOutStock(bomChildrenList, virtualInventoryList,detailLabelDTO, detailDTO);
                     }
                 }
 
@@ -3245,8 +3244,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param detailDTO
      * @return Boolean
      */
-    private Boolean isVirtualOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList
-            , SoB2cDetailDTO.ListDTO detailDTO) {
+    private void isVirtualOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList
+            ,SoB2cDetailDTO.DetailLabelDTO detailLabelDTO, SoB2cDetailDTO.ListDTO detailDTO) {
+        //返回信息
+        List<SoB2cDTO.VirtualChildScarceDTO> childScarceList = new ArrayList<>();
         //判断是否是组合品
         Boolean isCombination = Boolean.FALSE;
         long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(e.getType())).count();
@@ -3254,7 +3255,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             isCombination = Boolean.TRUE;
         }
 
-        Boolean isOutStock = Boolean.FALSE;
+        Boolean isVirtualScarce = Boolean.FALSE;
         //费销售套装bom判断父级SKU是否够使用
         if (!isCombination) {
             //虚拟仓是否缺货
@@ -3263,28 +3264,44 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             && StrUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                     .findFirst().orElse(MathUtil.ZERO);
-            return detailDTO.getQty() > virtualUsableQty;
+            detailLabelDTO.setIsVirtualOutStock(detailDTO.getQty() > virtualUsableQty);
+            detailLabelDTO.setChildScarceList(childScarceList);
+            return;
         }
         //销售套装bom需要判断子件库存是否够使用
         List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())
                         && BomTypeEnum.COMBINATION.getType().equals(e.getType()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(childList)) {
-            return Boolean.TRUE;
+            detailLabelDTO.setIsVirtualOutStock(Boolean.TRUE);
+            detailLabelDTO.setChildScarceList(childScarceList);
+            return;
         }
         for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+            SoB2cDTO.VirtualChildScarceDTO scarceDTO = new SoB2cDTO.VirtualChildScarceDTO();
             //虚拟仓是否缺货
-            Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId())
+            Integer childVirtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId())
                             && StrUtil.equals(obj.getVirtualWarehouseId(), detailDTO.getVirtualWarehouseId())
                             && StrUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                     .findFirst().orElse(MathUtil.ZERO);
-            if ((detailDTO.getQty() * childrenSkuDTO.getQuantity() > virtualUsableQty)) {
-                isOutStock = Boolean.TRUE;
-                break;
+            if (!isVirtualScarce && (detailDTO.getQty() * childrenSkuDTO.getQuantity() > childVirtualUsableQty)) {
+                isVirtualScarce = Boolean.TRUE;
             }
+            scarceDTO.setChildUsableQty(childVirtualUsableQty);
+            //针对父级可用数量
+            double floor = Math.floor(childVirtualUsableQty / childrenSkuDTO.getQuantity());
+            Integer parentUsableQty = Integer.valueOf(StrUtil.toString(floor));
+            scarceDTO.setParentUsableQty(parentUsableQty);
+
+            Integer virtualScarceQty = detailDTO.getQty() * childrenSkuDTO.getQuantity() - childVirtualUsableQty;
+            scarceDTO.setVirtualScarceQty(MathUtil.compareTo(virtualScarceQty,MathUtil.ZERO) >= MathUtil.ZERO ? virtualScarceQty : MathUtil.ZERO);
+            scarceDTO.setSkuId(childrenSkuDTO.getSkuId());
+            scarceDTO.setSkuNo(childrenSkuDTO.getSkuNo());
+            childScarceList.add(scarceDTO);
         }
-        return isOutStock;
+        detailLabelDTO.setIsVirtualOutStock(isVirtualScarce);
+        detailLabelDTO.setChildScarceList(childScarceList);
     }
 
 

@@ -89,4 +89,10 @@ public class VirtualInventoryController extends BaseController {
     public ApiResult<List<VirtualInventoryDTO.ViewQtyDTO>> getQty(@RequestBody @Validated VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO) {
         return success(virtualInventoryService.getQty(qtyTypeDTO));
     }
+
+    @PostMapping(value = "/listBomVirtual")
+    public ApiResult<List<VirtualInventoryDTO.BomReturnDTO>> listBomVirtual(@RequestBody @Validated VirtualInventoryDTO.BomParamDTO paramDTO) {
+        return success(virtualInventoryService.listBomVirtual(paramDTO));
+    }
+
 }

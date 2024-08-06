@@ -2841,4 +2841,39 @@ public class SoB2cDTO implements Serializable {
         @NotBlank(message = "仓库名称不能为空")
         private String warehouseName;
     }
+
+
+    /**
+     * 子件缺货信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class VirtualChildScarceDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 子件虚拟仓缺货数量
+         */
+        private Integer virtualScarceQty;
+
+        /**
+         * 子件虚拟仓可用数量
+         */
+        private Integer childUsableQty;
+
+        /**
+         * 子级SKU按bom转换后可用数量（父级维度）
+         */
+        private Integer parentUsableQty;
+    }
+
 }

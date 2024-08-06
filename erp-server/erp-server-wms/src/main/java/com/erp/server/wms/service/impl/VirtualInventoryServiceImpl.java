@@ -366,6 +366,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         return baseMapper.getBySkuIdAndVwId(skuId, virtualWarehouseId);
     }
 
+    @Override
+    public List<VirtualInventoryDTO.BomReturnDTO> listBomVirtual(VirtualInventoryDTO.BomParamDTO paramDTO) {
+        return null;
+    }
+
     /**
      * 虚拟库存分页查询数据处理
      *

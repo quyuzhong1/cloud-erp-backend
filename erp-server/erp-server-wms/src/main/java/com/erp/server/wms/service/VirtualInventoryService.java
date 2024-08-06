@@ -116,4 +116,12 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @return
      */
     List<VirtualInventoryDTO.CommonDTO> getBySkuIdAndVwId(String skuId, String id);
+    /**
+     * bom库存信息
+     * @author will
+     * @date 2024/8/6 15:11
+     * @param paramDTO
+     * @return List<BomReturnDTO>
+     */
+    List<VirtualInventoryDTO.BomReturnDTO> listBomVirtual(VirtualInventoryDTO.BomParamDTO paramDTO);
 }
