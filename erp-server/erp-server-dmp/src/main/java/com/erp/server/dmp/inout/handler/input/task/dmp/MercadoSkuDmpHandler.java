@@ -33,19 +33,21 @@ public class MercadoSkuDmpHandler extends DmpInputDbConvertDmpHandler {
     @Resource
     private DmpProductInfoService dmpProductInfoService;
 
-    @Resource
-    private DmpSkuInfoService dmpSkuInfoService;
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
+        List<String> fidList = new ArrayList<>();
+        for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> listListEntry : dmpInputDataDmpRelationMaps.entrySet()) {
+            List<TreeMap<String, Object>> dmpDataMaps = listListEntry.getValue();
+            List<String> fids = dmpDataMaps.stream().map(req -> req.get("fid").toString()).distinct().collect(Collectors.toList());
+            fidList.addAll(fids);
+        }
+        List<DmpProductInfoEntity> dmpProductInfoEntityList = dmpProductInfoService.lambdaQuery().in(DmpProductInfoEntity::getSpuId, fidList).list();
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
             Map<String, Object> mongoDataMap = mongoDataMaps.get(0);
 
-            List<String> fids = dmpDataMaps.stream().map(req -> req.get("fid").toString()).distinct().collect(Collectors.toList());
-
-            List<DmpProductInfoEntity> dmpProductInfoEntityList = dmpProductInfoService.lambdaQuery().in(DmpProductInfoEntity::getSpuId, fids).list();
 
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 dmpDataMap.put("nextLevelId", nextLevelId);
@@ -57,8 +59,8 @@ public class MercadoSkuDmpHandler extends DmpInputDbConvertDmpHandler {
                 }
                 dmpDataMap.put("mainId", productInfoEntities.get(0).getId());
 
-                dmpDataMap.put("platformCreateTime", dmpDataMap.get("dateCreated"));
-                dmpDataMap.put("platformUpdateTime", dmpDataMap.get("lastUpdated"));
+                dmpDataMap.put("platformCreateTime", mongoDataMap.get("dateCreated"));
+                dmpDataMap.put("platformUpdateTime", mongoDataMap.get("lastUpdated"));
                 dmpDataMap.put("spuId", dmpDataMap.get("fid"));
 
                 if (ObjectUtil.isNotEmpty(dmpDataMap.get("pictures"))) {
@@ -119,7 +121,12 @@ public class MercadoSkuDmpHandler extends DmpInputDbConvertDmpHandler {
                                 if (CollectionUtils.isNotEmpty(valuesList)) {
                                     Map<String, Object> structMap = (Map<String, Object>) valuesList.get(0).get("struct");
                                     dmpDataMap.put("grossWeight", structMap.get("number"));
+                                    dmpDataMap.put("weightUnit", structMap.get("unit"));
                                 }
+                            }
+
+                            if ("SELLER_SKU".equalsIgnoreCase(String.valueOf(map.get("fid")))) {
+                                dmpDataMap.put("skuNo", map.get("valueName"));
                             }
                         }
                     }
