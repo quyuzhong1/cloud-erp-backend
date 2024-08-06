@@ -195,6 +195,11 @@ public interface MongoTableNameContant {
     String DATA_REPORT_AMZ_FBA_MYI_ALL_INVENTORY = "data_report_amz_fba_myi_all_inventory";
 
     /**
+     * 亚马逊物流管理库存-未存档
+     */
+    String DATA_REPORT_AMZ_FBA_MYI_UNSUPPRESSED_INVENTORY = "data_report_amz_fba_myi_unsuppressed_inventory";
+
+    /**
      * 亚马逊物流预留库存报告
      */
     String DATA_REPORT_AMZ_RESERVED = "data_report_amz_reserved";
