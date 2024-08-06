@@ -2933,6 +2933,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         paramDTO.setSkuIdList(skuIdList);
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryFeign.listInventoryQty(paramDTO);
+        //虚拟仓库信息
+        List<VirtualWarehouseEntity> virtualWarehouseList = CollectionUtils.isEmpty(virtualWarehouseIdList) ? new ArrayList<>() : FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
 
         //物流信息
         List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
@@ -3138,6 +3140,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 //存在虚拟仓库则判断是否缺货
                 if (StrUtil.isNotBlank(detailDTO.getVirtualWarehouseId())) {
+                    String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailDTO.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+                    detailDTO.setVirtualWarehouseName(virtualWarehouseName);
                     //缺货订单
                     if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
                             || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))) {
@@ -3264,8 +3268,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             && StrUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                     .findFirst().orElse(MathUtil.ZERO);
+            detailDTO.setVirtualUsableQty(virtualUsableQty);
             detailLabelDTO.setIsVirtualOutStock(detailDTO.getQty() > virtualUsableQty);
-            detailLabelDTO.setChildScarceList(childScarceList);
+            detailDTO.setChildScarceList(childScarceList);
             return;
         }
         //销售套装bom需要判断子件库存是否够使用
@@ -3274,7 +3279,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(childList)) {
             detailLabelDTO.setIsVirtualOutStock(Boolean.TRUE);
-            detailLabelDTO.setChildScarceList(childScarceList);
+            detailDTO.setChildScarceList(childScarceList);
             return;
         }
         for (BomChildrenSkuDTO childrenSkuDTO : childList) {
@@ -3291,7 +3296,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             scarceDTO.setChildUsableQty(childVirtualUsableQty);
             //针对父级可用数量
             double floor = Math.floor(childVirtualUsableQty / childrenSkuDTO.getQuantity());
-            Integer parentUsableQty = Integer.valueOf(StrUtil.toString(floor));
+            Integer parentUsableQty = Integer.valueOf((int) floor);
             scarceDTO.setParentUsableQty(parentUsableQty);
 
             Integer virtualScarceQty = detailDTO.getQty() * childrenSkuDTO.getQuantity() - childVirtualUsableQty;
@@ -3301,7 +3306,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             childScarceList.add(scarceDTO);
         }
         detailLabelDTO.setIsVirtualOutStock(isVirtualScarce);
-        detailLabelDTO.setChildScarceList(childScarceList);
+        detailDTO.setChildScarceList(childScarceList);
+        if (CollectionUtils.isNotEmpty(childScarceList)) {
+            //bom最小可用数
+            Integer bomUsableQty = childScarceList.stream().min(Comparator.comparing(SoB2cDTO.VirtualChildScarceDTO::getParentUsableQty)).map(SoB2cDTO.VirtualChildScarceDTO::getParentUsableQty).get();
+            detailDTO.setVirtualUsableQty(bomUsableQty);
+        }
     }
 
 

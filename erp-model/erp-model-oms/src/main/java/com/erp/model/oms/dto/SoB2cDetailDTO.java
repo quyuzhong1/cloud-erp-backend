@@ -93,6 +93,16 @@ public class SoB2cDetailDTO implements Serializable {
        private String virtualWarehouseId;
 
         /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+
+        /**
+         * 可用库存
+         */
+        private Integer virtualUsableQty;
+
+        /**
          * 出货仓库
          */
        private String warehouseId;
@@ -165,6 +175,11 @@ public class SoB2cDetailDTO implements Serializable {
          */
         private String declareLabelName;
 
+        /**
+         * 子件缺货信息
+         */
+        private List<SoB2cDTO.VirtualChildScarceDTO> childScarceList;
+
     }
 
     @Data
@@ -233,11 +248,6 @@ public class SoB2cDetailDTO implements Serializable {
         * 虚拟仓是否缺货
         */
        private Boolean isVirtualOutStock;
-
-        /**
-         * 子件缺货信息
-         */
-        private List<SoB2cDTO.VirtualChildScarceDTO> childScarceList;
 
        /**
         * 当前是否退款: true=退款, false=未退款
