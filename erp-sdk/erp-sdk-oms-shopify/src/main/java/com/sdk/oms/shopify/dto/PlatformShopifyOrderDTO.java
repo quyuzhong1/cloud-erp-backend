@@ -212,6 +212,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
             receiverDTO.setCustomerId(StringUtils.isBlank(customer.getId())? "" : customer.getId());
             receiverDTO.setTelNumber(StringUtils.isBlank(customer.getPhone())? "" : customer.getPhone());
             receiverDTO.setEmail(StringUtils.isBlank(customer.getEmail()) ? "" : customer.getEmail());
+            receiverDTO.setReceiverTaxNo(StringUtils.isBlank(customer.getReceiverTaxNo())? "" : customer.getReceiverTaxNo());
             orderDTO.setReceiver(receiverDTO);
         }
 
