@@ -254,12 +254,14 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             return;
         }
         for (VirtualInventoryDiffDTO.ListDTO listDTO : list) {
+            //实体仓实际库存数量
+            listDTO.setRealQty(MathUtil.add(listDTO.getUsableQty(),listDTO.getFrozenQty()));
             //已分配数量
             listDTO.setDistributionQty(listDTO.getVirtualQty());
             //未分配数量
-            listDTO.setUnDistributionQty(listDTO.getUsableQty() - listDTO.getDistributionQty());
+            listDTO.setUnDistributionQty(listDTO.getRealQty() - listDTO.getDistributionQty());
             //是否有差异
-            boolean isDiff = listDTO.getVirtualQty() > listDTO.getUsableQty();
+            boolean isDiff = listDTO.getVirtualQty() > listDTO.getRealQty();
             listDTO.setIsDiff(isDiff);
         }
     }
@@ -315,10 +317,11 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
                 continue;
             }
             flagList.add(flag);
-
+            //仓库实际数量
+            listDTO.setRealQty(MathUtil.add(listDTO.getUsableQty(),listDTO.getFrozenQty()));
             listDTO.setDistributionQty(listDTO.getTotalVirtualQty());
             //未分配数量
-            listDTO.setUnDistributionQty(listDTO.getUsableQty() - listDTO.getDistributionQty());
+            listDTO.setUnDistributionQty(listDTO.getRealQty() - listDTO.getDistributionQty());
         }
     }
 }
