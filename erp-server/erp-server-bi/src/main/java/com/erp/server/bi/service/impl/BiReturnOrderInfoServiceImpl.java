@@ -23,6 +23,7 @@ import com.erp.model.dmp.dto.DmpReturnOrderInfoImportExcelDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.enums.ReturnOrderStatusEnum;
 import com.erp.server.bi.listener.DmpReturnOrderInfoExcelListener;
@@ -63,6 +64,8 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<DmpReturnOrderInfoDTO> paging(PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
@@ -164,6 +167,18 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
             updateWrapper.eq(BiReturnOrderInfoEntity::getId,returnOrderId);
             this.update(updateWrapper);
         }
+    }
+
+    @Override
+    public PagingVO<DmpReturnOrderInfoExcelDTO> exportBiReturnOrderInfo(PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
+        //查询所有数据
+        Page<DmpReturnOrderInfoDTO> list = baseMapper.getAllDmpReturnOrderInfo(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+
+        list.getRecords().forEach(obj ->obj.setStatusName(ReturnOrderStatusEnum.getName(obj.getStatus())));
+        //导出销售数据
+        List<DmpReturnOrderInfoExcelDTO> excelDTOS = BeanMapperUtils.copyList(DmpReturnOrderInfoExcelDTO.class, list.getRecords());
+
+        return new PagingVO<>(excelDTOS, (int) list.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
 }

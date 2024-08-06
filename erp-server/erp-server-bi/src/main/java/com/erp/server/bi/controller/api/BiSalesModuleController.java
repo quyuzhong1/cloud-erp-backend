@@ -78,8 +78,8 @@ public class BiSalesModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出sku销售额")
     @PostMapping("/exportSkuSales")
-    public ApiResult<String> exportSkuSales(@RequestBody @Valid SkuSalesDTO.SearchSkuDTO params) {
-        salesOrderService.exportSkuSalesExcel(params);
+    public ApiResult<String> exportSkuSales(@RequestBody @Valid SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
+        salesOrderService.exportSkuSalesExcel(params,response);
         return success();
 
     }

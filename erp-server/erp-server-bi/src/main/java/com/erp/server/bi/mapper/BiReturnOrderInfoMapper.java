@@ -34,6 +34,14 @@ public interface BiReturnOrderInfoMapper extends BaseMapper<BiReturnOrderInfoEnt
      * @return List<DmpReturnOrderInfoDTO>
      */
     List<DmpReturnOrderInfoDTO> getAllDmpReturnOrderInfo(@Param("params") DmpReturnOrderInfoSearchDTO params);
+    /**
+     * @description: 查询退货数据
+     * @author Will
+     * @date: 2022/12/15 10:49
+     * @param params
+     * @return List<DmpReturnOrderInfoDTO>
+     */
+    Page<DmpReturnOrderInfoDTO> getAllDmpReturnOrderInfo(@Param("page") Page<DmpReturnOrderInfoDTO> page, @Param("params") DmpReturnOrderInfoSearchDTO params);
 }
 
 

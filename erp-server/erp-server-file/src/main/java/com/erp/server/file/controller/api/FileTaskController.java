@@ -3,7 +3,9 @@ package com.erp.server.file.controller.api;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -18,6 +20,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 下载中心
@@ -50,10 +54,18 @@ public class FileTaskController extends BaseController {
     /**
      *  删除下载任务
      */
-    @DeleteMapping
-    public ApiResult<String> delete(@RequestParam String id){
-        fileTaskContext.delete(id);
-        return success();
+    @PostMapping("/delete")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (String id : dto.getIds()) {
+            try {
+                fileTaskContext.delete(id);
+                resultDTOS.add(BatchResultDTO.success(id,null, "删除成功"));
+            }catch (Exception e){
+                resultDTOS.add(BatchResultDTO.fail(id , null, e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

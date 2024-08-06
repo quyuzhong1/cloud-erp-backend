@@ -1014,7 +1014,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-29 17:32
      */
     @Override
-    public void exportExcel(SearchPagingDTO dto, HttpServletResponse response) {
+    public void exportExcel(SearchPagingDTO dto) {
         String fileName = "BOM数据";
         String searchType = dto.getSearchType();
         String searchKeyword = dto.getSearchKeyword();
@@ -1074,7 +1074,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         List<BomExportExcelVO> excelList = BeanMapperUtils.copyList(BomExportExcelVO.class, list);
 
-        ExcelUtil.export(fileName, "BOM", excelList, BomExportExcelVO.class, response);
+//        ExcelUtil.export(fileName, "BOM", excelList, BomExportExcelVO.class, response);
 
 
     }

@@ -3,7 +3,8 @@ package com.erp.server.file.business.bi;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.SkuSalesDTO;
+import com.erp.model.dmp.dto.DmpReturnOrderInfoExcelDTO;
+import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.rpc.bi.feign.ExportBiFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -14,33 +15,33 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SKU_SALES;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_BI_ORDER_INFO;
+
 @Component
 @Slf4j
-public class ExportSkuSalesHandler  extends AbstractPageFileEventHandler<SkuSalesDTO.PagingSalesInfoDTO, SkuSalesDTO.SearchSkuDTO> {
+public class ExportBiReturnOrderInfoHandler extends AbstractPageFileEventHandler<DmpReturnOrderInfoExcelDTO, DmpReturnOrderInfoSearchDTO> {
 
     @Resource
     private ExportBiFeign exportBiFeign;
-
     @Override
-    protected List<SkuSalesDTO.PagingSalesInfoDTO> getData(FileTask fileTask) {
-        SkuSalesDTO.SearchSkuDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SkuSalesDTO.SearchSkuDTO>() {
+    protected List<DmpReturnOrderInfoExcelDTO> getData(FileTask fileTask) {
+        DmpReturnOrderInfoSearchDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DmpReturnOrderInfoSearchDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<SkuSalesDTO.PagingSalesInfoDTO> getPageData(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {
-        return exportBiFeign.exportSkuSales(dto);
+    protected PagingVO<DmpReturnOrderInfoExcelDTO> getPageData(PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
+        return exportBiFeign.exportBiReturnOrderInfo(dto);
     }
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_SKU_SALES;
+        return EXPORT_BI_ORDER_INFO;
     }
 
     @Override
     public String getExcelPath() {
-        return "excel/bi/SkuSales.xlsx";
+        return "excel/bi/biReturnOrderInfo.xlsx";
     }
 }

@@ -301,8 +301,8 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出bom")
     @PostMapping("/exportExcel")
-    public ApiResult exportExcel(@RequestBody @Validated SearchPagingDTO dto, HttpServletResponse response) {
-        bomInfoService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody @Validated SearchPagingDTO dto) {
+        bomInfoService.exportExcel(dto);
         return success();
     }
 

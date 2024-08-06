@@ -367,8 +367,85 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
-    public void exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params) {
-        downloadTaskFeign.saveDownloadTask("sku销售额", EXPORT_SKU_SALES.getCode(), params);
+    public Boolean exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
+        //获取到结算汇率
+        String settleRate = getSettleRate(params.getSettleMethod());
+        LocalDateTime paramsEndTime = params.getEndTime();
+        params.setEndTime(paramsEndTime, 1);
+
+        List<SkuSalesDTO.PagingSalesInfoDTO> resultList = baseMapper.listSkuSalesExcel(params, settleRate);
+        List<String> skuNoList = resultList.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
+
+        LocalDateTime nowTime = LocalDateTime.now();
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
+        params.setStartTime(beforeThirtyDays);
+        params.setEndTime(nowTime);
+        //查询进三十天信息
+        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate);
+
+
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
+        params.setStartTime(beforeSevenDays);
+        params.setEndTime(nowTime);
+        //查询进七天信息
+        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate);
+
+
+        Integer nowYear = LocalDate.now().getYear();
+        //销售信息
+        List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
+        for (SkuSalesDTO.PagingSalesInfoDTO item : resultList) {
+            SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
+                    findFirst().orElse(null);
+            if (Objects.nonNull(skuInfo)) {
+                //公司首单日期
+                LocalDate firstOrderDate = skuInfo.getFirstOrderDate();
+                if (firstOrderDate != null) {
+                    Integer year = firstOrderDate.getYear();
+                    if (nowYear.equals(year)) {
+                        item.setIsNewProductName("是");
+                    }
+                }
+                item.setFirstOrderDate(skuInfo.getFirstOrderDate());
+                item.setSaleStateName(skuInfo.getSaleStateName());
+            }
+
+            //近三十天
+            Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getSkuNo())).
+                    mapToInt(SalesBaseVO::getSalesQuantity).sum();
+            //近七天
+            Integer lastSevenDaysSalesQuantity = lastSevenDays.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) &&
+                            b.getFlagNo().equals(item.getSkuNo())).
+                    mapToInt(SalesBaseVO::getSalesQuantity).sum();
+
+            item.setLastSevenDaysSalesQty(lastSevenDaysSalesQuantity);
+            item.setLastThirtyDaysSalesQty(lastThirtyDaysSalesQuantity);
+
+//            BigDecimal sales = item.getSales();
+//            Integer orderCount = item.getOrderCount();
+//            if (orderCount != 0 && sales != null) {
+//                //客单价
+//                BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
+//                item.setPerCustomerTransaction(perCustomerTransaction);
+//            }
+
+        }
+
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/SkuSales.xlsx";
+        String name = "sku销售额";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("sku销售额导出出错 >>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 
     /**

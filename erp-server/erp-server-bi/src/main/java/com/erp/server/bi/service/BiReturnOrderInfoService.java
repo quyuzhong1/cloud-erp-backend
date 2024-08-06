@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
+import com.erp.model.dmp.dto.DmpReturnOrderInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,7 +40,6 @@ public interface BiReturnOrderInfoService extends IService<BiReturnOrderInfoEnti
      * @author Will
      * @date: 2022/12/15 10:48
      * @param dto
-     * @param response
      */
     void exportExcel(DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response);
     /**
@@ -67,4 +67,11 @@ public interface BiReturnOrderInfoService extends IService<BiReturnOrderInfoEnti
      * @param returnOrderId
      */
     void updateOrderFeeById(String returnOrderId);
+
+    /**
+     * 查询退货数据
+     * @param dto
+     * @return
+     */
+    PagingVO<DmpReturnOrderInfoExcelDTO> exportBiReturnOrderInfo(PagingDTO<DmpReturnOrderInfoSearchDTO> dto);
 }

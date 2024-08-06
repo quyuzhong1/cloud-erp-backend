@@ -59,7 +59,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     void updateState(String sourceId, Integer state);
 
-    void exportExcel(SearchPagingDTO dto, HttpServletResponse response);
+    void exportExcel(SearchPagingDTO dto);
 
     void approvalNoPass(AuditParamDTO dto);
 

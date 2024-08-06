@@ -190,7 +190,7 @@ public interface SalesOrderService extends IService<BiOrderInfoEntity> {
      * @param params
      * @return
      */
-    void exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params);
+    Boolean exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response);
 
     /**
      * 产品等级销售分析

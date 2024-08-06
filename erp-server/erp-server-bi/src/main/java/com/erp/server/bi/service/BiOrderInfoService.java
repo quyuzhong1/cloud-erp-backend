@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
+import com.erp.model.dmp.dto.DmpOrderInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.dmp.dto.DmpOrderStateDTO;
 import com.erp.model.dmp.entity.BiOrderInfoEntity;
@@ -107,7 +108,6 @@ public interface BiOrderInfoService extends IService<BiOrderInfoEntity> {
      * @author Will
      * @date: 2022/12/15 10:17
      * @param dto
-     * @param response
      */
     void exportExcel(DmpOrderInfoSearchDTO dto, HttpServletResponse response);
     /**
@@ -270,4 +270,9 @@ public interface BiOrderInfoService extends IService<BiOrderInfoEntity> {
      * 通过SKU NO查询各平台首单
      */
     Map<String, BiOrderInfoEntity> mapFirstOrderBySkuNo(String skuNo);
+
+    /**
+     * 导出订单数据
+     */
+    PagingVO<DmpOrderInfoExcelDTO> exportBiOrderInfo(PagingDTO<DmpOrderInfoSearchDTO> dto);
 }
