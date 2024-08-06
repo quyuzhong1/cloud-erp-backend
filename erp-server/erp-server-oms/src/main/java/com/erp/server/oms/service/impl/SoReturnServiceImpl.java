@@ -614,7 +614,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     if (Objects.nonNull(soDetail)) {
                         biReturnOrderItemEntity.setSellPrice(soDetail.getAmount());
                         if (Objects.nonNull(soDetail.getTaxAmount()) && Objects.nonNull(soDetail.getQty()) && Objects.nonNull(soReturnDetail.getReturnQty())) {
-                            biReturnOrderItemEntity.setAmountAfter(soDetail.getTaxAmount().divide(BigDecimal.valueOf(soDetail.getQty())).multiply(BigDecimal.valueOf(soReturnDetail.getReturnQty())));
+                            biReturnOrderItemEntity.setAmountAfter(soDetail.getTaxAmount().divide(BigDecimal.valueOf(soDetail.getQty()), 4, BigDecimal.ROUND_HALF_UP).multiply(BigDecimal.valueOf(soReturnDetail.getReturnQty())));
                         }
                         biReturnOrderItemEntity.setCleanCostPrice(soDetail.getSaleCost());
                         if (Objects.nonNull(soDetail.getIsGift()) && soDetail.getIsGift()) {
