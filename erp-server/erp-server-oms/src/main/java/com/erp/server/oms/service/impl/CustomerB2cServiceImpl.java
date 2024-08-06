@@ -940,11 +940,6 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<CustomerB2CDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerB2CDTO.InfoDTO.class);
         List<ApproveStatusEnum> statusList = new ArrayList<>(1);
         statusList.add(ApproveStatusEnum.APPROVE);
-        for (CustomerB2CDTO.InfoDTO item : resultList) {
-            if (!statusList.contains(item.getApproveStatus())) {
-                item.setDisabled(true);
-            }
-        }
         resultList = resultList.stream().sorted(Comparator.comparing(CustomerB2CDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
         return resultList;
     }

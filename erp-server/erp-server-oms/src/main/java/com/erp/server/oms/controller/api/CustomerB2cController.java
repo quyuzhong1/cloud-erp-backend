@@ -299,7 +299,7 @@ public class CustomerB2cController extends BaseController {
      * 客户列表远程搜索
      */
     @PostMapping("/pagingSelect")
-    public ApiResult<PagingVO<CustomerB2CDTO.InfoDTO>> pagingSelect(PagingDTO<CustomerB2CDTO.SelectDTO> searchDTO) {
+    public ApiResult<PagingVO<CustomerB2CDTO.InfoDTO>> pagingSelect(@RequestBody @Valid PagingDTO<CustomerB2CDTO.SelectDTO> searchDTO) {
         PagingVO<CustomerB2CDTO.InfoDTO> list = customerB2cService.pagingSelect(searchDTO);
         return success(list);
     }
