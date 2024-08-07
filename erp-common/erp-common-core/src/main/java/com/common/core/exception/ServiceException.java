@@ -136,6 +136,16 @@ public class ServiceException extends RuntimeException {
     }
 
     /**
+     * 抛出 ServiceException 异常
+     * @param code              错误代号
+     * @param formatedErrMsg    错误消息,支持格式化，如：XXX[{}]成功
+     * @param params            错误信息 参数
+     */
+    public static void runError(Integer code, String formatedErrMsg,Object... params) {
+        throw new ServiceException(code,StrUtil.format(formatedErrMsg,params));
+    }
+
+    /**
      * 抛出 ServiceException 异常，警告类型
      * @param formatedErrMsg    错误消息,支持格式化，如：XXX[{}]成功
      * @param params            错误信息 参数
