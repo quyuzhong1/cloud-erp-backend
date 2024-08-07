@@ -549,16 +549,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Override
     public Boolean exportExcel(ProductCertificateDTO.ExportParamDTO params) {
         downloadTaskFeign.saveDownloadTask("产品认证列表",EXPORT_PLM_PRODUCT_CERTIFICATE.getCode(), params);
-        List<ProductCertificateDTO.ListDTO> records = this.baseMapper.exportExcel(params);
-        if (CollectionUtils.isEmpty(records)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"产品认证");
-        }
-        //数据赋值处理
-        handlePaging(records);
-        String name = "产品认证列表";
-
-        String excelPath = "excel/productCertificate.xlsx";
-
         return Boolean.TRUE;
     }
 
@@ -626,6 +616,14 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
         List<ProductCertificateEntity> list = this.lambdaQuery().in(ProductCertificateEntity::getSkuId, skuIdList).list();
         return list;
+    }
+
+    @Override
+    public PagingVO<ProductCertificateDTO.ListDTO> exportProductCertificate(PagingDTO<ProductCertificateDTO.ExportParamDTO> dto) {
+        Page<ProductCertificateDTO.ListDTO> page = this.baseMapper.exportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        //数据赋值处理
+        handlePaging(page.getRecords());
+        return new PagingVO<>(page);
     }
 
     /**

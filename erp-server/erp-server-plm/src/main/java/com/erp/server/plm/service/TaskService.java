@@ -8,7 +8,6 @@ import com.erp.model.plm.dto.TaskPagingDTO;
 import com.erp.model.plm.dto.TaskPagingShowDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -34,9 +33,11 @@ public interface TaskService extends IService<ProjectTaskEntity> {
      * 导出
      * @author yl
      * @date 2023-06-25 12:10
-     * @param dto
-     * @param response
      * @return java.lang.Boolean
      */
-    Boolean exportTask(TaskPagingDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportTask(TaskPagingDTO.ExportDTO dto);
+    /**
+     * 导出
+     */
+    PagingVO<TaskDTO.TaskExportDTO> exportTask(PagingDTO<TaskPagingDTO.ExportDTO> dto);
 }

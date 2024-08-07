@@ -117,4 +117,10 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
      * @return List<ProductCertificateEntity>
      */
     List<ProductCertificateEntity> listBySkuIdList(List<String> skuIdList);
+
+    /**
+     * 导出
+     * @param dto 导出
+     */
+    PagingVO<ProductCertificateDTO.ListDTO> exportProductCertificate(PagingDTO<ProductCertificateDTO.ExportParamDTO> dto);
 }

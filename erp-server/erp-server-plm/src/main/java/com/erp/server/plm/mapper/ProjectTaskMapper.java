@@ -31,6 +31,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     IPage<TaskPagingShowDTO> paging(Page query,@Param("params") TaskPagingDTO params,@Param("userId") String userId);
 
     List<TaskDTO.TaskExportDTO> waitMyFinishExport(@Param("params") TaskPagingDTO.ExportDTO params, @Param("userId")String userId);
+    Page<TaskDTO.TaskExportDTO> waitMyFinishExport(@Param("page") Page<TaskDTO.TaskExportDTO> page, @Param("params") TaskPagingDTO.ExportDTO params, @Param("userId")String userId);
 
     Integer pagingCount(@Param("productId") String productId,@Param("userId") String userId,
                                     @Param("statusList") List<Integer> statusList, @Param("param") String param
@@ -49,6 +50,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return
      */
     List<TaskDTO.TaskExportDTO> allExport(@Param("params") TaskPagingDTO.ExportDTO params);
+    Page<TaskDTO.TaskExportDTO> allExport(@Param("page") Page<TaskDTO.TaskExportDTO> page, @Param("params") TaskPagingDTO.ExportDTO params);
 
     /**
      * 变更导出
@@ -56,6 +58,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return
      */
     List<TaskDTO.TaskExportDTO> changeExport(@Param("params") TaskPagingDTO.ExportDTO params);
+    Page<TaskDTO.TaskExportDTO> changeExport(@Param("page") Page<TaskDTO.TaskExportDTO> page, @Param("params") TaskPagingDTO.ExportDTO params);
 
     /**
      * 这个是变更的任务
@@ -102,6 +105,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return
      */
     List<TaskDTO.TaskExportDTO> myApprovaExport(@Param("params")TaskPagingDTO.ExportDTO params, @Param("processIdList")List<String> processIds);
+    Page<TaskDTO.TaskExportDTO> myApprovaExport(@Param("page") Page<TaskDTO.TaskExportDTO> page, @Param("params")TaskPagingDTO.ExportDTO params, @Param("processIdList")List<String> processIds);
 
     Integer myApprovalPagingCount(@Param("productId") String productId,@Param("userId") String userId,
                                               @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
