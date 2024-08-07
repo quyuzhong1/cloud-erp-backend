@@ -2644,6 +2644,15 @@ public class SoInfoDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+        /**
+         * 子件缺货相信
+         */
+        private List<VirtualChildScarceDTO> childScarceList;
     }
 
     @Data

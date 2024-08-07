@@ -3554,8 +3554,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> virtualWarehouseIdList = soInfoList.stream().map(SoInfoEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseEntity> virtualWarehouseList = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
 
-        //产品信息
+        //SKu
         List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+
+
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+            List<String> bomSkuIdList = bomChildrenList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getParentSkuId())).distinct().collect(Collectors.toList());
+            skuIdList.addAll(bomSkuIdList);
+        }
+
+        //产品信息
         List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
         //查询虚拟库存
@@ -3615,6 +3625,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             ).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
             batchLockDTO.setVirtualUsableQty(virtualUsableQty);
 
+
             //销售通知单
             Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
                     && StrUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId()))
@@ -3626,6 +3637,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setEffectiveNoticeQty(effectiveNoticeQty);
+
+            //入参
+            SoInfoDTO.VirtuaParamScarceDTO paramScarceDTO = new SoInfoDTO.VirtuaParamScarceDTO();
+            BeanMapperUtils.copy(soDetailEntity,paramScarceDTO);
+            paramScarceDTO.setWarehouseId(soInfoEntity.getWarehouseId());
+            paramScarceDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+            //虚拟仓bom库存
+            handelVirtualBomScarce(bomChildrenList,virtualInventoryQtyList,paramScarceDTO,effectiveNoticeQty);
+            batchLockDTO.setVirtualUsableQty(paramScarceDTO.getVirtualUsableQty());
+            batchLockDTO.setChildScarceList(paramScarceDTO.getChildScarceList());
+            batchLockDTO.setIsCombination(paramScarceDTO.getIsCombination());
+
             //Min 【（销售数量 - 发货通知单审核数量），虚拟仓可用库存】
             Integer toFrozenQty = soDetailEntity.getQty() - effectiveNoticeQty;
             batchLockDTO.setToFrozenQty(virtualUsableQty > toFrozenQty ? toFrozenQty : virtualUsableQty);
