@@ -1349,11 +1349,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                             && req.getBomVersion().equals(soDetailEntity.getBomVersion())
                             && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).findFirst().orElse(null);
-            Integer noticeQty = noticeDetailEntities.stream()
-                    .filter(v -> !v.getId().equals(detailEntity.getId()))
-                    .filter(v -> v.getSkuId().equals(detailEntity.getSkuId()))
-                    .map(SoDeliveryNoticeDetailEntity::getDeliveryQty)
-                    .reduce(0, Math::addExact);
             if (!org.springframework.util.ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                 Integer qty = pickingDetailEntities.stream()
                         .filter(v -> v.getSourceDetailId().equals(detailEntity.getId()))
@@ -1369,11 +1364,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                         .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty);
             }
-            if (Optional.ofNullable(skuQty.get(detailEntity.getSkuId())).orElse(0) < noticeQty + detailEntity.getPickingQty()) {
-                throw new ServiceException(ApiError.ERROR_99127, detailEntity.getSkuNo());
-            }
             if (detailEntity.getDeliveryQty() < detailEntity.getPickingQty()) {
-                detailEntity.setDeliveryQty(detailEntity.getPickingQty());
+                throw new ServiceException(ApiError.ERROR_99127, detailEntity.getSkuNo());
             }
         }
         // 增加当次拣货数量和
