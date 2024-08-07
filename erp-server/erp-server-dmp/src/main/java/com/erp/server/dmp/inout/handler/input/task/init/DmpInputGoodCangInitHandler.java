@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
@@ -54,7 +55,8 @@ public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
         if(CollUtil.isEmpty(overseasProviderEntityList)) {
         	throw new ServiceException("谷仓授权信息不存在");
         }
-        ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
+        OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.get(0);
+		ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
         while(true) {
         	goodCangGetSkuReq.setPage(page);
         	String response = GoodCangUtils.sendPost(apiType,JSON.toJSONString(goodCangGetSkuReq));
@@ -75,8 +77,14 @@ public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
         	}
         	page = page + 1;
         }
+        String id = overseasProviderEntity.getId();
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));
+		JSONArray parseArray = JSON.parseArray(JSONObject.toJSONString(allResult));
+		parseArray.forEach(p -> {
+			JSONObject j = (JSONObject)p;
+			j.put("authId", id);
+		});
+		dmpInputTaskInitDTO.setMsg(parseArray.toJSONString());
 		return Collections.singletonList(dmpInputTaskInitDTO);
 	}
 
