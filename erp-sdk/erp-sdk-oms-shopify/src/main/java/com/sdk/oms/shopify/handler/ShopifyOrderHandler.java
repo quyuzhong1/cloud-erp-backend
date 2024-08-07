@@ -144,7 +144,7 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
         String country = Optional.of(dto)
                 .map(PlatformShopifyOrderDTO::getShopifyOrder)
                 .map(ShopifyOrder::getShippingAddress)
-                .map(ShopifyAddress::getCountry)
+                .map(ShopifyAddress::getCountryCode)
                 .orElse("");
         if(countryTaxMap.containsKey(country)){
             String taxTitle = countryTaxMap.get(country);
