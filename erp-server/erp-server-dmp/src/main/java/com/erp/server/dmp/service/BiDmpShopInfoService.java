@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.dmp.dto.BiShopInfoDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.sys.dto.SysUserDeptDTO;
@@ -10,7 +11,7 @@ import java.util.List;
 /**
  * 店铺信息服务类
  */
-public interface BiShopInfoService extends IService<BiShopInfoEntity> {
+public interface BiDmpShopInfoService extends IService<BiShopInfoEntity> {
     /**
      * 添加店铺信息
      * @Author Luo_WG
@@ -55,7 +56,7 @@ public interface BiShopInfoService extends IService<BiShopInfoEntity> {
      * @Author Luo_WG
      * @Date 2022/12/13 17:48
      **/
-    DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign, List<SysUserDeptDTO> userDeptList) ;
+    BiShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign, List<SysUserDeptDTO> userDeptList) ;
 
     void checkShopByKingDee(BiShopInfoEntity biShopInfoEntity);
     /**
@@ -65,5 +66,5 @@ public interface BiShopInfoService extends IService<BiShopInfoEntity> {
      * @param shopId
      * @return DmpShopInfoDTO
      */
-    DmpShopInfoDTO getShopById(String shopId);
+    BiShopInfoDTO getShopById(String shopId);
 }
