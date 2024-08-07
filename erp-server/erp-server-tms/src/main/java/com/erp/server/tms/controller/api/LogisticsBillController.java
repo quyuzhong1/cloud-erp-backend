@@ -3,10 +3,12 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -14,10 +16,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.server.tms.query.LogisticsBillQueryHandler;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
+import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -25,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 物流单
@@ -47,6 +54,8 @@ public class LogisticsBillController extends BaseController {
     @Resource
     private LogisticsTrackService logisticsTrackService;
 
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
 
     /**
      * tab 列表
@@ -80,6 +89,7 @@ public class LogisticsBillController extends BaseController {
             menuCode = "tms:logisticsBill:paging",
             tableAlias = "lb"
     )
+    @WebAdvanceQuery(handler = LogisticsBillQueryHandler.class)
     public ApiResult<PagingVO<LogisticsBillDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsBillDTO.PagingVO> pagingVO = logisticsBillService.paging(dto);
         return success(pagingVO);
@@ -98,18 +108,36 @@ public class LogisticsBillController extends BaseController {
             menuCode = "tms:logisticsBill:paging",
             tableAlias = "lb"
     )
-    public ApiResult exportExcel(@RequestBody @Valid LogisticsBillDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = LogisticsBillQueryHandler.class)
+    public ApiResult exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean result = logisticsBillService.exportExcel(dto, response);
         return result ? success() : failure();
     }
 
     /**
      * 获取物流轨迹明细
-     *
+     * @param logisticsChannelId 物流渠道id
+     * @param trackNo 跟踪号
+     * @param transportNo 运单号
      * @return
      */
     @GetMapping("/getTrackInfo")
-    public ApiResult<LogisticsTrackDTO.ViewDTO> listTrack(@RequestParam(value = "trackNo") String trackNo) {
+    public ApiResult<LogisticsTrackDTO.ViewDTO> listTrack(@RequestParam(value = "logisticsChannelId",required = false) String logisticsChannelId,
+                                                          @RequestParam(value = "trackNo",required = false) String trackNo,
+                                                          @RequestParam(value = "transportNo",required = false) String transportNo) {
+        if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(transportNo)){
+            return failure("运单号和跟踪号不能同时为空");
+        }
+        if (StringUtils.isBlank(trackNo) || StringUtils.isBlank(logisticsChannelId)){
+            trackNo = transportNo;
+        }
+        if (StringUtils.isNotBlank(logisticsChannelId)){
+            LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsChannelId);
+            if (Objects.isNull(channelEntity) || StringUtils.isBlank(channelEntity.getTrackQueryType())
+                    || !TrackQueryTypeEnum.TRACK_NO.getCode().equals(channelEntity.getTrackQueryType())){
+                trackNo = transportNo;
+            }
+        }
         LogisticsTrackDTO.ViewDTO list = logisticsTrackService.listByTrackNo(trackNo);
         return success(list);
 

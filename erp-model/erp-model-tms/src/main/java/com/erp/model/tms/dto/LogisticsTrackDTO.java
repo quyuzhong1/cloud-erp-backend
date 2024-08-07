@@ -133,11 +133,25 @@ public class LogisticsTrackDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
         /**
+         * 跟踪号
+         */
+        @NotBlank(message = "跟踪号不能为空")
+        @Size(max = 30,message = "跟踪号最大长度不能超过30位")
+        private String trackNo;
+        /**
          * 运单号
          */
-        @NotBlank(message = "运单号不能为空")
-        @Size(max = 30,message = "运单号最大长度不能超过30位")
-        private String trackNo;
+        private String transportNo;
+        /**
+         * 轨迹查询单号（运单号transportNo跟踪号trackNo）
+         * TrackQueryTypeEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = trackQueryType
+         */
+        private String trackQueryType;
+        /**
+         * 渠道id
+         */
+        private String channelId;
         /**
          * 平台订单号
          */

@@ -14,6 +14,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -211,8 +212,9 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform,"tms");
         List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
         //这个是删除的同步来源ids
-        List<String> deleteSyncSourceIdList = saleChannelList.stream().filter(l -> l.getIsDeleted()).map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
+        List<String> deleteSyncSourceIdList = saleChannelList.stream().filter(BaseEntity::getIsDeleted).map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
         List<LogisticsChannelEntity> channelList = logisticsChannelService.listBySyncSourceIds(syncSourceIdList, id);
+        List<LogisticsChannelEntity> allChannels = logisticsChannelService.listByMainId(id);
         //这个是对应删除的渠道id集合
         List<String> deleteChannelIdList = channelList.stream().filter(c -> deleteSyncSourceIdList.contains(c.getSyncSourceId())).map(LogisticsChannelEntity::getId).collect(Collectors.toList());
 
@@ -225,9 +227,10 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         Boolean trueFlag = Boolean.TRUE;
         Integer zeroFlag = MathUtil.ZERO;
 
-        //这个不是海外仓物流
+        //这个不是海外仓物流(海外仓数据为空，筛选出来物流渠道数据)
         List<LogisticsSaleChannelEntity> logisticsList = saleChannelList.stream().filter(s -> StringUtils.isBlank(s.getOverseasWarehouseId()) && !s.getIsDeleted()).collect(Collectors.toList());
         totalSize = totalSize + logisticsList.size();
+        //根据原始渠道进行更新现有渠道数据
         if (CollectionUtils.isNotEmpty(logisticsList)) {
             List<LogisticsChannelEntity> saveOrUpdateList = new ArrayList<>(logisticsList.size());
             for (LogisticsSaleChannelEntity saleChannel : logisticsList) {
@@ -258,8 +261,12 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         if (CollectionUtils.isNotEmpty(deleteChannelIdList)) {
             logisticsChannelService.removeByIdList(deleteChannelIdList);
         }
-
-
+        //对比现有已开启渠道校验是否需要禁用
+        List<LogisticsChannelEntity> noSyncList = allChannels.stream().filter(e -> !syncSourceIdList.contains(e.getSyncSourceId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(noSyncList)){
+            List<String> channelIds = noSyncList.stream().map(LogisticsChannelEntity::getId).distinct().collect(Collectors.toList());
+            logisticsChannelService.updateStatusByIds(channelIds, Boolean.TRUE);
+        }
         return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功" + totalSize + "个渠道");
 
     }

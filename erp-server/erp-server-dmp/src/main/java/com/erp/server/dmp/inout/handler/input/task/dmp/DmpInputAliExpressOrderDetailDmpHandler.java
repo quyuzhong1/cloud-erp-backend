@@ -35,6 +35,7 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 			List<ParamData> paramDataList = new ArrayList<>();
 			List<String> orderIdList = dmpInputMongoChildList.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList());
 			paramDataList.add(new ParamData("trade_order_no", "trade_order_no", PannoEnum.IN, orderIdList));
+			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_soOutstock_data");
 			Map<String, Map<String, Object>> soOutstockMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("trade_order_no").toString(), f -> f , (f1 , f2) -> f2));
 			
@@ -56,6 +57,10 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 							Object amount_obj = product_price.get("amount");
 							if(amount_obj != null) {
 								c.put("sellPriceOrigin", new BigDecimal(product_count_obj.toString()).multiply(new BigDecimal(amount_obj.toString())));
+							}
+							Object currency_code_obj = product_price.get("currency_code");
+							if(currency_code_obj != null) {
+								c.put("currencyCode", currency_code_obj);
 							}
 						}
 						

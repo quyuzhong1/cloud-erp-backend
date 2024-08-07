@@ -16,6 +16,7 @@ import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpSoOutstockEntity;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoOutstockService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -39,6 +40,7 @@ public class DmpInputAliExpressOrderSoOutStockDetailDmpHandler extends DmpInputA
 			List<String> orderIdList = dmpInputMongoChildList.stream().map(d -> d.get("fulfillment_order_no").toString()).collect(Collectors.toList());
 			List<ParamData> paramDataList = new ArrayList<>();
 			paramDataList.add(new ParamData("fulfillment_order_no", "fulfillment_order_no", PannoEnum.IN, orderIdList));
+			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_soOutstock_data");
 			if(CollUtil.isNotEmpty(findMongoData)) {
 				Map<String, Map<String, Object>> orderNoMainMap = findMongoData.stream().collect(Collectors.toMap(f -> f.get("fulfillment_order_no").toString(), f -> f));

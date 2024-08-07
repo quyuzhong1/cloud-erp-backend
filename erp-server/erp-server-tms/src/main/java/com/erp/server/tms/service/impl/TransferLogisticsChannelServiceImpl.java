@@ -114,12 +114,12 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     public BatchResultDTO delete(String id) {
         TransferLogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
 
         TransferDeclareEntity declareEntity = transferDeclareService.checkExistByChannelIds(Arrays.asList(id));
         if(ObjectUtil.isNotEmpty(declareEntity)){
-            new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
+            throw new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
         }
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
@@ -156,7 +156,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         if (CollectionUtils.isNotEmpty(channelIdList)) {
             TransferDeclareEntity declareEntity = transferDeclareService.checkExistByChannelIds(channelIdList);
             if(ObjectUtil.isNotEmpty(declareEntity)){
-                new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
+                throw new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
             }
 
             this.removeByIds(channelIdList);

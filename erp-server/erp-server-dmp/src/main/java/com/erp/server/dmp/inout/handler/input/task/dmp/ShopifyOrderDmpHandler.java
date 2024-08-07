@@ -1,20 +1,32 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.enums.MabangOriginalOrderStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
+import com.sdk.oms.shopify.api.rest.model.ShopifyOrder;
+import com.sdk.oms.shopify.api.rest.model.ShopifyRefund;
+import com.sdk.oms.shopify.api.rest.model.ShopifyRefundLineItem;
+import com.sdk.oms.shopify.api.rest.model.enums.ShopifyOrderFinancialStatusEnum;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 订单主表字段映射转换
@@ -28,14 +40,40 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
+
+
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+
                 //状态
                 Object financialStatusObj = dmpDataMap.get("platformOriginalStatus");
                 if (financialStatusObj != null) {
+                    dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     String financialStatus = String.valueOf(financialStatusObj);
+
+                    ShopifyOrderFinancialStatusEnum statusEnum = ShopifyOrderFinancialStatusEnum.getByCode(financialStatus);
+                    if (null == statusEnum) {
+                        //待付款
+                        dmpDataMap.put("payStatus", Boolean.FALSE);
+                    }
+                    // 已付款
+                    if (ShopifyOrderFinancialStatusEnum.PAID.equals(statusEnum) ||
+                            ShopifyOrderFinancialStatusEnum.VOIDED.equals(statusEnum) ||
+                            ShopifyOrderFinancialStatusEnum.REFUNDED.equals(statusEnum) ||
+                            ShopifyOrderFinancialStatusEnum.PARTIALLY_REFUNDED.equals(statusEnum)
+                    ) {
+                        dmpDataMap.put("payStatus", Boolean.TRUE);
+                    }
+                    // 待付款
+                    if (ShopifyOrderFinancialStatusEnum.PENDING.equals(statusEnum) ||
+                            ShopifyOrderFinancialStatusEnum.UNPAID.equals(statusEnum) ||
+                            ShopifyOrderFinancialStatusEnum.AUTHORIZED.equals(statusEnum) ||
+                            ShopifyOrderFinancialStatusEnum.PARTIALLY_PAID.equals(statusEnum)
+                    ) {
+                        dmpDataMap.put("payStatus", Boolean.FALSE);
+                    }
+
                     if ("fulfilled".equalsIgnoreCase(financialStatus)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
-                        dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
                     } else if ("refunded".equalsIgnoreCase(financialStatus)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.REJECT.getCode());
                         dmpDataMap.put("returnStatus", DmpOrderReturnStatusEnum.ORDER_RETURN.getCode());
@@ -49,12 +87,39 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                     }
                 }
+                //状态
+                Object fulfillmentStatusObj = dmpDataMap.get("fulfillmentStatus");
+                if (fulfillmentStatusObj != null) {
+                    String fulfillmentStatus = String.valueOf(fulfillmentStatusObj);
+                    dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                    if (null == fulfillmentStatus || StringUtils.isBlank(fulfillmentStatus)){
+                        // 配货中
+                        dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                    }
+                    // 已发货
+                    if ("fulfilled".equalsIgnoreCase(fulfillmentStatus)) {
+                        dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
+                        dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+                    } else if ("refunded".equalsIgnoreCase(fulfillmentStatus)) {
+                        dmpDataMap.put("returnStatus", DmpOrderReturnStatusEnum.ORDER_RETURN.getCode());
+                    }
+                }
+
                 //买家备注
                 Object customerObj = dmpDataMap.get("customer");
                 if (customerObj != null) {
-                    Map<String,Object> customerMap = (Map<String, Object>) customerObj;
+                    Map<String, Object> customerMap = (Map<String, Object>) customerObj;
                     dmpDataMap.put("buyerRemark", customerMap.get("note"));
                 }
+
+                //支付时间
+                Object payTimeObj = dmpDataMap.get("payTime");
+                if (payTimeObj != null) {
+                    dmpDataMap.put("payTime", payTimeObj);
+                } else {
+                    dmpDataMap.put("payTime", null);
+                }
+
                 //税率
                 Object taxLinesObj = dmpDataMap.get("taxLines");
                 if (taxLinesObj != null) {
@@ -63,7 +128,7 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                         dmpDataMap.put("taxRate", taxLinesList.get(0).get("rate"));
                     }
                 }
-                //税率
+                //运费
                 Object shippingLinesObj = dmpDataMap.get("shippingLines");
                 if (shippingLinesObj != null) {
                     List<Map<String, Object>> shippingLinesList = (List<Map<String, Object>>) shippingLinesObj;
@@ -71,6 +136,42 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                         BigDecimal shippingAmount = shippingLinesList.stream().map(req -> MathUtil.valueOf(req.get("price"))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                         dmpDataMap.put("shippingAmount", shippingAmount);
                     }
+                }
+
+                //退款
+                Object refundsObj = dmpDataMap.get("refunds");
+                if (ObjectUtil.isNotEmpty(refundsObj)) {
+                    // 存在退款的明细ID
+                    Set<String> refundedLineItemIds = new HashSet<>();
+
+                    Map<String, Object> refundsMap = (Map<String, Object>) refundsObj;
+                    Object refundLineItems = refundsMap.get("refundLineItems");
+                    if (ObjectUtil.isNotEmpty(refundLineItems)) {
+                        List<Map<String, Object>> refundLineItemsList = (List<Map<String, Object>>) refundLineItems;
+                        List<String> sourceFundedLineItemIds = refundLineItemsList.stream()
+                                .map(req -> req.get("lineItemId").toString())
+                                .distinct()
+                                .collect(Collectors.toList());
+                        refundedLineItemIds.addAll(sourceFundedLineItemIds);
+
+                    }
+
+                    List<ShopifyRefund> refunds = JSON.parseArray(JSON.toJSONString(refundsObj), ShopifyRefund.class);
+                    if (!CollectionUtils.isEmpty(refunds)) {
+                        List<ShopifyRefundLineItem> refundLineItem = refunds.stream().map(ShopifyRefund::getRefundLineItems)
+                                .flatMap(List::stream)
+                                .collect(Collectors.toList());
+                        if (!CollectionUtils.isEmpty(refundLineItem)) {
+                            List<String> sourceFundedLineItemIds = refundLineItem.stream()
+                                    .map(ShopifyRefundLineItem::getLineItemId)
+                                    .distinct()
+                                    .collect(Collectors.toList());
+                            refundedLineItemIds.addAll(sourceFundedLineItemIds);
+                        }
+                    }
+                    Map<String, Object> lableMap = new HashMap<>();
+                    lableMap.put("refundedLineItemIds", refundedLineItemIds);
+                    dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
                 }
             }
         }

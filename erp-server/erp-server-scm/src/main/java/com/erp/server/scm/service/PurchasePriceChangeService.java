@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -8,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -82,20 +84,25 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * 采购价目变更 审核
      * @author yl
      * @date 2023-03-28 16:52
-     * @param dto
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 18:53
-     * @param dto
-     * @param list
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return Boolean
      */
-    Boolean approveEnd (BaseApproveParamDTO dto,List<PurchasePriceChangeEntity> list);
+    BatchResultDTO approveEnd (PurchasePriceChangeEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
      * 取消流程

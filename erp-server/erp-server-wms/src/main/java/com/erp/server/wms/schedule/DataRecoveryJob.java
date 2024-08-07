@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
+import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.SoReturnInstockService;
@@ -70,14 +72,21 @@ public class DataRecoveryJob {
 
         ids.parallelStream().forEach(item -> {
             BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
-            idsDTO.setIds(Arrays.asList(item));
+//            idsDTO.setIds(Collections.singletonList(item));
+            SoOutstockEntity soOutstock = soOutstockService.getById(item);
             try {
                 if(StrUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
-                    soReturnInstockService.disApprove(idsDTO.getIds(), isPushKingdee);
+                    SoReturnInstockEntity entity = soReturnInstockService.getById(item);
+                    if (Objects.nonNull(entity)){
+                        soReturnInstockService.disApprove(entity, isPushKingdee);
+                    }
                 }else if(StrUtil.isNotBlank(type) && "transferInfoService".equals(type)){
-                    transferInfoService.disApprove(idsDTO.getIds(), isPushKingdee,isManual);
+                    TransferInfoEntity entity = transferInfoService.getById(item);
+                    if (Objects.nonNull(entity)){
+                        transferInfoService.disApprove(entity, isPushKingdee, Boolean.TRUE);
+                    }
                 }else if(StrUtil.isNotBlank(type) && "soOutstockService".equals(type)){
-                    soOutstockService.disApprove(idsDTO, isPushKingdee);
+                    soOutstockService.disApprove(soOutstock, isPushKingdee);
                 }
             } catch (Exception e) {
                 XxlJobHelper.log("数据修复失败，id={} e ={}", item, e);

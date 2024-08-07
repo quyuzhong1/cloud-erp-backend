@@ -96,6 +96,19 @@ public class LogisticsChannelDTO implements Serializable {
          * 纸张大小
          */
         private String paperSize;
+
+        /**
+         * 配送方式/发货方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
+         * DeliveryTypeEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = deliveryType
+         */
+        private String deliveryType;
+        /**
+         * 不可达处理 退回:return/销毁:return 默认 return销毁
+         * UnDeliverableDecisionEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
+         */
+        private String undeliverableDecision;
     }
 
 
@@ -410,6 +423,24 @@ public class LogisticsChannelDTO implements Serializable {
          * 保宏单号（报关单号类型）
          */
         private String declareCodeType;
+        /**
+         * 配送方式/发货方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
+         * DeliveryTypeEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = deliveryType
+         */
+        private String deliveryType;
+        /**
+         * 不可达处理 退回:return/销毁:return 默认 return销毁
+         * UnDeliverableDecisionEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
+         */
+        private String undeliverableDecision;
+        /**
+         * 轨迹查询单号（运单号transportNo跟踪号trackNo）
+         * TrackQueryTypeEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = trackQueryType
+         */
+        private String trackQueryType;
 
         /**
          * 物流映射列表
@@ -671,6 +702,18 @@ public class LogisticsChannelDTO implements Serializable {
          * 配送方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
          */
         private String deliveryType;
+        /**
+         * 不可达处理 退回:return/销毁:return 默认 return销毁
+         * UnDeliverableDecisionEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
+         */
+        private String undeliverableDecision;
+        /**
+         * 轨迹查询单号（运单号transportNo跟踪号trackNo）
+         * TrackQueryTypeEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = trackQueryType
+         */
+        private String trackQueryType;
     }
 
     @Data
@@ -798,4 +841,26 @@ public class LogisticsChannelDTO implements Serializable {
         private Boolean showSupplier=false;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryDTO{
+        /**
+         * 渠道id
+         */
+        @NotBlank(message = "渠道id不能为空")
+        private String id;
+
+        /**
+         * 配送方式/发货方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
+         * DeliveryTypeEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = deliveryType
+         */
+        private String deliveryType;
+        /**
+         * 不可达处理 退回:return/销毁:return 默认 return销毁
+         * UnDeliverableDecisionEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
+         */
+        private String undeliverableDecision;
+    }
 }

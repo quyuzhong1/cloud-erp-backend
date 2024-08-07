@@ -28,6 +28,7 @@
        <result column="handle_user_id" property="handleUserId" />
        <result column="handle_user_name" property="handleUserName" />
        <result column="handle_time" property="handleTime" />
+       <result column="fba_shipment_code" property="fbaShipmentCode" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -186,7 +187,7 @@
         rad.from_warehouse_id AS fromWarehouseId,
         rad.from_warehouse_name AS fromWarehouseName,
         rad.from_virtual_warehouse_id AS fromVirtualWarehouseId,
-        rad.from_virtual_warehouse_name AS fromVirtualWarehouseName,
+        vw.name AS fromVirtualWarehouseName,
         rad.to_warehouse_id AS toWarehouseId,
         rad.to_warehouse_name AS toWarehouseName,
         ra.create_user_name AS createUserName,
@@ -203,6 +204,7 @@
         LEFT JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = ra.channel_id and opw.is_deleted = false
         LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        left join virtual_warehouse vw on rad.from_virtual_warehouse_id = vw.id and vw.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and ra.is_deleted = FALSE
@@ -238,7 +240,8 @@
         ra.source_id as deliveryPlanId,
         rad.source_detail_id as deliveryPlanDetailId,
         rad.platform_fn_sku as fnSku,
-        rad.platform_spu as platformSpuNo
+        rad.platform_spu as platformSpuNo,
+        ra.fba_shipment_code
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
         where ra.is_deleted = false

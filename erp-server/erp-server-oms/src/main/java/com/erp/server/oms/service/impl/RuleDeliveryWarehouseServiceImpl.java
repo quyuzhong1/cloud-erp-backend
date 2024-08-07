@@ -17,7 +17,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -27,7 +26,6 @@ import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -43,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -50,7 +49,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <p>
@@ -243,6 +241,10 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         //规则条件
         List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
         boolean isRuleMatch = Boolean.TRUE;
+
+        //需要更新仓库id的明细
+        List<Pair<SoB2cDetailEntity,String>> updateWarehouseList = new ArrayList<>();
+
         //明细规则匹配
         for(Map<String, Object> detailMap : mapList){
             String detailId = Objects.nonNull(detailMap.get("detailId")) ? detailMap.get("detailId").toString() : null;
@@ -265,10 +267,15 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
                 String warehouseId = ruleMatchResult.getWarehouseId();
                 //返回了仓库则更新仓库为空的数据
                 if (StrUtil.isNotBlank(warehouseId)) {
-                    soB2cDetailService.updateWarehouse(entity, soB2cDetail, warehouseId);
+                    updateWarehouseList.add(new Pair<>(soB2cDetail,warehouseId));
                 }
             }
         }
+        //更新仓库
+        if (CollectionUtils.isNotEmpty(updateWarehouseList)) {
+            soB2cDetailService.updateWarehouse(entity, updateWarehouseList);
+        }
+
         SoB2cDTO.RuleResultDTO ruleResult = new SoB2cDTO.RuleResultDTO();
         ruleResult.setId(entity.getId());
         ruleResult.setIsRuleMatch(isRuleMatch);

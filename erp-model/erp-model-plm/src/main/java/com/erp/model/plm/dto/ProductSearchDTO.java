@@ -45,6 +45,10 @@ public class ProductSearchDTO extends PermissionsDTO {
         private String categoryId;
 
         /**
+         * 分类id list
+         */
+        private List<String> categoryIdList;
+        /**
          * 在点击分类可以获取到产品id
          */
         private List<String> productIds;

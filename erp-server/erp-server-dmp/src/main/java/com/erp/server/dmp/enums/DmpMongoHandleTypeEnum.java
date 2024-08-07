@@ -3,7 +3,6 @@ package com.erp.server.dmp.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.core.exception.ServiceException;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -23,6 +22,7 @@ public enum DmpMongoHandleTypeEnum {
 
     AMZ_REPORT_FULFILLED_SHIPMENTS("amzReportFulfilledShipments", "亚马逊物流销售报告处理", "amzFulfilledShipmentsMongoHandler", MongoTableNameContant.DATA_REPORT_AMZ_FULFILLED_SHIPMENTS),
     AMZ_REPORT_ALL_LISTING("amzReportAllListing", "亚马逊Listing报告处理", "amzReportAllListingHandler", MongoTableNameContant.DATA_REPORT_AMZ_LISTING),
+    AMZ_REPORT_FBA_MYI_UNSUPPRESSED_INVENTORY("amzReportFbaMyiUnsuppressedInventory", "亚马逊库存管理报告", "amzReportFbaMyiUnsuppressedInventoryHandler", MongoTableNameContant.DATA_REPORT_AMZ_FBA_MYI_UNSUPPRESSED_INVENTORY),
 
     ;
 

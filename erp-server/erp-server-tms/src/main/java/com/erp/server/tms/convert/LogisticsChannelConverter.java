@@ -183,12 +183,6 @@ public interface LogisticsChannelConverter {
     })
     RegisterRequest registerTrackNoByTrack123(LogisticsRegisterVO logisticsRegisterVO);
     List<RegisterRequest> registerTrackNoByTrack123(List<LogisticsRegisterVO> logisticsRegisterVOS);
-    @Mappings({
-        @Mapping(target = "trackNo",source = "trackNo"),
-        @Mapping(target = "phoneSuffix",source = "telNumber")
-    })
-    LogisticsRegisterVO convertRegisterDataByTrack123(LogisticsTrackDTO.UpdateTrackDTO record);
-    List<LogisticsRegisterVO> convertRegisterDataByTrack123(List<LogisticsTrackDTO.UpdateTrackDTO> records);
 
     @Mappings({
             @Mapping(target = "code", source = "code"),

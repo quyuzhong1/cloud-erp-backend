@@ -1,5 +1,7 @@
 package com.erp.model.wms.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -175,6 +178,34 @@ public class CfgSettingValueDTO implements Serializable {
          * 抄送人员id集合,post请求,/api/plm/common/findUserList
          */
         private List<String> userIdList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CfgPrintDetail {
+        /**
+         * 纸张大小
+         */
+        private String paperSize;
+
+        /**
+         * 打印机名称
+         */
+        private String printerName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CfgPrint {
+        /**
+         * 打印配置详情
+         */
+        private List<CfgSettingValueDTO.CfgPrintDetail> cfgPrintDetails = new ArrayList<>();
     }
 
 }

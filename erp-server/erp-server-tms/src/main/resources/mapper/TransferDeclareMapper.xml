@@ -126,6 +126,7 @@
             td.instock_forecast_status AS instockForecastStatus,
             td.instock_forecast_remark AS instockForecastRemark,
             tdd.so_code AS soCode,
+            tdd.so_id AS soId,
             tdd.order_upload_status AS uploadOrderStatus,
             tdd.logistics_channel_name AS logisticsChannelName,
             tdd.track_no AS trackNo,

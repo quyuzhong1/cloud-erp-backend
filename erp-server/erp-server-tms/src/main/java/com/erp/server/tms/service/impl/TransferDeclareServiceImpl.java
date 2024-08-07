@@ -16,6 +16,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -41,6 +42,8 @@ import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.PackageForecastDTO;
+import com.erp.model.wms.entity.PackageForecastDetailEntity;
+import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -360,12 +363,29 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         if (CollectionUtil.isEmpty(list)){
             return;
         }
+        List<String> soIdList = list.stream().map(TransferDeclareDTO.ExportListDTO::getSoId).distinct().collect(Collectors.toList());
+        List<PackageForecastDetailEntity> packageForecastDetailEntityList = CollectionUtils.isNotEmpty(soIdList)?FeignQuery.create(PackageForecastDetailEntity.class).in(PackageForecastDetailEntity::getSoId,soIdList).list():new ArrayList<>();
+        List<String> packageForecastIds = packageForecastDetailEntityList.stream().map(PackageForecastDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<PackageForecastEntity> packageForecastEntityList = CollectionUtils.isNotEmpty(packageForecastIds)?FeignQuery.create(PackageForecastEntity.class).in(PackageForecastEntity::getId,packageForecastIds).list():new ArrayList<>();
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
         list.forEach(exportListDTO -> {
+            PackageForecastDetailEntity mainPackageForecastDetailEntity = packageForecastDetailEntityList.stream().filter(v -> v.getSoCode().equals(exportListDTO.getSoCode())).findFirst().orElse(new PackageForecastDetailEntity());
+            PackageForecastEntity mainPackageForecastEntity = packageForecastEntityList.stream().filter(v -> v.getId().equals(mainPackageForecastDetailEntity.getMainId())).findFirst().orElse(new PackageForecastEntity());
+            exportListDTO.setPackageForecastCode(mainPackageForecastEntity.getCode());
             exportListDTO.setUploadBatchStatusName(TransferDeclareUploadStatusEnum.getName(exportListDTO.getUploadBatchStatus()));
             exportListDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(exportListDTO.getInstockForecastStatus()));
             exportListDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(exportListDTO.getUploadOrderStatus()));
-            exportListDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(exportListDTO.getOutstockStatus()));
+//            exportListDTO.setOutstockStatusName(TransferOutstockStatusEnum.getName(exportListDTO.getOutstockStatus()));
             exportListDTO.setTransferStatusName(TransferLogisticsStatusEnum.getName(exportListDTO.getTransferStatus()));
+            SoB2cEntity detailSoB2cEntity = soB2cEntityList.stream()
+                    .filter(req -> req.getId().equals(exportListDTO.getSoId())
+                            && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(detailSoB2cEntity)) {
+                exportListDTO.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
+            } else {
+                exportListDTO.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());
+            }
         });
     }
 
@@ -413,7 +433,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
                 TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
                         .orderCode(soB2cEntity.getShippingOrderNo())
-                        .packNum(packageForecastDTO.getCode())
+                        .packNum(StringUtils.isBlank(packageForecastDTO.getTransportNo())?packageForecastDTO.getCode():packageForecastDTO.getTransportNo())
                         .grossWeight(maxWeight)
                         .build();
                 receiveItemList.add(receiveItem);
@@ -791,20 +811,23 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     /**
      * 分页列表字段处理
      *
-     * @param dateList
+     * @param dataList
      * @param params
      */
-    private void fillList(List<TransferDeclareDTO.ListDTO> dateList, TransferDeclareDTO.PagingParamDTO params) {
-        if (CollectionUtils.isEmpty(dateList)){
+    private void fillList(List<TransferDeclareDTO.ListDTO> dataList, TransferDeclareDTO.PagingParamDTO params) {
+        if (CollectionUtils.isEmpty(dataList)){
             return;
         }
         //主表记录ids
-        List<String> declareIds = dateList.stream().map(TransferDeclareDTO.ListDTO::getId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> declareIds = dataList.stream().map(TransferDeclareDTO.ListDTO::getId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByCondition(declareIds,params);
-        List<String> soIdList = dateList.stream().map(TransferDeclareDTO.ListDTO::getSoId).distinct().collect(Collectors.toList());
+        List<String> soIdList = dataList.stream().map(TransferDeclareDTO.ListDTO::getSoId).distinct().collect(Collectors.toList());
         soIdList.addAll(transferDeclareDetailEntities.stream().map(TransferDeclareDetailEntity::getSoId).collect(Collectors.toList()));
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
-        for (TransferDeclareDTO.ListDTO listDTO : dateList){
+        List<PackageForecastDetailEntity> packageForecastDetailEntityList = CollectionUtils.isNotEmpty(soIdList)?FeignQuery.create(PackageForecastDetailEntity.class).in(PackageForecastDetailEntity::getSoId,soIdList).list():new ArrayList<>();
+        List<String> packageForecastIds = packageForecastDetailEntityList.stream().map(PackageForecastDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<PackageForecastEntity> packageForecastEntityList = CollectionUtils.isNotEmpty(packageForecastIds)?FeignQuery.create(PackageForecastEntity.class).in(PackageForecastEntity::getId,packageForecastIds).list():new ArrayList<>();
+        for (TransferDeclareDTO.ListDTO listDTO : dataList){
             List<TransferDeclareDetailEntity> detailEntityList = transferDeclareDetailEntities.stream().filter(e -> e.getMainId().equals(listDTO.getId())).collect(Collectors.toList());
 
             //如果明细有移除需要根据明细上传状态修改主表上传状态
@@ -844,6 +867,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 listDTO.setUploadOrderStatusName(TransferDeclareUploadStatusEnum.getName(listDTO.getUploadOrderStatus()));
                 //入库预报状态
                 listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.getName(listDTO.getInstockForecastStatus()));
+                //组包单号
+            PackageForecastDetailEntity mainPackageForecastDetailEntity = packageForecastDetailEntityList.stream().filter(v -> v.getSoCode().equals(listDTO.getSoCode())).findFirst().orElse(new PackageForecastDetailEntity());
+            PackageForecastEntity mainPackageForecastEntity = packageForecastEntityList.stream().filter(v -> v.getId().equals(mainPackageForecastDetailEntity.getMainId())).findFirst().orElse(new PackageForecastEntity());
+            listDTO.setPackageForecastCode(mainPackageForecastEntity.getCode());
             detailEntityList.forEach(transferDeclareDetailEntity -> {
                 SoB2cEntity detailSoB2cEntity = soB2cEntityList.stream()
                         .filter(req -> req.getId().equals(transferDeclareDetailEntity.getSoId())
@@ -856,14 +883,17 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 }
                 transferDeclareDetailEntity.setOrderUploadStatusName(TransferDeclareUploadStatusEnum.getName(transferDeclareDetailEntity.getOrderUploadStatus()));
                 transferDeclareDetailEntity.setTransferStatusName(TransferLogisticsStatusEnum.getName(transferDeclareDetailEntity.getTransferStatus()));
+                PackageForecastDetailEntity packageForecastDetailEntity = packageForecastDetailEntityList.stream().filter(v -> v.getSoId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(new PackageForecastDetailEntity());
+                PackageForecastEntity packageForecastEntity = packageForecastEntityList.stream().filter(v -> v.getId().equals(packageForecastDetailEntity.getMainId())).findFirst().orElse(new PackageForecastEntity());
+                transferDeclareDetailEntity.setPackageForecastCode(packageForecastEntity.getCode());
             });
             listDTO.setDetailEntityList(detailEntityList);
         }
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(TransferDeclareEntity transferDeclareEntity) {
         //发货物流商名称
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(transferDeclareEntity.getDeliveryLogisticsSupplierId());

@@ -85,30 +85,31 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
                         dmpDataMap.put("remark", "ON_HOLD");
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("AWAITING_SHIPMENT".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("AWAITING_COLLECTION".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("PARTIALLY_SHIPPING".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("IN_TRANSIT".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("DELIVERED".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("COMPLETED".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-
+                        dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("CANCELLED".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
@@ -146,6 +147,8 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     // 使用Instant类将Unix时间戳转换为LocalDateTime对象
                     LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(paidTimeObj + "")), ZoneId.systemDefault());
                     dmpDataMap.put("payTime", payTime);
+                } else {
+                    dmpDataMap.put("payTime", null);
                 }
 
                 //创建时间
@@ -177,7 +180,9 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 if (paymentObj != null) {
                     Map<String, Object> paymentMap = (Map<String, Object>) paymentObj;
                     dmpDataMap.put("payAmount", paymentMap.get("totalAmount"));
-                    dmpDataMap.put("salePrice", paymentMap.get("totalAmount"));
+                    dmpDataMap.put("allAmount", paymentMap.get("subTotal"));
+                    dmpDataMap.put("currencyCode", paymentMap.get("currency"));
+                    dmpDataMap.put("shippingAmount", paymentMap.get("shippingFee"));
                 }
             }
         }

@@ -141,6 +141,11 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     @TableField("shipping_cost")
     private BigDecimal shippingCost;
     /**
+     * 币种编码
+     */
+     @TableField("currency_code")
+     private String currencyCode = "";
+    /**
     * 拓展字段
     */
     @TableField("extend_data")

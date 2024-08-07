@@ -80,6 +80,11 @@ public class WarehouseLocationMoveDetailEntity extends BaseEntity<WarehouseLocat
      */
     @TableField("remark")
     private String remark;
+    /**
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
 
     public static final String MAIN_ID = "main_id";
 

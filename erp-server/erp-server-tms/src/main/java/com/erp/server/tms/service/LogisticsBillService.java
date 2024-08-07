@@ -127,7 +127,7 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      *@author yl
      *@date 2023-11-16
      */
-    Boolean exportExcel(LogisticsBillDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(LogisticsBillDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
      * 生成物流单

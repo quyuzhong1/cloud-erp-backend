@@ -137,7 +137,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "orderNumber" ,source = "deliveryNo"),
             @Mapping(target = "receiverInfo.name",source = "receiverInfoVO.contact"),
             @Mapping(target = "receiverInfo.country",source = "receiverInfoVO.country"),
-            @Mapping(target = "receiverInfo.address",source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "receiverInfo.address",expression = "java(receiverInfoVO.getAddressFirst()+\" \"+receiverInfoVO.getAddressSecond()+\" \"+receiverInfoVO.getStreetAddress())"),
             @Mapping(target = "receiverInfo.phone",source = "receiverInfoVO.telNumber"),
             @Mapping(target = "receiverInfo.state",source = "receiverInfoVO.province"),
             @Mapping(target = "receiverInfo.city",source = "receiverInfoVO.city"),
@@ -306,7 +306,7 @@ public interface LogisticsOrderConverter {
 
 
     @Mappings({
-            @Mapping(target = "taxNumber" ,source = "receiverInfoVO.receiverTaxNo"),
+//            @Mapping(target = "taxNumber" ,source = "receiverInfoVO.receiverTaxNo"),
             @Mapping(target = "customerOrderNumber" ,source = "deliveryNo"),
             @Mapping(target = "shippingMethodCode" ,source = "logisticsSaleChannel.code"),
             @Mapping(target = "length" ,source = "parceInfoVO.length"),
@@ -559,7 +559,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "province",source = "receiverInfoVO.province"),
             @Mapping(target = "city",source = "receiverInfoVO.city"),
             @Mapping(target = "county",source = "receiverInfoVO.district"),
-            @Mapping(target = "streetAddress",source = "receiverInfoVO.streetAddress"),
+            @Mapping(target = "streetAddress",source = "receiverInfoVO.addressFirst"),
             @Mapping(target = "email",source = "receiverInfoVO.email"),
             @Mapping(target = "postCode",source = "receiverInfoVO.zipCode"),
             @Mapping(target = "name",source = "receiverInfoVO.contact"),

@@ -5,6 +5,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SkuCostDTO;
@@ -216,7 +217,7 @@ public interface ScmTaskFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/scmWorkOption/salesDemandApprove")
-    Boolean salesDemandApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+    List<BatchResultDTO> salesDemandApprove(@RequestBody @Validated BaseApproveParamDTO dto);
 
     /**
      * 审核
@@ -226,7 +227,7 @@ public interface ScmTaskFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/scmWorkOption/purchasePriceApprove")
-    Boolean purchasePriceApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+    List<BatchResultDTO> purchasePriceApprove(@RequestBody @Validated BaseApproveParamDTO dto);
 
     /**
      * 审核
@@ -236,7 +237,7 @@ public interface ScmTaskFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/scmWorkOption/purchasePriceChangeApprove")
-    Boolean purchasePriceChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+    List<BatchResultDTO> purchasePriceChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto);
 
     /**
      * 审核
@@ -256,7 +257,7 @@ public interface ScmTaskFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/scmWorkOption/purchaseChangeApprove")
-    Boolean purchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+    List<BatchResultDTO> purchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto);
 
     /**
      * 审核
@@ -266,7 +267,7 @@ public interface ScmTaskFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/scmWorkOption/purchaseApplicationApprove")
-    Boolean purchaseApplicationApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+    List<BatchResultDTO> purchaseApplicationApprove(@RequestBody @Validated BaseApproveParamDTO dto);
 
     /**
      * 根据来源id集合获取到下推数据

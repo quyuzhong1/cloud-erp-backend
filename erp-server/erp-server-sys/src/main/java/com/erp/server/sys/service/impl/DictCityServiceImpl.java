@@ -31,6 +31,7 @@ import com.erp.server.sys.service.ThirdpartyRefBusinessService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -137,6 +138,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addProvince(DictCityDTO.AddProvinceDTO dto) {
         DictCityEntity addEntity = new DictCityEntity();
         String code = dto.getCode();
@@ -193,6 +195,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateProvince(DictCityDTO.UpdateProvinceDTO dto) {
         String id = dto.getId();
         DictCityEntity entity=this.getById(id);
@@ -226,20 +229,17 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         if (count > 0) {
             throw new ServiceException("存在下级，无法删除");
         }
-        Boolean result= this.removeById(id);
-        if (result ) {
-            //金蝶推送
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeCityService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-                }
-            });
-            thirdpartyRefBusinessService.removeByBusinessId(id);
-
-        }
+        baseMapper.deleteById(id);
+        //金蝶推送
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeCityService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
+        thirdpartyRefBusinessService.removeByBusinessId(id);
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
 
 
@@ -279,6 +279,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addCity(DictCityDTO.AddCityDTO dto) {
         DictCityEntity addEntity = new DictCityEntity();
         //省id
@@ -337,6 +338,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateCity(DictCityDTO.UpdateCityDTO dto) {
         String id = dto.getId();
         DictCityEntity entity = this.getById(id);

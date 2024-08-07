@@ -24,6 +24,7 @@ import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.StringUtil;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpLogisticInfoEntity;
@@ -169,7 +170,10 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 			List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList = new ArrayList<>();
 			if(CollUtil.isNotEmpty(dmpSoOutstockEntityList)) {
 				for(DmpSoOutstockEntity dmpSoOutstockEntity : dmpSoOutstockEntityList) {
-					dmpSoOutstockDetailEntityList.addAll(dmpSoOutstockDetailEntityMap.get(dmpSoOutstockEntity.getId()));
+					List<DmpSoOutstockDetailEntity> list = dmpSoOutstockDetailEntityMap.get(dmpSoOutstockEntity.getId());
+					if(CollUtil.isNotEmpty(list)) {
+						dmpSoOutstockDetailEntityList.addAll(list);
+					}
 				}
 			}
 			PlatformOrderDTO orderDTO = this.convert(dmpSoInfoEntityMap.get(changId), dmpSoDetailEntityMap.get(changId) 
@@ -282,7 +286,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 //发货时间
                 logisticsDTO.setDeliveryTime(dmpLogisticInfoEntity.getDeliveryTime());
                 logisticsDTO.setActualShippingCost(shippingAmount);
-                logisticsDTO.setActualShippingCurrency(currencyCode);
+                logisticsDTO.setActualShippingCurrency(dmpLogisticInfoEntity.getCurrencyCode());
             	orderLogisticList.add(logisticsDTO);
         	}
         }
@@ -321,7 +325,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 }
                 
 				detailDTO.setAmount(sellPriceOrigin);
-                detailDTO.setCurrency(currencyCode);
+                detailDTO.setCurrency(dmpSoDetailEntity.getCurrencyCode());
                 
                 // 汇率
                 detailDTO.setExchangeRate(BigDecimal.ONE);
@@ -365,17 +369,30 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if(dmpSoReceiverEntity != null) {
         	receiverDTO.setCountry(dmpSoReceiverEntity.getCountry());
-            receiverDTO.setFirstAddress(dmpSoReceiverEntity.getMainStreet());
-            receiverDTO.setSecondAddress(dmpSoReceiverEntity.getSecondStreet());
-            receiverDTO.setFullAddress(dmpSoReceiverEntity.getFullAddress());
+            String firstAddress = dmpSoReceiverEntity.getMainStreet();
+            String fullAddress = dmpSoReceiverEntity.getFullAddress();
+            if(StringUtils.isBlank(fullAddress)) {
+            	fullAddress = "";
+            }
+            String secondStreet = dmpSoReceiverEntity.getSecondStreet();
+            if(StringUtils.isBlank(secondStreet)) {
+            	secondStreet = "";
+            }
+			if(StringUtils.isBlank(firstAddress)) {
+            	firstAddress = fullAddress + " " + secondStreet;
+            }
+        	receiverDTO.setFirstAddress(firstAddress);
+            receiverDTO.setSecondAddress(secondStreet);
+            receiverDTO.setFullAddress(fullAddress);
             receiverDTO.setCityName(dmpSoReceiverEntity.getCity());
             receiverDTO.setProvinceName(dmpSoReceiverEntity.getProvince());
             receiverDTO.setReceiverName(dmpSoReceiverEntity.getReceiverName());
-            receiverDTO.setReceiverTelNumber(dmpSoReceiverEntity.getReceiverTelNumber());
+            String mainPhone = dmpSoReceiverEntity.getMainPhone();
+			receiverDTO.setReceiverTelNumber(mainPhone);
             receiverDTO.setPostCode(dmpSoReceiverEntity.getPostCode());
             receiverDTO.setReceiverTaxNo(dmpSoReceiverEntity.getReceiverTaxNo());
             // 买家电话
-            receiverDTO.setTelNumber(dmpSoReceiverEntity.getMainPhone());
+            receiverDTO.setTelNumber(mainPhone);
             
             String buyerId = dmpSoReceiverEntity.getBuyerId();
 			receiverDTO.setLoginId(buyerId);
@@ -397,7 +414,6 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         receiverDTO.setEmail("");
         receiverDTO.setCountryName("");
         receiverDTO.setDistrictName("");
-        receiverDTO.setTelNumber("");
         
         orderDTO.setReceiver(receiverDTO);
         
