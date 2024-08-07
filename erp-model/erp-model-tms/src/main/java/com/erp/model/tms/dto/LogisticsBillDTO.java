@@ -1060,7 +1060,18 @@ public class LogisticsBillDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TrackDTO {
+        /**
+         * 运单号
+         */
         private  String transportNo;
+        /**
+         * 跟踪号
+         */
         private  String trackNo;
+        /**
+         * so_b2c_logistics.id
+         * 销售物流单id
+         */
+        private  String id;
     }
 }

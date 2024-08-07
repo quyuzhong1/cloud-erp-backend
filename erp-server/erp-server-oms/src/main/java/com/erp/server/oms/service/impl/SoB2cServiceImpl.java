@@ -1394,6 +1394,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 log.error("{}原因是：{}", ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL.msg, cancelResult.getMsg());
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL, entity.getCode());
             }
+            //如果取消物流单 则需要清空物流单信息
+            String msg = "取消物流单号，修改单号【{}/{}】改为【/】";
+            operateLogService.addModuleOperateLog(StrUtil.format(msg, soB2cLogisticsEntity.getCode(),soB2cLogisticsEntity.getTrackNo()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单号");
+            soB2cLogisticsService.updateLogisticsCode(soB2cLogisticsEntity.getId(), "","");
         }
         //校验是否存在申报信息，不存在则生成
         List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);

@@ -84,11 +84,16 @@ public class GetLogisticsTrackNoTaskJob {
                     List<LogisticsOrderResponseVO> resultList = orderResponse.getData();
                     List<LogisticsBillDTO.TrackDTO> updateList = new ArrayList<>(resultList.size());
                     for (LogisticsOrderResponseVO item : resultList) {
-                        LogisticsBillDTO.TrackDTO dto = LogisticsBillDTO.TrackDTO.builder()
-                                .transportNo(item.getTransportNo())
-                                .trackNo(item.getTrackNo())
-                                .build();
-                        updateList.add(dto);
+                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
+                                map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
+                        if (StringUtils.isNotBlank(b2cLogisticsId)){
+                            LogisticsBillDTO.TrackDTO dto = LogisticsBillDTO.TrackDTO.builder()
+                                    .transportNo(item.getTransportNo())
+                                    .trackNo(item.getTrackNo())
+                                    .id(b2cLogisticsId)
+                                    .build();
+                            updateList.add(dto);
+                        }
                     }
                     if (CollectionUtils.isNotEmpty(updateList)) {
                         soB2cFeign.updateTrackNoByTransportNo(updateList);
