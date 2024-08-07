@@ -89,8 +89,9 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
                 allocationDetailFeign.updateSyncStatus(dto);
             }
         } catch (WdtErpException e) {
+            dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
+            msg = e.getMessage();
             if (Objects.equals(bizType, SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())) {
-                dto.setSyncStatus(VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode());
                 dto.setHandelDetailId(map.get("sourceId").toString());
                 dto.setFinishDescription(e.getMessage());
                 log.info("旺店通虚拟仓订单创建：同步分货单：{}", dto);
