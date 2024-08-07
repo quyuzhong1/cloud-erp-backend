@@ -31,6 +31,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_BI_REPORT("EXPORT_BI_REPORT", "新老品销售额"),
     //plm
     EXPORT_PLM_BOM("EXPORT_PLM_BOM", "BOM数据"),
+    EXPORT_PLM_PRODUCT_CERTIFICATE("EXPORT_PLM_PRODUCT_CERTIFICATE", "产品认证列表"),
     PRODUCT_DETAIL_EXPORT("PRODUCT_DETAIL_EXPORT", "产品明细"),
 
     //wms

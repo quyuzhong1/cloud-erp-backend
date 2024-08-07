@@ -41,6 +41,6 @@ public class ExportPlmBomHandler extends AbstractPageFileEventHandler<BomExportE
 
     @Override
     public String getExcelPath() {
-        return null;
+        return "excel/plm/bom.xlsx";
     }
 }

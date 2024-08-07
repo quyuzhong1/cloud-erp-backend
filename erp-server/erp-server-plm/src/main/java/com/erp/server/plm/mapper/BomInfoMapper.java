@@ -32,6 +32,7 @@ public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
     List<ChangeInfoDTO> getBomInfo(@Param("state")Integer state, @Param("searchKeyword") String searchKeyword);
 
     List<BomPagingVO> getAllBom(@Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList,@Param("skuIdList") List<String> skuIdList,@Param("stateList")List<Integer> stateList);
+    Page<BomPagingVO> getAllBom(@Param("page") Page<BomPagingVO> page, @Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList,@Param("skuIdList") List<String> skuIdList,@Param("stateList")List<Integer> stateList);
 
     IPage<BomSkuPageDTO.ListDTO> skuPaging(Page query, @Param("params") BomSkuPageDTO.PagingParamDTO params);
 

@@ -184,7 +184,6 @@ public class ProductCertificateController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品证书信息")
@@ -194,8 +193,8 @@ public class ProductCertificateController extends BaseController {
             menuCode = "plm:productCertificate:paging",
             tableAlias = "pc"
     )
-    public ApiResult exportExcel(@RequestBody ProductCertificateDTO.ExportParamDTO dto, HttpServletResponse response) {
-        Boolean flag = productCertificateService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody ProductCertificateDTO.ExportParamDTO dto) {
+        Boolean flag = productCertificateService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 }
