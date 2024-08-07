@@ -11,6 +11,8 @@ import com.common.business.dto.PlatformOtherOutStockDetailDTO;
 import com.common.business.enums.*;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
@@ -41,6 +43,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import javax.validation.constraints.*;
 import java.lang.reflect.Array;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -189,8 +192,12 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
     private OtherOutstockDTO.AddDTO generateAddDTO(PlatformOtherOutStockDTO dto, SoMultiChannelEntity mainEntity, ShopInfoEntity shopInfo, SysDepartmentUserNumberDTO deptDTO) {
         OtherOutstockDTO.AddDTO addDTO = new OtherOutstockDTO.AddDTO();
 
+        LocalDateTime deliveryLocalDateTime = DateUtil.parseLocalDateTimeWithOffset(dto.getPlatformDeliveryTime());
+        if (null == deliveryLocalDateTime){
+            throw new ServiceException("未找到出库单日期");
+        }
         // 出库日期
-        addDTO.setBillDate(dto.getPlatformDeliveryTime().toLocalDate());
+        addDTO.setBillDate(deliveryLocalDateTime.toLocalDate());
         // 库存方向
         addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
         // 发货仓库id

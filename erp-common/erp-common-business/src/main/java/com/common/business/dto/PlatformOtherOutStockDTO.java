@@ -36,7 +36,7 @@ public class PlatformOtherOutStockDTO extends UniqueDto {
     /**
      * 平台配送时间
      */
-    private OffsetDateTime platformDeliveryTime;
+    private String platformDeliveryTime;
 
     /**
      * 明细列表
@@ -45,7 +45,7 @@ public class PlatformOtherOutStockDTO extends UniqueDto {
 
     public PlatformOtherOutStockDTO(String platformCode,
                                     String shopId,
-                                    OffsetDateTime platformDeliveryTime,
+                                    String platformDeliveryTime,
                                     List<PlatformOtherOutStockDetailDTO> detailList,
                                     String uniqueId,
                                     String platform
