@@ -1151,6 +1151,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         addDTO.setBillType(PickingBillTypeEnum.B2B.getCode());
         addDTO.setCustomerId(soDeliveryNotice.getCustomerId());
         addDTO.setSourceId(soDeliveryNotice.getId());
+        CustomerInfoEntity customerInfoEntity = customerFeign.getCustomerById(soDeliveryNotice.getCustomerId());
+        if(Objects.nonNull(customerInfoEntity)){
+            addDTO.setCountryCode(customerInfoEntity.getCountryId());
+        }
         addDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         addDTO.setSourceCode(soDeliveryNotice.getCode());
         List<SoDeliveryNoticeDetailEntity> updateDetails = new ArrayList<>();

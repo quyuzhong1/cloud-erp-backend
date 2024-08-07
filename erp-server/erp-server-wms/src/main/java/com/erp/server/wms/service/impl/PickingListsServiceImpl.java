@@ -140,6 +140,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         executionData.setCustomerId(dto.getCustomerId());
         executionData.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());
         executionData.setSourceCode(dto.getSourceCode());
+        executionData.setCountryCode(dto.getCountryCode());
         executionData.setDetails(details);
         // 执行拣货规则
         List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
