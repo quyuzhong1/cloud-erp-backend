@@ -100,8 +100,8 @@
         vma.remark,
         vmad.detail_remark detailRemark,
         COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0) as unDistributionQty,
-        COALESCE(vit.toVirtualUsableQty,0) as toVirtualUsableQty,
-        COALESCE(vif.fromVirtualUsableQty,0) as fromVirtualUsableQty,
+        vit.toVirtualUsableQty as toVirtualWarehouseUsableQty,
+        vif.fromVirtualUsableQty as fromVirtualWarehouseUsableQty,
         case when vma.status = 'waitSubmit'and vma.type ='allocation'  then vmad.qty > COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0)
              when vma.status = 'waitSubmit'and vma.type ='transfer'  then vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)
              when vma.status = 'waitSubmit'and vma.type ='cancel'  then vmad.qty > COALESCE(vit.toVirtualUsableQty,0)
