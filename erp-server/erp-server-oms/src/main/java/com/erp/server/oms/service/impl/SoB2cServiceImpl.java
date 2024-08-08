@@ -1535,7 +1535,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //增加订单类型传递
         result.setOrderType(entity.getSourceType());
-
+        result.setPlatformCode(entity.getPlatformCode());
         result.setShopId(shopId);
         result.setShopName(entity.getShopName());
         result.setIossTaxNo(shopInfoEntity.getIossTaxNo());
