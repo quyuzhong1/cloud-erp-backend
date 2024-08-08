@@ -310,13 +310,14 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         String msg = StrUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
         //进行合单并创建中台任务数据进行同步
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
 //                virtualWarehouseAllocationHandleService.handleData(allocationEntity);
-                CompletableFuture.runAsync(() -> virtualWarehousePushHandleService.handleData(allocationEntity));
-            }
-        });
+//                CompletableFuture.runAsync(() -> virtualWarehousePushHandleService.handleData(allocationEntity));
+//            }
+//        });
+        virtualWarehousePushHandleService.handleData(allocationEntity);
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
 

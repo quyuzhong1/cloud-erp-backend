@@ -19,7 +19,13 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegisterResponseVO implements Serializable {
+    /**
+     * 运单号/跟踪号
+     */
     private String trackNo;
+    /**
+     * 已注册
+     */
     private Boolean trackStatus;
     private String code;
     private String msg;

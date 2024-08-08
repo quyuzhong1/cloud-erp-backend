@@ -2,10 +2,7 @@ package com.erp.server.plm.controller.api;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -17,6 +14,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.ProductDetailApproverEntity;
@@ -26,8 +24,6 @@ import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -100,25 +96,10 @@ public class ProductDetailController extends BaseController {
     private ProductUnitService productUnitService;
 
     @Resource
-    private BasicCategoryService basicCategoryService;
-
-    @Resource
-    private BasicDictService basicDictService;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
-
-    @Resource
-    private ScmTaskFeign scmTaskFeign;
-
-    @Resource
     private ProductDetailApproverService productDetailApproverService;
 
     @Resource
     private ProductCustomsService productCustomsService;
-
-    @Resource
-    private BomSkuService bomSkuService;
 
     /**
      * 临时接口-添加产品国外海关编码
@@ -270,7 +251,7 @@ public class ProductDetailController extends BaseController {
     )*/
     //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
     public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailById(@RequestBody ProductManySpecUpdateDTO dto) {
-        ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailById(dto.getProductId());
+        ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailBySkuId(dto.getId());
         return this.success(list);
     }
 
@@ -338,6 +319,17 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 添加已有sku到现有spu
+     * @param changeSkuToSpuDTO
+     * @return
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品信息-多规格-添加sku关联")
+    @PostMapping("/changeSkuBySpu")
+    public ApiResult<List<ProductDetailEntity>> changeSkuBySpu(@RequestBody @Validated ChangeSkuToSpuDTO changeSkuToSpuDTO) {
+        List<ProductDetailEntity> list = productDetailService.changeSkuBySpu(changeSkuToSpuDTO);
+        return this.success(list);
+    }
     /**
      * 产品信息-多规格sku-删除
      *
@@ -698,7 +690,6 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载导出模板")
     @GetMapping("/exportTemplate")
-    //@RequestPermissions("plm:product:detail:exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
         String excelName = "template.xlsx";
@@ -732,7 +723,7 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息")
     @PostMapping(value = "/exportProduct")
-    //@RequestPermissions("plm:product:detail:exportProduct")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
     public void exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuExcelDTO, response);
     }
@@ -1051,16 +1042,30 @@ public class ProductDetailController extends BaseController {
     /**
      * 批量审核-PLM-1.3
      *
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
      **/
     @LogAction(value = LogActionEnum.APPROVE, desc = "产品详情批量审核")
     @PostMapping("/approve")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = productDetailService.approve(baseApproveParamDTO);
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<ProductDetailEntity> entityList = productDetailService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            ProductDetailEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(productDetailService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("产品sku审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -1073,9 +1078,23 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "产品详情批量反审核")
     @PostMapping("/disApprove")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = productDetailService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<ProductDetailEntity> entityList = productDetailService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            ProductDetailEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(productDetailService.disApprove(entity));
+            }catch (Exception e){
+                log.error("产品sku审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

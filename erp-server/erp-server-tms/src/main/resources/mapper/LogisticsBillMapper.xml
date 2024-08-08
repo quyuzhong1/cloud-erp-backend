@@ -44,6 +44,50 @@
         source_id,
         source_code, outstock_id, outstock_code, channel_id, order_time, delivery_time, transport_no
     </sql>
+    <sql id="pagingSql">
+        SELECT
+        lbd.id as detailId,
+        lb.id as id,
+        lb.sales_platform AS salesPlatform,
+        lb.shop_id AS shopId,
+        lb.shop_name AS shopName,
+        lb.source_type AS sourceType,
+        lb.order_type AS orderType,
+        lb.source_id AS sourceId,
+        lb.source_code AS sourceCode,
+        lb.outstock_id AS outstockId,
+        lb.outstock_code AS outstockCode,
+        lb.channel_id AS channelId,
+        lb.order_time AS orderTime,
+        lb.delivery_time AS deliveryTime,
+        lb.transport_no AS transportNo,
+        lb.to_country AS toCountry,
+        lbd.track_status AS trackStatus ,
+        lbd.track_no AS trackNo,
+        lbd.sign_time AS signTime,
+        lbd.track_query_mode AS trackQueryMode,
+        lc.name AS channelName,
+        lc.track_query_type AS trackQueryType,
+        lb.platform_code as platformCode,
+        lb.shipment_type as shipmentType
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        <where>
+            ${params.sqlMap.default}
+            and lb.is_deleted=false and lb.order_type in ('B2B','B2C')
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        lb.create_time DESC
+    </sql>
 
     <select id="listLogisticsBillVoBySourceIds" resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
         SELECT
@@ -102,267 +146,13 @@
     </select>
     <!--分页列表-->
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
-         SELECT
-             lbd.id,
-             lb.sales_platform AS salesPlatform,
-             lb.shop_id AS shopId,
-             lb.shop_name AS shopName,
-             lb.source_type AS sourceType,
-             lb.order_type AS orderType,
-             lb.source_id AS sourceId,
-             lb.source_code AS sourceCode,
-             lb.outstock_id AS outstockId,
-             lb.outstock_code AS outstockCode,
-             lb.channel_id AS channelId,
-             lb.order_time AS orderTime,
-             lb.delivery_time AS deliveryTime,
-             lb.transport_no AS transportNo,
-             lb.to_country AS toCountry,
-             lbd.track_status AS trackStatus ,
-             lbd.track_no AS trackNo,
-             lbd.sign_time AS signTime,
-             lbd.track_query_mode AS trackQueryMode,
-             lc.name AS channelName,
-             lb.platform_code as platformCode,
-             lb.shipment_type as shipmentType
-        FROM  logistics_bill lb
-        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
-        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
-        WHERE  lb.is_deleted=false
-        and lb.order_type in ('B2B','B2C')
-        <!--状态-->
-        <if test="statusList !=null and statusList.size>0">
-            AND lbd.track_status in
-            <foreach collection="statusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--物流单号-->
-        <if test="params.trackNoList !=null and params.trackNoList.size>0">
-            AND lbd.track_no in
-            <foreach collection="params.trackNoList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--订单号-->
-        <if test="params.orderNoList !=null and params.orderNoList.size>0">
-            AND lb.source_code in
-            <foreach collection="params.orderNoList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--发货类型-->
-        <if test="params.shipmentTypeList !=null and params.shipmentTypeList.size>0">
-            AND lb.shipment_type in
-            <foreach collection="params.shipmentTypeList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--平台订单号-->
-        <if test="params.platformCode != '' and params.platformCode != null">
-            and lb.platform_code ILIKE concat('%', #{params.platformCode}::text,'%')
-        </if>
-          <!--销售平台-->
-         <if test="params.salesPlatformList !=null and params.salesPlatformList.size>0">
-            AND lb.sales_platform in
-            <foreach collection="params.salesPlatformList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-         </if>
-        <!--需要排除的订单类型-->
-        <if test="params.excludeOrderTypeList !=null and params.excludeOrderTypeList.size>0">
-            AND lb.order_type not in
-            <foreach collection="params.excludeOrderTypeList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--订单类型-->
-        <if test="params.orderTypeList !=null and params.orderTypeList.size>0">
-            AND lb.order_type in
-            <foreach collection="params.orderTypeList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--店铺-->
-        <if test="params.shopIdList !=null and params.shopIdList.size>0">
-            AND lb.shop_id in
-            <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-
-        <!--下单时间-->
-        <if test="params.orderTimeList !=null and params.orderTimeList.size>0">
-            AND lb.order_time >= #{params.orderTimeList[0]} and (#{params.orderTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > lb.order_time
-        </if>
-
-        <!--发货时间-->
-        <if test="params.deliveryTimeList !=null and params.deliveryTimeList.size>0">
-            AND lb.delivery_time >= #{params.deliveryTimeList[0]} and (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > lb.delivery_time
-        </if>
-
-        <!--物流渠道-->
-        <if test="params.channelIdList !=null and params.channelIdList.size>0">
-            AND lb.channel_id in
-            <foreach collection="params.channelIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <!--包裹状态-->
-        <if test="params.trackStatusList !=null and params.trackStatusList.size>0">
-            AND lbd.track_status in
-            <foreach collection="params.trackStatusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        lb.create_time DESC
+         <include refid="pagingSql"/>
     </select>
 
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
-        SELECT
-            lbd.id,
-            lb.sales_platform AS salesPlatform,
-            lb.shop_id AS shopId,
-            lb.shop_name AS shopName,
-            lb.source_type AS sourceType,
-            lb.order_type AS orderType,
-            lb.source_id AS sourceId,
-            lb.source_code AS sourceCode,
-            lb.outstock_id AS outstockId,
-            lb.outstock_code AS outstockCode,
-            lb.channel_id AS channelId,
-            lb.order_time AS orderTime,
-            lb.delivery_time AS deliveryTime,
-            lb.transport_no AS transportNo,
-            lb.to_country AS toCountry,
-            lbd.track_status AS trackStatus ,
-            lbd.track_no AS trackNo,
-            lbd.sign_time AS signTime,
-            lbd.track_query_mode AS trackQueryMode,
-            lc.name AS channelName,
-            lb.platform_code as platformCode,
-            lb.shipment_type as shipmentType
-        FROM  logistics_bill lb
-        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
-        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
-        WHERE  lb.is_deleted=false
-        and lb.order_type in ('B2B','B2C')
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0">
-                AND lbd.id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </when>
-            <otherwise>
-                <!--状态-->
-                <if test="statusList !=null and statusList.size>0">
-                    AND lbd.track_status in
-                    <foreach collection="statusList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--订单号-->
-                <if test="params.orderNoList !=null and params.orderNoList.size>0">
-                    AND lb.source_code in
-                    <foreach collection="params.orderNoList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--发货类型-->
-                <if test="params.shipmentTypeList !=null and params.shipmentTypeList.size>0">
-                    AND lb.shipment_type in
-                    <foreach collection="params.shipmentTypeList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--平台订单号-->
-                <if test="params.platformCode != '' and params.platformCode != null">
-                    and lb.platform_code ILIKE concat('%', #{params.platformCode}::text,'%')
-                </if>
-                <!--物流单号-->
-                <if test="params.trackNoList !=null and params.trackNoList.size>0">
-                    AND lbd.track_no in
-                    <foreach collection="params.trackNoList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--销售平台-->
-                <if test="params.salesPlatformList !=null and params.salesPlatformList.size>0">
-                    AND lb.sales_platform in
-                    <foreach collection="params.salesPlatformList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--订单类型-->
-                <if test="params.orderTypeList !=null and params.orderTypeList.size>0">
-                    AND lb.order_type in
-                    <foreach collection="params.orderTypeList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--店铺-->
-                <if test="params.shopIdList !=null and params.shopIdList.size>0">
-                    AND lb.shop_id in
-                    <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-
-                <!--下单时间-->
-                <if test="params.orderTimeList !=null and params.orderTimeList.size>0">
-                    AND lb.order_time >= #{params.orderTimeList[0]} and (#{params.orderTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > lb.order_time
-                </if>
-
-                <!--发货时间-->
-                <if test="params.deliveryTimeList !=null and params.deliveryTimeList.size>0">
-                    AND lb.delivery_time >= #{params.deliveryTimeList[0]} and (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > lb.delivery_time
-                </if>
-
-                <!--物流渠道-->
-                <if test="params.channelIdList !=null and params.channelIdList.size>0">
-                    AND lb.channel_id in
-                    <foreach collection="params.channelIdList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--包裹状态-->
-                <if test="params.trackStatusList !=null and params.trackStatusList.size>0">
-                    AND lbd.track_status in
-                    <foreach collection="params.trackStatusList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-            </otherwise>
-        </choose>
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        lb.create_time DESC
-        limit 50000
+        <include refid="pagingSql"/>
+         limit 50000
     </select>
 
     <select id="getBaseByTrackNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$BaseDTO">
@@ -440,9 +230,10 @@
                lb.carrier_id as carrierId,
                lb.source_code as businessCode,
                lb.outstock_code as outstockCode,
+               lbd.track_no as trackNo,
                lbd.track_status as logisticsStatus,
         CASE WHEN lbd.track_no !=''    then
-        (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false and lt.content !='' order by lt.update_time desc limit 1) else '' end  as logisticsTrack ,
+        (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false and lt.content !='' order by lt.track_time desc limit 1) else '' end  as logisticsTrack ,
                lb.invoices_status as invoicesStatus,
                lbc.reconciliation_status as reconciliationStatus,
                lb.shipping_method as shippingMethod,

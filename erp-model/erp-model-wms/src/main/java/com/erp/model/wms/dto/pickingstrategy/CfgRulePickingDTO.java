@@ -117,6 +117,10 @@ public class CfgRulePickingDTO {
          */
         private String deliveryWarehouseId;
         /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
          * sku明细数据
          */
         private List<CfgExecutionDataDetailDTO> details;
@@ -148,5 +152,30 @@ public class CfgRulePickingDTO {
          * 来源明细id
          */
         private String sourceDetailId;
+    }
+
+    @Getter
+    @Setter
+    public static class CfgRulePickingInventoryDTO {
+
+        private String ruleId;
+
+        private String warehouseId;
+
+        private String warehouseAreaId;
+
+        private String skuId;
+
+        private String skuNo;
+
+        private String warehouseLocation;
+
+        private Integer qty;
+
+        private Integer priority;
+
+        private LocalDateTime updateTime;
+
+        private Integer index;
     }
 }

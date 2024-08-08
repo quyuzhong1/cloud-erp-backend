@@ -2,21 +2,18 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoReturnDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
-import com.erp.model.wms.dto.SoReturnNoticeDTO;
+import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.server.wms.query.SoReturnNoticeQueryHandler;
 import com.erp.server.wms.service.SoReturnNoticeService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,13 +25,16 @@ import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售退货通知单
  * @author Luo_WG
  * @since 2023-05-10
  */
+@Slf4j
 @RestController
 @LogSystemModule("销售退货通知单")
 @RequestMapping("/soReturnNotice")
@@ -192,7 +192,7 @@ public class SoReturnNoticeController extends BaseController {
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售退货通知单")
@@ -202,9 +202,23 @@ public class SoReturnNoticeController extends BaseController {
             menuCode = "wms:soReturnNotice:approve",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = soReturnNoticeService.approve(baseApproveParamDTO);
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoReturnNoticeEntity> entityList = soReturnNoticeService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoReturnNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"退货通知单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnNoticeService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("退货通知单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -221,9 +235,23 @@ public class SoReturnNoticeController extends BaseController {
             menuCode = "wms:soReturnNotice:disApprove",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnNoticeService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoReturnNoticeEntity> entityList = soReturnNoticeService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoReturnNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnNoticeService.disApprove(entity));
+            }catch (Exception e){
+                log.error("采购收货单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

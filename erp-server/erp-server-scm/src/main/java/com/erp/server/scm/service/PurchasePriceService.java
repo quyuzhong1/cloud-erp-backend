@@ -1,13 +1,17 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
+import com.erp.model.scm.entity.SalesDemandEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -94,20 +98,25 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * 审核
      * @author yl
      * @date 2023-03-27 12:29
-     * @param dto
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 16:18
-     * @param dto
-     * @param list
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return Boolean
      */
-    Boolean approveEnd (BaseApproveParamDTO dto,List<PurchasePriceEntity> list);
+    Boolean approveEnd (PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
      * 取消流程
@@ -195,10 +204,10 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
 
     /**
      * 反审核
-     * @param ids
+     * @param entity
      * @return
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(PurchasePriceEntity entity,List<PurchasePriceDetailEntity> detailEntityList,List<PurchasePriceChangeDetailEntity> changeDetailEntityList);
     /**
      * @description: 更新明细备注
      * @author Will

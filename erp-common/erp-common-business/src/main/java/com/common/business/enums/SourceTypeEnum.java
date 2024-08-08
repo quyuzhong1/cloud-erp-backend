@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 @NoArgsConstructor
@@ -66,7 +68,8 @@ public enum SourceTypeEnum {
     SUBCONTRACT_ISSUE("subcontractIssue", "委外发料单","subcontract_issue"),
     WAREHOUSE_AREA_INFO("warehouseAreaInfo", "库区","warehouse_area_info"),
     VIRTUAL_WAREHOUSE_ALLOCATION("virtualWarehouseAllocation", "分货单","virtual_warehouse_allocation"),
-
+    PICKING_LISTS_ADD("pickingListsAdd", "拣货单新增","picking_lists_add"),
+    PICKING_LISTS_SUBTRACT("pickingListsSubtract", "拣货单减少","picking_lists_subtract"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
@@ -252,5 +255,8 @@ public enum SourceTypeEnum {
 
     public static SourceTypeEnum getByCode(String code) {
         return Arrays.stream(SourceTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    }
+    public static List<String> pickingLists() {
+        return Arrays.asList(PICKING_LISTS_ADD.getCode(), PICKING_LISTS_SUBTRACT.getCode());
     }
 }

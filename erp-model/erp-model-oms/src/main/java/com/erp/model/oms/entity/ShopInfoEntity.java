@@ -190,7 +190,11 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
     @TableField("type")
     private String type;
-
+    /**
+     * VOEC税号
+     */
+    @TableField("voec_tax_no")
+    private String voecTaxNo;
 
     public static final String PLATFORM_DICT = "platform_dict";
 

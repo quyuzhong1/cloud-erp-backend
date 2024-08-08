@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -53,6 +54,7 @@ public class ProductDetailDTO implements Serializable {
     /**
      * 计划上市时间
      */
+//    @NotNull(message = "预计上市时间不能为空")
     private LocalDate planListingTime;
 
     /**

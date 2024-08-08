@@ -10,6 +10,12 @@ import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.OrderTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.UnitEnum;
 import com.common.business.enums.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -26,7 +32,6 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -45,6 +50,7 @@ import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,7 +74,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Resource
     private OperateLogService operateLogService;
-
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
 
@@ -389,12 +395,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public Boolean updateWeight(String soId,String id, BigDecimal weightByG) {
+    public Boolean updateWeight(String soId, String id, BigDecimal weightByG, String operation) {
         String msg = StrUtil.format("用户【{}】更新重量为{} ", UserContext.getDefaultLoginUser().getUserName(),weightByG+"g");
         if(!MathUtil.isValidNumber(weightByG,12)){
             throw new ServiceException("重量过大，整数最大值不能超过12位");
         }
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, "【组包称重】");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soId, operation);
         return lambdaUpdate()
                 .set(SoB2cLogisticsEntity::getWeight, weightByG)
                 .eq(SoB2cLogisticsEntity::getMainId, soId)
@@ -447,6 +453,21 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
         }
 
+    }
+
+    @Override
+    public void updateLogisticsBySoId(String soId, String trackNo) {
+        if (StrUtil.isNotBlank(soId)){
+            this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, soId).set(SoB2cLogisticsEntity::getTrackNo, trackNo).update();
+        }
+    }
+
+    @Override
+    public void updateTrackNoByTransportNo(List<LogisticsBillDTO.TrackDTO> trackDTOS) {
+        if (CollectionUtils.isEmpty(trackDTOS)){
+            return;
+        }
+        baseMapper.updateTrackNoByTransportNo(trackDTOS);
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

@@ -17,12 +17,12 @@ import java.util.List;
 public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
 
     /**
-    * 新增
-    * @author lrp
-    * @date: 2024-06-28
-    * @param dto
-    * @return
-    */
+     * 新增
+     * @author lrp
+     * @date: 2024-06-28
+     * @param dto
+     * @return
+     */
     BaseResultDTO.AddDTO addOrUpdate(CfgRuleOutDTO.CommonDTO dto);
 
     CfgRuleOutDTO.CommonDTO view();
@@ -63,4 +63,14 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
     List<CfgRuleOutDTO.CfgProductPackingDetail> getCfgProductPackingDetailByType(String type);
 
     Boolean matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto);
+
+    /**
+     * 匹配中转规则和仓库
+     * @author will
+     * @date 2024/7/23 14:07
+     * @param dto
+     * @return  CfgRuleOutDTO.MatchTransferResultDTO
+     */
+    CfgRuleOutDTO.MatchTransferResultDTO matchTransferAndWarehouse(CfgRuleOutDTO.MatchTransferDTO dto);
+
 }

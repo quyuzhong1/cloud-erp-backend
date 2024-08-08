@@ -113,24 +113,8 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         saveOrUpdateDmpSyncTask(entity);
         return entity;
     }
-
-    /**
-     * 批量保存
-     * @param dtos
-     * @return
-     */
-//    @Override
-//    @Transactional(rollbackFor = Exception.class)
-//    public List<DmpPushTaskEntity> saveTaskList(List<DmpPushTaskFeignDTO> dtos) {
-//        List<DmpPushTaskEntity> dmpPushTaskEntityList=new ArrayList<>();
-//        dtos.forEach(dto->{
-//            dmpPushTaskEntityList.add(dmpPushTaskService.saveTask(dto));
-//        });
-//        return dmpPushTaskEntityList;
-//    }
-
     @Override
-    public void sendTask(List<DmpPushTaskEntity> dmpPushTaskEntityList) {
+    public void sendTask(List<DmpPushTaskEntity> dmpPushTaskEntityList, Integer delayLevel) {
         if (CollectionUtils.isEmpty(dmpPushTaskEntityList)) {
             return;
         }
@@ -148,7 +132,13 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             String mqData = entity.getMqData();
             JSONObject jsonObject = JSONUtil.parseObj(mqData);
             jsonObject.set("dmpSyncTaskId",entity.getId());
-            SendResult result = mqProducerService.syncClassMsg(entity.getMqTopic(), entity.getMqTag(), JSONUtil.toJsonStr(jsonObject), entity.getSourceId());
+            // delayLevel=0 无延时
+            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(entity.getMqTopic(),
+                    entity.getMqTag(),
+                    JSONUtil.toJsonStr(jsonObject),
+                    entity.getSourceId(),
+                    delayLevel
+            );
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }

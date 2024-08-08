@@ -13,9 +13,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
 import com.erp.server.wms.query.WarehouseQueryHandler;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.service.WarehouseService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 仓库管理
@@ -32,6 +35,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-03-15
  */
+@Slf4j
 @RestController
 @LogSystemModule("仓库列表")
 @RequestMapping("/warehouse")
@@ -199,9 +203,23 @@ public class WarehouseController extends BaseController {
             menuCode = "wms:warehouse:approve",
             serviceClass = WarehouseService.class,
             keyIdName = "id")
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = warehouseService.approve(dto);
-        return result == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<WarehouseEntity> entityList = warehouseService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            WarehouseEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"仓库记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(warehouseService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("仓库审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -219,9 +237,23 @@ public class WarehouseController extends BaseController {
             menuCode = "wms:warehouse:disApprove",
             serviceClass = WarehouseService.class,
             keyIdName = "id")
-    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = warehouseService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<WarehouseEntity> entityList = warehouseService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            WarehouseEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"仓库记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(warehouseService.disApprove(entity));
+            }catch (Exception e){
+                log.error("仓库反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

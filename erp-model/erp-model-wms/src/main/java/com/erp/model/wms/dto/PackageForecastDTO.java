@@ -191,6 +191,12 @@ public class PackageForecastDTO implements Serializable {
          *
          */
         private String minPackageHandoverStatusName;
+
+        /**
+         * 出库状态名
+         */
+        private String outstockStatusName;
+
     }
 
     /**
@@ -214,6 +220,11 @@ public class PackageForecastDTO implements Serializable {
          * 编号
          */
         private String code;
+
+        /**
+         *中转单单号
+         */
+        private String transferDeclareCode;
 
         /**
          *第三方交接单号
@@ -294,6 +305,11 @@ public class PackageForecastDTO implements Serializable {
          * 交接状态名
          */
         private String handoverStatusName;
+
+        /**
+         * 出库状态名
+         */
+        private String outstockStatusName;
 
         /**
          * 最新失败原因

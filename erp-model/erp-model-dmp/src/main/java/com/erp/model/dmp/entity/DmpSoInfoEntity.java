@@ -60,12 +60,12 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 作废状态（false未作废，true已作废）
     */
     @TableField("invalid_status")
-    private Boolean invalidStatus;
+    private Boolean invalidStatus = Boolean.FALSE;
     /**
      * 是否取消（false未取消，true已取消）
      */
     @TableField("is_cancel")
-    private Boolean isCancel;
+    private Boolean isCancel = Boolean.FALSE;
     /**
     * 订单状态 waitSubmit.待提交 approveIng.审核中 reject.审核不通过 approve.已审核
     */
@@ -110,7 +110,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 支付时间
     */
     @TableField("pay_time")
-    private LocalDateTime payTime;
+    private LocalDateTime payTime = null;
     /**
     * 付款状态 （false未付款，true已付款）
     */
@@ -215,7 +215,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 物流类型
     */
     @TableField("logistic_type")
-    private String logisticType;
+    private String logisticType = "";
     /**
     * 渠道id
     */

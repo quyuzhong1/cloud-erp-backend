@@ -102,7 +102,7 @@ public class DmpOutputKingdeeOrderReturnRocketMQTaskHandler extends DmpOutputRoc
     	resultEntity.setFSaleOrgName(entity.getSaleOrgName());
     	resultEntity.setFSaledeptNumber(entity.getSaledeptNumber());
     	resultEntity.setFSaledeptName(entity.getSaledeptName());
-    	resultEntity.setFDate(LocalDateUtil.formatTime(entity.getReturnTime(), "yyyy-MM-dd'T'HH:mm:ss.SSS"));
+    	resultEntity.setFDate(LocalDateUtil.formatTime(entity.getBillDate(), "yyyy-MM-dd'T'HH:mm:ss.SSS"));
     	resultEntity.setFEThirdBillNo(entity.getThirdBillNo());
     	resultEntity.setFDocumentStatus(entity.getStatus());
         return resultEntity;

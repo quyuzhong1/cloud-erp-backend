@@ -1,6 +1,7 @@
 package com.sdk.tms.track123.handler;
 
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -8,6 +9,7 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractLogisticsTrackHandler;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -16,6 +18,7 @@ import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
+import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.sdk.tms.track123.dto.PlatformTrack123TrackDTO;
@@ -113,8 +116,31 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
     private ResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {
         if (CollectionUtils.isNotEmpty(records)) {
             String token = cfgAppClient.getClientSecret();
+            //根据配置进行获取
+            List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
+            //根据配置进行组装注册数据
+            records.forEach(updateTrackDTO -> {
+                if (TrackQueryTypeEnum.TRACK_NO.getCode().equals(updateTrackDTO.getTrackQueryType()) && StrUtil.isNotBlank(updateTrackDTO.getTrackNo())){
+                    logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
+                            .trackNo(updateTrackDTO.getTrackNo())
+                            .phoneSuffix(updateTrackDTO.getTelNumber())
+                            .build());
+
+                }else {
+                    String transportNo = updateTrackDTO.getTransportNo();
+                    if (StrUtil.isNotBlank(transportNo)){
+                        logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
+                                .trackNo(transportNo)
+                                .phoneSuffix(updateTrackDTO.getTelNumber())
+                                .build());
+                    }
+                }
+            });
+            if (CollectionUtils.isEmpty(logisticsRegisterVOS)){
+                return null;
+            }
             TrackRequest trackRequest = TrackRequest.builder()
-                    .trackNos(records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo).collect(Collectors.toList()))
+                    .trackNos(logisticsRegisterVOS.stream().map(LogisticsRegisterVO::getTrackNo).distinct().collect(Collectors.toList()))
                     .cursor("")
                     .queryPageSize(100)
                     .build();

@@ -198,4 +198,5 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * 按仓位导出数据
      */
     List<InventoryDTO.PagingViewDTO> exportByLocation(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList);
+
 }
