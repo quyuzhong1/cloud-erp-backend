@@ -5317,9 +5317,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productPackEntity.setProductWidth(width);
         productPackEntity.setProductHeight(height);
         productPackEntity.setGrossWeight(weight);
-        productPackService.updateById(productPackEntity);
-        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
-                .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent));
+        boolean result = productPackService.updateById(productPackEntity);
+        if(result){
+            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
+                    .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent));
+        }
 
         return "操作成功";
     }
