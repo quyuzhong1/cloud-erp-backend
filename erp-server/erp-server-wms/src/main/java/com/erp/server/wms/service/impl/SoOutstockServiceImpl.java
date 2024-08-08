@@ -2768,6 +2768,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     soB2cFeign.deleteDetailError(deleteDTO);
                 }
             } catch (Exception e) {
+                log.warn("自动生成销售出库单失败：dto={}, error={}", JSONUtil.toJsonStr(dto), ExceptionUtil.stacktraceToString(e));
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setParamJson(JSONUtil.toJsonStr(genDTO));
