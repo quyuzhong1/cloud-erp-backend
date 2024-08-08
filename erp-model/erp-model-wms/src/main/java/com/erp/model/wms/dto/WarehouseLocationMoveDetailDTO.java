@@ -253,6 +253,11 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         @NotBlank(message = "取货仓位不能为空")
         @Size(max = 50, message = "取货仓位最大长度不能超过50位")
         private String outWarehouseLocation;
+        /**
+         * 取货仓位库存状态
+         */
+        @NotBlank(message = "取货仓位库存状态不能为空")
+        private String outInventoryStatus;
 
         /**
          * 上架仓位
@@ -260,6 +265,12 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         @NotBlank(message = "上架仓位不能为空")
         @Size(max = 50, message = "上架仓位最大长度不能超过50位")
         private String inWarehouseLocation;
+
+        /**
+         * 上架仓位库存状态
+         */
+        @NotBlank(message = "上架仓位库存状态不能为空")
+        private String inInventoryStatus;
 
         /**
          * 移动数量

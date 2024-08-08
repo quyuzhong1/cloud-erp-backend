@@ -640,7 +640,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-
+        if (SourceTypeEnum.PICKING_LISTS_ADD.getCode().equals(entity.getSourceType()) || SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode().equals(entity.getSourceType())){
+            throw new ServiceException(ApiError.ERROR_99135);
+        }
         return true;
     }
 
@@ -764,7 +766,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, WarehouseLocationMoveEntity entity) {
+    public Boolean  approveEnd(ApproveOneDTO dto, WarehouseLocationMoveEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
@@ -776,6 +778,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             WarehouseLocationMoveEntity infoEntity = this.getById(entity.getId());
             List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(infoEntity.getId()));
             List<TransferDTO> transferDTOList = new ArrayList<>();
+            List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
             for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
                 TransferDTO transferDTO = new TransferDTO();
                 transferDTO.setSourceType(InventorySourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
@@ -797,9 +800,14 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 //            transferDTO.setWarehouseLocation("");
                 transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
                 transferDTOList.add(transferDTO);
+                TransactionRuleDTO current = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.getByCode(detailEntity.getOutInventoryStatus()), InventoryModeEnum.OUT_STOCK);
+                current.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+                transactionRuleDTOList.add(current);
+                TransactionRuleDTO target = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET,InventoryStatusEnum.getByCode(detailEntity.getOutInventoryStatus()) , InventoryModeEnum.IN_STOCK);
+                target.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+                transactionRuleDTOList.add(target);
             }
 
-            List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
             if (SourceTypeEnum.PICKING_LISTS_ADD.getCode().equals(entity.getSourceType())) {
                 InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
                 inventoryTransferDTO.setParamList(transferDTOList);
@@ -812,12 +820,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 inventoryTransCoreService.approveByType(inventoryTransferDTO);
             }else {
                 InventoryTransferRuleDTO ruleDTO = new InventoryTransferRuleDTO();
-                TransactionRuleDTO current = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK);
-                current.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
-                transactionRuleDTOList.add(current);
-                TransactionRuleDTO target = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK);
-                target.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
-                transactionRuleDTOList.add(target);
                 ruleDTO.setParamList(transferDTOList);
                 ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
                 ruleDTO.setRules(transactionRuleDTOList);
