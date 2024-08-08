@@ -10,9 +10,7 @@ import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
@@ -375,6 +373,7 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 明细信息
          */
+        @Dict
         private List<DetailViewDTO> detailList;
     }
 
@@ -924,5 +923,20 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 取出仓位名称
          */
         private String outWarehouseLocationName;
+    }
+
+    @EqualsAndHashCode
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    public static class Group {
+        /**
+         * 取货仓位库存状态
+         */
+        private String outInventoryStatus;
+        /**
+         * 上架仓位库存状态
+         */
+        private String inInventoryStatus;
     }
 }
