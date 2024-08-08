@@ -368,4 +368,9 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 .shippingCost(dmpSoInfoEntity.getShippingAmount())
                 .build();
     }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("platformCode");
+    }
 }

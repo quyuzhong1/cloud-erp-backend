@@ -1,6 +1,8 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -82,6 +84,11 @@ public class DmpOutputGoodCangInventoryRocketMQTaskHandler extends DmpOutputRock
     	platformInventoryDTO.setDownloadTime(LocalDateTime.now());
     	
         return platformInventoryDTO;
+    }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("platformWarehouseCode" , "productSku");
     }
 
 }

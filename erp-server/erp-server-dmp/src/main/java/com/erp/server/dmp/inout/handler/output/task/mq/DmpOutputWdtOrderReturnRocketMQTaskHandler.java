@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -147,5 +148,10 @@ public class DmpOutputWdtOrderReturnRocketMQTaskHandler extends DmpOutputRocketM
             orderItemList.add(itemEntity);
         }
         return orderItemList;
+    }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("thirdCode");
     }
 }

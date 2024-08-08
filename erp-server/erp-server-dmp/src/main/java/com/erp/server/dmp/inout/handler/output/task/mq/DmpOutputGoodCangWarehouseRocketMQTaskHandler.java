@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -85,4 +86,8 @@ public class DmpOutputGoodCangWarehouseRocketMQTaskHandler extends DmpOutputRock
         return warehouse;
     }
 
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("warehouseCode");
+    }
 }

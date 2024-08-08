@@ -3,7 +3,9 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -47,6 +49,7 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 		
 		List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
 		
+		List<String> sourceCodeKeys = this.getSourceCodeKeys();
 		for(Map.Entry<String, String> pushJsonData : pushJsonDataMap.entrySet()) {
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
 			String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
@@ -58,6 +61,15 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 			JSONObject parseObject = JSON.parseObject(value);
 			parseObject.put("dmpOutputTaskRecordId", id);
 			parseObject.put("dmpOutputTaskRecordDataId", key);
+			if(CollUtil.isNotEmpty(sourceCodeKeys)) {
+				dmpOutputTaskRecordEntity.setSourceCode(sourceCodeKeys.stream().map(s -> {
+					String string = parseObject.getString(s);
+					if(string == null) {
+						string = "";
+					}
+					return string;
+				}).collect(Collectors.joining("_")));
+			}
 			dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(parseObject));
 			dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
 			dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
@@ -77,4 +89,8 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 	
 	
 	public abstract Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse);
+	
+	protected List<String> getSourceCodeKeys() {
+		return null;
+	}
 }
