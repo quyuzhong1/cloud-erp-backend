@@ -910,7 +910,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             BeanMapperUtils.copy(paramDTO,resultDTO);
             //实体仓可用库存
             Integer warehouseUsableQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()) && StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()))
-                    .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).findFirst().orElse(MathUtil.ZERO);
+                    .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
             resultDTO.setWarehouseUsableQty(warehouseUsableQty);
             //实体仓已分配库存
             Integer distributionQty = warehouseInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()))
