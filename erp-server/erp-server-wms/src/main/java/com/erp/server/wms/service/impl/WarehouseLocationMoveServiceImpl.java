@@ -779,7 +779,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(infoEntity.getId()));
 
             List<TransferDTO> transferDTOList = new ArrayList<>();
-            List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
             for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
                 TransferDTO transferDTO = new TransferDTO();
                 transferDTO.setSourceType(InventorySourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
@@ -839,6 +838,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                         transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
                         transferNewDTOList.add(transferDTO);
                     }
+                    List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
                     TransactionRuleDTO current = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.getByCode(entry.getKey().getOutInventoryStatus()), InventoryModeEnum.OUT_STOCK);
                     current.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
                     transactionRuleDTOList.add(current);
@@ -937,6 +937,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
             detailViewDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, detailViewDTO.getWarehouseId(), detailViewDTO.getInWarehouseLocation()).getName());
             detailViewDTO.setOutWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, detailViewDTO.getWarehouseId(), detailViewDTO.getOutWarehouseLocation()).getName());
+            detailViewDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(detailViewDTO.getInInventoryStatus()));
+            detailViewDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(detailViewDTO.getOutInventoryStatus()));
             //设置库存
             List<InventoryDTO.InventoryViewQtyDTO> inventoryQtys = inventoryService.getInventoryQty(Collections.singletonList(inventoryBySkuIdAndWarehouseDTO));
             inventoryQtys.forEach(inventoryQtyDTO -> {

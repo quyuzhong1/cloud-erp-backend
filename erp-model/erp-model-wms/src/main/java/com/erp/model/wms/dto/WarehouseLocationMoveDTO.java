@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Objects;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
@@ -373,7 +374,6 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 明细信息
          */
-        @Dict
         private List<DetailViewDTO> detailList;
     }
 
@@ -772,13 +772,19 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 取货仓位库存状态
          */
-        @Dict(enumClass = InventoryStatusEnum.class)
         private String outInventoryStatus;
+        /**
+         * 取货仓位库存状态名字
+         */
+        private String outInventoryStatusName;
         /**
          * 上架仓位库存状态
          */
-        @Dict(enumClass = InventoryStatusEnum.class)
         private String inInventoryStatus;
+        /**
+         * 上架仓位库存状态名字
+         */
+        private String inInventoryStatusName;
         /**
          * 产品明细数量
          */
