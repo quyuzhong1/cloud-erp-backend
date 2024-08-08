@@ -134,4 +134,12 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @return List<BomReturnDTO>
      */
     List<VirtualInventoryDTO.BomReturnDTO> listBomVirtual(VirtualInventoryDTO.BomParamDTO paramDTO);
+    /**
+     * SKU可用库存
+     * @author will
+     * @date 2024/8/8 18:28
+     * @param paramList
+     * @return SkuReturnDTO
+     */
+    List<VirtualInventoryDTO.SkuReturnDTO> listSkuVirtualInventoryQty(List<VirtualInventoryDTO.BomParamDTO> paramList);
 }

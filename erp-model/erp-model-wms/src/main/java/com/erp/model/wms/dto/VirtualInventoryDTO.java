@@ -602,12 +602,41 @@ public class VirtualInventoryDTO implements Serializable {
          * 虚拟仓可用库存
          */
         private Integer virtualUsableQty;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuReturnDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
 
         /**
-         * 虚拟仓可用库存(父级)
+         * skuNo
          */
-        private Integer parentVirtualUsableQty;
+        private String skuNo;
+
+        /**
+         * 实体仓可用库存
+         */
+        private Integer usableQty;
+
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
     }
+
 
     @Data
     @NoArgsConstructor

@@ -102,4 +102,17 @@ public class VirtualInventoryController extends BaseController {
         return success(virtualInventoryService.listBomVirtual(paramDTO));
     }
 
+    /**
+     * SKU可用库存
+     * @author will
+     * @date 2024/8/8 18:26
+     * @param paramList
+     * @return ApiResult<SkuReturnDTO>
+     */
+    @PostMapping(value = "/listSkuVirtualInventoryQty")
+    public ApiResult<List<VirtualInventoryDTO.SkuReturnDTO>> listSkuVirtualInventoryQty(@RequestBody @Validated List<VirtualInventoryDTO.BomParamDTO> paramList) {
+        return success(virtualInventoryService.listSkuVirtualInventoryQty(paramList));
+    }
+
+
 }

@@ -21,9 +21,11 @@ import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
@@ -413,17 +415,84 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             returnDTO.setWarehouseId(bomParamDTO.getWarehouseId());
             returnDTO.setVirtualWarehouseId(bomParamDTO.getVirtualWarehouseId());
             returnDTO.setVirtualUsableQty(childVirtualUsableQty);
-
-            //针对父级可用数量
-            double floor = Math.floor(childVirtualUsableQty / childrenSkuDTO.getQuantity());
-            Integer parentVirtualUsableQty = Integer.valueOf((int) floor);
-            returnDTO.setParentVirtualUsableQty(parentVirtualUsableQty);
             resultList.add(returnDTO);
         }
-        if (CollectionUtils.isNotEmpty(resultList)) {
+        return resultList;
+    }
+
+    @Override
+    public List<VirtualInventoryDTO.SkuReturnDTO> listSkuVirtualInventoryQty(List<VirtualInventoryDTO.BomParamDTO> paramList) {
+        List<VirtualInventoryDTO.SkuReturnDTO> resultList = new ArrayList<>();
+        //SKU
+        List<String> skuIdList = paramList.stream().map(VirtualInventoryDTO.BomParamDTO::getSkuId).distinct().collect(Collectors.toList());
+        //仓库
+        List<String> warehouseIdList = paramList.stream().map(VirtualInventoryDTO.BomParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        //虚拟仓库
+        List<String> virtualWarehouseIdList = paramList.stream().map(VirtualInventoryDTO.BomParamDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
+        if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+            List<String> bomSkuIdList = bomChildrenList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getParentSkuId())).distinct().collect(Collectors.toList());
+            skuIdList.addAll(bomSkuIdList);
+        }
+        //虚拟仓库存
+        VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
+        paramDTO.setWarehouseIdList(warehouseIdList);
+        paramDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
+        paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setSkuIdList(skuIdList);
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = this.listInventoryQty(paramDTO);
+
+
+        InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+        skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+        skuInventoryDTO.setSkuIdList(skuIdList);
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(skuInventoryDTO);
+
+        for (VirtualInventoryDTO.BomParamDTO bomParamDTO : paramList) {
+            VirtualInventoryDTO.SkuReturnDTO skuReturnDTO = new VirtualInventoryDTO.SkuReturnDTO();
+            BeanMapperUtils.copy(bomParamDTO,skuReturnDTO);
+
+            //实体仓可用数量
+            Integer usableQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomParamDTO.getSkuId())
+                    && StrUtil.equals(obj.getWarehouseId(), bomParamDTO.getWarehouseId()))
+                    .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
+            skuReturnDTO.setUsableQty(usableQty);
+
+            //虚拟仓可用数量
+            Integer virtualWarehouseUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), bomParamDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(), bomParamDTO.getSkuId()) && StrUtil.equals(obj.getVirtualWarehouseId(), bomParamDTO.getVirtualWarehouseId()))
+                    .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
+            skuReturnDTO.setVirtualUsableQty(virtualWarehouseUsableQty);
+
+            //bom信息
+            List<BomChildrenSkuDTO> bomList = bomChildrenList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), bomParamDTO.getSkuId()) && StrUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(bomList)){
+                resultList.add(skuReturnDTO);
+                continue;
+            }
+            List<Integer> parentUsableQtyList = new ArrayList<>();
+            for (BomChildrenSkuDTO skuDTO : bomList) {
+                //子件可用库存
+                Integer childVirtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuDTO.getSkuId())
+                                && StrUtil.equals(obj.getVirtualWarehouseId(), bomParamDTO.getVirtualWarehouseId())
+                                && StrUtil.equals(obj.getWarehouseId(), bomParamDTO.getWarehouseId())
+                                && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
+                        )
+                        .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
+                        .findFirst().orElse(MathUtil.ZERO);
+                //针对父级可用数量
+                double floor = Math.floor(childVirtualUsableQty / skuDTO.getQuantity());
+                Integer parentUsableQty = Integer.valueOf((int) floor);
+                parentUsableQtyList.add(parentUsableQty);
+            }
             //bom最小可用数
-            Integer bomUsableQty = resultList.stream().min(Comparator.comparing(VirtualInventoryDTO.BomReturnDTO::getParentVirtualUsableQty)).map(VirtualInventoryDTO.BomReturnDTO::getParentVirtualUsableQty).get();
-            resultList.forEach(obj -> obj.setParentVirtualUsableQty(bomUsableQty));
+            Integer bomUsableQty = parentUsableQtyList.stream().min(Comparator.comparing(obj -> obj)).get();
+            skuReturnDTO.setVirtualUsableQty(bomUsableQty);
+            resultList.add(skuReturnDTO);
         }
         return resultList;
     }
