@@ -647,7 +647,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
          * 5. 加工单：组装、拆卸
          *
          */
-        List<String> typeList = Arrays.asList(InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode(),InventorySourceTypeEnum.PURCHASE_RETURN_ORDER.getCode()
+        List<String> typeList = Arrays.asList(InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode(),InventorySourceTypeEnum.OTHER_INSTOCK.getCode(),InventorySourceTypeEnum.PURCHASE_RETURN_ORDER.getCode()
                 ,InventorySourceTypeEnum.RECEIVE_MATERIAL.getCode(),InventorySourceTypeEnum.RETURN_MATERIAL.getCode(),InventorySourceTypeEnum.MACHINE_INFO.getCode());
         //虚拟库存校验
         if (InventoryStatusEnum.USABLE.equals(status) && (typeList.contains(sourceTypeEnum.getCode()) || Arrays.asList(InventoryBusinessTypeEnum.DIRECT_ALLOCATE.getCode(),InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode()).contains(businessType.getCode()))){
@@ -657,7 +657,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             //仓库可用库存
             Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(warehouseId, skuId);
             log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",warehouseDetail.getName(),skuNo,virtualQty,usableInventoryTotal);
-            if (qty > usableInventoryTotal - virtualQty) {
+            if (Math.abs(qty) > usableInventoryTotal - virtualQty) {
                 ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,virtualQty,usableInventoryTotal - virtualQty);
             }
         }
