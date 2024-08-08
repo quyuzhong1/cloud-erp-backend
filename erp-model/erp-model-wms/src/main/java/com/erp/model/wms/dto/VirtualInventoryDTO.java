@@ -567,7 +567,6 @@ public class VirtualInventoryDTO implements Serializable {
         /**
          * 虚拟仓库id
          */
-        @NotBlank(message = "虚拟仓库不能为空")
         private String virtualWarehouseId;
         /**
          * skuId

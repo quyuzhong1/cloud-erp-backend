@@ -463,6 +463,12 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                     .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
             skuReturnDTO.setUsableQty(usableQty);
 
+            //无虚拟仓则直接返回
+            if (StrUtil.isBlank(bomParamDTO.getVirtualWarehouseId())) {
+                resultList.add(skuReturnDTO);
+                continue;
+            }
+
             //虚拟仓可用数量
             Integer virtualWarehouseUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), bomParamDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(), bomParamDTO.getSkuId()) && StrUtil.equals(obj.getVirtualWarehouseId(), bomParamDTO.getVirtualWarehouseId()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
