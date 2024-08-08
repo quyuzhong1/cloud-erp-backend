@@ -283,6 +283,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
                     .filter(req -> req.getParentSkuId().equals(handleListDTO.getSkuId())
                             && req.getBomVersion().equals(handleListDTO.getBomVersion())
+                            && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType())
                     ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 handleListDTO.setIsCombination(Boolean.TRUE);
