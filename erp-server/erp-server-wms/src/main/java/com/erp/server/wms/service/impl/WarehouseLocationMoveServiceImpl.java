@@ -803,7 +803,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 TransactionRuleDTO current = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.getByCode(detailEntity.getOutInventoryStatus()), InventoryModeEnum.OUT_STOCK);
                 current.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
                 transactionRuleDTOList.add(current);
-                TransactionRuleDTO target = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET,InventoryStatusEnum.getByCode(detailEntity.getOutInventoryStatus()) , InventoryModeEnum.IN_STOCK);
+                TransactionRuleDTO target = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET,InventoryStatusEnum.getByCode(detailEntity.getInInventoryStatus()) , InventoryModeEnum.IN_STOCK);
                 target.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
                 transactionRuleDTOList.add(target);
             }
