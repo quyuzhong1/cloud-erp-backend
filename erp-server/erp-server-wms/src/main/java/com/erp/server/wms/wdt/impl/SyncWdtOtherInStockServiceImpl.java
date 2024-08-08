@@ -59,11 +59,11 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
                 }
             }
         }
-        List<CreateOtherStockinRequest.GoodsList> handlerGoodsList = super.handleGoodsList(goodsList);
+//        List<CreateOtherStockinRequest.GoodsList> handlerGoodsList = super.handleGoodsList(goodsList);
 
         request.setWarehouseNo(thirdWarehouseCode);
         request.setisCheck(Boolean.TRUE);
-        request.setGoodsList(handlerGoodsList);
+        request.setGoodsList(goodsList);
         request.setSourceId(outerCode);
         request.setOperateCode(operateCode);
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());

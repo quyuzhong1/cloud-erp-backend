@@ -155,6 +155,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
     private DmpPushWdtFeign dmpPushWdtFeign;
+    @Resource
+    private AbstractWdtService abstractWdtService;
 
 
     @Override
@@ -1179,8 +1181,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             goods.setPositionNo(split.length > 1 ? split[1] : "");
             goodsList.add(goods);
         });
-
-        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherInstockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, true);
+        List<CreateOtherStockinRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(goodsList);
+        List<CreateOtherStockinRequest.GoodsList> skuGroupGoodsList = syncWdtOtherInstockService.sumBySkuAndPositionNo(bomSplitGoodsList);
+        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherInstockService.generateTask(skuGroupGoodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, true);
         List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -1199,7 +1202,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         addDTO.setWarehouseId(entity.getWarehouseId());
         addDTO.setThirdWarehouseCode(thirdWarehouseCode);
         addDTO.setOperateType(operateCode);
-        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(goodsList, DmpPushWdtDetailDTO.class);
+        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(skuGroupGoodsList, DmpPushWdtDetailDTO.class);
         addDTO.setDetailDTOList(detailDTOList);
         dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
     }
@@ -1242,7 +1245,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
         //保存任务
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherOutStockService.generateTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, true);
+        List<CreateOtherStockoutRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(goodsList);
+        List<CreateOtherStockoutRequest.GoodsList> skuGroupGoodsList = syncWdtOtherOutStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
+        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherOutStockService.generateTask(skuGroupGoodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, true);
         List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -1261,7 +1266,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         addDTO.setWarehouseId(entity.getWarehouseId());
         addDTO.setThirdWarehouseCode(thirdWarehouseCode);
         addDTO.setOperateType(operateCode);
-        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(goodsList, DmpPushWdtDetailDTO.class);
+        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(skuGroupGoodsList, DmpPushWdtDetailDTO.class);
         addDTO.setDetailDTOList(detailDTOList);
         dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
     }

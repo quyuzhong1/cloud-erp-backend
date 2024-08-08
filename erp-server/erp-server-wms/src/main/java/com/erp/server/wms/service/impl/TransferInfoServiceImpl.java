@@ -164,6 +164,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
     private DmpPushWdtFeign dmpPushWdtFeign;
+    @Resource
+    private AbstractWdtService abstractWdtService;
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -577,7 +579,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 outGoodsList.add(outGoods);
             }
             String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-            List<CreateOtherStockoutRequest.GoodsList> goodsLists = syncWdtOtherOutStockService.sumBySkuAndPositionNo(outGoodsList);
+            List<CreateOtherStockoutRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(outGoodsList);
+            List<CreateOtherStockoutRequest.GoodsList> goodsLists = syncWdtOtherOutStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
             String thirdWarehouseCode = thirdWarehouseMap.get(warehouseId);
             DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherOutStockService.generateTask(goodsLists, operateCode, entity.getCode(), warehouseId, outCode, thirdWarehouseCode, false);
             unSaveTaskList.add(outUnSaveTask);
@@ -597,47 +600,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 inGoodsList.add(inGoods);
             }
             String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-            List<CreateOtherStockinRequest.GoodsList> goodsLists = syncWdtOtherInStockService.sumBySkuAndPositionNo(inGoodsList);
+            List<CreateOtherStockinRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(inGoodsList);
+            List<CreateOtherStockinRequest.GoodsList> goodsLists = syncWdtOtherInStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
             String thirdWarehouseCode = thirdWarehouseMap.get(warehouseId);
             DmpPushTaskFeignDTO inUnSaveTask = syncWdtOtherInStockService.generateTask(goodsLists, operateCode, entity.getCode(), warehouseId, inCode, thirdWarehouseCode, false);
             unSaveTaskList.add(inUnSaveTask);
             DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity, operateCode, warehouseId, inCode, thirdWarehouseCode, goodsLists, SourceTypeEnum.OTHER_INSTOCK);
             wdtDtoList.add(addDTO);
         }
-
-        /*for (TransferInfoDetailEntity dto : transferDetailList) {
-            //调出仓转化为其他出库单
-            if (thirdWarehouseMap.containsKey(dto.getOutWarehouseId())) {
-                CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
-                outGoods.setSpecNo(dto.getSkuNo());
-                outGoods.setNum(BigDecimal.valueOf(dto.getQty()));
-                outGoods.setPositionNo(StringUtils.isNotBlank(dto.getOutWarehouseLocation()) ? dto.getOutWarehouseLocation() : "");
-
-                String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-                String thirdWarehouseCode = thirdWarehouseMap.get(dto.getOutWarehouseId());
-                DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherOutStockService.generateTask(Collections.singletonList(outGoods), operateCode, entity.getCode(), dto.getId(), outCode, thirdWarehouseCode, false);
-                unSaveTaskList.add(outUnSaveTask);
-
-                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockOutInterim(entity, operateCode, dto.getOutWarehouseId(), outCode, thirdWarehouseCode, outGoods);
-                wdtDtoList.add(addDTO);
-            }
-
-            //调入仓转换为其他入库单
-            if (thirdWarehouseMap.containsKey(dto.getInWarehouseId())) {
-                CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
-                inGoods.setSpecNo(dto.getSkuNo());
-                inGoods.setNum(BigDecimal.valueOf(dto.getQty()));
-                inGoods.setPositionNo(StringUtils.isNotBlank(dto.getInWarehouseLocation()) ? dto.getInWarehouseLocation() : "");
-
-                String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-                String thirdWarehouseCode = thirdWarehouseMap.get(dto.getInWarehouseId());
-                DmpPushTaskFeignDTO inUnSaveTask = syncWdtOtherInStockService.generateTask(Collections.singletonList(inGoods), operateCode, entity.getCode(), dto.getId(), inCode, thirdWarehouseCode, false);
-                unSaveTaskList.add(inUnSaveTask);
-
-                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity, operateCode, dto.getInWarehouseId(), inCode, thirdWarehouseCode, inGoods);
-                wdtDtoList.add(addDTO);
-            }
-        }*/
 
         List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(unSaveTaskList);
 
@@ -693,7 +663,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 outGoodsList.add(outGoods);
             }
             String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-            List<CreateOtherStockoutRequest.GoodsList> goodsLists = syncWdtOtherOutStockService.sumBySkuAndPositionNo(outGoodsList);
+            List<CreateOtherStockoutRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(outGoodsList);
+            List<CreateOtherStockoutRequest.GoodsList> goodsLists = syncWdtOtherOutStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
             String thirdWarehouseCode = thirdWarehouseMap.get(warehouseId);
             DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherOutStockService.generateTask(goodsLists, operateCode, entity.getCode(), warehouseId, outCode, thirdWarehouseCode, false);
             unSaveTaskList.add(outUnSaveTask);
@@ -714,7 +685,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 inGoodsList.add(inGoods);
             }
             String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-            List<CreateOtherStockinRequest.GoodsList> goodsLists = syncWdtOtherInStockService.sumBySkuAndPositionNo(inGoodsList);
+            List<CreateOtherStockinRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(inGoodsList);
+            List<CreateOtherStockinRequest.GoodsList> goodsLists = syncWdtOtherInStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
             String thirdWarehouseCode = thirdWarehouseMap.get(warehouseId);
             DmpPushTaskFeignDTO inUnSaveTask = syncWdtOtherInStockService.generateTask(goodsLists, operateCode, entity.getCode(), warehouseId, inCode, thirdWarehouseCode, false);
             unSaveTaskList.add(inUnSaveTask);

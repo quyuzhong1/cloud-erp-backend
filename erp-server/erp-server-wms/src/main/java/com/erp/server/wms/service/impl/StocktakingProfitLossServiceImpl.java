@@ -141,6 +141,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
     private DmpPushWdtFeign dmpPushWdtFeign;
+    @Resource
+    private AbstractWdtService abstractWdtService;
     /**
      * tab list
      *
@@ -589,7 +591,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 outGoodsList.add(outGoods);
             }
             String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-            List<CreateOtherStockoutRequest.GoodsList> goodsLists = syncWdtOtherOutStockService.sumBySkuAndPositionNo(outGoodsList);
+            List<CreateOtherStockoutRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(outGoodsList);
+            List<CreateOtherStockoutRequest.GoodsList> goodsLists = syncWdtOtherOutStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
             DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherOutStockService.generateTask(goodsLists, operateCode, entity.getCode(), warehouseId, outerCode, thirdWarehouseCode, false);
             unSaveTaskList.add(outUnSaveTask);
             //生成中间表数据
@@ -673,43 +676,14 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 inGoodsList.add(inGoods);
             }
             String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-            List<CreateOtherStockinRequest.GoodsList> goodsLists = syncWdtOtherInStockService.sumBySkuAndPositionNo(inGoodsList);
+            List<CreateOtherStockinRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(inGoodsList);
+            List<CreateOtherStockinRequest.GoodsList> goodsLists = syncWdtOtherInStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
             DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherInStockService.generateTask(goodsLists, operateCode, entity.getCode(), warehouseId, outerCode, thirdWarehouseCode, false);
             unSaveTaskList.add(outUnSaveTask);
             //生成中间表数据
             DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity, operateCode, outerCode, warehouseId, thirdWarehouseCode, goodsLists, SourceTypeEnum.OTHER_INSTOCK);
             wdtDtoList.add(addDTO);
         }
-
-        /*for (StocktakingProfitLossDetailDTO.ViewDTO dto : detailList) {
-            if(! thirdWarehouseMap.containsKey(dto.getWarehouseId())){
-                continue;
-            }
-
-            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            goods.setSpecNo(dto.getSkuNo());
-            goods.setNum(BigDecimal.valueOf(Math.abs(dto.getDiffQty())));
-            goods.setPositionNo(StringUtils.isNotBlank(dto.getWarehouseLocation()) ? dto.getWarehouseLocation() : "");
-
-            String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-            String thirdWarehouseCode = thirdWarehouseMap.get(dto.getWarehouseId());
-            DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherInStockService.generateTask(Collections.singletonList(goods), operateCode, entity.getCode(), dto.getId(), outerCode, thirdWarehouseCode, false);
-            unSaveTaskList.add(outUnSaveTask);
-
-            //生成中间表数据
-            DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
-            addDTO.setSourceId(entity.getId());
-            addDTO.setSourceCode(entity.getCode());
-            addDTO.setThirdCode(outerCode);
-            addDTO.setThirdType(SourceTypeEnum.OTHER_INSTOCK.getCode());
-            addDTO.setWarehouseId(dto.getWarehouseId());
-            addDTO.setThirdWarehouseCode(thirdWarehouseCode);
-            addDTO.setOperateType(operateCode);
-            DmpPushWdtDetailDTO detailDTO = new DmpPushWdtDetailDTO();
-            BeanMapper.copy(goods, detailDTO);
-            addDTO.setDetailDTOList(Collections.singletonList(detailDTO));
-            wdtDtoList.add(addDTO);
-        }*/
         //批量保存中间表数据
         dmpPushWdtFeign.addBatch(wdtDtoList);
 

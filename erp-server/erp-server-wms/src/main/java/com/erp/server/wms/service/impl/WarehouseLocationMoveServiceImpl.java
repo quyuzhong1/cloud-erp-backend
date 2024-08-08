@@ -129,6 +129,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
     @Resource
     private DmpPushWdtFeign dmpPushWdtFeign;
+    @Resource
+    private AbstractWdtService abstractWdtService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -583,7 +585,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
         //转换为同一个其他出库单
         String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-        List<CreateOtherStockoutRequest.GoodsList> outGoodsLists = wdtOtherOutStockService.sumBySkuAndPositionNo(outgoodsList);
+        List<CreateOtherStockoutRequest.GoodsList> bomSplitOutGoodsList = abstractWdtService.handleGoodsList(outgoodsList);
+        List<CreateOtherStockoutRequest.GoodsList> outGoodsLists = wdtOtherOutStockService.sumBySkuAndPositionNo(bomSplitOutGoodsList);
         DmpPushTaskFeignDTO dmpPushTaskFeignDTO = wdtOtherOutStockService.generateTask(outGoodsLists, SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), entity.getId(), outCode, thirdWarehouseCode, false);
         unSaveTaskList.add(dmpPushTaskFeignDTO);
         if(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)){
@@ -598,7 +601,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
         //转换为同一个其他入库单
         String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        List<CreateOtherStockinRequest.GoodsList> inGoodsLists = wdtOtherInStockService.sumBySkuAndPositionNo(ingoodsList);
+        List<CreateOtherStockinRequest.GoodsList> bomSplitInGoodsList = abstractWdtService.handleGoodsList(ingoodsList);
+        List<CreateOtherStockinRequest.GoodsList> inGoodsLists = wdtOtherInStockService.sumBySkuAndPositionNo(bomSplitInGoodsList);
         DmpPushTaskFeignDTO taskFeignDTO = wdtOtherInStockService.generateTask(inGoodsLists, SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), entity.getId(), inCode, thirdWarehouseCode, false);
         unSaveTaskList.add(taskFeignDTO);
         if(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)){
@@ -611,54 +615,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             wdtDtoList.add(addDTO);
         }
 
-
-        /*for (WarehouseLocationMoveDetailEntity moveDetailEntity : detailEntityList) {
-            //转换成出库单
-            if(! thirdWarehouseMap.containsKey(moveDetailEntity.getWarehouseId())){
-                continue;
-            }
-            CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
-            outGoods.setSpecNo(moveDetailEntity.getSkuNo());
-            outGoods.setNum(BigDecimal.valueOf(moveDetailEntity.getQty()));
-            outGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE) ?
-                    (StringUtils.isNotBlank(moveDetailEntity.getOutWarehouseLocation()) ? moveDetailEntity.getOutWarehouseLocation() : "") :
-                    (StringUtils.isNotBlank(moveDetailEntity.getInWarehouseLocation()) ? moveDetailEntity.getInWarehouseLocation() : ""));
-
-            String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-            String outWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
-            DmpPushTaskFeignDTO dmpPushTaskFeignDTO = wdtOtherOutStockService.generateTask(Collections.singletonList(outGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), outCode, outWarehouseId, false);
-            unSaveTaskList.add(dmpPushTaskFeignDTO);
-            if(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)){
-                //其他出库单的中间表数据
-                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockOutInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), moveDetailEntity.getWarehouseId(), outCode, outWarehouseId, outGoods);
-                wdtDtoList.add(addDTO);
-            }else {
-                //其他入库单的中间表数据
-                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), moveDetailEntity.getWarehouseId(), outCode, outWarehouseId, outGoods);
-                wdtDtoList.add(addDTO);
-            }
-
-            //调入仓转换为其他入库单
-            CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
-            inGoods.setSpecNo(moveDetailEntity.getSkuNo());
-            inGoods.setNum(BigDecimal.valueOf(moveDetailEntity.getQty()));
-            inGoods.setPositionNo(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)?
-                    (ObjectUtils.isEmpty(moveDetailEntity.getInWarehouseLocation()) ? "" : moveDetailEntity.getInWarehouseLocation()) : ObjectUtils.isEmpty(moveDetailEntity.getOutWarehouseLocation()) ? "" : moveDetailEntity.getOutWarehouseLocation());
-
-            String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-            String inWarehouseId = thirdWarehouseMap.get(moveDetailEntity.getWarehouseId());
-            DmpPushTaskFeignDTO taskFeignDTO = wdtOtherInStockService.generateTask(Collections.singletonList(inGoods), SyncOperateEnum.OPERATE_APPROVE.getCode(), entity.getCode(), moveDetailEntity.getId(), inCode, inWarehouseId);
-            unSaveTaskList.add(taskFeignDTO);
-            if(operateCode.equals(SyncOperateEnum.OPERATE_APPROVE)){
-                //其他入库单的中间表数据
-                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), moveDetailEntity.getWarehouseId(), outCode, outWarehouseId, outGoods);
-                wdtDtoList.add(addDTO);
-            }else {
-                //其他出库单的中间表数据
-                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockOutInterim(entity.getId(), entity.getCode(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), moveDetailEntity.getWarehouseId(), inCode, inWarehouseId, inGoods);
-                wdtDtoList.add(addDTO);
-            }
-        }*/
         List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(unSaveTaskList);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
