@@ -104,7 +104,7 @@
         vif.fromVirtualUsableQty as fromVirtualWarehouseUsableQty,
         case when vma.status = 'waitSubmit'and vma.type ='allocation'  then vmad.qty > COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0)
              when vma.status = 'waitSubmit'and vma.type ='transfer'  then vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)
-             when vma.status = 'waitSubmit'and vma.type ='cancel'  then vmad.qty > COALESCE(vit.toVirtualUsableQty,0)
+             when vma.status = 'waitSubmit'and vma.type ='cancel'  then vmad.qty > COALESCE(vit.fromVirtualUsableQty,0)
             else false
         end isVirtualScarce
         FROM virtual_warehouse_allocation_detail vmad
