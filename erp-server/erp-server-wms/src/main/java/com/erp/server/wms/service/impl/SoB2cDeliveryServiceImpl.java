@@ -1229,17 +1229,20 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(entity.getId()));
         List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
+        LinkedList<SoOutstockDetailDTO.AddDTO> newDetailList = new LinkedList<>();
         for (PickingListsDTO.SourceView view : views) {
             SoB2cDeliveryDetailEntity detailEntity = deliveryDetailList.stream().filter(v -> v.getId().equals(view.getSourceDetailId()))
                     .findFirst().orElse(new SoB2cDeliveryDetailEntity());
-            SoOutstockDetailDTO.AddDTO dto = detailList.stream().filter(d -> d.getSourceDetailId().equals(detailEntity.getSourceDetailId()))
+            SoOutstockDetailDTO.AddDTO dto = detailList.stream().filter(d -> d.getSoDetailId().equals(detailEntity.getSourceDetailId()))
                     .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
             SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
             addDTO.setWarehouseLocation(Objects.isNull(entity.getBatchNo()) ? view.getWarehouseLocation() : "");
             addDTO.setActualQty(view.getQty());
             addDTO.setPlanQty(view.getQty());
             addDTO.setSourceDetailId(detailEntity.getId());
+            newDetailList.add(addDTO);
         }
+        generateB2cDTO.setDetailList(newDetailList);
         soOutstockService.generateB2cSoOutstock(generateB2cDTO);
 
     }
