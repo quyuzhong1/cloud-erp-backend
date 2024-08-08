@@ -413,7 +413,17 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             returnDTO.setWarehouseId(bomParamDTO.getWarehouseId());
             returnDTO.setVirtualWarehouseId(bomParamDTO.getVirtualWarehouseId());
             returnDTO.setVirtualUsableQty(childVirtualUsableQty);
+
+            //针对父级可用数量
+            double floor = Math.floor(childVirtualUsableQty / childrenSkuDTO.getQuantity());
+            Integer parentVirtualUsableQty = Integer.valueOf((int) floor);
+            returnDTO.setParentVirtualUsableQty(parentVirtualUsableQty);
             resultList.add(returnDTO);
+        }
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            //bom最小可用数
+            Integer bomUsableQty = resultList.stream().min(Comparator.comparing(VirtualInventoryDTO.BomReturnDTO::getParentVirtualUsableQty)).map(VirtualInventoryDTO.BomReturnDTO::getParentVirtualUsableQty).get();
+            resultList.forEach(obj -> obj.setParentVirtualUsableQty(bomUsableQty));
         }
         return resultList;
     }

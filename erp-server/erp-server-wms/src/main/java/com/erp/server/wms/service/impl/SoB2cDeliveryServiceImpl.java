@@ -1913,6 +1913,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isNotEmpty(soOutstockList)) {
             throw new ServiceException(StrUtil.format("发货单【{}】已下推出库单不支持重新出库",entity.getCode()));
         }
+        //销售订单
+        SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class, entity.getSourceId());
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException("未找到销售订单不支持重新出库");
+        }
+        if (StrUtil.equals(soB2cEntity.getSignOrderError(), SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode())) {
+            throw new ServiceException("扣减虚拟冻结库存异常不支持重新出库");
+        }
+
         //生成直接调拨单
         this.pushTransferInfo(entity);
 
@@ -2347,7 +2356,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             outFreezeVirtualInventory(entity);
         } catch (Exception e) {
             String soB2cId = entity.getSourceId();
-            String type = SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode();
+            String type = SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode();
             String paramJson = JSONUtil.toJsonStr(entity);
             String message = e.getMessage();
             log.error("创建直接调拨单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);

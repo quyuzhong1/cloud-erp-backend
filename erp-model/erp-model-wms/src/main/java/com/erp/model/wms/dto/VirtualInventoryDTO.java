@@ -602,6 +602,11 @@ public class VirtualInventoryDTO implements Serializable {
          * 虚拟仓可用库存
          */
         private Integer virtualUsableQty;
+
+        /**
+         * 虚拟仓可用库存(父级)
+         */
+        private Integer parentVirtualUsableQty;
     }
 
     @Data
