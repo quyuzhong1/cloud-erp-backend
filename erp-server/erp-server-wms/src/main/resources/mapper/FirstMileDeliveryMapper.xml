@@ -98,7 +98,7 @@
         fdd.platform_sku_no as thirdWarehouseSku,
         fd.logistics_status,
         fd.declare_status,
-        fd.fba_shipment_code
+        fdd.fba_shipment_code fbaShipmentCode
         FROM first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false
