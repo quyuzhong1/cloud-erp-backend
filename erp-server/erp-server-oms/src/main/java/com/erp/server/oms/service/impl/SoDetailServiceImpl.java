@@ -1754,14 +1754,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 throw new ServiceException(ApiError.ERROR_92015);
             }
 
-            List<String> skuIdList = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))
-                    .map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-
             //有效数量
             Integer noticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            //如果发货通知单没改sku再校验
-            if (skuIdList.size() == 1 && StrUtil.equals(skuIdList.get(0),updateDTO.getSkuId()) && noticeQty > updateDTO.getQty()) {
+            //SKU变更校验
+            if (noticeQty > MathUtil.ZERO && !StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId())) {
+                throw new ServiceException(StrUtil.format("SKU【{}】已下推发货通知单不支持变更SKU",soDetailEntity.getSkuNo()));
+            }
+            //销售数量校验
+            if (noticeQty > updateDTO.getQty()) {
                 throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于发货通知单下推数量",soDetailEntity.getSkuNo()));
             }
             //已审核数量
@@ -1769,12 +1770,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                             && StrUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            //如果发货通知单没改sku，并且数量大于0再校验
-            if ((skuIdList.size() == 1 && StrUtil.equals(skuIdList.get(0),updateDTO.getSkuId()) && MathUtil.compareTo(noticeApproveQty,MathUtil.ZERO) > MathUtil.ZERO)
-                    || (CollectionUtils.isEmpty(skuIdList) && StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()))) {
-                if (noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
-                    throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
-                }
+            //销售数量不能小于（冻结数量+发货通知单审核数量）
+            if (noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
+                throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
             }
             //仅判断冻结数量
             if (StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
@@ -1792,14 +1790,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             long count = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).count();
             if (count > 0) {
-                throw new ServiceException(StrUtil.format("SKU【{}】以下推发货通知单不支持删除",soDetailEntity.getSkuNo()));
+                throw new ServiceException(StrUtil.format("SKU【{}】已下推发货通知单不支持删除",soDetailEntity.getSkuNo()));
             }
             //删除明细释放库存
             if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
                 unLockIdList.add(soDetailEntity.getId());
             }
         }
-
         //释放冻结库存
         if (CollectionUtils.isNotEmpty(unLockIdList)) {
             unLockIdList.forEach(obj -> batchUnLockVirtualInventory(obj));
