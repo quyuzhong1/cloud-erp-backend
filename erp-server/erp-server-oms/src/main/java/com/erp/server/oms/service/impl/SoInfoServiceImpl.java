@@ -757,6 +757,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 handelVirtualBomScarce(bomChildrenList, virtualInventoryList, virtuaParamScarceDTO,approveNoticeQty);
                 item.setVirtualUsableQty(virtuaParamScarceDTO.getVirtualUsableQty());
                 item.setChildScarceList(virtuaParamScarceDTO.getChildScarceList());
+                item.setIsVirtualScarce(virtuaParamScarceDTO.getIsVirtualScarce());
 
                 //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的审核通过数量 ]  - 当前虚拟仓可用库存
                 Integer virtualScarceQty = item.getQty() - approveNoticeQty - item.getVirtualUsableQty();
