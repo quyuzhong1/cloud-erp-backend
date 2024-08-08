@@ -256,7 +256,6 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         /**
          * 取货仓位库存状态
          */
-        @NotBlank(message = "取货仓位库存状态不能为空")
         private String outInventoryStatus;
 
         /**
@@ -269,7 +268,6 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         /**
          * 上架仓位库存状态
          */
-        @NotBlank(message = "上架仓位库存状态不能为空")
         private String inInventoryStatus;
 
         /**
