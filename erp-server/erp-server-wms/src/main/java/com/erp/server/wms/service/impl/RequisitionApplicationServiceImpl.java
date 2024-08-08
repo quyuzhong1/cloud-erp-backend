@@ -177,6 +177,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         // 新增明细
         requisitionApplicationDetailService.add(addDTO, requisitionApplicationEntity.getId());
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "要货申请" , requisitionApplicationEntity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "新增操作");
+
         return new BaseResultDTO.AddDTO(requisitionApplicationEntity.getId(), code);
     }
 
