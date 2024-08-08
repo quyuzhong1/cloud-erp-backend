@@ -311,9 +311,13 @@ public class DmpHandlerCache implements CommandLineRunner{
 			}, 0, freshCacheTime, TimeUnit.SECONDS);
 			
 			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-				List<OverseasProviderEntity> overseasProviderEntityFreshList = FeignQuery.create(OverseasProviderEntity.class)
-						.gt(DmpCfgOutputBlackEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
-						.list();
+				List<OverseasProviderEntity> overseasProviderEntityFreshList = null;
+				try {
+					overseasProviderEntityFreshList = FeignQuery.create(OverseasProviderEntity.class)
+							.gt(DmpCfgOutputBlackEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+							.list();
+				} catch (Exception e) {
+				}
 				if(CollUtil.isNotEmpty(overseasProviderEntityFreshList)) {
 					List<String> newIds = overseasProviderEntityFreshList.stream().map(OverseasProviderEntity::getId).collect(Collectors.toList());
 					overseasProviderEntityCache.removeIf(d -> newIds.contains(d.getId()));

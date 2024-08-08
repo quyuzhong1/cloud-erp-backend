@@ -61,4 +61,15 @@ public class RocketMqNewTopic {
      * 新中台平台库存
      */
     public static final String DMP_PLATFORM_INVENTORY_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_inventory_to_wms_topic";
+    
+    /**
+     * 新中台平台入库
+     */
+    public static final String DMP_PLATFORM_INBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_inbound_to_wms_topic";
+    
+
+    /**
+     * 新中台平台入库
+     */
+    public static final String DMP_PLATFORM_OUTBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_wms_topic";
 }
