@@ -196,14 +196,15 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         Map<AmazonIdentifiersTypeEnum, List<PlatformAmazonListingDTO>> listMap = currentListingDTOList.stream().collect(Collectors.groupingBy(e -> e.convertIdentifiersType(marketPlaceEnum)));
 
         //查询商品详情
-        CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+//        CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+        CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
         List<PlatformAmazonListingDTO> resultList = new LinkedList<>();
         for (Map.Entry<AmazonIdentifiersTypeEnum, List<PlatformAmazonListingDTO>> entry : listMap.entrySet()) {
             List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
             List<String> identifiers = entry.getValue()
                     .stream()
-                    .map(e-> e.checkAndGetIdentifier()).filter(Objects::nonNull).distinct().collect(Collectors.toList());
+                    .map(PlatformAmazonListingDTO::checkAndGetIdentifier).filter(Objects::nonNull).distinct().collect(Collectors.toList());
             String identifiersType = entry.getKey().getCode();
             List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
             String locale = null;
