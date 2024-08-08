@@ -2380,7 +2380,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //清除异常
         SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
         deleteDTO.setMainId(entity.getSourceId());
-        deleteDTO.setType(SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode());
+        deleteDTO.setType(SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode());
         soB2cFeign.deleteError(deleteDTO);
     }
 
