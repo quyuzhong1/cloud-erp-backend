@@ -132,6 +132,13 @@ public class FirstMileDeliveryDetailEntity extends BaseEntity<FirstMileDeliveryD
     @TableField(exist = false)
     private String approveStatus;
 
+    /**
+     * FBA货件编码
+     */
+    @TableField("fba_shipment_code")
+    private String fbaShipmentCode;
+
+
 
     public static final String MAIN_ID = "main_id";
 
