@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -491,7 +492,10 @@ public class SoOutstockDTO implements Serializable {
          * 批次号，发货单下推时生成
          */
         private String batchNo;
-
+        /**
+         * 出库日期
+         */
+        private LocalDate billDate;
         /**
          * 详情
          */
@@ -564,6 +568,11 @@ public class SoOutstockDTO implements Serializable {
          * 预计发货时间
          */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
 
         /**
          * 承运商

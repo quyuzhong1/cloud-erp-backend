@@ -348,7 +348,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setCode(code);
         soOutstock.setId(id);
         soOutstock.setTotalDiscountAmount(totalDiscountAmount);
-        soOutstock.setBillDate(LocalDate.now());
+        if(Objects.isNull(soOutstock.getBillDate())){
+            soOutstock.setBillDate(LocalDate.now());
+        }
         //tob 保存数据修改
         handleSaveOrUpdateDbByB2b(soOutstock, soCustomer);
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
@@ -1687,6 +1689,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 add.setSellerId(generateInfo.getSellerId());
                 add.setCustomerOrderNo(customerOrderNo);
                 add.setBatchNo(batchNo);
+                add.setBillDate(generateInfo.getBillDate());
                 List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>(generateInfoList.size());
                 for (SoOutstockDTO.GenerateSoOutstockViewDTO item : generateInfoList) {
                     SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
