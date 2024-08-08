@@ -1219,9 +1219,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //手工发货
         String manual = DeliverTypeEnum.MANUAL.getCode();
         if (manual.equals(deliveryType)) {
-            return this.manualDelivery(id);
+            return soB2cDeliveryService.manualDelivery(id);
         } else {
-            return this.falseDelivery(id);
+            return soB2cDeliveryService.falseDelivery(id);
         }
     }
 
