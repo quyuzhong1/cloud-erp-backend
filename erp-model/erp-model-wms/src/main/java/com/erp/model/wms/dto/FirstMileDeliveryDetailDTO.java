@@ -248,6 +248,11 @@ public class FirstMileDeliveryDetailDTO implements Serializable {
         * 来源详情Id
         */
         private String sourceDetailId;
+
+        /**
+         * FBA货件编码
+         */
+        private String fbaShipmentCode;
     }
 
 

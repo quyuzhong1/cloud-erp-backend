@@ -1383,6 +1383,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 } else {
                     detailAddDto.setWarehouseLocation("");
                 }
+                detailAddDto.setFbaShipmentCode(viewDTO.getFbaShipmentCode());
                 detailAddList.add(detailAddDto);
             }
 
