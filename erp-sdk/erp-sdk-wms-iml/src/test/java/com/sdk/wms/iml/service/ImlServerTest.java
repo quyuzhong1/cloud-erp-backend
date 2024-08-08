@@ -25,8 +25,8 @@ public class ImlServerTest {
 
     public ImlServerTest(){
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appToken","44ac3ae1211d416a080858e57833cc14");
-        authMap.put("appKey","fa0c90d7dbb434fa2160209756db677c");
+        authMap.put("appToken","bee4c5e37009b3f4d8a18f7ce44a2365");
+        authMap.put("appKey","674f5f45f2ffdaa6705d88d38d5d04a3");
         ThirdWarehouseContext.setAuthMap(authMap);
     }
 
