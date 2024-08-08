@@ -768,7 +768,14 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 仓库名称--兼容移动端pda历史数据
          */
         private String infoWarehouseName;
-
+        /**
+         * 取货仓位库存状态
+         */
+        private String outInventoryStatus;
+        /**
+         * 上架仓位库存状态
+         */
+        private String inInventoryStatus;
         /**
          * 产品明细数量
          */
