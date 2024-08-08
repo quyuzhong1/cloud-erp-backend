@@ -20,11 +20,11 @@ public class VirtualWarehouseAllocationQueryHandler extends AbstractQueryHandler
         }
         if("isVirtualScarce".equals(field)) {
             if ((Boolean) value) {
-                return "(vma.status = 'waitSubmit'and (( vma.type ='allocation'  and vmad.qty > COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0)) " +
-                        "or ( vma.type ='transfer'  and vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)) " +
+                return "(vma.status = 'waitSubmit' and (( vma.type ='allocation'  and vmad.qty > COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0)) " +
+                        "or ( vma.type ='transfer' and vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)) " +
                         "or ( vma.type ='cancel'  and vmad.qty > COALESCE(vif.fromVirtualUsableQty,0))))";
             } else {
-                return "vma.status != 'waitSubmit' and ((vma.type ='allocation' and COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0) > vmad.qty) " +
+                return "vma.status = 'waitSubmit' and ((vma.type ='allocation' and COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0) > vmad.qty) " +
                         "or (vma.type ='transfer' and  COALESCE(vif.fromVirtualUsableQty,0) > vmad.qty) " +
                         "or (vma.type ='cancel' and  COALESCE(vif.fromVirtualUsableQty,0) > vmad.qty))";
             }
