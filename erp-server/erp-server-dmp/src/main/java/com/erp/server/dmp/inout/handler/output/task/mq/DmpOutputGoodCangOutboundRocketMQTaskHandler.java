@@ -77,7 +77,7 @@ public class DmpOutputGoodCangOutboundRocketMQTaskHandler extends DmpOutputRocke
     	}
     	String orderStatus = dmpThirdOutboundEntity.getOrderStatus();
 		String erpOrderStatus = GoodCangEnums.OrderStatusEnum.getErpOrderStatus(orderStatus);
-		if(StringUtils.isNotBlank(erpOrderStatus)) {
+		if(StringUtils.isBlank(erpOrderStatus)) {
 			return null;
 		}
     	PlatformOutboundDTO platformOutboundDTO = BeanUtil.copyProperties(dmpThirdOutboundEntity, PlatformOutboundDTO.class);

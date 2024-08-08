@@ -8,6 +8,8 @@ import java.util.TreeMap;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+
 import cn.hutool.core.collection.CollUtil;
 
 /**
@@ -44,6 +46,9 @@ public class DmpInputGoodCangTransferDmpHandler extends DmpInputDbConvertDmpHand
 					warehouseList.forEach(w -> {
 						w.put("logisticsChannelCode", l.get("sm_code"));
 						w.put("logisticsChannelName", l.get("sm_code_name"));
+						w.put("authId", dmpInputMongoEntity.get("authId"));
+						w.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoEntity.get(DmpInputMongoHandler.MONGO_BASE_ID));
+						w.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoEntity.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
 					});
 					newDmpInputMongoEntityList.addAll(warehouseList);
 				}
