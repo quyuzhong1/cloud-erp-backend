@@ -2350,7 +2350,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public Boolean generateOutFreezeError (SoB2cDeliveryEntity entity) {
         try {
-            soB2cDeliveryService.outFreezeVirtualInventory(entity);
+            soB2cDeliveryService.cleanErrorSignFreeze(entity);
         } catch (Exception e) {
             String soB2cId = entity.getSourceId();
             String type = SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode();
@@ -2365,7 +2365,23 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             soB2cFeign.addSoB2cError(addError);
             return Boolean.FALSE;
         }
+
         return  Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void cleanErrorSignFreeze (SoB2cDeliveryEntity entity) {
+        Boolean isClean = outFreezeVirtualInventory(entity);
+        if (!isClean) {
+            return;
+        }
+        //清除异常
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setMainId(entity.getSourceId());
+        deleteDTO.setType(SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode());
+        soB2cFeign.deleteError(deleteDTO);
     }
 
     /**
@@ -2410,12 +2426,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
         //更新库存
         virtualInventoryTransCoreService.approve(dto);
-
-        //清除异常
-        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
-        deleteDTO.setMainId(entity.getSourceId());
-        deleteDTO.setType(SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode());
-        soB2cFeign.deleteError(deleteDTO);
         return  Boolean.TRUE;
     }
 

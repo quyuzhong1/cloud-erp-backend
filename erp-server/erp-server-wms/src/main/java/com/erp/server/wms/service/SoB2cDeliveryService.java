@@ -198,6 +198,14 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     Boolean generateOutFreezeError (SoB2cDeliveryEntity entity);
 
     /**
+     * 清除扣减冻结异常
+     * @author will
+     * @date 2024/8/8 22:08
+     * @param entity
+     */
+    void cleanErrorSignFreeze (SoB2cDeliveryEntity entity);
+
+    /**
      * 扣减冻结库存
      * @author will
      * @date 2024/7/21 9:47
