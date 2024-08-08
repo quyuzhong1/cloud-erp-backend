@@ -127,5 +127,10 @@ public class MercadoProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
     	
         return product;
     }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("platformSkuNo");
+    }
 
 }

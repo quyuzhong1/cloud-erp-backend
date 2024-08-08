@@ -21,6 +21,8 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
 	ALI_EXPRESS("AliExpress", "速卖通"),
 	SHOPIFY("Shopify", "Shopify"),
     MERCADOLIBRE("mercadolibre", "美客多"),
+    GOODCANG("goodcang", "谷仓"),
+    IML("iml", "艾姆勒"),
     ;
     /**
      * 类型
