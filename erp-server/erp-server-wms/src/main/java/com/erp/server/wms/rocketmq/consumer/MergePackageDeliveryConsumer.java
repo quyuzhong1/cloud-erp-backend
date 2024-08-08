@@ -99,7 +99,9 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         // 去重判断
         if(!SoB2cDeliveryStatusEnum.SHIPPED.getCode().equalsIgnoreCase(curDeliveryEntity.getStatus())){
             //处理其他d单据状态(独立事务)
-            isOutVirtual = packageForecastService.handleMergePackageDeliveryOther(soId, curDeliveryEntity);
+            packageForecastService.handleMergePackageDeliveryOther(soId, curDeliveryEntity);
+            //扣减冻结库存
+            isOutVirtual = soB2cDeliveryService.generateOutFreezeError(curDeliveryEntity);
         }
 
         // 判断当前单据平台标记发货是否有正在处理

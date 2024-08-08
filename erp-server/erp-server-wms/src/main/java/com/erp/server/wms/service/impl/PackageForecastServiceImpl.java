@@ -966,7 +966,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean handleMergePackageDeliveryOther(String soId, SoB2cDeliveryEntity deliveryEntity) {
+    public void handleMergePackageDeliveryOther(String soId, SoB2cDeliveryEntity deliveryEntity) {
         //将发货状态更新为已发货
         deliveryEntity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());
         //获取一个当前时间当作发货时间
@@ -989,10 +989,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
         deliveryEntity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
-
-        //扣减冻结库存
-        Boolean isOutVirtual = soB2cDeliveryService.generateOutFreezeError(deliveryEntity);
-        return isOutVirtual;
     }
 
     /**

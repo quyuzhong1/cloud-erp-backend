@@ -204,17 +204,6 @@ public class AsyncServiceImpl implements AsyncService {
         entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
         soB2cDeliveryService.updateById(entity);
 
-        //扣减冻结库存
-        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
-        if (isOut) {
-            //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
-            if (isPush) {
-                //出库
-                soB2cDeliveryService.generateB2cSoOutstock(entity);
-            }
-        }
-
     }
 
     @Override
@@ -230,6 +219,15 @@ public class AsyncServiceImpl implements AsyncService {
     @Async("wmsErpExecutor")
     public void syncSoB2cDeliveryAutoOut(SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity) {
         asyncService.soB2cDeliveryAutoOut(soB2cEntity,entity);
+        //扣减冻结库存
+        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
+        if (isOut) {
+            //生成直接调拨单
+            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+            if (isPush) {
+                //出库
+                soB2cDeliveryService.generateB2cSoOutstock(entity);
+            }
+        }
     }
-
 }
