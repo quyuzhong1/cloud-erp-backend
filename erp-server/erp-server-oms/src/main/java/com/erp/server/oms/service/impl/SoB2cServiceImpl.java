@@ -3142,11 +3142,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (StrUtil.isNotBlank(detailDTO.getVirtualWarehouseId())) {
                     String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailDTO.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
                     detailDTO.setVirtualWarehouseName(virtualWarehouseName);
+                    //虚拟仓缺货处理
+                    isVirtualOutStock(bomChildrenList, virtualInventoryList,detailLabelDTO, detailDTO);
                     //缺货订单
                     if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
                             || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))) {
-                        //虚拟仓缺货处理
-                        isVirtualOutStock(bomChildrenList, virtualInventoryList,detailLabelDTO, detailDTO);
+                        detailLabelDTO.setIsOutStock(Boolean.FALSE);
                     }
                 }
 
