@@ -510,7 +510,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                dmpMqFeign.delayLevel3SendTask(Collections.singletonList(dmpPushTaskEntity));
             }
         });
 

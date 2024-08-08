@@ -169,7 +169,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
                 Criteria.where("amazonOrderId").is(dto.getPlatformCode())
                         // 亚马逊多渠道订单的OrderItemId=merchantOrderItemId
                         .and("merchantOrderItemId").in(sourceDetailIds)
-                        .and("isClean").ne(CleanStatusEnum.CLEANED.getCode())
+//                        .and("isClean").ne(CleanStatusEnum.CLEANED.getCode())
         );
         List<PlatformAmazonFulfilledShipmentsDTO> list = mongoTemplate.find(query, PlatformAmazonFulfilledShipmentsDTO.class, tableName);
         if (CollectionUtils.isEmpty(list)) {
@@ -220,7 +220,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
         return new PlatformOtherOutStockDTO(
                 sourceDTO.getAmazonOrderId(),
                 sourceDTO.getShopId(),
-                java.time.OffsetDateTime.parse(sourceDTO.getShipmentDateLocale()),
+                sourceDTO.getShipmentDateLocale(),
                 Collections.singletonList(detailDTO),
                 sourceDTO.getUniqueId(),
                 PlatformDictEnum.AMAZON.getCode()

@@ -90,4 +90,11 @@ public interface DmpMqFeign {
      */
     @PostMapping(value = "/batchSyncBySourceId")
     Boolean batchSyncBySourceId(@RequestBody List<String> sourceIds);
+
+    /**
+     * 发送MQ延时等级3消息(10秒后消费)
+     * @author Jim
+     */
+    @PostMapping("/send/delayLevel3SendTask")
+    Boolean delayLevel3SendTask(@RequestBody List<DmpPushTaskEntity> list);
 }
