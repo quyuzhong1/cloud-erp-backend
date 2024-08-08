@@ -60,4 +60,12 @@ public interface AsyncService {
      * @param b2cSoId
      */
     void asyncGenerateB2cSoOutstock (String b2cSoId);
+    /**
+     * 异步自动出库
+     * @author will
+     * @date 2024/8/8 20:26
+     * @param soB2cEntity
+     * @param entity
+     */
+    void syncSoB2cDeliveryAutoOut(SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity);
 }

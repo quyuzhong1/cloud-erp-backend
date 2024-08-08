@@ -33,6 +33,7 @@ import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.SoOutstockService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,6 +73,9 @@ public class AsyncServiceImpl implements AsyncService {
     @Resource
     private SoOutstockService soOutstockService;
 
+    @Resource
+    @Lazy
+    private AsyncService asyncService;
 
     @Async("wmsErpExecutor")
     @Override
@@ -152,7 +156,6 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    @Async("wmsErpExecutor")
     public void soB2cDeliveryAutoOut (SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity) {
 
         if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
@@ -215,11 +218,18 @@ public class AsyncServiceImpl implements AsyncService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Async("wmsErpExecutor")
     public void asyncGenerateB2cSoOutstock (String b2cSoId) {
         soOutstockService.generateB2cSoOutstock(b2cSoId);
+    }
+
+    /**
+     * 异步
+     */
+    @Override
+    @Async("wmsErpExecutor")
+    public void syncSoB2cDeliveryAutoOut(SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity) {
+        asyncService.soB2cDeliveryAutoOut(soB2cEntity,entity);
     }
 
 }
