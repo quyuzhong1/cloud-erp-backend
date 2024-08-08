@@ -620,6 +620,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         if (CollectionUtils.isEmpty(results)) {
             resultData = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData);
             results = resultData.getFirst();
+            if (!CollectionUtils.isEmpty(resultData.getSecond())) {
+                return resultData.getSecond();
+            }
         }
         Map<String, List<LocationInventoryResultDTO>> resultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
         for (Map.Entry<String, List<LocationInventoryResultDTO>> entry : resultMap.entrySet()) {
