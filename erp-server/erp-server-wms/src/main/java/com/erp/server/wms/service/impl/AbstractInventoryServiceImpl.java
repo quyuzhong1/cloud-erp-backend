@@ -653,12 +653,14 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         if (InventoryStatusEnum.USABLE.equals(status) && (typeList.contains(sourceTypeEnum.getCode()) || Arrays.asList(InventoryBusinessTypeEnum.DIRECT_ALLOCATE.getCode(),InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode()).contains(businessType.getCode()))){
             //虚拟库存
             Integer virtualQty = virtualInventoryService.getInventoryQtyByWarehouseId(warehouseId,skuId);
-            virtualQty = ObjectUtil.isEmpty(virtualQty) ? MathUtil.ZERO : virtualQty;
-            //仓库可用库存
-            Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(warehouseId, skuId);
-            log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",warehouseDetail.getName(),skuNo,virtualQty,usableInventoryTotal);
-            if (Math.abs(qty) > usableInventoryTotal - virtualQty) {
-                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,virtualQty,usableInventoryTotal - virtualQty);
+            //有分配虚拟库存则校验
+            if (MathUtil.compareTo(virtualQty,MathUtil.ZERO) > MathUtil.ZERO) {
+                //仓库可用库存
+                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(warehouseId, skuId);
+                log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",warehouseDetail.getName(),skuNo,virtualQty,usableInventoryTotal);
+                if (Math.abs(qty) > usableInventoryTotal - virtualQty) {
+                    ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,virtualQty,usableInventoryTotal - virtualQty);
+                }
             }
         }
     }
