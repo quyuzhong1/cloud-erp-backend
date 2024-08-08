@@ -4,10 +4,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -771,10 +773,12 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 取货仓位库存状态
          */
+        @Dict(enumClass = InventoryStatusEnum.class)
         private String outInventoryStatus;
         /**
          * 上架仓位库存状态
          */
+        @Dict(enumClass = InventoryStatusEnum.class)
         private String inInventoryStatus;
         /**
          * 产品明细数量
