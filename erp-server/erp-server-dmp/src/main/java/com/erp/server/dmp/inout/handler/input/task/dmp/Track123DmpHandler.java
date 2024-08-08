@@ -21,7 +21,7 @@ import java.util.*;
 
 @Service
 @Scope("prototype")
-public class Track123ExpressDeliveryDmpHandler extends DmpInputDbConvertDmpHandler {
+public class Track123DmpHandler extends DmpInputDbConvertDmpHandler {
     @Override
     protected Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData(List<Map<String, Object>> dmpInputMongoEntityList) {
         Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps = new HashMap<>();
