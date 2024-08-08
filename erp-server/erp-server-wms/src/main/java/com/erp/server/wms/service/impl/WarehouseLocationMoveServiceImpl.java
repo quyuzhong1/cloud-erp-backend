@@ -554,7 +554,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             warehouseIdSet.add(detail.getWarehouseId());
         }
         //查询三方仓库映射
-        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getWarehouseId()), "wdt");
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(warehouseIdSet), "wdt");
         if(mappingList.isEmpty()){
             return;
         }
