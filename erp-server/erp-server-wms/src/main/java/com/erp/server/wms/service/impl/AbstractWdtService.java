@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public abstract class AbstractWdtService {
+public class AbstractWdtService {
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
