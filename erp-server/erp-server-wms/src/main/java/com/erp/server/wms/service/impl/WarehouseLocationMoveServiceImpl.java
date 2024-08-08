@@ -640,7 +640,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-
+        if (SourceTypeEnum.PICKING_LISTS_ADD.getCode().equals(entity.getSourceType()) || SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode().equals(entity.getSourceType())){
+            throw new ServiceException(ApiError.ERROR_99135);
+        }
         return true;
     }
 
@@ -764,7 +766,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, WarehouseLocationMoveEntity entity) {
+    public Boolean  approveEnd(ApproveOneDTO dto, WarehouseLocationMoveEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
@@ -775,6 +777,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (ApproveType.PASS.equals(dto.getType())) {
             WarehouseLocationMoveEntity infoEntity = this.getById(entity.getId());
             List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(infoEntity.getId()));
+
             List<TransferDTO> transferDTOList = new ArrayList<>();
             for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
                 TransferDTO transferDTO = new TransferDTO();
@@ -794,12 +797,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 transferDTO.setSkuNo(detailEntity.getSkuNo());
                 transferDTO.setWarehouseId(dto.getPcShow() ?
                         (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
-//            transferDTO.setWarehouseLocation("");
+
                 transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
                 transferDTOList.add(transferDTO);
             }
 
-            List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
             if (SourceTypeEnum.PICKING_LISTS_ADD.getCode().equals(entity.getSourceType())) {
                 InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
                 inventoryTransferDTO.setParamList(transferDTOList);
@@ -811,18 +813,46 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO_SUBTRACT.getCode());
                 inventoryTransCoreService.approveByType(inventoryTransferDTO);
             }else {
-                InventoryTransferRuleDTO ruleDTO = new InventoryTransferRuleDTO();
-                TransactionRuleDTO current = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK);
-                current.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
-                transactionRuleDTOList.add(current);
-                TransactionRuleDTO target = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK);
-                target.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
-                transactionRuleDTOList.add(target);
-                ruleDTO.setParamList(transferDTOList);
-                ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
-                ruleDTO.setRules(transactionRuleDTOList);
+                Map<WarehouseLocationMoveDTO.Group, List<WarehouseLocationMoveDetailEntity>> groupListMap = detailEntityList.stream().collect(Collectors.groupingBy(e -> new WarehouseLocationMoveDTO.Group(e.getOutInventoryStatus(), e.getInInventoryStatus())));
+                for (Map.Entry<WarehouseLocationMoveDTO.Group, List<WarehouseLocationMoveDetailEntity>> entry : groupListMap.entrySet()) {
+                    List<TransferDTO> transferNewDTOList = new ArrayList<>();
+                    for (WarehouseLocationMoveDetailEntity detail : entry.getValue()) {
+                        TransferDTO transferDTO = new TransferDTO();
+                        transferDTO.setSourceType(InventorySourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+                        transferDTO.setSourceId(infoEntity.getId());
+                        transferDTO.setSourceCode(infoEntity.getCode());
+                        transferDTO.setBillDate(infoEntity.getBillDate());
+                        transferDTO.setSourceDetailId(detail.getId());
+                        transferDTO.setCurWarehouseId(dto.getPcShow()?
+                                (StringUtils.isNotBlank(detail.getWarehouseId()) ? detail.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
+                        transferDTO.setCurWarehouseLocation(detail.getOutWarehouseLocation());
+                        transferDTO.setTargetWarehouseId(dto.getPcShow()?
+                                (StringUtils.isNotBlank(detail.getWarehouseId()) ? detail.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
+                        transferDTO.setTargetWarehouseLocation(detail.getInWarehouseLocation());
+                        transferDTO.setQty(detail.getQty());
+                        transferDTO.setSkuId(detail.getSkuId());
+                        transferDTO.setSkuNo(detail.getSkuNo());
+                        transferDTO.setWarehouseId(dto.getPcShow() ?
+                                (StringUtils.isNotBlank(detail.getWarehouseId()) ? detail.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
 
-                inventoryTransCoreService.approveByRule(ruleDTO);
+                        transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
+                        transferNewDTOList.add(transferDTO);
+                    }
+                    List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
+                    TransactionRuleDTO current = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.getByCode(entry.getKey().getOutInventoryStatus()), InventoryModeEnum.OUT_STOCK);
+                    current.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+                    transactionRuleDTOList.add(current);
+                    TransactionRuleDTO target = new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET,InventoryStatusEnum.getByCode(entry.getKey().getInInventoryStatus()) , InventoryModeEnum.IN_STOCK);
+                    target.setDictBizType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+                    transactionRuleDTOList.add(target);
+                    InventoryTransferRuleDTO ruleDTO = new InventoryTransferRuleDTO();
+                    ruleDTO.setParamList(transferNewDTOList);
+                    ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
+                    ruleDTO.setRules(transactionRuleDTOList);
+                    inventoryTransCoreService.approveByRule(ruleDTO);
+                }
+
+
             }
             //发送旺店通
             syncDisApproveInfoToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
@@ -907,6 +937,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
             detailViewDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, detailViewDTO.getWarehouseId(), detailViewDTO.getInWarehouseLocation()).getName());
             detailViewDTO.setOutWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, detailViewDTO.getWarehouseId(), detailViewDTO.getOutWarehouseLocation()).getName());
+            detailViewDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(detailViewDTO.getInInventoryStatus()));
+            detailViewDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(detailViewDTO.getOutInventoryStatus()));
             //设置库存
             List<InventoryDTO.InventoryViewQtyDTO> inventoryQtys = inventoryService.getInventoryQty(Collections.singletonList(inventoryBySkuIdAndWarehouseDTO));
             inventoryQtys.forEach(inventoryQtyDTO -> {
