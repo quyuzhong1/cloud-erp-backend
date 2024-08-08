@@ -74,6 +74,10 @@ public class DmpInputGoodCangInboundInitHandler extends DmpInputInitHandler{
                 paramsMap.put("receiving_code",receiveCode);
             	String response = GoodCangUtils.sendPost(apiType,paramsMap);
             	GoodCangResponse<GoodCangReceiptBatchResp> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangReceiptBatchResp>>() {}.getType());
+            	String ask = respDto.getAsk();
+            	if(ask.equals("Failure") && respDto.getMessage().contains("入库单号不存在")) {
+            		continue;
+            	}
             	allResult.add(respDto.getData());
             }
         }
