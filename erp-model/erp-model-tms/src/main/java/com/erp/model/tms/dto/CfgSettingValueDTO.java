@@ -187,32 +187,41 @@ public class CfgSettingValueDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AllocationSettingDTO {
+
+
         /**
-         * 重量分摊
+         * 重量分摊-头程费用配置
+         * http://172.16.100.11:3002/project/128/interface/api/25522   key=weightAllocation
+         *
          */
-        //头程费用配置
+
         private String weightFirstAllocation;
-        //小包费用配置
+        /**
+         * 重量分摊-小包费用配置
+         */
         private String weightPackageAllocation;
+
         /**
-         * 费用分摊-头程
+         * 费用分摊-头程-运费
+         * http://172.16.100.11:3002/project/128/interface/api/25522   key= firstMileCostAllocation
+         *
          */
-        //运费
         private String firstShippingCost;
-        //关税费用
+        //费用分摊-头程-关税费用
         private String firstTariffFee;
-        //其他税费
+        //费用分摊-头程-其他税费
         private String firstOtherTaxFee;
-        //其他费用
+        //费用分摊-头程-其他费用
         private String firstOtherFee;
+
         /**
-         * 费用分摊-小包
+         * 费用分摊-小包-运费
+         * http://172.16.100.11:3002/project/128/interface/api/25522   key=packageCostAllocation
          */
-        //运费
         private String packageShippingCost;
-        //关税费用
+        //费用分摊-小包-关税费用
         private String packageTariffFee;
-        //其他费用
+        //费用分摊-小包-其他费用
         private String packageOtherFee;
     }
 }
