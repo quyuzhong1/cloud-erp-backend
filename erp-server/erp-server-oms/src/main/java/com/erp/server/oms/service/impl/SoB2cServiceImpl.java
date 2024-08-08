@@ -6705,7 +6705,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                dmpMqFeign.delayLevel3SendTask(Collections.singletonList(dmpPushTaskEntity));
             }
         });
     }
