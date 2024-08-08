@@ -2388,11 +2388,16 @@ public class SoB2cDTO implements Serializable {
          * 产品skuId
          */
         private String skuId;
+        private String parentSkuId;
 
         /**
          * 产品sku编号
          */
         private String skuNo;
+        /**
+         * 父级sku用于记录bom拆分时原sku
+         */
+        private String parentSkuNo;
 
         /**
          * 产品名称
