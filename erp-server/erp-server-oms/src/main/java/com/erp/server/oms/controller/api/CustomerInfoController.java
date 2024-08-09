@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
@@ -269,9 +268,8 @@ public class CustomerInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出客户信息")
     @PostMapping("/export")
-    @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
-    public ApiResult exportCustomer(@RequestBody @Valid CustomerDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = customerInfoService.exportExcel(dto, response);
+    public ApiResult exportCustomer(@RequestBody @Valid CustomerDTO.ExportDTO dto) {
+        Boolean result = customerInfoService.exportExcel(dto);
         return result ? success() : failure();
     }
 

@@ -14,7 +14,6 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.dto.OperateLogDTO;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -59,12 +58,11 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * 导出sku 对照表
      *
      * @param dto
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-30 9:35
      */
-    Boolean exportPlatformSku(SkuMappingDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportPlatformSku(SkuMappingDTO.ExportDTO dto);
 
     /**
      * 获取tab 列表
@@ -119,10 +117,9 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @author yl
      * @date 2023-08-21 10:22
      * @param dto
-     * @param response
      * @return java.lang.Boolean
      */
-    Boolean exportWarehouseSku(SkuMappingDTO.ExportWarehouseSkuDTO dto, HttpServletResponse response);
+    Boolean exportWarehouseSku(SkuMappingDTO.ExportWarehouseSkuDTO dto);
 
     /**
      * 更改库存sku 对照
@@ -267,4 +264,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     List<SkuMappingEntity> listHistoryByListingId(String id);
     List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(String warehouseId,List<String> platformSkuNoList);
 
+    PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(PagingDTO<SkuMappingDTO.ExportDTO> dto);
+
+    PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto);
 }

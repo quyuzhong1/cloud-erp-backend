@@ -49,8 +49,8 @@ public class ReportManagerController extends BaseController {
      * @return
      */
     @PostMapping("/productSalesExport")
-    public ApiResult productSalesExport(@RequestBody @Validated ReportDTO.ProductSalesPagingParamDTO dto, HttpServletResponse response) {
-        Boolean result = soB2cService.productSalesExport(dto,response);
+    public ApiResult productSalesExport(@RequestBody @Validated ReportDTO.ProductSalesPagingParamDTO dto) {
+        Boolean result = soB2cService.productSalesExport(dto);
         return result ? success() : failure();
 
     }

@@ -136,8 +136,8 @@ public class SkuMappingController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出sku对照表")
     @PostMapping("/exportPlatformSku")
-    public ApiResult exportPlatformSku(@RequestBody @Valid SkuMappingDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = skuMappingService.exportPlatformSku(dto, response);
+    public ApiResult exportPlatformSku(@RequestBody @Valid SkuMappingDTO.ExportDTO dto) {
+        Boolean result = skuMappingService.exportPlatformSku(dto);
         return result ? success() : failure();
     }
 
@@ -147,8 +147,8 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/exportWarehouseSku")
-    public ApiResult exportWarehouseSku(@RequestBody @Valid SkuMappingDTO.ExportWarehouseSkuDTO dto, HttpServletResponse response) {
-        Boolean result = skuMappingService.exportWarehouseSku(dto, response);
+    public ApiResult exportWarehouseSku(@RequestBody @Valid SkuMappingDTO.ExportWarehouseSkuDTO dto) {
+        Boolean result = skuMappingService.exportWarehouseSku(dto);
         return result ? success() : failure();
     }
 

@@ -2,22 +2,17 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
 import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -27,17 +22,13 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cDeclareProductMapper;
-import com.erp.server.oms.service.*;
-import com.erp.server.oms.service.*;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cDeclareProductService;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
+import com.erp.server.oms.service.SoB2cReceiverService;
 import com.erp.server.oms.service.SoB2cService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -48,21 +39,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.*;
-import java.math.BigDecimal;
-import java.util.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.*;
-
-import javax.servlet.http.HttpServletResponse;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_DECLARE;
 
 /**
  * <p>
@@ -86,6 +70,8 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     @Autowired
     @Lazy
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -187,24 +173,22 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     }
 
     @Override
-    public Boolean exportExcel(SoB2cDeclareProductDTO.ListDTO dto, HttpServletResponse response) {
-        List<SoB2cDeclareProductDTO.ViewDTO> resultList = this.listViewBySoIds(dto.getIds());
-        if (CollectionUtils.isEmpty(resultList)) {
+    public Boolean exportExcel(SoB2cDeclareProductDTO.ListDTO dto) {
+        downloadTaskFeign.saveDownloadTask("申报信息", EXPORT_OMS_SO_B2C_DECLARE.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<SoB2cDeclareProductDTO.ViewDTO> exportSoB2CDeclare(PagingDTO<SoB2cDeclareProductDTO.ListDTO> dto) {
+        if (CollectionUtils.isEmpty(dto.getParams().getIds())){
+            return new PagingVO<>();
+        }
+        Page<SoB2cDeclareProductDTO.ViewDTO> page = baseMapper.listViewBySoIds(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams().getIds());
+        buildDeclareProductInfo(page.getRecords());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.ERROR_DECLARE_NOT_EXIST);
         }
-        String name = "申报信息";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/b2cDeclareProductExport.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("申报信息导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
-        return Boolean.TRUE;
+        return new PagingVO<>(page);
     }
 
     /**

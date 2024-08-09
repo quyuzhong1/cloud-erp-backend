@@ -141,7 +141,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_ABNORMAL;
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -4645,40 +4645,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date 2023-09-04 16:39
      */
     @Override
-    public Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO params, HttpServletResponse response) {
-        //sku 创建时间
-        List skuCreateTimeList = params.getSkuCreateTimeList();
-        List<String> skuIdList = Lists.newArrayList();
-        if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
-            List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
-            skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(skuIdList)) {
-                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-            }
-        }
-        //获取到产品销售统计导出的数据
-        List<ReportDTO.ProductSalesPagingViewDTO> list = baseMapper.listProductSalesExport(params, skuIdList);
-        Duration between = LocalDateTimeUtil.between(params.getOrderCreateTimeList().get(0), params.getOrderCreateTimeList().get(1));
-        long diffDays = between.toDays();
-        if (diffDays == 0) {
-            diffDays = 1;
-        }
-        fillProductSalesList(list, diffDays);
-        StringBuilder sb = new StringBuilder();
-        String excelPath = "excel/ProductSalesCount.xlsx";
-        String name = "产品销售统计";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("产品销售统计导出出错 >>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO params) {
+        downloadTaskFeign.saveDownloadTask("产品销售统计", EXPORT_OMS_SO_B2C_PRODUCT_SALES.getCode(), params);
         return Boolean.TRUE;
-
-
     }
 
     @Override
@@ -6765,6 +6734,70 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
+        //查询店铺设置权限
+        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL, "B2C销售订单");
+        }
+        Page<SoB2cDTO.ExcelExportDTO> page;
+        List<SoB2cDTO.ExcelExportDTO> records;
+        List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
+        //是否缺货 过滤
+        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        try {
+            if (Objects.nonNull(isOutStock)) {
+                //必须选仓库而且只能选一个
+                List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> v.getField().equals("sb2cd.warehouse_id") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
+                if (warehouseIdList.size() != 1) {
+                    throw new ServiceException("选择缺货条件必须选择仓库且只能选择一个仓库");
+                }
+                page = this.baseMapper.exportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), shopAuthResultDTO, Boolean.TRUE);
+                // 数据处理
+                records = handleExport(page.getRecords() , dto.getParams().getExportType(), Boolean.TRUE);
+                if (isOutStock) {
+                    //缺货
+                    records = records.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.getIsOutStock()) && obj.getIsOutStock()).collect(Collectors.toList());
+                    ;
+                } else {
+                    //无缺货标识或不缺货
+                    records = records.stream().filter(obj -> ObjectUtil.isEmpty(obj.getIsOutStock()) || !obj.getIsOutStock()).collect(Collectors.toList());
+                }
+            } else {
+                page = this.baseMapper.exportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), shopAuthResultDTO, null);
+                // 数据处理
+                records = handleExport(page.getRecords() , dto.getParams().getExportType(), Boolean.FALSE);
+            }
+        } catch (Exception e) {
+            throw new ServiceException(e.getMessage());
+        }
+        return new PagingVO<>(records, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
+        //sku 创建时间
+        List skuCreateTimeList = dto.getParams().getSkuCreateTimeList();
+        List<String> skuIdList = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
+            List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
+            skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(skuIdList)) {
+                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            }
+        }
+        //获取到产品销售统计导出的数据
+        Page<ReportDTO.ProductSalesPagingViewDTO> page = baseMapper.listProductSalesExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), skuIdList);
+        Duration between = LocalDateTimeUtil.between(dto.getParams().getOrderCreateTimeList().get(0), dto.getParams().getOrderCreateTimeList().get(1));
+        long diffDays = between.toDays();
+        if (diffDays == 0) {
+            diffDays = 1;
+        }
+        fillProductSalesList(page.getRecords(), diffDays);
+        return new PagingVO<>(page);
+    }
+
+    @Override
     public SoB2cDTO.SoB2cDataDTO listSoB2cData(SoB2cDTO.SoB2cDataParamDTO paramDTO) {
         //校验必填
         if(CollectionUtils.isEmpty(paramDTO.getB2cSoIdList()) && CollectionUtils.isEmpty(paramDTO.getB2cSoCodeList())) {
@@ -6981,64 +7014,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public Boolean exportExcel(SoB2cDTO.ExportParamDTO params, HttpServletResponse response) {
-        //查询店铺设置权限
-        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
-        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL, "B2C销售订单");
-        }
-        List<SoB2cDTO.ExcelExportDTO> records = null;
-        List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
-        //是否缺货 过滤
-        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-
-        //导出总数
-        Integer totalCount = this.baseMapper.countExportExcel(params, shopAuthResultDTO, Boolean.TRUE);
-        if (totalCount > 50000) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_EXPORT_SIZE);
-        }
-        try {
-            if (Objects.nonNull(isOutStock)) {
-                //必须选仓库而且只能选一个
-                List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> v.getField().equals("sb2cd.warehouse_id") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
-                if (warehouseIdList.size() != 1) {
-                    throw new ServiceException("选择缺货条件必须选择仓库且只能选择一个仓库");
-                }
-                List<SoB2cDTO.ExcelExportDTO> exportExcelList = this.baseMapper.exportExcel(params, shopAuthResultDTO, Boolean.TRUE);
-                // 数据处理
-                records = handleExport(exportExcelList, params.getExportType(), Boolean.TRUE);
-                if (isOutStock) {
-                    //缺货
-                    records = records.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.getIsOutStock()) && obj.getIsOutStock()).collect(Collectors.toList());
-                    ;
-                } else {
-                    //无缺货标识或不缺货
-                    records = records.stream().filter(obj -> ObjectUtil.isEmpty(obj.getIsOutStock()) || !obj.getIsOutStock()).collect(Collectors.toList());
-                    ;
-                }
-            } else {
-                List<SoB2cDTO.ExcelExportDTO> exportExcelList = this.baseMapper.exportExcel(params, shopAuthResultDTO, null);
-                // 数据处理
-                records = handleExport(exportExcelList, params.getExportType(), Boolean.FALSE);
-            }
-        } catch (Exception e) {
-            throw new ServiceException(e.getMessage());
-        }
-        if (CollectionUtils.isEmpty(records)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL, "B2C销售订单");
-        }
-        String name = "B2C销售订单";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/soB2c.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(records, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("产品认证列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(SoB2cDTO.ExportParamDTO params) {
+        downloadTaskFeign.saveDownloadTask("B2C销售订单", EXPORT_OMS_SO_B2C.getCode(), params);
         return Boolean.TRUE;
     }
 

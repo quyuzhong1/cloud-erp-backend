@@ -39,6 +39,7 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
     IPage<SkuMappingDTO.WarehousePagingViewDTO> warehousePaging(Page query, @Param("params") SkuMappingDTO.WarehousePagingParamDTO params,@Param("matchResult") Boolean matchResult);
 
     List<SkuMappingDTO.PagingViewDTO> listExport(@Param("params") SkuMappingDTO.ExportDTO params, @Param("matchResult")Boolean matchResult);
+    Page<SkuMappingDTO.PagingViewDTO> listExport(@Param("page")Page<SkuMappingDTO.PagingViewDTO> page, @Param("params") SkuMappingDTO.ExportDTO params, @Param("matchResult")Boolean matchResult);
     /**
      * 获取到tab 统计数据
      * @author yl
@@ -59,6 +60,7 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.PagingViewDTO>
      */
     List<SkuMappingDTO.WarehousePagingViewDTO> listWarehouseExport(@Param("params")SkuMappingDTO.ExportWarehouseSkuDTO dto,@Param("matchResult") Boolean matchResult);
+    Page<SkuMappingDTO.WarehousePagingViewDTO> listWarehouseExport(@Param("page") Page<SkuMappingDTO.WarehousePagingViewDTO> page, @Param("params")SkuMappingDTO.ExportWarehouseSkuDTO dto,@Param("matchResult") Boolean matchResult);
 
     /**
      * 跟哭库存sku no list获取

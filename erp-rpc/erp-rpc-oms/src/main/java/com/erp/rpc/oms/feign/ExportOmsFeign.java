@@ -2,10 +2,7 @@ package com.erp.rpc.oms.feign;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
-import com.erp.model.oms.dto.SoB2cAbnormalDTO;
-import com.erp.model.oms.dto.SoChangeDTO;
-import com.erp.model.oms.dto.SoReturnDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,4 +19,18 @@ public interface ExportOmsFeign {
     PagingVO<SoReturnDTO.PagingView> exportSoReturn(@RequestBody PagingDTO<SoReturnDTO.PagingParam> dto);
     @PostMapping("/feign/export/soB2CAbnormal")
     PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/soB2C")
+    PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto);
+    @PostMapping("/feign/export/soB2CDeclare")
+    PagingVO<SoB2cDeclareProductDTO.ViewDTO> exportSoB2CDeclare(@RequestBody PagingDTO<SoB2cDeclareProductDTO.ListDTO> dto);
+    @PostMapping("/feign/export/soB2CProductSales")
+    PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(@RequestBody PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
+    @PostMapping("/feign/export/platformSku")
+    PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.ExportDTO> dto);
+    @PostMapping("/feign/export/warehouseSku")
+    PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto);
+    @PostMapping("/feign/export/shop")
+    PagingVO<ShopDTO.PagingViewDTO> exportShop(@RequestBody PagingDTO<ShopDTO.ExportDTO> dto);
+    @PostMapping("/feign/export/customer")
+    PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto);
 }
