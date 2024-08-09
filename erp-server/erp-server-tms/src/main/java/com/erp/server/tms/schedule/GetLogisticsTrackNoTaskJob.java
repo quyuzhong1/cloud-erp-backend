@@ -82,6 +82,9 @@ public class GetLogisticsTrackNoTaskJob {
                     //查询跟踪号
                     ApiResult<List<LogisticsOrderResponseVO>> orderResponse = logisticsService.queryOrderList(logisticsQuery);
                     List<LogisticsOrderResponseVO> resultList = orderResponse.getData();
+                    if (CollectionUtils.isEmpty(resultList)){
+                        continue;
+                    }
                     List<LogisticsBillDTO.TrackDTO> updateList = new ArrayList<>(resultList.size());
                     for (LogisticsOrderResponseVO item : resultList) {
                         String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
