@@ -44,7 +44,6 @@ public class InventoryFlowRecalculateJob {
         if (StrUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             startTime = jsonParam.getLocalDateTime("startTime", LocalDateTime.parse("2023-07-06T00:00:00"));
-            endTime = jsonParam.getLocalDateTime("endTime", LocalDateTime.now());
             status = jsonParam.getStr("status");
             inventoryId = jsonParam.getStr("inventoryId");
         }

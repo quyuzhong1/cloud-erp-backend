@@ -126,13 +126,6 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
     void overrideInventoryFlow(LocalDateTime startTime, LocalDateTime endTime, String status, String inventoryId);
 
     /**
-     * 增加反审核流水
-     * @param detail 库存明细
-     * @param txnFlow 原交易流水
-     */
-    void addUnApproveFlow(InventoryDetailEntity detail, TransactionFlowEntity txnFlow, Integer afterQty);
-
-    /**
      * @description: 每日库存
      * @author Will
      * @date: 2023/12/6 17:14

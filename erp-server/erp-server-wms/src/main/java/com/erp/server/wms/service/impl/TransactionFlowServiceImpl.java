@@ -346,11 +346,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Transactional(rollbackFor = Exception.class)
     public void overrideInventoryFlow(LocalDateTime startTime, LocalDateTime endTime, String status, String inventoryId) {
         // 悲观锁 锁表
-//        List<TransactionFlowEntity> lockTableList = lambdaQuery().last("for update").list();
-
         List<TransactionFlowEntity> lockTableList = lambdaQuery()
-                .ge(ObjUtil.isNotEmpty(startTime), TransactionFlowEntity::getTradeTime, startTime)
-                .le(ObjUtil.isNotEmpty(endTime), TransactionFlowEntity::getTradeTime, endTime)
+                .ge(ObjUtil.isNotEmpty(startTime), TransactionFlowEntity::getBillDate, startTime.toLocalDate())
                 .eq(ObjUtil.isNotEmpty(status), TransactionFlowEntity::getDictInventoryStatus, status)
                 .eq(ObjUtil.isNotEmpty(inventoryId), TransactionFlowEntity::getInventoryId, inventoryId)
                 .last("for update")
@@ -360,12 +357,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         }
         // 获取需要覆盖的数据
         Map<String, List<TransactionFlowEntity>> flowMap = lockTableList.stream()
-                .sorted(Comparator.comparing(TransactionFlowEntity::getId))
-                .filter(x -> (ObjUtil.isNotEmpty(startTime) ? x.getTradeTime().isAfter(startTime) : Boolean.TRUE)
-                        && (ObjUtil.isNotEmpty(endTime) ? x.getTradeTime().isBefore(endTime) : Boolean.TRUE)
-                        && (StrUtil.isNotBlank(status) ? x.getDictInventoryStatus().equals(status) : Boolean.TRUE)
-                        && (StrUtil.isNotBlank(inventoryId) ? x.getInventoryId().equals(inventoryId) : Boolean.TRUE)
-                ).collect(Collectors.groupingBy(TransactionFlowEntity::getInventoryId, Collectors.toList()));
+                .sorted(Comparator.comparing(TransactionFlowEntity::getBillDate)
+                        .thenComparing(TransactionFlowEntity::getTradeTime)
+                        .thenComparing(TransactionFlowEntity::getId)
+                )
+                .collect(Collectors.groupingBy(TransactionFlowEntity::getInventoryId, Collectors.toList()));
 
         // 重算库存流水
         flowMap.keySet().parallelStream().forEach(flow -> {
@@ -374,28 +370,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             // 重算库存流水
             overrideFlowByInventoryId(flowList, hisEntity);
         });
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void addUnApproveFlow(InventoryDetailEntity detail, TransactionFlowEntity txnFlow, Integer afterQty) {
-        // 记录交易流水
-        LoginUser loginUser = UserContext.getDefaultLoginUser();
-        // 复制所有参数
-        TransactionFlowEntity transactionFlow = new TransactionFlowEntity();
-        BeanMapper.copy(txnFlow,transactionFlow);
-        // 更改指定的参数
-        transactionFlow.setCurInventoryQty(afterQty);
-        transactionFlow.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "0");
-        transactionFlow.setQty(detail.getQty());
-        transactionFlow.setInstockBatchDate(detail.getInstockBatchDate());
-        transactionFlow.setIsUnapproved(Boolean.TRUE);
-        transactionFlow.setInventoryDetailId(detail.getId());
-
-        // 个别参数设置空值
-        transactionFlow.setId(null);
-        boolean save = super.save(transactionFlow);
-        ValidatorUtil.isTrue(save, ()->new ServiceException("反审核库存流水数据保存失败"));
     }
 
     @Override
