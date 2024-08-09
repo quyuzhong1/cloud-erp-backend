@@ -1,12 +1,11 @@
 package com.erp.server.oms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PagingDTO;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -29,4 +28,5 @@ public interface CustomerB2bSellerChangeMapper extends BaseMapper<CustomerB2bSel
     IPage<CustomerB2bSellerChangeDTO.ListDTO> paging(Page query, @Param("params")CustomerB2bSellerChangeDTO.ParamDTO dto);
 
     List<CustomerB2bSellerExcelDTO> export(@Param("params") CustomerB2bSellerChangeDTO.ParamDTO dto);
+    Page<CustomerB2bSellerExcelDTO> export(@Param("page") Page<CustomerB2bSellerExcelDTO> page,@Param("params") CustomerB2bSellerChangeDTO.ParamDTO dto);
 }

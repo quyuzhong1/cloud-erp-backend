@@ -42,6 +42,7 @@ public interface SoChangeMapper extends BaseMapper<SoChangeEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.PagingViewDTO>
      */
     List<SoChangeDTO.PagingViewDTO> listExport(@Param("params") SoChangeDTO.PagingParamDTO dto);
+    Page<SoChangeDTO.PagingViewDTO> listExport(@Param("page")Page<SoChangeDTO.PagingViewDTO> page, @Param("params") SoChangeDTO.PagingParamDTO dto);
 
     List<SoChangeDTO.SoRefDTO> listSoRefSoChangeBySoId(@Param("soId") String soId);
 

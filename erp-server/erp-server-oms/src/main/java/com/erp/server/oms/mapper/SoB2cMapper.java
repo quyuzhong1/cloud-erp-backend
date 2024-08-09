@@ -191,6 +191,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return List<ListDTO>
      */
     List<SoB2cAbnormalDTO.ListDTO> abnormalExportExcel( @Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    Page<SoB2cAbnormalDTO.ListDTO> abnormalExportExcel( @Param("page") Page<SoB2cAbnormalDTO.ListDTO> page,@Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
      * 批量更新审核信息

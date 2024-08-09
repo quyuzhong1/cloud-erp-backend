@@ -5,7 +5,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -28,10 +27,9 @@ public interface SoB2cAbnormalService {
      * @author Will
      * @date: 2024/4/22 19:53
      * @param dto
-     * @param response
      * @return Boolean
      */
-    Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto);
     /**
      * @description: 批量重试
      * @author Will

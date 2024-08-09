@@ -67,6 +67,7 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -216,6 +217,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private VirtualInventoryFeign virtualInventoryFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * 添加销售订单
@@ -2088,7 +2091,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * 导出销售订单发票信息
      *
      * @param id
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-07-04 14:48

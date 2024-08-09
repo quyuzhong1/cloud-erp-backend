@@ -38,6 +38,7 @@ public interface SoReturnMapper extends BaseMapper<SoReturnEntity> {
      * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingView>
      **/
     List<SoReturnDTO.PagingView> soDeliveryNoticeExportExcel(@Param("params") SoReturnDTO.PagingParam dto);
+    Page<SoReturnDTO.PagingView> soDeliveryNoticeExportExcel(@Param("page")Page<SoReturnDTO.PagingView> page,@Param("params") SoReturnDTO.PagingParam dto);
     /**
      * 列表状态数量统计
      * @Author Luo_WG

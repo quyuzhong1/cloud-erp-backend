@@ -21,7 +21,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -302,9 +301,8 @@ public class SoChangeController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售变更单")
     @PostMapping("/export")
-    @WebAdvanceQuery(handler = SoChangeQueryHandler.class)
-    public ApiResult exportWarehouse(@RequestBody @Valid SoChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean result = soChangeService.exportExcel(dto, response);
+    public ApiResult exportWarehouse(@RequestBody @Valid SoChangeDTO.PagingParamDTO dto) {
+        Boolean result = soChangeService.exportExcel(dto);
         return result ? success() : failure();
     }
 

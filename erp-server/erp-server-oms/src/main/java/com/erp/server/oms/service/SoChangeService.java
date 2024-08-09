@@ -9,7 +9,6 @@ import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -78,7 +77,7 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean exportExcel(SoChangeDTO.PagingParamDTO dto,HttpServletResponse response);
+    Boolean exportExcel(SoChangeDTO.PagingParamDTO dto);
 
     
     /**
@@ -213,4 +212,10 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @date 2023-05-31 14:20
      */
     Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
+
+    /**
+     * 销售变更单导出
+     * @param dto 参数
+     */
+    PagingVO<SoChangeDTO.PagingViewDTO> exportSoChange(PagingDTO<SoChangeDTO.PagingParamDTO> dto);
 }

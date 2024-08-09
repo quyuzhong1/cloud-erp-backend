@@ -18,7 +18,6 @@ import com.erp.server.oms.service.SoB2cService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,8 +51,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     }
 
     @Override
-    public Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto, HttpServletResponse response) {
-        return soB2cService.abnormalExportExcel(dto,response);
+    public Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto) {
+        return soB2cService.abnormalExportExcel(dto);
     }
 
     @Override

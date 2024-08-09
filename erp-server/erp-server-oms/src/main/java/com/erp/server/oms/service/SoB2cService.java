@@ -11,7 +11,6 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -819,10 +818,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Will
      * @date: 2024/4/22 19:54
      * @param dto
-     * @param response
      * @return Boolean
      */
-    Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto);
     /**
      * 扫描单号匹配订单
      * @param code
@@ -947,4 +945,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     List<SoB2cEntity> listByCreateTime(LocalDateTime startTime, LocalDateTime endTime);
 
+    /**
+     * 导出异常订单
+     */
+    PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto);
 }
