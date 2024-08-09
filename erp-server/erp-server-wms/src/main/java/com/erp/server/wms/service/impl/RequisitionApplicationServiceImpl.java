@@ -1019,10 +1019,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getOne(new LambdaQueryWrapper<FirstMileDeliveryEntity>()
                     .eq(FirstMileDeliveryEntity::getSourceCode, requisitionApplicationEntity.getCode())
                     .eq(FirstMileDeliveryEntity::getSourceType, SourceTypeEnum.REQUISITION_APPLICATION.getCode()));
-            firstMileDeliveryDetailService.lambdaUpdate()
-                    .eq(FirstMileDeliveryDetailEntity::getMainId, firstMileDelivery.getId())
-                    .set(FirstMileDeliveryDetailEntity::getFbaShipmentCode, requisitionApplicationEntity.getFbaShipmentCode())
-                    .update();
+            if(firstMileDelivery != null){
+                firstMileDeliveryDetailService.lambdaUpdate()
+                        .eq(FirstMileDeliveryDetailEntity::getMainId, firstMileDelivery.getId())
+                        .set(FirstMileDeliveryDetailEntity::getFbaShipmentCode, requisitionApplicationEntity.getFbaShipmentCode())
+                        .update();
+            }
         }
         if(CollectionUtils.isNotEmpty(updateList)){
             service.updateBatchById(updateList);
