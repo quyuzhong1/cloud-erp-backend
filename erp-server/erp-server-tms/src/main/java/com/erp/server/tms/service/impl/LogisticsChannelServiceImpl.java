@@ -659,7 +659,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform) {
         LogisticsChannelEntity channelEntity = this.getById(logisticsChannelId);
         if (null == channelEntity){
-            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道id："+logisticsChannelId+"");
         }
         if (StringUtils.isBlank(dictPlatform)){
             throw new ServiceException("关联的销售平台不能为空");
