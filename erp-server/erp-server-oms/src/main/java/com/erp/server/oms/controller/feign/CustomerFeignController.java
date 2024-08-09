@@ -1,6 +1,9 @@
 package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SellerDTO;
@@ -11,6 +14,7 @@ import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.CustomerSellerService;
 import com.erp.server.oms.service.DictBasicService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,10 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("feign/customer")
-public class CustomerFeignController {
+@Slf4j
+public class CustomerFeignController extends BaseController {
     @Resource
     private CustomerInfoService customerInfoService;
 
@@ -129,8 +135,24 @@ public class CustomerFeignController {
      * @Date 2023/7/4 12:28
      **/
     @PostMapping("/approve")
-    public Boolean approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return customerInfoService.approve(dto);
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<CustomerInfoEntity> entityList = customerInfoService.listByIds(ids);
+        for (String id : ids) {
+            CustomerInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"客户信息不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(customerInfoService.approve(dto, entity));
+            }catch (Exception e){
+                log.error("B2B客户审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

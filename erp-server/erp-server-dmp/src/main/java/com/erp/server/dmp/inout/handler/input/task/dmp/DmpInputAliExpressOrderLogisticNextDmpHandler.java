@@ -68,6 +68,18 @@ public class DmpInputAliExpressOrderLogisticNextDmpHandler extends DmpInputDoNex
 									currencyCode = currencyCodeObj.toString();
 								}
 							}
+							String logisticsServiceName = "";
+							Object child_order_list_obj = orderDetails.get("child_order_list");
+							if(child_order_list_obj != null) {
+								List<Map<String , Object>> child_order_list = (List<Map<String , Object>>)child_order_list_obj;
+								if(CollUtil.isNotEmpty(child_order_list)) {
+									Map<String, Object> child_order = child_order_list.get(0);
+									Object logistics_service_name_obj = child_order.get("logistics_service_name");
+									if(logistics_service_name_obj != null) {
+										logisticsServiceName = logistics_service_name_obj.toString();
+									}
+								}
+							}
 							List<Map<String, Object>> logistic_info_list = (List<Map<String, Object>>)logistic_info_list_obj;
 							ArrayList<TreeMap<String, Object>> valueList = new ArrayList<>();
 							for(Map<String, Object> logistic_info : logistic_info_list) {
@@ -75,7 +87,7 @@ public class DmpInputAliExpressOrderLogisticNextDmpHandler extends DmpInputDoNex
 								value.put("mainId", mainId);
 								value.put("logisticsNo", logistic_info.get("logistics_no"));
 								value.put("deliveryTime", logistic_info.get("gmt_send"));
-								value.put("logisticsServiceName", logistic_info.get("logistics_service_name"));
+								value.put("logisticsServiceName", logisticsServiceName);
 								value.put("logisticsTypeCode", logistic_info.get("logistics_type_code"));
 								value.put("receiveStatus", logistic_info.get("receive_status"));
 								value.put("currencyCode", currencyCode);

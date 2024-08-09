@@ -88,6 +88,24 @@ public class WarehouseLocationMoveEntity extends BaseEntity<WarehouseLocationMov
     @TableField("invalid_remark")
     private String invalidRemark;
 
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源编号
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

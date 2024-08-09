@@ -160,6 +160,7 @@ public class PackageDTO implements Serializable {
          */
         private Boolean isAutoOut;
 
+        private Boolean isIntercept;
         /**
          * 预报状态
          */

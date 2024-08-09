@@ -3,17 +3,19 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Objects;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
@@ -391,6 +393,21 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 是否是pc端访问
          */
         private Boolean pcShow = false;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     /**
@@ -752,7 +769,22 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 仓库名称--兼容移动端pda历史数据
          */
         private String infoWarehouseName;
-
+        /**
+         * 取货仓位库存状态
+         */
+        private String outInventoryStatus;
+        /**
+         * 取货仓位库存状态名字
+         */
+        private String outInventoryStatusName;
+        /**
+         * 上架仓位库存状态
+         */
+        private String inInventoryStatus;
+        /**
+         * 上架仓位库存状态名字
+         */
+        private String inInventoryStatusName;
         /**
          * 产品明细数量
          */
@@ -897,5 +929,20 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 取出仓位名称
          */
         private String outWarehouseLocationName;
+    }
+
+    @EqualsAndHashCode
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    public static class Group {
+        /**
+         * 取货仓位库存状态
+         */
+        private String outInventoryStatus;
+        /**
+         * 上架仓位库存状态
+         */
+        private String inInventoryStatus;
     }
 }

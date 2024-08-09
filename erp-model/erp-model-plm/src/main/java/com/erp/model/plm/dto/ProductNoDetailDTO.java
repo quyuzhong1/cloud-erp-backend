@@ -20,6 +20,10 @@ public class ProductNoDetailDTO {
      * 产品信息列表id
      */
     private String id;
+    /**
+     * spu
+     */
+    private String spuNo;
 
     /**
      * 产品图片
@@ -30,6 +34,10 @@ public class ProductNoDetailDTO {
      * skuNo
      */
     private String skuNo;
+    /**
+     * skuId
+     */
+    private String skuId;
 
     /**
      * 产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发

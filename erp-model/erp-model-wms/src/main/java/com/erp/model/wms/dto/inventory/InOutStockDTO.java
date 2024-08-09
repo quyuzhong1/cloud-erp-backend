@@ -3,6 +3,7 @@ package com.erp.model.wms.dto.inventory;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -87,7 +88,7 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
                 return inOutStockDTO;
         }
 
-        public static InOutStockDTO getInOutStockDTO(SoOutstockEntity entity, String sourceDetailId,String skuId, String skuNo, String warehouseLocation, Integer qty){
+        public static InOutStockDTO getInOutStockDTO(SoOutstockEntity entity, String sourceDetailId, String skuId, String skuNo, String warehouseLocation, Integer qty){
                 InOutStockDTO stockDTO = new InOutStockDTO();
                 stockDTO.setWarehouseId(entity.getWarehouseId());
                 stockDTO.setSourceId(entity.getId());

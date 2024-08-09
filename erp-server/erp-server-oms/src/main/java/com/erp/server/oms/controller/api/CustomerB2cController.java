@@ -12,8 +12,10 @@ import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
+import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.server.oms.service.CustomerB2cAddressService;
 import com.erp.server.oms.service.CustomerB2cService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +25,9 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * B2C销售管理-B2C客户管理
@@ -33,6 +37,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/customerB2c")
+@Slf4j
 public class CustomerB2cController extends BaseController {
 
     @Resource
@@ -185,9 +190,24 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "ids"
     )
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = customerB2cService.approve(dto);
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<CustomerB2cEntity> entityList = customerB2cService.listByIds(ids);
+        for (String id : ids) {
+            CustomerB2cEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"B2C客户不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(customerB2cService.approve(dto, entity));
+            }catch (Exception e){
+                log.error("B2C客户审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -201,8 +221,23 @@ public class CustomerB2cController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = customerB2cService.disApprove(dto.getIds());
-        return result ? success() : failure();
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<CustomerB2cEntity> entityList = customerB2cService.listByIds(ids);
+        for (String id : ids) {
+            CustomerB2cEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"B2C客户不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(customerB2cService.disApprove(entity));
+            }catch (Exception e){
+                log.error("B2C客户反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -264,7 +299,7 @@ public class CustomerB2cController extends BaseController {
      * 客户列表远程搜索
      */
     @PostMapping("/pagingSelect")
-    public ApiResult<PagingVO<CustomerB2CDTO.InfoDTO>> pagingSelect(PagingDTO<CustomerB2CDTO.SelectDTO> searchDTO) {
+    public ApiResult<PagingVO<CustomerB2CDTO.InfoDTO>> pagingSelect(@RequestBody @Valid PagingDTO<CustomerB2CDTO.SelectDTO> searchDTO) {
         PagingVO<CustomerB2CDTO.InfoDTO> list = customerB2cService.pagingSelect(searchDTO);
         return success(list);
     }

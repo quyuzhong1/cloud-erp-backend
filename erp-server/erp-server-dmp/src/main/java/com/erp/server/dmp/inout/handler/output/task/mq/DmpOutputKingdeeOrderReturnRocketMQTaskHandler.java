@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -102,7 +103,7 @@ public class DmpOutputKingdeeOrderReturnRocketMQTaskHandler extends DmpOutputRoc
     	resultEntity.setFSaleOrgName(entity.getSaleOrgName());
     	resultEntity.setFSaledeptNumber(entity.getSaledeptNumber());
     	resultEntity.setFSaledeptName(entity.getSaledeptName());
-    	resultEntity.setFDate(LocalDateUtil.formatTime(entity.getReturnTime(), "yyyy-MM-dd'T'HH:mm:ss.SSS"));
+    	resultEntity.setFDate(LocalDateUtil.formatTime(entity.getBillDate(), "yyyy-MM-dd'T'HH:mm:ss.SSS"));
     	resultEntity.setFEThirdBillNo(entity.getThirdBillNo());
     	resultEntity.setFDocumentStatus(entity.getStatus());
         return resultEntity;
@@ -124,5 +125,10 @@ public class DmpOutputKingdeeOrderReturnRocketMQTaskHandler extends DmpOutputRoc
             orderItemList.add(itemEntity);
         }
         return orderItemList;
+    }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("FBillNo");
     }
 }

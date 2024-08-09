@@ -46,6 +46,7 @@ public enum LogActionEnum {
     CANCEL_CONFIRM("cancelConfirm", "取消确认",true),
     RECEIVE("receive", "签收",true),
     EXECUTE("execute", "执行",true),
+    GET_LOGISTICS_NO("getLogisticsNo", "获取物流跟踪号",true),
     ;
 
     @EnumValue

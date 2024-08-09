@@ -21,6 +21,12 @@ public class SysAccountingCompanyDTO {
     private String id;
 
     /**
+     * 金蝶id
+     */
+    @NotBlank(message = "金蝶id不能为空")
+    private String kingdeeId;
+
+    /**
      * 公司名
      */
     @NotBlank(message = "公司名不能为空")

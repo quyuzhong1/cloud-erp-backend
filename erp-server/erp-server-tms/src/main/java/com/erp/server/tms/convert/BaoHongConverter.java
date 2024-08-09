@@ -102,6 +102,9 @@ public interface BaoHongConverter {
     TransferLogisticsOrderDTO createOrderInfoConvert(OrderDataArr data);
 
     static TransferLogisticsStatusEnum orderStatusConvert(String orderStatus){
+        if(orderStatus.equals("13")){
+            return TransferLogisticsStatusEnum.SIGNED;
+        }
         if(orderStatus.equals("11") || orderStatus.equals("9")){
             return TransferLogisticsStatusEnum.OUTSTOCK;
         }
@@ -120,6 +123,7 @@ public interface BaoHongConverter {
         if(orderStatus.equals("0")){
             return TransferLogisticsStatusEnum.DELETED;
         }
+
         return null;
     }
 

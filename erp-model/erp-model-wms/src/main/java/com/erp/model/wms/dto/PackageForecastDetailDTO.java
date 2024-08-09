@@ -107,12 +107,17 @@ public class PackageForecastDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        /**
+         * 是否存在发货拦截单
+         */
+        private boolean hasDeliveryIntercept;
 
         /**
          * 销售订单单据状态
          */
         private String billStatus;
 
+        private Boolean isIntercept;
     }
 
     /**

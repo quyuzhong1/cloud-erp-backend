@@ -45,6 +45,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -310,6 +312,8 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO sync(VirtualWarehouseAllocationDetailEntity vwAllocationDetailEntity, VirtualWarehouseAllocationEntity vwAllocationEntity) {
         //获取合单表明细id
         VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehousePushHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
@@ -325,12 +329,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                         handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).collect(Collectors.toList()));
                 //修改中台任务状态并触发mq
                 List<String> sourceIds = handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getHandleDetailId).collect(Collectors.toList());
-                try {
-                    dmpMqFeign.batchSyncBySourceId(sourceIds);
-                } catch (Exception e) {
-                    log.info("手动同步失败：{}", e.getMessage());
-                    return BatchResultDTO.fail(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), "操作失败");
-                }
+                dmpMqFeign.batchSyncBySourceId(sourceIds);
             }
         }
         return BatchResultDTO.success(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), "操作成功");
@@ -426,7 +425,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                 List<VirtualWarehouseAllocationDTO.DetailDto> detailDtos = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailList);
                 //获取所有的sku信息
                 List<String> skuIds = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-                List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+                List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
                 detailDtos.forEach(detailDto -> {
                     SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())).findFirst().orElse(null);
                     if (Objects.nonNull(skuVO)) {
@@ -485,5 +484,44 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                 .eq(VirtualWarehouseAllocationDetailEntity::getId, updateRemarkDTO.getId())
                 .update();
     }
+    /**
+     * 初始化第三方编码存在异常的数据
+     */
+    @Override
+    public void initFailThirdCode(String errorMsg) {
+        if (StringUtils.isBlank(errorMsg)){
+            errorMsg = "check_fail";
+        }
+        List<VirtualWarehouseAllocationDetailEntity> list = this.lambdaQuery().like(VirtualWarehouseAllocationDetailEntity::getThirdCode, errorMsg).list();
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        list.forEach(this::updateDetailData);
+    }
 
+    /**
+     * 更新历史数据
+     * @param detailEntity
+     */
+    private void updateDetailData(VirtualWarehouseAllocationDetailEntity detailEntity) {
+        String thirdCode = "";
+        String finishDescription = detailEntity.getThirdCode();
+        String syncStatus = VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode();
+        // 正则表达式匹配模式
+        String pattern = "\\bVO\\d{12}\\b";
+        // 创建 Pattern 对象
+        Pattern r = Pattern.compile(pattern);
+        // 创建 Matcher 对象
+        Matcher m = r.matcher(detailEntity.getThirdCode());
+        // 查找匹配的
+        if (m.find()) {
+            thirdCode = m.group(0);
+        }
+        this.lambdaUpdate()
+                .set(VirtualWarehouseAllocationDetailEntity::getThirdCode,thirdCode)
+                .set(VirtualWarehouseAllocationDetailEntity::getFinishDescription,finishDescription)
+                .set(VirtualWarehouseAllocationDetailEntity::getSyncStatus,syncStatus)
+                .eq(VirtualWarehouseAllocationDetailEntity::getId, detailEntity.getId())
+                .update();
+    }
 }

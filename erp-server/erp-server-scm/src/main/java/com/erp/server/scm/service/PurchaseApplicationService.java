@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -10,6 +11,7 @@ import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -70,18 +72,21 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @description: 审核
      * @author Will
      * @date: 2023/3/15 18:20
-     * @param baseApproveParamDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
 
      */
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(PurchaseApplicationEntity entity, String type, String comment, Boolean isNeedProcess);
     /**
      * @description: 批量反审核
      * @author Will
      * @date: 2023/3/15 18:20
-     * @param ids
+     * @param entity
      * @return Boolean
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(PurchaseApplicationEntity entity);
     /**
      * @description: 生成采购订单查询
      * @author Will

@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -56,10 +56,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -432,74 +429,55 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
-        List<SoReturnNoticeEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
-        }
+    public BatchResultDTO approve(SoReturnNoticeEntity entity, String type, String comment, Boolean isNeedProcess) {
         //判断是否是审核中的状态
-        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
-        ).count();
-
-        if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98006);
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //TODO 待加审核流程
-        if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
+        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnNoticeEntity::getApproveUserId, userInfo.getUid())
                     .set(SoReturnNoticeEntity::getApproveUserName, userInfo.getUserName())
                     .set(SoReturnNoticeEntity::getApproveTime, LocalDateTime.now())
-                    .in(SoReturnNoticeEntity::getId, ids)
+                    .eq(SoReturnNoticeEntity::getId, entity.getId())
                     .update();
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
-                    .in(SoReturnNoticeEntity::getId, ids)
+                    .eq(SoReturnNoticeEntity::getId, entity.getId())
                     .update();
         }
         //操作日志
-        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售退货通知单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "审核操作");
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        List<SoReturnNoticeEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
-        }
+    public BatchResultDTO disApprove(SoReturnNoticeEntity entity) {
         //已审核支持反审核
-        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
-        ).count();
-        if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_99003);
+        if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
         }
         //TODO 待加审核流程
 
         //下推签收单不能反审核
-        List<String> returnIds = entityList.stream().map(SoReturnNoticeEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<SoReturnReceiveEntity> soReturnNoticeEntities = soReturnReceiveService.listBySourceIds(returnIds);
+        List<SoReturnReceiveEntity> soReturnNoticeEntities = soReturnReceiveService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
         if (CollectionUtils.isNotEmpty(soReturnNoticeEntities)) {
             throw new ServiceException(ApiError.ERROR_99068);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                .in(SoReturnNoticeEntity::getId, ids)
+                .eq(SoReturnNoticeEntity::getId, entity.getId())
                 .update();
 
         //操作日志
-        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog(String.format("反审核了一个销售退货通知单【%s】", entity.getCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override

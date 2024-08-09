@@ -353,7 +353,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
 
     private Boolean validateDisApprove(StocktakingPlanEntity entity) {
         // 已审核支持反审核
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         // 下游盘点计划单全部为未开始时允许反审核
@@ -395,7 +395,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     public BatchResultDTO cancelProcess(String id) {
         StocktakingPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到盘点计划单数据"));
         // 只有审核中的单据允许撤销
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // 撤销流程

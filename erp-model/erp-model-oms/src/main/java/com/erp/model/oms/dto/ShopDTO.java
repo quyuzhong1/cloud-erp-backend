@@ -331,7 +331,10 @@ public class ShopDTO implements Serializable {
          */
         private String warehouseId;
 
-
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
     }
 
 
@@ -406,7 +409,10 @@ public class ShopDTO implements Serializable {
          * ioss税号
          */
         private String  iossTaxNo;
-
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
         /**
          * 国家id
          */
@@ -561,7 +567,10 @@ public class ShopDTO implements Serializable {
          * ioss税号
          */
         private String  iossTaxNo;
-
+        /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
         /**
          * 销售组织
          */

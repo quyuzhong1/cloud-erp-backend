@@ -70,7 +70,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
                 }
 
                 // 调拨/移仓位 的仓库校验
-                if(businessType.equals(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO)) {
+                if(InventoryBusinessTypeEnum.warehouseLocationMoveInfo().contains(businessType)) {
                     //移仓位：当前仓和目的仓必须 一样
                     ValidatorUtil.isTrue(Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()), () -> new ServiceException(ApiError.CURRENT_TARGET_WAREHOUSE_SAME));
                 }else {

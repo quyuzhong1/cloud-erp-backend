@@ -101,7 +101,7 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
             pageNo++;
 
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-            dmpInputTaskInitDTO.setMsg(JSON.toJSONString(apiResult.getData()));
+            dmpInputTaskInitDTO.setMsg(apiResult.getData().toString());
             dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         }
         return dmpInputTaskInitDTOList;

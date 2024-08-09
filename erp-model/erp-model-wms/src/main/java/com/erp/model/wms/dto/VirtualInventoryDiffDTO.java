@@ -75,6 +75,15 @@ public class VirtualInventoryDiffDTO implements Serializable {
          */
         private Integer usableQty;
         /**
+         * 实体仓冻结库存
+         */
+        private Integer frozenQty;
+
+        /**
+         * 实体仓实际库存
+         */
+        private Integer realQty;
+        /**
          * 实体仓已分配数
          */
         private Integer distributionQty;
@@ -207,6 +216,15 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 实体仓可用库存
          */
         private Integer usableQty;
+        /**
+         * 实体仓冻结库存
+         */
+        private Integer frozenQty;
+
+        /**
+         * 实体仓实际库存
+         */
+        private Integer realQty;
         /**
          * 实体仓已分配数
          */

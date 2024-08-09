@@ -27,6 +27,7 @@ import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.alibaba.excel.converters.bytearray.ByteArrayImageConverter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.io.IOUtils;
@@ -646,6 +647,10 @@ public class ExcelPrintUtils {
 			EasyExcelListConverter listConverter = new EasyExcelListConverter();
 			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey()), listConverter);
 			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey(), listConverter.supportExcelTypeKey()), listConverter);
+			// 图片转换器
+			ByteArrayImageConverter byteArrayImageConverter = new ByteArrayImageConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(byteArrayImageConverter.supportJavaTypeKey()), byteArrayImageConverter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(byteArrayImageConverter.supportJavaTypeKey(), byteArrayImageConverter.supportExcelTypeKey()), byteArrayImageConverter);
 
 			WriteSheet writeSheet = EasyExcel.writerSheet().build();
 

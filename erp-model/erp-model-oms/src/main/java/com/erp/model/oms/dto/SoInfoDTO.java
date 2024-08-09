@@ -146,6 +146,11 @@ public class SoInfoDTO implements Serializable {
         private String virtualWarehouseId;
 
         /**
+         * 虚拟仓库名称
+         */
+        private String virtualWarehouseName;
+
+        /**
          * 客户id
          */
         private String customerId;

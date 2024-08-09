@@ -164,7 +164,6 @@ public class FirstMileDeliveryEntity extends BaseEntity<FirstMileDeliveryEntity>
     @TableField("declare_status")
     private WmsDeclareStatusEnum declareStatus;
 
-
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

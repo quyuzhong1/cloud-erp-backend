@@ -37,9 +37,8 @@ public class MabangOrderHistoryApiInitHandler implements DmpInputApiInitHandler 
 	public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
 
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-        DmpInputMabangApiInitRequest dmpInputMabangApiInitRequest = (DmpInputMabangApiInitRequest) dmpInputApiInitRequest;
 
-        String requestParam = dmpInputMabangApiInitRequest.getRequestParam();
+        String requestParam = dmpInputApiInitRequest.getRequestParam();
         Map<String, Object> paramMap = JSON.parseObject(requestParam, Map.class);
 
 
@@ -55,7 +54,7 @@ public class MabangOrderHistoryApiInitHandler implements DmpInputApiInitHandler 
             }
 //            params.put("paidTime", sdf.format(endDate));
             paramMap.put("pageSize", pageSize);
-            ParamHeaderVO paramVo = MabangTool.getParamMap(dmpInputMabangApiInitRequest.getApiType(), 0, paramMap);
+            ParamHeaderVO paramVo = MabangTool.getParamMap(dmpInputApiInitRequest.getApiType(), 0, paramMap);
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
             if (!Objects.equals(responseMap.getInteger("code"), 200)) {
                 log.error("调用url={} param={} {}马帮历史销售订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));

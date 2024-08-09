@@ -128,4 +128,8 @@ public class TikTokProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
         return product;
     }
 
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("platformSkuNo");
+    }
 }

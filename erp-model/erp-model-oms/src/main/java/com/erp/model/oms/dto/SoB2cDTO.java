@@ -1192,16 +1192,6 @@ public class SoB2cDTO implements Serializable {
         private Boolean isCover;
 
         /**
-         * 物流渠道id
-         */
-        private String logisticsChannelId;
-
-        /**
-         * 仓库 http://172.16.100.11:3002/project/92/interface/api/22930
-         */
-        private String warehouseId;
-
-        /**
          * 明细数据
          */
         @Valid
@@ -2398,11 +2388,16 @@ public class SoB2cDTO implements Serializable {
          * 产品skuId
          */
         private String skuId;
+        private String parentSkuId;
 
         /**
          * 产品sku编号
          */
         private String skuNo;
+        /**
+         * 父级sku用于记录bom拆分时原sku
+         */
+        private String parentSkuNo;
 
         /**
          * 产品名称
@@ -2841,4 +2836,5 @@ public class SoB2cDTO implements Serializable {
         @NotBlank(message = "仓库名称不能为空")
         private String warehouseName;
     }
+
 }

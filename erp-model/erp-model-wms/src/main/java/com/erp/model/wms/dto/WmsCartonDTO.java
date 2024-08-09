@@ -56,6 +56,11 @@ public class WmsCartonDTO {
          */
         @StateEnumValue(strValues = {"load","pretend","repacking"},message = "调整装箱类型有误")
         private String adjustType;
+
+        /**
+         * 调整装箱详情
+         */
+        private List<AdjustDetailDTO> cartonDetailList;
     }
 
     @Data
@@ -302,5 +307,32 @@ public class WmsCartonDTO {
          * 装箱明细
          */
         private List<CartonDetailDTO> cartonDetailList;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PrintDTO {
+        /**
+         * 源单id
+         */
+        private String sourceId;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 源单编码
+         */
+        private String sourceCode;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+        /**
+         * 箱号
+         */
+        private Integer boxNo;
     }
 }

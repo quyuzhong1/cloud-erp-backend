@@ -14,9 +14,16 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceEntity;
+import com.erp.model.scm.entity.SalesDemandEntity;
 import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.erp.server.scm.query.PurchasePriceQueryHandler;
+import com.erp.server.scm.service.PurchasePriceChangeDetailService;
+import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 采购价目管理
@@ -33,6 +43,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-03-15
  */
+@Slf4j
 @RestController
 @LogSystemModule("采购价目表")
 @RequestMapping("/purchase/price")
@@ -40,7 +51,10 @@ public class PurchasePriceController extends BaseController {
 
     @Resource
     private PurchasePriceService purchasePriceService;
-
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
+    @Resource
+    private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
 
     /**
      * 采购价目分页列表
@@ -212,9 +226,23 @@ public class PurchasePriceController extends BaseController {
             menuCode = "scm:purchase:price:approve",
             serviceClass = PurchasePriceService.class,
             keyIdName = "ids")
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = purchasePriceService.approve(dto);
-        return result == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchasePriceEntity> entityList = purchasePriceService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购价目不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchasePriceService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("采购价目审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -286,9 +314,29 @@ public class PurchasePriceController extends BaseController {
             serviceClass = PurchasePriceService.class,
             keyIdName = "ids"
     )
-    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchasePriceService.disApprove(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchasePriceEntity> entityList = purchasePriceService.listByIds(dto.getIds());
+        List<PurchasePriceDetailEntity> detailList = purchasePriceDetailService.listDetailByMainIds(dto.getIds());
+        List<String> priceDetailIds = detailList.stream().map(PurchasePriceDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<PurchasePriceChangeDetailEntity> changeDetailList = purchasePriceChangeDetailService.listByPurchasePriceDetailIds(priceDetailIds);
+        for (String id : dto.getIds()) {
+            PurchasePriceEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购价目不存在"));
+                continue;
+            }
+            List<PurchasePriceDetailEntity> detailEntityList = detailList.stream().filter(e -> e.getPurchasePriceId().equals(id)).collect(Collectors.toList());
+            List<String> priceDetailList = detailEntityList.stream().map(PurchasePriceDetailEntity::getId).distinct().collect(Collectors.toList());
+            List<PurchasePriceChangeDetailEntity> changeDetailEntityList = changeDetailList.stream().filter(e -> priceDetailList.contains(e.getPurchasePriceDetailId())).collect(Collectors.toList());
+            try {
+                resultDTOS.add(purchasePriceService.disApprove(entity,detailEntityList,changeDetailEntityList));
+            }catch (Exception e){
+                log.error("采购价目反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

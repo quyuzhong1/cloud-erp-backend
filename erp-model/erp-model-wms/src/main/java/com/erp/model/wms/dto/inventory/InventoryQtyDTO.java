@@ -1,5 +1,7 @@
 package com.erp.model.wms.dto.inventory;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -194,6 +196,18 @@ public class InventoryQtyDTO implements Serializable {
         private List<String> inventoryStatusList;
 
 
+    }
+    /**
+     * sku 查询库存的参数
+     */
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class InventoryBySkuDTO {
+        @NotNull
+        @Size(min = 1,message = "sku不能为空")
+        private List<String> skuIdList;
     }
 
 }

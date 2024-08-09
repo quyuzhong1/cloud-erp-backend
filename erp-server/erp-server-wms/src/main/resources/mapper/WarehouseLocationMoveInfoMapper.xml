@@ -125,6 +125,8 @@
         wlmd.sku_no,
         wlmd.out_warehouse_location,
         wlmd.in_warehouse_location,
+        wlmd.out_inventory_status,
+        wlmd.in_inventory_status,
         wlmd.qty
         FROM warehouse_location_move_detail wlmd
         INNER JOIN warehouse_location_move wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE

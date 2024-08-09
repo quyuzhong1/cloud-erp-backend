@@ -439,19 +439,16 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             List<SoB2cDeliveryDetailEntity> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
                     .collect(Collectors.toList());
             if (CollectionUtil.isEmpty(detailList)) {
-                log.error("发货单【{}】未找到明细数据",deliveryEntity.getCode());
+                log.error("发货单【{}】未找到明细数据", deliveryEntity.getCode());
                 continue;
             }
-            try {
-                soB2cDeliveryService.generatePickingDetail(deliveryEntity,detailList);
-            } catch (ServiceException e) {
+            List<String> skus = soB2cDeliveryService.generatePickingDetail(deliveryEntity, detailList);
+            if (CollectionUtil.isNotEmpty(skus)) {
                 //生成缺货补货数据
-                generateReplenish(detailList,deliveryEntity);
+                generateReplenish(detailList, deliveryEntity, skus);
                 //添加波次生成的缺货异常
                 updateDeliveryList.add(deliveryEntity.getId());
-                continue;
             }
-
             //商品总数超出最大数量后另起波次,或者发货单数量超过最大单数后另起波次
             if ((MathUtil.compareTo(entity.getMaxQty(),MathUtil.ZERO) != MathUtil.ZERO && detailTotalQty + totalQty > entity.getMaxQty())
                     || orderQty > entity.getMaxOrderQty()) {
@@ -534,14 +531,16 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     /**
      * 生成缺货补货数据
-     * @author will
-     * @date 2024/7/5 16:53
+     *
      * @param detailList
      * @param deliveryEntity
+     * @param skus
+     * @author will
+     * @date 2024/7/5 16:53
      */
-    private void generateReplenish (List<SoB2cDeliveryDetailEntity> detailList,SoB2cDeliveryEntity deliveryEntity) {
+    private void generateReplenish (List<SoB2cDeliveryDetailEntity> detailList, SoB2cDeliveryEntity deliveryEntity, List<String> skus) {
         //根据sku、仓库合并生成数据
-        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
+        Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().filter(obj -> skus.contains(obj.getSkuNo())).collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
         for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
             SoB2cDeliveryDetailEntity detailEntity = entry.getValue().get(0);
 

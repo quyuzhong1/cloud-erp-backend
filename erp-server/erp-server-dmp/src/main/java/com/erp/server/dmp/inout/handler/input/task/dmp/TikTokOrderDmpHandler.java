@@ -147,6 +147,8 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     // 使用Instant类将Unix时间戳转换为LocalDateTime对象
                     LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(paidTimeObj + "")), ZoneId.systemDefault());
                     dmpDataMap.put("payTime", payTime);
+                } else {
+                    dmpDataMap.put("payTime", null);
                 }
 
                 //创建时间
