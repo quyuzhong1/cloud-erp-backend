@@ -238,6 +238,9 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         //销售订单参数
         List<VirtualInventoryStockDTO.OutInStockDTO> soParamList = new ArrayList<>();
 
+        //销售订单冻结数量更新
+        List<SoDetailDTO.UpdateFrozenQtyDTO> updateList = new ArrayList<>();
+
         for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
 
             //销售明细
@@ -258,6 +261,19 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             }
             //销售订单参数
             handleSoParam(soInfoEntity, soDetailEntity, detailEntity,soParamList);
+
+            //更新冻结库存参数
+            if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
+                SoDetailDTO.UpdateFrozenQtyDTO updateFrozenQtyDTO = new SoDetailDTO.UpdateFrozenQtyDTO();
+                updateFrozenQtyDTO.setDetailId(soDetailEntity.getId());
+                boolean isExceed = soDetailEntity.getFrozenQty() > detailEntity.getDeliveryQty();
+                if (isExceed) {
+                    updateFrozenQtyDTO.setFrozenQty(soDetailEntity.getFrozenQty() - detailEntity.getDeliveryQty());
+                } else {
+                    updateFrozenQtyDTO.setFrozenQty(MathUtil.ZERO);
+                }
+                updateList.add(updateFrozenQtyDTO);
+            }
         }
         //销售订单扣减库存
         if (CollectionUtils.isNotEmpty(soParamList)) {
@@ -267,11 +283,10 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getCode());
             //更新库存
             virtualInventoryTransCoreService.approve(dto);
-
-            //更新销售订单冻结数量
-            List<SoDetailDTO.UpdateFrozenQtyDTO> updateList = soParamList.stream().map(obj -> new SoDetailDTO.UpdateFrozenQtyDTO(obj.getSourceDetailId(), obj.getQty())).collect(Collectors.toList());
-            soInfoFeign.updateFrozenQty(updateList);
         }
+
+        //更新销售订单冻结数量
+        soInfoFeign.updateFrozenQty(updateList);
     }
 
     /**
