@@ -233,12 +233,8 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 }
             }
             if (0 != quantity.get()) {
-                if (PickingBillTypeEnum.B2C.getCode().equals(dto.getBillType())) {
-                    stockSku.add(detail.getSkuNo());
-                    result = result.stream().filter(v -> !v.getSkuNo().equals(detail.getSkuNo())).collect(Collectors.toList());
-                } else {
-                    throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, detail.getSkuNo());
-                }
+                stockSku.add(detail.getSkuNo());
+                result = result.stream().filter(v -> !v.getSkuNo().equals(detail.getSkuNo())).collect(Collectors.toList());
             }
         }
         log.warn("单据【{}】完成执行拣货策略，完成时间为{}", dto.getSourceCode(), System.currentTimeMillis());
