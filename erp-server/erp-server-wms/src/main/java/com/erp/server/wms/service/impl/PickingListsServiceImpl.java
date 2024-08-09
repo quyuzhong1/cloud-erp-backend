@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -289,6 +290,10 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             int count = soOutstockService.countNotVoided(entity.getSourceId());
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_99087);
+            }
+            SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getById(entity.getSourceId());
+            if (ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNotice.getApproveStatus())) {
+                throw new ServiceException(ApiError.ERROR_99161);
             }
         }
     }

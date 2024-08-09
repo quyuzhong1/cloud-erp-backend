@@ -883,7 +883,7 @@ public enum ApiError implements Serializable {
     ERROR_99128(99128,"组合产品【{}】的拣货数量与bom用量比例不一致，无法修改"),
     ERROR_99129(99129,"已下推销售出库单，不能重复下推"),
     ERROR_99131(99131,"SKU【{}】存在库存,不可变更SPU"),
-    ERROR_99130(99130,"要货申请完成后，不能删除拣货单"),
+    ERROR_99130(99130,"要货申请完成后，不能修改或删除拣货单"),
 
     ERROR_99135(99135,"拣货单生成的移仓单，不支持反审核"),
 
@@ -891,6 +891,7 @@ public enum ApiError implements Serializable {
     ERROR_99141(99141,"拣货单下推的发货单，不能修改仓位移动单"),
 
     ERROR_99160(99160,"发货通知单已审核，不能生成拣货单"),
+    ERROR_99161(99161,"发货通知单已审核，不能修改或删除拣货单"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
