@@ -41,4 +41,9 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台订单
      */
     public static final String DMP_PLATFORM_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_order_to_oms_group";
+    
+    /**
+     * 新中台旺店通预入库
+     */
+    public static final String DMP_WDT_PRE_STOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_pre_stock_to_wms_group";
 }

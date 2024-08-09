@@ -1,14 +1,17 @@
 package com.erp.model.dmp.dto;
 
-import java.time.LocalDateTime;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+import java.util.List;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+
+import com.erp.model.dmp.dto.DmpSoPrestockDetailDTO.PrestockDetailDTO;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * <p>
@@ -134,6 +137,89 @@ public class DmpSoPrestockInfoDTO implements Serializable {
 
 
     }
+    
+    /**
+     * 详情
+     */
+     @Data
+     @NoArgsConstructor
+     public static class ProstockDTO {
+
+         /**
+         * 平台创建时间
+         */
+         private LocalDateTime platformCreateTime;
+
+         /**
+         * 平台修改时间
+         */
+         private LocalDateTime platformUpdateTime;
+
+         /**
+         * 审核时间
+         */
+         private LocalDateTime checkTime;
+
+         /**
+         * 来源系统
+         */
+         private String sourceSystem;
+
+         /**
+         * 第三方单号
+         */
+         private String thirdCode;
+
+         /**
+         * 物流单号
+         */
+         private String logisticsNo;
+
+         /**
+         * 物流名称
+         */
+         private String logisticsName;
+
+         /**
+         * 货品数量
+         */
+         private Integer goodsCount;
+
+         /**
+         * 货品种类数
+         */
+         private Integer goodsTypeCount;
+
+         /**
+         * 入库人姓名
+         */
+         private String operatorName;
+
+         /**
+         * 审核员姓名
+         */
+         private String checkerName;
+
+         /**
+         * 仓库id
+         */
+         private String warehouseId;
+
+         /**
+         * 仓库编号
+         */
+         private String warehouseNo;
+
+         /**
+         * 备注
+         */
+         private String remark;
+
+         /**
+         * 明细
+         */
+        private List<PrestockDetailDTO> detailList;
+     }
 
     /**
     * 新增

@@ -103,6 +103,51 @@ public class DmpSoPrestockDetailDTO implements Serializable {
 
 
     }
+    
+    /**
+     * 详情
+     */
+     @Data
+     @NoArgsConstructor
+     public static class PrestockDetailDTO {
+
+         /**
+         * 来源详情id
+         */
+         private String thirdDetailId;
+
+         /**
+         * skuId
+         */
+         private String skuId;
+
+         /**
+         * sku名称
+         */
+         private String skuNo;
+
+         /**
+         * sku名称
+         */
+         private String skuName;
+
+         /**
+         * 数量
+         */
+         private Integer qty;
+
+         /**
+         * 仓位
+         */
+         private String warehouseLocation;
+
+         /**
+         * 备注
+         */
+         private String remark;
+
+
+     }
 
     /**
     * 新增
