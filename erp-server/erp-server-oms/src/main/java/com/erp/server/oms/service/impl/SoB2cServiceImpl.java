@@ -1241,7 +1241,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                    channelId(existChannelId).transportNo(code).
+                    channelId(existChannelId).transportNo(code).platformCode(entity.getPlatformCode()).
                     referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
@@ -1385,7 +1385,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                    channelId(soB2cLogisticsEntity.getLogisticsChannelId()).transportNo(soB2cLogisticsEntity.getCode()).
+                    channelId(soB2cLogisticsEntity.getLogisticsChannelId()).transportNo(soB2cLogisticsEntity.getCode()).platformCode(entity.getPlatformCode()).
                     referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
@@ -5635,7 +5635,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isNotBlank(code)) {
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                    channelId(existChannelId).transportNo(code).
+                    channelId(existChannelId).transportNo(code).platformCode(entity.getPlatformCode()).
                     referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
