@@ -438,6 +438,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 channelId(soB2cLogisticsEntity.getLogisticsChannelId())
                 .transportNo(soB2cLogisticsEntity.getCode())
                 .referenceNumber(soB2cEntity.getCode())
+                .platformCode(soB2cEntity.getPlatformCode())
                 .shopId(soB2cEntity.getShopId())
                 .build();
         ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);

@@ -1241,7 +1241,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                    channelId(existChannelId).transportNo(code).
+                    channelId(existChannelId).transportNo(code).platformCode(entity.getPlatformCode()).
                     referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
@@ -1385,7 +1385,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                    channelId(soB2cLogisticsEntity.getLogisticsChannelId()).transportNo(soB2cLogisticsEntity.getCode()).
+                    channelId(soB2cLogisticsEntity.getLogisticsChannelId()).transportNo(soB2cLogisticsEntity.getCode()).platformCode(entity.getPlatformCode()).
                     referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
@@ -5635,7 +5635,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isNotBlank(code)) {
             //取消物流单
             LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                    channelId(existChannelId).transportNo(code).
+                    channelId(existChannelId).transportNo(code).platformCode(entity.getPlatformCode()).
                     referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
@@ -7625,12 +7625,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //非销售套装bom则直接导出父级SKU信息
                 if (CollectionUtils.isEmpty(childList)) {
                     exportDTO.setSkuQty(exportDTO.getQty());
+                    //根据订单维度还是bom维度清除已存在的记录
+                    processRepeatData(exportDTO, resultList);
                     resultList.add(exportDTO);
                     continue;
                 }
+
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
                     SoB2cDTO.ExcelExportDTO resultDTO = new SoB2cDTO.ExcelExportDTO();
                     BeanMapperUtils.copy(exportDTO, resultDTO);
+                    //记录原始sku
+                    resultDTO.setParentSkuId(exportDTO.getSkuId());
+                    resultDTO.setParentSkuNo(exportDTO.getSkuNo());
                     resultDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
                     resultDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
                     resultDTO.setQty(resultDTO.getQty());
@@ -7642,14 +7648,46 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         resultDTO.setProductName(childEntity.getName());
                         resultDTO.setVariantProperty(childEntity.getVariantProperty());
                     }
+                    //根据订单维度还是bom维度清除已存在的记录
+                    processRepeatData(resultDTO, resultList);
                     resultList.add(resultDTO);
                 }
             } else {
                 exportDTO.setSkuQty(exportDTO.getQty());
+                //根据订单维度还是bom维度清除已存在的记录
+                processRepeatData(exportDTO, resultList);
                 resultList.add(exportDTO);
             }
         }
         return resultList;
+    }
+
+    private void processRepeatData(SoB2cDTO.ExcelExportDTO resultDTO, List<SoB2cDTO.ExcelExportDTO> resultList) {
+        String code = resultDTO.getCode();
+        SoB2cDTO.ExcelExportDTO excelExportDTO = resultList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotEmpty(code) && code.equals(e.getCode())).findFirst().orElse(null);
+        if (Objects.nonNull(excelExportDTO)){
+            //清除订单维度数据
+            resultDTO.setShippingCost(BigDecimal.ZERO);
+            resultDTO.setAmount(BigDecimal.ZERO);
+            resultDTO.setEstimatedShippingCost(BigDecimal.ZERO);
+            resultDTO.setActualShippingCost(BigDecimal.ZERO);
+            resultDTO.setLength(BigDecimal.ZERO);
+            resultDTO.setWidth(BigDecimal.ZERO);
+            resultDTO.setHeight(BigDecimal.ZERO);
+            resultDTO.setWeight(BigDecimal.ZERO);
+        }
+        String parentSkuId = resultDTO.getParentSkuId();
+        SoB2cDTO.ExcelExportDTO excelExportDTO2 = resultList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotEmpty(code)
+                && code.equals(e.getCode()) && StrUtil.isNotEmpty(parentSkuId) && parentSkuId.equals(e.getParentSkuId())
+        ).findFirst().orElse(null);
+        if (Objects.nonNull(excelExportDTO2)){
+            //清除bom拆分数据
+            resultDTO.setTaxCost(BigDecimal.ZERO);
+            resultDTO.setSourceAmount(BigDecimal.ZERO);
+            resultDTO.setBaseAmount(BigDecimal.ZERO);
+            resultDTO.setQty(MathUtil.ZERO);
+        }
+
     }
 
 
