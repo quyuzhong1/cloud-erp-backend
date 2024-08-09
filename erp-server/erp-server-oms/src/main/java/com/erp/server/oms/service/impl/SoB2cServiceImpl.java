@@ -2008,7 +2008,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(entity.getId());
         String secondAddress = receiver.getSecondAddress();
         String fullAddress = receiver.getFullAddress();
-        String address2 = secondAddress + fullAddress;
+        String address2;
+        if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform())) {
+            address2 = secondAddress ;
+        }else{
+            address2 = secondAddress + fullAddress;
+        }
         //转化收货人
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo = B2cOrderConverter.INSTANCE.convertThirdWarehouseReceiver(receiver);
         receiverInfo.setAddress2(address2);
