@@ -1272,6 +1272,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (ObjectUtil.isEmpty(soDeliveryNotice)) {
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
+        if (ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNotice.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_99160);
+        }
         List<SoDeliveryNoticeDetailEntity> details = soDeliveryNoticeDetailService.list(Wrappers.<SoDeliveryNoticeDetailEntity>lambdaQuery()
                 .eq(SoDeliveryNoticeDetailEntity::getMainId, picking.getId())
                 .in(SoDeliveryNoticeDetailEntity::getId, picking.getDetailIds())

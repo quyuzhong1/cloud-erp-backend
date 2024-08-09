@@ -889,6 +889,8 @@ public enum ApiError implements Serializable {
 
     ERROR_99140(99140,"已生成拣货单，不能修改发货通知单"),
     ERROR_99141(99141,"拣货单下推的发货单，不能修改仓位移动单"),
+
+    ERROR_99160(99160,"发货通知单已审核，不能生成拣货单"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),

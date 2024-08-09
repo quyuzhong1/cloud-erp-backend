@@ -154,6 +154,9 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     @Override
     public List<LocationInventoryResultDTO> getRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto) {
         Pair<List<LocationInventoryResultDTO>, List<String>> result = getSoB2CRuleOrderMatchResult(dto);
+        if (!CollectionUtils.isEmpty(result.getSecond())) {
+            throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, String.join(",", result.getSecond()));
+        }
         return result.getFirst();
     }
 
