@@ -58,6 +58,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -467,7 +468,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (CollectionUtils.isEmpty(trackDTOS)){
             return;
         }
-        baseMapper.updateTrackNoByTransportNo(trackDTOS);
+        trackDTOS = trackDTOS.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getTransportNo()) && StringUtils.isNotBlank(e.getTrackNo()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(trackDTOS)){
+            baseMapper.updateTrackNoByTransportNo(trackDTOS);
+        }
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {
