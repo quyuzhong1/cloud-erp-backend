@@ -99,7 +99,7 @@ public class AutoGenerator {
         }
         // 模板引擎初始化执行文件输出，不打开文件
         templateEngine.init(this.pretreatmentConfigBuilder(config)).mkdirs().batchOutput();
-        System.out.println("==========================文件生成完成！！！==========================");
+        System.out.println("\u001B[32m" + "==========================文件生成完成！！！==========================" + "\u001B[0m");
     }
 
     /**
