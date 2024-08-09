@@ -144,18 +144,26 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	}
 
 	protected void afterDmpInputConvertValue(Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps) {
-		List<DmpCfgInputConvertValueDTO.MappingAndValueDTO> dmpCfgInputConvertValue = dmpHandlerCache.getDmpCfgInputConvertValue(convertId);
+		Map<String, List<String>> originaConvertMap = new HashMap<>();
 
+		List<DmpCfgInputConvertValueDTO.MappingAndValueDTO> dmpCfgInputConvertValue = dmpHandlerCache.getDmpCfgInputConvertValue(convertId);
 		for (Map.Entry<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpInputDmpBaseEntityList = dmpInputDataDmpRelationMap.getValue();
-
 			for (TreeMap<String, Object> dmpInputDmpBaseEntity : dmpInputDmpBaseEntityList) {
 
 
-
 				for (Map.Entry<String , Object> entry : dmpInputDmpBaseEntity.entrySet()) {
-//					Object valueByPath = DmpHandlerUtils.getValueByPath(dmpInputDmpBaseEntity, entry.getKey());
+				/*	String originalKey = entry.getKey().toString();
+					List<String> convertKey = originaConvertMap.get(originalKey);
+					if(convertKey == null) {
+						convertKey = this.convertKey(originalKey);
+						originaConvertMap.put(originalKey, convertKey);
+					}
+					for(String c : convertKey) {
+						dmpInputDmpBaseEntity.put(c, entry.getValue());
+					}*/
 
+//					Object valueByPath = DmpHandlerUtils.getValueByPath(dmpInputDmpBaseEntity, entry.getKey());
 					String mappingAndValue = dmpCfgInputConvertValue.stream().filter(req -> StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey()) && req.getConvertBeforeValue().equals(entry.getValue())).map(req -> req.getConvertAfterValue()).findFirst().orElse("");
 					if (StringUtils.isNotBlank(mappingAndValue)) {
 						dmpInputDmpBaseEntity.put(entry.getKey(), mappingAndValue);
@@ -178,7 +186,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 
 			for (Map.Entry<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 				List<TreeMap<String , Object>> dmpInputDmpBaseEntityList = dmpInputDataDmpRelationMap.getValue();
-				
+
 				for(TreeMap<String , Object> dmpInputDmpBaseEntity : dmpInputDmpBaseEntityList) {
 					StringBuilder uniqueFieldMd5Sb = new StringBuilder();
 					StringBuilder dataMd5Sb = new StringBuilder();
@@ -307,8 +315,6 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		for(Map<String, Object> dmpInputMongoBaseEntity : dmpInputMongoEntityList) {
 			TreeMap<String , Object> dmpInputDmpBaseEntity = new TreeMap<>();
 			Set<Entry<String, Object>> entrySet = dmpInputMongoBaseEntity.entrySet();
-
-
 			for (Map.Entry<String, Object> entry : entrySet) {
 				String originalKey = entry.getKey().toString();
 				List<String> convertKey = originaConvertMap.get(originalKey);
