@@ -1029,7 +1029,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             transferInfoDetail.setOutWarehouseLocation(pickingStaging.getWarehouseLocation());
             transferInfoDetail.setOutWarehouseId(entity.getWarehouseId());
             transferInfoDetail.setInWarehouseId(warehouseId);
-            transferInfoDetail.setSourceDetailId(view.getSourceDetailId());
+            transferInfoDetail.setSourceDetailId(view.getId());
             detailList.add(transferInfoDetail);
         }
         return detailList;
