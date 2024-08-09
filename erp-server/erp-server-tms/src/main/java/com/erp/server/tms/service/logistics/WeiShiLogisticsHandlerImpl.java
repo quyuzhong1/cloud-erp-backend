@@ -289,7 +289,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO) {
         try {
             WeiShiUpdateWeightRequest weiShiCancelOrderRequest = WeiShiUpdateWeightRequest.builder()
-                    .orderCode(logisticsUpdateWeightVO.getDeliveryNo())
+                    .orderCode(logisticsUpdateWeightVO.getPlatformCode())
                     .weight(logisticsUpdateWeightVO.getWeight().divide(new BigDecimal(1000),4, RoundingMode.HALF_UP))
                     .build();
             ValidatorUtil.validateEntity(weiShiCancelOrderRequest);

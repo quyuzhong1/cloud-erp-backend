@@ -1040,6 +1040,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(),soB2cEntity.getShopId(), auth.getLogisticsPlatform());
         LogisticsUpdateWeightVO logisticsUpdateWeightVO = LogisticsUpdateWeightVO.builder()
                 .deliveryNo(soB2cEntity.getCode())
+                .platformCode(soB2cEntity.getPlatformCode())
                 .transportNo(soB2cLogisticsEntity.getCode())
                 .weight(soB2cLogisticsEntity.getWeight())
                 .authMap(authMap)
