@@ -68,4 +68,12 @@ public interface AsyncService {
      * @param entity
      */
     void syncSoB2cDeliveryAutoOut(SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity);
+
+    /**
+     * 异步扣减虚拟库存，自动出库
+     * @author will
+     * @date 2024/8/9 11:07
+     * @param entity 
+     */
+    void syncAutoOut(SoB2cDeliveryEntity entity);
 }

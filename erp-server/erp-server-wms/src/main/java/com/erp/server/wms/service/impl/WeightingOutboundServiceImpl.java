@@ -223,7 +223,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             }
 
             //自动出库
-            asyncService.syncSoB2cDeliveryAutoOut(soB2cEntity,entity);
+            asyncService.syncAutoOut(entity);
 
         }
         return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus(), trackNo);

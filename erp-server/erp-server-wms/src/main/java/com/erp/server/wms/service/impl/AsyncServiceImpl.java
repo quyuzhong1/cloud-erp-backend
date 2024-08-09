@@ -230,4 +230,22 @@ public class AsyncServiceImpl implements AsyncService {
             }
         }
     }
+    /**
+     * 异步
+     */
+    @Override
+    @Async("wmsErpExecutor")
+    public void syncAutoOut(SoB2cDeliveryEntity entity) {
+        //扣减冻结库存
+        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
+        if (isOut) {
+            //生成直接调拨单
+            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+            if (isPush) {
+                //出库
+                soB2cDeliveryService.generateB2cSoOutstock(entity);
+            }
+        }
+    }
+
 }
