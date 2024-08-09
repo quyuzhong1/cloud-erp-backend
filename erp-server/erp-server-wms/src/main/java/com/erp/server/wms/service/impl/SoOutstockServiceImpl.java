@@ -2339,20 +2339,30 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean generateB2cSoOutstock(String soB2cId) {
         SoOutstockEntity outstock = this.getBySoId(soB2cId);
         if (Objects.isNull(outstock)) {
-            SoOutstockDTO.GenerateB2cDTO dto = soB2cFeign.getSoOutstockInfoById(soB2cId);
-            if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(dto.getSourceType())) {
+            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cId);
+            if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(generateB2cDTO.getSourceType())) {
                 SoB2cDeliveryEntity notCancelBySoId = soB2cDeliveryService.getNotCancelBySoId(soB2cId);
-                dto.setSourceId(notCancelBySoId.getId());
-                dto.setSourceCode(notCancelBySoId.getCode());
-                List<SoB2cDeliveryDetailEntity> entities = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(notCancelBySoId.getId()));
-                for (SoOutstockDetailDTO.AddDTO addDTO : dto.getDetailList()) {
-                    SoB2cDeliveryDetailEntity entity = entities.stream()
-                            .filter(e ->e.getSkuId().equals(addDTO.getSkuId()))
-                            .filter(e ->e.getSourceDetailId().equals(addDTO.getSoDetailId())).findFirst().orElse(new SoB2cDeliveryDetailEntity());
-                    addDTO.setSourceDetailId(entity.getId());
+                generateB2cDTO.setSourceId(notCancelBySoId.getId());
+                generateB2cDTO.setSourceCode(notCancelBySoId.getCode());
+                List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(notCancelBySoId.getId()));
+                List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(notCancelBySoId.getId()));
+                List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
+                LinkedList<SoOutstockDetailDTO.AddDTO> newDetailList = new LinkedList<>();
+                for (PickingListsDTO.SourceView view : views) {
+                    SoB2cDeliveryDetailEntity detailEntity = deliveryDetailList.stream().filter(v -> v.getId().equals(view.getSourceDetailId()))
+                            .findFirst().orElse(new SoB2cDeliveryDetailEntity());
+                    SoOutstockDetailDTO.AddDTO dto = detailList.stream().filter(d -> d.getSoDetailId().equals(detailEntity.getSourceDetailId()))
+                            .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
+                    SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
+                    addDTO.setWarehouseLocation(Objects.isNull(notCancelBySoId.getBatchNo()) ? view.getWarehouseLocation() : "");
+                    addDTO.setActualQty(view.getQty());
+                    addDTO.setPlanQty(view.getQty());
+                    addDTO.setSourceDetailId(detailEntity.getId());
+                    newDetailList.add(addDTO);
                 }
+                generateB2cDTO.setDetailList(newDetailList);
             }
-            Boolean result = createB2cSoOutstock(dto);
+            Boolean result = createB2cSoOutstock(generateB2cDTO);
             return result;
         } else {
             String id = outstock.getId();
