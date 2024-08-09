@@ -146,7 +146,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             if (SourceTypeEnum.SO_MULTI_CHANNEL.getCode().equalsIgnoreCase(convertDto.getSourceType())) {
                 // 不需要下载地址
                 newDto.setDownloadAddressStatus(-1);
-                business = BusinessTypeEnum.SO_MULTI_CHANNEL.getCode();
+//                business = BusinessTypeEnum.SO_MULTI_CHANNEL.getCode();
             }
 
             businessService.pullDetailProcess(newDto, convertDto, category, platform, business);

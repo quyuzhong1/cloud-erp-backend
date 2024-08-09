@@ -1,6 +1,10 @@
 package com.erp.server.dmp.inout.utils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -25,8 +29,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import com.alibaba.excel.util.StringUtils;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
+import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.server.dmp.service.DmpBasicSystemService;
+import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
+import com.erp.server.dmp.service.DmpCfgInputConvertService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
+import com.erp.server.dmp.service.DmpCfgInputService;
+import com.erp.server.dmp.service.DmpCfgMqService;
+import com.erp.server.dmp.service.DmpCfgOutputBlackService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
@@ -62,6 +78,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	private volatile List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackCache;
 	
+	private volatile List<OverseasProviderEntity> overseasProviderEntityCache;
+
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
 	@Autowired
@@ -133,7 +151,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 
 		return convertValueCache.get(convertId);
 	}
-	
+
 	public DmpCfgMqEntity getRocketMQDmpCfgMqCache(String mqId){
 		if(rocketMQDmpCfgMqCache == null) {
 			this.initRocketMQTemplate();
@@ -156,6 +174,15 @@ public class DmpHandlerCache implements CommandLineRunner{
 		return dmpCfgOutputBlackCache.stream().filter(paramPredicate).collect(Collectors.toList());
 	}
 	
+	public List<OverseasProviderEntity> getOverseasProviderEntityList(Predicate<? super OverseasProviderEntity> paramPredicate) {
+		if(overseasProviderEntityCache == null) {
+			overseasProviderEntityCache = FeignQuery.create(OverseasProviderEntity.class)
+					.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+					.list();
+		}
+		return overseasProviderEntityCache.stream().filter(paramPredicate).collect(Collectors.toList());
+	}
+
 	private void dealRocketMQTemplate(List<DmpCfgMqEntity> updateRocketMQDmpCfgMqEntity) {
 		if(CollUtil.isNotEmpty(updateRocketMQDmpCfgMqEntity)) {
 			List<DmpCfgMqEntity> disabledList = updateRocketMQDmpCfgMqEntity.stream().filter(d -> Boolean.TRUE.equals(d.getDisabled())).collect(Collectors.toList());
@@ -216,6 +243,13 @@ public class DmpHandlerCache implements CommandLineRunner{
 		dmpCfgOutputBlackCache = dmpCfgOutputBlackService.lambdaQuery()
 				.eq(DmpCfgOutputBlackEntity::getDisabled, false).list();
 		
+		try {
+			overseasProviderEntityCache = FeignQuery.create(OverseasProviderEntity.class)
+													.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+													.list();
+		} catch (Exception e) {
+		}
+
 		if(isCreateTask) {
 			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 				List<DmpBasicSystemEntity> dmpBasicSystemEntityFreshList = dmpBasicSystemService.lambdaQuery()
@@ -300,7 +334,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 				}
 
 			}, 6, freshCacheTime, TimeUnit.SECONDS);
-			
+
 			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 				List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackEntityFreshList = dmpCfgOutputBlackService.lambdaQuery()
 						.gt(DmpCfgOutputBlackEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
@@ -313,7 +347,24 @@ public class DmpHandlerCache implements CommandLineRunner{
 				}
 				
 			}, 0, freshCacheTime, TimeUnit.SECONDS);
-		
+
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<OverseasProviderEntity> overseasProviderEntityFreshList = null;
+				try {
+					overseasProviderEntityFreshList = FeignQuery.create(OverseasProviderEntity.class)
+							.gt(DmpCfgOutputBlackEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+							.list();
+				} catch (Exception e) {
+				}
+				if(CollUtil.isNotEmpty(overseasProviderEntityFreshList)) {
+					List<String> newIds = overseasProviderEntityFreshList.stream().map(OverseasProviderEntity::getId).collect(Collectors.toList());
+					overseasProviderEntityCache.removeIf(d -> newIds.contains(d.getId()));
+					overseasProviderEntityCache.addAll(overseasProviderEntityFreshList.stream()
+							.filter(d -> AuthStatusEnum.ALREADY.getCode().equals(d.getAuthStatus())).collect(Collectors.toList()));
+				}
+
+			}, 1, freshCacheTime, TimeUnit.SECONDS);
+
 		}
 	}
 	

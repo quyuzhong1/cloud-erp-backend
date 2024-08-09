@@ -48,17 +48,17 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
     @Override
     public void invoke(PackingExcelDTO data, AnalysisContext context) {
         //添加数据用于判断是否为空
-        packingExcelDTOList.add(data);
         List<String> errorMsgList = new ArrayList<>();
 
         //注解验证信息
         List<String> msgList = FieldValidUtil.fieldValid(data);
         if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
+        }else{
+            int currentRowNumber = context.readRowHolder().getRowIndex();
+            data.setRowNum(currentRowNumber);
+            packingExcelDTOList.add(data);
         }
-        int currentRowNumber = context.readRowHolder().getRowIndex();
-        data.setRowNum(currentRowNumber);
-        packingExcelDTOList.add(data);
 
         String errStr = "";
         if (errorMsgList.size() > 0) {

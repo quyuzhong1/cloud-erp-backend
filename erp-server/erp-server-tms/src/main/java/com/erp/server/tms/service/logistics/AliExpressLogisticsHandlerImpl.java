@@ -14,6 +14,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
@@ -27,6 +28,7 @@ import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -83,6 +85,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Value("${tms.AliExpress.childOrderId}")
     private String childOrderId;
 
+    @Resource
+    private SoB2cFeign soB2cFeign;
     /**
      * 根据平台获取授权列表
      *
@@ -534,13 +538,18 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //根据查询结果进行打印
         if (queryOrderList.isSuccess() && CollectionUtils.isNotEmpty(queryOrderList.getData())){
             List<LogisticsOrderResponseVO> data = queryOrderList.getData();
+            List<LogisticsBillDTO.TrackDTO> trackDTOS = new ArrayList<>(logisticsQueryVO.size());
             logisticsQueryVO.forEach(logisticsGetLabelVO -> {
-                LogisticsOrderResponseVO logisticsOrderResponseVO = data.stream().filter(e -> e.getDeliveryNo().equals(logisticsGetLabelVO.getDeliveryNo()) &&  e.getTransportNo().equals(logisticsGetLabelVO.getTransportNo())).findFirst().orElse(null);
-                if (Objects.nonNull(logisticsOrderResponseVO)){
-                    logisticsGetLabelVO.setTransportNo(logisticsOrderResponseVO.getTransportNo());
-                    logisticsGetLabelVO.setTrackNo(logisticsOrderResponseVO.getTrackNo());
+                LogisticsOrderResponseVO vo = data.stream().filter(e -> e.getDeliveryNo().equals(logisticsGetLabelVO.getDeliveryNo()) &&  e.getTransportNo().equals(logisticsGetLabelVO.getTransportNo())).findFirst().orElse(null);
+                if (Objects.nonNull(vo) && !StringUtils.isBlank(vo.getTrackNo())){
+                    logisticsGetLabelVO.setTransportNo(vo.getTransportNo());
+                    logisticsGetLabelVO.setTrackNo(vo.getTrackNo());
+                    trackDTOS.add(LogisticsBillDTO.TrackDTO.builder().trackNo(vo.getTrackNo()).transportNo(vo.getTransportNo()).build());
                 }
             });
+            if (CollectionUtils.isNotEmpty(trackDTOS)){
+                soB2cFeign.updateTrackNoByTransportNo(trackDTOS);
+            }
             ApiResult<List<LogisticsPrintLabelResponse>> label = this.getLabel(logisticsQueryVO);
             return label;
         }else {

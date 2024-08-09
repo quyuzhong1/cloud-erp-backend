@@ -7,6 +7,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -154,4 +155,10 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @param trackNo
      */
     void updateLogisticsBySoId(String soId, String trackNo);
+
+    /**
+     * 根据运单号进行跟踪号更新
+     * @param trackDTOS
+     */
+    void updateTrackNoByTransportNo(List<LogisticsBillDTO.TrackDTO> trackDTOS);
 }

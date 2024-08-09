@@ -11,6 +11,8 @@ import com.common.business.dto.PlatformOtherOutStockDetailDTO;
 import com.common.business.enums.*;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
@@ -19,6 +21,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -41,6 +44,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import javax.validation.constraints.*;
 import java.lang.reflect.Array;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -189,8 +193,12 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
     private OtherOutstockDTO.AddDTO generateAddDTO(PlatformOtherOutStockDTO dto, SoMultiChannelEntity mainEntity, ShopInfoEntity shopInfo, SysDepartmentUserNumberDTO deptDTO) {
         OtherOutstockDTO.AddDTO addDTO = new OtherOutstockDTO.AddDTO();
 
+        LocalDateTime deliveryLocalDateTime = DateUtil.parseLocalDateTimeWithOffset(dto.getPlatformDeliveryTime());
+        if (null == deliveryLocalDateTime){
+            throw new ServiceException("未找到出库单日期");
+        }
         // 出库日期
-        addDTO.setBillDate(dto.getPlatformDeliveryTime().toLocalDate());
+        addDTO.setBillDate(deliveryLocalDateTime.toLocalDate());
         // 库存方向
         addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
         // 发货仓库id
@@ -200,7 +208,7 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
         //处理类型
         List<DictKingdeeDTO.ListDTO> typeList = sysDictFeign.listByTypeName(DictKindgeeConstant.OTHER_TYPE_NAME);
         List<DictKingdeeDTO.ListDTO> outTypeList = sysDictFeign.listByTypeName(DictKindgeeConstant.OTHER_OUT_TYPE_NAME);
-        DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(DictKindgeeConstant.OTHER_OUT_INVENTORY_ADJUSTMENTS)).findFirst().orElse(new DictKingdeeDTO.ListDTO());
+        DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(DictKindgeeConstant.OTHER_OUT_MATERIAL_PICKING)).findFirst().orElse(new DictKingdeeDTO.ListDTO());
         // 业务类型
         addDTO.setType(typeDTO.getCode());
         addDTO.setTypeName(typeDTO.getName());
@@ -213,6 +221,9 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
         addDTO.setDeptId(deptDTO.getDepartmentId());
         // 流程申请单号
         addDTO.setProcessApplyCode(dto.getPlatformCode());
+        // 客户信息
+        OtherOutstockCustomerDTO.AddDTO customerDTO =  convertCustomer(shopInfo);
+        addDTO.setOtherOutstockCustomer(customerDTO);
 
         List<OtherOutstockDetailDTO.AddDTO> detailList = dto.getDetailList().stream().map(e -> {
             OtherOutstockDetailDTO.AddDTO detailDTO = new OtherOutstockDetailDTO.AddDTO();
@@ -226,6 +237,17 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
 
         // 明细
         addDTO.setDetailList(detailList);
+        return addDTO;
+    }
+
+    /**
+     * 转换客户信息
+     */
+    private OtherOutstockCustomerDTO.AddDTO convertCustomer(ShopInfoEntity shopInfo) {
+        OtherOutstockCustomerDTO.AddDTO addDTO = new OtherOutstockCustomerDTO.AddDTO();
+        addDTO.setCustomerId(shopInfo.getCustomerId());
+        addDTO.setCustomerCode(shopInfo.getCustomerCode());
+        addDTO.setName(shopInfo.getName());
         return addDTO;
     }
 }

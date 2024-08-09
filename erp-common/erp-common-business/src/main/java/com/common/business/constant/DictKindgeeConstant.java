@@ -13,7 +13,7 @@ public class DictKindgeeConstant {
     /**
      * 其他出库单多渠道订单名称
      */
-    public static final String OTHER_OUT_SO_MULTI_CHANNEL = "多渠道订单";
+    public static final String OTHER_OUT_SO_MULTI_CHANNEL = "亚马逊多渠道订单";
 
     /**
      * 其他出库单多渠道订单名称
@@ -29,6 +29,12 @@ public class DictKindgeeConstant {
 
     /**
      * 其他出库单库存调整
+     * 推送金蝶失败
      */
-    public static final String OTHER_OUT_INVENTORY_ADJUSTMENTS = "库存调整";
+//    public static final String OTHER_OUT_INVENTORY_ADJUSTMENTS = "库存调整";
+
+    /**
+     * 其他出库单物料领用
+     */
+    public static final String OTHER_OUT_MATERIAL_PICKING = "物料领用";
 }

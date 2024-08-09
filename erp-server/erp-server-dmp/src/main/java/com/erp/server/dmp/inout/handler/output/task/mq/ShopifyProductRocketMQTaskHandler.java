@@ -128,4 +128,8 @@ public class ShopifyProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
         return product;
     }
 
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("platformSkuNo");
+    }
 }

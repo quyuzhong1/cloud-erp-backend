@@ -497,6 +497,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 sourceId(dto.getOrderId()).
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
+                platformCode(dto.getPlatformCode()).
                 country(country).
                 voecTaxNo(dto.getVoecTaxNo()).
                 iossCode(getIossCodeByCountry(country,logisticsChannel.getIsIossPrepay(),dto.getIossTaxNo())).
@@ -579,20 +580,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         String transportNo = responseVO.getTransportNo();
         //跟踪单号
         String trackNo = responseVO.getTrackNo();
-        if (StringUtils.isNotBlank(trackNo) && !"null".equals(trackNo)) {
-            trackNoList.add(trackNo);
-        }
-        Boolean more = responseVO.getMore();
-        if (Objects.nonNull(more) && more) {
-            List<LogisticsOrderResponseVO> responseList = responseVO.getLogisticsOrderResponseVOS();
-            for (LogisticsOrderResponseVO item : responseList) {
-                LogisticsBillDetailDTO.AddDTO detailDTO = new LogisticsBillDetailDTO.AddDTO();
-                detailDTO.setTrackNo(item.getTrackNo());
-                trackNoList.add(item.getTrackNo());
-            }
-        }
+//        if (StringUtils.isNotBlank(trackNo) && !"null".equals(trackNo)) {
+//            trackNoList.add(trackNo);
+//        }
+//        Boolean more = responseVO.getMore();
+//        if (Objects.nonNull(more) && more) {
+//            List<LogisticsOrderResponseVO> responseList = responseVO.getLogisticsOrderResponseVOS();
+//            for (LogisticsOrderResponseVO item : responseList) {
+//                LogisticsBillDetailDTO.AddDTO detailDTO = new LogisticsBillDetailDTO.AddDTO();
+//                detailDTO.setTrackNo(item.getTrackNo());
+//                trackNoList.add(item.getTrackNo());
+//            }
+//        }
         resultDTO.setTransportNo(transportNo);
-        resultDTO.setTrackNoList(trackNoList);
+        resultDTO.setTrackNo(trackNo);
         return resultDTO;
 
     }

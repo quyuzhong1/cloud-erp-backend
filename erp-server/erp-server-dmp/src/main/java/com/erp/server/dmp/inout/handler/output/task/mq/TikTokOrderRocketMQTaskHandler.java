@@ -383,4 +383,9 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
                 .platformCost(taxAmount)
                 .build();
     }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("platformCode");
+    }
 }

@@ -77,11 +77,11 @@ public class MongoHandleCreateJob {
                     Integer handleResultCount = DmpMongoHandlerFactory.createHandler(handleTypeEnum).findAndFillDataOrHandle(taskEntity, queryIsAddOrUpdate);
                     XxlJobHelper.log("mongoHandleJob 当前任务执行成功：handleType={}, 当前处理数量={}", taskEntity.getHandleType(), handleResultCount);
                 } catch (Exception e) {
-                    XxlJobHelper.log("mongoHandleJob 当前任务执行成功异常：handleType={}, error={}",
+                    log.error("mongoHandleJob 当前任务执行成功异常：handleType={}, error={}",
                             taskEntity.getHandleType(),
                             ExceptionUtil.stacktraceToString(e)
                     );
-                    log.error("mongoHandleJob 当前任务执行成功异常：handleType={}, error={}",
+                    XxlJobHelper.log("mongoHandleJob 当前任务执行成功异常：handleType={}, error={}",
                             taskEntity.getHandleType(),
                             ExceptionUtil.stacktraceToString(e)
                     );

@@ -188,7 +188,7 @@ public interface LogisticsOrderConverter {
     @Mappings({
             @Mapping(target = "shippingMethod" ,source = "logisticsSaleChannel.code"),
             @Mapping(target = "countryCode" ,source = "receiverInfoVO.country"),
-            @Mapping(target = "referenceNo" ,source = "deliveryNo"),
+            @Mapping(target = "referenceNo" ,source = "platformCode"),
             @Mapping(target = "orderWeight" ,source = "parceInfoVO.totalWeight" ,qualifiedByName = "divideByOneThousandWithThreeDecimal"),
             @Mapping(target = "orderPieces" ,constant = "1"),
             @Mapping(target = "insuranceValue" ,source = "parceInfoVO.insuranceValue"),

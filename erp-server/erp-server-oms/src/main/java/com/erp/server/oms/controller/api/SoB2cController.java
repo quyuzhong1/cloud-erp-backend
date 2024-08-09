@@ -578,11 +578,15 @@ public class SoB2cController extends BaseController {
             BatchResultDTO result;
             try {
                 result = soB2cService.saveSoB2cDistribution(id, dto);
+                List<String> channelIds = dto.getDetailList().stream().filter(e -> com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getLogisticsChannelId())
+                                && id.equals(e.getId())).map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getLogisticsChannelId)
+                        .distinct().collect(Collectors.toList());
                 //申报信息匹配
                 if (result.getSuccess()){
                     SoB2cEntity entity = soB2cService.getById(id);
                     if (SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
                             && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
+                            && CollectionUtils.isNotEmpty(channelIds)
                     ){
                         soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE, false);
                     }
@@ -605,9 +609,11 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:47
      */
     @PostMapping("/getLogisticsCode")
+    @LogAction(value = LogActionEnum.GET_LOGISTICS_NO, desc = "获取物流单号")
     public ApiResult<List<BatchResultDTO>> getLogisticsCode(@RequestBody @Validated SoB2cDTO.GetLogisticsCode dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
             BatchResultDTO result;
             try {
                 result = soB2cService.getLogisticsCode(id, dto.getIsDelivery());

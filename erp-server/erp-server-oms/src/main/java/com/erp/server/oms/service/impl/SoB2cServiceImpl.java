@@ -1204,8 +1204,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          * 否：新选择的物流渠道和仓库只添加到物流方式和仓库为空的订单，已存在物流方式和仓库的订单不做更改
          */
         Boolean isCover = dto.getIsCover();
-        String logisticsChannelId = channelIds.get(0);
-
+        String logisticsChannelId = "";
+        //定义物流渠道id
+        if (CollectionUtils.isNotEmpty(channelIds)){
+            logisticsChannelId = channelIds.get(0);
+        }
         //获取检查备案结果
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
         String packageStatus = resultDTO.getPackageStatus();
@@ -1231,7 +1234,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration,isUpdateTransferStatus);
 
         //如果有物流单号 就要去取消
-        if (StringUtils.isNotBlank(code)) {
+        if (StringUtils.isNotBlank(code) && StringUtils.isNotBlank(logisticsChannelId) && !Objects.equals(logisticsChannelId,existChannelId)) {
             //已存在的渠道为空
             if (StringUtils.isBlank(existChannelId)) {
                 throw new ServiceException(ApiError.CANCEL_LOGISTICS_ID_NOT_EXIST);
@@ -1242,13 +1245,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
             ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
             //取消失败
-            if (!cancelResult.isSuccess()) {
+            if (!cancelResult.isSuccess() && cancelResult.getCode()!=-1) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAI, code);
+            }else{
+                String msg = StrUtil.format("取消物流单单号成功,单号:【{}/{}】 ", soB2cLogisticsEntity.getCode(),soB2cLogisticsEntity.getTrackNo());
+                operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单");
+                soB2cLogisticsEntity.setCode("");
+                soB2cLogisticsEntity.setTrackNo("");
             }
-            soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
-            soB2cLogisticsEntity.setCode("");
-            soB2cLogisticsEntity.setTrackNo("");
-            logisticsBillFeign.removeLogisticsBillBySourceId(Arrays.asList(id));
         }
         //重置物流渠道信息
         soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
@@ -1348,7 +1352,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "id")
+    @DataIdempotent(keyIdName = "id", waitTime = 120)
     public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
         String message = "";
         //B2C销售订单主表信息
@@ -1390,6 +1394,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 log.error("{}原因是：{}", ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL.msg, cancelResult.getMsg());
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL, entity.getCode());
             }
+            //如果取消物流单 则需要清空物流单信息
+            String msg = "取消物流单号，修改单号【{}/{}】改为【/】";
+            operateLogService.addModuleOperateLog(StrUtil.format(msg, soB2cLogisticsEntity.getCode(),soB2cLogisticsEntity.getTrackNo()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单号");
+            soB2cLogisticsService.updateLogisticsCode(soB2cLogisticsEntity.getId(), "","");
         }
         //校验是否存在申报信息，不存在则生成
         List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);
@@ -1404,7 +1412,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(resultDTO)) {
                 throw new ServiceException("下物流单失败");
             }
-            String trackNo = resultDTO.getTrackNoList().stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(","));
+            String trackNo = resultDTO.getTrackNo();
+            if (StringUtils.isBlank(trackNo)){
+                trackNo = "";//重置字段保障运单号和跟踪号一致
+            }
             String transportNo = resultDTO.getTransportNo();
             soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo);
 
@@ -1524,7 +1535,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //增加订单类型传递
         result.setOrderType(entity.getSourceType());
-
+        result.setPlatformCode(entity.getPlatformCode());
         result.setShopId(shopId);
         result.setShopName(entity.getShopName());
         result.setIossTaxNo(shopInfoEntity.getIossTaxNo());
@@ -6715,7 +6726,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                dmpMqFeign.delayLevel3SendTask(Collections.singletonList(dmpPushTaskEntity));
             }
         });
     }
@@ -7614,12 +7625,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //非销售套装bom则直接导出父级SKU信息
                 if (CollectionUtils.isEmpty(childList)) {
                     exportDTO.setSkuQty(exportDTO.getQty());
+                    //根据订单维度还是bom维度清除已存在的记录
+                    processRepeatData(exportDTO, resultList);
                     resultList.add(exportDTO);
                     continue;
                 }
+
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
                     SoB2cDTO.ExcelExportDTO resultDTO = new SoB2cDTO.ExcelExportDTO();
                     BeanMapperUtils.copy(exportDTO, resultDTO);
+                    //记录原始sku
+                    resultDTO.setParentSkuId(exportDTO.getSkuId());
+                    resultDTO.setParentSkuNo(exportDTO.getSkuNo());
                     resultDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
                     resultDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
                     resultDTO.setQty(resultDTO.getQty());
@@ -7631,14 +7648,46 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         resultDTO.setProductName(childEntity.getName());
                         resultDTO.setVariantProperty(childEntity.getVariantProperty());
                     }
+                    //根据订单维度还是bom维度清除已存在的记录
+                    processRepeatData(resultDTO, resultList);
                     resultList.add(resultDTO);
                 }
             } else {
                 exportDTO.setSkuQty(exportDTO.getQty());
+                //根据订单维度还是bom维度清除已存在的记录
+                processRepeatData(exportDTO, resultList);
                 resultList.add(exportDTO);
             }
         }
         return resultList;
+    }
+
+    private void processRepeatData(SoB2cDTO.ExcelExportDTO resultDTO, List<SoB2cDTO.ExcelExportDTO> resultList) {
+        String code = resultDTO.getCode();
+        SoB2cDTO.ExcelExportDTO excelExportDTO = resultList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotEmpty(code) && code.equals(e.getCode())).findFirst().orElse(null);
+        if (Objects.nonNull(excelExportDTO)){
+            //清除订单维度数据
+            resultDTO.setShippingCost(BigDecimal.ZERO);
+            resultDTO.setAmount(BigDecimal.ZERO);
+            resultDTO.setEstimatedShippingCost(BigDecimal.ZERO);
+            resultDTO.setActualShippingCost(BigDecimal.ZERO);
+            resultDTO.setLength(BigDecimal.ZERO);
+            resultDTO.setWidth(BigDecimal.ZERO);
+            resultDTO.setHeight(BigDecimal.ZERO);
+            resultDTO.setWeight(BigDecimal.ZERO);
+        }
+        String parentSkuId = resultDTO.getParentSkuId();
+        SoB2cDTO.ExcelExportDTO excelExportDTO2 = resultList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotEmpty(code)
+                && code.equals(e.getCode()) && StrUtil.isNotEmpty(parentSkuId) && parentSkuId.equals(e.getParentSkuId())
+        ).findFirst().orElse(null);
+        if (Objects.nonNull(excelExportDTO2)){
+            //清除bom拆分数据
+            resultDTO.setTaxCost(BigDecimal.ZERO);
+            resultDTO.setSourceAmount(BigDecimal.ZERO);
+            resultDTO.setBaseAmount(BigDecimal.ZERO);
+            resultDTO.setQty(MathUtil.ZERO);
+        }
+
     }
 
 
