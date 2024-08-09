@@ -90,6 +90,7 @@ import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -642,7 +643,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:plm:getNoInventorySku",keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = RedisKeyConstant.CACHE_SKU_NO_INVENTORY,keyGenerator = "myKeyGenerator")
     public List<SkuVO> getNoInventorySku() {
         return this.baseMapper.getNoInventorySku();
     }
@@ -2129,6 +2130,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = RedisKeyConstant.CACHE_SKU_NO_INVENTORY, allEntries = true)
     public Boolean approvalPass(ProductDetailOperateDTO dto, Boolean isCheck) {
         ProductDetailEntity entity = this.getById(dto.getId());
 

@@ -35,7 +35,9 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -146,9 +148,18 @@ public class RedisConfig {
                 .serializeValuesWith(pair)
                 // 设置缓存有效期
                 .entryTtl(Duration.ofSeconds(redisProperties.getCacheExpireTime() != null ? redisProperties.getCacheExpireTime() : 60));
+
+        // 特定缓存的配置
+        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+        cacheConfigurations.put("cache:wms:", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
+        cacheConfigurations.put("cache:sys", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
+
+
         return RedisCacheManager
                 .builder(redisCacheWriter)
-                .cacheDefaults(redisCacheConfiguration).build();
+                .cacheDefaults(redisCacheConfiguration)
+                .withInitialCacheConfigurations(cacheConfigurations)
+                .build();
     }
 
     /**

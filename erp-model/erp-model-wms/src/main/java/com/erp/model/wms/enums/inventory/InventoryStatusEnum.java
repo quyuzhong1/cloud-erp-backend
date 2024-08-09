@@ -5,9 +5,7 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @Classname: InventoryStatusEnum
@@ -92,4 +90,8 @@ public enum InventoryStatusEnum  implements EnumMessage {
                 .findFirst()
                 .orElseThrow(()-> new ServiceException("InventoryStatusEnum类型不存在：code=" + code));
     }
+    /**
+     * 无库位
+     */
+    public final static List<InventoryStatusEnum> NO_WAREHOUSE_LOCATION = new ArrayList<>(Arrays.asList(InventoryStatusEnum.IN_TRANSIT,InventoryStatusEnum.WAIT_QC));
 }

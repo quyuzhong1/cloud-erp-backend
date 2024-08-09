@@ -15,7 +15,6 @@ import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.ObjectError;
@@ -82,6 +81,25 @@ public class GlobalExceptionHandler {
         }*/
         return result;
     }
+
+//    /**
+//     * 系统异常 监测
+//     * @param e 异常
+//     * @return  ApiResult
+//     */
+//    @ExceptionHandler({Exception.class})
+//    public ApiResult resolveException(Exception e) {
+//        log.error("系统异常：{}", null == e.getMessage()?e.toString(): e.getMessage());
+//        ApiResult result = new ApiResult();
+//        result.setCode(1000000);
+//        result.setMsg(null==e.getMessage()?e.toString():e.getMessage());
+//        // 某些异常需要返回data
+//        if (Objects.nonNull(e.getStackTrace())) {
+//            result.setData(e.getStackTrace());
+//        }
+//        return result;
+//    }
+
 
 
     @ExceptionHandler(value = FeignServiceException.class)
