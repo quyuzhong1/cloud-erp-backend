@@ -143,6 +143,7 @@ public class DmpOutputWdtOrderReturnRocketMQTaskHandler extends DmpOutputRocketM
             itemEntity.setWarehouseId(item.getWarehouseId());
             itemEntity.setSoReturnDetailId(item.getPlatformDetailId());
             itemEntity.setSourceDetailId(item.getThirdDetailId());
+            itemEntity.setAmount(item.getAmount());
         	
             orderItemList.add(itemEntity);
         }
