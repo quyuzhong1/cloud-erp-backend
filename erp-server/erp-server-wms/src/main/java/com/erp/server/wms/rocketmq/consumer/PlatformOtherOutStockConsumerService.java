@@ -21,6 +21,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -220,6 +221,9 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
         addDTO.setDeptId(deptDTO.getDepartmentId());
         // 流程申请单号
         addDTO.setProcessApplyCode(dto.getPlatformCode());
+        // 客户信息
+        OtherOutstockCustomerDTO.AddDTO customerDTO =  convertCustomer(shopInfo);
+        addDTO.setOtherOutstockCustomer(customerDTO);
 
         List<OtherOutstockDetailDTO.AddDTO> detailList = dto.getDetailList().stream().map(e -> {
             OtherOutstockDetailDTO.AddDTO detailDTO = new OtherOutstockDetailDTO.AddDTO();
@@ -233,6 +237,17 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
 
         // 明细
         addDTO.setDetailList(detailList);
+        return addDTO;
+    }
+
+    /**
+     * 转换客户信息
+     */
+    private OtherOutstockCustomerDTO.AddDTO convertCustomer(ShopInfoEntity shopInfo) {
+        OtherOutstockCustomerDTO.AddDTO addDTO = new OtherOutstockCustomerDTO.AddDTO();
+        addDTO.setCustomerId(shopInfo.getCustomerId());
+        addDTO.setCustomerCode(shopInfo.getCustomerCode());
+        addDTO.setName(shopInfo.getName());
         return addDTO;
     }
 }
