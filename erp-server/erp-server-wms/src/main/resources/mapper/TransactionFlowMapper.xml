@@ -101,6 +101,9 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.warehouseLocation != null">
+            and t.warehouse_location = #{params.warehouseLocation}
+        </if>
         order by t.trade_time desc,t.id desc
     </select>
     <select id="paging" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockTransFlowPagingViewDTO">
