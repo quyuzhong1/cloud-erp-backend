@@ -1379,6 +1379,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //如果有物流单号 就要去取消
         if (StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())) {
+            if(TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())){
+                String transferName = "";
+                if(StringUtils.isNotBlank(soB2cLogisticsEntity.getTransferLogisticsSupplierId())){
+                    TransferLogisticsSupplierEntity transferLogisticsSupplierEntity = transferLogisticsFeign.getLogisticsSupplierById(soB2cLogisticsEntity.getTransferLogisticsSupplierId());
+                    if(Objects.nonNull(transferLogisticsSupplierEntity)){
+                        transferName = transferLogisticsSupplierEntity.getSupplierName();
+                    }
+                }
+                throw new ServiceException(StrUtil.format("订单信息已预报给{}，请取消订单预报后支持重新获取跟踪号",transferName));
+            }
             //已存在的渠道为空
             if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
                 throw new ServiceException(ApiError.CANCEL_LOGISTICS_ID_NOT_EXIST);
@@ -7081,8 +7091,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"sku明细为空"));
                 continue;
             }
-            if (!TransferStatusEnum.WAIT.getCode().equals(soB2cEntity.getTransferStatus()) && !TransferStatusEnum.FAILURE.getCode().equals(soB2cEntity.getTransferStatus())) {
-                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "仅可操作中转状态为待中转/预报失败的单据"));
+            if (!ApproveStatusEnum.APPROVE.equals(soB2cEntity.getApproveStatus()) || (!TransferStatusEnum.WAIT.getCode().equals(soB2cEntity.getTransferStatus()) && !TransferStatusEnum.FAILURE.getCode().equals(soB2cEntity.getTransferStatus()))) {
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "仅可操作已审核+中转状态为待中转/预报失败的单据"));
                 continue;
             }
             soB2cLogisticsEntity.setTransferLogisticsSupplierId(dto.getTransferLogisticsSupplierId());
