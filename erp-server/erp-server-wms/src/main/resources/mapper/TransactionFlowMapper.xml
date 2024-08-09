@@ -30,7 +30,7 @@
             AND t.warehouse_id = #{params.warehouseId}
             AND t.org_id = #{params.orgId}
             AND t.sku_id = #{params.skuId}
-            <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
+            <if test="params.warehouseLocation != null">
                 AND t.warehouse_location = #{params.warehouseLocation}
             </if>
             <if test="params.sourceCode != null and params.sourceCode != ''">
@@ -100,6 +100,9 @@
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
+        </if>
+        <if test="params.warehouseLocation != null">
+            and t.warehouse_location = #{params.warehouseLocation}
         </if>
         order by t.trade_time desc,t.id desc
     </select>
