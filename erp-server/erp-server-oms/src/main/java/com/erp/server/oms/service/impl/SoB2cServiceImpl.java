@@ -6865,6 +6865,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.IS_NOT_B2C_NOT_UPDATE_MAPPING);
         }
 
+        if(TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())|| SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus()) || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())){
+            throw new ServiceException("订单预报状态为预报成功或订单发货状态待发货&已发货 不允许更新映射");
+        }
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
             // 未找到B2C销售订单明细信息
