@@ -371,6 +371,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if (existSplit){
             return oldDetailEntityList;
         }
+        // 是否保留历史数量和sku信息：自发货订单已发货保留历史数量
+        boolean keepHistory = !mainEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus());
 
         // 来源不为空
         // 历史map
@@ -424,7 +426,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             SoB2cDetailEntity saveOrUpdateEntity;
             if (null != oldEntity) {
                 // 更新指定内容
-                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO, imageUrl, platformSpuNo);
+                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO, imageUrl, platformSpuNo, keepHistory);
             } else {
                 // 新记录
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl, platformSpuNo);
