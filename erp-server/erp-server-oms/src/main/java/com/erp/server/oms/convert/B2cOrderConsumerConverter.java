@@ -52,7 +52,7 @@ public interface B2cOrderConsumerConverter {
 
     @Mappings({
             // 更新的内容
-            @Mapping(target = "platformSkuNo", expression = "java(keepHistory ?  oldEntity.getPlatformSkuNo() : detailDTO.getPlatformSkuNo)"),
+            @Mapping(target = "platformSkuNo", expression = "java(keepHistory ?  oldEntity.getPlatformSkuNo() : detailDTO.getPlatformSkuNo())"),
 //            @Mapping(target = "platformSpuNo", source = "detailDTO.platformSpuNo"),
             @Mapping(target = "warehouseSkuNo", expression = "java(keepHistory ? oldEntity.getWarehouseSkuNo() : detailDTO.getWarehouseSkuNo())"),
             @Mapping(target = "qty", expression = "java(keepHistory ? oldEntity.getQty() : detailDTO.getQty())"),
