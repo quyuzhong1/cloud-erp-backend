@@ -142,8 +142,15 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                     throw new ServiceException(ApiError.LOCATION_MOVE_FROZEN_QTY_ERROR, detailEntity.getSkuNo());
                 }
             }else {
-                if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
-                    throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
+                if (InventoryStatusEnum.USABLE.getCode().equals(detailEntity.getOutInventoryStatus())) {
+                    if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
+                        throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
+                    }
+                }
+                if (InventoryStatusEnum.FROZEN.getCode().equals(detailEntity.getOutInventoryStatus())) {
+                    if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getFrozenQty()) {
+                        throw new ServiceException(ApiError.LOCATION_MOVE_FROZEN_QTY_ERROR, detailEntity.getSkuNo());
+                    }
                 }
             }
             detailEntity.setInInventoryStatus(Optional.ofNullable(detailEntity.getInInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
