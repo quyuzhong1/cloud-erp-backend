@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,6 @@ import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
-import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.DmpInputMongoDmpRelationService;
 import com.google.common.collect.Lists;
 
@@ -154,8 +154,8 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 
 
 				for (Map.Entry<String , Object> entry : dmpInputDmpBaseEntity.entrySet()) {
+//					Object valueByPath = DmpHandlerUtils.getValueByPath(dmpInputDmpBaseEntity, entry.getKey());
 
-					DmpHandlerUtils.
 					String mappingAndValue = dmpCfgInputConvertValue.stream().filter(req -> StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey()) && req.getConvertBeforeValue().equals(entry.getValue())).map(req -> req.getConvertAfterValue()).findFirst().orElse("");
 					if (StringUtils.isNotBlank(mappingAndValue)) {
 						dmpInputDmpBaseEntity.put(entry.getKey(), mappingAndValue);
@@ -307,6 +307,8 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		for(Map<String, Object> dmpInputMongoBaseEntity : dmpInputMongoEntityList) {
 			TreeMap<String , Object> dmpInputDmpBaseEntity = new TreeMap<>();
 			Set<Entry<String, Object>> entrySet = dmpInputMongoBaseEntity.entrySet();
+
+
 			for (Map.Entry<String, Object> entry : entrySet) {
 				String originalKey = entry.getKey().toString();
 				List<String> convertKey = originaConvertMap.get(originalKey);
