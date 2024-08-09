@@ -130,6 +130,7 @@ public class GetLogisticsTrackNoTaskJob {
                 }
                 item.setDeliveryNo(deliveryNo);
                 queryBase.setDeliveryNo(deliveryNo);
+                queryBase.setPlatformCode(item.getPlatformCode());
                 Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(authId,item.getShopId(), logisticsPlatform);
                 authMap.put("token", item.getShopToken());
                 queryBase.setAuthMap(authMap);
