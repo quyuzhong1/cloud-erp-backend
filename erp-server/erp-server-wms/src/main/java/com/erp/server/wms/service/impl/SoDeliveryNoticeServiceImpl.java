@@ -1309,6 +1309,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             if (pickingQty > deliveryQty) {
                 throw new ServiceException(StrUtil.format("发货通知单【{}】SKU【{}】拣货数量【{}】不能大于发货数量【{}】",entity.getCode(),detailEntity.getSkuNo(),pickingQty,deliveryQty));
             }
+            if (MathUtil.compareTo(deliveryQty,pickingQty) == MathUtil.ZERO) {
+                continue;
+            }
             outInStockDTO.setQty(deliveryQty - pickingQty);
             subList.add(outInStockDTO);
         }
