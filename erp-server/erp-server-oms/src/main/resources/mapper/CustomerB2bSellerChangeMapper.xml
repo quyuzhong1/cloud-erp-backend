@@ -99,7 +99,6 @@
             ${params.sqlMap.default}
           and cbs.is_deleted = false
           and ci.is_deleted = false
-        limit 50000
     </select>
 
 

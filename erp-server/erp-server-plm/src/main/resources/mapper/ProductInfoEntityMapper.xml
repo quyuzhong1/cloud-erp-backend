@@ -614,7 +614,6 @@
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>
-        limit 50000
     </select>
 
     <select id="getProductRelevanceList" resultType="com.erp.model.plm.dto.CountDTO">

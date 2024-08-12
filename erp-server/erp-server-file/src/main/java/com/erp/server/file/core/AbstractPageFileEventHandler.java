@@ -11,7 +11,7 @@ import java.util.List;
 @Slf4j
 public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEventHandler<T> {
 
-    // 以500条数据进行拆分
+    // 以1000条数据进行拆分
     private static final int LIMIT = 1000;
 
     /**
