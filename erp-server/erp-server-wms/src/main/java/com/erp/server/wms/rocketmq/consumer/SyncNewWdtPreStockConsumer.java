@@ -8,7 +8,7 @@ import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
-import com.erp.model.dmp.dto.DmpSoPrestockInfoDTO.ProstockDTO;
+import com.erp.model.dmp.dto.DmpSoPrestockInfoDTO.PrestockDTO;
 
 @Component
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_WDT_PRE_STOCK_TO_WMS_TOPIC, 
@@ -23,7 +23,7 @@ public class SyncNewWdtPreStockConsumer extends AbstractNewPlatformConsumerHandl
     
 	@Override
 	public void handle(String data) {
-		ProstockDTO entity = JSON.parseObject(data,  ProstockDTO.class);
+		PrestockDTO dto = JSON.parseObject(data,  PrestockDTO.class);
 		
 	}
 	

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSON;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.dto.DmpSoPrestockDetailDTO.PrestockDetailDTO;
-import com.erp.model.dmp.dto.DmpSoPrestockInfoDTO.ProstockDTO;
+import com.erp.model.dmp.dto.DmpSoPrestockInfoDTO.PrestockDTO;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoPrestockDetailEntity;
 import com.erp.model.dmp.entity.DmpSoPrestockInfoEntity;
@@ -83,10 +83,10 @@ public class DmpOutputWdtPreStockRocketMQTaskHandler extends DmpOutputRocketMQTa
 				continue;
 			}
 			List<DmpSoPrestockDetailEntity> itemList = dmpSoPrestockDetailEntityMap.get(changId);
-			ProstockDTO prostockDto = BeanUtil.copyProperties(dmpSoPrestockInfoEntity, ProstockDTO.class);
+			PrestockDTO prestockDto = BeanUtil.copyProperties(dmpSoPrestockInfoEntity, PrestockDTO.class);
 			List<PrestockDetailDTO> detailList = BeanUtil.copyToList(itemList, PrestockDetailDTO.class);
-			prostockDto.setDetailList(detailList);
-			map.put(changId, JSON.toJSONString(prostockDto));
+			prestockDto.setDetailList(detailList);
+			map.put(changId, JSON.toJSONString(prestockDto));
 		}
 		return map;
 	}

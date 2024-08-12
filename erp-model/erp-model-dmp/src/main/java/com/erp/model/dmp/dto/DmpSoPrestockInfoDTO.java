@@ -143,7 +143,7 @@ public class DmpSoPrestockInfoDTO implements Serializable {
      */
      @Data
      @NoArgsConstructor
-     public static class ProstockDTO {
+     public static class PrestockDTO {
 
          /**
          * 平台创建时间
