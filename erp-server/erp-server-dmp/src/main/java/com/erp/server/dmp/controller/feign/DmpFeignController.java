@@ -2,15 +2,11 @@ package com.erp.server.dmp.controller.feign;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.CfgApiAuthDTO;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.dto.KingdeeDTO;
+import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
@@ -40,7 +36,7 @@ import java.util.Map;
 public class DmpFeignController extends BaseController {
 
     @Resource
-    private BiShopInfoService biShopInfoService;
+    private BiDmpShopInfoService biDmpShopInfoService;
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -77,8 +73,8 @@ public class DmpFeignController extends BaseController {
 
 
     @PostMapping("/getShopById")
-    public DmpShopInfoDTO getShopById(@RequestBody String shopId) {
-        return biShopInfoService.getShopById(shopId);
+    public BiShopInfoDTO getShopById(@RequestBody String shopId) {
+        return biDmpShopInfoService.getShopById(shopId);
     }
 
     @PostMapping("/getByKingdeeId")
@@ -133,7 +129,7 @@ public class DmpFeignController extends BaseController {
      */
     @PostMapping("/listShop")
     public List<BiShopInfoEntity> listShop() {
-        return biShopInfoService.list();
+        return biDmpShopInfoService.list();
     }
 
     /**
