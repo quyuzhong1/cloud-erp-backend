@@ -7569,6 +7569,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //产品信息
         List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
+
+        //虚拟仓库存
+        List<String> virtualWarehouseIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
+        paramDTO.setWarehouseIdList(warehouseIdList);
+        paramDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
+        paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setSkuIdList(skuIdList);
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryFeign.listInventoryQty(paramDTO);
+        //虚拟仓库信息
+        List<VirtualWarehouseEntity> virtualWarehouseList = CollectionUtils.isEmpty(virtualWarehouseIdList) ? new ArrayList<>() : FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
+
         //是否缺货
         if (isOutStock) {
             // 忽略库存计算SKU
@@ -7629,6 +7641,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                 }
             }
+
+            //存在虚拟仓库则判断是否缺货
+            if (StrUtil.isNotBlank(exportDTO.getVirtualWarehouseId())) {
+                String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), exportDTO.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+                exportDTO.setVirtualWarehouseName(virtualWarehouseName);
+                Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), exportDTO.getSkuId())
+                                && StrUtil.equals(obj.getVirtualWarehouseId(), exportDTO.getVirtualWarehouseId())
+                                && StrUtil.equals(obj.getWarehouseId(), exportDTO.getWarehouseId()))
+                        .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
+                        .findFirst().orElse(MathUtil.ZERO);
+                exportDTO.setVirtualUsableQty(virtualUsableQty);
+            }
+
             //按子级SKU导出
             if (SoB2cExportTypeEnum.CHILD_EXPORT.getCode().equals(exportType)) {
                 //销售套装bom子级信息
@@ -7654,6 +7679,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     if (ObjectUtil.isNotEmpty(childEntity)) {
                         resultDTO.setProductName(childEntity.getName());
                         resultDTO.setVariantProperty(childEntity.getVariantProperty());
+                    }
+                    //虚拟仓可用库存
+                    if (StrUtil.isNotBlank(exportDTO.getVirtualWarehouseId())) {
+                        //虚拟仓是否缺货
+                        Integer childVirtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomChildrenSkuDTO.getSkuId())
+                                        && StrUtil.equals(obj.getVirtualWarehouseId(), exportDTO.getVirtualWarehouseId())
+                                        && StrUtil.equals(obj.getWarehouseId(), exportDTO.getWarehouseId()))
+                                .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
+                                .findFirst().orElse(MathUtil.ZERO);
+                        resultDTO.setVirtualUsableQty(childVirtualUsableQty);
                     }
                     resultList.add(resultDTO);
                 }

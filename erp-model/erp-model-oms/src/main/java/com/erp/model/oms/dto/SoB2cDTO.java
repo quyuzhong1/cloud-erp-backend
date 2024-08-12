@@ -2450,6 +2450,16 @@ public class SoB2cDTO implements Serializable {
         private String  warehouseName;
 
         /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+
+        /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+
+        /**
          * 仓位
          */
         private String warehouseLocation;
@@ -2478,6 +2488,11 @@ public class SoB2cDTO implements Serializable {
          * 可用数量
          */
         private Integer useableQty;
+
+        /**
+         * 虚拟仓可用数量
+         */
+        private Integer virtualUsableQty;
 
         /**
          * 是否缺货
