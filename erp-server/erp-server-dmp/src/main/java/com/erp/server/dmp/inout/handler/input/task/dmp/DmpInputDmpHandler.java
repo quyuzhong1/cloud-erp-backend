@@ -150,20 +150,20 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		for (Map.Entry<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpInputDmpBaseEntityList = dmpInputDataDmpRelationMap.getValue();
 			for (TreeMap<String, Object> dmpInputDmpBaseEntity : dmpInputDmpBaseEntityList) {
-
-
 				for (Map.Entry<String , Object> entry : dmpInputDmpBaseEntity.entrySet()) {
-				/*	String originalKey = entry.getKey().toString();
+					String originalKey = entry.getKey();
+					if (!".".contains(originalKey)) {
+						continue;
+					}
 					List<String> convertKey = originaConvertMap.get(originalKey);
 					if(convertKey == null) {
 						convertKey = this.convertKey(originalKey);
 						originaConvertMap.put(originalKey, convertKey);
 					}
 					for(String c : convertKey) {
-						dmpInputDmpBaseEntity.put(c, entry.getValue());
-					}*/
+						dmpInputDmpBaseEntity.put(c, DmpHandlerUtils.getValueByPath(entry.getValue(), entry.getKey()));
+					}
 
-//					Object valueByPath = DmpHandlerUtils.getValueByPath(dmpInputDmpBaseEntity, entry.getKey());
 					String mappingAndValue = dmpCfgInputConvertValue.stream().filter(req -> StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey()) && req.getConvertBeforeValue().equals(entry.getValue())).map(req -> req.getConvertAfterValue()).findFirst().orElse("");
 					if (StringUtils.isNotBlank(mappingAndValue)) {
 						dmpInputDmpBaseEntity.put(entry.getKey(), mappingAndValue);

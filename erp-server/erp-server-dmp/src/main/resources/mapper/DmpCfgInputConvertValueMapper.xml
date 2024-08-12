@@ -38,8 +38,8 @@
             cv.convert_before_value,
             cm.convert_key,
             cm.original_key
-        FROM dmp_cfg_input_convert_value cv
-        LEFT JOIN dmp_cfg_input_convert_mapping cm ON cv.main_id = cm."id" AND cv.is_deleted = FALSE
+        FROM dmp_cfg_input_convert_mapping cm
+        LEFT JOIN dmp_cfg_input_convert_value cv ON cv.main_id = cm."id" AND cv.is_deleted = FALSE
         WHERE cm.is_deleted = FALSE AND cm.disabled = FALSE
     </select>
 
@@ -52,8 +52,8 @@
             cv.convert_before_value,
             cm.convert_key,
             cm.original_key
-        FROM dmp_cfg_input_convert_value cv
-        LEFT JOIN dmp_cfg_input_convert_mapping cm ON cv.main_id = cm."id" AND cv.is_deleted = FALSE
+        FROM dmp_cfg_input_convert_mapping cm
+        LEFT JOIN dmp_cfg_input_convert_value cv ON cv.main_id = cm."id" AND cv.is_deleted = FALSE
         WHERE cm.is_deleted = FALSE
         AND cm.disabled = FALSE
         AND cv.update_time > #{freshCacheTime}
