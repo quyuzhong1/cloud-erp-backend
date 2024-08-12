@@ -174,7 +174,9 @@
         tfmrd.relation_code,
         tfmrd.transport_status,
         tfmrd.logistics_channel_id,
-        tfmrd.transport_no
+        tfmrd.transport_no,
+        tfmrd.reconciliation_count,
+        tfmrd.reconciliation_month
         from tms_first_mile_reconciliation_detail tfmrd
         left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id
         <where>

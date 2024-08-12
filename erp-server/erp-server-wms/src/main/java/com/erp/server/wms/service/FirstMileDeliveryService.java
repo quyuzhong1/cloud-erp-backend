@@ -293,4 +293,11 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     FirstMileDeliveryEntity getByCode(String key);
+
+    /**
+     * 生成物流单
+     * @param firstMileDeliveryEntity
+     * @return
+     */
+    BatchResultDTO generateLogisticsBill(FirstMileDeliveryEntity firstMileDeliveryEntity);
 }

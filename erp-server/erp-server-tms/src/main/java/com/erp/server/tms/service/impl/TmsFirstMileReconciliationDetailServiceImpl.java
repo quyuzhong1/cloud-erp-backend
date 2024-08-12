@@ -53,6 +53,7 @@ import com.erp.server.tms.mapper.TmsFirstMileReconciliationDetailMapper;
 import com.erp.server.tms.service.*;
 import com.sun.corba.se.spi.orb.StringPair;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -291,6 +292,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             // 对账状态
             data.setStatusName(ReconciliationStatusEnum.getName(data.getStatus()));
 
+            if (Objects.nonNull(data.getReconciliationCount())){
+                if (Objects.equals(1, data.getReconciliationCount())){
+                    data.setReconciliationCountName("首次对账");
+                }else {
+                    data.setReconciliationCountName(data.getReconciliationCount()+"次对账");
+                }
+
+            }
         }
     }
 
@@ -344,7 +353,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
 
         tmsFirstMileReconciliationService.updateById(mainEntity);
-
+        LocalDate endDate = mainEntity.getEndDate();
+        if (Objects.nonNull(endDate)){
+            LocalDate dayOfMonth = endDate.withDayOfMonth(1);
+            list.forEach(e -> e.setReconciliationMonth(dayOfMonth));
+        }
         log.info("编辑 开始修改头程对账单数据，id：【{}】", mainId);
         boolean save = super.saveOrUpdateBatch(list);
         if (!save) {
@@ -495,6 +508,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             if (null == viewDTO.getStatus()) {
                 viewDTO.setStatus(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
                 viewDTO.setStatusName(ReconciliationStatusEnum.TO_BE_CONFIRM.getName());
+            }
+            if (Objects.nonNull(viewDTO.getReconciliationCount())){
+                if (Objects.equals(1, viewDTO.getReconciliationCount())){
+                    viewDTO.setReconciliationCountName("首次对账");
+                }else {
+                    viewDTO.setReconciliationCountName(viewDTO.getReconciliationCount()+"次对账");
+                }
             }
         }
     }

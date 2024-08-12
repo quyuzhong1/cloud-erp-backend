@@ -399,17 +399,41 @@ public class FirstMileDeliveryController extends BaseController {
     public void exportList(@RequestBody @Validated FirstMileDeliveryDTO.PagingParamDTO dto, HttpServletResponse response) {
         firstMileDeliveryService.exportList(dto, response);
     }
+    /**
+     * 下推物流单
+     **/
+    @PostMapping("/generateLogisticsBill")
+    public ApiResult<List<BatchResultDTO>> generateLogisticsBill(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(ids);
+        List<BatchResultDTO> result = new ArrayList<>();
+        for (String id : ids){
+            FirstMileDeliveryEntity firstMileDeliveryEntity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(firstMileDeliveryEntity)){
+                result.add(BatchResultDTO.fail(id,id,"发货单为空"));
+                continue;
+            }
+            try {
+                result.add(firstMileDeliveryService.generateLogisticsBill(firstMileDeliveryEntity));
+            }catch (Exception e){
+                log.error("头程发货单下推装箱任务失败>>>>>", e);
+                result.add(BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),e.getMessage()));
+            }
+        }
+        return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
+    }
 
     /**
      * 下推装箱任务
      **/
     @PostMapping("/generatePackingTask")
     public ApiResult<List<BatchResultDTO>> generatePackingTask(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(dto.getIds());
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(ids);
         List<String> sourceCodes = entityList.stream().map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodes);
         List<BatchResultDTO> result = new ArrayList<>();
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             FirstMileDeliveryEntity firstMileDeliveryEntity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(firstMileDeliveryEntity)){
                 result.add(BatchResultDTO.fail(id,id,"发货单为空"));

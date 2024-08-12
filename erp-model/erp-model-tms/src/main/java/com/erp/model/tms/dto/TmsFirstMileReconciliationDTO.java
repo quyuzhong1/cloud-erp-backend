@@ -143,6 +143,10 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 对账结束日期【可排序】
          */
         private LocalDate endDate;
+        /**
+         * 对账月份
+         */
+        private LocalDate reconciliationMonth;
 
         /**
          * 对账周期
@@ -268,6 +272,10 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 生成对账日期
          */
         private LocalDate reconciliationDate;
+        /**
+         * 对账月份（取值为对账周期末值所在月份）
+         */
+        private LocalDate reconciliationMonth;
 
         /**
          * 提交日期
@@ -363,7 +371,11 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
+        /**
+         * 对账月份（取值为对账周期末值所在月份）
+         */
+        @NotNull(message = "对账月份不能为空")
+        private LocalDate reconciliationMonth;
         /**
          * 明细id集合
          */

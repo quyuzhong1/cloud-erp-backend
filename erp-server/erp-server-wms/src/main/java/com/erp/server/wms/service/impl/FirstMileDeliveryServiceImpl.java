@@ -1681,6 +1681,40 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         return this.lambdaQuery().eq(FirstMileDeliveryEntity::getCode, code).last("limit 1").one();
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO generateLogisticsBill(FirstMileDeliveryEntity firstMileDeliveryEntity) {
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())){
+            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"只有已审核发货单才能下推物流单");
+        }
+        if(!FmDeliveryLogisticsStatusEnum.WAIT.equals(firstMileDeliveryEntity.getLogisticsStatus())){
+            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"物流单只有未生成状态才能下推");
+        }
+
+        //走TMS自动生成物流单逻辑
+        AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                .id(firstMileDeliveryEntity.getId())
+                .billGenerateTimingEnum(BillGenerateTimingEnum.MANUAL_PUSH)
+                .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
+                .firstMileDeliveryEntity(firstMileDeliveryEntity)
+                .build();
+        try {
+            Boolean autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+            if(autoGenerateResult){
+                FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
+                updateStatusDTO.setIds(Arrays.asList(firstMileDeliveryEntity.getId()));
+                updateStatusDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.getCode());
+                this.updateStatus(updateStatusDTO);
+            }
+        }catch (Exception e){
+            log.error("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", firstMileDeliveryEntity.getCode(), e.getMessage());
+            throw new ServiceException(StrUtil.format("头程发货单{} 手动下推生成物流单失败：{}", firstMileDeliveryEntity.getCode(), e.getMessage()));
+        }
+        return BatchResultDTO.success(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"物流单下推成功");
+    }
+
     @Override
     public Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
         if (CollectionUtils.isEmpty(dto.getIds()) || CollectionUtils.isEmpty(dto.getBillTypes())) {

@@ -191,7 +191,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(generateLogisticDTO == null){
             throw new ServiceException("发货单不存在或者未装箱或已生成物流单");
         }
-
+        //一个发货单仅可下推一次
+        if (StringUtils.isNotBlank(outstockId)){
+            List<LogisticsBillEntity> list = this.lambdaQuery().eq(LogisticsBillEntity::getOutstockId, outstockId).list();
+            if (CollectionUtils.isNotEmpty(list)){
+                throw new ServiceException("发货单已下推物流单，不能重复下推");
+            }
+        }
         //新增物流单
         LogisticsBillEntity tmsFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,addDTO);
         if(StringUtils.isBlank(tmsFirstMileLogisticEntity.getRemark())){
@@ -295,12 +301,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             costAddDTO.setActualWeight(actualWeight);
             //设置预估体积重 = 长宽高/材积
             if(StringUtils.isNotBlank(addDTO.getLogisticsChannelId())){
-                ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(addDTO.getLogisticsChannelId());
-                if(Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
+                LogisticsChannelEntity channelEntity = logisticsChannelService.getById(addDTO.getLogisticsChannelId());
+//                ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(addDTO.getLogisticsChannelId());
+                if(Objects.nonNull(channelEntity) && channelEntity.getVolumeSetting() > 0){
                     BigDecimal totalSize = packingDTOList.stream()
                             .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    costAddDTO.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
+                    costAddDTO.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
                 }
             }
         }
@@ -324,12 +331,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             costUpdateDTO.setActualWeight(actualWeight);
             if(StringUtils.isNotBlank(updateDTO.getLogisticsChannelId())){
                 //设置预估体积重 = 长宽高/材积
-                ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(updateDTO.getLogisticsChannelId());
-                if(Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
+                LogisticsChannelEntity channelEntity = logisticsChannelService.getById(updateDTO.getLogisticsChannelId());
+//                ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(updateDTO.getLogisticsChannelId());
+                if(Objects.nonNull(channelEntity) && channelEntity.getVolumeSetting() > 0){
                     BigDecimal totalSize = packingDTOList.stream()
                             .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    costUpdateDTO.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
+                    costUpdateDTO.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
                 }
             }
         }
@@ -639,9 +647,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             dto.setToWarehouseName(deliveryDTO.getToWarehouseName());
             dto.setToAddress(deliveryDTO.getToAddress());
             if(CollectionUtils.isNotEmpty(deliveryDTO.getPackingDTOList())){
-                if(logisticsDTO.getVolumeSetting() != null && logisticsDTO.getVolumeSetting() > 0){
+                LogisticsChannelEntity channelEntity = logisticsChannelService.getById(dto.getLogisticsChannelId());
+                if(Objects.nonNull(channelEntity) && channelEntity.getVolumeSetting() != null && channelEntity.getVolumeSetting() > 0){
                     deliveryDTO.getPackingDTOList().forEach(v -> {
-                        v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(logisticsDTO.getVolumeSetting()), 4, RoundingMode.HALF_UP));
+                        v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()), 4, RoundingMode.HALF_UP));
                     });
                 }
                 dto.setPackingDTOList(deliveryDTO.getPackingDTOList());
@@ -947,12 +956,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             updateList.add(logisticsBillEntity);
             //更新体积重
             FirstMileDeliveryDTO.GenerateLogisticDTO deliveryLogisticDto = generateLogisticDTOList.stream().filter(v->v.getOutstockId().equals(logisticsBillEntity.getOutstockId())).findFirst().orElse(null);
-            if(Objects.nonNull(deliveryLogisticDto) && CollectionUtils.isNotEmpty(deliveryLogisticDto.getPackingDTOList()) && Objects.nonNull(shippingTemplateEntity)
-                    && shippingTemplateEntity.getVolumeSetting()!= null && shippingTemplateEntity.getVolumeSetting() > 0){
+            if(Objects.nonNull(deliveryLogisticDto) && CollectionUtils.isNotEmpty(deliveryLogisticDto.getPackingDTOList())
+                    && logisticsChannelEntity.getVolumeSetting()!= null && logisticsChannelEntity.getVolumeSetting() > 0){
                 BigDecimal totalSize = deliveryLogisticDto.getPackingDTOList().stream()
                         .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
-                logisticsBillCostEntity.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
+                logisticsBillCostEntity.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(logisticsChannelEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
                 updateCostList.add(logisticsBillCostEntity);
             }
             //设置消息发送
@@ -1454,12 +1463,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<TmsFirstMileLogisticDTO.DeliveryDTO> result = BeanUtil.copyToList(generateLogisticDTO,TmsFirstMileLogisticDTO.DeliveryDTO.class);
         //渠道为空设置体积重
         if(StringUtils.isNotBlank(dto.getLogisticsChannelId())){
-            ShippingTemplateEntity shippingTemplateEntity =  shippingTemplateService.getByChannelId(dto.getLogisticsChannelId());
-            if(Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting()>0){
+            LogisticsChannelEntity channelEntity = logisticsChannelService.getById(dto.getLogisticsChannelId());
+//            ShippingTemplateEntity shippingTemplateEntity =  shippingTemplateService.getByChannelId(dto.getLogisticsChannelId());
+            if(Objects.nonNull(channelEntity) && channelEntity.getVolumeSetting()>0){
                 for (TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO : result) {
                     if(CollectionUtil.isNotEmpty(deliveryDTO.getPackingDTOList())){
                         deliveryDTO.getPackingDTOList().forEach(v-> {
-                            v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()),4,RoundingMode.HALF_UP));
+                            v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()),4,RoundingMode.HALF_UP));
                         });
                     }
                 }
@@ -1524,12 +1534,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         result.setFeeRule(logisticsChannelEntity.getFeeRule());
         result.setFeeRuleName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));
-
-        ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(result.getLogisticsChannelId());
-        if(Objects.nonNull(shippingTemplateEntity)){
-            result.setVolumeSetting(shippingTemplateEntity.getVolumeSetting());
+        LogisticsChannelEntity channelEntity = logisticsChannelService.getById(result.getLogisticsChannelId());
+//        ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(result.getLogisticsChannelId());
+        if(Objects.nonNull(channelEntity)){
+            result.setVolumeSetting(channelEntity.getVolumeSetting());
         }
-        if(StringUtils.isNotBlank(dto.getOutstockId()) && Objects.nonNull(shippingTemplateEntity) && shippingTemplateEntity.getVolumeSetting() > 0){
+        if(StringUtils.isNotBlank(dto.getOutstockId()) && Objects.nonNull(channelEntity) && channelEntity.getVolumeSetting() > 0){
             FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
             reqDto.setIds(Arrays.asList(dto.getOutstockId()));
             List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
@@ -1539,7 +1549,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
                 if (CollectionUtil.isNotEmpty(deliveryDTO.getPackingDTOList())) {
                     deliveryDTO.getPackingDTOList().forEach(v -> {
-                        v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(shippingTemplateEntity.getVolumeSetting()), 4, RoundingMode.HALF_UP));
+                        v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()), 4, RoundingMode.HALF_UP));
                     });
                     result.setPackingDTOList(deliveryDTO.getPackingDTOList());
                 }

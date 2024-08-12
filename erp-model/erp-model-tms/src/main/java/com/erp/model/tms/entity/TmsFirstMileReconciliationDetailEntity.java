@@ -199,7 +199,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
      * 对账月份（取值为对账周期末值所在月份）
      */
     @TableField("reconciliation_month")
-    private Date reconciliationMonth;
+    private LocalDate reconciliationMonth;
 
     /**
      * 账单类型： actual=实际， initPeriod=期初

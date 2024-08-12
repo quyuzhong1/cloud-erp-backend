@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationImportEnum;
@@ -15,6 +16,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -162,6 +164,20 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 计费重带单位
          */
         private BigDecimal billingWeightWithUnit;
+
+        /**
+         * 对账次数 默认1
+         */
+        private Integer reconciliationCount;
+        /**
+         *显示为首次对账，N次对账
+         */
+        private String reconciliationCountName;
+
+        /**
+         * 对账月份（取值为对账周期末值所在月份）
+         */
+        private LocalDate reconciliationMonth;
 
         public String getActualWeightWithUnit() {
             BigDecimal actualWeight = this.getActualWeight();
@@ -444,6 +460,20 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 对账次数 默认1
          */
         private Integer reconciliationCount;
+        /**
+         * 显示为首次对账，N次对账
+         */
+        private String reconciliationCountName;
+
+        /**
+         * 对账月份（取值为对账周期末值所在月份）
+         */
+        private LocalDate reconciliationMonth;
+
+        /**
+         * 账单类型： actual=实际， initPeriod=期初
+         */
+        private String reconciliationType;
 
         /**
          * 费用明细详情(导入时传递)
@@ -963,6 +993,15 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 对账次数 默认1
          */
         private Integer reconciliationCount;
+
+        /**
+         * 对账月份（取值为对账周期末值所在月份）
+         */
+        private LocalDate reconciliationMonth;
+        /**
+         * 账单类型： actual=实际， initPeriod=期初
+         */
+        private String reconciliationType;
     }
 
     @Data
