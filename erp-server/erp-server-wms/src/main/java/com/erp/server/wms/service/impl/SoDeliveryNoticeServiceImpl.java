@@ -43,7 +43,6 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
@@ -384,7 +383,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoDeliveryNoticeEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, soDeliveryNoticeEntity, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "", "");
 
-        soDeliveryNoticeDetailService.update(dto);
+        //soDeliveryNoticeDetailService.update(dto);
         return flag;
     }
 
@@ -1287,6 +1286,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //多退，退回冻结添加可用
         List<VirtualInventoryStockDTO.OutInStockDTO> subList = new ArrayList<>();
 
+        //少补，减少可用添加冻结
+        List<VirtualInventoryStockDTO.OutInStockDTO> addList = new ArrayList<>();
+
         for (SoDeliveryNoticeDetailEntity detailEntity : soDeliveryNoticeDetailList) {
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setBillDate(LocalDate.now());
@@ -1299,23 +1301,44 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
             outInStockDTO.setWarehouseId(entity.getWarehouseId());
             outInStockDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
+            //发货数量
             Integer deliveryQty = detailEntity.getDeliveryQty();
+            //拣货数量
             Integer pickingQty = detailEntity.getPickingQty();
+            //上次发货数量
+            Integer lastPickingQty = detailEntity.getLastPickingQty();
             if (pickingQty > deliveryQty) {
                 throw new ServiceException(StrUtil.format("发货通知单【{}】SKU【{}】拣货数量【{}】不能大于发货数量【{}】",entity.getCode(),detailEntity.getSkuNo(),pickingQty,deliveryQty));
             }
-            if (MathUtil.compareTo(deliveryQty,pickingQty) == MathUtil.ZERO) {
-                continue;
+            //数量
+            Integer qty = pickingQty - lastPickingQty;
+            outInStockDTO.setQty(Math.abs(qty));
+
+            //本次拣货数量大于上次拣货数量则需要补货
+            if (pickingQty > lastPickingQty) {
+                addList.add(outInStockDTO);
+            } else {
+                subList.add(outInStockDTO);
             }
-            outInStockDTO.setQty(deliveryQty - pickingQty);
-            subList.add(outInStockDTO);
+            detailEntity.setLastPickingQty(pickingQty);
         }
+        //补货
+        if (CollectionUtils.isNotEmpty(addList)) {
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getCode());
+            stockParamDTO.setParamList(addList);
+            virtualInventoryTransCoreService.approve(stockParamDTO);
+        }
+        //退货
         if (CollectionUtils.isNotEmpty(subList)) {
             VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_APPROVE.getCode());
+            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_LESS.getCode());
             stockParamDTO.setParamList(subList);
             virtualInventoryTransCoreService.approve(stockParamDTO);
         }
+
+        //更新上次拣货数量
+        soDeliveryNoticeDetailService.updateBatchById(soDeliveryNoticeDetailList);
     }
 
     /**

@@ -113,7 +113,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeDetailEntity.setIsClose(detailDto.getIsClose());
             soDeliveryNoticeDetailEntity.setRemark(detailDto.getRemark());
             soDeliveryNoticeDetailEntity.setSourceDetailId(detailDto.getSourceDetailId());
-
+            soDeliveryNoticeDetailEntity.setLastPickingQty(soDeliveryNoticeDetailEntity.getDeliveryQty());
             Class<SoDeliveryNoticeDetailEntity> detailEntityClass = SoDeliveryNoticeDetailEntity.class;
             TableName tableName = detailEntityClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
