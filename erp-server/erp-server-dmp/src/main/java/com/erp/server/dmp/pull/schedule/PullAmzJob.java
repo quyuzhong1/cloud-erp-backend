@@ -224,8 +224,8 @@ public class PullAmzJob {
         // 每次请求接口限制数量不能大于20
         // {"shopIdList":[""]}
         String jobParamStr = XxlJobHelper.getJobParam();
-        AmazonJobParamDTO.ReportJobDTO jobParamDTO = AmazonJobParamDTO.ReportJobDTO.init(jobParamStr, 100);
-        int size = jobParamDTO.getSize();
+        AmazonJobParamDTO.ReportJobDTO jobParamDTO = AmazonJobParamDTO.ReportJobDTO.init(jobParamStr, 20);
+        int size = jobParamDTO.getSize() > 20 ? 20 : jobParamDTO.getSize();
         XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务开始,param={}", JSONUtil.toJsonStr(jobParamDTO));
         // 根据状态查询未下载数据
         // 查询所有任务列表

@@ -30,7 +30,7 @@ public interface DmpTaskFeign {
      * 店铺id查询店铺
      */
     @PostMapping("feign/getShopById")
-    DmpShopInfoDTO getShopById(@RequestBody String shopId);
+    BiShopInfoDTO getShopById(@RequestBody String shopId);
 
 
     /**

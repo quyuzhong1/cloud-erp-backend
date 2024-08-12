@@ -339,8 +339,6 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
                 .code(dmpSoInfoEntity.getLogisticsCode())
                 .name(name)
                 .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
-                .logisticsChannelId(dmpSoInfoEntity.getLogisticsChannelId())
-                .logisticsChannelName(dmpSoInfoEntity.getLogisticsChannelName())
                 .estimatedShippingCost(cost)
                 .actualShippingCost(BigDecimal.ZERO)
                 .accessoriesCostCurrency("")

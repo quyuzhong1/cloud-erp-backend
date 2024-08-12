@@ -97,9 +97,9 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
     }
 
     @Override
-    public DmpShopInfoDTO getDmpShopInfoById(String id) {
+    public BiShopInfoDTO getDmpShopInfoById(String id) {
         BiShopInfoEntity biShopInfoEntity = this.getById(id);
-        DmpShopInfoDTO dto = new DmpShopInfoDTO();
+        BiShopInfoDTO dto = new BiShopInfoDTO();
         if (ObjectUtils.isNotEmpty(biShopInfoEntity)) {
             BeanUtils.copyProperties(biShopInfoEntity, dto);
         }
@@ -107,7 +107,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
     }
 
     @Override
-    public Boolean addDmpShopInfo(DmpShopInfoDTO dto) {
+    public Boolean addDmpShopInfo(BiShopInfoDTO dto) {
         //验证店铺名称是否重复
         checkShopName(dto);
         FindUserDTO user = sysUserFeign.getUserByUserId(dto.getChargeId());
@@ -119,7 +119,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
     }
 
     @Override
-    public Boolean updateDmpShopInfo(DmpShopInfoDTO dto) {
+    public Boolean updateDmpShopInfo(BiShopInfoDTO dto) {
         //验证店铺名称是否重复
         checkShopName(dto);
         if (StringUtils.isNotBlank(dto.getChargeId())) {
@@ -381,7 +381,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
      * @author Will
      * @date: 2022/12/15 14:41
      */
-    private void checkShopName(DmpShopInfoDTO dto) {
+    private void checkShopName(BiShopInfoDTO dto) {
         LambdaQueryWrapper<BiShopInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiShopInfoEntity::getPlatformName, dto.getPlatformName());
         queryWrapper.eq(BiShopInfoEntity::getSite, dto.getSite());

@@ -1,6 +1,5 @@
 package com.erp.server.wms.query;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
@@ -18,6 +17,17 @@ public class VirtualWarehouseAllocationQueryHandler extends AbstractQueryHandler
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("tab".equals(field)) {
             return getTabSql(value);
+        }
+        if("isVirtualScarce".equals(field)) {
+            if ((Boolean) value) {
+                return "(vma.status = 'waitSubmit'and (( vma.type ='allocation'  then vmad.qty > COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0)) " +
+                        "or ( vma.type ='transfer'  then vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)) " +
+                        "or ( vma.type ='cancel'  then vmad.qty > COALESCE(vit.toVirtualUsableQty,0))))";
+            } else {
+                return "vma.status != 'waitSubmit' and ((vma.type ='allocation' then COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0) > vmad.qty) " +
+                        "or (vma.type ='transfer' then  COALESCE(vif.fromVirtualUsableQty,0) > vmad.qty) " +
+                        "or (vma.type ='cancel' then  COALESCE(vit.toVirtualUsableQty,0) > vmad.qty))";
+            }
         }
         return null;
     }

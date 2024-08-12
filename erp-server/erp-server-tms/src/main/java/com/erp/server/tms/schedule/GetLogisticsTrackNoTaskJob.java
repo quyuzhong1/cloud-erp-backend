@@ -82,11 +82,14 @@ public class GetLogisticsTrackNoTaskJob {
                     //查询跟踪号
                     ApiResult<List<LogisticsOrderResponseVO>> orderResponse = logisticsService.queryOrderList(logisticsQuery);
                     List<LogisticsOrderResponseVO> resultList = orderResponse.getData();
+                    if (CollectionUtils.isEmpty(resultList)){
+                        continue;
+                    }
                     List<LogisticsBillDTO.TrackDTO> updateList = new ArrayList<>(resultList.size());
                     for (LogisticsOrderResponseVO item : resultList) {
                         String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
                                 map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
-                        if (StringUtils.isNotBlank(b2cLogisticsId)){
+                        if (StringUtils.isNotBlank(b2cLogisticsId) && StringUtils.isNotBlank(item.getTrackNo())){
                             LogisticsBillDTO.TrackDTO dto = LogisticsBillDTO.TrackDTO.builder()
                                     .transportNo(item.getTransportNo())
                                     .trackNo(item.getTrackNo())

@@ -10,6 +10,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.stream.CollectorUtil;
+import com.alibaba.excel.util.StringUtils;
+import com.common.business.utils.CollectionUtils;
+import com.common.business.utils.StringUtil;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
+import com.erp.model.dmp.entity.*;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.server.dmp.service.*;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -21,13 +32,6 @@ import org.springframework.stereotype.Component;
 import com.alibaba.excel.util.StringUtils;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.StrUtils;
-import com.erp.model.dmp.entity.DmpBasicSystemEntity;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
-import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
-import com.erp.model.dmp.entity.DmpCfgMqEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -64,7 +68,10 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	private volatile List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingCache;
 	private volatile Map<String, Map<String, List<String>>> convertMappingCache;
-	
+
+	private volatile List<DmpCfgInputConvertValueDTO.MappingAndValueDTO> dmpCfgInputConvertValueCache;
+	private volatile Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache;
+
 	private volatile Map<String , RocketMQTemplate> rocketMQTemplateMap;
 	
 	private volatile Map<String , DmpCfgMqEntity> rocketMQDmpCfgMqCache;
@@ -72,7 +79,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private volatile List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackCache;
 	
 	private volatile List<OverseasProviderEntity> overseasProviderEntityCache;
-	
+
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
 	@Autowired
@@ -83,6 +90,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private DmpCfgInputDetailService dmpCfgInputDetailService;
 	@Autowired
 	private DmpCfgInputConvertMappingService dmpCfgInputConvertMappingService;
+	@Autowired
+	private DmpCfgInputConvertValueService dmpCfgInputConvertValueService;
 	@Autowired
 	private DmpCfgMqService dmpCfgMqService;
 	@Autowired
@@ -127,7 +136,22 @@ public class DmpHandlerCache implements CommandLineRunner{
 		}
 		return convertMappingCache.get(mainId);
 	}
-	
+
+	/**
+	 * 获取映射字段配置的映射值
+	 * @Author Luo_WG
+	 * @Date 2024/8/8 16:30
+	 * @param convertId
+	 * @return java.util.Map<java.lang.String,java.util.List<java.lang.String>>
+	 **/
+	public List<DmpCfgInputConvertValueDTO.MappingAndValueDTO> getDmpCfgInputConvertValue(String convertId){
+		if(convertValueCache == null) {
+			this.dealConvertValueCache();
+		}
+
+		return convertValueCache.get(convertId);
+	}
+
 	public DmpCfgMqEntity getRocketMQDmpCfgMqCache(String mqId){
 		if(rocketMQDmpCfgMqCache == null) {
 			this.initRocketMQTemplate();
@@ -158,7 +182,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 		}
 		return overseasProviderEntityCache.stream().filter(paramPredicate).collect(Collectors.toList());
 	}
-	
+
 	private void dealRocketMQTemplate(List<DmpCfgMqEntity> updateRocketMQDmpCfgMqEntity) {
 		if(CollUtil.isNotEmpty(updateRocketMQDmpCfgMqEntity)) {
 			List<DmpCfgMqEntity> disabledList = updateRocketMQDmpCfgMqEntity.stream().filter(d -> Boolean.TRUE.equals(d.getDisabled())).collect(Collectors.toList());
@@ -209,8 +233,11 @@ public class DmpHandlerCache implements CommandLineRunner{
 		dmpCfgInputConvertMappingCache = dmpCfgInputConvertMappingService.lambdaQuery()
 				.eq(DmpCfgInputConvertMappingEntity::getDisabled, false)
 				.list();
+		dmpCfgInputConvertValueCache = dmpCfgInputConvertValueService.listMappingAndValue();
 		this.dealConvertMappingCache();
-		
+
+		this.dealConvertValueCache();;
+
 		this.initRocketMQTemplate();
 		
 		dmpCfgOutputBlackCache = dmpCfgOutputBlackService.lambdaQuery()
@@ -222,7 +249,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 													.list();
 		} catch (Exception e) {
 		}
-		
+
 		if(isCreateTask) {
 			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 				List<DmpBasicSystemEntity> dmpBasicSystemEntityFreshList = dmpBasicSystemService.lambdaQuery()
@@ -296,7 +323,18 @@ public class DmpHandlerCache implements CommandLineRunner{
 						.gt(DmpCfgMqEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
 						.list());
 			}, 5, freshCacheTime, TimeUnit.SECONDS);
-			
+
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpCfgInputConvertValueDTO.MappingAndValueDTO> dmpCfgInputConvertMappingEntityFreshList = dmpCfgInputConvertValueService.listMappingAndValueByFreshCacheTime(DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)));
+				if(CollUtil.isNotEmpty(dmpCfgInputConvertMappingEntityFreshList)) {
+					List<String> newIds = dmpCfgInputConvertMappingEntityFreshList.stream().map(DmpCfgInputConvertValueDTO.MappingAndValueDTO::getId).collect(Collectors.toList());
+					dmpCfgInputConvertValueCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpCfgInputConvertValueCache.addAll(dmpCfgInputConvertMappingEntityFreshList);
+					this.dealConvertValueCache();
+				}
+
+			}, 6, freshCacheTime, TimeUnit.SECONDS);
+
 			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 				List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackEntityFreshList = dmpCfgOutputBlackService.lambdaQuery()
 						.gt(DmpCfgOutputBlackEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
@@ -309,7 +347,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 				}
 				
 			}, 0, freshCacheTime, TimeUnit.SECONDS);
-			
+
 			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 				List<OverseasProviderEntity> overseasProviderEntityFreshList = null;
 				try {
@@ -324,9 +362,9 @@ public class DmpHandlerCache implements CommandLineRunner{
 					overseasProviderEntityCache.addAll(overseasProviderEntityFreshList.stream()
 							.filter(d -> AuthStatusEnum.ALREADY.getCode().equals(d.getAuthStatus())).collect(Collectors.toList()));
 				}
-				
+
 			}, 1, freshCacheTime, TimeUnit.SECONDS);
-		
+
 		}
 	}
 	
@@ -350,6 +388,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 					.list();
 		}
 		Map<String, List<DmpCfgInputConvertMappingEntity>> mainEntityMap = dmpCfgInputConvertMappingCache.stream().collect(Collectors.groupingBy(DmpCfgInputConvertMappingEntity::getMainId));
+
 		for(Map.Entry<String, List<DmpCfgInputConvertMappingEntity>> mainEntity : mainEntityMap.entrySet()) {
 			Map<String, List<String>> map = new HashMap<>();
 			Map<String, List<DmpCfgInputConvertMappingEntity>> mapping = mainEntity.getValue().stream().collect(Collectors.groupingBy(d -> d.getOriginalKey().replace(".", "")));
@@ -359,7 +398,22 @@ public class DmpHandlerCache implements CommandLineRunner{
 			convertMappingCache.put(mainEntity.getKey(), map);
 		}
 	}
-	
+
+	private void dealConvertValueCache() {
+		convertValueCache = new HashMap<>();
+		//映射值信息
+		if(dmpCfgInputConvertValueCache == null) {
+			dmpCfgInputConvertValueCache = dmpCfgInputConvertValueService.listMappingAndValue();
+		}
+
+		Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> mainEntityMap = dmpCfgInputConvertValueCache.stream().collect(Collectors.groupingBy(DmpCfgInputConvertValueDTO.MappingAndValueDTO::getConvertId));
+
+		for(Map.Entry<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> mainEntity : mainEntityMap.entrySet()) {
+			convertValueCache.put(mainEntity.getKey(), mainEntity.getValue());
+		}
+
+	}
+
 	private void initRocketMQTemplate() {
 		if(rocketMQTemplateMap == null) {
 			rocketMQTemplateMap = new HashMap<>();

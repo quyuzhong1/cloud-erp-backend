@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import cn.hutool.core.collection.CollectionUtil;
 import org.apache.commons.lang.StringUtils;
 
 import com.baomidou.mybatisplus.core.toolkit.Sequence;
@@ -97,5 +98,25 @@ public class DmpHandlerUtils {
 			}
 		}
 		return BeanUtil.toBeanIgnoreError(newSource, clazz);
+	}
+
+	public static Object getValueByPath(Object data, String field) {
+		String[] keys = field.split("\\.");
+
+		for (String key : keys) {
+			if (data instanceof Map) {
+				data = ((Map<String, Object>) data).get(key);
+			} else if (data instanceof List) {
+				//如果是数组类型默认取第一个
+				List<Map<String, Object>> valueList = (List<Map<String, Object>>) data;
+				if (CollectionUtil.isNotEmpty(valueList)) {
+					data = valueList.get(0).get(key);
+				}
+			} else {
+				return null;  // 如果路径不正确，返回null
+			}
+		}
+
+		return data;
 	}
 }

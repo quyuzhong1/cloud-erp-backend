@@ -108,6 +108,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -348,7 +349,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setCode(code);
         soOutstock.setId(id);
         soOutstock.setTotalDiscountAmount(totalDiscountAmount);
-        soOutstock.setBillDate(LocalDate.now());
+        if(Objects.isNull(soOutstock.getBillDate())){
+            soOutstock.setBillDate(LocalDate.now());
+        }
         //tob 保存数据修改
         handleSaveOrUpdateDbByB2b(soOutstock, soCustomer);
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
@@ -1687,6 +1690,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 add.setSellerId(generateInfo.getSellerId());
                 add.setCustomerOrderNo(customerOrderNo);
                 add.setBatchNo(batchNo);
+                add.setBillDate(generateInfo.getBillDate());
                 List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>(generateInfoList.size());
                 for (SoOutstockDTO.GenerateSoOutstockViewDTO item : generateInfoList) {
                     SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
@@ -2568,7 +2572,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     if(Objects.isNull(deliveryTime)){
                        throw new ServiceException("发货日期不能为空");
                     }
-                    billDate = deliveryTime.toLocalDate();
+                    // 速卖通GMT时区转北京时区
+                    LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
+                            ZoneId.of("America/Los_Angeles"),
+                            ZoneId.of("Asia/Shanghai"));
+                    billDate = targetDeliveryTime.toLocalDate();
                 }
             }
         }
@@ -3053,8 +3061,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         .findFirst()
                         .orElse(null);
                 if (null != deliveryTime){
+                    // 速卖通GMT时区转北京时区
+                    LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
+                            ZoneId.of("America/Los_Angeles"),
+                            ZoneId.of("Asia/Shanghai"));
                     // 检查关账时间
-                    LocalDate closedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), deliveryTime.toLocalDate());
+                    LocalDate closedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), targetDeliveryTime.toLocalDate());
                     if (null != closedDate){
                         // 临时跳过生成已关账之前的销售出库单
                         return true;

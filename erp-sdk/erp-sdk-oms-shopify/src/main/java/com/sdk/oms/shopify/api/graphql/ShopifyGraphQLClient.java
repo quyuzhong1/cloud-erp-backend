@@ -4,20 +4,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.shopify.api.graphql.model.*;
 import io.netty.channel.ChannelOption;
-import io.netty.handler.logging.LogLevel;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
-import io.netty.util.internal.StringUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
-//import reactor.netty.transport.logging.AdvancedByteBufFormat;
+import reactor.netty.tcp.ProxyProvider;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,10 +53,12 @@ public class ShopifyGraphQLClient {
         this.apiVersion = apiVersion;
 
 //        HttpClient httpClient = HttpClient.create().wiretap("reactor.netty.http.client.HttpClient", LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL);
-
         HttpClient httpClient = HttpClient.create()
                 .tcpConfiguration(client ->
                         client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
+                                //本地启动时设置代理
+//                                .proxy(proxy -> proxy.type(ProxyProvider.Proxy.HTTP)
+//                                        .address(new InetSocketAddress("127.0.0.1", 7890)))
                                 .doOnConnected(conn -> conn
                                         .addHandlerLast(new ReadTimeoutHandler(60))
                                         .addHandlerLast(new WriteTimeoutHandler(60))));
@@ -83,6 +83,20 @@ public class ShopifyGraphQLClient {
         // Parse the JSON String response into a Shop object
         Shop shop = handleResponse(jsonString, Shop.class);
         return shop;
+    };
+
+    public ShopifyOrderResponse getOrderLocalizationExtensions(String orderId) {
+        Map<String, String> variablesMap = new HashMap<>();
+        variablesMap.put("id","gid://shopify/Order/"+orderId);
+        String jsonString = runQuery("orderLocalizationExtensions",variablesMap);
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            ShopifyOrderResponse response = objectMapper.readValue(jsonString, ShopifyOrderResponse.class);
+            return response;
+        } catch (Exception e) {
+            log.error("shopify获取订单信息转换异常",e);
+            return null;
+        }
     };
 
 
@@ -135,23 +149,9 @@ public class ShopifyGraphQLClient {
         try {
             // Load the query from a file
             String query = GraphqlSchemaReaderUtil.getSchemaFromFileName(queryFileName);
-            // Try to load variables if there are any for this query
-            String variablesString = GraphqlSchemaReaderUtil.getVariablesFromFileName(queryFileName);
-            log.debug("variablesString: " + variablesString);
-
             GraphqlRequestBody graphQLRequestBody = new GraphqlRequestBody();
             graphQLRequestBody.setQuery(query);
-            // If we have a variables JSON file AND the variablesMap is not empty, then we have variables to process
-            if (!StringUtil.isNullOrEmpty(variablesString) && variablesMap != null) {
-                for (Map.Entry<String, String> entry : variablesMap.entrySet()) {
-                    String key = entry.getKey();
-                    String value = entry.getValue();
-                    variablesString = variablesString.replace(key, value);
-                }
-                log.debug("Variables: " + variablesString);
-                InputWrapper inputWrapper = new InputWrapper(variablesString);
-                graphQLRequestBody.setVariables(inputWrapper);
-            }
+            graphQLRequestBody.setVariables(variablesMap);
             // Run the GraphQL API Call and return the JSON String response
             jsonString = webClient.post().bodyValue(graphQLRequestBody).retrieve().bodyToMono(String.class).block();
         } catch (IOException e) {
@@ -195,7 +195,7 @@ public class ShopifyGraphQLClient {
 
             JsonNode errorNode = jsonNode.get("errors");
             if (errorNode != null) {
-                log.error("Error in GraphQL API call: " + errorNode.toString());
+                log.error("shopify Error in GraphQL API call: " + errorNode.toString());
                 return null;
             }
 
