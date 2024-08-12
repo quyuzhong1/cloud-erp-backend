@@ -744,7 +744,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StrUtil.isNotBlank(item.getVirtualWarehouseId())) {
 
                 Integer approveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), item.getDetailId())
-                        && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
                 ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
                 //虚拟仓名称
@@ -759,7 +758,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setChildScarceList(virtuaParamScarceDTO.getChildScarceList());
                 item.setIsVirtualScarce(virtuaParamScarceDTO.getIsVirtualScarce());
 
-                //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的审核通过数量 ]  - 当前虚拟仓可用库存
+                //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的通过数量 ]  - 当前虚拟仓可用库存
                 Integer virtualScarceQty = item.getQty() - approveNoticeQty - item.getVirtualUsableQty();
                 item.setVirtualScarceQty(virtualScarceQty > MathUtil.ZERO ? virtualScarceQty : MathUtil.ZERO);
             }
@@ -3645,17 +3644,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             paramScarceDTO.setWarehouseId(soInfoEntity.getWarehouseId());
             paramScarceDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
             //虚拟仓bom库存
-            handelVirtualBomScarce(bomChildrenList,virtualInventoryQtyList,paramScarceDTO,effectiveNoticeQty);
+            handelVirtualBomScarce(bomChildrenList,virtualInventoryQtyList,paramScarceDTO,totalNoticeQty);
             batchLockDTO.setVirtualUsableQty(paramScarceDTO.getVirtualUsableQty());
             batchLockDTO.setChildScarceList(paramScarceDTO.getChildScarceList());
             batchLockDTO.setIsCombination(paramScarceDTO.getIsCombination());
 
-            //Min 【（销售数量 - 发货通知单审核数量），虚拟仓可用库存】
-            Integer toFrozenQty = soDetailEntity.getQty() - effectiveNoticeQty;
+            //Min 【（销售数量 - 发货通知单数量），虚拟仓可用库存】
+            Integer toFrozenQty = soDetailEntity.getQty() - totalNoticeQty;
             batchLockDTO.setToFrozenQty(virtualUsableQty > toFrozenQty ? toFrozenQty : virtualUsableQty);
 
-            //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的审核通过数量 ]  - 当前虚拟仓可用库存
-            Integer qty = soDetailEntity.getQty() - effectiveNoticeQty - virtualUsableQty;
+            //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的通过数量 ]  - 当前虚拟仓可用库存
+            Integer qty = soDetailEntity.getQty() - totalNoticeQty - virtualUsableQty;
             batchLockDTO.setVirtualScarceQty(qty > MathUtil.ZERO ? qty : MathUtil.ZERO);
 
             //销售出库单
@@ -3765,17 +3764,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             paramScarceDTO.setWarehouseId(soInfoEntity.getWarehouseId());
             paramScarceDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
             //虚拟仓bom库存
-            handelVirtualBomScarce(bomChildrenList,virtualInventoryQtyList,paramScarceDTO,effectiveNoticeQty);
+            handelVirtualBomScarce(bomChildrenList,virtualInventoryQtyList,paramScarceDTO,totalNoticeQty);
             detailDTO.setVirtualUsableQty(paramScarceDTO.getVirtualUsableQty());
             detailDTO.setChildScarceList(paramScarceDTO.getChildScarceList());
             detailDTO.setIsCombination(paramScarceDTO.getIsCombination());
 
-            //Min 【（销售数量 - 发货通知单审核数量），虚拟仓可用库存】
-            Integer toFrozenQty = soDetailEntity.getQty() - effectiveNoticeQty;
+            //Min 【（销售数量 - 发货通知单数量），虚拟仓可用库存】
+            Integer toFrozenQty = soDetailEntity.getQty() - totalNoticeQty;
             detailDTO.setToFrozenQty(detailDTO.getVirtualUsableQty() > toFrozenQty ? toFrozenQty : detailDTO.getVirtualUsableQty());
 
-            //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的审核通过数量 ]  - 当前虚拟仓可用库存
-            Integer qty = soDetailEntity.getQty() - effectiveNoticeQty - detailDTO.getVirtualUsableQty();
+            //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的数量 ]  - 当前虚拟仓可用库存
+            Integer qty = soDetailEntity.getQty() - totalNoticeQty - detailDTO.getVirtualUsableQty();
             detailDTO.setVirtualScarceQty(qty > MathUtil.ZERO ? qty : MathUtil.ZERO);
 
             //销售出库单
