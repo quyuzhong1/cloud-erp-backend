@@ -390,7 +390,11 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
             receiverDTO.setProvinceName(dmpSoReceiverEntity.getProvince());
             receiverDTO.setReceiverName(dmpSoReceiverEntity.getReceiverName());
             String mainPhone = dmpSoReceiverEntity.getMainPhone();
-			receiverDTO.setReceiverTelNumber(mainPhone);
+            if(StringUtils.isNotBlank(mainPhone)) {
+            	receiverDTO.setReceiverTelNumber(mainPhone);
+            }else {
+            	receiverDTO.setReceiverTelNumber(dmpSoReceiverEntity.getReceiverTelNumber());
+            }
             receiverDTO.setPostCode(dmpSoReceiverEntity.getPostCode());
             receiverDTO.setReceiverTaxNo(dmpSoReceiverEntity.getReceiverTaxNo());
             // 买家电话
