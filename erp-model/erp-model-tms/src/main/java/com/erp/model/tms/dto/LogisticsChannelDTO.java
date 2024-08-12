@@ -441,6 +441,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = trackQueryType
          */
         private String trackQueryType;
+        /**
+         * 材积设置
+         */
+        private Integer volumeSetting;
 
         /**
          * 物流映射列表
@@ -714,6 +718,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = trackQueryType
          */
         private String trackQueryType;
+        /**
+         * 材积设置
+         */
+        private Integer volumeSetting;
     }
 
     @Data

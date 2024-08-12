@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -29,4 +30,11 @@ public interface TmsFirstMileReconciliationDetailMapper extends BaseMapper<TmsFi
     String getCurrencyById(@Param("id") String id);
 
     List<TmsFirstMileReconciliationDetailEntity> listByMainIdsBySort(@Param("mainIds") List<String> mainIds);
+
+    /**
+     * 根据明细id获取对账记录
+     * @param sourceIds
+     * @return
+     */
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(@Param("sourceIds") List<String> sourceIds);
 }

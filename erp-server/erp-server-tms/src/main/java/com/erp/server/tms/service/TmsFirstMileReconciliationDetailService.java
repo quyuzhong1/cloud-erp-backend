@@ -125,7 +125,14 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      */
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> addWaitReconciliation(List<String> sourceIds);
 
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO);
+    /**
+     * 生成实际和差异记录
+     * @param sourceListDTO
+     * @param reconciliationCount
+     * @param keepActual 是否保留实际账单
+     * @return
+     */
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO,int reconciliationCount,boolean keepActual);
 
     Map<String, TmsFirstMileReconciliationDetailEntity> handleUpdateData(List<TmsFirstMileReconciliationDetailEntity> list, String mainId, List<TmsFirstMileReconciliationDetailEntity> oldList);
 
@@ -157,4 +164,11 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     String getCurrencyById(String mainId);
 
     List<TmsFirstMileReconciliationDetailEntity> listByMainIdsBySort(List<String> mainIds);
+
+    /**
+     * 根据明细id进行查询对账单明细
+     * @param sourceIds
+     * @return
+     */
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(List<String> sourceIds);
 }

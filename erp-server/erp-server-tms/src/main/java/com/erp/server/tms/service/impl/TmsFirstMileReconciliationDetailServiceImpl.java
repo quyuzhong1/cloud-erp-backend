@@ -116,7 +116,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private LogisticsChannelService logisticsChannelService;
-
+    @Resource
+    private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -517,12 +518,20 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         // 数据处理
         fillWaitReconciliationList(sourceFilterList);
-
+        //查询生成对账明细记录
+        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(sourceIds);
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> resultList = new LinkedList<>();
         // 生成差异和对比数据
         for (TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO : sourceFilterList) {
+            //当前明细对账单次数
+            int reconciliationCount = 1;
+            TmsFirstMileReconciliationDetailEntity maxDetailEntity = detailEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getSourceId(),sourceListDTO.getSourceId()))
+                    .max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
+            if (Objects.nonNull(maxDetailEntity)){
+                reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
+            }
             // 根据预计DTO生成：预计, 实际, 差异
-            List<TmsFirstMileReconciliationDetailDTO.ListDTO> curAllTyoeList = generateAllTypeDTO(sourceListDTO);
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> curAllTyoeList = generateAllTypeDTO(sourceListDTO, reconciliationCount,Boolean.FALSE);
             // 添加到结果
             resultList.addAll(curAllTyoeList);
         }
@@ -533,7 +542,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
      * 根据预计DTO生成：预计, 实际, 差异
      */
     @Override
-    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO) {
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO,int reconciliationCount,boolean keepActual) {
         // 实际
         TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO = new TmsFirstMileReconciliationDetailDTO.ListDTO();
         BeanUtils.copyProperties(sourceListDTO, actualListDTO);
@@ -557,10 +566,29 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         diffListDTO.setType(DetailReconciliationTypeEnum.DIFF.getCode());
         diffListDTO.setTypeName(DetailReconciliationTypeEnum.DIFF.getName());
 
+        //首次对账正常取值预估和实际费用，N次对账则所有预计+实际费用取值为0
+        if (!Objects.equals(1, reconciliationCount)){
+            initSourceDataDTO(sourceListDTO);
+            if (!keepActual){
+                initSourceDataDTO(actualListDTO);
+            }
+        }
         // 计算差异值
         generateDiff(sourceListDTO, actualListDTO, diffListDTO);
-
+        sourceListDTO.setReconciliationCount(reconciliationCount);
         return Arrays.asList(sourceListDTO, actualListDTO, diffListDTO);
+    }
+
+    private void initSourceDataDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO) {
+        sourceListDTO.setTotalLogisticsCost(BigDecimal.ZERO);
+        sourceListDTO.setActualWeight(BigDecimal.ZERO);
+        sourceListDTO.setVolumeWeight(BigDecimal.ZERO);
+        sourceListDTO.setBillingWeight(BigDecimal.ZERO);
+        sourceListDTO.setShippingCost(BigDecimal.ZERO);
+        sourceListDTO.setDeclareCost(BigDecimal.ZERO);
+        sourceListDTO.setOtherCost(BigDecimal.ZERO);
+        sourceListDTO.setVolumeWeightLogistics(BigDecimal.ZERO);
+        sourceListDTO.setWeightLogistics(BigDecimal.ZERO);
     }
 
 
@@ -952,7 +980,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO>> sourceTypeGroupMap = cfgErpFieldMap.values()
                 .stream()
                 .collect(Collectors.groupingBy(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getSourceType));
-
         for (FirstMileReconciliationStandardExcelDTO excelDTO : successList) {
             // 对应物流单
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailDTO = sourceLogisticMap.get(excelDTO.getTransportNo());
@@ -961,6 +988,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 errorList.add(excelDTO);
                 continue;
             }
+            List<String> sourceIds = sourceDetailDTO.stream().filter(Objects::nonNull).map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
+            List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(sourceIds);
             // 先从结果集获取
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(excelDTO.getTransportNo());
             if (null == currentTrackNoList) {
@@ -968,7 +997,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 if (CollectionUtils.isEmpty(currentTrackNoList)) {
                     // 生成当前物流单的所有明细
                     currentTrackNoList = sourceDetailDTO.stream()
-                            .map(this::generateAllTypeDTO)
+                            .map(e ->{
+                                //当前明细对账单次数
+                                int reconciliationCount = 1;
+                                TmsFirstMileReconciliationDetailEntity maxDetailEntity = detailEntityList.stream().filter(f -> Objects.nonNull(f) && Objects.equals(e.getSourceId(),f.getSourceId()))
+                                        .max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
+                                if (Objects.nonNull(maxDetailEntity)){
+                                    reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
+                                }
+                                return  generateAllTypeDTO(e, reconciliationCount, Boolean.TRUE);
+                            })
                             .flatMap(List::stream)
                             .collect(Collectors.toList());
                 } else {
@@ -1385,6 +1423,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 errorList.add(jsonObject);
                 continue;
             }
+            //获取来源id列表
+            List<String> sourceIds = sourceLogisticList.stream().filter(Objects::nonNull).map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
+            List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(sourceIds);
             // 先从结果集获取
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(transportNo);
             if (null == currentTrackNoList) {
@@ -1392,7 +1433,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 if (CollectionUtils.isEmpty(currentTrackNoList)) {
                     // 生成当前物流单的所有明细
                     currentTrackNoList = sourceDetailDTO.stream()
-                            .map(this::generateAllTypeDTO)
+                            .map(e -> {
+                                //当前明细对账单次数
+                                int reconciliationCount = 1;
+                                TmsFirstMileReconciliationDetailEntity maxDetailEntity = detailEntityList.stream().filter(f -> Objects.nonNull(f) && Objects.equals(e.getSourceId(),f.getSourceId()))
+                                        .max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
+                                if (Objects.nonNull(maxDetailEntity)){
+                                    reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
+                                }
+                                return generateAllTypeDTO(e, reconciliationCount, Boolean.TRUE);
+                            })
                             .flatMap(List::stream)
                             .collect(Collectors.toList());
                 } else {
@@ -1537,6 +1587,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .stream()
                 .filter(e -> StringUtils.isNotBlank(e.getCurrency()))
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getAutoStringPair));
+        List<String> billIds = list.stream().filter(Objects::nonNull).map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
+        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(billIds);
         for (Map.Entry<StringPair, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> entry : map.entrySet()) {
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = entry.getValue();
             this.fillWaitReconciliationList(sourceDetailList);
@@ -1570,8 +1622,15 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> allDetailDTOList = new LinkedList<>();
             updateDTO.setId(reconciliationEntity.getId());
             for (TmsFirstMileReconciliationDetailDTO.ListDTO listDTO : sourceDetailList) {
+                //当前明细对账单次数
+                int reconciliationCount = 1;
+                TmsFirstMileReconciliationDetailEntity maxDetailEntity = detailEntityList.stream().filter(f -> Objects.nonNull(f) && Objects.equals(listDTO.getSourceId(),f.getSourceId()))
+                        .max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
+                if (Objects.nonNull(maxDetailEntity)){
+                    reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
+                }
                 // 生成实际和差异记录
-                List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = this.generateAllTypeDTO(listDTO);
+                List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = this.generateAllTypeDTO(listDTO,reconciliationCount, Boolean.FALSE);
                 List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailDTOList = TmsFirstMileReconciliationConverter.INSTANCE.convertDetailDTOList(saveListDTO);
                 allDetailDTOList.addAll(detailDTOList);
             }
@@ -1610,5 +1669,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     @Override
     public List<TmsFirstMileReconciliationDetailEntity> listByMainIdsBySort(List<String> mainIds) {
         return baseMapper.listByMainIdsBySort(mainIds);
+    }
+
+    @Override
+    public List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listBySourceIds(sourceIds);
     }
 }

@@ -1116,11 +1116,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if (CollectionUtils.isEmpty(sourceDetailList)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
         }
-        boolean notGenerate = sourceDetailList.stream()
-                .anyMatch(e -> !ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(e.getReconciliationStatus()));
-        if (notGenerate){
-            throw new ServiceException("物流单已生成对账");
-        }
+//        boolean notGenerate = sourceDetailList.stream()
+//                .anyMatch(e -> !ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(e.getReconciliationStatus()));
+//        if (notGenerate){
+//            throw new ServiceException("物流单已生成对账");
+//        }
         boolean notSign = sourceDetailList.stream()
                 .anyMatch(e -> !LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(e.getTransportStatus()));
         if (notSign){
@@ -1134,7 +1134,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if (null == curListDTO){
             throw new ServiceException("数据异常, 明细为空");
         }
-
+        //头程对账单明细查询
+        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(Collections.singletonList(id));
         // 是否当前新增账单
         boolean currenAddMainEntity = false;
         String mainKey = "";
@@ -1168,6 +1169,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             LocalDate startDate = dateList.get(0);
             LocalDate endDate = dateList.get(1);
             mainKey = StrUtil.format("{}_{}_{}_{}", logisticsSupplierId, curListDTO.getCurrency(), startDate, endDate);
+            //一个头程物流单可生成多次对账单-限制同一个单同一个月份仅可生成一次
+            LocalDate dayOfMonth = endDate.withDayOfMonth(1);
+            TmsFirstMileReconciliationDetailEntity tmsFirstMileReconciliationDetailEntity = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getReconciliationMonth().equals(dayOfMonth)).findFirst().orElse(null);
+            if (Objects.nonNull(tmsFirstMileReconciliationDetailEntity)){
+                throw new ServiceException(ApiError.ERROR_92260,tmsFirstMileReconciliationDetailEntity.getSourceCode(), dayOfMonth);
+            }
             // 之前已添加账单
             reconciliationEntity = currentMainEntityMap.get(mainKey);
             if (null == reconciliationEntity){
@@ -1206,8 +1213,14 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
 
         // 保存明细
+        //当前明细对账单次数
+        int reconciliationCount = 1;
+        TmsFirstMileReconciliationDetailEntity maxDetailEntity = tmsFirstMileReconciliationDetailEntityList.stream().filter(Objects::nonNull).max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
+        if (Objects.nonNull(maxDetailEntity)){
+            reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
+        }
         // 生成实际和差异记录
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = tmsFirstMileReconciliationDetailService.generateAllTypeDTO(curListDTO);
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = tmsFirstMileReconciliationDetailService.generateAllTypeDTO(curListDTO, reconciliationCount,Boolean.FALSE);
         TmsFirstMileReconciliationDTO.UpdateDTO updateDTO = new TmsFirstMileReconciliationDTO.UpdateDTO();
         updateDTO.setId(reconciliationEntity.getId());
 
@@ -1245,10 +1258,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public List<BatchResultDTO> generateReconciliation(TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // 当前添加的主账单记录
         Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             BatchResultDTO updateResult;
             try {
                 updateResult = this.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap);

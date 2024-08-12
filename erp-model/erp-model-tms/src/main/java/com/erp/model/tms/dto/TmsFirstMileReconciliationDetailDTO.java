@@ -440,6 +440,10 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 物流单记录的实际重(后台用)
          */
         private BigDecimal weightLogistics;
+        /**
+         * 对账次数 默认1
+         */
+        private Integer reconciliationCount;
 
         /**
          * 费用明细详情(导入时传递)
@@ -955,7 +959,10 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 渠道商ID
          */
         private String logisticsChannelId;
-
+        /**
+         * 对账次数 默认1
+         */
+        private Integer reconciliationCount;
     }
 
     @Data

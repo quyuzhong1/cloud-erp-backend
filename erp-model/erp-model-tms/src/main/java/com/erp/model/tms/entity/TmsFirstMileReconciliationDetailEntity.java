@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 
@@ -187,6 +188,24 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
      */
     @TableField("confirm_user_name")
     private String confirmUserName;
+
+    /**
+     * 对账次数 默认1
+     */
+    @TableField("reconciliation_count")
+    private Integer reconciliationCount;
+
+    /**
+     * 对账月份（取值为对账周期末值所在月份）
+     */
+    @TableField("reconciliation_month")
+    private Date reconciliationMonth;
+
+    /**
+     * 账单类型： actual=实际， initPeriod=期初
+     */
+    @TableField("reconciliation_type")
+    private String reconciliationType;
 
     /**
      * 费用编辑（导入数据返回）

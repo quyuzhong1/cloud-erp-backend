@@ -89,7 +89,10 @@
             business_code,
             transport_status,
             logistics_channel_id,
-            transport_no
+            transport_no,
+            reconciliation_count,
+            reconciliation_month,
+            reconciliation_type
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ListDTO">
@@ -230,5 +233,18 @@
             WHEN 'diff' THEN 3
             END
         </where>
+    </select>
+    <select id="listBySourceIds"
+            resultType="com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from tms_first_mile_reconciliation_detail
+        where is_deleted = false
+          <if test="sourceIds != null and sourceIds.size > 0">
+              and source_id in
+              <foreach collection="sourceIds" open="(" close=")" separator="," item="item">
+                  #{item}
+              </foreach>
+          </if>
     </select>
 </mapper>
