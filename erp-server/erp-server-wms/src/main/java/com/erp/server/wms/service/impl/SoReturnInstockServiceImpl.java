@@ -577,9 +577,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             inventoryTransCore(Collections.singletonList(entity));
 
             //发送金蝶
-            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
-            this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
-         else {
+            sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_APPROVE.getCode());
+            this.syncToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
+        }else {
             //审核不通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
                     .eq(SoReturnInstockEntity::getId, entity.getId())
