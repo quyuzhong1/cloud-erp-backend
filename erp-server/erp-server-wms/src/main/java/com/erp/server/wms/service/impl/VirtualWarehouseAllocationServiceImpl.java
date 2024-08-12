@@ -202,6 +202,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                 .eq(VirtualWarehouseAllocationDetailEntity::getMainId, id).orderByAsc(VirtualWarehouseAllocationDetailEntity::getId));
 
+        //仓库Id
+        List<String> warehouseIdList = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+
         //获取数量
         VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO = new VirtualInventoryDTO.QtyTypeDTO();
         qtyTypeDTO.setType(vmAllocation.getType());
@@ -211,6 +214,18 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         //获取所有的sku信息
         List<String> skuIds = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        //实体仓库存
+        InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+        dto.setWarehouseIdList(warehouseIdList);
+        dto.setSkuIdList(skuIds);
+        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
+
+        //实体仓下已分配数量
+        List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> virtualInventoryQtyList = virtualInventoryService.listInventoryQtyByWarehouseId(warehouseIdList,skuIds);
+
+
         List<VirtualWarehouseAllocationDTO.DetailDto> detailDtos = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailList);
         detailDtos.forEach(detailDto -> {
             SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())).findFirst().orElse(null);
@@ -229,6 +244,17 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                     }
                 }
             });
+
+            //仓库实际库存
+            Integer realQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailDto.getSkuId())
+                            && StrUtil.equals(obj.getWarehouseId(), detailDto.getWarehouseId())
+                            && Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()).contains(obj.getInventoryStatus()))
+                    .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
+
+            //虚拟仓库存
+            Integer virtualQty = virtualInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), detailDto.getSkuId()) && StrUtil.equals(obj.getWarehouseId(), detailDto.getWarehouseId()))
+                    .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            detailDto.setUnDistributionQty(realQty - virtualQty);
         });
         viewDTO.setDetailList(detailDtos);
         return viewDTO;

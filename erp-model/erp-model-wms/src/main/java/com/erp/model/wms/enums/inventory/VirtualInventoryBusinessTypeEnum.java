@@ -77,6 +77,11 @@ public enum VirtualInventoryBusinessTypeEnum {
      * 发货通知单，减冻结，加可用
      */
     SO_DELIVERY_NOTICE_APPROVE("so_delivery_notice_approve", "14","发货通知单审核"),
+
+    /**
+     * 发货通知单，减冻结，加冻结
+     */
+    SO_DELIVERY_NOTICE_ADD("so_delivery_notice_add", "15","发货通知单新增"),
     ;
 
     private String code;

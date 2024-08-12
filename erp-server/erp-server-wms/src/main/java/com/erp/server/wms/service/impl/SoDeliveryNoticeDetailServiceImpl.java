@@ -18,6 +18,7 @@ import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -122,9 +123,12 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
             list.add(soDeliveryNoticeDetailEntity);
         }
+
+        boolean saveBatch = this.saveBatch(list);
+
         //虚拟仓扣减库存
-        handleVirtualInventory(list);
-        return this.saveBatch(list);
+        handleVirtualInventory(id,list);
+        return saveBatch;
     }
 
     @Override
@@ -226,7 +230,13 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
      * @date 2024/6/14 10:39
      * @param detailList
      */
-    private void handleVirtualInventory (List<SoDeliveryNoticeDetailEntity> detailList) {
+    private void handleVirtualInventory (String id,List<SoDeliveryNoticeDetailEntity> detailList) {
+        //发货通知单
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(id);
+        if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST,"发货通知单");
+        }
+
         //销售明细
         List<String> sourceDetailIdList = detailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIdList);
@@ -237,6 +247,9 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
         //销售订单参数
         List<VirtualInventoryStockDTO.OutInStockDTO> soParamList = new ArrayList<>();
+
+        //发货通知单参数
+        List<VirtualInventoryStockDTO.OutInStockDTO> sDeliveryNoticeoParamList = new ArrayList<>();
 
         //销售订单冻结数量更新
         List<SoDetailDTO.UpdateFrozenQtyDTO> updateList = new ArrayList<>();
@@ -262,6 +275,9 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             //销售订单参数
             handleSoParam(soInfoEntity, soDetailEntity, detailEntity,soParamList);
 
+            //发货通知单参数
+            handleSoDeliveryNoticeParam(soDeliveryNoticeEntity, detailEntity,sDeliveryNoticeoParamList);
+
             //更新冻结库存参数
             if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
                 SoDetailDTO.UpdateFrozenQtyDTO updateFrozenQtyDTO = new SoDetailDTO.UpdateFrozenQtyDTO();
@@ -275,12 +291,22 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
                 updateList.add(updateFrozenQtyDTO);
             }
         }
+
         //销售订单扣减库存
         if (CollectionUtils.isNotEmpty(soParamList)) {
-            //扣减冻结，添加可用
+            //添加冻结，扣减可用
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(soParamList);
             dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getCode());
+            //更新库存
+            virtualInventoryTransCoreService.approve(dto);
+        }
+        //发货通知单添加冻结
+        if (CollectionUtils.isNotEmpty(sDeliveryNoticeoParamList)) {
+            //添加冻结，扣减冻结
+            VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+            dto.setParamList(sDeliveryNoticeoParamList);
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_ADD.getCode());
             //更新库存
             virtualInventoryTransCoreService.approve(dto);
         }
@@ -317,6 +343,31 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
         soParamList.add(outInStockDTO);
+    }
+
+    /**
+     * 发货通知单参数
+     * @author will
+     * @date 2024/8/12 15:32
+     * @param soDeliveryNoticeEntity
+     * @param detailEntity
+     * @param paramList
+     */
+    private void handleSoDeliveryNoticeParam(SoDeliveryNoticeEntity soDeliveryNoticeEntity
+            ,SoDeliveryNoticeDetailEntity detailEntity,List<VirtualInventoryStockDTO.OutInStockDTO> paramList) {
+
+        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+        outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
+        outInStockDTO.setSourceId(soDeliveryNoticeEntity.getId());
+        outInStockDTO.setSourceCode(soDeliveryNoticeEntity.getCode());
+        outInStockDTO.setSourceDetailId(detailEntity.getId());
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setSkuId(detailEntity.getSkuId());
+        outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+        outInStockDTO.setQty(detailEntity.getDeliveryQty());
+        outInStockDTO.setWarehouseId(soDeliveryNoticeEntity.getWarehouseId());
+        outInStockDTO.setVirtualWarehouseId(soDeliveryNoticeEntity.getVirtualWarehouseId());
+        paramList.add(outInStockDTO);
     }
 
 
