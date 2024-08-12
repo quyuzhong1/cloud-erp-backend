@@ -111,7 +111,7 @@
         inner JOIN virtual_warehouse_allocation vma
         on vma.id = vmad.main_id and vma.is_deleted = false
         left join (
-            select sum(qty) as realQty,sku_id,warehouse_id from inventory where is_deleted = false group by sku_id,warehouse_id
+            select sum(qty) as realQty,sku_id,warehouse_id from inventory where is_deleted = false and dict_inventory_status in('usable','frozen')  group by sku_id,warehouse_id
         ) iv on vmad.sku_id = iv.sku_id  and vmad.warehouse_id = iv.warehouse_id
         left join (
             select sum(qty) as distributionQty,sku_id,warehouse_id from virtual_inventory where is_deleted = false  group by sku_id,warehouse_id

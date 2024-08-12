@@ -297,7 +297,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         List<VirtualInventoryDTO.ViewQtyDTO> vmUsableQty = getVmUsableQty(vmParamDto, toVmIds);
         //拼接返回数据
         for (VirtualInventoryDTO.QtySearchDTO qtySearchDTO : qtySearchList) {
-            //获取实体仓可分配库存：实体仓可用库存-虚拟仓实际库存（可用+冻结）
+            //获取实体仓可分配库存：实体仓实际库存-虚拟仓实际库存（可用+冻结）
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
             //仓库实际库存
@@ -307,7 +307,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                     .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
             //虚拟仓库存
             Integer virtualQty = vmRealQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), qtySearchDTO.getSkuId()) && StrUtil.equals(obj.getWarehouseId(), qtySearchDTO.getWarehouseId()))
-                    .map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseUsableQty).reduce(MathUtil.ZERO, Integer::sum);
+                    .map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseRealQty).reduce(MathUtil.ZERO, Integer::sum);
             viewQtyDTO.setWarehouseAllocationQty(realQty - virtualQty);
 
             VirtualInventoryDTO.ViewQtyDTO vmUsableQtyDto = vmUsableQty.stream().filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())

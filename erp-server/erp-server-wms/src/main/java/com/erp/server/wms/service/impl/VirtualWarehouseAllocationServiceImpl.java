@@ -202,9 +202,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                 .eq(VirtualWarehouseAllocationDetailEntity::getMainId, id).orderByAsc(VirtualWarehouseAllocationDetailEntity::getId));
 
-        //仓库Id
-        List<String> warehouseIdList = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
-
         //获取数量
         VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO = new VirtualInventoryDTO.QtyTypeDTO();
         qtyTypeDTO.setType(vmAllocation.getType());
