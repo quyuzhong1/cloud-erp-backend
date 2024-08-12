@@ -2263,6 +2263,11 @@ public class SoB2cDTO implements Serializable {
          * 发货时间
          */
         private LocalDateTime deliveryTime;
+
+        /**
+         * 物流信息
+         */
+        List<SoB2cLogisticsEntity> soB2cLogisticsList;
     }
 
 

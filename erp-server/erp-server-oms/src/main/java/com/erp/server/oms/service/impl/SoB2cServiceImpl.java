@@ -5741,9 +5741,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean updateResult = lambdaUpdate().in(SoB2cEntity::getId, deliveryTimeDTO.getSoB2cIds())
                 .set(SoB2cEntity::getBillStatus, deliveryTimeDTO.getStatus())
                 .update();
-
-        //修改发货时间
-        soB2cLogisticsService.updateDeliveryTimeByMainIds(deliveryTimeDTO.getSoB2cIds(), deliveryTimeDTO.getDeliveryTime());
+        if (CollectionUtils.isEmpty(deliveryTimeDTO.getSoB2cLogisticsList())) {
+            //修改发货时间
+            soB2cLogisticsService.updateDeliveryTimeByMainIds(deliveryTimeDTO.getSoB2cIds(), deliveryTimeDTO.getDeliveryTime());
+        } else {
+            deliveryTimeDTO.getSoB2cLogisticsList().forEach(obj -> obj.setDeliveryTime(deliveryTimeDTO.getDeliveryTime()));
+            soB2cLogisticsService.updateBatchById(deliveryTimeDTO.getSoB2cLogisticsList());
+        }
 
         String statusName = SoB2cBillStatusEnum.getName(deliveryTimeDTO.getStatus());
         String msg = "销售订单状态变更为:" + statusName;

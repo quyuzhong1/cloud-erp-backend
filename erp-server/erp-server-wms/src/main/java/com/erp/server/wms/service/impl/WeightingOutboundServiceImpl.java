@@ -171,9 +171,11 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                         .build();
                 asyncService.updateLogisticWeight(updateWeight);
             }
-
-            //更新B2c物流订单重量
-            soB2cFeign.batchUpdateLogistics(soB2cLogisticsEntities);
+            //未发货时更新，发货时下面一起更新免得seata事务报错
+            if (!isAutoDelivery) {
+                //更新B2c物流订单重量
+                soB2cFeign.batchUpdateLogistics(soB2cLogisticsEntities);
+            }
         }
         //自动发货
         if (isAutoDelivery && entity.getIsWeigh()) {
@@ -203,6 +205,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
             updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
+            updateDeliveryTimeDTO.setSoB2cLogisticsList(soB2cLogisticsEntities);
             soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
 
@@ -226,6 +229,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             asyncService.syncAutoOut(entity);
 
         }
+
         return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus(), trackNo);
     }
 
