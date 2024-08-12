@@ -332,8 +332,10 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                 receiverDTO.setReceiverTelNumber(receiptInfo.getMobileNo());
                 receiverDTO.setPostCode(receiptInfo.getZip());
                 receiverDTO.setReceiverTaxNo(receiptInfo.getCpfNo());
+                // 手机号为空取电话
+                String telNumber = StringUtils.isBlank(receiptInfo.getMobileNo())? receiptInfo.getPhoneNumber(): receiptInfo.getMobileNo();
                 // 买家电话
-                receiverDTO.setTelNumber(receiptInfo.getMobileNo());
+                receiverDTO.setTelNumber(telNumber);
             }
             BuyerInfo buyerInfo = detail.getBuyerInfo();
             receiverDTO.setLoginId(buyerInfo.getLoginId());
