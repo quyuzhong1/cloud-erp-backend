@@ -1672,7 +1672,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         for (SoDetailEntity soDetailEntity : soDetailEntityList) {
             Integer frozenQty = soParamList.stream().filter(obj -> StrUtil.equals(obj.getDetailId(), soDetailEntity.getId())).map(SoDetailDTO.UpdateFrozenQtyDTO::getFrozenQty).findFirst().orElse(MathUtil.ZERO);
-            soDetailEntity.setFrozenQty(soDetailEntity.getFrozenQty() - frozenQty);
+            soDetailEntity.setFrozenQty(frozenQty);
         }
         this.updateBatchById(soDetailEntityList);
     }
