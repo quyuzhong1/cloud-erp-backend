@@ -43,10 +43,7 @@ import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cLogisticsMapper;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoB2cLogisticsService;
-import com.erp.server.oms.service.SoB2cReceiverService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -90,6 +87,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
+
+    @Resource
+    private SoB2cLabelService soB2cLabelService;
 
     @Override
     public Boolean add(SoB2cLogisticsDTO.AddDTO logisticsDTO, String mainId) {
@@ -452,6 +452,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             soB2cLogisticsEntity.setCode("");
             soB2cLogisticsEntity.setTrackNo("");
             this.updateById(soB2cLogisticsEntity);
+            //清空面单信息
+            soB2cLabelService.deleteByMainIds(Arrays.asList(id));
             return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
         }
 
