@@ -114,6 +114,7 @@ public class DmpOutputWdtOrderReturnRocketMQTaskHandler extends DmpOutputRocketM
         resultEntity.setShopId(entity.getShopId());
         resultEntity.setShopName(entity.getShopName());
         resultEntity.setCreated(entity.getPlatformCreateTime());
+        resultEntity.setModified(entity.getPlatformUpdateTime());
         //仓库id
         resultEntity.setWarehouseId(itemList.stream().map(DmpSoReturnDetailEntity::getWarehouseId).filter(StringUtils::isNotBlank).findAny().orElse(""));
         resultEntity.setWarehouseName(itemList.stream().map(DmpSoReturnDetailEntity::getWarehouseName).filter(StringUtils::isNotBlank).findAny().orElse(""));

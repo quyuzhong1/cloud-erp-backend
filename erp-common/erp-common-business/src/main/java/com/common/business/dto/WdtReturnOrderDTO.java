@@ -83,6 +83,8 @@ public class WdtReturnOrderDTO extends UniqueDto {
     private String shopNo;
 
     private LocalDateTime created;
+    
+    private LocalDateTime modified;
 
     private List<WdtReturnOrderDetailDTO> detailList;
 }
