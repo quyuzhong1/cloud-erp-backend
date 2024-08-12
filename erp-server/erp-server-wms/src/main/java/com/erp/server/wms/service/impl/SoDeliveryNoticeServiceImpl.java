@@ -1313,7 +1313,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //数量
             Integer qty = pickingQty - lastPickingQty;
             outInStockDTO.setQty(Math.abs(qty));
-
+            if (MathUtil.compareTo(qty,MathUtil.ZERO) == MathUtil.ZERO) {
+                continue;
+            }
             //本次拣货数量大于上次拣货数量则需要补货
             if (pickingQty > lastPickingQty) {
                 addList.add(outInStockDTO);
