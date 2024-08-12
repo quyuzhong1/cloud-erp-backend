@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.dmp.mapper.BiSettlementExchangeRateMapper">
 
 
-    <select id="findByCurrencyAndDate" resultType="com.erp.model.dmp.entity.BiSettlementExchangeRateEntity">
+    <select id="findByCurrencyAndDate" resultType="com.erp.model.bi.entity.BiSettlementExchangeRateEntity">
         select id, settlement_date_begin, settlement_date_end, exchange_rate, source_currency_code, target_currency_code, update_time
         from bi_settlement_exchange_rate
         <where>

@@ -7,7 +7,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.dmp.entity.BiSettlementExchangeRateEntity;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.server.dmp.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.dmp.service.BiSettlementExchangeRateService;
 import org.apache.commons.collections4.CollectionUtils;
