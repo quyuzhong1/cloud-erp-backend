@@ -283,11 +283,13 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     }
 
     private void getAllocationInfo(List<VirtualInventoryDTO.QtySearchDTO> qtySearchDTOS, List<String> skuIds, List<String> warehouseIds, VirtualInventoryDTO.ParamDTO vmParamDto, List<VirtualInventoryDTO.QtySearchDTO> qtySearchList, List<VirtualInventoryDTO.ViewQtyDTO> resultList) {
-        //获取实体仓可用库存
-        InventoryDTO.ParamDTO paramDTO = new InventoryDTO.ParamDTO();
-        paramDTO.setSkuIdList(skuIds);
-        paramDTO.setWarehouseIdList(warehouseIds);
-        List<InventoryDTO.InventoryViewQtyDTO> inventoryUsableQtyList = inventoryService.getUsableQtyBySkuIdsAndWarehouseIds(paramDTO);
+        //实体仓库存
+        InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+        dto.setWarehouseIdList(warehouseIds);
+        dto.setSkuIdList(skuIds);
+        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
+
         //获取实体仓对应的虚拟仓所有（可用+冻结）库存数量
         List<VirtualInventoryDTO.ViewQtyDTO> vmRealQtyList = baseMapper.getRealQty(vmParamDto);
         //获取调入虚拟仓可用数量
@@ -298,20 +300,16 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             //获取实体仓可分配库存：实体仓可用库存-虚拟仓实际库存（可用+冻结）
             VirtualInventoryDTO.ViewQtyDTO viewQtyDTO = new VirtualInventoryDTO.ViewQtyDTO();
             BeanUtils.copyProperties(qtySearchDTO, viewQtyDTO);
-            List<InventoryDTO.InventoryViewQtyDTO> inventoryViewQtyDTOS = inventoryUsableQtyList.stream()
-                    .filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())
-                            && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId()))
-                    .collect(Collectors.toList());
-            List<VirtualInventoryDTO.ViewQtyDTO> vmRealDTOS = vmRealQtyList.stream().filter(inventoryViewQtyDTO ->
-                            Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId()) && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId()))
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(inventoryViewQtyDTOS)) {
-                Integer warehouseAllocationQty = inventoryViewQtyDTOS.get(0).getUsableQty();
-                if (CollectionUtils.isNotEmpty(vmRealDTOS)) {
-                    warehouseAllocationQty -= vmRealDTOS.get(0).getToVirtualWarehouseRealQty();
-                }
-                viewQtyDTO.setWarehouseAllocationQty(warehouseAllocationQty);
-            }
+            //仓库实际库存
+            Integer realQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), qtySearchDTO.getSkuId())
+                            && StrUtil.equals(obj.getWarehouseId(), qtySearchDTO.getWarehouseId())
+                            && Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()).contains(obj.getInventoryStatus()))
+                    .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
+            //虚拟仓库存
+            Integer virtualQty = vmRealQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), qtySearchDTO.getSkuId()) && StrUtil.equals(obj.getWarehouseId(), qtySearchDTO.getWarehouseId()))
+                    .map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseUsableQty).reduce(MathUtil.ZERO, Integer::sum);
+            viewQtyDTO.setWarehouseAllocationQty(realQty - virtualQty);
+
             VirtualInventoryDTO.ViewQtyDTO vmUsableQtyDto = vmUsableQty.stream().filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())
                     && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId())
                     && Objects.equals(inventoryViewQtyDTO.getToVirtualWarehouseId(), qtySearchDTO.getToVirtualWarehouseId())).findFirst().orElse(null);

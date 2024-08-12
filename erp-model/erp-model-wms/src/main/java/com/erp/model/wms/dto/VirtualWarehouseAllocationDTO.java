@@ -591,10 +591,6 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         @Size(max = 100, message = "备注最大长度不能超过100位")
         private String detailRemark;
-        /**
-         * 实体仓可分配数量
-         */
-        private Integer unDistributionQty;
 
         public String getSyncStatusName() {
             return VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(syncStatus);
