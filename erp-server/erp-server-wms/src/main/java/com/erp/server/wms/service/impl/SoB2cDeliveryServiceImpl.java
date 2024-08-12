@@ -1227,13 +1227,22 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         generateB2cDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         generateB2cDTO.setBatchNo(entity.getBatchNo());
         List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(entity.getId()));
         List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
-        for (SoOutstockDetailDTO.AddDTO item : detailList) {
-            String soDetailId = item.getSoDetailId();
-            String sourceDetailId = deliveryDetailList.stream().filter(d -> d.getSourceDetailId().equals(soDetailId)).
-                    map(SoB2cDeliveryDetailEntity::getId).findFirst().orElse("");
-            item.setSourceDetailId(sourceDetailId);
+        LinkedList<SoOutstockDetailDTO.AddDTO> newDetailList = new LinkedList<>();
+        for (PickingListsDTO.SourceView view : views) {
+            SoB2cDeliveryDetailEntity detailEntity = deliveryDetailList.stream().filter(v -> v.getId().equals(view.getSourceDetailId()))
+                    .findFirst().orElse(new SoB2cDeliveryDetailEntity());
+            SoOutstockDetailDTO.AddDTO dto = detailList.stream().filter(d -> d.getSoDetailId().equals(detailEntity.getSourceDetailId()))
+                    .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
+            SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
+            addDTO.setWarehouseLocation(Objects.isNull(entity.getBatchNo()) ? view.getWarehouseLocation() : "");
+            addDTO.setActualQty(view.getQty());
+            addDTO.setPlanQty(view.getQty());
+            addDTO.setSourceDetailId(detailEntity.getId());
+            newDetailList.add(addDTO);
         }
+        generateB2cDTO.setDetailList(newDetailList);
         soOutstockService.generateB2cSoOutstock(generateB2cDTO);
 
     }
