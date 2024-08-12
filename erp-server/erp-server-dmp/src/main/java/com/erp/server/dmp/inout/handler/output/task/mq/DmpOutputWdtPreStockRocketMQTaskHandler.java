@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -90,4 +91,8 @@ public class DmpOutputWdtPreStockRocketMQTaskHandler extends DmpOutputRocketMQTa
 		return map;
 	}
 	
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("thirdCode");
+    }
+
 }
