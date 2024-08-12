@@ -151,7 +151,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 			List<TreeMap<String, Object>> dmpInputDmpBaseEntityList = dmpInputDataDmpRelationMap.getValue();
 			for (TreeMap<String, Object> dmpInputDmpBaseEntity : dmpInputDmpBaseEntityList) {
 				for (Map.Entry<String , Object> entry : dmpInputDmpBaseEntity.entrySet()) {
-					String originalKey = entry.getKey();
+					/*String originalKey = entry.getKey();
 					if (!".".contains(originalKey)) {
 						continue;
 					}
@@ -162,7 +162,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 					}
 					for(String c : convertKey) {
 						dmpInputDmpBaseEntity.put(c, DmpHandlerUtils.getValueByPath(entry.getValue(), entry.getKey()));
-					}
+					}*/
 
 					String mappingAndValue = dmpCfgInputConvertValue.stream().filter(req -> StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey()) && req.getConvertBeforeValue().equals(entry.getValue())).map(req -> req.getConvertAfterValue()).findFirst().orElse("");
 					if (StringUtils.isNotBlank(mappingAndValue)) {
