@@ -934,14 +934,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isNotEmpty(childList)) {
             isCombination = Boolean.TRUE;
         }
+        item.setIsCombination(isCombination);
         //虚拟仓是否缺货
         Boolean isVirtualScarce = Boolean.FALSE;
         //费销售套装bom判断父级SKU是否够使用
         if (!isCombination) {
             item.setIsVirtualScarce(item.getQty() - approveNoticeQty > item.getVirtualUsableQty());
             item.setChildScarceList(childScarceList);
+            return;
         }
-        item.setIsCombination(isCombination);
         for (BomChildrenSkuDTO childrenSkuDTO : childList) {
             SoInfoDTO.VirtualChildScarceDTO scarceDTO = new SoInfoDTO.VirtualChildScarceDTO();
             //虚拟仓是否缺货

@@ -3295,6 +3295,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 isVirtualScarce = Boolean.TRUE;
             }
             scarceDTO.setChildUsableQty(childVirtualUsableQty);
+
             //针对父级可用数量
             double floor = Math.floor(childVirtualUsableQty / childrenSkuDTO.getQuantity());
             Integer parentUsableQty = Integer.valueOf((int) floor);
@@ -7556,16 +7557,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     .stream()
                     .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
         }
-        //按子级SKU导出或缺货
-        if (SoB2cExportTypeEnum.CHILD_EXPORT.getCode().equals(exportType) || isOutStock) {
-            //根据SKU查询BOM判断是否是组合SKU
-            bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-            List<String> childSkuIdList = bomChildrenList.stream().filter(obj -> StrUtil.isNotBlank(obj.getSkuId()))
-                    .map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(childSkuIdList)) {
-                skuIdList.addAll(childSkuIdList);
-            }
+
+        //根据SKU查询BOM判断是否是组合SKU
+        bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<String> childSkuIdList = bomChildrenList.stream().filter(obj -> StrUtil.isNotBlank(obj.getSkuId())  && StrUtil.equals(BomTypeEnum.COMBINATION.getType(), obj.getType()))
+                .map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(childSkuIdList)) {
+            skuIdList.addAll(childSkuIdList);
         }
+
         //产品信息
         List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
@@ -7654,18 +7654,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 exportDTO.setVirtualUsableQty(virtualUsableQty);
             }
 
-            //按子级SKU导出
-            if (SoB2cExportTypeEnum.CHILD_EXPORT.getCode().equals(exportType)) {
-                //销售套装bom子级信息
-                List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), exportDTO.getSkuId())
-                                && StrUtil.equals(BomTypeEnum.COMBINATION.getType(), obj.getType()))
-                        .collect(Collectors.toList());
-                //非销售套装bom则直接导出父级SKU信息
-                if (CollectionUtils.isEmpty(childList)) {
-                    exportDTO.setSkuQty(exportDTO.getQty());
-                    resultList.add(exportDTO);
-                    continue;
-                }
+            //销售套装bom子级信息
+            List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), exportDTO.getSkuId())
+                            && StrUtil.equals(BomTypeEnum.COMBINATION.getType(), obj.getType()))
+                    .collect(Collectors.toList());
+
+            //销售套装bom
+            if (CollectionUtils.isNotEmpty(childList)) {
+                List<Integer> qtyList = new ArrayList<>();
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
                     SoB2cDTO.ExcelExportDTO resultDTO = new SoB2cDTO.ExcelExportDTO();
                     BeanMapperUtils.copy(exportDTO, resultDTO);
@@ -7689,10 +7685,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                 .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                                 .findFirst().orElse(MathUtil.ZERO);
                         resultDTO.setVirtualUsableQty(childVirtualUsableQty);
+
+                        //针对父级可用数量
+                        double floor = Math.floor(childVirtualUsableQty / bomChildrenSkuDTO.getQuantity());
+                        Integer parentUsableQty = Integer.valueOf((int) floor);
+                        qtyList.add(parentUsableQty);
                     }
-                    resultList.add(resultDTO);
+                    //如果按子级导出则添加
+                    if (SoB2cExportTypeEnum.CHILD_EXPORT.getCode().equals(exportType)) {
+                        resultList.add(resultDTO);
+                    }
                 }
-            } else {
+                //父级可用取子级中最小可用数量
+                if (SoB2cExportTypeEnum.PARENT_EXPORT.getCode().equals(exportType) && CollectionUtils.isNotEmpty(qtyList)) {
+                    Integer bomUsableQty = qtyList.stream().min(Comparator.comparing(obj -> obj)).get();
+                    exportDTO.setVirtualUsableQty(bomUsableQty);
+                }
+            }
+            //按父级导出
+            if (SoB2cExportTypeEnum.PARENT_EXPORT.getCode().equals(exportType)) {
                 exportDTO.setSkuQty(exportDTO.getQty());
                 resultList.add(exportDTO);
             }
