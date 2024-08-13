@@ -377,7 +377,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             }
             if(equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.NOT_IN_LIST.getCode()) || equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.NQ.getCode())){
                 if(!equipmentSortingPortConditionDTO.getValueList().contains(dto.getLogisticsSupplierId()) && !equipmentSortingPortConditionDTO.getValueList().contains(dto.getChannelId())){
-                    return new CfgRuleOutDTO.SortingPortResultDTO(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode(),false);
+                    return new CfgRuleOutDTO.SortingPortResultDTO(equipmentSortingPortConditionDTO.getPort(),false);
                 }
             }
         }

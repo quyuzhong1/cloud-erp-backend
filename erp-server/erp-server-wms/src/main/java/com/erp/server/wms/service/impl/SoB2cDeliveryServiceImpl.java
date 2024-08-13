@@ -986,19 +986,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .build();
         //返回分检口
         String sortingPort = cfgRuleOutService.getSortingPort(sortingPortRuleDTO);
-        CfgRuleOutDTO.CommonDTO commonDTO = cfgRuleOutService.view();
-        Boolean isDeviation = cfgRuleOutService.handleB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations(),sortingPortRuleDTO);
+//        CfgRuleOutDTO.CommonDTO commonDTO = cfgRuleOutService.view();
+//        Boolean isDeviation = cfgRuleOutService.handleB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations(),sortingPortRuleDTO);
 
-        //记录发货单异常
-        if (!isDeviation) {
-            entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
-            entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
-        }
         //更新发货单
         this.updateById(entity);
 
-        //自动出库
-        if (isDeviation && entity.getIsAutoOut()) {
+        //不是异常口才能自动出库
+        if (!CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode().equals(sortingPort) && entity.getIsAutoOut()) {
             asyncService.syncSoB2cDeliveryAutoOut(soB2cEntity,entity);
         }
         //更新图片
@@ -1010,7 +1005,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //发货单操作日志
         //操作日志
-        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "", "");
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "", "流水线称重");
 
         if(sortingPort.equals(errorPortCode)){
             return ApiResult.success("出库配置返回异常口",errorPortCode);
