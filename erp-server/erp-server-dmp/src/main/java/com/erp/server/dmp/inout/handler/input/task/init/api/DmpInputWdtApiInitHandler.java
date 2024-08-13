@@ -76,12 +76,11 @@ public class DmpInputWdtApiInitHandler implements DmpInputApiInitHandler{
         	
         	Integer total = data.getInteger("total_count");
         	JSONArray order = data.getJSONArray("order");
+        	if(order == null) {
+				order = data.getJSONArray("detail_list");
+			}
         	
-        	int size = order.size();
-        	if(size == 0) {
-        		break;
-        	}
-			currTotal = currTotal + size;
+        	currTotal = currTotal + order.size();
         	DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
         	dmpInputTaskInitDTO.setMsg(order.toJSONString());
         	dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
