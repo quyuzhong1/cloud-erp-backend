@@ -2,6 +2,8 @@ package com.erp.server.wms.rocketmq.sync;
 
 import com.common.business.dto.WdtReturnOrderDTO;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
+import com.erp.model.wms.entity.OtherInstockEntity;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
 
 public interface SyncSoReturnService {
 
@@ -19,4 +21,7 @@ public interface SyncSoReturnService {
      */
     void syncWdtReturnOrderToSoReturn(WdtReturnOrderDTO dto);
 
+    void saveWdtReturnData(SoReturnInstockEntity inStockEntity, OtherInstockEntity dbOtherInstockEntity);
+
+    void disApproveAndGenerate(SoReturnInstockEntity entity, OtherInstockEntity dbOtherInstockEntity, SoReturnInstockEntity newEntity);
 }

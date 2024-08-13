@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -565,4 +566,7 @@ public interface SysUserFeign {
      */
     @PostMapping("/feign/sysSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+    @PostMapping("feign/dept/getDeptByNames")
+    List<SysDepartmentEntity> getDeptByNames(@RequestBody List<String> deptNameList);
 }

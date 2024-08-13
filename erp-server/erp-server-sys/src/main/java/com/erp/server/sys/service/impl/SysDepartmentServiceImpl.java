@@ -443,6 +443,14 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         return baseMapper.getDeptByParentId(deptId);
     }
 
+    @Override
+    public List<SysDepartmentEntity> getDeptByNames(List<String> deptNameList) {
+        if(CollectionUtils.isEmpty(deptNameList)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(SysDepartmentEntity::getName,deptNameList).list();
+    }
+
     /**
      * 查找部门最上级
      */

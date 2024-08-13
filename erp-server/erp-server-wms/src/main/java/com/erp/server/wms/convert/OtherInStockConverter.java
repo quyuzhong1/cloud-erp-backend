@@ -94,6 +94,7 @@ public interface OtherInStockConverter {
             @Mapping(target = "deptName", source = "departmentDTO.name"),
             @Mapping(target = "code", source = "code"),
             @Mapping(target = "approveStatus", constant = "waitSubmit"),
+            @Mapping(target = "remark", ignore = true),
     })
     OtherInstockEntity combineAddEntity(OtherInStockImportExcelDTO importExcelDTO,
                                         InstockTypeEnum inStockTypeEnum,
@@ -127,4 +128,33 @@ public interface OtherInStockConverter {
                                                  SkuVO skuVO,
                                                  WarehouseLocationEntity locationEntity,
                                                  Integer actualQty);
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "code", ignore = true),
+    })
+    OtherInstockEntity copy(OtherInstockEntity dbOtherInstockEntity);
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "mainId", ignore = true),
+    })
+    OtherInstockDetailEntity copyDetail(OtherInstockDetailEntity dbDetail);
+    List<OtherInstockDetailEntity> copyDetailList(List<OtherInstockDetailEntity> dbDetailList);
 }

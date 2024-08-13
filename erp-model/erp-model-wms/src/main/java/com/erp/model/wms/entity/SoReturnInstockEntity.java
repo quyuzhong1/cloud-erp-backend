@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -209,6 +210,9 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
      */
     @TableField("created")
     private LocalDateTime created;
+
+    @TableField(exist = false)
+    private List<SoReturnInstockDetailEntity> detailEntityList;
 
     public static final String APPROVE_STATUS = "approve_status";
 

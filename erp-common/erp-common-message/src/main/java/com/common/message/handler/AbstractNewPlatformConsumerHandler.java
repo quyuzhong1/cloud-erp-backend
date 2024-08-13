@@ -65,7 +65,7 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
         try {
         	 this.handle(data);
         } catch (Throwable e) {
-            log.error("{}同步输出任务失败，msg = {}",bizName ,e.getMessage());
+            log.error("{}同步输出任务失败，msg = {}",bizName ,e.getMessage(),e);
             updateDTO.setStatus(DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode());
             updateDTO.setResponseData(bizName + "消费数据失败：" + ExceptionUtil.stacktraceToOneLineString(e));
             updateDTO.setMessage(bizName + "【" + e.getMessage() + "】");
