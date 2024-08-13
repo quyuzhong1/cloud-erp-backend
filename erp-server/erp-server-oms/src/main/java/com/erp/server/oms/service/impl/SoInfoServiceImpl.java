@@ -937,7 +937,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //费销售套装bom判断父级SKU是否够使用
         if (!isCombination) {
             //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的通过数量 - 锁定数量 ]  - 当前虚拟仓可用库存
-            Integer virtualScarceQty = item.getQty() - approveNoticeQty - item.getFrozenQty() - item.getVirtualUsableQty();
+            Integer virtualScarceQty = item.getQty() - approveNoticeQty -  item.getFrozenQty() - item.getVirtualUsableQty();
 
             item.setIsVirtualScarce(virtualScarceQty > MathUtil.ZERO);
             item.setVirtualScarceQty(virtualScarceQty > MathUtil.ZERO ? virtualScarceQty : MathUtil.ZERO);
