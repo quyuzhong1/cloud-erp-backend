@@ -265,7 +265,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         Map<String, Object> lableMap = new HashMap<>();
         JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
         if (jsonObject.get("refundedLineItemIds") != null) {
-            Set<String> refundedLineItemIds = (Set<String>) jsonObject.get("refundedLineItemIds");
+            List<String> refundedLineItemIds = (List<String>) jsonObject.get("refundedLineItemIds");
             if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(soDetailEntity.getThirdDetailId())) {
                 lableMap.put("isRefunded", true);
                 detailDTO.setIsDetailRefund(true);
