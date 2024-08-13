@@ -48,4 +48,11 @@ public interface InventoryClosedRecordService extends SuperService<InventoryClos
      * @param orgIdList
      */
     void checkHsClosed (List<InventoryClosedRecordDTO.ClosedParamDTO> orgIdList);
+
+    /**
+     * 通过分类查询关账数据
+     * @param category 分类
+     * @return Map<String, InventoryClosedRecordEntity>
+     */
+    Map<String, InventoryClosedRecordEntity> mapByCategory(String category);
 }

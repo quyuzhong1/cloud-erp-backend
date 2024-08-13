@@ -2,8 +2,10 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.entity.InventoryHisEntity;
+import com.erp.model.wms.entity.TransactionFlowEntity;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @Classname: InventoryHisService
@@ -47,10 +49,8 @@ public interface InventoryHisService extends SuperService<InventoryHisEntity> {
 
     /**
      * 历史库存重算方法
-     * @param startTime
-     * @param endTime
-     * @param status
-     * @param inventoryId
+     * @param flowList 需要重算流水
+     * @param hisEntity 基准历史库存
      */
-    void overrideInventoryHis(LocalDate startTime, LocalDate endTime, String status, String inventoryId);
+    void overrideInventoryHis(List<TransactionFlowEntity> flowList, InventoryHisEntity hisEntity);
 }

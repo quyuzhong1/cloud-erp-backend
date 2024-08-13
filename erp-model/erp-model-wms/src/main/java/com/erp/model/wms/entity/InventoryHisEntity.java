@@ -3,6 +3,7 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
 @TableName("inventory_his")
@@ -44,9 +46,9 @@ public class InventoryHisEntity extends BaseEntity<InventoryHisEntity> implement
     @TableField("qty")
     private Integer qty;
 
-    public InventoryHisEntity(String id, AtomicReference<Integer> curQty) {
+    public InventoryHisEntity(String id, Integer curQty) {
         super(id);
-        this.qty = curQty.get();
+        this.qty = curQty;
     }
 
     public InventoryHisEntity(AtomicReference<Integer> curQty, LocalDate billDate) {

@@ -36,6 +36,7 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO.ListDailyInventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.InventoryFlowOverrideRecordTypeEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -64,7 +65,9 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -92,9 +95,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     private SysUserFeign sysUserFeign;
 
     @Autowired
-    private InitStockService initStockService;
-
-    @Autowired
     private TransferOutService transferOutService;
 
     @Autowired
@@ -108,6 +108,9 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private InventoryFlowOverrideRecordService inventoryFlowOverrideRecordService;
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
@@ -344,18 +347,20 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void overrideInventoryFlow(LocalDateTime startTime, LocalDateTime endTime, String status, String inventoryId) {
-        // 悲观锁 锁表
+    public void overrideInventoryFlow(Map.Entry<String, LocalDate> orgStartTimeMap, LocalDateTime startTime, String inventoryId, String orgName) {
+        // 更新库存流水
+        LocalDate startDate = ObjectUtil.isNotEmpty(startTime) ? startTime.toLocalDate() : orgStartTimeMap.getValue();
+        //  1. 查询大于最小时间的需要重算的流水记录
         List<TransactionFlowEntity> lockTableList = lambdaQuery()
-                .ge(ObjUtil.isNotEmpty(startTime), TransactionFlowEntity::getBillDate, startTime.toLocalDate())
-                .eq(ObjUtil.isNotEmpty(status), TransactionFlowEntity::getDictInventoryStatus, status)
+                .ge(TransactionFlowEntity::getBillDate, startDate)
+                .eq(TransactionFlowEntity::getOrgId, orgStartTimeMap.getKey())
                 .eq(ObjUtil.isNotEmpty(inventoryId), TransactionFlowEntity::getInventoryId, inventoryId)
                 .last("for update")
                 .list();
         if(CollUtil.isEmpty(lockTableList)) {
             return;
         }
-        // 获取需要覆盖的数据
+        // 2. 对需要重算流水排序
         Map<String, List<TransactionFlowEntity>> flowMap = lockTableList.stream()
                 .sorted(Comparator.comparing(TransactionFlowEntity::getBillDate)
                         .thenComparing(TransactionFlowEntity::getTradeTime)
@@ -363,13 +368,23 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
                 )
                 .collect(Collectors.groupingBy(TransactionFlowEntity::getInventoryId, Collectors.toList()));
 
-        // 重算库存流水
+        // 3. 进行流水重算
         flowMap.keySet().parallelStream().forEach(flow -> {
             List<TransactionFlowEntity> flowList = flowMap.get(flow);
-            InventoryHisEntity hisEntity = inventoryHisService.findLastInventory(flow, startTime.toLocalDate().minusDays(1));
+            InventoryHisEntity hisEntity = inventoryHisService.findLastInventory(flow, startDate.minusDays(1));
+            if(ObjectUtil.isEmpty(hisEntity)){
+                hisEntity = new InventoryHisEntity(flow, startDate.minusDays(1),0);
+            }
             // 重算库存流水
             overrideFlowByInventoryId(flowList, hisEntity);
+            // 重算历史库存
+            inventoryHisService.overrideInventoryHis(flowList, hisEntity);
         });
+        if(StrUtil.isNotEmpty(inventoryId) && ObjectUtil.isNotEmpty(orgStartTimeMap)){
+            inventoryFlowOverrideRecordService.save(new InventoryFlowOverrideRecordEntity(LocalDateTime.of(startDate, LocalTime.MIN),LocalDateTime.now(), orgStartTimeMap.getKey(),orgName, InventoryFlowOverrideRecordTypeEnum.AUTO));
+        }
+
+
     }
 
     @Override
