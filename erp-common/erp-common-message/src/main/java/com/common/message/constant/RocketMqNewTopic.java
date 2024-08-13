@@ -87,4 +87,9 @@ public class RocketMqNewTopic {
      * 新中台旺店通虚拟仓库
      */
     public static final String DMP_WDT_VIRTUALWAREHOUSE_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_virtualwarehouse_to_dmp_topic";
+    
+    /**
+     * 新中台旺店通店铺
+     */
+    public static final String DMP_WDT_SHOP_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_shop_to_dmp_topic";
 }

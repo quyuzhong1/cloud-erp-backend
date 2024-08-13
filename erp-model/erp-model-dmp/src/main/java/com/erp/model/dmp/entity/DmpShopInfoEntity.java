@@ -75,7 +75,7 @@ public class DmpShopInfoEntity extends BaseEntity<DmpShopInfoEntity> {
     * 店铺状态:true 禁用 false 启用
     */
     @TableField("disabled")
-    private String disabled;
+    private Boolean disabled;
     /**
     * 企业id
     */
@@ -86,6 +86,62 @@ public class DmpShopInfoEntity extends BaseEntity<DmpShopInfoEntity> {
     */
     @TableField("company_name")
     private String companyName;
+    
+    /**
+     * 店铺id
+     */
+    @TableField("third_id")
+    private String thirdId;
+    /**
+     * 平台id
+     */
+    @TableField("platform_id")
+    private String platformId;
+    /**
+     * 子平台id
+     */
+    @TableField("sub_platform_id")
+    private String subPlatformId;
+    /**
+     * 分组id
+     */
+    @TableField("group_id")
+    private String groupId;
+    
+    /**
+     * 授权状态：0未授权 1已授权 2授权失效 3授权停用
+     */
+    @TableField("auth_state")
+    private Integer authState;
+    /**
+     * 授权时间
+     */
+    @TableField("auth_time")
+    private LocalDateTime authTime;
+    
+    /**
+     * 联系人
+     */
+    @TableField("contacts")
+    private String contacts;
+    /**
+     * 联系人电话
+     */
+    @TableField("tel_number")
+    private String telNumber;
+    
+    /**
+     * 地址
+     */
+    @TableField("address")
+    private String address;
+    
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+    
     /**
     * 唯一字段md5值
     */
