@@ -2018,6 +2018,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SkuMappingDTO.ListingSkuParamDTO listingSkuParam = new SkuMappingDTO.ListingSkuParamDTO();
             listingSkuParam.setDictPlatform(dictPlatform);
             listingSkuParam.setSkuNo(item.getSkuNo());
+            listingSkuParam.setSkuId(item.getSkuId());
             listingSkuParam.setWarehouseId(warehouseId);
             listingSkuParam.setType(warehouseType);
             listSkuParamList.add(listingSkuParam);
