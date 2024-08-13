@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -85,6 +86,12 @@ public class DmpOutputWdtPreStockRocketMQTaskHandler extends DmpOutputRocketMQTa
 			List<DmpSoPrestockDetailEntity> itemList = dmpSoPrestockDetailEntityMap.get(changId);
 			PrestockDTO prestockDto = BeanUtil.copyProperties(dmpSoPrestockInfoEntity, PrestockDTO.class);
 			List<PrestockDetailDTO> detailList = BeanUtil.copyToList(itemList, PrestockDetailDTO.class);
+			detailList.forEach(d -> {
+				String warehouseLocation = d.getWarehouseLocation();
+				if(StringUtils.isNotBlank(warehouseLocation) && DmpOutputWdtSoOutstockRocketMQTaskHandler.nullPositionNo.contains(warehouseLocation)) {
+					d.setWarehouseLocation("");
+				}
+			});
 			prestockDto.setDetailList(detailList);
 			map.put(changId, JSON.toJSONString(prestockDto));
 		}
