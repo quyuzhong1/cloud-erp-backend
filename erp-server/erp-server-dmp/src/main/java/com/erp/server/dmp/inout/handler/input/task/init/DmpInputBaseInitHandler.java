@@ -68,8 +68,9 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 			String parentStorageName = "";
 			
 			String extendJson = dmpCfgInputEntity.getExtendJson();
+			
+			dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputApiInitHandler.class);
 			if(DmpBasicSystemCodeEnum.KINGDEE.getCode().equals(dmpBasicSystemEntity.getCode())) {
-				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputKingdeeApiInitHandler.class);
 				DmpInputKingdeeApiInitRequest dmpInputKingdeeApiInitRequest = new DmpInputKingdeeApiInitRequest();
 				dmpInputApiInitRequest = dmpInputKingdeeApiInitRequest;
 				dmpInputKingdeeApiInitRequest.setFormId(dmpCfgApiEntity.getApiType());
@@ -118,7 +119,6 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 					dmpInputKingdeeApiInitRequest.setFieldKeys(parseObject.getString("fieldKeys"));
 				}
 			} else {
-				dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputApiInitHandler.class);
 				dmpInputApiInitRequest = new DmpInputApiInitRequest();
 				dmpInputApiInitRequest.setRequestParam(extendJson);
 				dmpInputApiInitRequest.setNextLevelId(nextLevelId);
