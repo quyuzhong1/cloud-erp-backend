@@ -2730,6 +2730,16 @@ public class SoInfoDTO implements Serializable {
         private Integer qty;
 
         /**
+         * 锁定数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * 缺货数量(虚拟仓)
+         */
+        private Integer virtualScarceQty;
+
+        /**
          * 是否组合品
          */
         private Boolean isCombination;

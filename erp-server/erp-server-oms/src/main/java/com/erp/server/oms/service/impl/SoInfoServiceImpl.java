@@ -757,10 +757,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setVirtualUsableQty(virtuaParamScarceDTO.getVirtualUsableQty());
                 item.setChildScarceList(virtuaParamScarceDTO.getChildScarceList());
                 item.setIsVirtualScarce(virtuaParamScarceDTO.getIsVirtualScarce());
-
-                //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的通过数量 ]  - 当前虚拟仓可用库存
-                Integer virtualScarceQty = item.getQty() - approveNoticeQty - item.getVirtualUsableQty();
-                item.setVirtualScarceQty(virtualScarceQty > MathUtil.ZERO ? virtualScarceQty : MathUtil.ZERO);
+                item.setVirtualScarceQty(virtuaParamScarceDTO.getVirtualScarceQty());
             }
 
             //作废状态
@@ -921,7 +918,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         /**
          *缺货数量：
          *
-         * 缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的审核通过数量 ]  - 当前虚拟仓可用库存
+         * 缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的数量 - 锁定数量 ]  - 当前虚拟仓可用库存
          * 若＜0则表示不缺货则结果显示“0”
          * 若＞0则表示缺货，列表显示缺货标识
          */
@@ -939,12 +936,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         Boolean isVirtualScarce = Boolean.FALSE;
         //费销售套装bom判断父级SKU是否够使用
         if (!isCombination) {
-            item.setIsVirtualScarce(item.getQty() - approveNoticeQty > item.getVirtualUsableQty());
+            //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的通过数量 - 锁定数量 ]  - 当前虚拟仓可用库存
+            Integer virtualScarceQty = item.getQty() - approveNoticeQty - item.getFrozenQty() - item.getVirtualUsableQty();
+
+            item.setIsVirtualScarce(virtualScarceQty > MathUtil.ZERO);
+            item.setVirtualScarceQty(virtualScarceQty > MathUtil.ZERO ? virtualScarceQty : MathUtil.ZERO);
             item.setChildScarceList(childScarceList);
             return;
         }
         for (BomChildrenSkuDTO childrenSkuDTO : childList) {
             SoInfoDTO.VirtualChildScarceDTO scarceDTO = new SoInfoDTO.VirtualChildScarceDTO();
+            //用量
+            Integer quantity = childrenSkuDTO.getQuantity();
+
             //虚拟仓是否缺货
             Integer childVirtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId())
                             && StrUtil.equals(obj.getVirtualWarehouseId(), item.getVirtualWarehouseId())
@@ -954,16 +958,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                     .findFirst().orElse(MathUtil.ZERO);
             //已缺货的无需标记
-            if (!isVirtualScarce && (item.getQty() * childrenSkuDTO.getQuantity() - approveNoticeQty * childrenSkuDTO.getQuantity() > childVirtualUsableQty)) {
+            if (!isVirtualScarce && (item.getQty() * quantity - item.getFrozenQty() * quantity -  approveNoticeQty * quantity > childVirtualUsableQty)) {
                 isVirtualScarce = Boolean.TRUE;
             }
             scarceDTO.setSkuNo(childrenSkuDTO.getSkuNo());
             //针对父级可用数量
-            double floor = Math.floor(childVirtualUsableQty / childrenSkuDTO.getQuantity());
+            double floor = Math.floor(childVirtualUsableQty / quantity);
             Integer parentUsableQty = Integer.valueOf((int) floor);
             scarceDTO.setParentUsableQty(parentUsableQty);
             //缺货数量
-            Integer virtualScarceQty = (item.getQty() * childrenSkuDTO.getQuantity() - approveNoticeQty * childrenSkuDTO.getQuantity()) - childVirtualUsableQty;
+            Integer virtualScarceQty = (item.getQty() * quantity - item.getFrozenQty() * quantity - approveNoticeQty * quantity) - childVirtualUsableQty;
             scarceDTO.setChildUsableQty(childVirtualUsableQty);
             scarceDTO.setVirtualScarceQty(MathUtil.compareTo(virtualScarceQty,MathUtil.ZERO) >= MathUtil.ZERO ? virtualScarceQty : MathUtil.ZERO);
             scarceDTO.setSkuId(childrenSkuDTO.getSkuId());
@@ -3653,10 +3657,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //Min 【（销售数量 - 发货通知单数量），虚拟仓可用库存】
             Integer toFrozenQty = soDetailEntity.getQty() - totalNoticeQty;
             batchLockDTO.setToFrozenQty(virtualUsableQty > toFrozenQty ? toFrozenQty : virtualUsableQty);
-
-            //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的通过数量 ]  - 当前虚拟仓可用库存
-            Integer qty = soDetailEntity.getQty() - totalNoticeQty - virtualUsableQty;
-            batchLockDTO.setVirtualScarceQty(qty > MathUtil.ZERO ? qty : MathUtil.ZERO);
+            batchLockDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
 
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
@@ -3773,10 +3774,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //Min 【（销售数量 - 发货通知单数量），虚拟仓可用库存】
             Integer toFrozenQty = soDetailEntity.getQty() - totalNoticeQty;
             detailDTO.setToFrozenQty(detailDTO.getVirtualUsableQty() > toFrozenQty ? toFrozenQty : detailDTO.getVirtualUsableQty());
-
-            //缺货数量 = [ 销售数量 - 已下推发货通知单（确认状态“未作废”）的数量 ]  - 当前虚拟仓可用库存
-            Integer qty = soDetailEntity.getQty() - totalNoticeQty - detailDTO.getVirtualUsableQty();
-            detailDTO.setVirtualScarceQty(qty > MathUtil.ZERO ? qty : MathUtil.ZERO);
+            detailDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
 
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
