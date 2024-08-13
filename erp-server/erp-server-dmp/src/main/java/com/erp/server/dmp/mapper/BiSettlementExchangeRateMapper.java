@@ -1,7 +1,7 @@
 package com.erp.server.dmp.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.dmp.entity.BiSettlementExchangeRateEntity;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -24,5 +24,13 @@ public interface BiSettlementExchangeRateMapper extends BaseMapper<BiSettlementE
      * @return
      */
     List<BiSettlementExchangeRateEntity> findByCurrencyAndDate(@Param(value = "date") LocalDate date, @Param(value = "sourceCurrencyCode") String sourceCurrencyCode);
-
+    /**
+     * 根据目标币别和来源币别查询已审核启用汇率信息
+     * @author will
+     * @date 2024/8/7 16:47
+     * @param targetCurrencyCode
+     * @param sourceCurrencyCode
+     * @return List<BiSettlementExchangeRateEntity>
+     */
+    List<BiSettlementExchangeRateEntity> listByCurrencyCode(@Param("targetCurrencyCode") String targetCurrencyCode,@Param("sourceCurrencyCode") String sourceCurrencyCode);
 }

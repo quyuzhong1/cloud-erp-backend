@@ -2,17 +2,17 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.core.utils.ObjectUtils;
+import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,7 +41,6 @@ import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.input.task.DmpInputTaskHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
-import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.DmpInputMongoDmpRelationService;
 import com.google.common.collect.Lists;
 
@@ -147,7 +146,58 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		dmpOutputDmpRequest.setChangeConvertInputDmpBaseEntityListMaps(dmpResponse.getChangeConvertInputDmpBaseEntityListMaps());
 		this.doBaseChain(dmpRequest, dmpResponse, chain, dmpOutputDmpRequest);
 	}
-	
+
+	protected void afterDmpInputConvertValue(Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps) {
+		Map<String, List<String>> originaConvertMap = new HashMap<>();
+
+		List<DmpCfgInputConvertValueDTO.MappingAndValueDTO> dmpCfgInputConvertValue = dmpHandlerCache.getDmpCfgInputConvertValue(convertId);
+		if (CollectionUtil.isEmpty(dmpCfgInputConvertValue)) {
+			return;
+		}
+		for (Map.Entry<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
+			List<TreeMap<String, Object>> dmpInputDmpBaseEntityList = dmpInputDataDmpRelationMap.getValue();
+			for (TreeMap<String, Object> dmpInputDmpBaseEntity : dmpInputDmpBaseEntityList) {
+				for (Map.Entry<String , Object> entry : dmpInputDmpBaseEntity.entrySet()) {
+/*
+					String originalKey = entry.getKey();
+*/
+/*					if (!".".contains(originalKey)) {
+						continue;
+					}*//*
+
+					List<String> convertKey = originaConvertMap.get(originalKey);
+					if(convertKey == null) {
+						convertKey = this.convertKey(originalKey);
+						originaConvertMap.put(originalKey, convertKey);
+					}
+					for(String c : convertKey) {
+						dmpInputDmpBaseEntity.put(c, DmpHandlerUtils.getValueByPath(entry.getValue(), entry.getKey()));
+					}
+
+					dmpCfgInputConvertValue.stream().filter()
+					DmpCfgInputConvertValueDTO.MappingAndValueDTO mappingAndValueDTO = dmpCfgInputConvertValue.stream().filter(req -> StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())).findFirst().orElse(null);
+
+					if (ObjectUtil.isNotEmpty(mappingAndValueDTO)) {
+						if (".".contains(mappingAndValueDTO.getOriginalKey())) {
+//							DmpHandlerUtils.getValueByPath(entry.getValue(), mappingAndValueDTO.getOriginalKey(), mappingAndValueDTO.getConvertKey());
+						}
+					}
+*/
+					String mappingAndValue = dmpCfgInputConvertValue.stream()
+							.filter(req -> StringUtils.isNotBlank(req.getConvertBeforeValue())
+									&& StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())
+									&& req.getConvertBeforeValue().equals(entry.getValue()))
+							.map(req -> StringUtils.isNotBlank(req.getConvertAfterValue()) ? req.getConvertAfterValue() : "")
+							.findFirst().orElse("");
+					if (StringUtils.isNotBlank(mappingAndValue)) {
+
+						dmpInputDmpBaseEntity.put(entry.getKey(), mappingAndValue);
+					}
+				}
+			}
+		}
+	}
+
 	protected List<BaseEntity> convertToDmp(List<Map<String, Object>> inputMongoEntityList){
 		List<DmpInputMongoDmpRelationEntity> dmpInputDataDmpRelationEntityList = new ArrayList<>();
 		DmpInputMongoDmpRelationEntity dmpInputMongoDmpRelationEntity = null;
@@ -155,9 +205,13 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		Map<String , Map<String, Object>> beanDmpInputDmpEntityMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(inputMongoEntityList)) {
 			Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps = this.convertData(inputMongoEntityList);
+
+			//值映射
+			afterDmpInputConvertValue(dmpInputDataDmpRelationMaps);
+
 			for (Map.Entry<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 				List<TreeMap<String , Object>> dmpInputDmpBaseEntityList = dmpInputDataDmpRelationMap.getValue();
-				
+
 				for(TreeMap<String , Object> dmpInputDmpBaseEntity : dmpInputDmpBaseEntityList) {
 					StringBuilder uniqueFieldMd5Sb = new StringBuilder();
 					StringBuilder dataMd5Sb = new StringBuilder();
@@ -358,4 +412,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 			return super.getNextLevelIdList(dmpRequest, dmpResponse);
 		}
 	}
+
+
+
 }

@@ -4,7 +4,12 @@ package com.erp.server.dmp.controller.api;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
+import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertValueEntity;
+import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,7 +48,7 @@ public class DmpInoutController extends BaseController {
 	
 	@Autowired
 	private DmpHandlerCache dmpHandlerCache;
-	
+
 	@Autowired
 	private DmpCfgInputConvertService dmpCfgInputConvertService;
 	
@@ -52,6 +57,9 @@ public class DmpInoutController extends BaseController {
 	
 	@Autowired
 	private DmpOutputCreateFactory dmpOutputCreateFactory;
+
+	@Autowired
+	private DmpCfgInputConvertMappingService dmpCfgInputConvertMappingService;
 	
     @PostMapping("doInputTask")
     public ApiResult<?> doInputTask(@RequestBody DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest) {
@@ -75,13 +83,25 @@ public class DmpInoutController extends BaseController {
 		
 		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
 				.eq(DmpCfgInputConvertEntity::getDisabled, false).list();
-    	Map<String, Map<String, List<String>>> convertMappingCache = new HashMap<>();
+
+
+		Map<String, Map<String, List<String>>> convertMappingCache = new HashMap<>();
     	for(DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
     		String id = dmpCfgInputConvertEntity.getId();
     		convertMappingCache.put(id, dmpHandlerCache.getDmpCfgInputConvertMapping(id));
+
     	}
-    	typeCacheMap.put("dmpCfgInputConvertMapping" , convertMappingCache);
-    	
+
+		Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache = new HashMap<>();
+		List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityList = dmpCfgInputConvertMappingService.lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getDisabled, Boolean.FALSE).list();
+		for (DmpCfgInputConvertMappingEntity dmpCfgInputConvertMappingEntity : dmpCfgInputConvertMappingEntityList) {
+			String id = dmpCfgInputConvertMappingEntity.getId();
+			convertValueCache.put(id, dmpHandlerCache.getDmpCfgInputConvertValue(id));
+		}
+
+		typeCacheMap.put("dmpCfgInputConvertMapping" , convertMappingCache);
+		typeCacheMap.put("dmpCfgInputConvertValue" , convertValueCache);
+
     	typeCacheMap.put("dmpCfgInputDetail", dmpHandlerCache.getDmpCfgInputDetailEntityList(d -> true));
     	typeCacheMap.put("dmpCfgInput", dmpHandlerCache.getDmpCfgInputEntityList(d -> true));
     	typeCacheMap.put("dmpCfgOutputBlack", dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> true));

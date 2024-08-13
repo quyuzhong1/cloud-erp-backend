@@ -997,9 +997,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
         deliveryEntity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
-
-        //扣减冻结库存
-        soB2cDeliveryService.outFreezeVirtualInventory(deliveryEntity);
     }
 
     /**

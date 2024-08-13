@@ -125,4 +125,12 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      * @author: tanmujin
      */
     Boolean updateRemark(VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO);
+    /**
+     * 查询库存数据
+     * @author will
+     * @date 2024/8/2 10:41
+     * @param list
+     * @return VirtualInventoryQtyDTO
+     */
+    List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO> listVirtualInventory(List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO> list);
 }

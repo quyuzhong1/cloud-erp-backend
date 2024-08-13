@@ -221,4 +221,9 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
         }
         return entityItemList;
     }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("code");
+    }
 }

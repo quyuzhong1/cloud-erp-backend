@@ -9,7 +9,7 @@ import java.util.concurrent.*;
 public class DmpInoutExecutorPoolConfig {
     @Bean(name = "dmpInputExecutorPool")
     public ExecutorService dmpInputExecutorPool() {
-        ThreadPoolExecutor service = new ThreadPoolExecutor(10, 30,
+        ThreadPoolExecutor service = new ThreadPoolExecutor(10, 50,
                 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(10000));
         //设置线城池的饱和策略

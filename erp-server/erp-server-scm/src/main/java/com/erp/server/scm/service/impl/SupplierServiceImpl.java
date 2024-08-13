@@ -293,7 +293,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 paymentConditionName = paymentCondition.getName();
             }
         }
-        result.setPaymentCondition(paymentConditionName);
+        result.setPaymentCondition(paymentConditionCode);
+        result.setPaymentConditionName(paymentConditionName);
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         result.setContactList(contactList);
