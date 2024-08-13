@@ -144,6 +144,7 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                     // 存在退款的明细ID
                     Set<String> refundedLineItemIds = new HashSet<>();
 
+                    log.warn("refunds:" + refundsObj);
                     List<Object> refundsMap = (List<Object>) refundsObj;
                     if (CollectionUtil.isNotEmpty(refundsMap)) {
 
