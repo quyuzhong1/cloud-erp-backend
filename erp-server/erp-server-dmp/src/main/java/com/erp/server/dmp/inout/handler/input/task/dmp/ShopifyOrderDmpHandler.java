@@ -144,11 +144,12 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                     // 存在退款的明细ID
                     Set<String> refundedLineItemIds = new HashSet<>();
 
-                    List<Map<String, Object>> refundsMap = (List<Map<String, Object>>) refundsObj;
+                    List<Object> refundsMap = (List<Object>) refundsObj;
                     if (CollectionUtil.isNotEmpty(refundsMap)) {
 
-                        for (Map<String, Object> map : refundsMap) {
-                            Object refundLineItems = map.get("refundLineItems");
+                        for (Object map : refundsMap) {
+                            Map<String, Object> stringObjectMap = (Map<String, Object>) map;
+                            Object refundLineItems = stringObjectMap.get("refundLineItems");
                             if (ObjectUtil.isNotEmpty(refundLineItems)) {
                                 List<Map<String, Object>> refundLineItemsList = (List<Map<String, Object>>) refundLineItems;
                                 List<String> sourceFundedLineItemIds = refundLineItemsList.stream()
@@ -161,20 +162,6 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                         }
                     }
 
-
-                    List<ShopifyRefund> refunds = JSON.parseArray(JSON.toJSONString(refundsObj), ShopifyRefund.class);
-                    if (!CollectionUtils.isEmpty(refunds)) {
-                        List<ShopifyRefundLineItem> refundLineItem = refunds.stream().map(ShopifyRefund::getRefundLineItems)
-                                .flatMap(List::stream)
-                                .collect(Collectors.toList());
-                        if (!CollectionUtils.isEmpty(refundLineItem)) {
-                            List<String> sourceFundedLineItemIds = refundLineItem.stream()
-                                    .map(ShopifyRefundLineItem::getLineItemId)
-                                    .distinct()
-                                    .collect(Collectors.toList());
-                            refundedLineItemIds.addAll(sourceFundedLineItemIds);
-                        }
-                    }
                     Map<String, Object> lableMap = new HashMap<>();
                     lableMap.put("refundedLineItemIds", refundedLineItemIds);
                     dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
