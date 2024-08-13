@@ -913,9 +913,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
                 virtualInventoryTransCoreService.approve(stockParamDTO);
             }
-            //扣实体仓库存
-            inventoryInOutStockDTO.setParamList(members);
-            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
         //物流单添加
         saveLogisticsBill(entity);

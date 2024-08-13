@@ -1295,11 +1295,39 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         //已审核数据
         /**
-         * 1、先根据发货数量退回可用添加冻结
+         * 0、添加一条可用
+         * 1、先根据发货数量减少可用添加冻结
          * 2、根据拣货数量进行多退少补
          * 3、判断是否存在直接调拨单，存在则根据直接调拨单进行出库
          * 4、无直接调拨单则根据销售出库单进行出库
          */
+
+        //默认入库一条可用
+        List<VirtualInventoryStockDTO.OutInStockDTO> inUsableList = new ArrayList<>();
+        for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(detailEntity.getId());
+            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(entity.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
+            //发货数量
+            outInStockDTO.setQty(detailEntity.getDeliveryQty());
+            inUsableList.add(outInStockDTO);
+        }
+        //默认入库一条可用
+        if (CollectionUtils.isNotEmpty(inUsableList)) {
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
+            stockParamDTO.setParamList(inUsableList);
+            virtualInventoryTransCoreService.approve(stockParamDTO);
+        }
+
 
         //减少可用添加冻结
         List<VirtualInventoryStockDTO.OutInStockDTO> addList = new ArrayList<>();
@@ -1338,7 +1366,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             if (CollectionUtils.isNotEmpty(transferInfoList)) {
                 List<String> mainIdList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
                 List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listByMainIds(mainIdList);
-                if (ObjectUtil.isNotEmpty(transferInfoDetailList)) {
+                if (ObjectUtil.isEmpty(transferInfoDetailList)) {
                     throw new ServiceException("未找到直接调拨单明细信息");
                 }
                 transferInfoService.updateVirtualInventoryTransCore(transferInfoList,transferInfoDetailList);
@@ -1366,7 +1394,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
             List<String> mainIdList = soOutstockList.stream().map(SoOutstockEntity::getId).distinct().collect(Collectors.toList());
             List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(mainIdList);
-            if (ObjectUtil.isNotEmpty(soOutstockDetailList)) {
+            if (ObjectUtil.isEmpty(soOutstockDetailList)) {
                 throw new ServiceException("未找到销售出库单明细信息");
             }
 
