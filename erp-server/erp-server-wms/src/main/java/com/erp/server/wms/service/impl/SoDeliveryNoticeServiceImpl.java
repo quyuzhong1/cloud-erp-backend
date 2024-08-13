@@ -154,6 +154,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private PickingDetailService pickingDetailService;
 
+    @Resource
+    private TransferInfoDetailService transferInfoDetailService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -1268,6 +1270,152 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return this.lambdaQuery().in(SoDeliveryNoticeEntity::getCode, codes).list();
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO handleErrorData(String id) {
+        SoDeliveryNoticeEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            return BatchResultDTO.fail(id, "", "未找到发货通知单");
+        }
+        List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Arrays.asList(id));
+        if (CollectionUtils.isEmpty(detailList)) {
+            return BatchResultDTO.fail(id, entity.getCode(), "未找到发货通知单明细");
+        }
+        if (entity.getInvalidStatus()) {
+            return BatchResultDTO.fail(id, entity.getCode(), "发货通知单已作废");
+        }
+        if (StrUtil.isBlank(entity.getVirtualWarehouseId())) {
+            return BatchResultDTO.fail(id, entity.getCode(), "发货通知单无虚拟仓");
+        }
+        //未审核数据
+        /**
+         * 1、按现有逻辑进行冻结数量转移
+         */
+        if (!StrUtil.equals(entity.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())) {
+            //虚拟库存扣减
+            soDeliveryNoticeDetailService.handleVirtualInventory(id,detailList);
+
+            lambdaUpdate().set(SoDeliveryNoticeEntity::getInvalidRemark,"数据处理")
+                    .eq(SoDeliveryNoticeEntity::getId,id)
+                    .update();
+         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+        }
+        //已审核数据
+        /**
+         * 1、先根据发货数量退回可用添加冻结
+         * 2、根据拣货数量进行多退少补
+         * 3、判断是否存在直接调拨单，存在则根据直接调拨单进行出库
+         * 4、无直接调拨单则根据销售出库单进行出库
+         */
+
+        //减少可用添加冻结
+        List<VirtualInventoryStockDTO.OutInStockDTO> addList = new ArrayList<>();
+        for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(detailEntity.getId());
+            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(entity.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
+            //发货数量
+            outInStockDTO.setQty(detailEntity.getDeliveryQty());
+            addList.add(outInStockDTO);
+        }
+        //补货
+        if (CollectionUtils.isNotEmpty(addList)) {
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getCode());
+            stockParamDTO.setParamList(addList);
+            virtualInventoryTransCoreService.approve(stockParamDTO);
+        }
+        //针对拣货单进行库存的多退少补
+        handleApproveVirtualInventoryQty(entity);
+
+        //判断是否存在直接调拨单（中转的情况会存在直接调拨单）
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Arrays.asList(id));
+        if (CollectionUtils.isNotEmpty(transferInfoList)) {
+            //审核通过的直接调拨单
+            transferInfoList = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+
+            if (CollectionUtils.isNotEmpty(transferInfoList)) {
+                List<String> mainIdList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
+                List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listByMainIds(mainIdList);
+                if (ObjectUtil.isNotEmpty(transferInfoDetailList)) {
+                    throw new ServiceException("未找到直接调拨单明细信息");
+                }
+                transferInfoService.updateVirtualInventoryTransCore(transferInfoList,transferInfoDetailList);
+            }
+
+            lambdaUpdate().set(SoDeliveryNoticeEntity::getInvalidRemark,"数据处理")
+                    .eq(SoDeliveryNoticeEntity::getId,id)
+                    .update();
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+        }
+
+        //根据销售出库单出库
+        List<SoOutstockEntity> soOutstockList = soOutstockService.listBySourceId(Arrays.asList(id));
+        if (CollectionUtils.isNotEmpty(soOutstockList)) {
+
+            //审核通过的直接调拨单
+            soOutstockList = soOutstockList.stream().filter(obj -> StrUtil.equals(obj.getApproveStatus().getCode(),ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+            //无数据则直接返回
+            if (CollectionUtils.isEmpty(soOutstockList)) {
+                lambdaUpdate().set(SoDeliveryNoticeEntity::getInvalidRemark,"数据处理")
+                        .eq(SoDeliveryNoticeEntity::getId,id)
+                        .update();
+                return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+            }
+
+            List<String> mainIdList = soOutstockList.stream().map(SoOutstockEntity::getId).distinct().collect(Collectors.toList());
+            List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(mainIdList);
+            if (ObjectUtil.isNotEmpty(soOutstockDetailList)) {
+                throw new ServiceException("未找到销售出库单明细信息");
+            }
+
+            //减少可用添加冻结
+            List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
+            for (SoOutstockDetailEntity outstockDetailEntity : soOutstockDetailList) {
+                SoOutstockEntity outstockEntity = soOutstockList.stream().filter(obj -> StrUtil.equals(obj.getId(), outstockDetailEntity.getMainId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(outstockEntity)) {
+                    throw new ServiceException("销售出库单未找到");
+                }
+                //虚拟仓为空或者中转过来的出库单不生成流水
+                if (StrUtil.isBlank(outstockDetailEntity.getVirtualWarehouseId()) || StrUtil.isNotBlank(outstockEntity.getBatchNo())) {
+                    continue;
+                }
+                VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+                outInStockDTO.setBillDate(LocalDate.now());
+                outInStockDTO.setSourceId(outstockEntity.getId());
+                outInStockDTO.setSourceCode(outstockEntity.getCode());
+                outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
+                outInStockDTO.setSourceDetailId(outstockDetailEntity.getId());
+                outInStockDTO.setBillDate(LocalDate.now());
+                outInStockDTO.setSkuId(outstockDetailEntity.getSkuId());
+                outInStockDTO.setSkuNo(outstockDetailEntity.getSkuNo());
+                outInStockDTO.setWarehouseId(outstockDetailEntity.getWarehouseId());
+                outInStockDTO.setVirtualWarehouseId(outstockDetailEntity.getVirtualWarehouseId());
+                //出库数量
+                outInStockDTO.setQty(outstockDetailEntity.getActualQty());
+                outList.add(outInStockDTO);
+            }
+            if (CollectionUtils.isNotEmpty(outList)) {
+                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+                stockParamDTO.setParamList(outList);
+                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
+                virtualInventoryTransCoreService.approve(stockParamDTO);
+            }
+        }
+        lambdaUpdate().set(SoDeliveryNoticeEntity::getInvalidRemark,"数据处理")
+                .eq(SoDeliveryNoticeEntity::getId,id)
+                .update();
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
     /**
      * 处理虚拟仓数量
      * @author will
@@ -1387,6 +1535,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             ,List<VirtualInventoryStockDTO.OutInStockDTO> paramList) {
         //无虚拟仓不扣库存
         if (StrUtil.isBlank(soDeliveryNoticeEntity.getVirtualWarehouseId())) {
+            return;
+        }
+        //拣货数据已被删无需退回库存
+        if (MathUtil.compareTo(detailEntity.getLastPickingQty(),MathUtil.ZERO) == MathUtil.ZERO) {
             return;
         }
         VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();

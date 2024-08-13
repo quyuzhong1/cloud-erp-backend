@@ -577,7 +577,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
      * @date 2024/7/25 19:04
      * @param list
      */
-    private void updateVirtualInventoryTransCore (List<TransferInfoEntity> list,List<TransferInfoDetailEntity> detailList) {
+    @Override
+    public void updateVirtualInventoryTransCore (List<TransferInfoEntity> list,List<TransferInfoDetailEntity> detailList) {
 
         List<TransferInfoEntity> pushList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode(), obj.getSourceType())
                         || StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode(), obj.getSourceType()))
