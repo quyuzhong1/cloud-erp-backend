@@ -241,7 +241,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             /**
              * 建议调整数量 = 超出数量绝对值 * 明细行虚拟仓可用库存 / 虚拟仓可用库存总和，按比例分配，抹零取整
              */
-            int suggestQty = exceedQty * usableQty / usableTotalQty;
+            int suggestQty = MathUtil.compareTo(usableTotalQty,MathUtil.ZERO) == MathUtil.ZERO ? MathUtil.ZERO : exceedQty * usableQty / usableTotalQty;
             listSuggestQtyDTO.setQty(suggestQty);
             resultList.add(listSuggestQtyDTO);
         }
