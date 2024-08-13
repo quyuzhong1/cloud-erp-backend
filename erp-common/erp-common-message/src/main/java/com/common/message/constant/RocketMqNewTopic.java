@@ -77,4 +77,9 @@ public class RocketMqNewTopic {
      * 新中台平台入库
      */
     public static final String DMP_PLATFORM_OUTBOUND_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_wms_topic";
+    
+    /**
+     * 新中台旺店通仓库
+     */
+    public static final String DMP_WDT_WAREHOUSE_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_warehouse_to_dmp_topic";
 }
