@@ -22,6 +22,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.DmpPushWdtDTO;
+import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -39,6 +41,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -53,6 +56,7 @@ import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -135,6 +139,10 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private DmpPushWdtFeign dmpPushWdtFeign;
+    @Resource
+    private AbstractWdtService abstractWdtService;
     /**
      * tab list
      *
@@ -567,8 +575,32 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
 
-        List<DmpPushTaskFeignDTO> unSaveTaskList = new ArrayList<>(detailList.size() * 2);
-        for (StocktakingProfitLossDetailDTO.ViewDTO dto : detailList) {
+        List<DmpPushTaskFeignDTO> unSaveTaskList = new ArrayList<>();
+        List<DmpPushWdtDTO.AddDTO> wdtDtoList = new ArrayList<>();
+        detailList = detailList.stream().filter(item -> thirdWarehouseMap.containsKey(item.getWarehouseId())).collect(Collectors.toList());
+        Map<String, List<StocktakingProfitLossDetailDTO.ViewDTO>> collect = detailList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId()));
+        for (Map.Entry<String, List<StocktakingProfitLossDetailDTO.ViewDTO>> entry : collect.entrySet()) {
+            String warehouseId = entry.getKey();
+            String thirdWarehouseCode = thirdWarehouseMap.get(warehouseId);
+            List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
+            for (StocktakingProfitLossDetailDTO.ViewDTO viewDTO : entry.getValue()) {
+                CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+                outGoods.setSpecNo(viewDTO.getSkuNo());
+                outGoods.setNum(BigDecimal.valueOf(Math.abs(viewDTO.getDiffQty())));
+                outGoods.setPositionNo(StringUtils.isNotBlank(viewDTO.getWarehouseLocation()) ? viewDTO.getWarehouseLocation() : "");
+                outGoodsList.add(outGoods);
+            }
+            String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+            List<CreateOtherStockoutRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(outGoodsList);
+            List<CreateOtherStockoutRequest.GoodsList> goodsLists = syncWdtOtherOutStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
+            DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherOutStockService.generateTask(goodsLists, operateCode, entity.getCode(), warehouseId, outerCode, thirdWarehouseCode, false);
+            unSaveTaskList.add(outUnSaveTask);
+            //生成中间表数据
+            DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity, operateCode, outerCode, warehouseId, thirdWarehouseCode, goodsLists, SourceTypeEnum.OTHER_OUTSTOCK);
+            wdtDtoList.add(addDTO);
+        }
+
+        /*for (StocktakingProfitLossDetailDTO.ViewDTO dto : detailList) {
             if(! thirdWarehouseMap.containsKey(dto.getWarehouseId())){
                 continue;
             }
@@ -581,7 +613,23 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             String thirdWarehouseCode = thirdWarehouseMap.get(dto.getWarehouseId());
             DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherOutStockService.generateTask(Collections.singletonList(goods), operateCode, entity.getCode(), dto.getId(), outerCode, thirdWarehouseCode, false);
             unSaveTaskList.add(outUnSaveTask);
-        }
+
+            //生成中间表数据
+            DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
+            addDTO.setSourceId(entity.getId());
+            addDTO.setSourceCode(entity.getCode());
+            addDTO.setThirdCode(outerCode);
+            addDTO.setThirdType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
+            addDTO.setWarehouseId(dto.getWarehouseId());
+            addDTO.setThirdWarehouseCode(thirdWarehouseCode);
+            addDTO.setOperateType(operateCode);
+            DmpPushWdtDetailDTO detailDTO = new DmpPushWdtDetailDTO();
+            BeanMapper.copy(goods, detailDTO);
+            addDTO.setDetailDTOList(Collections.singletonList(detailDTO));
+            wdtDtoList.add(addDTO);
+        }*/
+        //批量保存中间表数据
+        dmpPushWdtFeign.addBatch(wdtDtoList);
 
         return dmpMqFeign.saveTaskList(unSaveTaskList);
     }
@@ -612,24 +660,48 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
 
-        List<DmpPushTaskFeignDTO> unSaveTaskList = new ArrayList<>(detailList.size() * 2);
-        for (StocktakingProfitLossDetailDTO.ViewDTO dto : detailList) {
-            if(! thirdWarehouseMap.containsKey(dto.getWarehouseId())){
-                continue;
+        List<DmpPushTaskFeignDTO> unSaveTaskList = new ArrayList<>();
+        List<DmpPushWdtDTO.AddDTO> wdtDtoList = new ArrayList<>();
+        detailList = detailList.stream().filter(item -> thirdWarehouseMap.containsKey(item.getWarehouseId())).collect(Collectors.toList());
+        Map<String, List<StocktakingProfitLossDetailDTO.ViewDTO>> collect = detailList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId()));
+        for (Map.Entry<String, List<StocktakingProfitLossDetailDTO.ViewDTO>> entry : collect.entrySet()) {
+            String warehouseId = entry.getKey();
+            String thirdWarehouseCode = thirdWarehouseMap.get(warehouseId);
+            List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
+            for (StocktakingProfitLossDetailDTO.ViewDTO viewDTO : entry.getValue()) {
+                CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+                inGoods.setSpecNo(viewDTO.getSkuNo());
+                inGoods.setNum(BigDecimal.valueOf(Math.abs(viewDTO.getDiffQty())));
+                inGoods.setPositionNo(StringUtils.isNotBlank(viewDTO.getWarehouseLocation()) ? viewDTO.getWarehouseLocation() : "");
+                inGoodsList.add(inGoods);
             }
-
-            CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            goods.setSpecNo(dto.getSkuNo());
-            goods.setNum(BigDecimal.valueOf(Math.abs(dto.getDiffQty())));
-            goods.setPositionNo(StringUtils.isNotBlank(dto.getWarehouseLocation()) ? dto.getWarehouseLocation() : "");
-
             String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-            String thirdWarehouseCode = thirdWarehouseMap.get(dto.getWarehouseId());
-            DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherInStockService.generateTask(Collections.singletonList(goods), operateCode, entity.getCode(), dto.getId(), outerCode, thirdWarehouseCode, false);
+            List<CreateOtherStockinRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(inGoodsList);
+            List<CreateOtherStockinRequest.GoodsList> goodsLists = syncWdtOtherInStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
+            DmpPushTaskFeignDTO outUnSaveTask = syncWdtOtherInStockService.generateTask(goodsLists, operateCode, entity.getCode(), warehouseId, outerCode, thirdWarehouseCode, false);
             unSaveTaskList.add(outUnSaveTask);
+            //生成中间表数据
+            DmpPushWdtDTO.AddDTO addDTO = generateWdtInterim(entity, operateCode, outerCode, warehouseId, thirdWarehouseCode, goodsLists, SourceTypeEnum.OTHER_INSTOCK);
+            wdtDtoList.add(addDTO);
         }
+        //批量保存中间表数据
+        dmpPushWdtFeign.addBatch(wdtDtoList);
 
         return dmpMqFeign.saveTaskList(unSaveTaskList);
+    }
+
+    private static DmpPushWdtDTO.AddDTO generateWdtInterim(StocktakingProfitLossEntity entity, String operateCode, String outerCode, String warehouseId, String thirdWarehouseCode, List<? extends CommonCreateBillGoodsReq> goodsLists, SourceTypeEnum sourceTypeEnum) {
+        DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setThirdCode(outerCode);
+        addDTO.setThirdType(sourceTypeEnum.getCode());
+        addDTO.setWarehouseId(warehouseId);
+        addDTO.setThirdWarehouseCode(thirdWarehouseCode);
+        addDTO.setOperateType(operateCode);
+        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(goodsLists, DmpPushWdtDetailDTO.class);
+        addDTO.setDetailDTOList(detailDTOList);
+        return addDTO;
     }
 
     /**

@@ -266,6 +266,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .channelId(entity.getLogisticsChannelId())
                 .transportNo(entity.getTransportNo())
                 .referenceNumber(soB2cEntity.getCode())
+                .platformCode(soB2cEntity.getPlatformCode())
                 .reason("b2c发货拦截单自动拦截")
                 .orderId(entity.getId())
                 .shopId(soB2cEntity.getShopId())

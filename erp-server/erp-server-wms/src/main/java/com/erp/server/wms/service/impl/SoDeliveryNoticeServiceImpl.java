@@ -888,7 +888,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             transferInfoDetail.setOutWarehouseLocation(pickingStaging.getWarehouseLocation());
             transferInfoDetail.setOutWarehouseId(entity.getWarehouseId());
             transferInfoDetail.setInWarehouseId(warehouseId);
-            transferInfoDetail.setSourceDetailId(view.getSourceDetailId());
+            transferInfoDetail.setSourceDetailId(view.getId());
             detailList.add(transferInfoDetail);
         }
         return detailList;
@@ -1131,6 +1131,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (ObjectUtil.isEmpty(soDeliveryNotice)) {
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
+        if (ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNotice.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_99160);
+        }
         List<SoDeliveryNoticeDetailEntity> details = soDeliveryNoticeDetailService.list(Wrappers.<SoDeliveryNoticeDetailEntity>lambdaQuery()
                 .eq(SoDeliveryNoticeDetailEntity::getMainId, picking.getId())
                 .in(SoDeliveryNoticeDetailEntity::getId, picking.getDetailIds())
@@ -1205,11 +1208,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                             && req.getBomVersion().equals(soDetailEntity.getBomVersion())
                             && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).findFirst().orElse(null);
-            Integer noticeQty = noticeDetailEntities.stream()
-                    .filter(v -> !v.getId().equals(detailEntity.getId()))
-                    .filter(v -> v.getSkuId().equals(detailEntity.getSkuId()))
-                    .map(SoDeliveryNoticeDetailEntity::getDeliveryQty)
-                    .reduce(0, Math::addExact);
             if (!org.springframework.util.ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                 Integer qty = pickingDetailEntities.stream()
                         .filter(v -> v.getSourceDetailId().equals(detailEntity.getId()))
@@ -1225,11 +1223,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                         .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty);
             }
-            if (Optional.ofNullable(skuQty.get(detailEntity.getSkuId())).orElse(0) < noticeQty + detailEntity.getPickingQty()) {
-                throw new ServiceException(ApiError.ERROR_99127, detailEntity.getSkuNo());
-            }
             if (detailEntity.getDeliveryQty() < detailEntity.getPickingQty()) {
-                detailEntity.setDeliveryQty(detailEntity.getPickingQty());
+                throw new ServiceException(ApiError.ERROR_99127, detailEntity.getSkuNo());
             }
         }
         // 增加当次拣货数量和
