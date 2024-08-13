@@ -180,6 +180,7 @@
             si.bank_service_fee AS bankServiceFee,
             si.shipping_fee AS shippingFee,
             si.warehouse_id AS warehouseId,
+            si.virtual_warehouse_id AS virtualWarehouseId,
             si.warehouse_org_id AS warehouseOrgId,
             si.bill_date AS billDate,
             si.discount_amount AS discountAmount,

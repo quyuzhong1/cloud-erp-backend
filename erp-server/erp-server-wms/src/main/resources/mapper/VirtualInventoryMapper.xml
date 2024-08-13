@@ -137,6 +137,12 @@
         <if test="params.isDiff != null and params.isDiff == false">
             and  usableQty >= virtualQty + frozenQty
         </if>
+        <if test="params.isExceed != null and params.isExceed == true">
+            and  virtualQty > usableQty
+        </if>
+        <if test="params.isExceed != null and params.isExceed == false">
+            and  usableQty >= virtualQty
+        </if>
     </select>
 
     <!-- 库存差异列表数量 -->
@@ -311,6 +317,27 @@
         </where>
         group by vi.warehouse_id,vi.sku_id
     </select>
+
+    <!-- 根据实体仓库查询虚拟库存数量 -->
+    <select id="listInventoryQtyByWarehouseId" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$WarehouseInventoryQtyDTO">
+        select
+            COALESCE(sum(vi.qty),0) as qty,
+            vi.warehouse_id,
+            vi.sku_id
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false and vi.warehouse_id in
+            <foreach collection="warehouseIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+            and vi.sku_id in
+            <foreach collection="skuIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </where>
+        group by vi.warehouse_id,vi.sku_id
+    </select>
+
     <select id="getBySkuIdAndVwId" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$CommonDTO">
         select <include refid="Base_Column_List"/>
             from virtual_inventory

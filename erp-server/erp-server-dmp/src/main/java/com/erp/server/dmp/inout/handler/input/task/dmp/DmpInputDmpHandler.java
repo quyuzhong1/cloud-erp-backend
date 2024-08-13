@@ -151,6 +151,9 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		Map<String, List<String>> originaConvertMap = new HashMap<>();
 
 		List<DmpCfgInputConvertValueDTO.MappingAndValueDTO> dmpCfgInputConvertValue = dmpHandlerCache.getDmpCfgInputConvertValue(convertId);
+		if (CollectionUtil.isEmpty(dmpCfgInputConvertValue)) {
+			return;
+		}
 		for (Map.Entry<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpInputDmpBaseEntityList = dmpInputDataDmpRelationMap.getValue();
 			for (TreeMap<String, Object> dmpInputDmpBaseEntity : dmpInputDmpBaseEntityList) {
@@ -180,17 +183,15 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 						}
 					}
 */
-					if (CollectionUtil.isNotEmpty(dmpCfgInputConvertValue)) {
-						String mappingAndValue = dmpCfgInputConvertValue.stream()
-								.filter(req -> StringUtils.isNotBlank(req.getConvertBeforeValue())
-										&& StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())
-										&& req.getConvertBeforeValue().equals(entry.getValue()))
-								.map(req -> StringUtils.isNotBlank(req.getConvertAfterValue()) ? req.getConvertAfterValue() : "")
-								.findFirst().orElse("");
-						if (StringUtils.isNotBlank(mappingAndValue)) {
+					String mappingAndValue = dmpCfgInputConvertValue.stream()
+							.filter(req -> StringUtils.isNotBlank(req.getConvertBeforeValue())
+									&& StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())
+									&& req.getConvertBeforeValue().equals(entry.getValue()))
+							.map(req -> StringUtils.isNotBlank(req.getConvertAfterValue()) ? req.getConvertAfterValue() : "")
+							.findFirst().orElse("");
+					if (StringUtils.isNotBlank(mappingAndValue)) {
 
-							dmpInputDmpBaseEntity.put(entry.getKey(), mappingAndValue);
-						}
+						dmpInputDmpBaseEntity.put(entry.getKey(), mappingAndValue);
 					}
 				}
 			}

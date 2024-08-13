@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.dmp.mapper.BiSettlementExchangeRateMapper">
 
 
-    <select id="findByCurrencyAndDate" resultType="com.erp.model.dmp.entity.BiSettlementExchangeRateEntity">
+    <select id="findByCurrencyAndDate" resultType="com.erp.model.bi.entity.BiSettlementExchangeRateEntity">
         select id, settlement_date_begin, settlement_date_end, exchange_rate, source_currency_code, target_currency_code, update_time
         from bi_settlement_exchange_rate
         <where>
@@ -11,6 +11,23 @@
             and target_currency_code = 'CNY'
             and settlement_date_begin <![CDATA[<=]]> #{date}
             and settlement_date_end >= #{date}
+            and approve_status = 'approve'
+            and disabled = false
+            and type = 'HLTX01_SYS'
         </where>
     </select>
+
+    <!-- 根据目标币别和来源币别查询已审核启用汇率信息 -->
+    <select id="listByCurrencyCode" resultType="com.erp.model.bi.entity.BiSettlementExchangeRateEntity">
+        select id, settlement_date_begin, settlement_date_end, exchange_rate, source_currency_code, target_currency_code, update_time
+        from bi_settlement_exchange_rate
+        <where>
+            source_currency_code = #{sourceCurrencyCode}
+            and target_currency_code = #{targetCurrencyCode}
+            and approve_status = 'approve'
+            and disabled = false
+            and type = 'HLTX01_SYS'
+        </where>
+    </select>
+
 </mapper>

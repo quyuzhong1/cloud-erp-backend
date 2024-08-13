@@ -23,6 +23,9 @@ public enum SoB2cErrorTypeEnum {
     INSTOCK_FORECAST("instockForecast",  "入库预报失败"),
     CANCEL_ORDER_FORECAST("cancelOrderForecast",  "取消订单预报失败"),
     THIRD_WAREHOUSE_OUT_EXCEPTION("thirdWarehouseOutException",  "第三方仓出库异常"),
+    GENERATE_TRANSFER_INFO("generateTransferInfo",  "生成直接调拨单"),
+    VIRTUAL_FREEZE_QTY("virtualFreezeQty",  "扣减虚拟冻结库存"),
+
     ;
     /**
      * 类型
