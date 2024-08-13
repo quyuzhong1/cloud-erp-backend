@@ -7,7 +7,10 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -164,7 +167,20 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 						dmpInputDmpBaseEntity.put(c, DmpHandlerUtils.getValueByPath(entry.getValue(), entry.getKey()));
 					}*/
 
-					String mappingAndValue = dmpCfgInputConvertValue.stream().filter(req -> StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey()) && req.getConvertBeforeValue().equals(entry.getValue())).map(req -> req.getConvertAfterValue()).findFirst().orElse("");
+/*					DmpCfgInputConvertValueDTO.MappingAndValueDTO mappingAndValueDTO = dmpCfgInputConvertValue.stream().filter(req -> StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())).findFirst().orElse(null);
+
+					if (ObjectUtil.isNotEmpty(mappingAndValueDTO)) {
+						if (".".contains(mappingAndValueDTO.getOriginalKey())) {
+							DmpHandlerUtils.getValueByPath(entry.getValue(), mappingAndValueDTO.getOriginalKey());
+						}
+					}*/
+
+					String mappingAndValue = dmpCfgInputConvertValue.stream()
+							.filter(req -> StringUtils.isNotBlank(req.getConvertBeforeValue())
+									&& StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())
+									&& req.getConvertBeforeValue().equals(entry.getValue()))
+							.map(req -> req.getConvertAfterValue())
+							.findFirst().orElse("");
 					if (StringUtils.isNotBlank(mappingAndValue)) {
 						dmpInputDmpBaseEntity.put(entry.getKey(), mappingAndValue);
 					}
