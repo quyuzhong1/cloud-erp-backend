@@ -3305,6 +3305,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             scarceDTO.setVirtualScarceQty(MathUtil.compareTo(virtualScarceQty,MathUtil.ZERO) >= MathUtil.ZERO ? virtualScarceQty : MathUtil.ZERO);
             scarceDTO.setSkuId(childrenSkuDTO.getSkuId());
             scarceDTO.setSkuNo(childrenSkuDTO.getSkuNo());
+            scarceDTO.setQuantity(childrenSkuDTO.getQuantity());
+            scarceDTO.setBomVersion(childrenSkuDTO.getBomVersion());
             childScarceList.add(scarceDTO);
         }
         detailLabelDTO.setIsVirtualOutStock(isVirtualScarce);

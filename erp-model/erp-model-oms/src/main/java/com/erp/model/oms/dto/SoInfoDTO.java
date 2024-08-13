@@ -2607,7 +2607,7 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer virtualUsableQty;
         /**
-         * 最大可锁数(可冻结数量)
+         * 剩余最大可锁数(可冻结数量)
          */
         private Integer toFrozenQty;
         /**
@@ -2705,6 +2705,16 @@ public class SoInfoDTO implements Serializable {
          * 子级SKU按bom转换后可用数量（父级维度）
          */
         private Integer parentUsableQty;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
     }
 
     /**
