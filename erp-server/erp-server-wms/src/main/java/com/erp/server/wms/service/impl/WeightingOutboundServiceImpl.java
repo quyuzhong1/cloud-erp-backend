@@ -229,7 +229,6 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
     }
 
     public void generateB2cSoOutstock(WeightingOutboundDTO.ScanDTO dto, SoB2cDeliveryEntity entity, SoB2cEntity soB2cEntity) {
-        soB2cDeliveryService.generateB2cSoOutstock(entity);
         if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
             // 调用第三方平台SDK标记发货(独立事务)
             String businessDesc = "称重出库";

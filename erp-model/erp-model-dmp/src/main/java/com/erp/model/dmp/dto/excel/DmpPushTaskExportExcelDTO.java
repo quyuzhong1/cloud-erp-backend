@@ -86,5 +86,10 @@ public class DmpPushTaskExportExcelDTO {
     @ExcelProperty(value = "推送失败原因", index = 9)
     private String returnMsg;
 
-
+    /**
+     * 第三方编号
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "第三方编号", index = 10)
+    private String thirdCode;
 }

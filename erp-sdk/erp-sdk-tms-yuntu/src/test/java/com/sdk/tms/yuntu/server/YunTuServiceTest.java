@@ -54,7 +54,7 @@ public class YunTuServiceTest {
                 .packageCount(1)
                 .weight(new BigDecimal("12"))
                 .receiver(YunTuCreateOrderRequest.Receiver.builder()
-                        .countryCode("US")
+                        .countryCode("BR")
                         .firstName("xin")
                         .lastName("ming")
                         .company("test")
