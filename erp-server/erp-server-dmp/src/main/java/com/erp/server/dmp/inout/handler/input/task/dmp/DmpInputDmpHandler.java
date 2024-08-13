@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
@@ -179,16 +180,17 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 						}
 					}
 */
+					if (CollectionUtil.isNotEmpty(dmpCfgInputConvertValue)) {
+						String mappingAndValue = dmpCfgInputConvertValue.stream()
+								.filter(req -> StringUtils.isNotBlank(req.getConvertBeforeValue())
+										&& StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())
+										&& req.getConvertBeforeValue().equals(entry.getValue()))
+								.map(req -> StringUtils.isNotBlank(req.getConvertAfterValue()) ? req.getConvertAfterValue() : "")
+								.findFirst().orElse("");
+						if (StringUtils.isNotBlank(mappingAndValue)) {
 
-					String mappingAndValue = dmpCfgInputConvertValue.stream()
-							.filter(req -> StringUtils.isNotBlank(req.getConvertBeforeValue())
-									&& StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())
-									&& req.getConvertBeforeValue().equals(entry.getValue()))
-							.map(req -> StringUtils.isNotBlank(req.getConvertAfterValue()) ? req.getConvertAfterValue() : "")
-							.findFirst().orElse("");
-					if (StringUtils.isNotBlank(mappingAndValue)) {
-
-						dmpInputDmpBaseEntity.put(entry.getKey(), mappingAndValue);
+							dmpInputDmpBaseEntity.put(entry.getKey(), mappingAndValue);
+						}
 					}
 				}
 			}
