@@ -213,7 +213,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyList = virtualInventoryService.listInventoryQty(paramDTO);
 
         //查询实际出库可用库存
-        Integer realInventoryTotalQty = inventoryService.getRealInventoryTotal(warehouseIdList.get(0), skuIdList.get(0));
+        Integer usableInventoryTotalQty = inventoryService.getUsableInventoryTotal(warehouseIdList.get(0), skuIdList.get(0));
 
         //虚拟库存总和
         Integer inventoryTotalQty = virtualInventoryQtyList.stream()
