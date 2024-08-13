@@ -272,7 +272,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             Integer exceedQty = listDTO.getUsableQty() - listDTO.getVirtualQty();
             listDTO.setExceedQty(exceedQty);
             //是否超出分配
-            Boolean isExceed = exceedQty > 0 ? Boolean.FALSE : Boolean.TRUE;
+            Boolean isExceed = exceedQty > 0 ? Boolean.TRUE : Boolean.FALSE;
             listDTO.setIsExceed(isExceed);
         }
     }
