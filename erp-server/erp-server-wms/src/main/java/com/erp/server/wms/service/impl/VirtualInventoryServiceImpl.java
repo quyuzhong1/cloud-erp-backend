@@ -410,6 +410,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             VirtualInventoryDTO.BomReturnDTO returnDTO = new VirtualInventoryDTO.BomReturnDTO();
             returnDTO.setSkuId(childrenSkuDTO.getSkuId());
             returnDTO.setSkuNo(childrenSkuDTO.getSkuNo());
+            returnDTO.setQuantity(childrenSkuDTO.getQuantity());
+            returnDTO.setBomVersion(childrenSkuDTO.getBomVersion());
             returnDTO.setWarehouseId(bomParamDTO.getWarehouseId());
             returnDTO.setVirtualWarehouseId(bomParamDTO.getVirtualWarehouseId());
             returnDTO.setVirtualUsableQty(childVirtualUsableQty);

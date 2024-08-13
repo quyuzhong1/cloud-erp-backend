@@ -152,6 +152,15 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds);
 
     /**
+     * 根据状态查询
+     * @author will
+     * @date 2024/8/13 15:50
+     * @param sourceIds
+     * @param notStatus
+     * @return List<SoB2cDeliveryEntity>
+     */
+    List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds, String notStatus);
+    /**
      * 回滚冻结的库存
      *
      * @param ids

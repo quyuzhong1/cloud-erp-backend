@@ -1097,6 +1097,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return lambdaQuery().in(SoB2cDeliveryEntity::getSourceId, sourceIds).list();
     }
 
+    @Override
+    public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds, String notStatus) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SoB2cDeliveryEntity::getSourceId, sourceIds)
+                .ne(SoB2cDeliveryEntity::getStatus,notStatus)
+                .list();
+    }
+
 
     @Override
     @GlobalTransactional
@@ -1885,7 +1895,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public Boolean afreshPushTransferInfo(String soId) {
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySourceIds(Arrays.asList(soId));
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySourceIds(Arrays.asList(soId),SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
         if (CollectionUtil.isEmpty(soB2cDeliveryList)) {
             return Boolean.FALSE;
         }
@@ -2424,7 +2434,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public Boolean afreshOutFreezeVirtualInventory(String soId) {
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySourceIds(Arrays.asList(soId));
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySourceIds(Arrays.asList(soId),SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
         if (CollectionUtil.isEmpty(soB2cDeliveryList)) {
             return Boolean.TRUE;
         }
