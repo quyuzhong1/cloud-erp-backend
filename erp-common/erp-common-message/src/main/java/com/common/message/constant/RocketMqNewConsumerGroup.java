@@ -82,4 +82,10 @@ public class RocketMqNewConsumerGroup {
      * 新中台旺店通仓库
      */
     public static final String DMP_WDT_WAREHOUSE_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_warehouse_to_dmp_group";
+    
+
+    /**
+     * 新中台旺店通虚拟仓库
+     */
+    public static final String DMP_WDT_VIRTUALWAREHOUSE_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_virtualwarehouse_to_dmp_group";
 }

@@ -120,6 +120,18 @@ public class DmpThirdWarehouseInfoEntity extends BaseEntity<DmpThirdWarehouseInf
     private String remark;
     
     /**
+     * 分类，实体仓和虚拟仓
+     */
+   @TableField("category")
+   private String category;
+   
+   /**
+    * 虚拟仓对应的实体仓
+    */
+  @TableField("warehouse_list")
+  private String warehouseList;
+    
+    /**
      * 是否禁用/停用 true 是 false 不是
      */
     private Boolean disabled;
