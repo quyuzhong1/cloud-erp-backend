@@ -167,15 +167,20 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 						dmpInputDmpBaseEntity.put(c, DmpHandlerUtils.getValueByPath(entry.getValue(), entry.getKey()));
 					}*/
 
-					DmpCfgInputConvertValueDTO.MappingAndValueDTO mappingAndValueDTO = dmpCfgInputConvertValue.stream().filter(req -> StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())).findFirst().orElse(null);
+/*					DmpCfgInputConvertValueDTO.MappingAndValueDTO mappingAndValueDTO = dmpCfgInputConvertValue.stream().filter(req -> StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())).findFirst().orElse(null);
 
 					if (ObjectUtil.isNotEmpty(mappingAndValueDTO)) {
 						if (".".contains(mappingAndValueDTO.getOriginalKey())) {
 							DmpHandlerUtils.getValueByPath(entry.getValue(), mappingAndValueDTO.getOriginalKey());
 						}
-					}
+					}*/
 
-					String mappingAndValue = dmpCfgInputConvertValue.stream().filter(req -> StringUtils.isNotBlank(req.getConvertBeforeValue()) && StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey()) && req.getConvertBeforeValue().equals(entry.getValue())).map(req -> req.getConvertAfterValue()).findFirst().orElse("");
+					String mappingAndValue = dmpCfgInputConvertValue.stream()
+							.filter(req -> StringUtils.isNotBlank(req.getConvertBeforeValue())
+									&& StrUtils.underlineToCamel(req.getConvertKey(), true).equals(entry.getKey())
+									&& req.getConvertBeforeValue().equals(entry.getValue()))
+							.map(req -> req.getConvertAfterValue())
+							.findFirst().orElse("");
 					if (StringUtils.isNotBlank(mappingAndValue)) {
 						dmpInputDmpBaseEntity.put(entry.getKey(), mappingAndValue);
 					}
