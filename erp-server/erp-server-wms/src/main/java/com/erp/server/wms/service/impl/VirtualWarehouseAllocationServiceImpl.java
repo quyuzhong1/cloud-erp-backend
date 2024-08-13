@@ -890,7 +890,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
         dto.setWarehouseIdList(warehouseIdList);
         dto.setSkuIdList(skuIdList);
-        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode()));
+        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
 
         //实体仓可分配库存
@@ -909,14 +909,23 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO resultDTO = new VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO();
             BeanMapperUtils.copy(paramDTO,resultDTO);
             //实体仓可用库存
-            Integer warehouseUsableQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()) && StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()))
+            Integer warehouseUsableQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId())
+                            && StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
+                            && StrUtil.equals(obj.getInventoryStatus(),InventoryStatusEnum.USABLE.getCode())
+                    )
                     .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
             resultDTO.setWarehouseUsableQty(warehouseUsableQty);
             //实体仓已分配库存
-            Integer distributionQty = warehouseInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()))
+            Integer distributionQty = warehouseInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
+                            && StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()))
                     .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).findFirst().orElse(MathUtil.ZERO);
             resultDTO.setDistributionQty(ObjectUtil.isEmpty(distributionQty) ? MathUtil.ZERO : distributionQty);
-            resultDTO.setUnDistributionQty(warehouseUsableQty - resultDTO.getDistributionQty());
+
+            //实体仓实际库存
+            Integer warehouseRealQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId())
+                            && StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()))
+                    .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
+            resultDTO.setUnDistributionQty(warehouseRealQty - resultDTO.getDistributionQty());
 
             Integer toVirtualWarehouseUsableQty = virtualInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()) && StrUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getToVirtualWarehouseId()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
