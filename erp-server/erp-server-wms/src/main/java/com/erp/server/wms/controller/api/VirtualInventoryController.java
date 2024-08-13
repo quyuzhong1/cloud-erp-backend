@@ -89,4 +89,30 @@ public class VirtualInventoryController extends BaseController {
     public ApiResult<List<VirtualInventoryDTO.ViewQtyDTO>> getQty(@RequestBody @Validated VirtualInventoryDTO.QtyTypeDTO qtyTypeDTO) {
         return success(virtualInventoryService.getQty(qtyTypeDTO));
     }
+
+    /**
+     * 查询bom虚拟库存信息
+     * @author will
+     * @date 2024/8/6 15:22
+     * @param paramDTO
+     * @return ApiResult<List<BomReturnDTO>>
+     */
+    @PostMapping(value = "/listBomVirtual")
+    public ApiResult<List<VirtualInventoryDTO.BomReturnDTO>> listBomVirtual(@RequestBody @Validated VirtualInventoryDTO.BomParamDTO paramDTO) {
+        return success(virtualInventoryService.listBomVirtual(paramDTO));
+    }
+
+    /**
+     * SKU可用库存
+     * @author will
+     * @date 2024/8/8 18:26
+     * @param paramList
+     * @return ApiResult<SkuReturnDTO>
+     */
+    @PostMapping(value = "/listSkuVirtualInventoryQty")
+    public ApiResult<List<VirtualInventoryDTO.SkuReturnDTO>> listSkuVirtualInventoryQty(@RequestBody @Validated List<VirtualInventoryDTO.BomParamDTO> paramList) {
+        return success(virtualInventoryService.listSkuVirtualInventoryQty(paramList));
+    }
+
+
 }

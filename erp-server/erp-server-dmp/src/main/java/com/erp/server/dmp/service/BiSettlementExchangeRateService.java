@@ -1,7 +1,7 @@
 package com.erp.server.dmp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.dmp.entity.BiSettlementExchangeRateEntity;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 
 import java.math.BigDecimal;
 
@@ -20,4 +20,15 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @return
      */
     BigDecimal findByCurrencyAndDate(String date, String sourceCurrencyCode);
+
+    /**
+     * 根据日期、目标币别、来源币别查询汇率信息
+     * @author will
+     * @date 2024/8/7 17:12
+     * @param date
+     * @param targetCurrencyCode
+     * @param sourceCurrencyCode
+     * @return BigDecimal
+     */
+    BigDecimal listRedisByCurrencyCode (String date, String targetCurrencyCode, String sourceCurrencyCode);
 }
