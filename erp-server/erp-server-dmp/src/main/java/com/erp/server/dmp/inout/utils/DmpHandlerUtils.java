@@ -3,13 +3,7 @@ package com.erp.server.dmp.inout.utils;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -118,5 +112,43 @@ public class DmpHandlerUtils {
 		}
 
 		return data;
+	}
+
+
+	public static Object getValueByPath(Map<String, Object> data, String path, String newKey) {
+		String[] keys = path.split("\\.");
+		Object value = data;
+
+		for (int i = 0; i < keys.length; i++) {
+			String key = keys[i];
+
+			if (value instanceof Map) {
+				value = ((Map<String, Object>) value).get(key);
+			} else if (value instanceof List) {
+				final int currentIndex = i;
+
+				// 递归处理 List 中的每一个元素
+				value = ((List<?>) value).stream()
+						.map(item -> {
+							if (item instanceof Map) {
+								// 截取数组的剩余部分并拼接为字符串
+								String remainingPath = String.join(".", Arrays.copyOfRange(keys, currentIndex + 1, keys.length));
+								return getValueByPath((Map<String, Object>) item, remainingPath, newKey);
+							}
+							return null;
+						})
+						.collect(Collectors.toList());
+				break; // 处理完 List 后退出循环
+			} else {
+				return null; // 如果路径不正确，返回null
+			}
+		}
+
+		if (value instanceof Map) {
+			// 替换最后的键为 newKey
+			value = ((Map<String, Object>) value).get(newKey);
+		}
+
+		return value;
 	}
 }
