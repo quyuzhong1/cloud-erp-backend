@@ -101,6 +101,6 @@ public class DmpOutputWdtQiMenWarehouseRocketMQTaskHandler extends DmpOutputRock
 
     @Override
     protected List<String> getSourceCodeKeys() {
-    	return Arrays.asList("warehouseCode");
+    	return Arrays.asList("code");
     }
 }
