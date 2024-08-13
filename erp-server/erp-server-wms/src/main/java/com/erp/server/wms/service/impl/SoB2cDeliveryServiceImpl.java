@@ -1663,26 +1663,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results) {
-        List<String> skuIds = soB2cDeliveryDetailEntities.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> detailList = new ArrayList<>();
         Map<String, String> warehouseMap = soB2cDeliveryDetailEntities.stream().collect(Collectors.toMap(SoB2cDeliveryDetailEntity::getWarehouseId, SoB2cDeliveryDetailEntity::getWarehouseName, (o1, o2) -> o1));
         for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailEntities) {
-            //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
-                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
-                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
-                    ).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
-                    detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), bomChildrenSkuDTO.getSkuId(), bomChildrenSkuDTO.getSkuNo(),
-                            detailEntity.getDeliveryQty() * bomChildrenSkuDTO.getQuantity(), detailEntity.getId()));
-                }
-            } else {
-                detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), detailEntity.getSkuId(), detailEntity.getSkuNo(),
-                        detailEntity.getDeliveryQty(), detailEntity.getId()));
-            }
+            detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), detailEntity.getSkuId(), detailEntity.getSkuNo(),
+                    detailEntity.getDeliveryQty(), detailEntity.getId()));
         }
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
         executionData.setBillType(PickingBillTypeEnum.B2C.getCode());
