@@ -301,22 +301,6 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
 
         //更新店铺token
         shopAuthService.refreshToken(shopAuthEntity.getId(), accessToken, refreshToken, 7*3600*24, tokenExpireTime);
-
-        Map<String, Object> extendData = shopInfoEntity.getExtendData();
-        TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
-        shopInfoDTO.setId(shopAuthEntity.getShopId());
-        shopInfoDTO.setClientId(cfgAppClient.getClientId());
-        shopInfoDTO.setClientSecret(cfgAppClient.getClientSecret());
-        shopInfoDTO.setBaseUrl(cfgAppClient.getUrl());
-        shopInfoDTO.setName(tokenDTO.getSellerName());
-        shopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
-        shopInfoDTO.setSite(tokenDTO.getSellerBaseRegion());
-        shopInfoDTO.setShopCipher(String.valueOf(extendData.get("shopCipher")));
-
-        //设置缓存
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), dto.getShopId());
-        redisUtil.set(tokenKey, shopInfoDTO, 7*3600*24);
-
         return Boolean.TRUE;
     }
 
