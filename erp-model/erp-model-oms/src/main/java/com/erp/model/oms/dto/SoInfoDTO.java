@@ -2295,7 +2295,10 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer totalWaitQty;
 
-
+        /**
+         * 锁定数量
+         */
+        private Integer totalFrozenQty;
     }
 
     /**
