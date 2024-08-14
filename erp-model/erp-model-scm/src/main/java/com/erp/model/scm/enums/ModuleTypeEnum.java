@@ -103,6 +103,7 @@ public enum ModuleTypeEnum {
     PICKING_LISTS("91", "拣货单"),
     CFG_RULE_WAVE("92", "波次规则"),
     WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
+    INIT_FIRST_MILE_ALLOCATION("94", "期初费用分摊"),
     ;
 
 

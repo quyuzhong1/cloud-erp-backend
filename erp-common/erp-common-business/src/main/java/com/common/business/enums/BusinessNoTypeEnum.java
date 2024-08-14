@@ -85,6 +85,7 @@ public enum BusinessNoTypeEnum {
     CODE_JHD(64, "JHD","拣货单",BusinessNoConstant.JHD),
     CODE_JHC(65, "JHC","拣货车管理",BusinessNoConstant.JHC),
     CODE_JHBC(66, "JHBC","拣货波次",BusinessNoConstant.JHBC),
+    CODE_QCFT(67, "QCFT","期初头程分摊",BusinessNoConstant.QCFT),
 
     ;
 

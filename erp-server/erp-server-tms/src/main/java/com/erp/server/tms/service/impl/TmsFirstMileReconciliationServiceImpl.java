@@ -125,7 +125,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 //        if (!save) {
 //            throw new ServiceException("头程对账单保存失败");
 //        }
-        LocalDate reconciliationMonth = updateDTO.getReconciliationMonth();
+        LocalDate reconciliationMonth = updateDTO.getReconciliationMonth().withDayOfMonth(1);
         List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList().stream().filter(e -> Objects.nonNull(e) && !Objects.equals(reconciliationMonth, e.getReconciliationMonth())).collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(detailList)){
             throw new ServiceException(StrUtil.format("对账单对账月份【{}】与发货单【{}】对账月份不一致", reconciliationMonth, detailList.stream().map(TmsFirstMileReconciliationDetailDTO.UpdateDTO::getSourceCode).distinct().collect(Collectors.joining(","))));
@@ -460,7 +460,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         data.setCycle(StrUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
         //对账月份
         if (Objects.nonNull(data.getEndDate())){
-            data.setReconciliationDate(data.getEndDate().withDayOfMonth(1));
+            data.setReconciliationMonth(data.getEndDate().withDayOfMonth(1));
         }
         // 明细数据
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIdsBySort(Collections.singletonList(data.getId()));

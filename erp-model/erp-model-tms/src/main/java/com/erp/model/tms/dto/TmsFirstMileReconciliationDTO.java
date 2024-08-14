@@ -14,15 +14,12 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.*;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Map;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -375,6 +372,7 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 对账月份（取值为对账周期末值所在月份）
          */
         @NotNull(message = "对账月份不能为空")
+        @DateTimeFormat(pattern="yyyy-MM")
         private LocalDate reconciliationMonth;
         /**
          * 明细id集合
