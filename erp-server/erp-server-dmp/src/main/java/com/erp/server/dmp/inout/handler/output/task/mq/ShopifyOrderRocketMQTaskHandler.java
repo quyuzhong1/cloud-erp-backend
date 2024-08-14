@@ -299,7 +299,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         if (Objects.isNull(soReceiverEntity)) {
             return null;
         }
-
         return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(soReceiverEntity.getBuyerId()))
                 .customerId(soReceiverEntity.getBuyerId())
@@ -342,8 +341,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 .code(dmpSoInfoEntity.getLogisticsCode())
                 .name(name)
                 .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
-                .logisticsChannelId(dmpSoInfoEntity.getLogisticsChannelId())
-                .logisticsChannelName(dmpSoInfoEntity.getLogisticsChannelName())
                 .estimatedShippingCost(cost)
                 .actualShippingCost(BigDecimal.ZERO)
                 .accessoriesCostCurrency("")

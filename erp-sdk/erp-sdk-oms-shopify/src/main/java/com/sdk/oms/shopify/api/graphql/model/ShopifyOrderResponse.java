@@ -10,6 +10,16 @@ import java.util.List;
 @ToString
 public class ShopifyOrderResponse{
 
+    /**
+     * 订单号（手动赋值，新中台用）
+     */
+    private String orderId;
+
+    /**
+     * 税号（手动赋值，新中台用）
+     */
+    private String taxNo;
+
     private Data data;
 
     private Extensions extensions;
