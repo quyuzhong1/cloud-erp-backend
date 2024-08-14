@@ -67,8 +67,6 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-        List<String> orderIds = findMongoData.stream().map(req -> req.get("orderId").toString()).distinct().collect(Collectors.toList());
-
         ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(findMongoData.get(0).get("nextLevelId").toString());
         if (null == shopInfoDTO) {
             log.error("[Shopify订单交易信息下载]从缓存中获取shopify token 失败: shopId={}", findMongoData.get(0).get("nextLevelId").toString());
