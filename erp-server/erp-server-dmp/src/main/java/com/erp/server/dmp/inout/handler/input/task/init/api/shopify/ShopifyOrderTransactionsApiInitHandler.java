@@ -81,6 +81,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
                 Map<String, Object> shippingAddressMap = (Map<String, Object>) shippingAddressObj;
 
                 Object country = shippingAddressMap.get("countryCode");
+                log.error("ShopifyOrderTransactionsApiInitHandler国家：" + country + "  是否计算" + countryTaxMap.containsKey(country));
                 if(countryTaxMap.containsKey(country)){
                     String taxTitle = countryTaxMap.get(country);
                     ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken());
@@ -96,6 +97,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
                     order.setOrderId(findMongoDatum.get("orderId").toString());
                     order.setTaxNo(taxNo);
 
+                    log.error("ShopifyOrderTransactionsApiInitHandler返回值：" + order);
                     DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
                     dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(order));
                     dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
