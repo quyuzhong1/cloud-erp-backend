@@ -1122,7 +1122,7 @@ public enum ApiError implements Serializable {
     ERROR_VWWSTOCK_NOTEMPRY(92231,"本虚拟仓在实体仓【{}】下库存不为0，操作失败"),
     ERROR_THIRD_VIRTUAL_WAREHOUSE_BINDED(92232,"旺店通【{}】已与仓库【{}】关联"),
     ERROR_NO_SYNC(92232,"没有同步信息"),
-    ERROR_CHECK_OUT_VIRTUAL_INVENTORY(92233,"虚拟仓库存已分配【{}】，出库数量不能超过【{}】"),
+    ERROR_CHECK_OUT_VIRTUAL_INVENTORY(92233,"SKU【{}】实体仓【{}】虚拟仓库存已分配【{}】，出库数量不能超过【{}】"),
     WAREHOUSE_AREA_EXIST(92142,"库区{}【{}】已存在"),
     POSITION_BINDING_EXIST(92143,"库区{}存在仓位绑定,无法删除或禁用"),
     WAREHOUSE_LOCATION_EXIST(92144, "仓位{}已存在"),
