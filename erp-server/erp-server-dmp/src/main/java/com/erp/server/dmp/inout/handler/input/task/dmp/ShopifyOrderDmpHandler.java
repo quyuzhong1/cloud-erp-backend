@@ -48,14 +48,15 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
             return;
         }
 
-        //订单拓展
-        DmpInputTaskEntity dmpInputTaskExtensionsEntity = list.stream().filter(req -> "1823265128548686459".equals(req.getCfgInputId())).findFirst().orElse(null);
+        //订单交易
+        DmpInputTaskEntity dmpInputTransactionsEntity = list.stream().filter(req -> "1823265118759180922".equals(req.getCfgInputId())).findFirst().orElse(null);
+
         List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskExtensionsEntity.getId()));
-        List<Map<String, Object>> dmpInputTransactionsMongoChildList = mongoService.findMongoData(paramDataList, "shopify_extensions_data");
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTransactionsEntity.getId()));
+        List<Map<String, Object>> dmpInputTransactionsMongoChildList = mongoService.findMongoData(paramDataList, "shopify_transactions_data");
         log.error("shopify：dmpInputTaskEntity：" + id);
         log.error("shopify：list：" + list);
-        log.error("shopify：dmpInputTaskExtensionsEntity：" + dmpInputTaskExtensionsEntity);
+        log.error("shopify：dmpInputTaskExtensionsEntity：" + dmpInputTransactionsEntity);
         log.error("shopify：dmpInputTransactionsMongoChildList：" + dmpInputTransactionsMongoChildList);
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
