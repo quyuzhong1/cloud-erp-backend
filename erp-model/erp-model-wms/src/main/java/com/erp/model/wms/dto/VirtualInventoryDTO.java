@@ -480,4 +480,22 @@ public class VirtualInventoryDTO implements Serializable {
         private Integer inventoryQty;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseInventoryQtyDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 库存数量
+         */
+        private Integer qty;
+    }
 }

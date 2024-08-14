@@ -354,6 +354,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         return baseMapper.getInventoryQtyByWarehouseId(warehouseId, skuId);
     }
 
+    @Override
+    public List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> listInventoryQtyByWarehouseId(List<String> warehouseIdList, List<String> skuIdList) {
+        return baseMapper.listInventoryQtyByWarehouseId(warehouseIdList, skuIdList);
+    }
+
     /**
      * 根据sku和虚拟仓id获取是否存在关联关系
      *
