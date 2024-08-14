@@ -2889,6 +2889,16 @@ public class SoB2cDTO implements Serializable {
          * 子级SKU按bom转换后可用数量（父级维度）
          */
         private Integer parentUsableQty;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
     }
 
 }

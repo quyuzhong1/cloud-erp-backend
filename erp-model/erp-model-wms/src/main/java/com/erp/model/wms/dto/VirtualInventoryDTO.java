@@ -601,6 +601,16 @@ public class VirtualInventoryDTO implements Serializable {
          * 虚拟仓可用库存
          */
         private Integer virtualUsableQty;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
     }
 
 

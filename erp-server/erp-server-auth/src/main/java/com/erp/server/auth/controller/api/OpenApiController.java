@@ -54,7 +54,7 @@ public class OpenApiController {
 
     @PostMapping("/upload")
     public @ResponseBody ApiResult<?> unitPlatformServiceUpload(@Valid OpenApiReqDTO input, HttpServletRequest request, MultipartFile file){
-        log.info("平台上传接口统一请求报文：{}" , JSON.toJSONString(input));
+        log.warn("平台上传接口统一请求报文：{}" , JSON.toJSONString(input));
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
         String referer = request.getHeader("Referer");
@@ -91,7 +91,9 @@ public class OpenApiController {
             log.error("openApi文件上传失败", e);
             return ApiResult.error(500, "上传失败，请联系实施人员");
         }
-        return ApiResult.success(fileUrl);
+        ApiResult<String> success = ApiResult.success(fileUrl);
+        log.warn("平台上传接口统一响应报文：{}" , JSON.toJSONString(success));
+		return success;
     }
 
     @PostMapping("/service")
