@@ -119,7 +119,7 @@ public class InitFirstMileAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:initFirstMileAllocation:paging",
-            tableAlias = "lb"
+            tableAlias = "a"
     )
     @WebAdvanceQuery(handler = InitFirstMileAllocationQueryHandler.class)
     public ApiResult<PagingVO<InitFirstMileAllocationDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<InitFirstMileAllocationDTO.PagingParamDTO> dto) {
@@ -289,7 +289,7 @@ public class InitFirstMileAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:initFirstMileAllocation:paging",
-            tableAlias = "lb"
+            tableAlias = "a"
     )
     @WebAdvanceQuery(handler = LogisticsBillQueryHandler.class)
     public ApiResult<?> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto, HttpServletResponse response) {

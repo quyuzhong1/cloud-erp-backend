@@ -164,11 +164,11 @@ public class FirstMileDeliveryEntity extends BaseEntity<FirstMileDeliveryEntity>
     @TableField("declare_status")
     private WmsDeclareStatusEnum declareStatus;
 
-    /**
-     * FBA货件编码
-     */
-    @TableField("fba_shipment_code")
-    private String fbaShipmentCode;
+//    /**
+//     * FBA货件编码
+//     */
+//    @TableField("fba_shipment_code")
+//    private String fbaShipmentCode;
 
 
     public static final String CODE = "code";

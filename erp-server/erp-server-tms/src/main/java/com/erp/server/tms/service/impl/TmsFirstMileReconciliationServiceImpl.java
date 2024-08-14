@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.annotation.format.DateTimeFormat;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -46,6 +47,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -125,10 +128,13 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 //        if (!save) {
 //            throw new ServiceException("头程对账单保存失败");
 //        }
-        LocalDate reconciliationMonth = updateDTO.getReconciliationMonth().withDayOfMonth(1);
-        List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList().stream().filter(e -> Objects.nonNull(e) && !Objects.equals(reconciliationMonth, e.getReconciliationMonth())).collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(detailList)){
-            throw new ServiceException(StrUtil.format("对账单对账月份【{}】与发货单【{}】对账月份不一致", reconciliationMonth, detailList.stream().map(TmsFirstMileReconciliationDetailDTO.UpdateDTO::getSourceCode).distinct().collect(Collectors.joining(","))));
+        if (!Objects.equals(tmsFirstMileReconciliationEntity.getReconciliationMonth(),updateDTO.getReconciliationMonth())){
+            this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getReconciliationMonth,updateDTO.getReconciliationMonth())
+                    .eq(TmsFirstMileReconciliationEntity::getId,updateDTO.getId()).update();
+            old.setReconciliationMonth(updateDTO.getReconciliationMonth());
+            String msg = "用户【{}】编辑了【{}】对账月份，由【{}】改为【{}】";
+            operateLogService.addModuleOperateLog(StrUtil.format(msg,UserContext.getDefaultLoginUser().getUserName(),tmsFirstMileReconciliationEntity.getCode(),tmsFirstMileReconciliationEntity.getReconciliationMonth(),updateDTO.getReconciliationMonth()),
+                    ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(),tmsFirstMileReconciliationEntity.getId(),"修改对账单");
         }
         // 修改明细数据（包含增删改）
         tmsFirstMileReconciliationDetailService.update(updateDTO.getDetailList(), old);

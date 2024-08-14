@@ -353,11 +353,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
 
         tmsFirstMileReconciliationService.updateById(mainEntity);
-        LocalDate endDate = mainEntity.getEndDate();
-        if (Objects.nonNull(endDate)){
-            LocalDate dayOfMonth = endDate.withDayOfMonth(1);
-            list.forEach(e -> e.setReconciliationMonth(dayOfMonth));
-        }
         log.info("编辑 开始修改头程对账单数据，id：【{}】", mainId);
         boolean save = super.saveOrUpdateBatch(list);
         if (!save) {

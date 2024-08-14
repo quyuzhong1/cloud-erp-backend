@@ -372,7 +372,6 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 对账月份（取值为对账周期末值所在月份）
          */
         @NotNull(message = "对账月份不能为空")
-        @DateTimeFormat(pattern="yyyy-MM")
         private LocalDate reconciliationMonth;
         /**
          * 明细id集合

@@ -1180,7 +1180,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             mainKey = StrUtil.format("{}_{}_{}_{}", logisticsSupplierId, curListDTO.getCurrency(), startDate, endDate);
             //一个头程物流单可生成多次对账单-限制同一个单同一个月份仅可生成一次
             LocalDate dayOfMonth = endDate.withDayOfMonth(1);
-            TmsFirstMileReconciliationDetailEntity tmsFirstMileReconciliationDetailEntity = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getReconciliationMonth().equals(dayOfMonth)).findFirst().orElse(null);
+            TmsFirstMileReconciliationDetailEntity tmsFirstMileReconciliationDetailEntity = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && dayOfMonth.equals(e.getReconciliationMonth())).findFirst().orElse(null);
             if (Objects.nonNull(tmsFirstMileReconciliationDetailEntity)){
                 throw new ServiceException(ApiError.ERROR_92260,tmsFirstMileReconciliationDetailEntity.getSourceCode(), dayOfMonth);
             }
@@ -1211,7 +1211,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 tmsFirstMileReconciliationDetailService.fillDetailList(oldListDTO, reconciliationEntity.getCurrency(), currencyView);
             }
         }
-
+        if(Objects.isNull(reconciliationEntity.getReconciliationMonth()) && Objects.nonNull(reconciliationEntity.getEndDate())){
+            reconciliationEntity.setReconciliationMonth(reconciliationEntity.getEndDate().withDayOfMonth(1));
+        }
         // 保存头程对账单
         tmsFirstMileReconciliationService.saveOrUpdate(reconciliationEntity);
 
@@ -1683,24 +1685,24 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO) {
+    public BatchResultDTO autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO) {
         if(StringUtils.isBlank(autoGenerateBillDTO.getId()) || Objects.isNull(autoGenerateBillDTO.getSourceTypeEnum()) || Objects.isNull(autoGenerateBillDTO.getBillGenerateTimingEnum())){
-            return false;
+            return BatchResultDTO.fail(autoGenerateBillDTO.getId(),"", "账单id,数据来源类型，生成方式不能为空");
         }
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
         if(cfgSettingEntity.getDisabled()){
-            return false;
+            return BatchResultDTO.fail(autoGenerateBillDTO.getId(),"", "头程物流单生成配置不存在");
         }
         CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
         if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoLogistics()) || !dto.getIsAutoLogistics() ||
                 StringUtils.isBlank(dto.getLogisticsGenerateTiming()) || !dto.getLogisticsGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
-            return false;
+            return BatchResultDTO.fail(autoGenerateBillDTO.getId(),"", "头程物流单生成方式不一致");
         }
         //生成物流单
         TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
         addDTO.setOutstockId(autoGenerateBillDTO.getId());
         addDTO.setIsAuto(true);
         this.add(addDTO);
-        return true;
+        return BatchResultDTO.success(autoGenerateBillDTO.getId(),"", "头程物流单创建成功");
     }
 }

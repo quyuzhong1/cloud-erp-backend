@@ -141,5 +141,5 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> listAutoGenerateFirstMileReconciliation(LocalDate startDate, LocalDate endDate);
 
-    Boolean autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO);
+    BatchResultDTO autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO);
 }

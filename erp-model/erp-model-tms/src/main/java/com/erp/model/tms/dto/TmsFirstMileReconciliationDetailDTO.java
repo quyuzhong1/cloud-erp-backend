@@ -993,11 +993,6 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 对账次数 默认1
          */
         private Integer reconciliationCount;
-
-        /**
-         * 对账月份（取值为对账周期末值所在月份）
-         */
-        private LocalDate reconciliationMonth;
         /**
          * 账单类型： actual=实际， initPeriod=期初
          */

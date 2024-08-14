@@ -198,7 +198,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     /**
      * 对账月份（取值为对账周期末值所在月份）
      */
-    @TableField("reconciliation_month")
+    @TableField(exist = false)
     private LocalDate reconciliationMonth;
 
     /**

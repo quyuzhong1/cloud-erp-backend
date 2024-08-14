@@ -108,6 +108,11 @@ public class TmsFirstMileReconciliationEntity extends BaseEntity<TmsFirstMileRec
      */
     @TableField("reason")
     private String reason;
+    /**
+     * 对账月份（取值为对账周期末值所在月份）
+     */
+    @TableField("reconciliation_month")
+    private LocalDate reconciliationMonth;
 
 
     public static final String CODE = "code";
