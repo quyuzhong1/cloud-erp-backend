@@ -818,7 +818,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             List<String> attachmentUrlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             detail.setAttachNameList(attachmentNameList);
             detail.setSoDetailId(item.getSourceDetailId());
-            detail.setSourceDetailId(item.getSourceDetailId());
+            detail.setSourceDetailId(item.getId());
             detail.setSkuId(item.getSkuId());
             detail.setSkuNo(item.getSkuNo());
             detail.setWarehouseId(warehouseId);
