@@ -74,9 +74,10 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
             log.error("[Shopify订单交易信息下载]从缓存中获取shopify token 失败: shopId={}", findMongoData.get(0).get("nextLevelId").toString());
             throw new ServiceException();
         }
+        log.error("ShopifyOrderTransactionsApiInitHandler:" + findMongoData);
 
 
-        for (Map<String, Object> findMongoDatum : findMongoData) {
+        /*for (Map<String, Object> findMongoDatum : findMongoData) {
             //特定国家需要查询税号
 
             Object shippingAddressObj = findMongoDatum.get("shippingAddress");
@@ -104,7 +105,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
                 }
 
             }
-        }
+        }*/
         return dmpInputTaskInitDTOList;
     }
 }

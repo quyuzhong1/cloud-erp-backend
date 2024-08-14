@@ -66,7 +66,9 @@ public class ShopifyOrderLocalizationApiInitHandler extends DmpInputInitHandler 
             throw new ServiceException();
         }
 
-        for (String orderId : orderIds) {
+        log.error("ShopifyOrderLocalizationApiInitHandler:" + orderIds);
+
+        /*for (String orderId : orderIds) {
             List<ShopifyTransaction> transactionList = shopifyRestClientService.getShopifyRestClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken())
                     .getOrderTransactions(orderId);
 
@@ -77,7 +79,7 @@ public class ShopifyOrderLocalizationApiInitHandler extends DmpInputInitHandler 
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
             dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(transactionList));
             dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-        }
+        }*/
         return dmpInputTaskInitDTOList;
     }
 }
