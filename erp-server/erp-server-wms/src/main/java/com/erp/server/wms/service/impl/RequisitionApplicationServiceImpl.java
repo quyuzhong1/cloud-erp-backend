@@ -295,6 +295,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
                     .filter(req -> req.getParentSkuId().equals(handleListDTO.getSkuId())
                             && req.getBomVersion().equals(handleListDTO.getBomVersion())
+                            && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType())
                     ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 handleListDTO.setIsCombination(Boolean.TRUE);
@@ -1019,10 +1020,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getOne(new LambdaQueryWrapper<FirstMileDeliveryEntity>()
                     .eq(FirstMileDeliveryEntity::getSourceCode, requisitionApplicationEntity.getCode())
                     .eq(FirstMileDeliveryEntity::getSourceType, SourceTypeEnum.REQUISITION_APPLICATION.getCode()));
-            firstMileDeliveryDetailService.lambdaUpdate()
-                    .eq(FirstMileDeliveryDetailEntity::getMainId, firstMileDelivery.getId())
-                    .set(FirstMileDeliveryDetailEntity::getFbaShipmentCode, requisitionApplicationEntity.getFbaShipmentCode())
-                    .update();
+            if(firstMileDelivery != null){
+                firstMileDeliveryDetailService.lambdaUpdate()
+                        .eq(FirstMileDeliveryDetailEntity::getMainId, firstMileDelivery.getId())
+                        .set(FirstMileDeliveryDetailEntity::getFbaShipmentCode, requisitionApplicationEntity.getFbaShipmentCode())
+                        .update();
+            }
         }
         if(CollectionUtils.isNotEmpty(updateList)){
             service.updateBatchById(updateList);
@@ -1071,6 +1074,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         .map(PickingDetailEntity::getQty)
                         .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty);
+            }
+            if (detailEntity.getApproveQty() < detailEntity.getPickingQty()) {
+                throw new ServiceException(ApiError.ERROR_99133, detailEntity.getSkuNo());
             }
         }
         requisitionApplicationDetailService.updateBatchById(detailEntities);

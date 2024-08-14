@@ -99,19 +99,19 @@
         vmad.sys_type_name,
         vma.remark,
         vmad.detail_remark detailRemark,
-        COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0) as unDistributionQty,
-        COALESCE(vit.toVirtualUsableQty,0) as toVirtualUsableQty,
-        COALESCE(vif.fromVirtualUsableQty,0) as fromVirtualUsableQty,
-        case when vma.status = 'waitSubmit'and vma.type ='allocation'  then vmad.qty > COALESCE(iv.usableQty,0) - COALESCE(vi.distributionQty,0)
+        COALESCE(iv.realQty,0) - COALESCE(vi.distributionQty,0) as unDistributionQty,
+        case when  vmad.to_virtual_warehouse_id = '' then null else COALESCE(vit.toVirtualUsableQty,0) end as toVirtualWarehouseUsableQty,
+        case when  vmad.from_virtual_warehouse_id = '' then null else COALESCE(vif.fromVirtualUsableQty,0) end as fromVirtualWarehouseUsableQty,
+        case when vma.status = 'waitSubmit'and vma.type ='allocation'  then vmad.qty > COALESCE(iv.realQty,0) - COALESCE(vi.distributionQty,0)
              when vma.status = 'waitSubmit'and vma.type ='transfer'  then vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)
-             when vma.status = 'waitSubmit'and vma.type ='cancel'  then vmad.qty > COALESCE(vit.toVirtualUsableQty,0)
+             when vma.status = 'waitSubmit'and vma.type ='cancel'  then vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)
             else false
         end isVirtualScarce
         FROM virtual_warehouse_allocation_detail vmad
         inner JOIN virtual_warehouse_allocation vma
         on vma.id = vmad.main_id and vma.is_deleted = false
         left join (
-            select sum(qty) as usableQty,sku_id,warehouse_id from inventory where is_deleted = false and dict_inventory_status = 'usable' group by sku_id,warehouse_id
+            select sum(qty) as realQty,sku_id,warehouse_id from inventory where is_deleted = false and dict_inventory_status in('usable','frozen')  group by sku_id,warehouse_id
         ) iv on vmad.sku_id = iv.sku_id  and vmad.warehouse_id = iv.warehouse_id
         left join (
             select sum(qty) as distributionQty,sku_id,warehouse_id from virtual_inventory where is_deleted = false  group by sku_id,warehouse_id

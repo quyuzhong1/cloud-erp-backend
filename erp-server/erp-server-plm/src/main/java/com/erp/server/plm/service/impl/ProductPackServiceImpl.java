@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -7,7 +8,9 @@ import com.common.core.utils.LengthConverterUtil;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.dto.ProductPackShowDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
+import com.erp.model.plm.entity.SysLogEntity;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -15,6 +18,7 @@ import com.erp.server.plm.mapper.ProductPackMapper;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductPackService;
+import com.erp.server.plm.service.SysLogService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -41,6 +45,8 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     @Resource
     private BasicDictService basicDictService;
 
+    @Resource
+    private SysLogService sysLogService;
     /**
      * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
@@ -233,6 +239,48 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
 		        .set(productPackDTO.getBoxWeight() != null , ProductPackEntity::getBoxWeight,productPackDTO.getBoxWeight())
 		        .set(productPackDTO.getNetWeight() != null , ProductPackEntity::getNetWeight,productPackDTO.getNetWeight())
                 .update();
+        StringBuilder logContentBuilder = new StringBuilder("更新了产品包装信息: ");
+
+        if (productPackDTO.getProductLength() != null) {
+            logContentBuilder.append("产品长度更新为").append(productPackDTO.getProductLength()).append("; ");
+        }
+
+        if (productPackDTO.getProductWidth() != null) {
+            logContentBuilder.append("产品宽度更新为").append(productPackDTO.getProductWidth()).append("; ");
+        }
+
+        if (productPackDTO.getProductHeight() != null) {
+            logContentBuilder.append("产品高度更新为").append(productPackDTO.getProductHeight()).append("; ");
+        }
+
+        if (productPackDTO.getBoxLength() != null) {
+            logContentBuilder.append("箱子长度更新为").append(productPackDTO.getBoxLength()).append("; ");
+        }
+
+        if (productPackDTO.getBoxWidth() != null) {
+            logContentBuilder.append("箱子宽度更新为").append(productPackDTO.getBoxWidth()).append("; ");
+        }
+
+        if (productPackDTO.getBoxHeight() != null) {
+            logContentBuilder.append("箱子高度更新为").append(productPackDTO.getBoxHeight()).append("; ");
+        }
+
+        if (productPackDTO.getBoxQty() != null) {
+            logContentBuilder.append("箱子数量更新为").append(productPackDTO.getBoxQty()).append("; ");
+        }
+
+        if (productPackDTO.getBoxWeight() != null) {
+            logContentBuilder.append("箱子重量更新为").append(productPackDTO.getBoxWeight()).append("; ");
+        }
+
+        if (productPackDTO.getNetWeight() != null) {
+            logContentBuilder.append("净重更新为").append(productPackDTO.getNetWeight()).append("; ");
+        }
+
+        String logContent = logContentBuilder.toString();
+
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(String.valueOf(ProductDetailEntity.class))
+                .setBusinessId(productPackDTO.getSkuId()).setOperation("QC质检").setContent(logContent));
     }
 }
 

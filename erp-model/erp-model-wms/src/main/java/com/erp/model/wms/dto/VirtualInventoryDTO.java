@@ -555,4 +555,114 @@ public class VirtualInventoryDTO implements Serializable {
         private Integer unDistributionQty;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class BomParamDTO {
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+        /**
+         * skuId
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class BomReturnDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuReturnDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 实体仓可用库存
+         */
+        private Integer usableQty;
+
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseInventoryQtyDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 库存数量
+         */
+        private Integer qty;
+    }
+}

@@ -1,24 +1,25 @@
 package com.erp.server.bi.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -37,6 +38,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,6 +59,10 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private RedisUtil redisUtil;
+
 
     @Override
     public PagingVO<BiSettlementExchangeRateDTO.ListDTO> paging(PagingDTO<BiSettlementExchangeRateDTO.SearchParamDTO> pagingDTO) {
@@ -153,6 +159,26 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         return update;
     }
 
+    /**
+     * 添加redis缓存
+     */
+    private void setRedisExchangeRate (BiSettlementExchangeRateEntity entity) {
+        String existKey = StrUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE, entity.getTargetCurrencyCode(),entity.getSourceCurrencyCode());
+
+        List<BiSettlementExchangeRateEntity> rateList = baseMapper.listByCurrencyCode(entity.getTargetCurrencyCode(), entity.getSourceCurrencyCode());
+        if (CollectionUtils.isEmpty(rateList)) {
+            throw new ServiceException(StrUtil.format("目标币别【{}】、原币别【{}】未查询到汇率",entity.getTargetCurrencyCode(),entity.getSourceCurrencyCode()));
+        }
+        boolean isHas = redisUtil.hasKey(existKey);
+        if (isHas) {
+            //删除缓存
+            redisUtil.keys(existKey).forEach(key -> redisUtil.del(key));
+        }
+        //添加缓存
+        redisUtil.set(existKey,rateList);
+    }
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
@@ -194,6 +220,8 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新单据汇率
             updateSettlementExchangeRate(list);
+            //添加redis
+            list.stream().forEach(obj -> setRedisExchangeRate(obj));
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("汇率【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
 
@@ -220,26 +248,56 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
 
         //更新单据为待提交
         updateApproveStatusForApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
+        //添加redis
+        list.stream().forEach(obj -> setRedisExchangeRate(obj));
         return Boolean.TRUE;
     }
 
     @Override
-    public BigDecimal findByCurrencyAndDate(LocalDate parseDate, String sourceCurrencyCode) {
-        if (CurrencyEnum.CNY.getCurrencyCode().equals(sourceCurrencyCode)) {
+    public BigDecimal findByCurrencyAndDate(String date, String sourceCurrencyCode) {
+        String targetCurrencyCode = CurrencyEnum.CNY.getCurrencyCode();
+        if (StrUtil.isBlank(date)) {
+            date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        }
+        BigDecimal exchangeRate = listRedisByCurrencyCode(date, targetCurrencyCode, sourceCurrencyCode);
+        return exchangeRate;
+    }
+
+    @Override
+    public BigDecimal listRedisByCurrencyCode (String date, String targetCurrencyCode, String sourceCurrencyCode) {
+        //数据验证
+        checkNotBlank(date,targetCurrencyCode,sourceCurrencyCode);
+
+        //如果目标币别和来源币别一致则直接返回1
+        if (StrUtil.equals(targetCurrencyCode,sourceCurrencyCode)) {
             return BigDecimal.ONE;
         }
-        if (ObjectUtils.isEmpty(parseDate)) {
-            parseDate = LocalDate.now();
+        //查询redis中存储的成本信息
+        String existKey = StrUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE,CurrencyEnum.CNY.getCurrencyCode(),sourceCurrencyCode);
+        List<BiSettlementExchangeRateEntity> rateList = (List<BiSettlementExchangeRateEntity>) redisUtil.get(existKey);
+        if (CollectionUtils.isEmpty(rateList)) {
+            //查询库中数据添加缓存
+            rateList = baseMapper.listByCurrencyCode(targetCurrencyCode, sourceCurrencyCode);
+            if (CollectionUtils.isNotEmpty(rateList)) {
+                //添加缓存
+                redisUtil.set(existKey,rateList);
+            }
         }
-        List<BiSettlementExchangeRateEntity> biSettlementExchangeRateEntityList = this.baseMapper.findByCurrencyAndDate(parseDate, sourceCurrencyCode);
-        if(CollUtil.isEmpty(biSettlementExchangeRateEntityList)) {
+        if (CollectionUtils.isEmpty(rateList)) {
             return null;
         }
-        biSettlementExchangeRateEntityList.sort(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()));
-        BiSettlementExchangeRateEntity biSettlementExchangeRateEntity = biSettlementExchangeRateEntityList.get(0);
-        return biSettlementExchangeRateEntity.getExchangeRate();
+        //格式化日期
+        LocalDate localDate = LocalDateUtil.parseStrToLocalDate(date);
+        //汇率
+        BigDecimal exchangeRate = rateList.stream().filter(obj -> obj.getSettlementDateBegin().isEqual(localDate)
+                        || obj.getSettlementDateEnd().isEqual(localDate)
+                        || (obj.getSettlementDateBegin().isBefore(localDate) && obj.getSettlementDateEnd().isAfter(localDate)))
+                .sorted(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()))
+                .map(BiSettlementExchangeRateEntity::getExchangeRate)
+                .findFirst().orElse(null);
+        return exchangeRate;
     }
+
 
     /**
      * 根据ids查询数据
@@ -290,5 +348,26 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             return true;
         }
         return false;
+    }
+
+
+    /**
+     * 数据验证
+     * @author will
+     * @date 2024/8/7 17:21
+     * @param date
+     * @param targetCurrencyCode
+     * @param sourceCurrencyCode
+     */
+    private void checkNotBlank (String date, String targetCurrencyCode, String sourceCurrencyCode) {
+        if (StrUtil.isBlank(date)) {
+            throw new ServiceException("汇率查询时间不能为空");
+        }
+        if (StrUtil.isBlank(targetCurrencyCode)) {
+            throw new ServiceException("汇率查询目标币别不能为空");
+        }
+        if (StrUtil.isBlank(sourceCurrencyCode)) {
+            throw new ServiceException("汇率查询来源币别不能为空");
+        }
     }
 }

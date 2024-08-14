@@ -1,7 +1,6 @@
 package com.erp.server.wms.wdt;
 
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.List;
  * @date 2024-05-16
  */
 public interface SyncWdtOtherOutStockService {
-
     /**
      * 保存推送旺店通其他出库单任务
      *
@@ -27,7 +25,14 @@ public interface SyncWdtOtherOutStockService {
      * @date: 2024-05-25
      * @author: tanmujin
      */
-    DmpPushTaskEntity saveTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode);
-
     DmpPushTaskFeignDTO generateTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode);
+
+    /**
+     * 根据sku和仓位合并明细
+     * @param goodsList 明细列表
+     * @return 合并后的列表
+     * @date: 2024-07-31
+     * @author: tanmujin
+     */
+    List<CreateOtherStockoutRequest.GoodsList> sumBySkuAndPositionNo(List<CreateOtherStockoutRequest.GoodsList> goodsList);
 }

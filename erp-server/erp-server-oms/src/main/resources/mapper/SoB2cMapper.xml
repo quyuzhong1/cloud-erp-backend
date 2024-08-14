@@ -128,6 +128,7 @@
         sb2cd.warehouse_id as warehouseId,
         sb2cd.warehouse_name as warehouseName,
         sb2cd.warehouse_location as warehouseLocation,
+        sb2cd.virtual_warehouse_id as virtualWarehouseId,
         sb2c.buyer_remark as buyerRemark,
         sb2c.remark as remark,
         sb2cl.name,

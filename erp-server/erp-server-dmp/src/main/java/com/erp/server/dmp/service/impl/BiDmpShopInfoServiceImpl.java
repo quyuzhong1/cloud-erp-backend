@@ -7,12 +7,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.BiShopInfoDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.server.dmp.pull.mapper.BiShopInfoMapper;
-import com.erp.server.dmp.service.BiShopInfoService;
+import com.erp.server.dmp.service.BiDmpShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,8 +27,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopInfoEntity>
-    implements BiShopInfoService {
+public class BiDmpShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopInfoEntity>
+    implements BiDmpShopInfoService {
 
     /**
      * 添加店铺信息
@@ -104,9 +105,9 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
      * @Date 2022/12/13 17:48
      **/
     @Override
-    public DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign, List<SysUserDeptDTO> userDeptList) {
+    public BiShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign, List<SysUserDeptDTO> userDeptList) {
         BiShopInfoEntity req = getShopByShopNo(shopNo);
-        DmpShopInfoDTO dmpShopInfoDTO = new DmpShopInfoDTO();
+        BiShopInfoDTO dmpShopInfoDTO = new BiShopInfoDTO();
         BeanUtil.copyProperties(req, dmpShopInfoDTO);
 
         List<SysUserDeptDTO> collect = userDeptList.stream().filter(udl -> udl.getUid().equals(req.getChargeId())).collect(Collectors.toList());
@@ -147,9 +148,9 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
     }
 
     @Override
-    public DmpShopInfoDTO getShopById(String shopId) {
+    public BiShopInfoDTO getShopById(String shopId) {
         BiShopInfoEntity entity = this.getById(shopId);
-        DmpShopInfoDTO dto = new DmpShopInfoDTO();
+        BiShopInfoDTO dto = new BiShopInfoDTO();
         if (ObjectUtils.isEmpty(entity)) {
             return dto;
         }

@@ -5,11 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.vo.ShopDropDownVO;
 import com.erp.model.bi.vo.ShopSiteVO;
-import com.erp.model.dmp.dto.DmpShopInfoChangeDTO;
-import com.erp.model.dmp.dto.DmpShopInfoDeptChangeDTO;
-import com.erp.model.dmp.dto.DmpShopInfoShowDTO;
-import com.erp.model.dmp.dto.DmpShopInfoSearchDTO;
-import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.BiShopInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -44,9 +40,9 @@ public interface BiShopInfoService extends IService<BiShopInfoEntity> {
      * @author Will
      * @date: 2022/12/15 16:34
      * @param id
-     * @return DmpShopInfoDTO
+     * @return BiShopInfoDTO
      */
-    DmpShopInfoDTO getDmpShopInfoById(String id);
+    BiShopInfoDTO getDmpShopInfoById(String id);
     /**
      * @description: 新增
      * @author Will
@@ -54,7 +50,7 @@ public interface BiShopInfoService extends IService<BiShopInfoEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean addDmpShopInfo(DmpShopInfoDTO dto);
+    Boolean addDmpShopInfo(BiShopInfoDTO dto);
     /**
      * @description: 修改
      * @author Will
@@ -62,7 +58,7 @@ public interface BiShopInfoService extends IService<BiShopInfoEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean updateDmpShopInfo(DmpShopInfoDTO dto);
+    Boolean updateDmpShopInfo(BiShopInfoDTO dto);
     /**
      * @description: 变更负责人
      * @author Will

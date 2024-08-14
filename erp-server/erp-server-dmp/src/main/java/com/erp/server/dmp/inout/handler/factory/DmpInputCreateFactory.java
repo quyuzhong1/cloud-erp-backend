@@ -2,10 +2,8 @@ package com.erp.server.dmp.inout.handler.factory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +18,7 @@ import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChainImpl;
 import com.erp.server.dmp.inout.handler.input.all.DmpInputTaskStatusHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputChildCreateHandler;
+import com.erp.server.dmp.inout.handler.input.create.DmpInputCompensateCreateHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputHistoryCreateHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputHotfixCreateHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputNormalCreateHandler;
@@ -39,6 +38,8 @@ public class DmpInputCreateFactory{
 	private DmpInputNormalCreateHandler dmpInputNormalCreateHandler;
 	@Autowired
 	private DmpInputHistoryCreateHandler dmpInputHistoryCreateHandler;
+	@Autowired
+	private DmpInputCompensateCreateHandler dmpInputCompensateCreateHandler;
 	@Autowired
 	private DmpInputHotfixCreateHandler dmpInputHotfixCreateHandler;
 	@Autowired
@@ -66,6 +67,17 @@ public class DmpInputCreateFactory{
 	public void createHistoryInputTask(DmpInputCreateRequest dmpInputCreateRequest) {
 		DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
 		bean.addDmpHandler(dmpInputHistoryCreateHandler);
+		bean.addDmpHandler(dmpInputTaskStatusHandler);
+		bean.doDmpHandler(dmpInputCreateRequest, new DmpInputCreateResponse());
+	}
+	
+	/**
+	 * 创建补偿任务
+	 * @param dmpInputCreateRequest
+	 */
+	public void createCompensateInputTask(DmpInputCreateRequest dmpInputCreateRequest) {
+		DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
+		bean.addDmpHandler(dmpInputCompensateCreateHandler);
 		bean.addDmpHandler(dmpInputTaskStatusHandler);
 		bean.doDmpHandler(dmpInputCreateRequest, new DmpInputCreateResponse());
 	}
