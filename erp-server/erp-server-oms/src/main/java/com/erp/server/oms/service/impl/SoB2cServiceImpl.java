@@ -7750,6 +7750,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         Integer bomUsableQty = qtyList.stream().min(Comparator.comparing(obj -> obj)).get();
                         exportDTO.setVirtualUsableQty(bomUsableQty);
                     }
+                    exportDTO.setSkuQty(exportDTO.getQty());
                     //根据订单维度还是bom维度清除已存在的记录
                     processRepeatData(exportDTO, resultList);
                     resultList.add(exportDTO);
