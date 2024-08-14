@@ -41,11 +41,14 @@ public class ShopifyListingHandler extends AbstractProductHandler<PlatformShopif
     @Resource
     private ShopifyRestClientService shopifyRestClientService;
 
+    @Resource
+    private ShopSdkServer shopSdkServer;
+
 
     @Override
     public List<PlatformShopifyListingDTO> download(JobTaskDTO data) {
         //  根据店铺ID获取授权
-        ShopifyShopInfoDTO tokenDTO = ShopSdkServer.getTokenAndDomainByShopId(data.getShopId());
+        ShopifyShopInfoDTO tokenDTO = shopSdkServer.getTokenAndDomainByShopId(data.getShopId());
         if (null == tokenDTO){
             log.error("[Shopify产品下载]从缓存中获取shopify token 失败: shopId={}", data.getShopId());
             return Collections.emptyList();

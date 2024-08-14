@@ -656,10 +656,10 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             //有分配虚拟库存则校验
             if (MathUtil.compareTo(virtualQty,MathUtil.ZERO) > MathUtil.ZERO) {
                 //仓库可用库存
-                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(warehouseId, skuId);
-                log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",warehouseDetail.getName(),skuNo,virtualQty,usableInventoryTotal);
-                if (Math.abs(qty) > usableInventoryTotal - virtualQty) {
-                    ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,virtualQty,usableInventoryTotal - virtualQty);
+                Integer realInventoryTotal = inventoryService.getRealInventoryTotal(warehouseId, skuId);
+                log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",warehouseDetail.getName(),skuNo,virtualQty,realInventoryTotal);
+                if (Math.abs(qty) > realInventoryTotal - virtualQty) {
+                    ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,skuNo,warehouseDetail.getName(),virtualQty,realInventoryTotal - virtualQty);
                 }
             }
         }

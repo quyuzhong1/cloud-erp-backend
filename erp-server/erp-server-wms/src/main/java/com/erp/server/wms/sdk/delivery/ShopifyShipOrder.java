@@ -55,7 +55,8 @@ public class ShopifyShipOrder extends AbstractShipOrder {
     @Resource
     private LogisticsFeign logisticsFeign;
 
-
+    @Resource
+    private ShopSdkServer shopSdkServer;
 
     @Override
     public List<String> shipOrder(PlatformShipOrderDTO dto) {
@@ -96,7 +97,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             Map<String, SoB2cDetailEntity> detailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
             log.warn("[Shopify标记发货] 平台订单号【{}】,当前提交明细IDS:{}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(detailEntityMap.keySet()));
             String shopId = mainEntity.getShopId();
-            ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(shopId);
+            ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(shopId);
             if (null == shopInfoDTO) {
                 log.error("[Shopify标记发货]从缓存中获取shopify token 失败: shopId={}", shopId);
                 throw new ServiceException();
