@@ -54,7 +54,6 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         List<Map<String, Object>> findMongoData = null;
         String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        log.error("ShopifyOrderTransactionsApiInitHandler:" + parentStorageName);
         if (StringUtils.isNotBlank(parentStorageName)) {
             List<ParamData> paramDataList = new ArrayList<>();
             paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
@@ -63,7 +62,6 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
         if (CollectionUtil.isEmpty(findMongoData)) {
             return new ArrayList<>();
         }
-        log.error("ShopifyOrderTransactionsApiInitHandler返回数量:" + findMongoData.size() + "  条~~~");
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
@@ -75,7 +73,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
 
 
 
-        /*for (Map<String, Object> findMongoDatum : findMongoData) {
+        for (Map<String, Object> findMongoDatum : findMongoData) {
             //特定国家需要查询税号
 
             Object shippingAddressObj = findMongoDatum.get("shippingAddress");
@@ -87,8 +85,6 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
                     String taxTitle = countryTaxMap.get(country);
                     ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken());
                     ShopifyOrderResponse order = shopifyGraphQLClient.getOrderLocalizationExtensions(findMongoDatum.get("orderId").toString());
-
-                    log.error("ShopifyOrderTransactionsApiInitHandler返回值:" + order);
 
                     List<ShopifyOrderResponse.Data.Node.LocalizationExtensions.Nodes> nodes = Optional.of(order)
                             .map(ShopifyOrderResponse::getData)
@@ -106,7 +102,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
                 }
 
             }
-        }*/
+        }
         return dmpInputTaskInitDTOList;
     }
 }

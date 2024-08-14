@@ -46,7 +46,6 @@ public class ShopifyOrderLocalizationApiInitHandler extends DmpInputInitHandler 
 
         List<Map<String, Object>> findMongoData = null;
         String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        log.error("ShopifyOrderLocalizationApiInitHandler:" + parentStorageName);
         if (StringUtils.isNotBlank(parentStorageName)) {
             List<ParamData> paramDataList = new ArrayList<>();
             paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
@@ -65,13 +64,10 @@ public class ShopifyOrderLocalizationApiInitHandler extends DmpInputInitHandler 
             log.error("[Shopify订单拓展信息下载]从缓存中获取shopify token 失败: shopId={}", findMongoData.get(0).get("nextLevelId").toString());
             throw new ServiceException();
         }
-        log.error("ShopifyOrderLocalizationApiInitHandler值:" + orderIds.size() + "数量~！");
 
-
-/*        for (String orderId : orderIds) {
+        for (String orderId : orderIds) {
             List<ShopifyTransaction> transactionList = shopifyRestClientService.getShopifyRestClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken())
                     .getOrderTransactions(orderId);
-            log.error("ShopifyOrderLocalizationApiInitHandler返回值:" + transactionList);
             if (CollectionUtils.isEmpty(transactionList)) {
                 continue;
             }
@@ -79,7 +75,7 @@ public class ShopifyOrderLocalizationApiInitHandler extends DmpInputInitHandler 
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
             dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(transactionList));
             dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-        }*/
+        }
         return dmpInputTaskInitDTOList;
     }
 }
