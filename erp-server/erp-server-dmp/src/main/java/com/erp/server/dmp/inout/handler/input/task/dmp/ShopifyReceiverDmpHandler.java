@@ -31,10 +31,10 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
             return Collections.emptyList();
         }
 
-        //订单拓展
-        DmpInputTaskEntity dmpInputExtensionsEntity = list.stream().filter(req -> "1823265128548686459".equals(req.getCfgInputId())).findFirst().orElse(null);
+        //订单交易
+        DmpInputTaskEntity dmpInputTransactionsEntity = list.stream().filter(req -> "1823265118759180922".equals(req.getCfgInputId())).findFirst().orElse(null);
         List<ParamData> extensionsDataList = new ArrayList<>();
-        extensionsDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputExtensionsEntity.getId()));
+        extensionsDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTransactionsEntity.getId()));
         List<Map<String, Object>> dmpInputExtensionsMongoChildList = mongoService.findMongoData(extensionsDataList, "shopify_extensions_data");
 
         List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
