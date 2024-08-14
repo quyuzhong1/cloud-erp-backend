@@ -985,15 +985,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .deliveryOrderId(entity.getId())
                 .build();
         //返回分检口
-        String sortingPort = cfgRuleOutService.getSortingPort(sortingPortRuleDTO);
-//        CfgRuleOutDTO.CommonDTO commonDTO = cfgRuleOutService.view();
-//        Boolean isDeviation = cfgRuleOutService.handleB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations(),sortingPortRuleDTO);
-
+        CfgRuleOutDTO.SortingPortResultDTO portResultDTO = cfgRuleOutService.getSortingPort(sortingPortRuleDTO);
+        String sortingPort = portResultDTO.getPort();
         //更新发货单
         this.updateById(entity);
 
-        //不是异常口才能自动出库
-        if (!CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode().equals(sortingPort) && entity.getIsAutoOut()) {
+        //没有异常才能自动出库
+        if (!portResultDTO.getUpdateError() && entity.getIsAutoOut()) {
             asyncService.syncSoB2cDeliveryAutoOut(soB2cEntity,entity);
         }
         //更新图片

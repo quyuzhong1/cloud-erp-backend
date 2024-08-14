@@ -30,7 +30,7 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
     /**
      * 根据出库配置返回分拣口
      */
-    String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto);
+    CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto);
     /**
      * 处理偏差
      * @author will

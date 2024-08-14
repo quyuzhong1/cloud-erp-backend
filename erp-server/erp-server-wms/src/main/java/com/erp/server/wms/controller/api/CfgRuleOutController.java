@@ -63,7 +63,7 @@ public class CfgRuleOutController extends BaseController {
      */
     @PostMapping("/getSortingPort")
     public ApiResult<String> getSortingPort(@RequestBody CfgRuleOutDTO.SortingPortRuleDTO dto) {
-        return success(cfgRuleOutService.getSortingPort(dto));
+        return success(cfgRuleOutService.getSortingPort(dto).getPort());
     }
 
     /**

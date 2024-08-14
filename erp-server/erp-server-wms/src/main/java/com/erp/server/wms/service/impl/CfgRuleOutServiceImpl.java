@@ -6,7 +6,6 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
@@ -234,7 +233,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     }
 
     @Override
-    public String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto) {
+    public CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto) {
         ValidatorUtil.validateEntity(dto);
         CfgRuleOutDTO.CommonDTO commonDTO = this.view();
         CfgRuleOutDTO.SortingPortResultDTO resultDTO = this.getSortingPort(commonDTO,dto);
@@ -245,7 +244,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 soB2cDeliveryService.updateAbnormal(Arrays.asList(dto.getDeliveryOrderId()), AbnormalCauseEnum.EQUIPMENT_SORTING);
             }
         }
-        return sortingPort;
+        return resultDTO;
     }
     @Override
     public CfgRuleOutDTO.CheckDTO handleOverweight(CfgRuleOutDTO.OverweightDTO dto) {
