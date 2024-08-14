@@ -54,6 +54,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         List<Map<String, Object>> findMongoData = null;
         String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
+        log.error("ShopifyOrderTransactionsApiInitHandler:" + parentStorageName);
         if (StringUtils.isNotBlank(parentStorageName)) {
             List<ParamData> paramDataList = new ArrayList<>();
             paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
@@ -73,9 +74,10 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
             log.error("[Shopify订单交易信息下载]从缓存中获取shopify token 失败: shopId={}", findMongoData.get(0).get("nextLevelId").toString());
             throw new ServiceException();
         }
+        log.error("ShopifyOrderTransactionsApiInitHandler:" + findMongoData);
 
 
-        for (Map<String, Object> findMongoDatum : findMongoData) {
+        /*for (Map<String, Object> findMongoDatum : findMongoData) {
             //特定国家需要查询税号
 
             Object shippingAddressObj = findMongoDatum.get("shippingAddress");
@@ -103,7 +105,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
                 }
 
             }
-        }
+        }*/
         return dmpInputTaskInitDTOList;
     }
 }
