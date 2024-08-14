@@ -2,10 +2,7 @@ package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.wms.dto.PackingTaskDTO;
-import com.erp.model.wms.dto.PackingTaskDetailDTO;
-import com.erp.model.wms.dto.WmsCartonDetailDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -40,6 +37,7 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      */
     IPage<PackingTaskDTO.PagingViewDTO> paging(@Param("query") Page<PackingTaskDTO.PagingViewDTO> query, @Param("params") PackingTaskDTO.PagingParamDTO params);
     List<PackingTaskDTO.PagingViewDTO> pagingList(@Param("params") PackingTaskDTO.PagingParamDTO params);
+    Page<PackingTaskDTO.PagingViewDTO> pagingList(@Param("page") Page<PackingTaskDTO.PagingViewDTO> page, @Param("params") PackingTaskDTO.PagingParamDTO params);
 
     /**
      * 根据任务id汇总状态
@@ -72,6 +70,7 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      */
     List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("params") PackingTaskDTO.PackedDetailDTO params);
     List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailBySkuId(@Param("taskIds") List<String> taskIds, @Param("permissionSql") String permissionSql);
+    Page<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailBySkuId(@Param("params") Page<WmsCartonDetailDTO.ListPackingDetailDTO> page, @Param("taskIds") List<String> taskIds, @Param("permissionSql") String permissionSql);
 
     /**
      * 从历史装箱数据补充装箱任务和装箱详情

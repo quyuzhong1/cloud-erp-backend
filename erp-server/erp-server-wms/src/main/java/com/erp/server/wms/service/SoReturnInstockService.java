@@ -12,7 +12,6 @@ import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -141,13 +140,13 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
 
     /**
      * 导出
+     *
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param dto dto
-     * @param response response
-     * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean exportExcel(@RequestBody SoReturnInstockDTO.PagingParam dto, HttpServletResponse response);
+    Boolean exportExcel(@RequestBody SoReturnInstockDTO.PagingParam dto);
 
     /**
      * 质检下推退货入库单-保存
@@ -293,4 +292,6 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.lang.Boolean
      **/
     Boolean pdaUpdateAndSubmit(SoReturnInstockDTO.Update dto);
+
+    PagingVO<SoReturnInstockDTO.PagingView> exportSoReturnInStock(PagingDTO<SoReturnInstockDTO.PagingParam> dto);
 }

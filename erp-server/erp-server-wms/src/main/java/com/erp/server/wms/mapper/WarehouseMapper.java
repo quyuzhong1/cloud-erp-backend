@@ -24,6 +24,7 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
     IPage<WarehouseDTO.PagingViewDTO> paging(Page query, @Param("params") WarehouseDTO.PagingParamDTO params);
 
     List<WarehouseDTO.PagingViewDTO> getExport(@Param("params") WarehouseDTO.PagingParamDTO dto);
+    Page<WarehouseDTO.PagingViewDTO> getExport(@Param("page") Page<WarehouseDTO.PagingViewDTO> page, @Param("params") WarehouseDTO.PagingParamDTO dto);
 
     IPage<WarehouseDTO.PagingNoPermissionDTO> pagingNoPermission(Page query,@Param("params")  WarehouseDTO.PagingDTO params);
 

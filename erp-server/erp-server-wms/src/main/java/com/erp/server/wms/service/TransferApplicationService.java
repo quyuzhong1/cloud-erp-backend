@@ -11,7 +11,6 @@ import com.erp.model.wms.dto.SingleApproveParamDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -145,14 +144,13 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      */
     Boolean cancelProcess(List<String> ids);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/5/10 18:57
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(TransferApplicationDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(TransferApplicationDTO.SearchParamDTO dto);
     /**
      * @description: 下推直接调拨单
      * @author Will
@@ -214,4 +212,6 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @return java.lang.Boolean
      **/
     Boolean saveGenerateMachineInfo(List<TransferApplicationDTO.ViewGenerateMachineInfo> list);
+
+    PagingVO<TransferApplicationDTO.ListDTO> exportTransferApplication(PagingDTO<TransferApplicationDTO.SearchParamDTO> dto);
 }

@@ -1,7 +1,8 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.validator.ValidList;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.common.business.service.SuperService;
@@ -22,11 +23,11 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
 
     /**
      * 导出明细
+     *
      * @param dto
-     * @param response
      * @return
      */
-    Boolean exportExcel(BaseIdDTO dto, HttpServletResponse response);
+    Boolean exportExcel(BaseIdDTO dto);
     /**
      * 导入明细
      * @author yl
@@ -109,4 +110,6 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      */
     
     void updateQty(List<StocktakingTaskDetailEntity> taskDetailList);
+
+    PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(PagingDTO<BaseIdDTO> dto);
 }

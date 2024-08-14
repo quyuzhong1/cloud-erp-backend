@@ -9,7 +9,6 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
@@ -65,6 +64,7 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
     List<WarehouseLocationDTO.ViewDto> listAreaByWarehouseId(@Param("warehouseId") String warehouseId);
 
     List<WarehouseLocationExportVo> listAllByParam(@Param("dto") WarehouseLocationDTO.exportParamDto dto);
+    Page<WarehouseLocationExportVo> listAllByParam(@Param("page") Page<WarehouseLocationExportVo> page, @Param("dto") WarehouseLocationDTO.exportParamDto dto);
 
     IPage<WarehouseLocationDTO.LocationListDTO> pagingSelectBySku(Page query, WarehouseLocationDTO.SelectDTO params);
 

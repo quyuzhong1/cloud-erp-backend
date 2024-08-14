@@ -18,21 +18,22 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.server.wms.mapper.AliexpressDeliveryMapper;
 import com.erp.server.wms.service.AliexpressDeliveryDetailService;
 import com.erp.server.wms.service.AliexpressDeliveryService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_ALIEXPRESS_DELIVERY_EXPORT;
 
 /**
  * <p>
@@ -50,6 +51,8 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
 
     @Resource
     private AliexpressDeliveryDetailService detailService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -86,22 +89,8 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
     }
 
     @Override
-    public Boolean exportExcel(AliexpressDeliveryDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<AliexpressDeliveryDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/aliexpressDeliveryExport.xlsx";
-        String name = "速卖通发货单";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(AliexpressDeliveryDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("速卖通发货单", EXPORT_WMS_ALIEXPRESS_DELIVERY_EXPORT.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -112,6 +101,12 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         dto.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
         List<ShopSysUserAuthDTO.ViewShopDTO> viewShopDTOList = shopSysUserAuthFeign.listUserAuthShop(dto);
         return viewShopDTOList;
+    }
+
+    @Override
+    public PagingVO<AliexpressDeliveryDTO.ListDTO> exportAliexpressDelivery(PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto) {
+        Page<AliexpressDeliveryDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        return new PagingVO<>(page);
     }
 
     public AliexpressDeliveryEntity getBySoId(String soId) {

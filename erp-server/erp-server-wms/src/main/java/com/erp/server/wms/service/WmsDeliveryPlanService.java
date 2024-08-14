@@ -139,14 +139,14 @@ public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEnti
     BatchResultDTO cancelProcess(String id);
 
     /**
-    * 导出Excel
-    * @author Luo_WG
-    * @date: 2023-11-16
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(WmsDeliveryPlanDTO.PagingParamDTO dto, HttpServletResponse response);
+     * 导出Excel
+     *
+     * @param dto
+     * @return
+     * @author Luo_WG
+     * @date: 2023-11-16
+     */
+    void exportList(WmsDeliveryPlanDTO.PagingParamDTO dto);
 
     /**
     * 审核通过回调方法
@@ -240,4 +240,6 @@ public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEnti
      * @return java.lang.Boolean
      **/
     Boolean updateDeliveryStatus(List<String> ids, String deliveryStatus);
+
+    PagingVO<WmsDeliveryPlanDTO.ListDTO> exportOverseasDeliveryPlan(PagingDTO<WmsDeliveryPlanDTO.PagingParamDTO> dto);
 }

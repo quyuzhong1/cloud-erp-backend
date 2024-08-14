@@ -3,12 +3,13 @@ package com.erp.server.wms.service.impl;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
@@ -19,12 +20,12 @@ import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -40,6 +41,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_STOCKTAKING_TASK_DETAIL;
 
 /**
  * <p>
@@ -71,57 +74,12 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     private StocktakingTaskMapper stocktakingTaskMapper;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
-    public Boolean exportExcel(BaseIdDTO dto, HttpServletResponse response) {
-        String mainId = dto.getId();
-        StocktakingTaskDTO.ViewDTO view = stocktakingTaskMapper.getViewById(mainId);
-        if(Objects.isNull(view)){
-            throw new ServiceException("盘点任务不存在");
-        }
-        //盘点方式
-        StocktakingModeEnum stocktakingMode = view.getStocktakingMode();
-        String stocktakingModeName = Objects.nonNull(stocktakingMode) ? stocktakingMode.getName() : "";
-        //是否盲盘
-        Boolean isBlindCount = StocktakingModeEnum.BLIND_COUNT.equals(stocktakingMode);
-        //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Arrays.asList(mainId));
-        String stocktakingUserName = taskUserList.stream().
-                map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
-        List<StocktakingTaskDetailDTO.ExportDTO> exportList = baseMapper.listExportByMainId(mainId);
-        if (CollectionUtils.isEmpty(exportList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        List<String> skuIdList = exportList.stream().map(StocktakingTaskDetailDTO.ExportDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
-
-        for (StocktakingTaskDetailDTO.ExportDTO item : exportList) {
-            item.setStocktakingUserName(stocktakingUserName);
-            String skuName = skuList.stream().filter(s -> s.getId().equals(item.getSkuId())).findFirst().
-                    map(ProductDetailEntity::getName).orElse("");
-            item.setProductName(skuName);
-            item.setStocktakingModeName(stocktakingModeName);
-            //如果是盲盘就要清空一些数据
-            if(isBlindCount){
-                item.setUsableQty(null);
-                item.setDiffQty(null);
-                item.setFrozenQty(null);
-            }
-
-        }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/StocktakingTaskDetail.xlsx";
-        String name = "盘点任务明细列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(exportList, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            log.error("盘点任务明细列表导出 出错 {}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(BaseIdDTO dto) {
+        downloadTaskFeign.saveDownloadTask("盘点任务明细列表", EXPORT_WMS_STOCKTAKING_TASK_DETAIL.getCode(), dto);
         return Boolean.TRUE;
-
     }
 
     /**
@@ -380,5 +338,46 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             }
             this.updateBatchById(taskDetailList);
         }
+    }
+
+    @Override
+    public PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(PagingDTO<BaseIdDTO> dto) {
+
+        String mainId = dto.getParams().getId();
+        StocktakingTaskDTO.ViewDTO view = stocktakingTaskMapper.getViewById(mainId);
+        if(Objects.isNull(view)){
+            throw new ServiceException("盘点任务不存在");
+        }
+        //盘点方式
+        StocktakingModeEnum stocktakingMode = view.getStocktakingMode();
+        String stocktakingModeName = Objects.nonNull(stocktakingMode) ? stocktakingMode.getName() : "";
+        //是否盲盘
+        Boolean isBlindCount = StocktakingModeEnum.BLIND_COUNT.equals(stocktakingMode);
+        //盘点人信息
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Arrays.asList(mainId));
+        String stocktakingUserName = taskUserList.stream().
+                map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
+        List<StocktakingTaskDetailDTO.ExportDTO> exportList = baseMapper.listExportByMainId(mainId);
+        if (CollectionUtils.isEmpty(exportList)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        List<String> skuIdList = exportList.stream().map(StocktakingTaskDetailDTO.ExportDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
+
+        for (StocktakingTaskDetailDTO.ExportDTO item : exportList) {
+            item.setStocktakingUserName(stocktakingUserName);
+            String skuName = skuList.stream().filter(s -> s.getId().equals(item.getSkuId())).findFirst().
+                    map(ProductDetailEntity::getName).orElse("");
+            item.setProductName(skuName);
+            item.setStocktakingModeName(stocktakingModeName);
+            //如果是盲盘就要清空一些数据
+            if(isBlindCount){
+                item.setUsableQty(null);
+                item.setDiffQty(null);
+                item.setFrozenQty(null);
+            }
+
+        }
+        return new PagingVO<>(exportList, exportList.size(), dto.getPageSize(), dto.getCurrPage());
     }
 }

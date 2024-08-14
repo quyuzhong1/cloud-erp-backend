@@ -24,7 +24,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -259,13 +258,8 @@ public class QcInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出质检单")
     @PostMapping("/exportQcBill")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "qc_user_id",
-            menuCode = "wms:qcBill:exportQcBill",
-            tableAlias = "qb")
-    @WebAdvanceQuery(handler = QcInfoQueryHandler.class)
-    public ApiResult exportWarehouse(@RequestBody @Valid QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
-        qcInfoService.exportQcBill(dto, response);
+    public ApiResult exportWarehouse(@RequestBody @Valid QcInfoDTO.ExportDTO dto) {
+        qcInfoService.exportQcBill(dto);
         return success();
     }
 
@@ -385,13 +379,8 @@ public class QcInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出质检单日报")
     @PostMapping("/exportDailyQcBill")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "qc_user_id",
-            menuCode = "wms:qcBill:exportQcBill",
-            tableAlias = "qb")
-    @WebAdvanceQuery(handler = QcInfoQueryHandler.class)
-    public ApiResult exportDailyExcel(@RequestBody @Valid QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
-        qcInfoService.exportDailyExcel(dto, response);
+    public ApiResult exportDailyExcel(@RequestBody @Valid QcInfoDTO.ExportDTO dto) {
+        qcInfoService.exportDailyExcel(dto);
         return success();
     }
 

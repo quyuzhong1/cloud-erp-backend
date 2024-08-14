@@ -12,7 +12,6 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -146,13 +145,13 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
 
     /**
      * 导出
+     *
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param dto dto
-     * @param response response
-     * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean exportExcel(@RequestBody SoDeliveryNoticeDTO.PagingParam dto, HttpServletResponse response);
+    Boolean exportExcel(@RequestBody SoDeliveryNoticeDTO.PagingParam dto);
 
 
 
@@ -265,4 +264,6 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     SoDeliveryNoticeEntity getByCode(String key);
 
     List<SoDeliveryNoticeEntity> listByCodes(List<String> codes);
+
+    PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto);
 }

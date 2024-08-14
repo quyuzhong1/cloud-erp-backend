@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -73,8 +72,8 @@ public class VirtualInventoryController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery
-    public ApiResult exportExcel(@RequestBody VirtualInventoryDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = virtualInventoryService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody VirtualInventoryDTO.SearchParamDTO dto) {
+        Boolean flag = virtualInventoryService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

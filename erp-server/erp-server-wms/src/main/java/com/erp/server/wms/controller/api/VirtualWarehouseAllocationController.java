@@ -1,42 +1,37 @@
 package com.erp.server.wms.controller.api;
 
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.server.wms.query.VirtualWarehouseAllocationQueryHandler;
 import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
+import com.erp.server.wms.service.VirtualWarehouseAllocationService;
 import com.erp.server.wms.service.VirtualWarehouseService;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.VirtualWarehouseAllocationService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -227,14 +222,8 @@ public class VirtualWarehouseAllocationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货单")
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:virtualWarehouseAllocation:export",
-            serviceClass = VirtualWarehouseAllocationService.class,
-            keyIdName = "id")
-    @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
-    public void export(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto, HttpServletResponse response) {
-        virtualWarehouseAllocationService.export(dto, response);
+    public void export(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
+        virtualWarehouseAllocationService.export(dto);
     }
 
     /**

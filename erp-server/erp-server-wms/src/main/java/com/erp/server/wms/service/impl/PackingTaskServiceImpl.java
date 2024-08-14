@@ -44,6 +44,7 @@ import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
@@ -84,6 +85,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -147,6 +150,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -660,50 +665,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    public void exportPacking(PackingTaskDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<PackingTaskDTO.PagingViewDTO> list = baseMapper.pagingList(dto);
-        //补充数据
-        buildPackingTask(list);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/packingTaskExport.xlsx";
-        String name = "装箱任务导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportPacking(PackingTaskDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("装箱任务导出", EXPORT_WMS_PACKING_TASK.getCode(), dto);
     }
 
     @Override
-    public void exportPackingDetail(PackingTaskDTO.ExportDTO dto, HttpServletResponse response) {
-        if (CollectionUtils.isEmpty(dto.getIds())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = baseMapper.listPackingDetailBySkuId(dto.getIds(), dto.getPermissionSql());
-        if (CollectionUtils.isEmpty(listPackingDetailDTOS)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //补充数据
-        buildPackingDetailTask(listPackingDetailDTOS);
-        //切换为装箱清单导出
-        buildPackingDetailExportTask(listPackingDetailDTOS);
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/packingDetailExport.xlsx";
-        String name = "装箱清单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(listPackingDetailDTOS, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportPackingDetail(PackingTaskDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("装箱清单导出", EXPORT_WMS_PACKING_TASK_DETAIL.getCode(), dto);
     }
 
     private void buildPackingDetailExportTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
@@ -2142,6 +2110,35 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(ApiError.ERROR_98001);
         }
         return getOutBoxNoBase64(packingTaskEntity.getSourceCode()+"-"+cartonEntity.getBoxNo());
+    }
+
+    @Override
+    public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+
+        if (CollectionUtils.isEmpty(dto.getParams().getIds())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.listPackingDetailBySkuId(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams().getIds(), dto.getParams().getPermissionSql());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //补充数据
+        buildPackingDetailTask(page.getRecords());
+        //切换为装箱清单导出
+        buildPackingDetailExportTask(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(PagingDTO<PackingTaskDTO.PagingParamDTO> dto) {
+
+        Page<PackingTaskDTO.PagingViewDTO> page = baseMapper.pagingList(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        //补充数据
+        buildPackingTask(page.getRecords());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        return new PagingVO<>(page);
     }
 
     /**

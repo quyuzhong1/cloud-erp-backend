@@ -40,6 +40,7 @@ public interface FbaInventoryMapper extends BaseMapper<FbaInventoryEntity> {
      * @return java.util.List<com.erp.model.wms.dto.FbaInventoryDTO.ListDTO>
      **/
     List<FbaInventoryDTO.ListDTO> listExport(@Param("params") FbaInventoryDTO.ExportDTO param);
+    Page<FbaInventoryDTO.ListDTO> listExport(@Param("page") Page<FbaInventoryDTO.ListDTO> page, @Param("params") FbaInventoryDTO.ExportDTO param);
 
     /**
      * 列表汇总数量

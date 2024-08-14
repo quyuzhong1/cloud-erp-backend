@@ -39,6 +39,7 @@ public interface TransferInMapper extends BaseMapper<TransferInEntity> {
      * @return
      */
     List<TransferInDTO.PagingViewDTO> listExport(@Param("params") TransferInDTO.ExportDTO dto);
+    Page<TransferInDTO.PagingViewDTO> listExport(@Param("page") Page<TransferInDTO.PagingViewDTO> page, @Param("params") TransferInDTO.ExportDTO dto);
 
     /**
      * 获取到对应参数

@@ -1,13 +1,12 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-import org.apache.ibatis.annotations.Mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.apache.ibatis.annotations.Param;
-
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -52,6 +51,7 @@ public interface WarehouseLocationMoveMapper extends BaseMapper<WarehouseLocatio
     * @return
     */
     List<WarehouseLocationMoveDTO.PdaPcListDTO> listExport(@Param("params") WarehouseLocationMoveDTO.ExportDTO params);
+    Page<WarehouseLocationMoveDTO.PdaPcListDTO> listExport(@Param("page") Page<WarehouseLocationMoveDTO.PdaPcListDTO> page, @Param("params") WarehouseLocationMoveDTO.ExportDTO params);
     /**
      * 展示详情-PC端
      * @param id

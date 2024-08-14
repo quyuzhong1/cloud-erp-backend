@@ -242,19 +242,12 @@ public class InitStockController extends BaseController {
     /**
      * 导出
      * @param dto
-     * @param response
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出初期库存")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:initStock:paging",
-            tableAlias = "ism"
-    )
-    @WebAdvanceQuery
-    public ApiResult<Void> exportExcel(@RequestBody InitStockDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
-        initStockService.exportExcel(dto, response);
+    public ApiResult<Void> exportExcel(@RequestBody InitStockDTO.ExportSearchParamDTO dto) {
+        initStockService.exportExcel(dto);
         return null;
     }
 

@@ -94,4 +94,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     Boolean updateReceiveStatus(List<String> ids);
 
     void removePoReconciliationDetail (List<String> idList);
+
+    PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
 }

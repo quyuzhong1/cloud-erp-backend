@@ -3,35 +3,38 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.query.PackingTaskQueryHandler;
+import com.erp.server.wms.service.PackingTaskService;
 import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.PackingTaskService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.PackingTaskDTO;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.*;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 装箱任务表
@@ -183,18 +186,11 @@ public class PackingTaskController extends BaseController {
      * @author Luo_WG
      * @date 2023-10-30
      * @param dto
-     * @param response
      */
     @PostMapping("/exportPacking")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:packingTask:exportPacking",
-            tableAlias = "pt"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出装箱任务Excel")
-    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
-    public ApiResult exportPacking(@RequestBody @Validated PackingTaskDTO.PagingParamDTO dto, HttpServletResponse response) {
-        packingTaskService.exportPacking(dto, response);
+    public ApiResult exportPacking(@RequestBody @Validated PackingTaskDTO.PagingParamDTO dto) {
+        packingTaskService.exportPacking(dto);
         return success();
     }
 
@@ -203,18 +199,11 @@ public class PackingTaskController extends BaseController {
      * @author Luo_WG
      * @date 2023-10-30
      * @param dto
-     * @param response
      */
     @PostMapping("/exportPackingDetail")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:packingTask:exportPackingDetail",
-            tableAlias = "pt"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出装箱任务Excel")
-    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
-    public ApiResult exportPackingDetail(@RequestBody @Validated PackingTaskDTO.ExportDTO dto, HttpServletResponse response) {
-        packingTaskService.exportPackingDetail(dto, response);
+    public ApiResult exportPackingDetail(@RequestBody @Validated PackingTaskDTO.ExportDTO dto) {
+        packingTaskService.exportPackingDetail(dto);
         return success();
     }
 

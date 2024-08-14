@@ -24,6 +24,7 @@ public interface InitStockMapper extends BaseMapper<InitStockEntity> {
     IPage<InitStockDTO.ListDTO> page(Page query, @Param("params") InitStockDTO.SearchParamDTO params);
 
     List<InitStockDTO.ListDTO> exportList(@Param("params") InitStockDTO.ExportSearchParamDTO params);
+    Page<InitStockDTO.ListDTO> exportList(@Param("page") Page<InitStockDTO.ListDTO> page, @Param("params") InitStockDTO.ExportSearchParamDTO params);
 
     Integer getTotalQty(@Param("params") InitStockDTO.ConditionDTO param);
 

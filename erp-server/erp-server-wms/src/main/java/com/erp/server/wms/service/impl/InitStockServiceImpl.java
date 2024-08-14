@@ -36,6 +36,7 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -66,6 +67,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INIT_STOCK;
 
 /**
  * <p>
@@ -105,6 +108,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<InitStockDTO.ListDTO> paging(PagingDTO<InitStockDTO.SearchParamDTO> pagingParamDTO) {
@@ -166,19 +171,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     }
 
     @Override
-    public void exportExcel(InitStockDTO.ExportSearchParamDTO param, HttpServletResponse response) {
-        List<InitStockDTO.ListDTO> list = this.baseMapper.exportList(param);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        filling(list);
-        List<ExportInitStockExcelDTO> resultList = BeanMapperUtils.copyList(ExportInitStockExcelDTO.class, list);
-        String fileName = "期初库存数据";
-        try {
-            ExcelUtil.exportAdapt(fileName, "期初库存数据", resultList, ExportInitStockExcelDTO.class, response, null);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportExcel(InitStockDTO.ExportSearchParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("期初库存数据", EXPORT_WMS_INIT_STOCK.getCode(), param);
     }
 
     @Override
@@ -471,6 +465,15 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     public Integer getInitQty(InitStockDTO.ConditionDTO condition) {
         // 根据仓库、sku、日期范围查询期初数量
         return this.baseMapper.getTotalQty(condition);
+    }
+
+    @Override
+    public PagingVO<InitStockDTO.ListDTO> exportInitStock(PagingDTO<InitStockDTO.ExportSearchParamDTO> dto) {
+        Page<InitStockDTO.ListDTO> page = this.baseMapper.exportList(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if(!CollUtil.isEmpty(page.getRecords())) {
+            filling(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     public void send2Inventory(Map<String, InitStockEntity> initStockEntityMap) {

@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,13 +64,11 @@ public class VirtualTransFlowController extends BaseController {
      * @author will
      * @date 2024/6/6 15:30
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
-    @WebAdvanceQuery(handler = VirtualTransFlowQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody VirtualTransFlowDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = virtualTransFlowService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody VirtualTransFlowDTO.SearchParamDTO dto) {
+        Boolean flag = virtualTransFlowService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

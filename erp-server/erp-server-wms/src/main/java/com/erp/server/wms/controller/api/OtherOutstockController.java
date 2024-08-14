@@ -333,7 +333,6 @@ public class OtherOutstockController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出其他出库单")
@@ -343,9 +342,8 @@ public class OtherOutstockController extends BaseController {
             menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
     )
-    @WebAdvanceQuery(handler = OtherOutstockQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody OtherOutstockDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = otherOutstockService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody OtherOutstockDTO.SearchParamDTO dto) {
+        Boolean flag = otherOutstockService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

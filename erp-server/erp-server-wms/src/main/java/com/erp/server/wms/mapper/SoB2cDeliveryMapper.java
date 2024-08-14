@@ -48,6 +48,7 @@ public interface SoB2cDeliveryMapper extends BaseMapper<SoB2cDeliveryEntity> {
      * @return
      */
     List<SoB2cDeliveryDTO.ListDTO> list(@Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
+    Page<SoB2cDeliveryDTO.ListDTO> list(@Param("page") Page<SoB2cDeliveryDTO.ListDTO> page, @Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
 
     List<SoB2cDeliveryDTO.CancelShipmentDTO> cancelShipmentView(@Param("ids") List<String> ids);
 

@@ -7,7 +7,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.entity.WarehouseLocationReplenishEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -40,7 +39,7 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
      * @date: 2024-06-24
      * @author: tanmujin
      */
-    Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto);
 
     /**
      * 新增补货单
@@ -58,4 +57,6 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
     List<WarehouseLocationReplenishDTO.LocationQtyDTO> listLocationQty(List<WarehouseLocationReplenishDTO.LocationQtyDTO> paramlist);
 
     List<BatchResultDTO> verifyReplenishQty(List<WarehouseLocationReplenishDTO.HandleDTO> dtoList);
+
+    PagingVO<WarehouseLocationReplenishDTO.ViewDTO> exportWarehouseLocationReplenish(PagingDTO<WarehouseLocationReplenishDTO.ExportParamDTO> dto);
 }

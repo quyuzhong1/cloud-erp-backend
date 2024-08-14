@@ -4,10 +4,10 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -39,10 +39,9 @@ public interface VirtualInventoryDiffService extends SuperService<VirtualInvento
      * @author will
      * @date 2024/6/3 17:58
      * @param dto
-     * @param response
      * @return Boolean
      */
-    Boolean exportExcel(VirtualInventoryDiffDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(VirtualInventoryDiffDTO.SearchParamDTO dto);
     /**
      * 库存差异数量
      * @author will
@@ -74,4 +73,14 @@ public interface VirtualInventoryDiffService extends SuperService<VirtualInvento
      * @return List<ListSuggestQtyDTO>
      */
     List<VirtualInventoryDiffDTO.ListSuggestQtyDTO> listSuggestQty(List<VirtualInventoryDiffDTO.ListSuggestQtyParamDTO> list);
+
+    /**
+     * 差异数据
+     */
+    PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto);
+
+    /**
+     * 明细数据
+     */
+    PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> exportWarehouseStatisticsData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto);
 }

@@ -16,13 +16,11 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.FieldConstant;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpSyncKingdeeDTO;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -43,6 +41,7 @@ import com.erp.model.wms.enums.inventory.InventoryAgeTitleEnum;
 import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpSyncFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -67,13 +66,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * @Classname: InventoryServiceImpl
@@ -104,6 +104,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -473,63 +475,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public void exportExcel(InventoryDTO.ExportSearchParamDTO param, HttpServletResponse response) {
-        // 如果是否选导出处理
-        dealExportParams(param);
-        InventoryDTO.SearchParamDTO searchParamDTO = BeanMapperUtils.map(InventoryDTO.SearchParamDTO.class, param);
-        List<InventoryDTO.PagingViewDTO> dataList = new ArrayList<>();
-        String excelPath = "";
-        if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
-            dataList = inventoryMapper.exportByWarehouse(searchParamDTO);
-            excelPath = "excel/inventory.xlsx";
-        }
-        if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())) {
-            dataList = inventoryMapper.exportByArea(searchParamDTO, param.getWarehouseAreaCodeList());
-            excelPath = "excel/inventory_area.xlsx";
-        }
-        if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
-            if(StringUtils.isNotBlank(param.getWarehouseLocationName())){
-                List<WarehouseLocationEntity> list = warehouseLocationService.listByLocationName(param.getWarehouseLocationName());
-                if(! list.isEmpty()){
-                    List<String> codeList = list.stream().map(WarehouseLocationEntity::getCode).distinct().collect(Collectors.toList());
-                    dataList = this.baseMapper.exportByLocation(searchParamDTO, codeList);
-                }
-            }else {
-                dataList = this.baseMapper.exportByLocation(searchParamDTO, param.getWarehouseLocationCodeList());
-            }
-            excelPath = "excel/inventory_location.xlsx";
-        }
-
-        if (CollUtil.isEmpty(dataList)) {
-            return;
-        }
-        fillInventoryPageData(dataList);
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        String fileName = date + "即时库存导出";
-        try {
-            new ExcelPrintUtils().patchExport(dataList, response, fileName, excelPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
-//        List<InventoryDTO.PagingViewDTO> dataList = inventoryMapper.exportInv(param);
-//        if (CollUtil.isEmpty(dataList)) {
-//            return;
-//        }
-
-        // 填充名称
-        /*fillInventoryPageData(dataList);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/inventory.xlsx";
-        String name = "即时库存导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }*/
+    public void exportExcel(InventoryDTO.ExportSearchParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("即时库存导出", EXPORT_WMS_INVENTORY.getCode(), param);
     }
 
     private static void dealExportParams(InventoryDTO.ExportSearchParamDTO param) {
@@ -572,33 +519,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public void exportInventoryAge(InventoryReportDTO.ExportInventoryAgeSearchParamDTO paramDTO, HttpServletResponse response) {
-        // 勾选导出处理
-        if (CollUtil.isNotEmpty(paramDTO.getItems())) {
-            List<InventoryReportDTO.ExportInventoryAgeItem> checkData = paramDTO.getItems();
-            List<String> warehouseIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseId).distinct().collect(Collectors.toList());
-            List<String> skuIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getSkuId).distinct().collect(Collectors.toList());
-            List<String> warehouseLocation = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseLocation).distinct().collect(Collectors.toList());
-            paramDTO.setWarehouseIdList(warehouseIds);
-            paramDTO.setSkuIdList(skuIds);
-            paramDTO.setWarehouseLocationList(warehouseLocation);
-        }
-
-        // 获取用户区间配置
-        List<CfgUserRangeDTO.UserRangeDataDTO> userRanges = sysUserFeign.getUserRangeByType(UserRangeTypeEnum.INVENTORY_AGE.getCode(), Boolean.TRUE);
-        List<InventoryReportDTO.InventoryAgeRangeDTO> userRangeList = BeanMapperUtils.copyList(InventoryReportDTO.InventoryAgeRangeDTO.class, userRanges);
-        paramDTO.setUserRangeList(userRangeList);
-
-        List<LinkedHashMap> dataList = inventoryMapper.exportInventoryPage(paramDTO);
-        if (CollUtil.isEmpty(dataList)) {
-            return;
-        }
-        // 标题及值赋值
-        List<LinkedHashMap> resultList = fillInventoryAgePageData(dataList, userRangeList);
-
-        // 导出Excel
-        exportInventoryAgeExcel(resultList, response);
-
+    public void exportInventoryAge(InventoryReportDTO.ExportInventoryAgeSearchParamDTO paramDTO) {
+        downloadTaskFeign.saveDownloadTask("库龄计算表数据", EXPORT_WMS_INVENTORY_AGE.getCode(), paramDTO);
     }
 
     @Override
@@ -1393,6 +1315,35 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
         fillInventoryPageData(dataList.getRecords());
         return new PagingVO<>(dataList);
+    }
+
+    @Override
+    public PagingVO<InventoryDTO.PagingViewDTO> exportInventoryAge(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto) {
+
+        // 勾选导出处理
+//        if (CollUtil.isNotEmpty(dto.getParams().getItems())) {
+//            List<InventoryReportDTO.ExportInventoryAgeItem> checkData = dto.getParams().getItems();
+//            List<String> warehouseIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseId).distinct().collect(Collectors.toList());
+//            List<String> skuIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getSkuId).distinct().collect(Collectors.toList());
+//            List<String> warehouseLocation = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseLocation).distinct().collect(Collectors.toList());
+//            dto.getParams().setWarehouseIdList(warehouseIds);
+//            dto.getParams().setSkuIdList(skuIds);
+//            dto.getParams().setWarehouseLocationList(warehouseLocation);
+//        }
+//
+//        // 获取用户区间配置
+//        List<CfgUserRangeDTO.UserRangeDataDTO> userRanges = sysUserFeign.getUserRangeByType(UserRangeTypeEnum.INVENTORY_AGE.getCode(), Boolean.TRUE);
+//        List<InventoryReportDTO.InventoryAgeRangeDTO> userRangeList = BeanMapperUtils.copyList(InventoryReportDTO.InventoryAgeRangeDTO.class, userRanges);
+//        dto.getParams().setUserRangeList(userRangeList);
+//
+//        List<LinkedHashMap> dataList = inventoryMapper.exportInventoryPage(dto.getParams());
+//
+//        // 标题及值赋值
+//        List<LinkedHashMap> resultList = fillInventoryAgePageData(dataList, userRangeList);
+//
+//        // 导出Excel
+//        exportInventoryAgeExcel(resultList, response);
+        return null;
     }
 
     @Override

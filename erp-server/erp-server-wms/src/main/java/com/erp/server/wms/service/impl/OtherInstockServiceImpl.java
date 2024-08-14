@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.excel.EasyExcel;
@@ -92,6 +93,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OTHER_IN_STOCK;
+
 /**
  * <p>
  * 服务实现类
@@ -152,7 +155,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<OtherInstockDTO.ListDTO> paging(PagingDTO<OtherInstockDTO.SearchParamDTO> pagingDTO) {
@@ -483,23 +487,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
-    public Boolean exportExcel(OtherInstockDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<OtherInstockDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        doOpHandleData(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/otherInstock.xlsx";
-        String name = "其他入库单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(OtherInstockDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("其他入库单导出", EXPORT_WMS_OTHER_IN_STOCK.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -1120,6 +1109,15 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         if (!otherInstockDetailService.saveBatch(detailEntityList)){
             throw new ServiceException("明细信息批量保存失败");
         }
+    }
+
+    @Override
+    public PagingVO<OtherInstockDTO.ListDTO> exportOtherInStock(PagingDTO<OtherInstockDTO.SearchParamDTO> dto) {
+        Page<OtherInstockDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            doOpHandleData(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

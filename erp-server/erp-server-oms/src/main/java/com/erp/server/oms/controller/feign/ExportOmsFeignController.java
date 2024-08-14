@@ -41,13 +41,13 @@ public class ExportOmsFeignController {
 
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
-    PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(@RequestBody PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
+    public PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(@RequestBody PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
         return customerB2bSellerChangeService.exportCustomerB2BSellerChange(dto);
     }
 
     @PostMapping("/soChange")
     @WebAdvanceQuery(handler = SoChangeQueryHandler.class)
-    PagingVO<SoChangeDTO.PagingViewDTO> exportSoChange(@RequestBody PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
+    public PagingVO<SoChangeDTO.PagingViewDTO> exportSoChange(@RequestBody PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
         return soChangeService.exportSoChange(dto);
     }
 
@@ -58,39 +58,39 @@ public class ExportOmsFeignController {
             tableAlias = "sr"
     )
     @WebAdvanceQuery(handler = SoReturnQueryHandler.class)
-    PagingVO<SoReturnDTO.PagingView> exportSoReturn(@RequestBody PagingDTO<SoReturnDTO.PagingParam> dto) {
+    public PagingVO<SoReturnDTO.PagingView> exportSoReturn(@RequestBody PagingDTO<SoReturnDTO.PagingParam> dto) {
         return soReturnService.exportSoReturn(dto);
     }
 
     @PostMapping("/soB2CAbnormal")
     @WebAdvanceQuery(handler = SoB2cAbnormalQueryHandler.class)
-    PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
+    public PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
         return soB2cService.exportSoB2CAbnormal(dto);
     }
 
     @PostMapping("/soB2C")
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
-    PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
+    public PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
         return soB2cService.exportSoB2C(dto);
     }
 
     @PostMapping("/soB2CDeclare")
-    PagingVO<SoB2cDeclareProductDTO.ViewDTO> exportSoB2CDeclare(@RequestBody PagingDTO<SoB2cDeclareProductDTO.ListDTO> dto) {
+    public PagingVO<SoB2cDeclareProductDTO.ViewDTO> exportSoB2CDeclare(@RequestBody PagingDTO<SoB2cDeclareProductDTO.ListDTO> dto) {
         return soB2cDeclareProductService.exportSoB2CDeclare(dto);
     }
 
     @PostMapping("/soB2CProductSales")
-    PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(@RequestBody PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
+    public PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(@RequestBody PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
         return soB2cService.exportSoB2CProductSales(dto);
     }
 
     @PostMapping("/platformSku")
-    PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.ExportDTO> dto) {
+    public PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.ExportDTO> dto) {
         return skuMappingService.exportPlatformSku(dto);
     }
 
     @PostMapping("/warehouseSku")
-    PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
+    public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
         return skuMappingService.exportWarehouseSku(dto);
     }
 
@@ -101,19 +101,19 @@ public class ExportOmsFeignController {
             serviceClass = ShopInfoService.class,
             keyIdName = "id")
     @WebAdvanceQuery(handler = ShopQueryHandler.class)
-    PagingVO<ShopDTO.PagingViewDTO> exportShop(@RequestBody PagingDTO<ShopDTO.ExportDTO> dto) {
+    public PagingVO<ShopDTO.PagingViewDTO> exportShop(@RequestBody PagingDTO<ShopDTO.ExportDTO> dto) {
         return shopInfoService.exportShop(dto);
     }
 
     @PostMapping("/customer")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
-    PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto) {
+    public PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto) {
         return customerInfoService.exportCustomer(dto);
     }
 
     @PostMapping("/so")
     @WebAdvanceQuery(handler = SoInfoQueryHandler.class)
-    PagingVO<SoInfoDTO.PagingViewDTO> exportSo(@RequestBody PagingDTO<SoInfoDTO.ExportDTO> dto) {
+    public PagingVO<SoInfoDTO.PagingViewDTO> exportSo(@RequestBody PagingDTO<SoInfoDTO.ExportDTO> dto) {
         return soInfoService.exportSo(dto);
     }
 }

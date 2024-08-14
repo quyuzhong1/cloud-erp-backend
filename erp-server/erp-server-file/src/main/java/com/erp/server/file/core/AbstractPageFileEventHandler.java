@@ -11,9 +11,6 @@ import java.util.List;
 @Slf4j
 public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEventHandler<T> {
 
-    // 以1000条数据进行拆分
-    private static final int LIMIT = 1000;
-
     /**
      * 顺序获取需要下载的数据
      *
@@ -23,7 +20,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     @SuppressWarnings("unchecked")
     public List<T> listSeqData(P p) {
         PagingDTO<P> dto = new PagingDTO<>();
-        dto.setPageSize(LIMIT);
+        dto.setPageSize(getPageSize());
         dto.setCurrPage(1);
         List<T> dataList = new ArrayList<>();
         boolean hasNext = true;
@@ -32,7 +29,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             PagingVO<T> data = getPageData(dto);
             dataList.addAll((Collection<? extends T>) data.getList());
             int totalCount = data.getTotalCount();
-            if (totalCount <= dto.getCurrPage() * LIMIT) {
+            if (totalCount <= dto.getCurrPage() * getPageSize()) {
                 hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);
@@ -40,6 +37,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         return dataList;
     }
 
+    /**
+     * 分页大小，可重写
+     */
+    protected int getPageSize() {
+        return 1000;
+    }
     /**
      * 分批获取数据
      *

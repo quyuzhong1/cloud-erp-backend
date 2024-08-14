@@ -8,24 +8,23 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportFormsManageMapper;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PURCHASE_BUSINESS;
 
 /**
  * 报表管理
@@ -46,7 +45,8 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
 
     @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> purchaseBusinessGatherTablePaging(PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -163,25 +163,20 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
     }
     */
     @Override
-    public Boolean exportExcelPurchaseBusiness(PurchaseBusinessGatherTableDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<PurchaseBusinessGatherTableDTO.PagingViewDTO> viewDTOList = baseMapper.paging(dto);
-        for (PurchaseBusinessGatherTableDTO.PagingViewDTO viewDTO : viewDTOList) {
+    public Boolean exportExcelPurchaseBusiness(PurchaseBusinessGatherTableDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("采购业务汇总表", EXPORT_WMS_PURCHASE_BUSINESS.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<PurchaseBusinessGatherTableDTO.PagingViewDTO> exportPurchaseBusiness(PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto) {
+        IPage<PurchaseBusinessGatherTableDTO.PagingViewDTO> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        for (PurchaseBusinessGatherTableDTO.PagingViewDTO viewDTO : page.getRecords()) {
             if (viewDTO.getAvgPrice() != null) {
                 viewDTO.setReturnAmount(viewDTO.getAvgPrice().multiply(BigDecimal.valueOf(viewDTO.getRefundQty() + viewDTO.getReplenishQty())));
             }
         }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/purchaseBusinessGatherExport.xlsx";
-        String name = "采购业务汇总表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(viewDTOList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return Boolean.TRUE;
+        return new PagingVO<>(page);
     }
 
     /**

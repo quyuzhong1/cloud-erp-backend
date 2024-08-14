@@ -11,7 +11,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.server.wms.service.OtherOutstockService;
@@ -335,13 +334,8 @@ public class PdaOtherOutstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出其他出库单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherOutstock:paging",
-            tableAlias = "oo"
-    )
     public ApiResult exportExcel(@RequestBody OtherOutstockDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = otherOutstockService.exportExcel(dto, response);
+        Boolean flag = otherOutstockService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 }

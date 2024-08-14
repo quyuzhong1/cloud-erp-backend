@@ -1,11 +1,10 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
 import com.common.business.vo.PagingVO;
-import javax.servlet.http.HttpServletResponse;
+
 import java.util.List;
 
 /**
@@ -118,14 +117,14 @@ public interface SubcontractIssueService extends SuperService<SubcontractIssueEn
     BatchResultDTO cancelProcess(String id);
 
     /**
-    * 导出Excel
-    * @author will
-    * @date: 2024-01-08
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(SubcontractIssueDTO.PagingParamDTO dto, HttpServletResponse response);
+     * 导出Excel
+     *
+     * @param dto
+     * @return
+     * @author will
+     * @date: 2024-01-08
+     */
+    void exportList(SubcontractIssueDTO.PagingParamDTO dto);
 
     /**
     * 审核通过回调方法
@@ -167,4 +166,6 @@ public interface SubcontractIssueService extends SuperService<SubcontractIssueEn
      * @param syncKingdeeId
      */
     Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId);
+
+    PagingVO<SubcontractIssueDTO.ListDTO> exportSubcontractIssue(PagingDTO<SubcontractIssueDTO.PagingParamDTO> dto);
 }

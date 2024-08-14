@@ -20,4 +20,6 @@ public interface WarehouseLocationSafetyInventoryMapper extends BaseMapper<Wareh
     IPage<WarehouseLocationSafetyInventoryDTO.ViewDTO> paging(Page<Object> page, @Param("param") WarehouseLocationSafetyInventoryDTO.SearchParamDTO searchParamDto);
 
     List<WarehouseLocationSafetyInventoryEntity> listByParam(@Param("param") WarehouseLocationSafetyInventoryDTO.SearchParamDTO searchParam);
+
+    Page<WarehouseLocationSafetyInventoryEntity> listByParam(@Param("page") Page<WarehouseLocationSafetyInventoryEntity> page,@Param("param") WarehouseLocationSafetyInventoryDTO.exportParamDTO params);
 }

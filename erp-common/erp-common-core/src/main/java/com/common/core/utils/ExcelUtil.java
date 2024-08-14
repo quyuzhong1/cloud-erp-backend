@@ -281,8 +281,7 @@ public class ExcelUtil {
             }
             list2.add(objects);
         }
-        try {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try(ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             // 这里需要设置不关闭流
             EasyExcelFactory.write(outputStream)
                     .head(hs)

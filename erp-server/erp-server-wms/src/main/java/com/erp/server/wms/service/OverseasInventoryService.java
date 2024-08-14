@@ -5,8 +5,6 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 
-import javax.servlet.http.HttpServletResponse;
-
 /**
  * <p>
  * 海外仓库存 服务类
@@ -56,12 +54,13 @@ public interface OverseasInventoryService extends SuperService<OverseasInventory
 
     /**
      * 导出海外仓
-     * @author Jim
-     * @date: 2023-11-21
+     *
      * @param dto
      * @return
+     * @author Jim
+     * @date: 2023-11-21
      */
-    Boolean exportExcel(OverseasInventoryDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(OverseasInventoryDTO.ExportDTO dto);
 
     Boolean saveOrUpdateByPlatform(OverseasInventoryEntity entity);
 
@@ -69,4 +68,9 @@ public interface OverseasInventoryService extends SuperService<OverseasInventory
      * 处理没有映射关系
      */
     void handleNotMapping(String platform);
+
+    /**
+     * 导出
+     */
+    PagingVO<OverseasInventoryDTO.ListDTO> exportOverseasInventory(PagingDTO<OverseasInventoryDTO.ExportDTO> dto);
 }

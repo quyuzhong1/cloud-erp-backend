@@ -1,12 +1,11 @@
 package com.erp.server.wms.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.QcInfoDTO;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -49,6 +48,7 @@ public interface SoReturnReceiveMapper extends BaseMapper<SoReturnReceiveEntity>
      * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.PagingView>
      **/
     List<SoReturnReceiveDTO.PagingView> soReturnReceiveExportExcel(@Param("params") SoReturnReceiveDTO.PagingParam dto);
+    Page<SoReturnReceiveDTO.PagingView> soReturnReceiveExportExcel(@Param("page") Page<SoReturnReceiveDTO.PagingView> page, @Param("params") SoReturnReceiveDTO.PagingParam dto);
 
     /**
      * 下推质检单查询

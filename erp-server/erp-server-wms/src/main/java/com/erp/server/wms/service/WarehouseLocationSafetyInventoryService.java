@@ -53,7 +53,7 @@ public interface WarehouseLocationSafetyInventoryService extends SuperService<Wa
      * @date: 2024-06-21
      * @author: tanmujin
      */
-    boolean exportExcel(WarehouseLocationSafetyInventoryDTO.exportParamDTO dto, HttpServletResponse response);
+    boolean exportExcel(WarehouseLocationSafetyInventoryDTO.exportParamDTO dto);
 
     /**
      * 下载导入模板
@@ -63,4 +63,6 @@ public interface WarehouseLocationSafetyInventoryService extends SuperService<Wa
      * @author: tanmujin
      */
     void downloadTemplate(HttpServletResponse response);
+
+    PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> exportWarehouseLocationSafetyInventory(PagingDTO<WarehouseLocationSafetyInventoryDTO.exportParamDTO> dto);
 }

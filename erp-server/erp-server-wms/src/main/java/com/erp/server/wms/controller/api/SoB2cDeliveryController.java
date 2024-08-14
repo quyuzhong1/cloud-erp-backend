@@ -107,19 +107,12 @@ public class SoB2cDeliveryController extends BaseController {
      * @Author zdy
      * @Date 2024/4/18 16:51
      * @param dto
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出b2c发货单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:soB2cDelivery:paging",
-            tableAlias = "sbd"
-    )
-    @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody @Validated SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = soB2cDeliveryService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody @Validated SoB2cDeliveryDTO.PagingParamDTO dto) {
+        Boolean flag = soB2cDeliveryService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

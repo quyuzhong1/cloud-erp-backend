@@ -624,14 +624,8 @@ public class PdaWarehouseLocationMoveController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓位移动")
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:pdaWarehouseLocationMoveInfo:export",
-            serviceClass = WarehouseLocationMoveService.class,
-            keyIdName = "id")
-    @WebAdvanceQuery(handler = MarehouseMoveInfoQueryHandler.class)
-    public void listExport(@RequestBody WarehouseLocationMoveDTO.ExportDTO dto, HttpServletResponse response) {
-        warehouseLocationMoveService.listExport(dto,response);
+    public void listExport(@RequestBody WarehouseLocationMoveDTO.ExportDTO dto) {
+        warehouseLocationMoveService.listExport(dto);
     }
     /**
      * 导出明细

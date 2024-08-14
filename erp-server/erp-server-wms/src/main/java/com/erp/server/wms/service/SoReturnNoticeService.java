@@ -3,7 +3,6 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
@@ -11,7 +10,6 @@ import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.common.business.service.SuperService;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -140,13 +138,13 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
 
     /**
      * 导出
+     *
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param dto dto
-     * @param response response
-     * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean exportExcel(@RequestBody SoReturnNoticeDTO.PagingParam dto, HttpServletResponse response);
+    Boolean exportExcel(@RequestBody SoReturnNoticeDTO.PagingParam dto);
 
     /**
      * 下推退货通知单-保存
@@ -176,4 +174,5 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
     List<SoReturnNoticeEntity> listBySourceId(List<String> sourceIds);
 
 
+    PagingVO<SoReturnNoticeDTO.PagingView> exportSoReturnNotice(PagingDTO<SoReturnNoticeDTO.PagingParam> dto);
 }

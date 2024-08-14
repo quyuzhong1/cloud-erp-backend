@@ -40,9 +40,10 @@ public interface InitStockService extends SuperService<InitStockEntity> {
 
     /**
      * 导出Excel
+     *
      * @param param
      */
-    void exportExcel(InitStockDTO.ExportSearchParamDTO param, HttpServletResponse response);
+    void exportExcel(InitStockDTO.ExportSearchParamDTO param);
 
     /**
      * @description: 导入
@@ -127,6 +128,8 @@ public interface InitStockService extends SuperService<InitStockEntity> {
      */
     Integer getInitQty(InitStockDTO.ConditionDTO condition);
 
-
-
+    /**
+     * 期初导出
+     */
+    PagingVO<InitStockDTO.ListDTO> exportInitStock(PagingDTO<InitStockDTO.ExportSearchParamDTO> dto);
 }

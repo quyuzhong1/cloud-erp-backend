@@ -1,12 +1,10 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -22,6 +20,7 @@ import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.listener.WarehouseLocationSafetyInventoryExcelListener;
 import com.erp.server.wms.mapper.WarehouseLocationSafetyInventoryMapper;
 import com.erp.server.wms.service.DictBasicService;
@@ -43,6 +42,8 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE_LOCATION_SAFETY_INVENTORY;
+
 /**
  * 仓位安全库存
  * @date 2024-06-21
@@ -57,7 +58,8 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
     private WarehouseService warehouseService;
     @Resource
     private DictBasicService dictBasicService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> paging(PagingDTO<WarehouseLocationSafetyInventoryDTO.SearchParamDTO> paramDto) {
         Page<Object> page = new Page<>(paramDto.getCurrPage(), paramDto.getPageSize());
@@ -159,20 +161,8 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public boolean exportExcel(WarehouseLocationSafetyInventoryDTO.exportParamDTO dto, HttpServletResponse response) {
-        WarehouseLocationSafetyInventoryDTO.SearchParamDTO searchParamDto = new WarehouseLocationSafetyInventoryDTO.SearchParamDTO();
-        BeanMapper.copy(dto, searchParamDto);
-        List<WarehouseLocationSafetyInventoryEntity> entityList = this.baseMapper.listByParam(searchParamDto);
-        List<WarehouseLocationSafetyInventoryDTO.ViewDTO> viewList = BeanMapper.copyList(entityList, WarehouseLocationSafetyInventoryDTO.ViewDTO.class);
-        fillViewList(viewList);
-        try {
-            String fileName = "仓位安全库存" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            String excelPath = "excel/warehouseLocationSafetyInventoryExport.xlsx";
-            new ExcelPrintUtils().patchExport(viewList, response, fileName, excelPath);
-        } catch (IOException e) {
-            log.error("仓位安全库存导出失败：{}", e);
-            return Boolean.FALSE;
-        }
+    public boolean exportExcel(WarehouseLocationSafetyInventoryDTO.exportParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("仓位安全库存", EXPORT_WMS_WAREHOUSE_LOCATION_SAFETY_INVENTORY.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -198,6 +188,14 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
             e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_95131);
         }
+    }
+
+    @Override
+    public PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> exportWarehouseLocationSafetyInventory(PagingDTO<WarehouseLocationSafetyInventoryDTO.exportParamDTO> dto) {
+        Page<WarehouseLocationSafetyInventoryEntity> page = this.baseMapper.listByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        List<WarehouseLocationSafetyInventoryDTO.ViewDTO> viewList = BeanMapper.copyList(page.getRecords(), WarehouseLocationSafetyInventoryDTO.ViewDTO.class);
+        fillViewList(viewList);
+        return new PagingVO<>(viewList,(int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
     /**

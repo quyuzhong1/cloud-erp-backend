@@ -223,10 +223,9 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 导出列表
      *
      * @param dto
-     * @param response
      * @return
      */
-    Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto);
 
     /**
      * 手动标发(批量)
@@ -377,4 +376,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return BatchResultDTO
      */
     BatchResultDTO handleErrorData(String id);
+
+    /**
+     * 导出发货单
+     * @param dto
+     * @return
+     */
+    PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto);
 }

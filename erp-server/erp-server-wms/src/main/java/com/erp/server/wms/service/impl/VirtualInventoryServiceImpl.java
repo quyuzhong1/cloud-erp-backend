@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -13,12 +12,10 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -27,6 +24,7 @@ import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryMapper;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.VirtualInventoryService;
@@ -39,11 +37,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY;
 
 /**
  * <p>
@@ -64,7 +64,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     private VirtualWarehouseService virtualWarehouseService;
     @Resource
     private InventoryService inventoryService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<VirtualInventoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
@@ -77,41 +78,43 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
 
     @Override
-    public Boolean exportExcel(VirtualInventoryDTO.SearchParamDTO dto, HttpServletResponse response) {
-        //总数
-        Integer count = baseMapper.pagingCount(dto);
-        if (count > MathUtil.EXPORT_MAX_COUNT) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_EXPORT_SIZE);
-        }
-        PagingDTO<VirtualInventoryDTO.SearchParamDTO> pagingParamDTO = new PagingDTO<>();
-        pagingParamDTO.setParams(dto);
-        pagingParamDTO.setPageSize(-1);
-        PagingVO<VirtualInventoryDTO.ListDTO> resultList = this.paging(pagingParamDTO);
-        List<VirtualInventoryDTO.ListDTO> list = (List<VirtualInventoryDTO.ListDTO>) resultList.getList();
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //数据赋值处理
-        fillPageData(list);
-
-        //明细数据
-        List<VirtualInventoryDTO.ListDetailDTO> detailList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().toArray(VirtualInventoryDTO.ListDetailDTO[]::new))).collect(Collectors.toList());
-        List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
-        pairList.add(new Pair<>(MathUtil.ZERO, list));
-        pairList.add(new Pair<>(MathUtil.ONE, detailList));
-
-        String name = "虚拟仓库库存信息";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/virtualInventory.xlsx";
-        try {
-            new ExcelPrintUtils().sheetPatchExport(pairList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("虚拟仓库库存信息导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(VirtualInventoryDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("虚拟仓库库存信息", EXPORT_WMS_VIRTUAL_INVENTORY.getCode(), dto);
+//
+//        //总数
+//        Integer count = baseMapper.pagingCount(dto);
+//        if (count > MathUtil.EXPORT_MAX_COUNT) {
+//            throw new ServiceException(ApiError.ERROR_EXCEL_EXPORT_SIZE);
+//        }
+//        PagingDTO<VirtualInventoryDTO.SearchParamDTO> pagingParamDTO = new PagingDTO<>();
+//        pagingParamDTO.setParams(dto);
+//        pagingParamDTO.setPageSize(-1);
+//        PagingVO<VirtualInventoryDTO.ListDTO> resultList = this.paging(pagingParamDTO);
+//        List<VirtualInventoryDTO.ListDTO> list = (List<VirtualInventoryDTO.ListDTO>) resultList.getList();
+//        if (CollectionUtils.isEmpty(list)) {
+//            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+//        }
+//        //数据赋值处理
+//        fillPageData(list);
+//
+//        //明细数据
+//        List<VirtualInventoryDTO.ListDetailDTO> detailList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().toArray(VirtualInventoryDTO.ListDetailDTO[]::new))).collect(Collectors.toList());
+//        List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
+//        pairList.add(new Pair<>(MathUtil.ZERO, list));
+//        pairList.add(new Pair<>(MathUtil.ONE, detailList));
+//
+//        String name = "虚拟仓库库存信息";
+//        StringBuffer sb = new StringBuffer();
+//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//        sb.append(date);
+//        sb.append(name);
+//        String excelPath = "excel/virtualInventory.xlsx";
+//        try {
+//            new ExcelPrintUtils().sheetPatchExport(pairList, response, sb.toString(), excelPath);
+//        } catch (IOException e) {
+//            log.error("虚拟仓库库存信息导出出错 >>>>>{}", e);
+//            return Boolean.FALSE;
+//        }
         return Boolean.TRUE;
     }
 

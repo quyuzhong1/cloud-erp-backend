@@ -1,27 +1,17 @@
 package com.erp.server.wms.service;
 
-import cn.hutool.core.lang.Tuple;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OtherInstockDTO;
-import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -140,14 +130,13 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      */
     Boolean cancelProcess(List<String> ids);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/5/17 15:17
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(OtherInstockDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(OtherInstockDTO.SearchParamDTO dto);
 
     /**
      * @description: 更新金蝶状态等信息
@@ -217,4 +206,9 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * {@code @date:} 2024/03/21
      */
     void importBatchSave(List<OtherInstockEntity> saveList);
+
+    /**
+     * 其他入库
+     */
+    PagingVO<OtherInstockDTO.ListDTO> exportOtherInStock(PagingDTO<OtherInstockDTO.SearchParamDTO> dto);
 }

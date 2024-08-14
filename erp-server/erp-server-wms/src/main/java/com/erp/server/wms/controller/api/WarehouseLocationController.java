@@ -1020,10 +1020,9 @@ public class WarehouseLocationController extends BaseController {
     /**
      * 导出仓位Excel
      */
-    @WebAdvanceQuery(handler = WarehouseLocationInfoQueryHandler.class)
     @PostMapping("/exportExcel")
-    public void exportExcel(@RequestBody @Validated WarehouseLocationDTO.exportParamDto dto, HttpServletResponse response){
-        warehouseLocationService.exportExcel(dto, response);
+    public void exportExcel(@RequestBody @Validated WarehouseLocationDTO.exportParamDto dto){
+        warehouseLocationService.exportExcel(dto);
     }
 
     /**

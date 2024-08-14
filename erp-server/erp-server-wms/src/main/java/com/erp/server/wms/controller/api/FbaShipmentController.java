@@ -71,9 +71,8 @@ public class FbaShipmentController extends BaseController {
      * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
      */
     @PostMapping("/export")
-    @WebAdvanceQuery
-    public ApiResult export(@RequestBody @Validated FbaShipmentDTO.PagingParamDTO dto, HttpServletResponse response) {
-        fbaShipmentService.export(dto,response);
+    public ApiResult export(@RequestBody @Validated FbaShipmentDTO.PagingParamDTO dto) {
+        fbaShipmentService.export(dto);
         return success();
     }
 
