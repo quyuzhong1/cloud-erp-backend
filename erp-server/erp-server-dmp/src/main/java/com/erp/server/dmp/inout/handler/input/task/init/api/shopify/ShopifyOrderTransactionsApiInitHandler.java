@@ -67,17 +67,15 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-        List<String> orderIds = findMongoData.stream().map(req -> req.get("orderId").toString()).distinct().collect(Collectors.toList());
-
         ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(findMongoData.get(0).get("nextLevelId").toString());
         if (null == shopInfoDTO) {
             log.error("[Shopify订单交易信息下载]从缓存中获取shopify token 失败: shopId={}", findMongoData.get(0).get("nextLevelId").toString());
             throw new ServiceException();
         }
-        log.error("ShopifyOrderTransactionsApiInitHandler:" + findMongoData);
 
 
-        /*for (Map<String, Object> findMongoDatum : findMongoData) {
+
+        for (Map<String, Object> findMongoDatum : findMongoData) {
             //特定国家需要查询税号
 
             Object shippingAddressObj = findMongoDatum.get("shippingAddress");
@@ -89,6 +87,9 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
                     String taxTitle = countryTaxMap.get(country);
                     ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken());
                     ShopifyOrderResponse order = shopifyGraphQLClient.getOrderLocalizationExtensions(findMongoDatum.get("orderId").toString());
+
+                    log.error("ShopifyOrderTransactionsApiInitHandler返回值:" + order);
+
                     List<ShopifyOrderResponse.Data.Node.LocalizationExtensions.Nodes> nodes = Optional.of(order)
                             .map(ShopifyOrderResponse::getData)
                             .map(ShopifyOrderResponse.Data::getNode)
@@ -105,7 +106,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
                 }
 
             }
-        }*/
+        }
         return dmpInputTaskInitDTOList;
     }
 }
