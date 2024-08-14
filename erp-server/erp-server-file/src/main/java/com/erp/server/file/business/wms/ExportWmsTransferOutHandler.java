@@ -3,7 +3,6 @@ package com.erp.server.file.business.wms;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
@@ -25,6 +24,7 @@ public class ExportWmsTransferOutHandler extends AbstractPageFileEventHandler<Tr
     private ExportWmsFeign exportWmsFeign;
     @Override
     public String getExcelPath() {
+        // todo
         return "excel/wms/aliexpressDeliveryExport.xlsx";
     }
 

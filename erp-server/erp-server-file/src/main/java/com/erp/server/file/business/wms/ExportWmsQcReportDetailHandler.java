@@ -4,12 +4,9 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
-import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -42,6 +39,7 @@ public class ExportWmsQcReportDetailHandler extends AbstractPageFileEventHandler
 
     @Override
     public String getExcelPath() {
+        // todo
         return "";
     }
 }

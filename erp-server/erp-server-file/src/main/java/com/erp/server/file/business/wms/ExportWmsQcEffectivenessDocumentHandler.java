@@ -15,7 +15,6 @@ import javax.annotation.Resource;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_EFFECTIVENESS_DOCUMENT;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_EFFECTIVENESS_PERSONNEL;
 
 @Component
 @Slf4j
@@ -43,6 +42,7 @@ public class ExportWmsQcEffectivenessDocumentHandler extends AbstractPageFileEve
 
     @Override
     public String getExcelPath() {
+        // todo
         return "";
     }
 }

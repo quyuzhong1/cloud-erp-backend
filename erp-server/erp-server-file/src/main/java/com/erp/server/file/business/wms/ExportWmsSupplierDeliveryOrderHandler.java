@@ -25,7 +25,7 @@ public class ExportWmsSupplierDeliveryOrderHandler extends AbstractPageFileEvent
     private ExportWmsFeign exportWmsFeign;
     @Override
     public String getExcelPath() {
-        return "excel/wms/aliexpressDeliveryExport.xlsx";
+        return "excel/wms/supplierDeliveryOrder.xlsx";
     }
 
     @Override

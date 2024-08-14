@@ -40,6 +40,6 @@ public class ExportWmsWarehouseReceiveHandler extends AbstractPageFileEventHandl
 
     @Override
     public String getExcelPath() {
-        return "excel/wms/warehouseLocation.xlsx";
+        return "excel/wms/warehouseReceive.xlsx";
     }
 }

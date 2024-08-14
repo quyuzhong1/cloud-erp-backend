@@ -4,15 +4,21 @@ import cn.hutool.core.lang.Pair;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
+import com.erp.server.file.exception.BusinessException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY;
@@ -25,9 +31,29 @@ public class ExportWmsVirtualInventoryHandler extends AbstractPageFileEventHandl
     private ExportWmsFeign exportWmsFeign;
     @Override
     public String getExcelPath() {
+        // todo
         return "excel/wms/aliexpressDeliveryExport.xlsx";
     }
 
+    @Override
+    public void handle(FileTask fileTask) {
+        List<Pair<Integer, List<?>>> list = getData(fileTask);
+        fileTask.setCount(list.get(0).getValue().size());
+        StringBuilder sb = new StringBuilder();
+        String excelPath = getExcelPath();
+        String name = fileTask.getFileName();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            byte[] bytes = new ExcelPrintUtils().sheetPatchExport(list, sb.toString(),excelPath);
+            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
+            fileTask.setFileUrl(s);
+        } catch (IOException e) {
+            log.error("上传文件失败{}", e.getMessage(), e);
+            throw new BusinessException(e.getMessage());
+        }
+    }
     @Override
     public FileTaskEventEnum getEvent() {
         return EXPORT_WMS_VIRTUAL_INVENTORY;
