@@ -50,6 +50,13 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
       */
       PagingVO<FirstMileDeliveryDTO.ListDTO> paging(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO);
 
+    /**
+     * 期初明细分页列表
+     * @param pagingParamDTO
+     * @return
+     */
+      PagingVO<FirstMileDeliveryDTO.ListDTO> pagingFirstMile(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO);
+
      /**
      * 状态统计
      * @author Luo_WG

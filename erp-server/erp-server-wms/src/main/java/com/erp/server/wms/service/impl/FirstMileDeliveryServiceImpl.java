@@ -47,6 +47,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
@@ -249,6 +250,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         IPage<FirstMileDeliveryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+    @Override
+    public PagingVO<FirstMileDeliveryDTO.ListDTO> pagingFirstMile(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<FirstMileDeliveryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
         }
         // 数据处理
         fillList(pageData.getRecords());
@@ -1693,21 +1706,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"物流单只有未生成状态才能下推");
         }
 
-        //走TMS自动生成物流单逻辑
-        AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                .id(firstMileDeliveryEntity.getId())
-                .billGenerateTimingEnum(BillGenerateTimingEnum.MANUAL_PUSH)
-                .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
-                .firstMileDeliveryEntity(firstMileDeliveryEntity)
-                .build();
+        TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
+        addDTO.setOutstockId(firstMileDeliveryEntity.getId());
+        //走TMS生成物流单逻辑
         try {
-            BatchResultDTO autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+            BatchResultDTO autoGenerateResult = tmsFirstMileLogisticFeign.generateFirstMileLogistic(addDTO);
             if(autoGenerateResult.getSuccess()){
                 FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
                 updateStatusDTO.setIds(Arrays.asList(firstMileDeliveryEntity.getId()));
                 updateStatusDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.getCode());
                 this.updateStatus(updateStatusDTO);
-
             }
             return autoGenerateResult;
         }catch (Exception e){

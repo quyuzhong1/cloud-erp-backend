@@ -374,6 +374,247 @@ public class FirstMileDeliveryDTO implements Serializable {
         private String fbaShipmentCode;
 
     }
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListFirstMileDTO {
+        /**
+         * 主键Id
+         */
+        private String id;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 明细主键Id
+         */
+        private String detailId;
+        /**
+         * 编号
+         */
+        private String code;
+        /**
+         * 物流单状态编码
+         */
+        private String logisticsStatus;
+        /**
+         * 物流单状态中文
+         */
+        private String logisticsStatusName;
+
+        /**
+         * 报关单状态编码
+         */
+        private String declareStatus;
+        /**
+         * 报关单状态中文
+         */
+        private String declareStatusName;
+
+        /**
+         * 服务商编码
+         */
+        private String provideCode;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 入库单号
+         */
+        private String overseasInboundCode;
+
+        /**
+         * 备货类型
+         */
+        private String demandType;
+
+        /**
+         * 备货类型名称
+         */
+        private String demandTypeName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 装箱状态名称
+         */
+        private String packingStatusName;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 国家
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+        /**
+         * 发货仓id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 发货仓名称
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 目的仓id
+         */
+        private String destWarehouseId;
+
+        /**
+         * 目的仓名称
+         */
+        private String destWarehouseName;
+
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+
+        /**
+         * 物流方式名称
+         */
+        private String logisticsMethodName;
+
+        /**
+         * 平台sku
+         */
+        private String platformSpuNo;
+
+        /**
+         * 卖家sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 第三方仓SKU
+         */
+        private String thirdWarehouseSku;
+
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+
+        /**
+         * ERP的SKU主键
+         */
+        private String skuId;
+
+        /**
+         * ERP的SKU
+         */
+        private String skuNo;
+
+        /**
+         * 是否组合产品
+         */
+        private Boolean isCombination;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 库存sku
+         */
+        private String stockSku;
+
+        /**
+         * 应发数量
+         */
+        private Integer planQty;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packingQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 创建用户名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 待审核人
+         */
+        private String waitApproveUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * FBA货件编码
+         */
+        private String fbaShipmentCode;
+
+    }
 
     /**
     * 导出Excel

@@ -552,4 +552,17 @@ public class FirstMileDeliveryController extends BaseController {
         Boolean result = firstMileDeliveryService.generateStatusUpdate(dto);
         return result == true ? success() : failure();
     }
+
+    /**
+     * 期初明细分页列表
+     * @author Luo_WG
+     * @date: 2023-10-30
+     * @param dto
+     * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
+     */
+    @PostMapping("/pagingFirstMile")
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
+    public ApiResult<PagingVO<FirstMileDeliveryDTO.ListDTO>> pagingFirstMile(@RequestBody @Validated PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
+        return success(firstMileDeliveryService.pagingFirstMile(dto));
+    }
 }

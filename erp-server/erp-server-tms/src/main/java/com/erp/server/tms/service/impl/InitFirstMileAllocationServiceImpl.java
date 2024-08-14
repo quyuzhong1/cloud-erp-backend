@@ -2,6 +2,8 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -16,11 +18,12 @@ import com.common.business.enums.TabApproveStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.scm.dto.SupplierReportDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
+import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
 import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
+import com.erp.server.tms.listener.InitFirstMileAllocationDetailExcelListener;
 import com.erp.server.tms.mapper.InitFirstMileAllocationMapper;
 import com.erp.server.tms.service.InitFirstMileAllocationDetailService;
 import com.erp.server.tms.service.InitFirstMileAllocationService;
@@ -29,6 +32,9 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,10 +43,13 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -155,7 +164,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         // 填充字段值
         fillPagingDb(list);
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/initFirstMileAllocation.xlsx";
+        String excelPath = "excel/initFirstMileAllocationExport.xlsx";
         String name = "期初头程分摊导出";
         String date = com.common.core.utils.date.DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
@@ -246,6 +255,80 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             viewDTO.setDetailList(viewDTOList);
         }
         return viewDTO;
+    }
+
+    /**
+     * 导入excel
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        InitFirstMileAllocationDetailExcelListener excelListenerUtil = new InitFirstMileAllocationDetailExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), InitFirstMileAllocationDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        List<InitFirstMileAllocationDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }else if (excelDateList.size() > 5000){
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<InitFirstMileAllocationDetailExcelDTO > errorList = excelListenerUtil.getErrorList();
+
+        List<InitFirstMileAllocationDetailExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //处理验证成功数据
+        handleImportSuccessList(successList, errorList);
+
+        if (errorList.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/initFirstMileAllocationImportError.xlsx";
+            String name = "sysUserImportError";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "excel/initFirstMileAllocationImport.xlsx";
+        String excelName = "期初头程分摊导入模板.xlsx";
+
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    private void handleImportSuccessList(List<InitFirstMileAllocationDetailExcelDTO> successList, List<InitFirstMileAllocationDetailExcelDTO> errorList) {
     }
 
     private void updateApproveStatusForApprove(List<String> ids, String status) {

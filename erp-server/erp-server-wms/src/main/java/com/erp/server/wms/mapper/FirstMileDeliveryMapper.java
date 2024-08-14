@@ -34,6 +34,7 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     * @return
     */
     IPage<FirstMileDeliveryDTO.ListDTO> paging(Page query, @Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
+    IPage<FirstMileDeliveryDTO.ListDTO> pagingFirstMile(Page query, @Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
 
     /**
     * 状态数量

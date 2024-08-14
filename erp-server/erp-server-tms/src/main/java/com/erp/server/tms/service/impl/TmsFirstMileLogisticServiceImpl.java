@@ -1705,4 +1705,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         this.add(addDTO);
         return BatchResultDTO.success(autoGenerateBillDTO.getId(),"", "头程物流单创建成功");
     }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO generateFirstMileLogistic(TmsFirstMileLogisticDTO.AddDTO addDTO) {
+        this.add(addDTO);
+        return BatchResultDTO.success(addDTO.getOutstockId(),"", "头程物流单创建成功");
+    }
 }

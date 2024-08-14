@@ -107,6 +107,16 @@ public class InitFirstMileAllocationDetailEntity extends BaseEntity<InitFirstMil
     @TableField("init_transit_cost")
     private BigDecimal initTransitCost;
     /**
+     * 期初在途头程关税
+     */
+    @TableField("init_transit_Tariff")
+    private BigDecimal initTransitTariff;
+    /**
+     * 期初暂估头程费用
+     */
+    @TableField("init_estimated_cost")
+    private BigDecimal initEstimatedCost;
+    /**
     * 期初暂估头程关税
     */
     @TableField("init_estimated_tariff")

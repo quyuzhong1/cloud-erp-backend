@@ -4,6 +4,7 @@ import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -102,4 +103,18 @@ public interface InitFirstMileAllocationService extends SuperService<InitFirstMi
      * @return
      */
     InitFirstMileAllocationDTO.ViewDTO view(String id);
+
+    /**
+     * 导入excel
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 下载导入模板
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
 }

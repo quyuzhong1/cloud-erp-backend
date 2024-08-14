@@ -35,6 +35,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -279,30 +280,59 @@ public class InitFirstMileAllocationController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
     /**
-     * 导出
+     * 导出Excel
      *
      * @param dto
-     * @author yl
-     * @date 2023-11-09 10:54
+     * @author zdy
+     * @date 2024-8-15 10:54
      */
     @PostMapping("/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:initFirstMileAllocation:paging",
-            tableAlias = "a"
-    )
-    @WebAdvanceQuery(handler = LogisticsBillQueryHandler.class)
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "tms:initFirstMileAllocation:exportExcel",
+//            tableAlias = "a"
+//    )
+    @WebAdvanceQuery(handler = InitFirstMileAllocationQueryHandler.class)
     public ApiResult<?> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto, HttpServletResponse response) {
         initFirstMileAllocationService.exportExcel(dto, response);
         return success();
     }
-
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载期初导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
+        initFirstMileAllocationService.downloadTemplate(response);
+        return success();
+    }
+    /**
+     * 导入Excel
+     * @author zdy
+     * @date: 2024/8/14 9:39
+     * @param excelFile
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
+    @PostMapping("/importFile")
+    public ApiResult<?> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = initFirstMileAllocationService.importFile(excelFile,response);
+        return flag ? success() : failure();
+    }
     /**
      * 详情
      *
      * @return
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:initFirstMileAllocation:view",
+            tableAlias = "a"
+    )
     public ApiResult<InitFirstMileAllocationDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         InitFirstMileAllocationDTO.ViewDTO result = initFirstMileAllocationService.view(dto.getId());
         return success(result);
