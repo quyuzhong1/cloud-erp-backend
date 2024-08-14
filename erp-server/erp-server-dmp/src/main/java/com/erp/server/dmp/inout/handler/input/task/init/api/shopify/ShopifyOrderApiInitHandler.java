@@ -46,6 +46,8 @@ public class ShopifyOrderApiInitHandler implements DmpInputApiInitHandler {
     @Resource
     private ShopifyRestClientService shopifyRestClientService;
 
+    @Resource
+    private ShopSdkServer shopSdkServer;
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -55,7 +57,7 @@ public class ShopifyOrderApiInitHandler implements DmpInputApiInitHandler {
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
         // Shopify订单下载
-        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(nextLevelId);
+        ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(nextLevelId);
         if (null == shopInfoDTO) {
             log.error("[Shopify订单下载]从缓存中获取shopify token 失败: shopId={}", nextLevelId);
             return Collections.emptyList();
