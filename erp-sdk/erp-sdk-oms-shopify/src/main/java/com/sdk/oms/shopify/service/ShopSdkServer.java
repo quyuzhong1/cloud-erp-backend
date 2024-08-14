@@ -10,7 +10,12 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 /**
  * @author Lambda
  * @Classname ShopServer1
@@ -35,6 +40,13 @@ import java.util.Objects;
 public class ShopSdkServer {
 
     private static RedisUtil redisUtil;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Resource
     public void setRedisUtil(RedisUtil redisUtil){
@@ -126,7 +138,7 @@ public class ShopSdkServer {
     /**
      * 缓存获取Token
      */
-    public static ShopifyShopInfoDTO getTokenAndDomainByShopId(String shopId) {
+    public ShopifyShopInfoDTO getTokenAndDomainByShopId(String shopId) {
         // platform-token:平台名称:店铺ID
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
         // 缓存获取
@@ -135,6 +147,35 @@ public class ShopSdkServer {
             if (tokenObj instanceof ShopifyShopInfoDTO) {
                 return (ShopifyShopInfoDTO) tokenObj;
             }
+        }else {
+            ShopAuthEntity shopAuthEntity = shopInfoFeign.getShopAuthByShopId(shopId);
+            ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+            CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+            AppClientEnum appClientEnum = AppClientEnum.TIKTOK_ACCESS_TOKEN;
+            findDTO.setBusinessType(appClientEnum.getBusinessType());
+            findDTO.setDictPlatform(appClientEnum.getPlatform());
+            findDTO.setPlatformType(appClientEnum.getPlatformType());
+            CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+            if (Objects.isNull(cfgAppClient)) {
+                return null;
+            }
+            ShopifyShopInfoDTO shopInfoDTO = new ShopifyShopInfoDTO()
+                    // 店铺ID
+                    .setId(shopInfoEntity.getId())
+                    // 访问token
+                    .setAccessToken(shopAuthEntity.getAccessToken())
+                    // 店铺名称
+                    .setName(shopInfoEntity.getName())
+                    // 区域id
+                    .setDictAreaCode(shopInfoEntity.getDictAreaCode())
+                    // 国家id
+                    .setDictCountryCode(shopInfoEntity.getDictCountryCode())
+                    // 负责人id
+                    .setChargeId(shopInfoEntity.getChargeId())
+                    // 店铺全域名: SHOP_NAME.myshopify.com
+                    .setShopDomain(shopInfoEntity.getDomain().concat(ShopifyConstant.DOMAIN));
+
+            redisUtil.set(tokenKey, shopInfoDTO, shopAuthEntity.getExpiresIn());
         }
         return null;
     }

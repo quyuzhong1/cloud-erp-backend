@@ -50,6 +50,9 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
     @Resource
     private ShopifyGraphQLClientService shopifyGraphQLClientService;
 
+    @Resource
+    private ShopSdkServer shopSdkServer;
+
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         List<Map<String, Object>> findMongoData = null;
@@ -65,7 +68,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(findMongoData.get(0).get("nextLevelId").toString());
+        ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(findMongoData.get(0).get("nextLevelId").toString());
         if (null == shopInfoDTO) {
             log.error("[Shopify订单交易信息下载]从缓存中获取shopify token 失败: shopId={}", findMongoData.get(0).get("nextLevelId").toString());
             throw new ServiceException();

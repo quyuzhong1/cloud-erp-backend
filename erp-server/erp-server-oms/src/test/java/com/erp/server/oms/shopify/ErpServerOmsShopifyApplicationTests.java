@@ -281,7 +281,7 @@ public class ErpServerOmsShopifyApplicationTests {
         Map<String, SoB2cDetailEntity> detailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
 
         String shopId = mainEntity.getShopId();
-        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(shopId);
+        ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(shopId);
         if (null == shopInfoDTO) {
             log.error("[Shopify标记发货]从缓存中获取shopify token 失败: shopId={}", shopId);
             throw new ServiceException();

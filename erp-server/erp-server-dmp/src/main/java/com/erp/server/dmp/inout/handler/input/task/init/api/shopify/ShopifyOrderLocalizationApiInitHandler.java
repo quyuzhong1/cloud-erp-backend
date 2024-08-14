@@ -41,6 +41,9 @@ public class ShopifyOrderLocalizationApiInitHandler extends DmpInputInitHandler 
     @Resource
     private ShopifyRestClientService shopifyRestClientService;
 
+    @Resource
+    private ShopSdkServer shopSdkServer;
+
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 
@@ -59,7 +62,7 @@ public class ShopifyOrderLocalizationApiInitHandler extends DmpInputInitHandler 
 
         List<String> orderIds = findMongoData.stream().map(req -> req.get("orderId").toString()).distinct().collect(Collectors.toList());
 
-        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(findMongoData.get(0).get("nextLevelId").toString());
+        ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(findMongoData.get(0).get("nextLevelId").toString());
         if (null == shopInfoDTO) {
             log.error("[Shopify订单拓展信息下载]从缓存中获取shopify token 失败: shopId={}", findMongoData.get(0).get("nextLevelId").toString());
             throw new ServiceException();
