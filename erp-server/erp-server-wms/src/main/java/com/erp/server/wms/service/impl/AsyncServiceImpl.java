@@ -147,6 +147,7 @@ public class AsyncServiceImpl implements AsyncService {
                 .list();
         // 已有成功标记发货明细记录跳过
         if (CollectionUtils.isNotEmpty(detailEntityList)){
+            log.warn("【{}】销售单【{}】 本单已标记发货忽略 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
             return detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         }
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
