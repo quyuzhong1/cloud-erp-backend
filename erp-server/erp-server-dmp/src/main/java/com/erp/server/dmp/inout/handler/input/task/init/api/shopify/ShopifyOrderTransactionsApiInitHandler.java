@@ -63,7 +63,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
         if (CollectionUtil.isEmpty(findMongoData)) {
             return new ArrayList<>();
         }
-
+        log.error("ShopifyOrderTransactionsApiInitHandler返回数量:" + findMongoData.size() + "  条~~~");
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
@@ -75,7 +75,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
 
 
 
-        for (Map<String, Object> findMongoDatum : findMongoData) {
+        /*for (Map<String, Object> findMongoDatum : findMongoData) {
             //特定国家需要查询税号
 
             Object shippingAddressObj = findMongoDatum.get("shippingAddress");
@@ -106,7 +106,7 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
                 }
 
             }
-        }
+        }*/
         return dmpInputTaskInitDTOList;
     }
 }
