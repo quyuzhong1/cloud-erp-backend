@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -83,6 +84,9 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
 
     @Override
     public List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds) {
+        if (CollectionUtils.isEmpty(rules)) {
+            return Collections.emptyList();
+        }
         List<String> ruleIds = rules.parallelStream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
         return baseMapper.listLocationByRule(ruleIds, warehouseIds, skuIds);
     }

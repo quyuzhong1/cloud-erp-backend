@@ -28,6 +28,7 @@ import com.erp.server.wms.service.AsyncService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WeightingOutboundService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -73,6 +74,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public WeightingOutboundDTO.ViewDTO scan(WeightingOutboundDTO.ScanDTO dto) {
         SoB2cDeliveryEntity entity = soB2cDeliveryService.getByBusinessCode(dto.getBusinessCode());
         if (Objects.isNull(entity)) {
@@ -171,9 +173,11 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                         .build();
                 asyncService.updateLogisticWeight(updateWeight);
             }
-
-            //更新B2c物流订单重量
-            soB2cFeign.batchUpdateLogistics(soB2cLogisticsEntities);
+            //未发货时更新，发货时下面一起更新免得seata事务报错
+            if (!isAutoDelivery) {
+                //更新B2c物流订单重量
+                soB2cFeign.batchUpdateLogistics(soB2cLogisticsEntities);
+            }
         }
         //自动发货
         if (isAutoDelivery && entity.getIsWeigh()) {
@@ -203,17 +207,11 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
             updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
+            updateDeliveryTimeDTO.setSoB2cLogisticsList(soB2cLogisticsEntities);
             soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
-            //扣减冻结库存
-            soB2cDeliveryService.outFreezeVirtualInventory(entity);
-
-            //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfo(entity);
-            if (isPush) {
-                //生成出库单
-                soB2cDeliveryService.generateB2cSoOutstock(entity);
-            }
+            //自动出库
+            asyncService.syncAutoOut(entity);
 
             String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "称重出库", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
@@ -229,7 +227,6 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
     }
 
     public void generateB2cSoOutstock(WeightingOutboundDTO.ScanDTO dto, SoB2cDeliveryEntity entity, SoB2cEntity soB2cEntity) {
-        soB2cDeliveryService.generateB2cSoOutstock(entity);
         if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
             // 调用第三方平台SDK标记发货(独立事务)
             String businessDesc = "称重出库";

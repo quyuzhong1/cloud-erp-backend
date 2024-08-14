@@ -333,6 +333,11 @@ public class DmpPushTaskDTO implements Serializable {
          * 同步操作名称
          */
         private String syncOperateName;
+
+        /**
+         * 第三方单号
+         */
+        private String thirdCode;
     }
 
 

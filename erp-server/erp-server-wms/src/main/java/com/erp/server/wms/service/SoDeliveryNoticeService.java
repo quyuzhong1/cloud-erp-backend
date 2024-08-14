@@ -268,4 +268,12 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     SoDeliveryNoticeEntity getByCode(String key);
 
     List<SoDeliveryNoticeEntity> listByCodes(List<String> codes);
+    /**
+     * 处理数据
+     * @author will
+     * @date 2024/8/13 17:01
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO handleErrorData(String id);
 }
