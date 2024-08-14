@@ -56,6 +56,7 @@ public interface OtherInStockConverter {
             @Mapping(target = "typeName", source = "inStockTypeEnum.name"),
             @Mapping(target = "deptId", source = "departmentDTO.id"),
             @Mapping(target = "detailList", source = "detailList"),
+            @Mapping(target = "remark", ignore = true),
     })
     OtherInstockDTO.AddDTO combineAddDTO(OtherInStockImportExcelDTO importExcelDTO,
                                          InstockTypeEnum inStockTypeEnum,
