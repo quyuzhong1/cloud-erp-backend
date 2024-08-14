@@ -9,14 +9,20 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.InventoryClosedRecordEnum;
 import com.common.business.utils.RedisUtil;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.InventoryHisEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.service.*;
 import com.google.common.base.Stopwatch;
@@ -56,6 +62,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     @Resource
     private StocktakingProfitLossServiceImpl stocktakingProfitLossService;
 
+    @Resource
+    private VirtualInventoryService virtualInventoryService;
+
     @Override
     @DistributeLocker(businessType = InventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.warehouseLocation,transactionList.inventoryStatus")
     public void doTransactionList(List<InventoryTransactionDTO> transactionList, String approveType) {
@@ -79,6 +88,8 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             transactionList = this.sortInventoryTransactionList(transactionList);
             // 3-检查业务是否允许交易
             this.checkAllowTransactionList(transactionList);
+            //校验虚拟仓库存
+            this.checkVirtualInventoryList(transactionList);
             // 检查库存是否充足
             this.checkInventoryList(transactionList);
             // 4-检查每日库存是否充足
@@ -289,6 +300,67 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     }
 
     /**
+     * 校验虚拟仓库存
+     * @author will
+     * @date 2024/8/8 16:00
+     * @param transactionList
+     */
+    private void checkVirtualInventoryList (List<InventoryTransactionDTO> transactionList) {
+        if (CollectionUtils.isEmpty(transactionList)) {
+            return;
+        }
+        /**
+         * 1. 调拨单：手动创建、调拨申请下推
+         * 2. 其他出库单：
+         * 3. 采购退货单：
+         * 4. 委外发料：正常领料、超出领料
+         * 5. 加工单：组装、拆卸
+         *
+         */
+        List<String> typeList = Arrays.asList(InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode(),InventorySourceTypeEnum.OTHER_INSTOCK.getCode(),InventorySourceTypeEnum.PURCHASE_RETURN_ORDER.getCode()
+                ,InventorySourceTypeEnum.RECEIVE_MATERIAL.getCode(),InventorySourceTypeEnum.RETURN_MATERIAL.getCode(),InventorySourceTypeEnum.MACHINE_INFO.getCode());
+        //以上类型出可用时需要进行分配数量校验
+        List<InventoryTransactionDTO> checkTransactionList = transactionList.stream().filter(obj ->
+                        MathUtil.compareTo(obj.getQty(), MathUtil.ZERO ) < MathUtil.ZERO
+                        && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus())
+                        && (typeList.contains(obj.getSourceType()) || Arrays.asList(InventoryBusinessTypeEnum.DIRECT_ALLOCATE.getCode(),InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode()).contains(obj.getDictBizType())))
+                        .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(checkTransactionList)) {
+            return;
+        }
+        //仓库id集合
+        List<String> warehouseIdList = checkTransactionList.stream().map(InventoryTransactionDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        //skuId集合
+        List<String> skuIdList = checkTransactionList.stream().map(InventoryTransactionDTO::getSkuId).distinct().collect(Collectors.toList());
+
+        //虚拟仓库存
+        List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList = virtualInventoryService.listInventoryQtyByWarehouseId(warehouseIdList, skuIdList);
+
+        //实体仓可用库存
+        InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+        dto.setWarehouseIdList(warehouseIdList);
+        dto.setSkuIdList(skuIdList);
+        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode()));
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
+
+        for (InventoryTransactionDTO transactionDTO : checkTransactionList) {
+            //虚拟库存校验
+            Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),transactionDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(),transactionDTO.getSkuId()))
+                    .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).findFirst().orElse(MathUtil.ZERO);
+            if(MathUtil.compareTo(virtualQty,MathUtil.ZERO) == MathUtil.ZERO) {
+                continue;
+            }
+            //仓库可用库存
+            Integer usableInventoryTotal = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),transactionDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(),transactionDTO.getSkuId()))
+                    .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
+            log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",transactionDTO.getWarehouseName(),transactionDTO.getSkuNo(),virtualQty,usableInventoryTotal);
+            if (Math.abs(transactionDTO.getQty()) > usableInventoryTotal - virtualQty) {
+                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),virtualQty,usableInventoryTotal - virtualQty);
+            }
+        }
+    }
+
+    /**
      * 检查所有库存交易，库存是否充足
      * @param transactionList   交易记录列表
      */
@@ -390,7 +462,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             inventoryEntity = inventoryService.getInventory(transactionDTO.getSkuId(), transactionDTO.getWarehouseId(), transactionDTO.getWarehouseLocation(), transactionDTO.getInventoryStatus());
         }
 
-        log.debug("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
+        log.info("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
         if(null == inventoryEntity) {
             inventoryEntity=new InventoryEntity();
             inventoryEntity.setSkuId(transactionDTO.getSkuId());
