@@ -46,6 +46,7 @@ public class ShopifyOrderLocalizationApiInitHandler extends DmpInputInitHandler 
 
         List<Map<String, Object>> findMongoData = null;
         String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
+        log.error("ShopifyOrderLocalizationApiInitHandler:" + parentStorageName);
         if (StringUtils.isNotBlank(parentStorageName)) {
             List<ParamData> paramDataList = new ArrayList<>();
             paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
