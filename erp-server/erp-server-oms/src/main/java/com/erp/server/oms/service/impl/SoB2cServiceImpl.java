@@ -7745,13 +7745,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                 }
                 //父级可用取子级中最小可用数量
-                if (SoB2cExportTypeEnum.PARENT_EXPORT.getCode().equals(exportType) && CollectionUtils.isNotEmpty(qtyList)) {
-                    Integer bomUsableQty = qtyList.stream().min(Comparator.comparing(obj -> obj)).get();
-                    exportDTO.setVirtualUsableQty(bomUsableQty);
+                if (SoB2cExportTypeEnum.PARENT_EXPORT.getCode().equals(exportType) ) {
+                    if (CollectionUtils.isNotEmpty(qtyList)) {
+                        Integer bomUsableQty = qtyList.stream().min(Comparator.comparing(obj -> obj)).get();
+                        exportDTO.setVirtualUsableQty(bomUsableQty);
+                    }
+                    //根据订单维度还是bom维度清除已存在的记录
+                    processRepeatData(exportDTO, resultList);
+                    resultList.add(exportDTO);
                 }
-            }
-            //按父级导出
-            if (SoB2cExportTypeEnum.PARENT_EXPORT.getCode().equals(exportType)) {
+            } else {
                 exportDTO.setSkuQty(exportDTO.getQty());
                 //根据订单维度还是bom维度清除已存在的记录
                 processRepeatData(exportDTO, resultList);
