@@ -185,7 +185,18 @@ public class SoB2cDeliveryDTO implements Serializable {
 
         private String sourceSkuId;
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DeliverySkuDTO that = (DeliverySkuDTO) o;
+            return Objects.equals(skuId, that.skuId) && Objects.equals(skuNo, that.skuNo) && Objects.equals(platformSkuNo, that.platformSkuNo) && Objects.equals(qty, that.qty) && Objects.equals(sourceSkuId, that.sourceSkuId);
+        }
 
+        @Override
+        public int hashCode() {
+            return Objects.hash(skuId, skuNo, platformSkuNo, qty, sourceSkuId);
+        }
     }
 
     /**
