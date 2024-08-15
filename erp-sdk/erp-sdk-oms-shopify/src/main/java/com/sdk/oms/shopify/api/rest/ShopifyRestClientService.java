@@ -18,7 +18,7 @@ public class ShopifyRestClientService {
     /**
      * Shopify接口版本：默认2023-07
      */
-    @Value("${shopify.api.rest.version:2023-07}")
+    @Value("${shopify.api.rest.version:2024-01}")
     private String apiVersion;
 
 
