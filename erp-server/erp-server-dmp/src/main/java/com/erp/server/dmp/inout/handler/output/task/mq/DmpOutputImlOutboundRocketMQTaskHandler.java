@@ -84,6 +84,7 @@ public class DmpOutputImlOutboundRocketMQTaskHandler extends DmpOutputRocketMQTa
     	platformOutboundDTO.setOutBoundTime(dmpThirdOutboundEntity.getDateShipping());
 		platformOutboundDTO.setOrderStatus(erpOrderStatus);
     	platformOutboundDTO.setThirdOrderStatus(ImlEnums.OrderStatusEnum.getName(orderStatus));
+    	platformOutboundDTO.setTrackNo(dmpThirdOutboundEntity.getTrackingNo());
     	
         return platformOutboundDTO;
     }
