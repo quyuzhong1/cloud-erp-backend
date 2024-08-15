@@ -1849,7 +1849,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> skuIdList = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
         //获取子SKU集合
         List<SoB2cDeliveryDetailDTO.AddDTO> deliveryDetailList = new ArrayList<>(list.size());
-        List<SoB2cDeliveryDTO.DeliverySkuDTO> deliverySkuList = listDeliverySku(entity.getShopId(), skuIdList, entity.getDictPlatform(), warehouseManageType);
+        List<SoB2cDeliveryDTO.DeliverySkuDTO> deliverySkuList = listDeliverySku(entity.getShopId(), list, entity.getDictPlatform(), warehouseManageType);
         for (SoB2cDetailEntity detailItem : list) {
             String skuId = detailItem.getSkuId();
             //数量
@@ -1883,18 +1883,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 获取到发货的sku 信息
-     * @description
-     * @param skuIdList sku id
-     * @param warehouseManageType  仓库的经营类型
+     *
+     * @param soDetailList        sku id
+     * @param warehouseManageType 仓库的经营类型
      * @return
+     * @description
      * @date 2024-02-27 15:38
      * @author Lambda
      */
-    public List<SoB2cDeliveryDTO.DeliverySkuDTO> listDeliverySku(String shopId, List<String> skuIdList, String platform, String warehouseManageType) {
+    public List<SoB2cDeliveryDTO.DeliverySkuDTO> listDeliverySku(String shopId, List<SoB2cDetailEntity> soDetailList, String platform, String warehouseManageType) {
         List<SoB2cDeliveryDTO.DeliverySkuDTO> resultList = new ArrayList<>(10);
+        List<String> skuIds = soDetailList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> platformNos = soDetailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
+
         ListingInfoParamDTO param = new ListingInfoParamDTO();
         param.setPlatform(platform);
-        param.setSkuIdList(skuIdList);
+        param.setSkuIdList(skuIds);
+        param.setPlatformSkuNoList(platformNos);
         param.setShopIdList(Arrays.asList(shopId));
         param.setIsExpire(false);
         //子件发货
@@ -1904,13 +1909,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //是否自建 如果是就是要拆分
         Boolean isSelfBuild = selfBuild.equals(warehouseManageType);
         List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(param);
-        //需要拆分的skuId
+        //需要拆分的skuId+platformNo
         List<String> wantSplitSkuIdList = new ArrayList<>(10);
-        for (String skuId : skuIdList) {
-            ListingInfoWithSkuMappingDTO skuMappingDTO = skuMappingList.stream().filter(s -> skuId.equals(s.getProductSkuId())).findFirst().orElse(null);
+        List<String> wantSplitSkuIdAndPlatformList = new ArrayList<>(10);
+        for (SoB2cDetailEntity soB2cDetailEntity : soDetailList) {
+            String skuId = soB2cDetailEntity.getSkuId();
+            ListingInfoWithSkuMappingDTO skuMappingDTO = skuMappingList.stream().filter(s -> skuId.equals(s.getProductSkuId()) && soB2cDetailEntity.getPlatformSkuNo().equals(s.getPlatformSkuNo())).findFirst().orElse(null);
             if (Objects.isNull(skuMappingDTO)) {
                 if (isSelfBuild) {
                     wantSplitSkuIdList.add(skuId);
+                    wantSplitSkuIdAndPlatformList.add(skuId+soB2cDetailEntity.getPlatformSkuNo());
                 }
                 continue;
             }
@@ -1919,6 +1927,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(extendMap)) {
                 if (isSelfBuild) {
                     wantSplitSkuIdList.add(skuId);
+                    wantSplitSkuIdAndPlatformList.add(skuId+soB2cDetailEntity.getPlatformSkuNo());
                 }
                 continue;
             }
@@ -1929,49 +1938,60 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //子件发货 就要去拆分
                 if (singleDelivery.equals(deliveryType)) {
                     wantSplitSkuIdList.add(skuId);
+                    wantSplitSkuIdAndPlatformList.add(skuId+soB2cDetailEntity.getPlatformSkuNo());
                 }
             } else {
                 if (isSelfBuild) {
                     wantSplitSkuIdList.add(skuId);
+                    wantSplitSkuIdAndPlatformList.add(skuId+soB2cDetailEntity.getPlatformSkuNo());
                 }
             }
         }
 
-        //不需要拆分的skuId
-        List<String> notSplitSkuIdList = skuIdList.stream().filter(s -> !wantSplitSkuIdList.contains(s)).collect(Collectors.toList());
-        for (String skuId : notSplitSkuIdList) {
-            SoB2cDeliveryDTO.DeliverySkuDTO deliverySku = new SoB2cDeliveryDTO.DeliverySkuDTO();
-            deliverySku.setSkuId(skuId);
-            deliverySku.setQty(1);
-            deliverySku.setSourceSkuId(skuId);
-            resultList.add(deliverySku);
-        }
         String combinationType = BomTypeEnum.COMBINATION.getType();
         //获取对应bom 信息
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(wantSplitSkuIdList);
-        for (String skuId : wantSplitSkuIdList) {
-            //套装的bom
-            List<BomChildrenSkuDTO> bomSkuList = bomChildrenSkuList.stream()
-                    .filter(req -> req.getParentSkuId().equals(skuId)
-                            && combinationType.equals(req.getType())
-                    ).collect(Collectors.toList());
-            //表示是bom
-            if (CollectionUtils.isNotEmpty(bomSkuList)) {
-                for (BomChildrenSkuDTO bomSku : bomSkuList) {
+
+        //不需要拆分的skuId
+        for (SoB2cDetailEntity detailEntity : soDetailList) {
+            String skuId = detailEntity.getSkuId();
+            String platformSkuNo = detailEntity.getPlatformSkuNo();
+            String skuNo = detailEntity.getSkuNo();
+            if(wantSplitSkuIdAndPlatformList.contains(skuId+platformSkuNo)){
+                //套装的bom
+                List<BomChildrenSkuDTO> bomSkuList = bomChildrenSkuList.stream()
+                        .filter(req -> req.getParentSkuId().equals(skuId)
+                                && combinationType.equals(req.getType())
+                        ).collect(Collectors.toList());
+                //表示是bom
+                if (CollectionUtils.isNotEmpty(bomSkuList)) {
+                    for (BomChildrenSkuDTO bomSku : bomSkuList) {
+                        SoB2cDeliveryDTO.DeliverySkuDTO deliverySku = new SoB2cDeliveryDTO.DeliverySkuDTO();
+                        deliverySku.setSkuId(bomSku.getSkuId());
+                        deliverySku.setSkuNo(bomSku.getSkuNo());
+                        Integer quantity = bomSku.getQuantity();
+                        deliverySku.setQty(quantity);
+                        deliverySku.setSourceSkuId(skuId);
+                        deliverySku.setPlatformSkuNo(platformSkuNo);
+                        resultList.add(deliverySku);
+                    }
+                } else {
+                    //表示没有
                     SoB2cDeliveryDTO.DeliverySkuDTO deliverySku = new SoB2cDeliveryDTO.DeliverySkuDTO();
-                    deliverySku.setSkuId(bomSku.getSkuId());
-                    deliverySku.setSkuNo(bomSku.getSkuNo());
-                    Integer quantity = bomSku.getQuantity();
-                    deliverySku.setQty(quantity);
+                    deliverySku.setSkuId(skuId);
+                    deliverySku.setQty(1);
                     deliverySku.setSourceSkuId(skuId);
+                    deliverySku.setSkuNo(skuNo);
+                    deliverySku.setPlatformSkuNo(platformSkuNo);
                     resultList.add(deliverySku);
                 }
-            } else {
-                //表示没有
+            }else{
                 SoB2cDeliveryDTO.DeliverySkuDTO deliverySku = new SoB2cDeliveryDTO.DeliverySkuDTO();
-                deliverySku.setSkuId(skuId);
+                deliverySku.setSkuId(detailEntity.getSkuId());
+                deliverySku.setPlatformSkuNo(detailEntity.getPlatformSkuNo());
                 deliverySku.setQty(1);
-                deliverySku.setSourceSkuId(skuId);
+                deliverySku.setSkuNo(skuNo);
+                deliverySku.setSourceSkuId(detailEntity.getSkuId());
                 resultList.add(deliverySku);
             }
         }
@@ -2003,12 +2023,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param
      * @param overseasProviderWarehouse
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void thirdWarehouseCreateOutStock(SoB2cEntity entity, String warehouseId,String warehouseManageType , String logisticsChannelId, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList) {
         //合并相同sku的明细
-        Map<String,Integer> sameSkuMap = detailList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSkuId, SoB2cDetailEntity::getQty, Integer:: sum));
-        List<String> skuIdList = new ArrayList<>(sameSkuMap.keySet());
-        List<SoB2cDeliveryDTO.DeliverySkuDTO> wantSkuList = listDeliverySku(entity.getShopId(), skuIdList, entity.getDictPlatform(), warehouseManageType);
+        Map<String,Integer> sameSkuMap = detailList.stream().collect(Collectors.toMap(v->v.getSkuId()+v.getPlatformSkuNo(), SoB2cDetailEntity::getQty, Integer:: sum));
+        List<SoB2cDeliveryDTO.DeliverySkuDTO> wantSkuList = listDeliverySku(entity.getShopId(), detailList, entity.getDictPlatform(), warehouseManageType);
         List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList = new ArrayList<>();
         String mainId = entity.getId();
         //平台
@@ -2043,7 +2061,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType);
         List<ThirdWarehouseCreateOutboundReq.Item> itemList = new ArrayList<>(detailList.size());
         for (SoB2cDeliveryDTO.DeliverySkuDTO deliverySkuDTO : wantSkuList) {
-            Integer qty = sameSkuMap.get(deliverySkuDTO.getSourceSkuId());
+            Integer qty = sameSkuMap.get(deliverySkuDTO.getSourceSkuId()+deliverySkuDTO.getPlatformSkuNo());
             if(qty == null){
                 throw new ServiceException(StrUtil.format("发货sku{}查不到原sku",deliverySkuDTO.getSkuNo()));
             }
@@ -5565,11 +5583,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setWarehouseOrgName(accountingCompanyList.get(0).getName());
         LinkedList<SoOutstockDetailDTO.AddDTO> wantDetailList = new LinkedList<>();
 
-        List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).
-                collect(Collectors.toList());
         //仓库经营类型
         String warehouseManageType = warehouseList.get(0).getWarehouseManageType();
-        List<SoB2cDeliveryDTO.DeliverySkuDTO> deliverySkuList = listDeliverySku(entity.getShopId(), skuIdList, entity.getDictPlatform(), warehouseManageType);
+        List<SoB2cDeliveryDTO.DeliverySkuDTO> deliverySkuList = listDeliverySku(entity.getShopId(), detailList, entity.getDictPlatform(), warehouseManageType);
         // 查询明细所有历史映射关系
         List<String> platformSkuList = detailList.stream()
                 .map(SoB2cDetailEntity::getPlatformSkuNo)
