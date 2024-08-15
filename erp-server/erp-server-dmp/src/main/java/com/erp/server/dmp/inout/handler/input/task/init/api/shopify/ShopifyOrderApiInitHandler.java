@@ -73,7 +73,8 @@ public class ShopifyOrderApiInitHandler implements DmpInputApiInitHandler {
         // 当前时间
 //        OffsetDateTime nowOffSetTime = OffsetDateTime.now(ZoneId.systemDefault());
 //        OffsetDateTime nowOffSetTime = null;
-
+//        System.setProperty("socksProxyHost", "127.0.0.1");
+//        System.setProperty("socksProxyPort", "7890");
         // Shopify产品下载所有(SDK已分页查询所有)
         List<ShopifyOrder> orders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
                 .getAllUpdatedOrdersCreatedBefore(lastOffSetTime, nextOffSetTime, null);
@@ -81,7 +82,6 @@ public class ShopifyOrderApiInitHandler implements DmpInputApiInitHandler {
         if (CollectionUtils.isEmpty(orders)) {
             return Collections.emptyList();
         }
-
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
         dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(orders));
         dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);

@@ -621,12 +621,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     public List<String> generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results) {
         List<String> skuIdList = executionData.getDetails().stream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        Pair<List<LocationInventoryResultDTO>, List<String>> resultData = Pair.create(Collections.emptyList(), Collections.emptyList());
+        Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> resultData = Pair.create(Collections.emptyList(), Collections.emptyMap());
         if (CollectionUtils.isEmpty(results)) {
             resultData = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData);
             results = resultData.getFirst();
             if (!CollectionUtils.isEmpty(resultData.getSecond())) {
-                return resultData.getSecond();
+                return new ArrayList<>(resultData.getSecond().keySet());
             }
         }
         Map<String, List<LocationInventoryResultDTO>> resultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
@@ -682,7 +682,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             save(entity);
             pickingDetailService.saveBatch(entities);
         }
-        return resultData.getSecond();
+        return new ArrayList<>(resultData.getSecond().keySet());
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import java.util.Map;
  * @author Administrator
  *
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
@@ -31,12 +33,16 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
             return Collections.emptyList();
         }
 
-        //订单交易
-        DmpInputTaskEntity dmpInputTransactionsEntity = list.stream().filter(req -> "1823265118759180922".equals(req.getCfgInputId())).findFirst().orElse(null);
+        //订单拓展
+        DmpInputTaskEntity dmpInputTaskExtensionsEntity = list.stream().filter(req -> "1823265128548686459".equals(req.getCfgInputId())).findFirst().orElse(null);
         List<ParamData> extensionsDataList = new ArrayList<>();
-        extensionsDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTransactionsEntity.getId()));
-        List<Map<String, Object>> dmpInputExtensionsMongoChildList = mongoService.findMongoData(extensionsDataList, "shopify_transactions_data");
-
+        extensionsDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskExtensionsEntity.getId()));
+        List<Map<String, Object>> dmpInputExtensionsMongoChildList = mongoService.findMongoData(extensionsDataList, "shopify_extensions_data");
+        log.error("shopify2：dmpInputTaskEntity：" + id);
+        log.error("shopify2：taskId：" + dmpInputTaskExtensionsEntity.getId());
+        log.error("shopify2：list：" + list);
+        log.error("shopify2：dmpInputTaskExtensionsEntity：" + dmpInputTaskExtensionsEntity);
+        log.error("shopify2：dmpInputTransactionsMongoChildList：" + dmpInputExtensionsMongoChildList);
         List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
         if(CollUtil.isNotEmpty(detailList)) {
             for(Map<String, Object> detail : detailList) {
@@ -63,8 +69,8 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
                     Map<String, Object> customerMap = (Map<String, Object>) customerObj;
                     detail.put("secondPhone", customerMap.get("phone"));
                 }
-
-                Map<String, Object> extensionsMap = dmpInputExtensionsMongoChildList.stream().filter(req -> req.get("orderId").equals(detail.get("thirdCode"))).findFirst().orElse(null);
+                log.error("shopify2：orderId：" + detail.get("orderId"));
+                Map<String, Object> extensionsMap = dmpInputExtensionsMongoChildList.stream().filter(req -> String.valueOf(req.get("orderId")).equals(detail.get("orderId")+"")).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(extensionsMap)) {
                     detail.put("receiverTaxNo", extensionsMap.get("taxNo"));
                 }

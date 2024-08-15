@@ -48,15 +48,12 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
             return;
         }
 
-        //订单拓展
-        DmpInputTaskEntity dmpInputTaskExtensionsEntity = list.stream().filter(req -> "1823265128548686459".equals(req.getCfgInputId())).findFirst().orElse(null);
+        //订单交易
+        DmpInputTaskEntity dmpInputTransactionsEntity = list.stream().filter(req -> "1823265118759180922".equals(req.getCfgInputId())).findFirst().orElse(null);
+
         List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskExtensionsEntity.getId()));
-        List<Map<String, Object>> dmpInputTransactionsMongoChildList = mongoService.findMongoData(paramDataList, "shopify_extensions_data");
-        log.error("shopify：dmpInputTaskEntity：" + id);
-        log.error("shopify：list：" + list);
-        log.error("shopify：dmpInputTaskExtensionsEntity：" + dmpInputTaskExtensionsEntity);
-        log.error("shopify：dmpInputTransactionsMongoChildList：" + dmpInputTransactionsMongoChildList);
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTransactionsEntity.getId()));
+        List<Map<String, Object>> dmpInputTransactionsMongoChildList = mongoService.findMongoData(paramDataList, "shopify_transactions_data");
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
@@ -135,7 +132,6 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                 Map<String, Object> transactionsMap = dmpInputTransactionsMongoChildList.stream()
                         .filter(req -> String.valueOf(req.get("orderId")).equals(String.valueOf(dmpDataMap.get("thirdCode"))))
                         .findFirst().orElse(null);
-                log.error("Shopify订单清洗：thirdCode：" + dmpDataMap.get("thirdCode"));
                 if (ObjectUtil.isNotEmpty(transactionsMap)) {
                     dmpDataMap.put("payTime", transactionsMap.get("createdAt"));
                     dmpDataMap.put("dictPayMethod", transactionsMap.get("gateway"));
