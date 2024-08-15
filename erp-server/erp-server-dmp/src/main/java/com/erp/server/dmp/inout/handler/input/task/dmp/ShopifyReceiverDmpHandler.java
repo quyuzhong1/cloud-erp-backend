@@ -70,7 +70,7 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
                     detail.put("secondPhone", customerMap.get("phone"));
                 }
                 log.error("shopify2：thirdCode：" + detail.get("thirdCode"));
-                Map<String, Object> extensionsMap = dmpInputExtensionsMongoChildList.stream().filter(req -> String.valueOf(req.get("orderId")).equals(detail.get("thirdCode")+"")).findFirst().orElse(null);
+                Map<String, Object> extensionsMap = dmpInputExtensionsMongoChildList.stream().filter(req -> String.valueOf(req.get("orderId")).equals(detail.get("orderId")+"")).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(extensionsMap)) {
                     detail.put("receiverTaxNo", extensionsMap.get("taxNo"));
                 }
