@@ -86,36 +86,25 @@ public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExte
                 .list();
 
         // 查询默认配置
-        List<DictBasicDTO.ViewDTO> defaultConfigList = dictBasicService.getByKey(DictBasicEnum.SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE.getKey());
-        if (CollectionUtils.isEmpty(defaultConfigList)){
-            throw new ServiceException("默认SKU仓库发货配置缺失");
-        }
+//        List<DictBasicDTO.ViewDTO> defaultConfigList = dictBasicService.getByKey(DictBasicEnum.SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE.getKey());
+//        if (CollectionUtils.isEmpty(defaultConfigList)){
+//            throw new ServiceException("默认SKU仓库发货配置缺失");
+//        }
         Map<String, SkuMappingExtendEntity> entityMap = list.stream().collect(Collectors.toMap(SkuMappingExtendEntity::getWarehouseManageType, Function.identity()));
-        Map<String, DictBasicDTO.ViewDTO> defaultMap = defaultConfigList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, Function.identity()));
         // 保存的列表
         List<SkuMappingExtendEntity> saveList = new ArrayList<>();
         // 更新的列表
         List<SkuMappingExtendEntity> updateList = new ArrayList<>();
 
         for (SkuMappingDTO.SkuMappingExtendListDTO dto : extendList) {
-            DictBasicDTO.ViewDTO viewDTO = defaultMap.get(dto.getWarehouseManageType());
-            if (null != viewDTO && dto.getWarehouseDeliveryType().equalsIgnoreCase(viewDTO.getRemark())) {
-                // 是否已存在
-                SkuMappingExtendEntity existEntity = entityMap.get(dto.getWarehouseDeliveryType());
-                if (null != existEntity){
-                    existEntity.setIsDeleted(true);
-                    updateList.add(existEntity);
-                }
+            // 是否已存在
+            SkuMappingExtendEntity existEntity = entityMap.get(dto.getWarehouseManageType());
+            if (null != existEntity){
+                existEntity.setDeliveryType(dto.getWarehouseDeliveryType());
+                updateList.add(existEntity);
             } else {
-                // 是否已存在
-                SkuMappingExtendEntity existEntity = entityMap.get(dto.getWarehouseDeliveryType());
-                if (null != existEntity){
-                    existEntity.setDeliveryType(dto.getWarehouseDeliveryType());
-                    updateList.add(existEntity);
-                } else {
-                    SkuMappingExtendEntity saveEntity = new SkuMappingExtendEntity(entity.getId(), dto.getWarehouseManageType(), dto.getWarehouseDeliveryType());
-                    saveList.add(saveEntity);
-                }
+                SkuMappingExtendEntity saveEntity = new SkuMappingExtendEntity(entity.getId(), dto.getWarehouseManageType(), dto.getWarehouseDeliveryType());
+                saveList.add(saveEntity);
             }
         }
 

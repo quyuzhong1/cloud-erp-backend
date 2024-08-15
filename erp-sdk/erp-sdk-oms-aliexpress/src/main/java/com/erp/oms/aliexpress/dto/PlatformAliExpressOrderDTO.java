@@ -329,7 +329,9 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
                 receiverDTO.setCityName(receiptInfo.getCity());
                 receiverDTO.setProvinceName(receiptInfo.getProvince());
                 receiverDTO.setReceiverName(receiptInfo.getContactPerson());
-                receiverDTO.setReceiverTelNumber(receiptInfo.getMobileNo());
+                // 手机号为空取电话
+                String telNumber = StringUtils.isBlank(receiptInfo.getMobileNo())? receiptInfo.getPhoneNumber(): receiptInfo.getMobileNo();
+                receiverDTO.setReceiverTelNumber(telNumber);
                 receiverDTO.setPostCode(receiptInfo.getZip());
                 receiverDTO.setReceiverTaxNo(receiptInfo.getCpfNo());
                 // 买家电话
