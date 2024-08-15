@@ -1353,7 +1353,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "id", waitTime = 120)
+    @DistributeLocker(keyName = "id")
     public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
         String message = "";
         //B2C销售订单主表信息
