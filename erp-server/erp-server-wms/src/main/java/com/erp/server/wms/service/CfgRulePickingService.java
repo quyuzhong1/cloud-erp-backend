@@ -10,6 +10,7 @@ import com.erp.model.wms.entity.CfgRulePickingEntity;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -63,5 +64,5 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
      *
      * @param dto 参数
      */
-    Pair<List<LocationInventoryResultDTO>, List<String>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto);
+    Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto);
 }
