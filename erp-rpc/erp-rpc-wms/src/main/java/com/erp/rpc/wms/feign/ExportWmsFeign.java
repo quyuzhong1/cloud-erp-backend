@@ -187,4 +187,6 @@ public interface ExportWmsFeign {
 
     @PostMapping("/feign/export/warehouseReceive")
     PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(@RequestBody PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/virtualInventory")
+    PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto);
 }

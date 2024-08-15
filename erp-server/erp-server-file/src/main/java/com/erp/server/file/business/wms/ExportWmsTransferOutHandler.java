@@ -24,8 +24,7 @@ public class ExportWmsTransferOutHandler extends AbstractPageFileEventHandler<Tr
     private ExportWmsFeign exportWmsFeign;
     @Override
     public String getExcelPath() {
-        // todo
-        return "excel/wms/aliexpressDeliveryExport.xlsx";
+        return "excel/wms/transferOut.xlsx";
     }
 
     @Override

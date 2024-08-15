@@ -115,4 +115,6 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @return
      */
     List<VirtualInventoryDTO.CommonDTO> getBySkuIdAndVwId(String skuId, String id);
+
+    PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto);
 }

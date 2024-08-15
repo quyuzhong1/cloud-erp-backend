@@ -80,41 +80,6 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     @Override
     public Boolean exportExcel(VirtualInventoryDTO.SearchParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("虚拟仓库库存信息", EXPORT_WMS_VIRTUAL_INVENTORY.getCode(), dto);
-//
-//        //总数
-//        Integer count = baseMapper.pagingCount(dto);
-//        if (count > MathUtil.EXPORT_MAX_COUNT) {
-//            throw new ServiceException(ApiError.ERROR_EXCEL_EXPORT_SIZE);
-//        }
-//        PagingDTO<VirtualInventoryDTO.SearchParamDTO> pagingParamDTO = new PagingDTO<>();
-//        pagingParamDTO.setParams(dto);
-//        pagingParamDTO.setPageSize(-1);
-//        PagingVO<VirtualInventoryDTO.ListDTO> resultList = this.paging(pagingParamDTO);
-//        List<VirtualInventoryDTO.ListDTO> list = (List<VirtualInventoryDTO.ListDTO>) resultList.getList();
-//        if (CollectionUtils.isEmpty(list)) {
-//            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-//        }
-//        //数据赋值处理
-//        fillPageData(list);
-//
-//        //明细数据
-//        List<VirtualInventoryDTO.ListDetailDTO> detailList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().toArray(VirtualInventoryDTO.ListDetailDTO[]::new))).collect(Collectors.toList());
-//        List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
-//        pairList.add(new Pair<>(MathUtil.ZERO, list));
-//        pairList.add(new Pair<>(MathUtil.ONE, detailList));
-//
-//        String name = "虚拟仓库库存信息";
-//        StringBuffer sb = new StringBuffer();
-//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-//        sb.append(date);
-//        sb.append(name);
-//        String excelPath = "excel/virtualInventory.xlsx";
-//        try {
-//            new ExcelPrintUtils().sheetPatchExport(pairList, response, sb.toString(), excelPath);
-//        } catch (IOException e) {
-//            log.error("虚拟仓库库存信息导出出错 >>>>>{}", e);
-//            return Boolean.FALSE;
-//        }
         return Boolean.TRUE;
     }
 
@@ -367,6 +332,18 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     @Override
     public List<VirtualInventoryDTO.CommonDTO> getBySkuIdAndVwId(String skuId, String virtualWarehouseId) {
         return baseMapper.getBySkuIdAndVwId(skuId, virtualWarehouseId);
+    }
+
+    @Override
+    public PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
+        PagingVO<VirtualInventoryDTO.ListDTO> resultList = this.paging(dto);
+        List<VirtualInventoryDTO.ListDTO> list = (List<VirtualInventoryDTO.ListDTO>) resultList.getList();
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //数据赋值处理
+        fillPageData(list);
+        return new PagingVO<>(list, resultList.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
     }
 
     /**

@@ -23,17 +23,17 @@ public class ExportWmsPoInStockHandler extends AbstractPageFileEventHandler<PoIn
     @Resource
     private ExportWmsFeign exportWmsFeign;
     private static final ThreadLocal<PoInstockDTO.ExportParamDTO> threadLocal = new ThreadLocal<>();
+
     @Override
     public String getExcelPath() {
         PoInstockDTO.ExportParamDTO dto = threadLocal.get();
         Boolean isHaveFieldPower = dto.getIsHaveFieldPower();
-        String excelPath = "";
-        //todo
-            if (isHaveFieldPower != null && isHaveFieldPower) {
-                excelPath = "PurchaseStockExportExcelDTO";
-            } else {
-                excelPath = "PurchaseStockNotFieldExportExcelDTO";
-            }
+        String excelPath;
+        if (isHaveFieldPower != null && isHaveFieldPower) {
+            excelPath = "excel/wms/poInStock.xlsx";
+        } else {
+            excelPath = "excel/wms/poInStockNotField.xlsx";
+        }
         threadLocal.remove();
         return excelPath;
     }

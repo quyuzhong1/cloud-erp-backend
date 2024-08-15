@@ -124,6 +124,8 @@ public class ExportWmsFeignController {
     private TransferOutService transferOutService;
     @Resource
     private TransferInService transferInService;
+    @Resource
+    private VirtualInventoryService virtualInventoryService;
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -593,5 +595,11 @@ public class ExportWmsFeignController {
     )
     public PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(@RequestBody PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
         return warehouseReceiveService.exportWarehouseReceive(dto);
+    }
+
+    @PostMapping("/virtualInventory")
+    @WebAdvanceQuery
+    PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
+        return virtualInventoryService.getVirtualInventory(dto);
     }
 }

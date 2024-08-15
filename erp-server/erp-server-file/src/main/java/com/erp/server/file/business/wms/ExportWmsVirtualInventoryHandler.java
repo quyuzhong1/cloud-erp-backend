@@ -6,6 +6,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
@@ -18,27 +19,34 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY;
 
 @Component
 @Slf4j
-public class ExportWmsVirtualInventoryHandler extends AbstractPageFileEventHandler<Pair<Integer, List<?>>, VirtualInventoryDTO.SearchParamDTO> {
+public class ExportWmsVirtualInventoryHandler extends AbstractPageFileEventHandler<VirtualInventoryDTO.ListDTO, VirtualInventoryDTO.SearchParamDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
     @Override
     public String getExcelPath() {
-        // todo
-        return "excel/wms/aliexpressDeliveryExport.xlsx";
+        return "excel/wms/virtualInventory.xlsx";
     }
 
     @Override
     public void handle(FileTask fileTask) {
-        List<Pair<Integer, List<?>>> list = getData(fileTask);
-        fileTask.setCount(list.get(0).getValue().size());
+        List<VirtualInventoryDTO.ListDTO> list = getData(fileTask);
+        fileTask.setCount(list.size());
+        //明细数据
+        List<VirtualInventoryDTO.ListDetailDTO> detailList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().toArray(new VirtualInventoryDTO.ListDetailDTO[0]))).collect(Collectors.toList());
+        List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
+        pairList.add(new Pair<>(MathUtil.ZERO, list));
+        pairList.add(new Pair<>(MathUtil.ONE, detailList));
         StringBuilder sb = new StringBuilder();
         String excelPath = getExcelPath();
         String name = fileTask.getFileName();
@@ -46,7 +54,7 @@ public class ExportWmsVirtualInventoryHandler extends AbstractPageFileEventHandl
         sb.append(date);
         sb.append(name);
         try {
-            byte[] bytes = new ExcelPrintUtils().sheetPatchExport(list, sb.toString(),excelPath);
+            byte[] bytes = new ExcelPrintUtils().sheetPatchExport(pairList, sb.toString(),excelPath);
             String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
             fileTask.setFileUrl(s);
         } catch (IOException e) {
@@ -60,7 +68,7 @@ public class ExportWmsVirtualInventoryHandler extends AbstractPageFileEventHandl
     }
 
     @Override
-    protected List<Pair<Integer, List<?>>> getData(FileTask fileTask) {
+    protected List<VirtualInventoryDTO.ListDTO> getData(FileTask fileTask) {
         VirtualInventoryDTO.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualInventoryDTO.SearchParamDTO>() {
         });
         return listSeqData(dto);
@@ -68,7 +76,7 @@ public class ExportWmsVirtualInventoryHandler extends AbstractPageFileEventHandl
 
 
     @Override
-    protected PagingVO<Pair<Integer, List<?>>>  getPageData(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
-        return null;
+    protected PagingVO<VirtualInventoryDTO.ListDTO>  getPageData(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
+        return exportWmsFeign.getVirtualInventory(dto);
     }
 }
