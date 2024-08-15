@@ -42,7 +42,6 @@ public class ExportWmsQcEffectivenessDocumentHandler extends AbstractPageFileEve
 
     @Override
     public String getExcelPath() {
-        // todo
-        return "";
+        return "excel/wms/qcEffectivenessDocument.xlsx";
     }
 }
