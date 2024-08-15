@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.PackingTaskEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackingTaskDTO;
+import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -276,4 +277,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId);
+
+    void addPackingByRequisition(RequisitionApplicationEntity entity);
 }

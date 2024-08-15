@@ -157,6 +157,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
+    @Resource
+    private PackingTaskService packingTaskService;
+
+    @Resource
+    private CfgRuleOutService cfgRuleOutService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1335,6 +1340,22 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      * @return java.lang.Boolean
      **/
     private Boolean generateDeliver(List<RequisitionApplicationDTO.GenerateDeliverViewDTO> list, Boolean isSubmit) {
+        if(CollectionUtils.isEmpty(list)){
+            return false;
+        }
+
+        //已装箱才能审核
+        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(list.get(0).getSourceCode());
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException("未生成装箱任务，不允许下推发货单");
+        }
+        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgRuleOutService.getCfgOverweightDetailDTOByType(taskEntity.getSourceType());
+        if(Objects.nonNull(cfgOverweightDetailDTO) && cfgOverweightDetailDTO.isCheckStatusWhenApprove()){
+            if(!(taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()) && taskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode()))){
+                throw new ServiceException(StrUtil.format("{}未完成装箱/称重无法发货",taskEntity.getCode()));
+            }
+        }
+
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
         List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         list = list.stream().filter(v -> noInventorySkuIds.contains(v.getSkuId()) || v.getDeliveryQty() > 0).collect(Collectors.toList());
@@ -1474,6 +1495,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         addDTO.setDetails(detailList);
         pickingListsService.add(addDTO);
         requisitionApplicationDetailService.updateBatchById(updateDetails);
+        //生成装箱任务
+        packingTaskService.addPackingByRequisition(application);
     }
 
     /**
@@ -1594,10 +1617,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
-        //查询第三方SKU信息
-        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList, "", "","");
-
+        Map<String,Integer> qtyMap = new HashMap<>();
         for (RequisitionApplicationDTO.ListDTO listDTO : list) {
+            if (org.apache.commons.lang3.StringUtils.isNotBlank(listDTO.getPackingStatus())) {
+                listDTO.setPackingStatusName(PackingTaskStatusEnum.getName(listDTO.getPackingStatus()));
+            }else{
+                listDTO.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
+                listDTO.setPackingStatusName(PackingTaskStatusEnum.WAIT.getName());
+            }
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
                     .filter(req -> req.getParentSkuId().equals(listDTO.getSkuId())
@@ -1616,28 +1643,23 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //要货类型中文
             listDTO.setTypeName(RequisitionApplicationTypeEnum.getName(listDTO.getType()));
 
-            //根据类型设置第三方SKU信息
-//            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = null;
-//            if(listDTO.getType().equals(RequisitionApplicationTypeEnum.OVERSEAS_WAREHOUSE.getCode())){
-//                if(StringUtils.isNotBlank(listDTO.getProvideCode())){
-//                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(
-//                            v->v.getProductSkuId().equals(listDTO.getSkuId()) && v.getDictPlatform().equals(listDTO.getProvideCode()) && (v.getHasMappingAll() || v.getWarehouseId().equals(listDTO.getChannelId()))
-//                    ).findFirst().orElse(null);
-//                }
-//            }
-//
-//            if(listDTO.getType().equals(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode())){
-//                if(StringUtils.isNotBlank(listDTO.getChannelId())){
-//                    listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(listDTO.getSkuId()) && v.getShopId().equals(listDTO.getChannelId())).findFirst().orElse(null);
-//                }
-//            }
-//
-//            if(Objects.nonNull(listingInfoWithSkuMappingDTO)){
-//                listDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-//                listDTO.setPlatformProductId(listingInfoWithSkuMappingDTO.getPlatformSpuNo());
-//                listDTO.setPlatformSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
-//                listDTO.setPlatformFnSku(listingInfoWithSkuMappingDTO.getPlatformFnSku());
-//            }
+            //如果装箱数量大于拣货数量，拆分处理
+            if(Objects.nonNull(listDTO.getPickingQty()) && Objects.nonNull(listDTO.getPackingQty()) && listDTO.getPackingQty() > listDTO.getPickingQty()){
+                String key = listDTO.getId() + listDTO.getSkuId();
+                if(qtyMap.containsKey(key)){
+                    Integer reduceQty = qtyMap.get(key);
+                    if(reduceQty > listDTO.getPickingQty()){
+                        listDTO.setPackingQty(listDTO.getPickingQty());
+                        qtyMap.put(key,reduceQty - listDTO.getPickingQty());
+                    }else{
+                        listDTO.setPackingQty(reduceQty);
+                        qtyMap.put(key,0);
+                    }
+                }else{
+                    qtyMap.put(key,listDTO.getPackingQty() - listDTO.getPickingQty());
+                    listDTO.setPackingQty(listDTO.getPickingQty());
+                }
+            }
         }
     }
 
@@ -1922,5 +1944,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         resultPage.setList(warehouseListDTOS);
         return resultPage;
     }
-
+    @Override
+    public BatchResultDTO generatePackingTask(RequisitionApplicationEntity entity) {
+        packingTaskService.addPackingByRequisition(entity);
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
+    }
 }
