@@ -230,7 +230,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
      * @date 2024/6/14 10:39
      * @param detailList
      */
-    private void handleVirtualInventory (String id,List<SoDeliveryNoticeDetailEntity> detailList) {
+    @Override
+    public void handleVirtualInventory (String id,List<SoDeliveryNoticeDetailEntity> detailList) {
         //发货通知单
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(id);
         if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {

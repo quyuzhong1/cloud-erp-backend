@@ -125,6 +125,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.rtfparserkit.rtf.Command.list;
+import static com.rtfparserkit.rtf.Command.v;
 
 /**
  * <p>
@@ -318,16 +319,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //出库金额
         BigDecimal outStockAmount = BigDecimal.ZERO;
-        //通知单详情
-        List<String> noticeDetailIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = CollectionUtils.isNotEmpty(noticeDetailIdList) ? soDeliveryNoticeDetailService.listByIds(noticeDetailIdList) : Collections.emptyList();
         for (SoOutstockDetailDTO.AddDTO item : detailList) {
 
             //实发数量
             Integer actualQty = item.getActualQty();
-            String sourceDetailId = item.getSourceDetailId();
-            String soDetailId = soDeliveryNoticeDetailEntityList.stream().filter(d -> d.getId().equals(sourceDetailId)).
-                    map(SoDeliveryNoticeDetailEntity::getSourceDetailId).findFirst().orElse("");
+            String soDetailId = item.getSoDetailId();
 
             BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                     findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
@@ -913,9 +909,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
                 virtualInventoryTransCoreService.approve(stockParamDTO);
             }
-            //扣实体仓库存
-            inventoryInOutStockDTO.setParamList(members);
-            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
         //物流单添加
         saveLogisticsBill(entity);
@@ -1584,9 +1577,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             BigDecimal taxAmountBefore = soDetail.getTaxAmountBefore();
             soAmount = soAmount.add(Objects.isNull(taxAmountBefore) ? BigDecimal.ZERO : taxAmountBefore);
         }
-        //通知单详情
-        List<String> noticeDetailIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = CollectionUtils.isNotEmpty(noticeDetailIdList) ? soDeliveryNoticeDetailService.listByIds(noticeDetailIdList) : Collections.emptyList();
         //出库金额
         BigDecimal outStockAmount = BigDecimal.ZERO;
         for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
@@ -1595,9 +1585,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //实发数量
             Integer actualQty = item.getActualQty();
 
-            String sourceDetailId = item.getSourceDetailId();
-            String soDetailId = soDeliveryNoticeDetailEntityList.stream().filter(d -> d.getId().equals(sourceDetailId)).
-                    map(SoDeliveryNoticeDetailEntity::getSourceDetailId).findFirst().orElse("");
+            String soDetailId = item.getSoDetailId();
 
             BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                     findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
@@ -2389,6 +2377,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                             .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
                     SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
                     addDTO.setWarehouseLocation(Objects.isNull(notCancelBySoId.getBatchNo()) ? view.getWarehouseLocation() : "");
+                    addDTO.setSkuNo(view.getSkuNo());
+                    addDTO.setSkuId(view.getSkuId());
                     addDTO.setActualQty(view.getQty());
                     addDTO.setPlanQty(view.getQty());
                     addDTO.setSourceDetailId(detailEntity.getId());

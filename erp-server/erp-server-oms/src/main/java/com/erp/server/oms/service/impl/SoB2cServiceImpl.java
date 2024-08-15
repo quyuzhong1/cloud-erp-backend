@@ -3348,6 +3348,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             scarceDTO.setVirtualScarceQty(MathUtil.compareTo(virtualScarceQty,MathUtil.ZERO) >= MathUtil.ZERO ? virtualScarceQty : MathUtil.ZERO);
             scarceDTO.setSkuId(childrenSkuDTO.getSkuId());
             scarceDTO.setSkuNo(childrenSkuDTO.getSkuNo());
+            scarceDTO.setQuantity(childrenSkuDTO.getQuantity());
+            scarceDTO.setBomVersion(childrenSkuDTO.getBomVersion());
             childScarceList.add(scarceDTO);
         }
         detailLabelDTO.setIsVirtualOutStock(isVirtualScarce);
@@ -7743,13 +7745,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                 }
                 //父级可用取子级中最小可用数量
-                if (SoB2cExportTypeEnum.PARENT_EXPORT.getCode().equals(exportType) && CollectionUtils.isNotEmpty(qtyList)) {
-                    Integer bomUsableQty = qtyList.stream().min(Comparator.comparing(obj -> obj)).get();
-                    exportDTO.setVirtualUsableQty(bomUsableQty);
+                if (SoB2cExportTypeEnum.PARENT_EXPORT.getCode().equals(exportType) ) {
+                    if (CollectionUtils.isNotEmpty(qtyList)) {
+                        Integer bomUsableQty = qtyList.stream().min(Comparator.comparing(obj -> obj)).get();
+                        exportDTO.setVirtualUsableQty(bomUsableQty);
+                    }
+                    exportDTO.setSkuQty(exportDTO.getQty());
+                    //根据订单维度还是bom维度清除已存在的记录
+                    processRepeatData(exportDTO, resultList);
+                    resultList.add(exportDTO);
                 }
-            }
-            //按父级导出
-            if (SoB2cExportTypeEnum.PARENT_EXPORT.getCode().equals(exportType)) {
+            } else {
                 exportDTO.setSkuQty(exportDTO.getQty());
                 //根据订单维度还是bom维度清除已存在的记录
                 processRepeatData(exportDTO, resultList);

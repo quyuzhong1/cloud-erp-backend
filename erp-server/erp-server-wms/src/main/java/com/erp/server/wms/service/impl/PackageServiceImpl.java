@@ -326,7 +326,7 @@ public class PackageServiceImpl implements PackageService {
         if (ObjectUtil.isEmpty(scanResult)) {
             return weightDTO;
         }
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listBySourceIds(Arrays.asList(scanResult.getSoId()));
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listBySourceIds(Arrays.asList(scanResult.getSoId()),SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
         if (CollectionUtils.isEmpty(soB2cDeliveryList)) {
             return  weightDTO;
         }
