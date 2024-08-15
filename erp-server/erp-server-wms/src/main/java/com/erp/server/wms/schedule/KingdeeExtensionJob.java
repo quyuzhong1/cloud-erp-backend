@@ -1,8 +1,10 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.InventoryClosedRecordEnum;
 import com.erp.model.wms.dto.extension.TStkCloseProfileDTO;
 import com.erp.model.wms.entity.InventoryClosedRecordEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -18,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +82,12 @@ public class KingdeeExtensionJob {
 
         if (CollectionUtils.isEmpty(newEntityList)) {
             XxlJobHelper.log("拉取【关账时间】(金蝶->WMS)]：执行结束-无需要金蝶最新库存组织关账时间保存记录");
+            return ReturnT.SUCCESS;
+        }
+        //现只取STK信息
+        newEntityList = newEntityList.stream().filter(obj -> StrUtil.equals(obj.getCategory(), InventoryClosedRecordEnum.STK.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(newEntityList)) {
+            XxlJobHelper.log("拉取【STK关账时间】(金蝶->WMS)]：执行结束-无需要金蝶最新库存组织关账时间保存记录");
             return ReturnT.SUCCESS;
         }
 

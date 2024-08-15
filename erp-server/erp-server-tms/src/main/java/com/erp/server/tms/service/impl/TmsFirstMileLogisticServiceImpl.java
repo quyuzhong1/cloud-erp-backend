@@ -657,7 +657,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 dto.setTotalEstimatedFee(totalEstimatedFee);
             }else{
                 //查询汇率
-                BigDecimal rate = dmpTaskFeign.getRate(logisticsBillCostEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
+                BigDecimal rate = StrUtil.isBlank(dto.getCurrency()) ? null : dmpTaskFeign.getRate(logisticsBillCostEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
                 if(Objects.nonNull(rate)){
                     dto.setTotalEstimatedFee(totalEstimatedFee.multiply(rate));
                 }
