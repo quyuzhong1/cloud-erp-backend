@@ -55,6 +55,7 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTransactionsEntity.getId()));
         List<Map<String, Object>> dmpInputTransactionsMongoChildList = mongoService.findMongoData(paramDataList, "shopify_transactions_data");
         log.error("shopify：dmpInputTaskEntity：" + id);
+        log.error("shopify：taskId：" + dmpInputTransactionsEntity.getId());
         log.error("shopify：list：" + list);
         log.error("shopify：dmpInputTaskExtensionsEntity：" + dmpInputTransactionsEntity);
         log.error("shopify：dmpInputTransactionsMongoChildList：" + dmpInputTransactionsMongoChildList);
