@@ -209,6 +209,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                     .filter(v -> v.getQty() > 0)
                     .collect(Collectors.toList());
             for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inventory : inventoryByWarehouse) {
+                log.warn("单据【{}】执行拣货策略，规则{},sku{},仓位{},数量{}", dto.getSourceCode(), inventory.getRuleId(), inventory.getSkuNo(), inventory.getWarehouseLocation(), inventory.getQty());
                 LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
                 inventoryResultDTO.setSkuId(detail.getSkuId());
                 inventoryResultDTO.setSkuNo(detail.getSkuNo());
