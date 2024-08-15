@@ -45,6 +45,7 @@ import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.TransactionFlowMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Maps;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -79,6 +80,7 @@ import java.util.stream.Collectors;
  * @CreateTime: 2023-04-25  19:43
  * @Author: zhangchunlin
  */
+@Slf4j
 @Service
 public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlowMapper, TransactionFlowEntity> implements TransactionFlowService {
 
@@ -348,6 +350,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void overrideInventoryFlow(Map.Entry<String, LocalDate> orgStartTimeMap, LocalDateTime startTime, String inventoryId, String orgName) {
+        log.info("重算库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startTime);
         // 更新库存流水
         LocalDate startDate = ObjectUtil.isNotEmpty(startTime) ? startTime.toLocalDate() : orgStartTimeMap.getValue();
         //  1. 查询大于最小时间的需要重算的流水记录
@@ -358,6 +361,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
                 .last("for update")
                 .list();
         if(CollUtil.isEmpty(lockTableList)) {
+            log.warn("未找到需要重算的库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate);
             return;
         }
         // 2. 对需要重算流水排序
@@ -369,7 +373,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
                 .collect(Collectors.groupingBy(TransactionFlowEntity::getInventoryId, Collectors.toList()));
 
         // 3. 进行流水重算
-        flowMap.keySet().parallelStream().forEach(flow -> {
+        flowMap.keySet().stream().forEach(flow -> {
+            log.info("重算库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, flow, startTime);
             List<TransactionFlowEntity> flowList = flowMap.get(flow);
             InventoryHisEntity hisEntity = inventoryHisService.findLastInventory(flow, startDate.minusDays(1));
             if(ObjectUtil.isEmpty(hisEntity)){
@@ -380,7 +385,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             // 重算历史库存
             inventoryHisService.overrideInventoryHis(flowList, hisEntity);
         });
-        if(StrUtil.isNotEmpty(inventoryId) && ObjectUtil.isNotEmpty(orgStartTimeMap)){
+        if(StrUtil.isEmpty(inventoryId) && ObjectUtil.isNotEmpty(orgStartTimeMap)){
             inventoryFlowOverrideRecordService.save(new InventoryFlowOverrideRecordEntity(LocalDateTime.of(startDate, LocalTime.MIN),LocalDateTime.now(), orgStartTimeMap.getKey(),orgName, InventoryFlowOverrideRecordTypeEnum.AUTO));
         }
 

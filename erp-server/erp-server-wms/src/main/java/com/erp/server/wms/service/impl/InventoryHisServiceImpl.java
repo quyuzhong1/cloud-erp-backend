@@ -1,8 +1,10 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -91,6 +93,7 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
                 .last("for update")
                 .list();
         if(CollectionUtil.isEmpty(lockInventoryHisList)){
+            log.info("需要修复历史库存列表为空！hisEntity={}", JSONUtil.toJsonStr(hisEntity));
             XxlJobHelper.log("需要修复历史库存列表为空！");
             return;
         }
@@ -120,6 +123,17 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
                     updateById(new InventoryHisEntity(inventoryHis.getId(), curQty.get()));
                 }
             });
+        // 查找 inventoryHisMap 中不包含在 flowBillDataMap 中的 key
+        List<String> removeHisIdList = inventoryHisMap.entrySet().stream()
+                .filter(entry -> !flowBillDataMap.containsKey(entry.getKey()))
+                .map(item -> item.getValue().getId())
+                // 过滤掉null值
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        // 删除不需要的历史库存
+        if(CollUtil.isNotEmpty(removeHisIdList)){
+            removeByIds(removeHisIdList);
+        }
     }
 
 

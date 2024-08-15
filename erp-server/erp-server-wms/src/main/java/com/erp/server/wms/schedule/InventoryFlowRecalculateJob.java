@@ -90,7 +90,6 @@ public class InventoryFlowRecalculateJob {
             XxlJobHelper.log("lastTimeOverrideMap = {} 上次重算结束时间， closedDateMap = {}组织关账时间， 都为空", lastTimeOverrideMap, closedDateMap);
             return ReturnT.SUCCESS;
         }
-//        sw.start("task start overrideInventoryFlow");
         // 4. 执行重算逻辑
         for (Map.Entry<String, LocalDate> orgStartTimeMap : startTimeMap.entrySet()) {
             sw.start("task start orgStartTimeMap = " + orgStartTimeMap);
@@ -98,12 +97,14 @@ public class InventoryFlowRecalculateJob {
             try {
                 transactionFlowService.overrideInventoryFlow(orgStartTimeMap, startTime, inventoryId,orgName);
             }catch (Exception e){
+                log.error("inventoryId = {} 组织名称 = {} 重算异常", inventoryId, orgName, e);
                 XxlJobHelper.log("inventoryId = {} 组织名称 = {} 重算异常", inventoryId, orgName, e);
             }
             sw.stop();
+            log.info("inventoryId = {} 组织名称 = {} 重算完成 耗时：{}", inventoryId, orgName, sw.prettyPrint(TimeUnit.SECONDS));
             XxlJobHelper.log("inventoryId = {} 组织名称 = {} 重算完成 耗时：{}", inventoryId, orgName, sw.prettyPrint(TimeUnit.SECONDS));
         }
-//        sw.stop();
+        log.info("库存流水重算定时任务执行结束 时间统计为 {}", sw.prettyPrint(TimeUnit.SECONDS));
         XxlJobHelper.log("库存流水重算定时任务执行结束 时间统计为 {}", sw.prettyPrint(TimeUnit.SECONDS));
         return ReturnT.SUCCESS;
     }
