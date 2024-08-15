@@ -464,10 +464,6 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         //对账周期
         data.setCycle(StrUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
-        //对账月份
-        if (Objects.nonNull(data.getEndDate())){
-            data.setReconciliationMonth(data.getEndDate().withDayOfMonth(1));
-        }
         // 明细数据
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIdsBySort(Collections.singletonList(data.getId()));
 
@@ -564,8 +560,9 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     .orElse(null);
             data.setCurrencySymbol(null == viewDTO ? "" : viewDTO.getSymbol());
             data.setCurrencyName(null == viewDTO ? "" : viewDTO.getName());
-            if (Objects.nonNull(data.getEndDate())){
-                data.setReconciliationMonth(data.getEndDate().withDayOfMonth(1));
+            if (Objects.nonNull(data.getReconciliationMonth())){
+                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                data.setReconciliationMonthStr(data.getReconciliationMonth().format(dateTimeFormatter));
             }
             LogisticsSupplierEntity supplierEntity = supplierMap.get(data.getLogisticsSupplierId());
             if (null != supplierEntity){
