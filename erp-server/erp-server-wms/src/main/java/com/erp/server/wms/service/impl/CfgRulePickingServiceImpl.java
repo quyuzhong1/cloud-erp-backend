@@ -179,11 +179,13 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         Map<String, Object> detailMap = new HashMap<>();
         detailMap.put("billType", dto.getBillType());
         detailMap.put("customerId", dto.getCustomerId());
+        detailMap.put("countryCode",dto.getCountryCode());
         detailMap.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
         Map<String, Object> map = new HashMap<>();
         map.put("detailList", Collections.singletonList(detailMap));
         map.put("billType", dto.getBillType());
         map.put("customerId", dto.getCustomerId());
+        map.put("countryCode",dto.getCountryCode());
         map.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
         // 获取所有符合条件的规则 使用异步流后需要重排序
         log.warn("单据【{}】开始过滤拣货策略，开始时间为{}", dto.getSourceCode(), System.currentTimeMillis());

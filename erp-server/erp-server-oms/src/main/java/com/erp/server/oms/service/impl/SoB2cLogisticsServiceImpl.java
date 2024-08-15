@@ -193,6 +193,23 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
+    public Boolean updateTransferInfo(List<SoB2cLogisticsEntity> updateLogisticList) {
+        if(CollectionUtils.isEmpty(updateLogisticList)){
+            return true;
+        }
+        Map<String,List<SoB2cLogisticsEntity>> updateMap = updateLogisticList.stream().collect(Collectors.groupingBy(SoB2cLogisticsEntity::getTransferLogisticsChannelId));
+        updateMap.forEach((key,val)->{
+            String transferLogisticsSupplierId = val.get(0).getTransferLogisticsSupplierId();
+            List<String> ids = val.stream().map(v->v.getId()).collect(Collectors.toList());
+            lambdaUpdate().in(SoB2cLogisticsEntity::getId, ids).
+                    set(SoB2cLogisticsEntity::getTransferLogisticsSupplierId, transferLogisticsSupplierId).
+                    set(SoB2cLogisticsEntity::getTransferLogisticsChannelId, key).
+                    update();
+        });
+        return true;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight,
                                                    BigDecimal maxLength, BigDecimal maxWidth, BigDecimal totalHeight) {

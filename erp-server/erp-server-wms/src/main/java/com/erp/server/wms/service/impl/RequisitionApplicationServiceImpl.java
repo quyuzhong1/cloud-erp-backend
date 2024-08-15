@@ -157,7 +157,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -1449,7 +1448,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
             ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(application.getChannelId());
             addDTO.setDeliveryWarehouseId(shopInfo.getWarehouseId());
+            addDTO.setCountryCode(shopInfo.getDictCountryCode());
         }else {
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(application.getChannelId());
+            if(Objects.nonNull(overseasProviderWarehouseEntity)){
+                addDTO.setCountryCode(overseasProviderWarehouseEntity.getCountry());
+            }
             addDTO.setDeliveryWarehouseId(application.getChannelId());
         }
         addDTO.setSourceId(application.getId());

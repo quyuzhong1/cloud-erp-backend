@@ -9,10 +9,13 @@ import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -21,6 +24,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
@@ -33,6 +37,7 @@ import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.SoOutstockService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -135,6 +140,16 @@ public class AsyncServiceImpl implements AsyncService {
     @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
     public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey) {
         log.info("【{}】销售单【{}】 标记发货开始 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
+        // 查询本单明细有已发货标记跳过触发
+        List<SoB2cDetailEntity> detailEntityList =FeignQuery.create(SoB2cDetailEntity.class)
+                .eq(SoB2cDetailEntity::getMainId, soId)
+                .eq(SoB2cDetailEntity::getIsSignShipped, true)
+                .list();
+        // 已有成功标记发货明细记录跳过
+        if (CollectionUtils.isNotEmpty(detailEntityList)){
+            log.warn("【{}】销售单【{}】 本单已标记发货忽略 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
+            return detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        }
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soId);
         platformShipOrderDTO.setDictPlatform(dictPlatform);
