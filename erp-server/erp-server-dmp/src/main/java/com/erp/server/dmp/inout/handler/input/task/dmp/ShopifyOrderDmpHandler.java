@@ -54,11 +54,6 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
         List<ParamData> paramDataList = new ArrayList<>();
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTransactionsEntity.getId()));
         List<Map<String, Object>> dmpInputTransactionsMongoChildList = mongoService.findMongoData(paramDataList, "shopify_transactions_data");
-        log.error("shopify：dmpInputTaskEntity：" + id);
-        log.error("shopify：taskId：" + dmpInputTransactionsEntity.getId());
-        log.error("shopify：list：" + list);
-        log.error("shopify：dmpInputTaskExtensionsEntity：" + dmpInputTransactionsEntity);
-        log.error("shopify：dmpInputTransactionsMongoChildList：" + dmpInputTransactionsMongoChildList);
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
@@ -137,7 +132,6 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                 Map<String, Object> transactionsMap = dmpInputTransactionsMongoChildList.stream()
                         .filter(req -> String.valueOf(req.get("orderId")).equals(String.valueOf(dmpDataMap.get("thirdCode"))))
                         .findFirst().orElse(null);
-                log.error("Shopify订单清洗：thirdCode：" + dmpDataMap.get("thirdCode"));
                 if (ObjectUtil.isNotEmpty(transactionsMap)) {
                     dmpDataMap.put("payTime", transactionsMap.get("createdAt"));
                     dmpDataMap.put("dictPayMethod", transactionsMap.get("gateway"));
