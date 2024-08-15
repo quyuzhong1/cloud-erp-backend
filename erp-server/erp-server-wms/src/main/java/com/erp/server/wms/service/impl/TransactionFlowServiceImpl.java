@@ -374,6 +374,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
         // 3. 进行流水重算
         flowMap.keySet().stream().forEach(flow -> {
+
             log.info("重算库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, flow, startTime);
             List<TransactionFlowEntity> flowList = flowMap.get(flow);
             InventoryHisEntity hisEntity = inventoryHisService.findLastInventory(flow, startDate.minusDays(1));
@@ -384,6 +385,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             overrideFlowByInventoryId(flowList, hisEntity);
             // 重算历史库存
             inventoryHisService.overrideInventoryHis(flowList, hisEntity);
+
         });
         if(StrUtil.isEmpty(inventoryId) && ObjectUtil.isNotEmpty(orgStartTimeMap)){
             inventoryFlowOverrideRecordService.save(new InventoryFlowOverrideRecordEntity(LocalDateTime.of(startDate, LocalTime.MIN),LocalDateTime.now(), orgStartTimeMap.getKey(),orgName, InventoryFlowOverrideRecordTypeEnum.AUTO));
@@ -471,10 +473,13 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
      */
     private void overrideFlowByInventoryId(List<TransactionFlowEntity> flowList, InventoryHisEntity hisEntity) {
         AtomicReference<Integer> afterQty = ObjectUtil.isNotEmpty(hisEntity) ? new AtomicReference<>(hisEntity.getQty()) : new AtomicReference<>(0);
+        List<TransactionFlowEntity> updateList = new ArrayList<>();
         flowList.stream().forEachOrdered(flow -> {
             afterQty.set(flow.getQty() + afterQty.get());
-            updateById(new TransactionFlowEntity(flow.getId(), afterQty.get()));
+            updateList.add(new TransactionFlowEntity(flow.getId(), afterQty.get()));
+//            updateById(new TransactionFlowEntity(flow.getId(), afterQty.get()));
         });
+        updateBatchById(updateList);
 
     }
 

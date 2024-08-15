@@ -109,7 +109,10 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
                         Collectors.summingInt(TransactionFlowEntity::getQty)));
         // 遍历统计流水日期
         AtomicReference<Integer> curQty = new AtomicReference<>(hisEntity.getQty());
+        List<InventoryHisEntity> insertList = new ArrayList<>();
+        List<InventoryHisEntity> updateList = new ArrayList<>();
         flowBillDataMap.keySet().stream().sorted().forEach(key -> {
+//            threadPoolTaskExecutor.execute();
                 // 当天单据日期合计变更数量
                 Integer tradeQty = flowBillDataMap.get(key);
                 // 查询是否存在历史库存记录
@@ -118,11 +121,17 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
                 if(ObjectUtil.isEmpty(inventoryHis)){
                     String billDateStr = key.split("_")[1];
                     String inventoryId = key.split("_")[0];
-                    save(new InventoryHisEntity(inventoryId, LocalDate.parse(billDateStr), curQty.get()));
+                    insertList.add(new InventoryHisEntity(inventoryId, LocalDate.parse(billDateStr), curQty.get()));
                 }else {
-                    updateById(new InventoryHisEntity(inventoryHis.getId(), curQty.get()));
+                    updateList.add(new InventoryHisEntity(inventoryHis.getId(), curQty.get()));
                 }
-            });
+                });
+        if(CollUtil.isNotEmpty(insertList)){
+            saveBatch(insertList);
+        }
+        if(CollUtil.isNotEmpty(updateList)){
+            updateBatchById(updateList);
+        }
         // 查找 inventoryHisMap 中不包含在 flowBillDataMap 中的 key
         List<String> removeHisIdList = inventoryHisMap.entrySet().stream()
                 .filter(entry -> !flowBillDataMap.containsKey(entry.getKey()))
