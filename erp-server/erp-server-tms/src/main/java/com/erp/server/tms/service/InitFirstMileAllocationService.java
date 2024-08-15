@@ -117,4 +117,10 @@ public interface InitFirstMileAllocationService extends SuperService<InitFirstMi
      * @param response
      */
     void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 提交修改并提审
+     * @param dto
+     */
+    void updateAndSubmit(InitFirstMileAllocationDTO.UpdateDTO dto);
 }

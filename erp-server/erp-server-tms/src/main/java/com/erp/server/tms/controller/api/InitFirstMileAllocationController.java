@@ -3,19 +3,10 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.OrderCategoryDTO;
-import com.erp.model.oms.entity.CustomerB2cEntity;
-import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
-import com.erp.model.scm.entity.PurchaseChangeEntity;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
-import com.erp.model.wms.entity.PoReturnDetailEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.server.tms.query.InitFirstMileAllocationQueryHandler;
-import com.erp.server.tms.query.LogisticsBillQueryHandler;
+import com.erp.server.tms.service.TmsFirstMileReconciliationService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -24,7 +15,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -249,7 +239,24 @@ public class InitFirstMileAllocationController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
+    /**
+     * 修改并提交审核
+     *
+     * @param dto DTO
+     * @return ApiResult<Void>
+     * @author zdy
+     * {@code @date:}2024-03-25
+     */
+    @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFirstMileReconciliation:updateAndSubmit",
+            serviceClass = TmsFirstMileReconciliationService.class,
+            keyIdName = "id")
+    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated InitFirstMileAllocationDTO.UpdateDTO dto) {
+        initFirstMileAllocationService.updateAndSubmit(dto);
+        return success();
+    }
     /**
      * 删除记录
      */

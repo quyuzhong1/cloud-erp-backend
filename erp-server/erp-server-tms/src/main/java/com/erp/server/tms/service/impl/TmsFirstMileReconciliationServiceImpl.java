@@ -129,6 +129,17 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 //            throw new ServiceException("头程对账单保存失败");
 //        }
         if (!Objects.equals(tmsFirstMileReconciliationEntity.getReconciliationMonth(),updateDTO.getReconciliationMonth())){
+            //校验明细物流单在这个月份是否已存在
+            List<String> sourceIds = updateDTO.getDetailList().stream().map(TmsFirstMileReconciliationDetailDTO.UpdateDTO::getSourceId).distinct().collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(sourceIds)){
+                List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(sourceIds);
+                List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> Objects.nonNull(e) && updateDTO.getReconciliationMonth().equals(e.getReconciliationMonth())).collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(detailEntityList1)){
+                    List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
+                    throw new ServiceException(ApiError.ERROR_92260,String.join(",",sourceCodes), updateDTO.getReconciliationMonth());
+                }
+            }
+
             this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getReconciliationMonth,updateDTO.getReconciliationMonth())
                     .eq(TmsFirstMileReconciliationEntity::getId,updateDTO.getId()).update();
             old.setReconciliationMonth(updateDTO.getReconciliationMonth());

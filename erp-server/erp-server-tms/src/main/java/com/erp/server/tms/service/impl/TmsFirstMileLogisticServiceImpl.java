@@ -1180,9 +1180,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             mainKey = StrUtil.format("{}_{}_{}_{}", logisticsSupplierId, curListDTO.getCurrency(), startDate, endDate);
             //一个头程物流单可生成多次对账单-限制同一个单同一个月份仅可生成一次
             LocalDate dayOfMonth = endDate.withDayOfMonth(1);
-            TmsFirstMileReconciliationDetailEntity tmsFirstMileReconciliationDetailEntity = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && dayOfMonth.equals(e.getReconciliationMonth())).findFirst().orElse(null);
-            if (Objects.nonNull(tmsFirstMileReconciliationDetailEntity)){
-                throw new ServiceException(ApiError.ERROR_92260,tmsFirstMileReconciliationDetailEntity.getSourceCode(), dayOfMonth);
+            List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && dayOfMonth.equals(e.getReconciliationMonth())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(detailEntityList1)){
+                List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
+                throw new ServiceException(ApiError.ERROR_92260,String.join(",",sourceCodes), dayOfMonth);
             }
             // 之前已添加账单
             reconciliationEntity = currentMainEntityMap.get(mainKey);
