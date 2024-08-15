@@ -26,9 +26,9 @@ public class ShopifyOrderNextDmpHandler extends ShopifyOrderGetDetailDmpHandler 
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 				//商品售价(折扣后单价)
-				Object priceObj = dmpDataMap.get("price");
-				Object totalDiscountObj = dmpDataMap.get("totalDiscount");
-				Object quantityObj = dmpDataMap.get("quantity");
+				Object priceObj = dmpDataMap.get("sellPriceOrigin");
+				Object totalDiscountObj = dmpDataMap.get("discountAmount");
+				Object quantityObj = dmpDataMap.get("qty");
 
 				BigDecimal price = BigDecimal.ZERO;
 				BigDecimal totalDiscount = BigDecimal.ZERO;
