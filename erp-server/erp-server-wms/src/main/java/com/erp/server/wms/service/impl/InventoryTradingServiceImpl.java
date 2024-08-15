@@ -21,7 +21,6 @@ import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.InventoryHisEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.service.*;
@@ -310,20 +309,13 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             return;
         }
         /**
-         * 1. 调拨单：手动创建、调拨申请下推
-         * 2. 其他出库单：
-         * 3. 采购退货单：
-         * 4. 委外发料：正常领料、超出领料
-         * 5. 加工单：组装、拆卸
-         *
+         * 盘盈盘亏单出库不校验
          */
-        List<String> typeList = Arrays.asList(InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode(),InventorySourceTypeEnum.OTHER_INSTOCK.getCode(),InventorySourceTypeEnum.PURCHASE_RETURN_ORDER.getCode()
-                ,InventorySourceTypeEnum.RECEIVE_MATERIAL.getCode(),InventorySourceTypeEnum.RETURN_MATERIAL.getCode(),InventorySourceTypeEnum.MACHINE_INFO.getCode());
         //以上类型出可用时需要进行分配数量校验
         List<InventoryTransactionDTO> checkTransactionList = transactionList.stream().filter(obj ->
                         MathUtil.compareTo(obj.getQty(), MathUtil.ZERO ) < MathUtil.ZERO
                         && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus())
-                        && (typeList.contains(obj.getSourceType()) || Arrays.asList(InventoryBusinessTypeEnum.DIRECT_ALLOCATE.getCode(),InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode()).contains(obj.getDictBizType())))
+                        && !(InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode().equals(obj.getSourceType())))
                         .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(checkTransactionList)) {
             return;
