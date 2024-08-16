@@ -60,6 +60,12 @@ public class DmpShopInfoEntity extends BaseEntity<DmpShopInfoEntity> {
     */
     @TableField("account_user_name")
     private String accountUserName;
+    
+    /**
+    * 平台店铺标识
+    */
+    @TableField("account_store_name")
+    private String accountStoreName;
     /**
     * 店铺名称
     */
@@ -107,6 +113,12 @@ public class DmpShopInfoEntity extends BaseEntity<DmpShopInfoEntity> {
      */
     @TableField("group_id")
     private String groupId;
+    
+    /**
+     * 平台名称
+     */
+    @TableField("platform_name")
+    private String platformName;
     
     /**
      * 授权状态：0未授权 1已授权 2授权失效 3授权停用
