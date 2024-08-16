@@ -192,7 +192,9 @@ public class DistributeLockerAspect {
         for (Object obj : objects) {
             if(keyFields.equals("#") || keyFields.equals("")){
                 result.add(obj.toString());
-            } else {
+            } else if(obj instanceof String){
+                result.add(obj.toString());
+            }else {
                 result.addAll(getValuesFromObject(obj, keyFields.split(",")));
             }
         }
