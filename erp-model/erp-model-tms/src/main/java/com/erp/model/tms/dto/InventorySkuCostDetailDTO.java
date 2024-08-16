@@ -13,7 +13,7 @@ import javax.validation.constraints.Digits;
 
 /**
  * <p>
- * SKU存货成本明细请求响应实体
+ * SKU成本明细请求响应实体
  * </p>
  *
  * @author zdy

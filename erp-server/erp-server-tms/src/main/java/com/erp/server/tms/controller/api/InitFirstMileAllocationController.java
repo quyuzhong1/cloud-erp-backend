@@ -52,8 +52,6 @@ public class InitFirstMileAllocationController extends BaseController {
 
     @Resource
     private InitFirstMileAllocationService initFirstMileAllocationService;
-    @Resource
-    private InitFirstMileAllocationDetailService initFirstMileAllocationDetailService;
 
     /**
     * 新增
@@ -347,9 +345,9 @@ public class InitFirstMileAllocationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
     @PostMapping("/importFile")
-    public ApiResult<?> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean flag = initFirstMileAllocationService.importFile(excelFile,response);
-        return flag ? success() : failure();
+    public ApiResult<InitFirstMileAllocationDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        InitFirstMileAllocationDTO.ImportDTO dto = initFirstMileAllocationService.importFile(excelFile,response);
+        return success(dto);
     }
     /**
      * 详情

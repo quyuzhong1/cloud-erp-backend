@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -52,6 +53,9 @@ public class InitFirstMileAllocationDTO implements Serializable {
         * 单据状态：waitSubmit=待提交，approveIng=审核中，reject=审核不通过，approve=已审核
         */
         private String status;
+        /**
+         * 单据状态名称
+         */
         private String statusName;
         /**
          * 备注
@@ -329,5 +333,19 @@ public class InitFirstMileAllocationDTO implements Serializable {
          */
         @NotNull(message = "周期不能为空")
         private List<LocalDate> dateList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<InventorySkuCostDetailDTO.AddDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
     }
 }

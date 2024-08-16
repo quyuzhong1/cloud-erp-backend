@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- * SKU存货成本明细 Mapper 接口
+ * SKU成本明细 Mapper 接口
  * </p>
  *
  * @author zdy

@@ -110,7 +110,7 @@ public interface InitFirstMileAllocationService extends SuperService<InitFirstMi
      * @param response
      * @return
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    InitFirstMileAllocationDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 下载导入模板
