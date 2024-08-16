@@ -47,7 +47,7 @@
             resultType="com.erp.model.mrp.dto.ReplenishmentSuggestionDTO$PurchaseSuggestionDTO">
         select
             <include refid="Base_Column_List"/>
-            ,rs.sku_id,rs.sku_id,rs.sku_no,rs.platform,rs.shop_id
+            ,rs.platform_type,rs.sku_id,rs.sku_id,rs.sku_no,rs.platform,rs.shop_id
         from purchase_suggest ps
         left join replenishment_suggestion rs on ps.source_id = rs.id and rs.is_deleted = false
         <where>

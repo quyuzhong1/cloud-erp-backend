@@ -187,6 +187,33 @@ public class ReplenishmentSuggestionDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PurchaseSuggestionDTO {
+
+        /**
+         * 类型
+         */
+        private String platformType;
+        /**
+         * 类型名称
+         */
+        private String platformTypeName;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺
+         */
+        private String shopName;
+
         /**
          * 单号
          */

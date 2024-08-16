@@ -1,13 +1,15 @@
 package com.erp.model.mrp.enums;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @AllArgsConstructor
 public enum CfgRulePlatformTypeEnum implements EnumMessage {
-    AMAZON("amazon", "AMAZON"),
+    AMAZON("amazon", "Amazon"),
     OVERSEAS("overseas", "海外"),
     INTERNAL("internal", "国内"),
     B2B("b2b", "B2B"),
@@ -35,4 +37,15 @@ public enum CfgRulePlatformTypeEnum implements EnumMessage {
         return null;
     }
 
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (CfgRulePlatformTypeEnum statusEnum : CfgRulePlatformTypeEnum.values()) {
+            if (StrUtil.equals(code,statusEnum.getCode())) {
+                return statusEnum.getName();
+            }
+        }
+        return "";
+    }
 }

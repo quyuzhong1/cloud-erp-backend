@@ -16,7 +16,11 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
 import com.erp.server.mrp.service.OperateLogService;
@@ -28,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -133,7 +138,28 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         }
         List<String> skuIdList = list.stream().map(ReplenishmentSuggestionDTO.PurchaseSuggestionDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+
+
+        //所有店铺
+        List<ShopInfoEntity> shopInfoList = FeignQuery.list(ShopInfoEntity.class);
+
+        //平台信息
+        List<String> platformList = list.stream().map(ReplenishmentSuggestionDTO.PurchaseSuggestionDTO::getPlatform).distinct().collect(Collectors.toList());
+        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+
         for (ReplenishmentSuggestionDTO.PurchaseSuggestionDTO purchaseSuggestionDTO : list) {
+
+            //平台类型
+            purchaseSuggestionDTO.setPlatformTypeName(CfgRulePlatformTypeEnum.getName(purchaseSuggestionDTO.getPlatformType()));
+
+            //平台名称
+            String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(),purchaseSuggestionDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            purchaseSuggestionDTO.setPlatformName(platformName);
+
+            //店铺名称
+            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), purchaseSuggestionDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            purchaseSuggestionDTO.setShopName(shopName);
+
             //产品名称
             String productName = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), purchaseSuggestionDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             purchaseSuggestionDTO.setProductName(productName);
