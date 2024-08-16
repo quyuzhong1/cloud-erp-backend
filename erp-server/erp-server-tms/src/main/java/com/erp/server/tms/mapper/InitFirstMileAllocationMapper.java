@@ -40,5 +40,10 @@ public interface InitFirstMileAllocationMapper extends BaseMapper<InitFirstMileA
      */
     IPage<InitFirstMileAllocationDTO.PagingVO> paging(Page<InitFirstMileAllocationDTO.PagingVO> query, @Param("params") InitFirstMileAllocationDTO.PagingParamDTO params);
 
+    /**
+     * 导出
+     * @param params
+     * @return
+     */
     List<InitFirstMileAllocationDTO.PagingVO> exportList(@Param("params") InitFirstMileAllocationDTO.PagingParamDTO params);
 }

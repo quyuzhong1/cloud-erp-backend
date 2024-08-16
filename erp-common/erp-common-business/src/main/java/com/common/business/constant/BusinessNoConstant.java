@@ -148,4 +148,5 @@ public interface BusinessNoConstant {
     //拣货波次
     String JHBC = "JHBC";
     String QCFT = "QCFT";
+    String CHCB = "CHCB";
 }

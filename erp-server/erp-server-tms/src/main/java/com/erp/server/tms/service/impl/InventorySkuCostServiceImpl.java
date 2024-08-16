@@ -2,13 +2,19 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.TabApproveStatusEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.server.tms.mapper.InventorySkuCostMapper;
 import com.erp.server.tms.service.InventorySkuCostService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -23,6 +29,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
@@ -115,7 +123,22 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public PagingVO<InventorySkuCostDTO.PagingVO> paging(PagingDTO<InventorySkuCostDTO.PagingParamDTO> dto) {
-        return null;
+        InventorySkuCostDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page<InventorySkuCostDTO.PagingVO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<InventorySkuCostDTO.PagingVO> pageData = baseMapper.paging(query, params);
+        List<InventorySkuCostDTO.PagingVO> list = pageData.getRecords();
+        fillPagingDb(list);
+        return new PagingVO<>(pageData);
+    }
+
+    private void fillPagingDb(List<InventorySkuCostDTO.PagingVO> list) {
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        list.forEach(e ->{
+            e.setStatusName(ApproveStatusEnum.getName(e.getStatus()));
+        });
     }
 
     @Override
@@ -173,7 +196,14 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     * 新增修改处理数据
     */
     private void handleData(InventorySkuCostEntity inventorySkuCostEntity) {
-    // TODO 验证数据 & 数据赋值
+        // 生成单号
+        if (StrUtil.isBlank(inventorySkuCostEntity.getCode())){
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CHCB);
+            inventorySkuCostEntity.setCode(code);
+        }
+        if (StrUtil.isBlank(inventorySkuCostEntity.getStatus())){
+            inventorySkuCostEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+        }
     }
     /**
      * 根据状态获取分页统计数量

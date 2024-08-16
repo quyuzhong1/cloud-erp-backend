@@ -1,5 +1,8 @@
 package com.erp.server.tms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -26,4 +29,19 @@ public interface InventorySkuCostMapper extends BaseMapper<InventorySkuCostEntit
      * @return
      */
     List<InventorySkuCostDTO.TabListDTO> tabList(@Param("permissionSql") String permissionSql);
+
+    /**
+     * 分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<InventorySkuCostDTO.PagingVO> paging(@Param("query") Page<InventorySkuCostDTO.PagingVO> query, @Param("params") InventorySkuCostDTO.PagingParamDTO params);
+
+    /**
+     * 导出
+     * @param params
+     * @return
+     */
+    List<InventorySkuCostDTO.PagingVO> exportList(@Param("params") InventorySkuCostDTO.PagingParamDTO params);
 }

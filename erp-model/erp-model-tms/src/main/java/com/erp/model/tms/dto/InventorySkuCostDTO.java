@@ -206,7 +206,66 @@ public class InventorySkuCostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingVO {
-
+        /**
+         * 主表id
+         */
+        private String id;
+        /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 单据状态
+         */
+        private String status;
+        /**
+         * 单据状态名称
+         */
+        private String statusName;
+        /**
+         * 分摊月份
+         */
+        private LocalDate allocatedMonth;
+        /**
+         *币种
+         */
+        private String currency;
+        /**
+         * 币种单位符号
+         */
+        private String currencySymbol;
+        /**
+         * 核算公司id
+         */
+        private String companyId;
+        /**
+         * 核算公司名称
+         */
+        private String companyName;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * 产品成本
+         */
+        private BigDecimal productCost;
     }
 
     /**

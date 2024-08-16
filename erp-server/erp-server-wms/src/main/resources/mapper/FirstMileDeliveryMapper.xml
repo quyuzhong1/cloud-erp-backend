@@ -327,7 +327,7 @@
         fd.id as sourceId,
         fdd.id as sourceDetailId,
         fd.code as sourceCode,
-        "delivery" as sourceType,
+        'delivery' as sourceType,
         fd.source_code AS businessCode,
         fd.demand_type AS businessType,
         fd.shop_id AS shopId,

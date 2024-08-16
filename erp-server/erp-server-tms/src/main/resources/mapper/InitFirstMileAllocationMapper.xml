@@ -35,7 +35,7 @@
         ad.id as detailId,ad.source_id, ad.source_detail_id, ad.source_code, ad.source_type, ad.business_code, ad.business_type,
         ad.shop_id, ad.shop_name, ad.warehouse_id, ad.warehouse_name, ad.sku_no, ad.sku_id, ad.product_name, ad.init_receive_qty,
         ad.init_transit_cost, ad.init_estimated_tariff,ad.weight_allocation, ad.product_cost, ad.exchange_rate, ad.weight_unit,
-        ad.currency, ad.currency_symbol,ad.create_user_name,ad.create_time,ad.update_user_name,ad.update_time
+        ad.currency, ad.currency_symbol,a.create_user_name,a.create_time,a.update_user_name,a.update_time
         FROM  init_first_mile_allocation a
         LEFT JOIN  init_first_mile_allocation_detail ad ON ad.main_id=a.id and ad.is_deleted=false
         <where>
