@@ -2,6 +2,7 @@ package com.sdk.wangdian.sdk.api.wms.stockin.dto;
 
 import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import lombok.Data;
 import lombok.ToString;
 
@@ -51,46 +52,11 @@ public class CreateOtherStockinRequest
 	private LocalDateTime createTime;
 
 	@ToString
-	public static class GoodsList
-	{
+	public static class GoodsList extends CommonCreateBillGoodsReq {
 
-		private String specNo;
-		private BigDecimal num;
-		private String remark;
 		private String batchNo;
-		private String positionNo;
 		private String productionDate;
 		private String expireDate;
-
-		public String getSpecNo()
-		{
-			return specNo;
-		}
-
-		public void setSpecNo(String specNo)
-		{
-			this.specNo = specNo;
-		}
-
-		public BigDecimal getNum()
-		{
-			return num;
-		}
-
-		public void setNum(BigDecimal num)
-		{
-			this.num = num;
-		}
-
-		public String getRemark()
-		{
-			return remark;
-		}
-
-		public void setRemark(String remark)
-		{
-			this.remark = remark;
-		}
 
 		public String getBatchNo()
 		{
@@ -102,15 +68,6 @@ public class CreateOtherStockinRequest
 			this.batchNo = batchNo;
 		}
 
-		public String getPositionNo()
-		{
-			return positionNo;
-		}
-
-		public void setPositionNo(String positionNo)
-		{
-			this.positionNo = positionNo;
-		}
 
 		public String getProductionDate()
 		{

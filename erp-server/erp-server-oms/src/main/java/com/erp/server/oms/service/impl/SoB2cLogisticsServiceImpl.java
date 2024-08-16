@@ -32,21 +32,20 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cLogisticsMapper;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoB2cLogisticsService;
-import com.erp.server.oms.service.SoB2cReceiverService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -90,6 +89,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
+
+    @Resource
+    private SoB2cLabelService soB2cLabelService;
 
     @Override
     public Boolean add(SoB2cLogisticsDTO.AddDTO logisticsDTO, String mainId) {
@@ -188,6 +190,23 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 set(SoB2cLogisticsEntity::getCode, transportNo).
                 set(SoB2cLogisticsEntity::getTrackNo, trackNo).
                 update();
+    }
+
+    @Override
+    public Boolean updateTransferInfo(List<SoB2cLogisticsEntity> updateLogisticList) {
+        if(CollectionUtils.isEmpty(updateLogisticList)){
+            return true;
+        }
+        Map<String,List<SoB2cLogisticsEntity>> updateMap = updateLogisticList.stream().collect(Collectors.groupingBy(SoB2cLogisticsEntity::getTransferLogisticsChannelId));
+        updateMap.forEach((key,val)->{
+            String transferLogisticsSupplierId = val.get(0).getTransferLogisticsSupplierId();
+            List<String> ids = val.stream().map(v->v.getId()).collect(Collectors.toList());
+            lambdaUpdate().in(SoB2cLogisticsEntity::getId, ids).
+                    set(SoB2cLogisticsEntity::getTransferLogisticsSupplierId, transferLogisticsSupplierId).
+                    set(SoB2cLogisticsEntity::getTransferLogisticsChannelId, key).
+                    update();
+        });
+        return true;
     }
 
     @Override
@@ -434,11 +453,15 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())) {
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),"只有配货中的订单可以取消");
         }
+        if(TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus())){
+            throw new ServiceException(StrUtil.format("订单信息已预报，请取消订单预报后支持重新获取跟踪号"));
+        }
         //取消物流单
         LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
                 channelId(soB2cLogisticsEntity.getLogisticsChannelId())
                 .transportNo(soB2cLogisticsEntity.getCode())
                 .referenceNumber(soB2cEntity.getCode())
+                .platformCode(soB2cEntity.getPlatformCode())
                 .shopId(soB2cEntity.getShopId())
                 .build();
         ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
@@ -451,6 +474,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             soB2cLogisticsEntity.setCode("");
             soB2cLogisticsEntity.setTrackNo("");
             this.updateById(soB2cLogisticsEntity);
+            //清空面单信息
+            soB2cLabelService.deleteByMainIds(Arrays.asList(id));
             return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
         }
 

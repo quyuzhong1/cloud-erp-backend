@@ -319,12 +319,12 @@ public class VirtualWarehouseAllocationController extends BaseController {
      * 查询虚拟仓库存数据
      * @author will
      * @date 2024/8/2 10:34
-     * @param dto
+     * @param list
      * @return ApiResult<VirtualInventoryQtyDTO>
      */
-    @PostMapping("/getVirtualInventory")
-    public ApiResult<VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO> getVirtualInventory(@RequestBody @Validated VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO dto){
-        return success(virtualWarehouseAllocationService.getVirtualInventory(dto));
+    @PostMapping("/listVirtualInventory")
+    public ApiResult<List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO>> getVirtualInventory(@RequestBody @Validated List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO> list){
+        return success(virtualWarehouseAllocationService.listVirtualInventory(list));
     }
 
 }

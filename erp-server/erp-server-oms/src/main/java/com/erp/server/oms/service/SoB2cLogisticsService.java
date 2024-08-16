@@ -78,6 +78,15 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo);
 
     /**
+     * 更新中转信息
+     * @param mainId
+     * @param transportNo
+     * @param trackNo
+     * @return
+     */
+    Boolean updateTransferInfo(List<SoB2cLogisticsEntity> updateLogisticList);
+
+    /**
      * 平台订单明细更新或保存
      *
      * @Author Jim

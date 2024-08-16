@@ -257,6 +257,11 @@ public class SoInfoDTO implements Serializable {
         private Integer virtualScarceQty;
 
         /**
+         * 子件缺货信息
+         */
+        private List<VirtualChildScarceDTO> childScarceList;
+
+        /**
          * 是否缺货(虚拟仓)
          */
         private Boolean isVirtualScarce;
@@ -2290,7 +2295,10 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer totalWaitQty;
 
-
+        /**
+         * 锁定数量
+         */
+        private Integer totalFrozenQty;
     }
 
     /**
@@ -2483,6 +2491,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String detailId;
         /**
+         * skuId
+         */
+        private String skuId;
+        /**
          * SKU
          */
         private String skuNo;
@@ -2530,6 +2542,15 @@ public class SoInfoDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+        /**
+         * 子件缺货相信
+         */
+        private List<VirtualChildScarceDTO> childScarceList;
     }
 
     /**
@@ -2589,7 +2610,7 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer virtualUsableQty;
         /**
-         * 最大可锁数(可冻结数量)
+         * 剩余最大可锁数(可冻结数量)
          */
         private Integer toFrozenQty;
         /**
@@ -2626,6 +2647,15 @@ public class SoInfoDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+        /**
+         * 子件缺货相信
+         */
+        private List<VirtualChildScarceDTO> childScarceList;
     }
 
     @Data
@@ -2645,5 +2675,112 @@ public class SoInfoDTO implements Serializable {
         @Min(value = 1,message = "锁定数量最小值为1")
         @Max(value = 999999999,message = "锁定数量最大值为999999999")
         private Integer frozenQty;
+    }
+
+    /**
+     * 子件缺货信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class VirtualChildScarceDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 子件虚拟仓缺货数量
+         */
+        private Integer virtualScarceQty;
+
+        /**
+         * 子件虚拟仓可用数量
+         */
+        private Integer childUsableQty;
+
+        /**
+         * 子级SKU按bom转换后可用数量（父级维度）
+         */
+        private Integer parentUsableQty;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+    }
+
+    /**
+     * BOM缺货返回信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class VirtuaParamScarceDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 锁定数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * 缺货数量(虚拟仓)
+         */
+        private Integer virtualScarceQty;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+
+        /**
+         * 是否缺货(虚拟仓)
+         */
+        private Boolean isVirtualScarce;
+
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+
+        /**
+         * 子件缺货信息
+         */
+        private List<VirtualChildScarceDTO> childScarceList;
     }
 }

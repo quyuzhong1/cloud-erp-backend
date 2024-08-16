@@ -105,7 +105,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<LogisticsPrintLabelResponse> result = new ArrayList<>();
         for(LogisticsGetLabelVO logisticsGetLabelVO : labelVO){
             WeiShiGetLabelUrlRequest request = WeiShiGetLabelUrlRequest.builder()
-                    .referenceNo(logisticsGetLabelVO.getDeliveryNo())
+                    .referenceNo(logisticsGetLabelVO.getPlatformCode())
                     .build();
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
             try {
@@ -180,7 +180,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         for(LogisticsInterceptOrderVO interceptOrderVO : logisticsQueryVO){
             WeiShiInterceptOrderRequest weiShiInterceptOrderRequest = WeiShiInterceptOrderRequest.builder()
                     //客户单号
-                    .referenceNo(interceptOrderVO.getDeliveryNo())
+                    .referenceNo(interceptOrderVO.getPlatformCode())
                     .build();
             InterceptResponseVO interceptResponseVO = LogisticsOperationOrderConverter.INSTANCE.interceptOrderCovert(interceptOrderVO);
             try {
@@ -216,7 +216,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         boolean isSuccess = true;
         for(LogisticsCancelOrderVO cancelOrderVO : cancelOrderVOList){
             WeiShiCancelOrderRequest request = WeiShiCancelOrderRequest.builder()
-                    .referenceNo(cancelOrderVO.getDeliveryNo())
+                    .referenceNo(cancelOrderVO.getPlatformCode())
                     .build();
             CancelResponseVO cancelResponseVO = LogisticsOperationOrderConverter.INSTANCE.cancelOrderCovert(cancelOrderVO);
             try {
@@ -289,7 +289,7 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO) {
         try {
             WeiShiUpdateWeightRequest weiShiCancelOrderRequest = WeiShiUpdateWeightRequest.builder()
-                    .orderCode(logisticsUpdateWeightVO.getDeliveryNo())
+                    .orderCode(logisticsUpdateWeightVO.getPlatformCode())
                     .weight(logisticsUpdateWeightVO.getWeight().divide(new BigDecimal(1000),4, RoundingMode.HALF_UP))
                     .build();
             ValidatorUtil.validateEntity(weiShiCancelOrderRequest);

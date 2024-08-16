@@ -65,6 +65,18 @@ public class DmpThirdOutboundEntity extends BaseEntity<DmpThirdOutboundEntity> {
     */
     @TableField("abnormal_problem_reason")
     private String abnormalProblemReason;
+    
+    /**
+     * 平台创建时间
+     */
+     @TableField("platform_create_time")
+     private LocalDateTime platformCreateTime;
+     /**
+     * 平台修改时间
+     */
+     @TableField("platform_update_time")
+     private LocalDateTime platformUpdateTime;
+    
     /**
     * 输入任务id
     */

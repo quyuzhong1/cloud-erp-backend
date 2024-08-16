@@ -736,6 +736,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
         cancelOrderVO.setDeliveryNo(dto.getReferenceNumber());
         cancelOrderVO.setTransportNo(dto.getTransportNo());
+        cancelOrderVO.setPlatformCode(dto.getPlatformCode());
         cancelOrderVO.setReason(dto.getReason());
         cancelOrderVO.setOrderId(dto.getOrderId());
         cancelOrderList.add(cancelOrderVO);
@@ -790,6 +791,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         interceptOrderVO.setTransportNo(dto.getTransportNo());
         interceptOrderVO.setInterceptReason(dto.getReason());
         interceptOrderVO.setOrderId(dto.getOrderId());
+        interceptOrderVO.setPlatformCode(dto.getPlatformCode());
         interceptOrderVOList.add(interceptOrderVO);
         if (StringUtils.isBlank(dto.getTransportNo())) {
             LogisticsBillDTO.BaseDTO billBase = this.getBaseByTrackNo(dto.getTrackNo());
@@ -1038,6 +1040,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(),soB2cEntity.getShopId(), auth.getLogisticsPlatform());
         LogisticsUpdateWeightVO logisticsUpdateWeightVO = LogisticsUpdateWeightVO.builder()
                 .deliveryNo(soB2cEntity.getCode())
+                .platformCode(soB2cEntity.getPlatformCode())
                 .transportNo(soB2cLogisticsEntity.getCode())
                 .weight(soB2cLogisticsEntity.getWeight())
                 .authMap(authMap)
@@ -1144,7 +1147,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<String> errorList = new ArrayList<>();
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
             try {
-                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(dto.getB2cSoId())).findFirst().orElse(null);
+                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(dto.getB2cSoId())).findFirst().orElse(new SoB2cEntity());
                 String channelId = dto.getChannelId();
                 LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
                 if (Objects.isNull(auth)) {
@@ -1166,6 +1169,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                         getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
                     }
                 }
+                getLabelVO.setPlatformCode(soB2cEntity.getPlatformCode());
                 //如果是保宏
                 if (logisticsPlatform.equals(LogisticsPlatformEnum.BAO_HONG.getCode())) {
                     if (ObjectUtil.isNotEmpty(soB2cEntity)) {

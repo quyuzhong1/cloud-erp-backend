@@ -93,6 +93,16 @@ public class SoB2cDetailDTO implements Serializable {
        private String virtualWarehouseId;
 
         /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+
+        /**
+         * 可用库存
+         */
+        private Integer virtualUsableQty;
+
+        /**
          * 出货仓库
          */
        private String warehouseId;
@@ -164,6 +174,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 申报标签名称
          */
         private String declareLabelName;
+
+        /**
+         * 子件缺货信息
+         */
+        private List<SoB2cDTO.VirtualChildScarceDTO> childScarceList;
 
     }
 
