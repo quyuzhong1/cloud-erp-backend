@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.InventorySkuCostMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.InventorySkuCostEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="remark" property="remark" />
+       <result column="code" property="code" />
+       <result column="status" property="status" />
+       <result column="allocated_month" property="allocatedMonth" />
+       <result column="currency" property="currency" />
+       <result column="currency_symbol" property="currencySymbol" />
+       <result column="exchange_rate" property="exchangeRate" />
+       <result column="company_id" property="companyId" />
+       <result column="company_name" property="companyName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        remark, code, status, allocated_month, currency, currency_symbol, exchange_rate, company_id, company_name
+    </sql>
+    <select id="tabList" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$TabListDTO">
+        SELECT
+        COUNT(*) AS count,
+        c.status AS tabFlag
+        FROM  inventory_sku_cost c
+        LEFT JOIN  inventory_sku_cost_detail cd ON cd.main_id=c.id and cd.is_deleted=false
+        WHERE  a.is_deleted=false
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY status
+    </select>
+
+
+</mapper>

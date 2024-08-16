@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -119,7 +118,7 @@ public class InitFirstMileAllocationDTO implements Serializable {
         /**
          * 类型名
          */
-        private String tabName;
+        private String tabFlagName;
 
         /**
          * 数量
@@ -227,7 +226,7 @@ public class InitFirstMileAllocationDTO implements Serializable {
          */
         private BigDecimal initTransitCost;
         /**
-         * 期初在途头程费用
+         * 期初在途头程关税
          */
         private BigDecimal initTransitTariff;
         /**

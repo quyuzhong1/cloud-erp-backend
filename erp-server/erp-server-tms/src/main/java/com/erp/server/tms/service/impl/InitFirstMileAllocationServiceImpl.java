@@ -140,10 +140,10 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public List<InitFirstMileAllocationDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<InitFirstMileAllocationDTO.TabListDTO> list = baseMapper.tabList(dto.getPermissionSql());
         List<InitFirstMileAllocationDTO.TabListDTO> tabListDTOList = new ArrayList<>(4);
-        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.WAIT_SUBMIT.getCode()).tabName(TabApproveStatusEnum.WAIT_SUBMIT.getName()).count(getTabCount(TabApproveStatusEnum.WAIT_SUBMIT.getCode(),list)).build());
-        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.APPROVE_ING.getCode()).tabName(TabApproveStatusEnum.APPROVE_ING.getName()).count(getTabCount(TabApproveStatusEnum.APPROVE_ING.getCode(),list)).build());
-        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.REJECT.getCode()).tabName(TabApproveStatusEnum.REJECT.getName()).count(getTabCount(TabApproveStatusEnum.REJECT.getCode(),list)).build());
-        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.APPROVE.getCode()).tabName(TabApproveStatusEnum.APPROVE.getName()).count(getTabCount(TabApproveStatusEnum.APPROVE.getCode(),list)).build());
+        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.WAIT_SUBMIT.getCode()).tabFlagName(TabApproveStatusEnum.WAIT_SUBMIT.getName()).count(getTabCount(TabApproveStatusEnum.WAIT_SUBMIT.getCode(),list)).build());
+        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.APPROVE_ING.getCode()).tabFlagName(TabApproveStatusEnum.APPROVE_ING.getName()).count(getTabCount(TabApproveStatusEnum.APPROVE_ING.getCode(),list)).build());
+        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.REJECT.getCode()).tabFlagName(TabApproveStatusEnum.REJECT.getName()).count(getTabCount(TabApproveStatusEnum.REJECT.getCode(),list)).build());
+        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.APPROVE.getCode()).tabFlagName(TabApproveStatusEnum.APPROVE.getName()).count(getTabCount(TabApproveStatusEnum.APPROVE.getCode(),list)).build());
         return tabListDTOList;
     }
 

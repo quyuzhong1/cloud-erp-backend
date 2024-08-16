@@ -56,10 +56,10 @@
     <!--tab汇总-->
     <select id="tabList" resultType="com.erp.model.tms.dto.InitFirstMileAllocationDTO$TabListDTO">
         SELECT
-        COUNT(ad.id) AS count,
+        COUNT(*) AS count,
         a.status AS tabFlag
         FROM  init_first_mile_allocation a
-        LEFT JOIN  init_first_mile_allocation_detail ad ON ad.main_id=a.id and (ad.is_deleted=false or ad.is_deleted is null)
+        LEFT JOIN  init_first_mile_allocation_detail ad ON ad.main_id=a.id and ad.is_deleted=false
         WHERE  a.is_deleted=false
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
