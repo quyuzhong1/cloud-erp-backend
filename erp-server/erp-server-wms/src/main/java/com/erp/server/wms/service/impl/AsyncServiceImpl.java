@@ -233,6 +233,9 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     @Async("wmsErpExecutor")
     public void syncSoB2cDeliveryAutoOut(SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity) {
+        if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())){
+            return;
+        }
         asyncService.soB2cDeliveryAutoOut(soB2cEntity,entity);
         //扣减冻结库存
         Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
