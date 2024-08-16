@@ -174,7 +174,7 @@ public class BiSettlementExchangeRateDTO {
       /**
        * 日期
        */
-      private LocalDate date;
+      private String date;
       /**
        * 币别
        */

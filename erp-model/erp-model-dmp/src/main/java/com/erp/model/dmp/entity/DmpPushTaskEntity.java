@@ -103,6 +103,12 @@ public class DmpPushTaskEntity extends BaseEntity<DmpPushTaskEntity> {
     @TableField("parent_id")
     private String parentId;
 
+    /**
+     * 第三方单号
+     */
+    @TableField("third_code")
+    private String thirdCode;
+
 
     public static final String TARGET_PLATFORM_NAME = "target_platform_name";
 
@@ -128,6 +134,8 @@ public class DmpPushTaskEntity extends BaseEntity<DmpPushTaskEntity> {
 
     public static final String RETRY_TIMES = "retry_times";
 
+    public static final String THIRD_CODE = "third_code";
+
    
 
     public DmpPushTaskEntity(DmpPushTaskFeignDTO dto) {
@@ -142,6 +150,7 @@ public class DmpPushTaskEntity extends BaseEntity<DmpPushTaskEntity> {
         this.sourceCode = dto.getSourceCode();
         this.syncOperate = dto.getSyncOperate();
         this.parentId = dto.getParentId();
+        this.thirdCode = dto.getThirdCode();
         this.retryTimes = 0;
     }
 

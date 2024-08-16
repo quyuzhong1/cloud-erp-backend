@@ -48,9 +48,9 @@ public class DmpInputAliExpressOrderReceiverDmpHandler extends DmpInputAliExpres
 				Map<String, Object> orderDetail = orderIdDetailMaps.get(order_id);
 				Map<String, Object> order = orderIdMaps.get(order_id);
 				Object receipt_address_obj = orderDetail.get("receipt_address");
+				dmpInputMongoChild.put("oaId", orderDetail.get("oaid"));
 				if(receipt_address_obj != null) {
 					Map<String , Object> receipt_address = (Map)receipt_address_obj;
-					dmpInputMongoChild.put("oaId", receipt_address.get("oaid"));
 					dmpInputMongoChild.put("country", receipt_address.get("country"));
 					dmpInputMongoChild.put("postCode", receipt_address.get("zip"));
 					dmpInputMongoChild.put("province", receipt_address.get("province"));

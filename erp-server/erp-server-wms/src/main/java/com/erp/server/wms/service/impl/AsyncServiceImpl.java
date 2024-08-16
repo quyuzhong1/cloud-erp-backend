@@ -9,10 +9,13 @@ import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -21,6 +24,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
+import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
@@ -33,6 +37,8 @@ import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.SoOutstockService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,6 +78,9 @@ public class AsyncServiceImpl implements AsyncService {
     @Resource
     private SoOutstockService soOutstockService;
 
+    @Resource
+    @Lazy
+    private AsyncService asyncService;
 
     @Async("wmsErpExecutor")
     @Override
@@ -131,6 +140,16 @@ public class AsyncServiceImpl implements AsyncService {
     @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
     public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey) {
         log.info("【{}】销售单【{}】 标记发货开始 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
+        // 查询本单明细有已发货标记跳过触发
+        List<SoB2cDetailEntity> detailEntityList =FeignQuery.create(SoB2cDetailEntity.class)
+                .eq(SoB2cDetailEntity::getMainId, soId)
+                .eq(SoB2cDetailEntity::getIsSignShipped, true)
+                .list();
+        // 已有成功标记发货明细记录跳过
+        if (CollectionUtils.isNotEmpty(detailEntityList)){
+            log.warn("【{}】销售单【{}】 本单已标记发货忽略 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
+            return detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        }
         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
         platformShipOrderDTO.setSoB2cId(soId);
         platformShipOrderDTO.setDictPlatform(dictPlatform);
@@ -152,7 +171,6 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    @Async("wmsErpExecutor")
     public void soB2cDeliveryAutoOut (SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity) {
 
         if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
@@ -201,23 +219,48 @@ public class AsyncServiceImpl implements AsyncService {
         entity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
         soB2cDeliveryService.updateById(entity);
 
-        //扣减冻结库存
-        soB2cDeliveryService.outFreezeVirtualInventory(entity);
-
-        //生成直接调拨单
-        Boolean isPush = soB2cDeliveryService.pushTransferInfo(entity);
-        if (isPush) {
-            //出库
-            soB2cDeliveryService.generateB2cSoOutstock(entity);
-        }
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Async("wmsErpExecutor")
     public void asyncGenerateB2cSoOutstock (String b2cSoId) {
         soOutstockService.generateB2cSoOutstock(b2cSoId);
+    }
+
+    /**
+     * 异步
+     */
+    @Override
+    @Async("wmsErpExecutor")
+    public void syncSoB2cDeliveryAutoOut(SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity) {
+        asyncService.soB2cDeliveryAutoOut(soB2cEntity,entity);
+        //扣减冻结库存
+        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
+        if (isOut) {
+            //生成直接调拨单
+            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+            if (isPush) {
+                //出库
+                soB2cDeliveryService.generateB2cSoOutstock(entity);
+            }
+        }
+    }
+    /**
+     * 异步
+     */
+    @Override
+    @Async("wmsErpExecutor")
+    public void syncAutoOut(SoB2cDeliveryEntity entity) {
+        //扣减冻结库存
+        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
+        if (isOut) {
+            //生成直接调拨单
+            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+            if (isPush) {
+                //出库
+                soB2cDeliveryService.generateB2cSoOutstock(entity);
+            }
+        }
     }
 
 }

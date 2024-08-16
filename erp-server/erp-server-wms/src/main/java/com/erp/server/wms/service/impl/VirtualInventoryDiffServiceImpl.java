@@ -80,6 +80,11 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         if (ObjectUtil.isNotNull(isDiff)) {
             dto.getParams().setIsDiff(Boolean.valueOf(isDiff.toString()));
         }
+        //超出分配
+        Object isExceed = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isExceed") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
+        if (ObjectUtil.isNotNull(isExceed)) {
+            dto.getParams().setIsExceed(Boolean.valueOf(isExceed.toString()));
+        }
         IPage<VirtualInventoryDiffDTO.ListDTO> pageData = this.baseMapper.diffPaging(query, dto.getParams());
         // 填充名称
         fillPageData(pageData.getRecords());
@@ -208,7 +213,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyList = virtualInventoryService.listInventoryQty(paramDTO);
 
         //查询实际出库可用库存
-        Integer realInventoryTotalQty = inventoryService.getRealInventoryTotal(warehouseIdList.get(0), skuIdList.get(0));
+        Integer usableInventoryTotalQty = inventoryService.getUsableInventoryTotal(warehouseIdList.get(0), skuIdList.get(0));
 
         //虚拟库存总和
         Integer inventoryTotalQty = virtualInventoryQtyList.stream()
@@ -221,8 +226,8 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
                 .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                 .reduce(MathUtil.ZERO, Integer::sum);
 
-        //差异数量绝对值
-        Integer diffQty =  Math.abs(realInventoryTotalQty - inventoryTotalQty);
+        //超出数量绝对值
+        Integer exceedQty =  Math.abs(usableInventoryTotalQty - inventoryTotalQty);
 
         for (VirtualInventoryDiffDTO.ListSuggestQtyParamDTO qtyParamDTO : list) {
             VirtualInventoryDiffDTO.ListSuggestQtyDTO listSuggestQtyDTO = BeanMapperUtils.map(VirtualInventoryDiffDTO.ListSuggestQtyDTO.class, qtyParamDTO);
@@ -234,9 +239,9 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                     .findFirst().orElse(MathUtil.ZERO);
             /**
-             * 建议调整数量 = 库存差异绝对值 * 明细行虚拟仓可用库存 / 虚拟仓可用库存总和，按比例分配，抹零取整
+             * 建议调整数量 = 超出数量绝对值 * 明细行虚拟仓可用库存 / 虚拟仓可用库存总和，按比例分配，抹零取整
              */
-            int suggestQty = diffQty * usableQty / usableTotalQty;
+            int suggestQty = MathUtil.compareTo(usableTotalQty,MathUtil.ZERO) == MathUtil.ZERO ? MathUtil.ZERO : exceedQty * usableQty / usableTotalQty;
             listSuggestQtyDTO.setQty(suggestQty);
             resultList.add(listSuggestQtyDTO);
         }
@@ -263,6 +268,12 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             //是否有差异
             boolean isDiff = listDTO.getVirtualQty() > listDTO.getRealQty();
             listDTO.setIsDiff(isDiff);
+            //超出分配数量
+            Integer exceedQty = listDTO.getUsableQty() - listDTO.getVirtualQty();
+            listDTO.setExceedQty(exceedQty);
+            //是否超出分配
+            Boolean isExceed = exceedQty >= 0 ? Boolean.FALSE : Boolean.TRUE;
+            listDTO.setIsExceed(isExceed);
         }
     }
 

@@ -44,6 +44,12 @@ public class ShopifyCustomer {
 
 
 	/**
+	 * 收件人税号
+	 */
+	private String receiverTaxNo;
+
+
+	/**
 	 * @param name
 	 * @param value
 	 */

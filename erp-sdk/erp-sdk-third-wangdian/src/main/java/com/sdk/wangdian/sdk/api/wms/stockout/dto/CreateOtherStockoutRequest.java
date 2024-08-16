@@ -52,53 +52,9 @@ public class CreateOtherStockoutRequest
 	private LocalDateTime createTime;
 
 	@ToString
-	public static class GoodsList
-	{
+	public static class GoodsList extends CommonCreateBillGoodsReq {
 
-		private String specNo;
-		private BigDecimal num;
-		private String remark;
-		private String positionNo;
 
-		public String getSpecNo()
-		{
-			return specNo;
-		}
-
-		public void setSpecNo(String specNo)
-		{
-			this.specNo = specNo;
-		}
-
-		public BigDecimal getNum()
-		{
-			return num;
-		}
-
-		public void setNum(BigDecimal num)
-		{
-			this.num = num;
-		}
-
-		public String getRemark()
-		{
-			return remark;
-		}
-
-		public void setRemark(String remark)
-		{
-			this.remark = remark;
-		}
-
-		public String getPositionNo()
-		{
-			return positionNo;
-		}
-
-		public void setPositionNo(String positionNo)
-		{
-			this.positionNo = positionNo;
-		}
 	}
 
 	public String getOuterNo()

@@ -3,16 +3,11 @@ package com.erp.server.dmp.inout.utils;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import cn.hutool.core.collection.CollectionUtil;
 import org.apache.commons.lang.StringUtils;
 
 import com.baomidou.mybatisplus.core.toolkit.Sequence;
@@ -97,5 +92,63 @@ public class DmpHandlerUtils {
 			}
 		}
 		return BeanUtil.toBeanIgnoreError(newSource, clazz);
+	}
+
+	public static Object getValueByPath(Object data, String field) {
+		String[] keys = field.split("\\.");
+
+		for (String key : keys) {
+			if (data instanceof Map) {
+				data = ((Map<String, Object>) data).get(key);
+			} else if (data instanceof List) {
+				//如果是数组类型默认取第一个
+				List<Map<String, Object>> valueList = (List<Map<String, Object>>) data;
+				if (CollectionUtil.isNotEmpty(valueList)) {
+					data = valueList.get(0).get(key);
+				}
+			} else {
+				return null;  // 如果路径不正确，返回null
+			}
+		}
+
+		return data;
+	}
+
+
+	public static Object getValueByPath(Map<String, Object> data, String path, String newKey) {
+		String[] keys = path.split("\\.");
+		Object value = data;
+
+		for (int i = 0; i < keys.length; i++) {
+			String key = keys[i];
+
+			if (value instanceof Map) {
+				value = ((Map<String, Object>) value).get(key);
+			} else if (value instanceof List) {
+				final int currentIndex = i;
+
+				// 递归处理 List 中的每一个元素
+				value = ((List<?>) value).stream()
+						.map(item -> {
+							if (item instanceof Map) {
+								// 截取数组的剩余部分并拼接为字符串
+								String remainingPath = String.join(".", Arrays.copyOfRange(keys, currentIndex + 1, keys.length));
+								return getValueByPath((Map<String, Object>) item, remainingPath, newKey);
+							}
+							return null;
+						})
+						.collect(Collectors.toList());
+				break; // 处理完 List 后退出循环
+			} else {
+				return null; // 如果路径不正确，返回null
+			}
+		}
+
+		if (value instanceof Map) {
+			// 替换最后的键为 newKey
+			value = ((Map<String, Object>) value).get(newKey);
+		}
+
+		return value;
 	}
 }

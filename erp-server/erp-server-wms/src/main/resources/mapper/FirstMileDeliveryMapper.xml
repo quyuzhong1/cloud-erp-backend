@@ -35,7 +35,7 @@
         fd.approve_time AS approveTime,
         fdd.platform_sku_no as thirdWarehouseSku,
         fd.logistics_status,
-        fd.fba_shipment_code,
+        fdd.fba_shipment_code fbaShipmentCode,
         (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
         where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = fdd.sku_id) as packingQty,
         pt.packing_status as packingStatus,
@@ -98,7 +98,7 @@
         fdd.platform_sku_no as thirdWarehouseSku,
         fd.logistics_status,
         fd.declare_status,
-        fd.fba_shipment_code
+        fdd.fba_shipment_code fbaShipmentCode
         FROM first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false

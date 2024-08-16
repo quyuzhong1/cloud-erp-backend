@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.enums.SyncStatusEnum;
-import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.model.dmp.dto.BiShopInfoDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SalesDataReportEnum;
@@ -50,7 +50,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
     private BiDeliveryDetailInfoService biDeliveryDetailInfoService;
 
     @Resource
-    private BiShopInfoService biShopInfoService;
+    private BiDmpShopInfoService biDmpShopInfoService;
 
     @Resource
     private BiOrderItemSplitService biOrderItemSplitService;
@@ -263,7 +263,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
                 }
             } else {
                 //查询店铺信息获取'负责人','站点信息'同步到订单
-                BiShopInfoEntity shopByShopNo = biShopInfoService.getShopByShopNo(biOrderInfoEntity.getShopNo());
+                BiShopInfoEntity shopByShopNo = biDmpShopInfoService.getShopByShopNo(biOrderInfoEntity.getShopNo());
                 if (null != shopByShopNo) {
                     if (StringUtils.isNotBlank(shopByShopNo.getSite())) {
                         updateWrapper.set(BiOrderInfoEntity::getSite, shopByShopNo.getSite());
@@ -286,7 +286,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
 
                 //根据负责人获取部门信息，同步到订单
                 if (StringUtils.isNotBlank(biOrderInfoEntity.getShopNo())) {
-                    DmpShopInfoDTO dmpShopInfoDTO = biShopInfoService.queryShopByPlatformList(biOrderInfoEntity.getShopNo(), biOrderInfoEntity.getPlatformSign(), userDeptList);
+                    BiShopInfoDTO dmpShopInfoDTO = biDmpShopInfoService.queryShopByPlatformList(biOrderInfoEntity.getShopNo(), biOrderInfoEntity.getPlatformSign(), userDeptList);
                     if (dmpShopInfoDTO != null && StringUtils.isNotBlank(dmpShopInfoDTO.getDeptId()) && StringUtils.isNotBlank(dmpShopInfoDTO.getDeptName())) {
                         if (!(Objects.equals(dmpShopInfoDTO.getDeptId(), biOrderInfoEntity.getDeptId()) && Objects.equals(dmpShopInfoDTO.getDeptName(), biOrderInfoEntity.getDeptName()))) {
                             updateWrapper.set(BiOrderInfoEntity::getDeptId, dmpShopInfoDTO.getDeptId());

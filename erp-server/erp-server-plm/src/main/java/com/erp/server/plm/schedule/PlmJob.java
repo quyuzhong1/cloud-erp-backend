@@ -95,7 +95,7 @@ public class PlmJob {
     /**
      * 产品信息同步到其他表冗余
      */
-    @XxlJob("productInfoSyncDmp")
+//    @XxlJob("productInfoSyncDmp")
     public void productInfoSyncDmp() {
 //        List<ProductInfoEntity> list = productInfoService.getProductInfoAll();
 //        syncProductService.syncProductInfoToDmp(list);
@@ -105,7 +105,7 @@ public class PlmJob {
     /**
      * 产品sku表同步到其他表冗余
      */
-    @XxlJob("productSkuSyncDmp")
+//    @XxlJob("productSkuSyncDmp")
     public void productSkuSyncDmp() {
 //        wmsSyncProductService.syncProductInfoToWms();
 //        wmsSyncProductService.syncProductSkuSaleToWms();

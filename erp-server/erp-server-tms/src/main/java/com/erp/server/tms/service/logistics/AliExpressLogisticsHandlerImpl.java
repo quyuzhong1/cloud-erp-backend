@@ -541,7 +541,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             List<LogisticsBillDTO.TrackDTO> trackDTOS = new ArrayList<>(logisticsQueryVO.size());
             logisticsQueryVO.forEach(logisticsGetLabelVO -> {
                 LogisticsOrderResponseVO vo = data.stream().filter(e -> e.getDeliveryNo().equals(logisticsGetLabelVO.getDeliveryNo()) &&  e.getTransportNo().equals(logisticsGetLabelVO.getTransportNo())).findFirst().orElse(null);
-                if (Objects.nonNull(vo)){
+                if (Objects.nonNull(vo) && !StringUtils.isBlank(vo.getTrackNo())){
                     logisticsGetLabelVO.setTransportNo(vo.getTransportNo());
                     logisticsGetLabelVO.setTrackNo(vo.getTrackNo());
                     trackDTOS.add(LogisticsBillDTO.TrackDTO.builder().trackNo(vo.getTrackNo()).transportNo(vo.getTransportNo()).build());

@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -388,7 +390,11 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
             receiverDTO.setProvinceName(dmpSoReceiverEntity.getProvince());
             receiverDTO.setReceiverName(dmpSoReceiverEntity.getReceiverName());
             String mainPhone = dmpSoReceiverEntity.getMainPhone();
-			receiverDTO.setReceiverTelNumber(mainPhone);
+            if(StringUtils.isNotBlank(mainPhone)) {
+            	receiverDTO.setReceiverTelNumber(mainPhone);
+            }else {
+            	receiverDTO.setReceiverTelNumber(dmpSoReceiverEntity.getReceiverTelNumber());
+            }
             receiverDTO.setPostCode(dmpSoReceiverEntity.getPostCode());
             receiverDTO.setReceiverTaxNo(dmpSoReceiverEntity.getReceiverTaxNo());
             // 买家电话
@@ -425,4 +431,8 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         return orderDTO;
     }
 
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("platformCode");
+    }
 }
