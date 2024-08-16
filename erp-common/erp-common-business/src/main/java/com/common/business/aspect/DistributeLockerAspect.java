@@ -239,7 +239,11 @@ public class DistributeLockerAspect {
      */
     private List<Object> getValuesFromField(Object obj, String[] fieldPath, int index) {
         List<Object> results = new ArrayList<>();
-        if (obj == null || index >= fieldPath.length) {
+        if (obj == null) {
+            return results;
+        }
+        if(index >= fieldPath.length){
+            results.add(obj);
             return results;
         }
 
