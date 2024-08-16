@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * <p>
- * SKU存货成本 服务类
+ * SKU成本 服务类
  * </p>
  *
  * @author zdy
@@ -114,7 +114,7 @@ public interface InventorySkuCostService extends SuperService<InventorySkuCostEn
      * @param response
      * @return
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    InventorySkuCostDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 详情

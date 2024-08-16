@@ -5,10 +5,8 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
-import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
-import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
-import com.erp.model.tms.dto.excel.TmsWarehouseMappingExcelDTO;
+import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
+import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,25 +16,25 @@ import java.util.List;
 /**
  * 期初头程分摊
  */
-public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventListener<InitFirstMileAllocationDetailExcelDTO> {
+public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<InventorySkuCostDetailExcelDTO> {
 
     /**
      * 错误信息
      */
     @Getter
-    private List<InitFirstMileAllocationDetailExcelDTO> errorList = new ArrayList<>();
+    private List<InventorySkuCostDetailExcelDTO> errorList = new ArrayList<>();
     /**
      * 全部数据（用于判断导入是否为空）
      */
-    private final List<InitFirstMileAllocationDetailExcelDTO> dataList = new ArrayList<>();
+    private final List<InventorySkuCostDetailExcelDTO> dataList = new ArrayList<>();
 
     /**
      * 成功信息
      */
     @Getter
-    private List<InitFirstMileAllocationDetailDTO.AddDTO> successList = new ArrayList<>();
+    private List<InventorySkuCostDetailDTO.AddDTO> successList = new ArrayList<>();
 
-    public InitFirstMileAllocationDetailExcelListener() {
+    public InventorySkuCostDetailExcelListener() {
 
     }
 
@@ -49,9 +47,9 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void invoke(InitFirstMileAllocationDetailExcelDTO excelDTO, AnalysisContext analysisContext) {
+    public void invoke(InventorySkuCostDetailExcelDTO excelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
-        InitFirstMileAllocationDetailDTO.AddDTO addDTO = new InitFirstMileAllocationDetailDTO.AddDTO();
+        InventorySkuCostDetailDTO.AddDTO addDTO = new InventorySkuCostDetailDTO.AddDTO();
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
@@ -69,7 +67,7 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
         successList.add(addDTO);
     }
 
-    public List<InitFirstMileAllocationDetailExcelDTO> getExcelDateList(){
+    public List<InventorySkuCostDetailExcelDTO> getExcelDateList(){
         return dataList;
     }
 

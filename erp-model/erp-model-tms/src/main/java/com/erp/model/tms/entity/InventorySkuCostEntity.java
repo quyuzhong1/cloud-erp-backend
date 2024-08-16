@@ -14,7 +14,7 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * SKU存货成本
+ * SKU成本
  * </p>
  *
  * @author zdy

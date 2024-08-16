@@ -92,7 +92,7 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
     }
 
     @Override
-    public void buildAllocationDetail(List<InitFirstMileAllocationDetailEntity> detailEntityList, String id) {
+    public void buildDetail(List<InitFirstMileAllocationDetailEntity> detailEntityList, String id) {
         if (CollectionUtils.isEmpty(detailEntityList)) {
             //明细为空则清空
             lambdaUpdate().eq(InitFirstMileAllocationDetailEntity::getMainId, id).remove();

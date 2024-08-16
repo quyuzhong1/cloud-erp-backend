@@ -39,7 +39,7 @@ public interface InitFirstMileAllocationDetailService extends SuperService<InitF
      * @param detailEntityList
      * @param id
      */
-    void buildAllocationDetail(List<InitFirstMileAllocationDetailEntity> detailEntityList, String id);
+    void buildDetail(List<InitFirstMileAllocationDetailEntity> detailEntityList, String id);
 
     /**
      * 根据主表id获取明细记录

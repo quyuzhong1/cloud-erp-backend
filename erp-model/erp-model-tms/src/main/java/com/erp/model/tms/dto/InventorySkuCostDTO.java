@@ -19,7 +19,7 @@ import javax.validation.constraints.Digits;
 
 /**
  * <p>
- * SKU存货成本请求响应实体
+ * SKU成本请求响应实体
  * </p>
  *
  * @author zdy
@@ -58,6 +58,10 @@ public class InventorySkuCostDTO implements Serializable {
         * 单据状态：waitSubmit=待提交，approveIng=审核中，reject=审核不通过，approve=已审核
         */
         private String status;
+        /**
+         * 单据状态名称
+         */
+        private String statusName;
 
         /**
         * 分摊月份
@@ -89,7 +93,10 @@ public class InventorySkuCostDTO implements Serializable {
         */
         private String companyName;
 
-
+        /**
+         * 明细记录
+         */
+        List<InventorySkuCostDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -99,7 +106,10 @@ public class InventorySkuCostDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 明细记录
+         */
+        List<InventorySkuCostDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -114,7 +124,10 @@ public class InventorySkuCostDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
+        /**
+         * 明细记录
+         */
+        List<InventorySkuCostDetailDTO.UpdateDTO> detailList;
     }
 
     @Data
@@ -284,5 +297,19 @@ public class InventorySkuCostDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<InventorySkuCostDetailDTO.AddDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
     }
 }

@@ -19,6 +19,7 @@ import com.common.business.enums.TabApproveStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
@@ -45,6 +46,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -82,7 +84,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     private LogisticsBillService logisticsBillService;
     @Resource
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
-    @GlobalTransactional(rollbackFor = Exception.class)
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(InitFirstMileAllocationDTO.AddDTO addDTO) {
@@ -92,42 +94,42 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         handleData(initFirstMileAllocationEntity);
         log.info("开始新增期初头程分摊");
         boolean save = super.save(initFirstMileAllocationEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("期初头程分摊保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "期初头程分摊" , initFirstMileAllocationEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "期初头程分摊", initFirstMileAllocationEntity.getCode());
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(), initFirstMileAllocationEntity.getId(), "新增操作");
         // 新增明细
-        if (!CollectionUtils.isEmpty(addDTO.getDetailList())){
+        if (!CollectionUtils.isEmpty(addDTO.getDetailList())) {
             List<InitFirstMileAllocationDetailEntity> detailEntityList = BeanMapperUtils.copyList(InitFirstMileAllocationDetailEntity.class, addDTO.getDetailList());
-            initFirstMileAllocationDetailService.buildAllocationDetail(detailEntityList,initFirstMileAllocationEntity.getId());
+            initFirstMileAllocationDetailService.buildDetail(detailEntityList, initFirstMileAllocationEntity.getId());
         }
         return new BaseResultDTO.AddDTO(initFirstMileAllocationEntity.getId(), initFirstMileAllocationEntity.getCode());
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(InitFirstMileAllocationDTO.UpdateDTO updateDTO) {
         InitFirstMileAllocationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "期初头程分摊"));
-        InitFirstMileAllocationEntity initFirstMileAllocationEntity =  BeanMapperUtils.map(InitFirstMileAllocationEntity.class, updateDTO);
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "期初头程分摊"));
+        InitFirstMileAllocationEntity initFirstMileAllocationEntity = BeanMapperUtils.map(InitFirstMileAllocationEntity.class, updateDTO);
 
         // 数据处理
         handleData(initFirstMileAllocationEntity);
         log.info("编辑 开始修改期初头程分摊数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(initFirstMileAllocationEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("期初头程分摊保存失败");
         }
         // 修改明细
-        if (!CollectionUtils.isEmpty(updateDTO.getDetailList())){
+        if (!CollectionUtils.isEmpty(updateDTO.getDetailList())) {
             List<InitFirstMileAllocationDetailEntity> detailEntityList = BeanMapperUtils.copyList(InitFirstMileAllocationDetailEntity.class, updateDTO.getDetailList());
-            initFirstMileAllocationDetailService.buildAllocationDetail(detailEntityList,initFirstMileAllocationEntity.getId());
+            initFirstMileAllocationDetailService.buildDetail(detailEntityList, initFirstMileAllocationEntity.getId());
         }
         // 记录主单操作日志
         log.info("编辑 开始记录期初头程分摊日志数据，单号：【{}】", initFirstMileAllocationEntity.getCode());
@@ -140,10 +142,10 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public List<InitFirstMileAllocationDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<InitFirstMileAllocationDTO.TabListDTO> list = baseMapper.tabList(dto.getPermissionSql());
         List<InitFirstMileAllocationDTO.TabListDTO> tabListDTOList = new ArrayList<>(4);
-        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.WAIT_SUBMIT.getCode()).tabFlagName(TabApproveStatusEnum.WAIT_SUBMIT.getName()).count(getTabCount(TabApproveStatusEnum.WAIT_SUBMIT.getCode(),list)).build());
-        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.APPROVE_ING.getCode()).tabFlagName(TabApproveStatusEnum.APPROVE_ING.getName()).count(getTabCount(TabApproveStatusEnum.APPROVE_ING.getCode(),list)).build());
-        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.REJECT.getCode()).tabFlagName(TabApproveStatusEnum.REJECT.getName()).count(getTabCount(TabApproveStatusEnum.REJECT.getCode(),list)).build());
-        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.APPROVE.getCode()).tabFlagName(TabApproveStatusEnum.APPROVE.getName()).count(getTabCount(TabApproveStatusEnum.APPROVE.getCode(),list)).build());
+        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.WAIT_SUBMIT.getCode()).tabFlagName(TabApproveStatusEnum.WAIT_SUBMIT.getName()).count(getTabCount(TabApproveStatusEnum.WAIT_SUBMIT.getCode(), list)).build());
+        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.APPROVE_ING.getCode()).tabFlagName(TabApproveStatusEnum.APPROVE_ING.getName()).count(getTabCount(TabApproveStatusEnum.APPROVE_ING.getCode(), list)).build());
+        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.REJECT.getCode()).tabFlagName(TabApproveStatusEnum.REJECT.getName()).count(getTabCount(TabApproveStatusEnum.REJECT.getCode(), list)).build());
+        tabListDTOList.add(InitFirstMileAllocationDTO.TabListDTO.builder().tabFlag(TabApproveStatusEnum.APPROVE.getCode()).tabFlagName(TabApproveStatusEnum.APPROVE.getName()).count(getTabCount(TabApproveStatusEnum.APPROVE.getCode(), list)).build());
         return tabListDTOList;
     }
 
@@ -160,6 +162,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
 
     /**
      * 导出excel
+     *
      * @param dto
      * @param response
      * @return
@@ -190,7 +193,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO approve(InitFirstMileAllocationEntity entity, String type, String comment, Boolean isNeedProcess) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98006.msg);
         }
         log.info("期初头程分摊记录【{}】，code=【{}】", ApproveTypeEnum.getName(type), entity.getCode());
         //审核通过
@@ -200,12 +203,12 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             //更新单据状态
             updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.REJECT.getStatus());
-        }else if (ApproveTypeEnum.CANCEL.getStatus().equals(type)){
+        } else if (ApproveTypeEnum.CANCEL.getStatus().equals(type)) {
             //更新单据状态
             updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个期初头程分摊记录【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个期初头程分摊记录【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "审核操作成功");
     }
 
@@ -213,32 +216,32 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO disApprove(InitFirstMileAllocationEntity entity) {
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.msg);
         }
         log.info("期初头程分摊记录反审核，code=【{}】", entity.getCode());
         //更新单据为待提交
-        updateApproveStatusForApprove(Collections.singletonList(entity.getId()),ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("反审核了一个期初头程分摊记录【%s】", entity.getCode()), ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(),entity.getId(),"反审核操作");
+        operateLogService.addModuleOperateLog(String.format("反审核了一个期初头程分摊记录【%s】", entity.getCode()), ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "反审核操作成功");
     }
 
     @Override
     public BatchResultDTO cancel(InitFirstMileAllocationEntity entity) {
-        return approve(entity,ApproveTypeEnum.CANCEL.getStatus(),"",Boolean.FALSE);
+        return approve(entity, ApproveTypeEnum.CANCEL.getStatus(), "", Boolean.FALSE);
     }
 
     @Override
     public BatchResultDTO submit(InitFirstMileAllocationEntity entity) {
         //只有待提交状态才能发起提交
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_1029.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_1029.msg);
         }
         log.info("期初头程分摊记录提交审核，code=【{}】", entity.getCode());
         //更新单据为审核中
-        updateApproveStatusForApprove(Collections.singletonList(entity.getId()),ApproveStatusEnum.APPROVE_ING.getStatus());
+        updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("提交审核了一个期初头程分摊记录【%s】", entity.getCode()), ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(),entity.getId(),"提交审核操作");
+        operateLogService.addModuleOperateLog(String.format("提交审核了一个期初头程分摊记录【%s】", entity.getCode()), ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(), entity.getId(), "提交审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "提交审核操作成功");
     }
 
@@ -247,21 +250,21 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO delete(InitFirstMileAllocationEntity entity) {
         //TODO 校验记录是否已被使用 费用分摊是否已使用
         initFirstMileAllocationDetailService.removeByMainId(entity.getId());
-        this.lambdaUpdate().eq(InitFirstMileAllocationEntity::getId,entity.getId()).remove();
+        this.lambdaUpdate().eq(InitFirstMileAllocationEntity::getId, entity.getId()).remove();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除记录操作成功");
     }
 
     @Override
     public InitFirstMileAllocationDTO.ViewDTO view(String id) {
         InitFirstMileAllocationEntity entity = this.getById(id);
-        if (Objects.isNull(entity)){
+        if (Objects.isNull(entity)) {
             throw new ServiceException("期初头程分摊记录不存在");
         }
         InitFirstMileAllocationDTO.ViewDTO viewDTO = new InitFirstMileAllocationDTO.ViewDTO();
-        BeanMapperUtils.copy(entity,viewDTO);
+        BeanMapperUtils.copy(entity, viewDTO);
         viewDTO.setStatusName(ApproveStatusEnum.getName(viewDTO.getStatus()));
         List<InitFirstMileAllocationDetailEntity> detailEntityList = initFirstMileAllocationDetailService.listByMainIds(Collections.singletonList(id));
-        if (!CollectionUtils.isEmpty(detailEntityList)){
+        if (!CollectionUtils.isEmpty(detailEntityList)) {
             List<InitFirstMileAllocationDetailDTO.ViewDTO> viewDTOList = BeanMapperUtils.copyList(InitFirstMileAllocationDetailDTO.ViewDTO.class, detailEntityList);
             viewDTO.setDetailList(viewDTOList);
         }
@@ -270,12 +273,13 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
 
     /**
      * 导入excel
+     *
      * @param excelFile
      * @param response
      * @return
      */
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public InitFirstMileAllocationDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
         InitFirstMileAllocationDetailExcelListener excelListenerUtil = new InitFirstMileAllocationDetailExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), InitFirstMileAllocationDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -289,30 +293,25 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         List<InitFirstMileAllocationDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
-        }else if (excelDateList.size() > 5000){
+        } else if (excelDateList.size() > 5000) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
-        List<InitFirstMileAllocationDetailExcelDTO > errorList = excelListenerUtil.getErrorList();
+        List<InitFirstMileAllocationDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
 
-        List<InitFirstMileAllocationDetailExcelDTO> successList = excelListenerUtil.getSuccessList();
-        //处理验证成功数据
-        handleImportSuccessList(successList, errorList);
+        List<InitFirstMileAllocationDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
 
-        if (errorList.size() > 0) {
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/initFirstMileAllocationImportError.xlsx";
-            String name = "sysUserImportError";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+        InitFirstMileAllocationDTO.ImportDTO importDTO = new InitFirstMileAllocationDTO.ImportDTO();
+        String url = "";
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "采购申请错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, PurchaseApplicationImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
             }
-            return Boolean.FALSE;
         }
-        return Boolean.TRUE;
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
     }
 
     @Override
@@ -352,40 +351,40 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         List<String> detailIds = dto.getDetailIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         List<InitFirstMileAllocationDetailEntity> detailEntityList = initFirstMileAllocationDetailService.listByIds(detailIds);
-        if (CollectionUtils.isEmpty(detailEntityList)){
-            resultDTOS.add(BatchResultDTO.fail("","", StrUtil.format("期初明细【{}】记录不存在",String.join(",",detailIds))));
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("期初明细【{}】记录不存在", String.join(",", detailIds))));
             return resultDTOS;
         }
         List<String> sourceIds = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
-        if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)){
-            resultDTOS.add(BatchResultDTO.fail("","", StrUtil.format("头程发货单【{}】记录不存在",String.join(",",sourceIds))));
+        if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)) {
+            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("头程发货单【{}】记录不存在", String.join(",", sourceIds))));
             return resultDTOS;
         }
         //过滤未审核期初账单
         List<String> ids = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<InitFirstMileAllocationEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(entityList)){
-            resultDTOS.add(BatchResultDTO.fail("","", StrUtil.format("期初【{}】记录不存在",String.join(",",ids))));
+        if (CollectionUtils.isEmpty(entityList)) {
+            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("期初【{}】记录不存在", String.join(",", ids))));
             return resultDTOS;
         }
         List<InitFirstMileAllocationEntity> unApproveList = entityList.stream().filter(e -> !ApproveStatusEnum.APPROVE.getStatus().equals(e.getStatus())).collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(unApproveList)){
+        if (!CollectionUtils.isEmpty(unApproveList)) {
             List<String> codeList = unApproveList.stream().map(InitFirstMileAllocationEntity::getCode).distinct().collect(Collectors.toList());
-            resultDTOS.add(BatchResultDTO.fail("","", StrUtil.format("期初编号【{}】未审核单据不能下推对账单",String.join(",",codeList))));
+            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("期初编号【{}】未审核单据不能下推对账单", String.join(",", codeList))));
             return resultDTOS;
         }
         //整理下推对账单数据
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByOutstockIdList(sourceIds);
-        if (sourceIds.size() != logisticsBillEntityList.size()){
+        if (sourceIds.size() != logisticsBillEntityList.size()) {
             List<String> existIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).distinct().collect(Collectors.toList());
             List<String> notExistIds = sourceIds.stream().filter(e -> !existIds.contains(e)).distinct().collect(Collectors.toList());
-            resultDTOS.add(BatchResultDTO.fail("","", StrUtil.format("头程发货单【{}】记录不存在物流单",String.join(",",notExistIds))));
+            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("头程发货单【{}】记录不存在物流单", String.join(",", notExistIds))));
             return resultDTOS;
         }
         // 当前添加的主账单记录
         Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
-        for (LogisticsBillEntity logisticsBillEntity : logisticsBillEntityList){
+        for (LogisticsBillEntity logisticsBillEntity : logisticsBillEntityList) {
             BatchResultDTO updateResult;
             String id = logisticsBillEntity.getId();
             try {
@@ -410,29 +409,29 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     }
 
     private void updateApproveStatusForApprove(List<String> ids, String status) {
-        if (CollectionUtils.isEmpty(ids) || StringUtils.isBlank(status)){
+        if (CollectionUtils.isEmpty(ids) || StringUtils.isBlank(status)) {
             return;
         }
-        this.lambdaUpdate().in(InitFirstMileAllocationEntity::getId,ids)
-                .set(InitFirstMileAllocationEntity::getStatus,status)
-                .set(InitFirstMileAllocationEntity::getStatus,status)
+        this.lambdaUpdate().in(InitFirstMileAllocationEntity::getId, ids)
+                .set(InitFirstMileAllocationEntity::getStatus, status)
                 .update();
     }
 
     /**
      * 根据状态获取分页统计数量
+     *
      * @param status
      * @param list
      * @return
      */
     private Integer getTabCount(String status, List<InitFirstMileAllocationDTO.TabListDTO> list) {
-        if (CollectionUtils.isEmpty(list)){
+        if (CollectionUtils.isEmpty(list)) {
             return MathUtil.ZERO;
         }
         InitFirstMileAllocationDTO.TabListDTO tabListDTO = list.stream().filter(e -> Objects.nonNull(e) && status.equals(e.getTabFlag())).findFirst().orElse(null);
-        if (Objects.nonNull(tabListDTO)){
+        if (Objects.nonNull(tabListDTO)) {
             return tabListDTO.getCount();
-        }else {
+        } else {
             return MathUtil.ZERO;
         }
     }
@@ -444,23 +443,24 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         List<String> sourceIds = list.stream().map(InitFirstMileAllocationDTO.PagingVO::getSourceId).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listByOutstockIds(sourceIds);
         Map<String, String> logisticsBillMap = logisticsBillEntityList.stream().collect(Collectors.toMap(LogisticsBillEntity::getOutstockId, LogisticsBillEntity::getId));
-        list.forEach(e ->{
+        list.forEach(e -> {
             e.setStatusName(ApproveStatusEnum.getName(e.getStatus()));
-            if (!logisticsBillMap.isEmpty()){
+            if (!logisticsBillMap.isEmpty()) {
                 e.setLogisticsBillId(logisticsBillMap.get(e.getSourceId()));
             }
         });
     }
+
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(InitFirstMileAllocationEntity initFirstMileAllocationEntity) {
         // 生成单号
-        if (StrUtil.isBlank(initFirstMileAllocationEntity.getCode())){
+        if (StrUtil.isBlank(initFirstMileAllocationEntity.getCode())) {
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QCFT);
             initFirstMileAllocationEntity.setCode(code);
         }
-        if (StrUtil.isBlank(initFirstMileAllocationEntity.getStatus())){
+        if (StrUtil.isBlank(initFirstMileAllocationEntity.getStatus())) {
             initFirstMileAllocationEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
         }
     }

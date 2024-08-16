@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * <p>
- * SKU存货成本 Mapper 接口
+ * SKU成本 Mapper 接口
  * </p>
  *
  * @author zdy

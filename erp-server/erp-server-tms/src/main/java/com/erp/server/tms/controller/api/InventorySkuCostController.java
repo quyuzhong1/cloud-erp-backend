@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.server.tms.query.InventorySkuCostQueryHandler;
@@ -36,14 +37,14 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * SKU存货成本
+ * SKU成本
  *
  * @author zdy
  * @since 2024-08-16
  */
 @Slf4j
 @RestController
-@LogSystemModule("SKU存货成本")
+@LogSystemModule("SKU成本")
 @RequestMapping("/inventorySkuCost")
 public class InventorySkuCostController extends BaseController {
 
@@ -58,7 +59,7 @@ public class InventorySkuCostController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "SKU存货成本新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "SKU成本新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated InventorySkuCostDTO.AddDTO dto) {
         return success(inventorySkuCostService.add(dto));
     }
@@ -71,7 +72,7 @@ public class InventorySkuCostController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "SKU存货成本修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "SKU成本修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "tms:inventorySkuCost:update",
@@ -128,7 +129,7 @@ public class InventorySkuCostController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核期初头程分摊")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核SKU成本")
     @PostMapping("/approve")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",
@@ -142,13 +143,13 @@ public class InventorySkuCostController extends BaseController {
         for (String id : ids) {
             InventorySkuCostEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"期初头程分摊记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"SKU成本记录不存在"));
                 continue;
             }
             try {
                 resultDTOS.add(inventorySkuCostService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
             }catch (Exception e){
-                log.error("期初头程分摊记录审核失败",e);
+                log.error("SKU成本记录审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
         }
@@ -172,13 +173,13 @@ public class InventorySkuCostController extends BaseController {
         for (String id : ids) {
             InventorySkuCostEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"期初头程分摊记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"SKU成本记录不存在"));
                 continue;
             }
             try {
                 resultDTOS.add(inventorySkuCostService.disApprove(entity));
             }catch (Exception e){
-                log.error("期初头程分摊记录反审核失败",e);
+                log.error("SKU成本记录反审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
         }
@@ -201,13 +202,13 @@ public class InventorySkuCostController extends BaseController {
         for (String id : ids) {
             InventorySkuCostEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"期初头程分摊记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"SKU成本记录不存在"));
                 continue;
             }
             try {
                 resultDTOS.add(inventorySkuCostService.cancel(entity));
             }catch (Exception e){
-                log.error("期初头程分摊记录撤销失败",e);
+                log.error("SKU成本记录撤销失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
         }
@@ -230,13 +231,13 @@ public class InventorySkuCostController extends BaseController {
         for (String id : ids) {
             InventorySkuCostEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"期初头程分摊记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"SKU成本记录不存在"));
                 continue;
             }
             try {
                 resultDTOS.add(inventorySkuCostService.submit(entity));
             }catch (Exception e){
-                log.error("期初头程分摊记录提交审核失败",e);
+                log.error("SKU成本记录提交审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
         }
@@ -277,13 +278,13 @@ public class InventorySkuCostController extends BaseController {
         for (String id : ids) {
             InventorySkuCostEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"期初头程分摊记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"SKU成本记录不存在"));
                 continue;
             }
             try {
                 resultDTOS.add(inventorySkuCostService.delete(entity));
             }catch (Exception e){
-                log.error("期初头程分摊记录删除失败",e);
+                log.error("SKU成本记录删除失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
         }
@@ -328,9 +329,9 @@ public class InventorySkuCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
     @PostMapping("/importFile")
-    public ApiResult<?> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean flag = inventorySkuCostService.importFile(excelFile,response);
-        return flag ? success() : failure();
+    public ApiResult<InventorySkuCostDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        InventorySkuCostDTO.ImportDTO dto = inventorySkuCostService.importFile(excelFile,response);
+        return success(dto);
     }
     /**
      * 详情
