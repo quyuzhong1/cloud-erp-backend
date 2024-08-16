@@ -138,9 +138,12 @@ public class InitFirstMileAllocationDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingVO {
         private String id;
+        /**
+         * 单据编号【可排序】
+         */
         private String code;
         /**
-         * 审核状态
+         * 审核状态【可排序】
          */
         private String status;
         /**
@@ -171,7 +174,7 @@ public class InitFirstMileAllocationDTO implements Serializable {
         private String sourceDetailId;
 
         /**
-         * 发货单编号
+         * 发货单编号【可排序】
          */
         private String sourceCode;
 
@@ -181,7 +184,7 @@ public class InitFirstMileAllocationDTO implements Serializable {
         private String sourceType;
 
         /**
-         * 业务单号
+         * 业务单号【可排序】
          */
         private String businessCode;
 
@@ -191,7 +194,7 @@ public class InitFirstMileAllocationDTO implements Serializable {
         private String businessType;
 
         /**
-         * 店铺id
+         * 店铺id【可排序】
          */
         private String shopId;
 
@@ -201,7 +204,7 @@ public class InitFirstMileAllocationDTO implements Serializable {
         private String shopName;
 
         /**
-         * 仓库ID
+         * 仓库ID【可排序】
          */
         private String warehouseId;
 
@@ -214,6 +217,10 @@ public class InitFirstMileAllocationDTO implements Serializable {
          * skuId
          */
         private String skuId;
+        /**
+         * sku编号【可排序】
+         */
+        private String skuNo;
 
         /**
          * 产品名称
@@ -221,40 +228,40 @@ public class InitFirstMileAllocationDTO implements Serializable {
         private String productName;
 
         /**
-         * 上线前签收数量
+         * 上线前签收数量【可排序】
          */
         private Integer initReceiveQty;
 
         /**
-         * 期初在途头程费用
+         * 期初在途头程费用【可排序】
          */
         private BigDecimal initTransitCost;
         /**
-         * 期初在途头程关税
+         * 期初在途头程关税【可排序】
          */
         private BigDecimal initTransitTariff;
         /**
-         * 期初暂估头程费用
+         * 期初暂估头程费用【可排序】
          */
         private BigDecimal initEstimatedCost;
 
         /**
-         * 期初暂估头程关税
+         * 期初暂估头程关税【可排序】
          */
         private BigDecimal initEstimatedTariff;
 
         /**
-         * 分摊重量
+         * 分摊重量【可排序】
          */
         private BigDecimal weightAllocation;
 
         /**
-         * 产品成本
+         * 产品成本【可排序】
          */
         private BigDecimal productCost;
 
         /**
-         * 汇率
+         * 汇率【可排序】
          */
         private BigDecimal exchangeRate;
 
@@ -273,23 +280,14 @@ public class InitFirstMileAllocationDTO implements Serializable {
          */
         private String currencySymbol;
         /**
-         * 创建人
+         * 创建人【可排序】
          */
         private String createUserName;
 
         /**
-         * 创建时间
+         * 创建时间【可排序】
          */
         private LocalDateTime createTime;
-
-        /**
-         * 更新时间
-         */
-        private LocalDateTime updateTime;
-        /**
-         * 更新人
-         */
-        private String updateUserName;
     }
 
     /**
