@@ -42,8 +42,8 @@ public class B2cDeliveryPushDmpDeliveryConsumer extends AbstractPlatformConsumer
     private SoB2cFeign soB2cFeign;
 
     @Override
-    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
-        dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpPushTaskService.updateStatus(paramDTO);
     }
 
     @Override
