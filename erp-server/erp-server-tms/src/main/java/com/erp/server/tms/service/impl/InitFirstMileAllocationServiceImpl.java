@@ -441,8 +441,14 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        List<String> sourceIds = list.stream().map(InitFirstMileAllocationDTO.PagingVO::getSourceId).distinct().collect(Collectors.toList());
+        List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listByOutstockIds(sourceIds);
+        Map<String, String> logisticsBillMap = logisticsBillEntityList.stream().collect(Collectors.toMap(LogisticsBillEntity::getOutstockId, LogisticsBillEntity::getId));
         list.forEach(e ->{
             e.setStatusName(ApproveStatusEnum.getName(e.getStatus()));
+            if (!logisticsBillMap.isEmpty()){
+                e.setLogisticsBillId(logisticsBillMap.get(e.getSourceId()));
+            }
         });
     }
     /**

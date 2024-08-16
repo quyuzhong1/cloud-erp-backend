@@ -152,6 +152,10 @@ public class InitFirstMileAllocationDTO implements Serializable {
          * 明细id
          */
         private String detailId;
+        /**
+         * 物流单id
+         */
+        private String logisticsBillId;
 
         /**
          * 发货单id
