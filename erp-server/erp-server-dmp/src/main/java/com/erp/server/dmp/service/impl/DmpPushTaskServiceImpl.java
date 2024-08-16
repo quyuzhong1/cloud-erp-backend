@@ -702,6 +702,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
         insertEntityList.addAll(updateEntityList);
 		return insertEntityList;
+        }
 
 
 
