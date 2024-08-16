@@ -1,12 +1,6 @@
 package com.erp.server.dmp.inout.handler.factory;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
@@ -25,12 +19,19 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputCreateResponse;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChainImpl;
+import com.erp.server.dmp.inout.handler.output.create.DmpOutputHistoryCreateHandler;
 import com.erp.server.dmp.inout.handler.output.create.DmpOutputHotfixCreateHandler;
 import com.erp.server.dmp.inout.handler.output.create.DmpOutputInputCreateHandler;
+import com.erp.server.dmp.inout.handler.output.create.DmpOutputNormalCreateHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
-
-import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 输出任务创建工厂，添加handler给handler链路执行
@@ -48,7 +49,11 @@ public class DmpOutputCreateFactory{
 	private DmpOutputTaskFactory dmpOutputTaskFactory;
 	@Autowired
 	private DmpHandlerCache dmpHandlerCache;
-	
+	@Resource
+	private DmpOutputNormalCreateHandler dmpOutputNormalCreateHandler;
+	@Resource
+	private DmpOutputHistoryCreateHandler dmpOutputHistoryCreateHandler;
+
 	/**
 	 * 创建输入任务类型输出任务
 	 * @param dmpOutputCreateRequest
@@ -164,5 +169,24 @@ public class DmpOutputCreateFactory{
 		
 		DmpOutputTaskResponse dmpOutputTaskResponse = dmpOutputTaskFactory.dealOutputTask(dmpOutputTaskRequest);
 		return dmpOutputTaskResponse;
+	}
+
+
+	/**
+	 * 创建正常任务
+	 */
+	public void createNormalOutputTask(DmpOutputCreateRequest dmpOutputCreateRequest) {
+		DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
+		bean.addDmpHandler(dmpOutputNormalCreateHandler);
+		bean.doDmpHandler(dmpOutputCreateRequest, new DmpOutputCreateResponse());
+	}
+
+	/**
+	 * 创建历史任务
+	 */
+	public void createHistoryOutputTask(DmpOutputCreateRequest dmpOutputCreateRequest) {
+		DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
+		bean.addDmpHandler(dmpOutputHistoryCreateHandler);
+		bean.doDmpHandler(dmpOutputCreateRequest, new DmpOutputCreateResponse());
 	}
 }

@@ -3,6 +3,8 @@ package com.erp.server.dmp.inout.job;
 import java.util.Arrays;
 import java.util.List;
 
+import com.erp.server.dmp.inout.dto.request.DmpOutputFinishRequest;
+import com.erp.server.dmp.inout.handler.factory.DmpOutputTaskFactory;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,12 +20,16 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 
 import cn.hutool.core.collection.CollUtil;
 
+import javax.annotation.Resource;
+
 @Component
 public class DmpOutputTaskJob {
 	@Autowired
 	private DmpOutputTaskRecordService dmpOutputTaskRecordService;
 	@Autowired
 	private DmpOutputRocketMQPushUtils dmpOutputRocketMQPushUtils;
+	@Resource
+	private DmpOutputTaskFactory dmpOutputTaskFactory;
 	
 	@XxlJob("doOutputErrorTask")
     public ReturnT doOutputErrorTask(){
@@ -59,5 +65,22 @@ public class DmpOutputTaskJob {
 		
         return ReturnT.SUCCESS;
     }
-	
+
+
+	/**
+	 * 输出任务执行
+	 */
+	@XxlJob("doOutputTask")
+	public ReturnT<String> doOutputTask(){
+		String idList = XxlJobHelper.getJobParam();
+		if(StringUtils.isNotBlank(idList)) {
+			String[] ids = idList.split(",");
+			for(String id : ids) {
+				DmpOutputFinishRequest dmpOutputFinishRequest = new DmpOutputFinishRequest();
+				dmpOutputFinishRequest.setOutputTaskId(id);
+				dmpOutputTaskFactory.dealOutputTask(dmpOutputFinishRequest);
+			}
+		}
+		return ReturnT.SUCCESS;
+	}
 }
