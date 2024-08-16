@@ -1,21 +1,19 @@
 package com.erp.model.dmp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.time.LocalDateTime;
-
-import com.baomidou.mybatisplus.annotation.TableField;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
+
 
 /**
  * <p>
- * 亚马逊报告请求记录
+ * 亚马逊报告信息
  * </p>
  *
  * @author Jim
@@ -25,8 +23,8 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @NoArgsConstructor
-@TableName("amz_report_info")
-public class AmzReportInfoEntity extends BaseEntity<AmzReportInfoEntity> {
+@TableName("dmp_amz_report_info")
+public class DmpAmzReportInfoEntity extends BaseEntity<DmpAmzReportInfoEntity> {
 
     /**
      * 市场报告ID列表
@@ -133,6 +131,36 @@ public class AmzReportInfoEntity extends BaseEntity<AmzReportInfoEntity> {
      */
     @TableField("created_method")
     private String createdMethod;
+    /**
+     * 亚马逊账号代号
+     */
+    @TableField("platform_shop_code")
+    private String platformShopCode;
+    /**
+     * 输入任务id
+     */
+    @TableField("input_task_id")
+    private String inputTaskId;
+    /**
+     * 转换id
+     */
+    @TableField("convert_id")
+    private String convertId;
+    /**
+     * 下一层级id
+     */
+    @TableField("next_level_id")
+    private String nextLevelId;
+    /**
+     * 唯一字段md5值
+     */
+    @TableField("unique_encrypt")
+    private String uniqueEncrypt;
+    /**
+     * 数据字段md5值
+     */
+    @TableField("data_encrypt")
+    private String dataEncrypt;
 
 
     public static final String MARKETPLACE_IDS = "marketplace_ids";

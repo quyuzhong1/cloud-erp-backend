@@ -1,6 +1,6 @@
 package com.erp.server.dmp.convert;
 
-import com.erp.model.dmp.entity.AmzReportInfoEntity;
+import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.sdk.oms.amz.spapi.dto.*;
@@ -12,8 +12,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
 
 
 /**
@@ -125,7 +123,7 @@ public interface DmpReportConverter {
             @Mapping(target = "processEndTime", expression = "java(null != report.getProcessingEndTime() ? report.getProcessingEndTime().toString() : \"\")"),
             @Mapping(target = "processingStatus", expression = "java(report.getProcessingStatus().getValue())"),
     })
-    AmzReportInfoEntity newReportInfoEntity(Report report, AmzReportTaskEntity taskEntity, String createdMethod);
+    DmpAmzReportInfoEntity newReportInfoEntity(Report report, AmzReportTaskEntity taskEntity, String createdMethod);
 
 
     @Mappings({

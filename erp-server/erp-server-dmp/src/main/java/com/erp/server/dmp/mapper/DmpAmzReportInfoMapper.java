@@ -1,5 +1,5 @@
 package com.erp.server.dmp.mapper;
-import com.erp.model.dmp.entity.AmzReportInfoEntity;
+import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -14,6 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2024-01-18
  */
 @Mapper
-public interface AmzReportInfoMapper extends BaseMapper<AmzReportInfoEntity> {
+public interface DmpAmzReportInfoMapper extends BaseMapper<DmpAmzReportInfoEntity> {
 
 }

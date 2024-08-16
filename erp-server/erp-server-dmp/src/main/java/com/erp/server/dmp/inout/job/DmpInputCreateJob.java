@@ -113,6 +113,7 @@ public class DmpInputCreateJob {
 	 */
 	@XxlJob("doHotfixInputTask")
 	public ReturnT doHotfixInputTask(){
+		// {"cfgInputId":""}
 		dmpInputCreateFactory.doHotfixInputTask(JSON.parseObject(XxlJobHelper.getJobParam() , DmpInputHotfixCreateRequest.class));
 		return ReturnT.SUCCESS;
 	}

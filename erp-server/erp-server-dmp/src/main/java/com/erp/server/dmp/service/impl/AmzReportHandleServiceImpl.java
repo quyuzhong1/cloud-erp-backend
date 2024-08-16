@@ -318,7 +318,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
         // 查询是否有处理中的报告(响应预估处理结束时间:0=无处理中报告)
-        Long estimatedWaitSecond = queryProcessReportWaitTime(reportsApi, reportTypes, taskEntity);
+        Long estimatedWaitSecond = queryProcessReportWaitTime(reportsApi, reportTypes, taskEntity.getId(), taskEntity.getGroupId());
         if (estimatedWaitSecond > 0) {
             return AmazonCreateReportResultDTO.wait(estimatedWaitSecond);
         }
@@ -473,9 +473,9 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ReportDocument queryAmzReportDocument(AmzReportInfoEntity reportInfoEntity, AmzReportTaskEntity taskEntity) {
+    public ReportDocument queryAmzReportDocument(DmpAmzReportInfoEntity reportInfoEntity, String taskId, String taskStatus){
         // 从缓存获取(已完成或结束删除)
-        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, taskEntity.getId(), taskEntity.getStatus());
+        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, taskId, taskStatus);
         Object reportDocumentObj = redisUtil.get(key);
         if (null != reportDocumentObj) {
             return JSONUtil.toBean(reportDocumentObj.toString(), ReportDocument.class);
@@ -486,14 +486,14 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         // 市场
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         // 接口类型
-        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.REPORTS_DOCUMENT_QUERY;
+//        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.REPORTS_DOCUMENT_QUERY;
 
         // 默认请求速率配置
-        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX_LAST, taskEntity.getGroupId(), requestTypeRateLimiterEnum.getBusinessTypeName());
-        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
+//        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX_LAST, taskEntity.getGroupId(), requestTypeRateLimiterEnum.getBusinessTypeName());
+//        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
 
         // 请求亚马逊接口
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
         ApiResponse<ReportDocument> respWithHttpInfo;
         ReportDocument reportDocument;
@@ -511,7 +511,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             redisUtil.set(key, JSONUtil.toJsonStr(reportDocument), xAmzExpires);
         }
         // 检查和缓存响应的速率到redis
-        amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, respWithHttpInfo);
+//        amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, respWithHttpInfo);
         return reportDocument;
     }
 
@@ -569,13 +569,13 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     }
 
     @Override
-    public Long queryProcessReportWaitTime(ReportsApi reportsApi, List<String> reportTypes, AmzReportTaskEntity taskEntity) {
+    public Long queryProcessReportWaitTime(ReportsApi reportsApi, List<String> reportTypes, String taskId, String groupId) {
         // 默认请求速率配置
-        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_GROUP_ID_PREFIX, taskEntity.getGroupId(), AmazonRequestTypeRateLimiterEnum.REPORTS.getBusinessTypeName());
+        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_GROUP_ID_PREFIX, groupId, AmazonRequestTypeRateLimiterEnum.REPORTS.getBusinessTypeName());
         // 获取动态速率
         Object limitObj = redisUtil.get(limitKey);
         if (null != limitObj){
-            log.warn("【查询报告】 taskId={}, groupId={},存在429等待恢复:放弃当前请求任务", taskEntity.getId(), taskEntity.getGroupId());
+            log.warn("【查询报告】 taskId={}, groupId={},存在429等待恢复:放弃当前请求任务", taskId, groupId);
             return redisUtil.getExpire(limitKey);
         }
 

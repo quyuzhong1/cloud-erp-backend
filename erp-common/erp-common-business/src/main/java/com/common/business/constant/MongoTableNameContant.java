@@ -180,6 +180,11 @@ public interface MongoTableNameContant {
     String THIRD_SYSTEM_AMAZON_FBA_SHIPMENT = "third_system_Amazon_fba_shipment";
 
     /**
+     * 亚马逊FBA货件表
+     */
+    String THIRD_SYSTEM_AMAZON_LISTING = "third_system_Amazon_listing";
+
+    /**
      * 亚马逊物流管理库存状况报告
      */
     String DATA_REPORT_AMZ_FBA_INVENTORY_PLANNING = "data_report_amz_fba_inventory_planning";
