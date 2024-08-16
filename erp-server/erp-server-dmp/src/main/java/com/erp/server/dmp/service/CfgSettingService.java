@@ -43,5 +43,13 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * 获取platform_api_task延时配置
      */
     Map<String, Integer> getApiTaskDelaySecond(SettingEnum settingEnum);
+    /**
+     * 是否支持推送金蝶仓位
+     * @author will
+     * @date 2024/8/15 18:16
+     * @param warehouseId
+     * @return Boolean
+     */
+    Boolean isPushKingdeeWarehouseLocation(String warehouseId);
 
 }

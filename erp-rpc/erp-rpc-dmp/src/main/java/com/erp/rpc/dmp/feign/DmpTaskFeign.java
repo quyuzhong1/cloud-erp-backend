@@ -2,7 +2,6 @@ package com.erp.rpc.dmp.feign;
 
 
 import cn.hutool.json.JSONObject;
-import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
@@ -187,6 +186,16 @@ public interface DmpTaskFeign {
     @PostMapping("feign/dmp/getPullTaskById")
     DmpPullTaskEntity getPullTaskById(@RequestBody String id);
 
+
+    /**
+     * 查询仓库是否支持推送仓位
+     * @author will
+     * @date 2024/8/15 18:29
+     * @param warehouseId
+     * @return Boolean
+     */
+    @PostMapping("feign/dmp/cfgSetting/isPushKingdeeWarehouseLocation")
+    Boolean isPushKingdeeWarehouseLocation(@RequestBody String warehouseId);
 
     /**
      * 根据type查询所有配置
