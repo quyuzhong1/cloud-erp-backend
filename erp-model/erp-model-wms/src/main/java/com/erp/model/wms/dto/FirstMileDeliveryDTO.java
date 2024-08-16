@@ -381,93 +381,31 @@ public class FirstMileDeliveryDTO implements Serializable {
     @NoArgsConstructor
     public static class ListFirstMileDTO {
         /**
-         * 主键Id
+         * 发货单id
          */
-        private String id;
+        private String sourceId;
         /**
-         * 装箱任务id
-         */
-        private String taskId;
-        /**
-         * 明细主键Id
-         */
-        private String detailId;
-        /**
-         * 编号
-         */
-        private String code;
-        /**
-         * 物流单状态编码
-         */
-        private String logisticsStatus;
-        /**
-         * 物流单状态中文
-         */
-        private String logisticsStatusName;
-
-        /**
-         * 报关单状态编码
-         */
-        private String declareStatus;
-        /**
-         * 报关单状态中文
-         */
-        private String declareStatusName;
-
-        /**
-         * 服务商编码
-         */
-        private String provideCode;
-
-        /**
-         * 来源单号
+         * 发货单号 【可排序】
          */
         private String sourceCode;
+        /**
+         * 发货单明细主键Id
+         */
+        private String sourceDetailId;
+        /**
+         * 发货单类型（默认 delivery）
+         */
+        private String sourceType;
 
         /**
-         * 入库单号
+         * 业务单号【可排序】
          */
-        private String overseasInboundCode;
+        private String businessCode;
 
         /**
-         * 备货类型
+         * 业务单号类型
          */
-        private String demandType;
-
-        /**
-         * 备货类型名称
-         */
-        private String demandTypeName;
-
-        /**
-         * 审核状态
-         */
-        private String approveStatus;
-
-        /**
-         * 审核状态名称
-         */
-        private String approveStatusName;
-
-        /**
-         * 作废状态
-         */
-        private Boolean invalidStatus;
-
-        /**
-         * 作废状态名称
-         */
-        private String invalidStatusName;
-
-        /**
-         * 装箱状态
-         */
-        private String packingStatus;
-
-        /**
-         * 装箱状态名称
-         */
-        private String packingStatusName;
+        private String businessType;
 
         /**
          * 店铺id
@@ -475,69 +413,19 @@ public class FirstMileDeliveryDTO implements Serializable {
         private String shopId;
 
         /**
-         * 店铺名称
+         * 店铺名称【可排序】
          */
         private String shopName;
 
         /**
-         * 国家
+         * 发货仓库id
          */
-        private String countryId;
+        private String warehouseId;
 
         /**
-         * 国家名称
+         * 发货仓库名称【可排序】
          */
-        private String countryName;
-
-        /**
-         * 发货仓id
-         */
-        private String deliveryWarehouseId;
-
-        /**
-         * 发货仓名称
-         */
-        private String deliveryWarehouseName;
-
-        /**
-         * 目的仓id
-         */
-        private String destWarehouseId;
-
-        /**
-         * 目的仓名称
-         */
-        private String destWarehouseName;
-
-        /**
-         * 物流方式
-         */
-        private String logisticsMethod;
-
-        /**
-         * 物流方式名称
-         */
-        private String logisticsMethodName;
-
-        /**
-         * 平台sku
-         */
-        private String platformSpuNo;
-
-        /**
-         * 卖家sku
-         */
-        private String platformSkuNo;
-
-        /**
-         * 第三方仓SKU
-         */
-        private String thirdWarehouseSku;
-
-        /**
-         * FNSKU
-         */
-        private String fnSku;
+        private String warehouseName;
 
         /**
          * ERP的SKU主键
@@ -545,14 +433,9 @@ public class FirstMileDeliveryDTO implements Serializable {
         private String skuId;
 
         /**
-         * ERP的SKU
+         * ERP的SKU【可排序】
          */
         private String skuNo;
-
-        /**
-         * 是否组合产品
-         */
-        private Boolean isCombination;
 
         /**
          * 产品名称
@@ -560,17 +443,12 @@ public class FirstMileDeliveryDTO implements Serializable {
         private String productName;
 
         /**
-         * 库存sku
-         */
-        private String stockSku;
-
-        /**
-         * 应发数量
+         * 应发数量【可排序】
          */
         private Integer planQty;
 
         /**
-         * 发货数量
+         * 实发数量【可排序】
          */
         private Integer deliveryQty;
 
@@ -578,42 +456,6 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 装箱数量
          */
         private Integer packingQty;
-
-        /**
-         * 备注
-         */
-        private String remark;
-
-        /**
-         * 创建用户名称
-         */
-        private String createUserName;
-
-        /**
-         * 创建时间
-         */
-        private LocalDateTime createTime;
-
-        /**
-         * 审核人
-         */
-        private String approveUserName;
-
-        /**
-         * 待审核人
-         */
-        private String waitApproveUserName;
-
-        /**
-         * 审核时间
-         */
-        private LocalDateTime approveTime;
-
-        /**
-         * FBA货件编码
-         */
-        private String fbaShipmentCode;
-
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -23,13 +24,15 @@ import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
 import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.listener.InitFirstMileAllocationDetailExcelListener;
 import com.erp.server.tms.mapper.InitFirstMileAllocationMapper;
-import com.erp.server.tms.service.InitFirstMileAllocationDetailService;
-import com.erp.server.tms.service.InitFirstMileAllocationService;
+import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.tms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -46,6 +49,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
@@ -71,7 +76,12 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private InitFirstMileAllocationDetailService initFirstMileAllocationDetailService;
-
+    @Resource
+    private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
+    @Resource
+    private LogisticsBillService logisticsBillService;
+    @Resource
+    private TmsFirstMileLogisticService tmsFirstMileLogisticService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -249,7 +259,8 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         }
         InitFirstMileAllocationDTO.ViewDTO viewDTO = new InitFirstMileAllocationDTO.ViewDTO();
         BeanMapperUtils.copy(entity,viewDTO);
-        List<InitFirstMileAllocationDetailEntity> detailEntityList = initFirstMileAllocationDetailService.listByMainId(id);
+        viewDTO.setStatusName(ApproveStatusEnum.getName(viewDTO.getStatus()));
+        List<InitFirstMileAllocationDetailEntity> detailEntityList = initFirstMileAllocationDetailService.listByMainIds(Collections.singletonList(id));
         if (!CollectionUtils.isEmpty(detailEntityList)){
             List<InitFirstMileAllocationDetailDTO.ViewDTO> viewDTOList = BeanMapperUtils.copyList(InitFirstMileAllocationDetailDTO.ViewDTO.class, detailEntityList);
             viewDTO.setDetailList(viewDTOList);
@@ -336,6 +347,65 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         this.submit(this.getById(dto.getId()));
     }
 
+    @Override
+    public List<BatchResultDTO> generateReconciliation(InitFirstMileAllocationDTO.ReconciliationDTO dto) {
+        List<String> detailIds = dto.getDetailIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        List<InitFirstMileAllocationDetailEntity> detailEntityList = initFirstMileAllocationDetailService.listByIds(detailIds);
+        if (CollectionUtils.isEmpty(detailEntityList)){
+            resultDTOS.add(BatchResultDTO.fail("","", StrUtil.format("期初明细【{}】记录不存在",String.join(",",detailIds))));
+            return resultDTOS;
+        }
+        List<String> sourceIds = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
+        if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)){
+            resultDTOS.add(BatchResultDTO.fail("","", StrUtil.format("头程发货单【{}】记录不存在",String.join(",",sourceIds))));
+            return resultDTOS;
+        }
+        //过滤未审核期初账单
+        List<String> ids = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<InitFirstMileAllocationEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(entityList)){
+            resultDTOS.add(BatchResultDTO.fail("","", StrUtil.format("期初【{}】记录不存在",String.join(",",ids))));
+            return resultDTOS;
+        }
+        List<InitFirstMileAllocationEntity> unApproveList = entityList.stream().filter(e -> !ApproveStatusEnum.APPROVE.getStatus().equals(e.getStatus())).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(unApproveList)){
+            List<String> codeList = unApproveList.stream().map(InitFirstMileAllocationEntity::getCode).distinct().collect(Collectors.toList());
+            resultDTOS.add(BatchResultDTO.fail("","", StrUtil.format("期初编号【{}】未审核单据不能下推对账单",String.join(",",codeList))));
+            return resultDTOS;
+        }
+        //整理下推对账单数据
+        List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByOutstockIdList(sourceIds);
+        if (sourceIds.size() != logisticsBillEntityList.size()){
+            List<String> existIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).distinct().collect(Collectors.toList());
+            List<String> notExistIds = sourceIds.stream().filter(e -> !existIds.contains(e)).distinct().collect(Collectors.toList());
+            resultDTOS.add(BatchResultDTO.fail("","", StrUtil.format("头程发货单【{}】记录不存在物流单",String.join(",",notExistIds))));
+            return resultDTOS;
+        }
+        // 当前添加的主账单记录
+        Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
+        for (LogisticsBillEntity logisticsBillEntity : logisticsBillEntityList){
+            BatchResultDTO updateResult;
+            String id = logisticsBillEntity.getId();
+            try {
+                updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap);
+
+            } catch (Exception e) {
+                log.error("头程对账生成失败", e);
+                LogisticsBillEntity entity = tmsFirstMileLogisticService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    updateResult = BatchResultDTO.fail(id, id, "B物流单不存在, 头程对账生成失败");
+                    resultDTOS.add(updateResult);
+                    continue;
+                }
+                updateResult = BatchResultDTO.fail(id, entity.getTransportNo(), e.getMessage());
+            }
+            resultDTOS.add(updateResult);
+        }
+        return resultDTOS;
+    }
+
     private void handleImportSuccessList(List<InitFirstMileAllocationDetailExcelDTO> successList, List<InitFirstMileAllocationDetailExcelDTO> errorList) {
     }
 
@@ -371,6 +441,9 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        list.forEach(e ->{
+            e.setStatusName(ApproveStatusEnum.getName(e.getStatus()));
+        });
     }
     /**
     * 新增修改处理数据

@@ -36,17 +36,17 @@ public interface InitFirstMileAllocationDetailService extends SuperService<InitF
 
     /**
      * 构建新增分摊明细数据
-     * @param addDTOList
+     * @param detailEntityList
      * @param id
      */
     void buildAllocationDetail(List<InitFirstMileAllocationDetailEntity> detailEntityList, String id);
 
     /**
      * 根据主表id获取明细记录
-     * @param mainId
+     * @param mainIds
      * @return
      */
-    List<InitFirstMileAllocationDetailEntity> listByMainId(String mainId);
+    List<InitFirstMileAllocationDetailEntity> listByMainIds(List<String> mainIds);
 
     /**
      * 根据主表记录删除明细

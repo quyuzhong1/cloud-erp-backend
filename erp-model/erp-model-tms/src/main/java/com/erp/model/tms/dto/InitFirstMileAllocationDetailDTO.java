@@ -117,6 +117,14 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
         * 期初在途头程费用
         */
         private BigDecimal initTransitCost;
+        /**
+         * 期初在途头程费用
+         */
+        private BigDecimal initTransitTariff;
+        /**
+         * 期初暂估头程费用
+         */
+        private BigDecimal initEstimatedCost;
 
         /**
         * 期初暂估头程关税
@@ -288,7 +296,18 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
         @NotNull(message = "期初在途头程费用不能为空")
         @Digits(integer = 12, fraction = 4, message = "期初在途头程费用整数位不能超过12位，小数位不能超过4位")
         private BigDecimal initTransitCost;
-
+        /**
+         * 期初在途头程费用
+         */
+        @NotNull(message = "期初在途头程关税不能为空")
+        @Digits(integer = 12, fraction = 4, message = "期初在途头程关税整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal initTransitTariff;
+        /**
+         * 期初暂估头程费用
+         */
+        @NotNull(message = "期初暂估头程费用不能为空")
+        @Digits(integer = 12, fraction = 4, message = "期初暂估头程费用整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal initEstimatedCost;
         /**
         * 期初暂估头程关税
         */

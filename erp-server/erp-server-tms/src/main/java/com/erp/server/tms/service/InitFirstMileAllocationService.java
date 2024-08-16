@@ -123,4 +123,11 @@ public interface InitFirstMileAllocationService extends SuperService<InitFirstMi
      * @param dto
      */
     void updateAndSubmit(InitFirstMileAllocationDTO.UpdateDTO dto);
+
+    /**
+     * 下推初期头程对账单你
+     * @param dto
+     * @return
+     */
+    List<BatchResultDTO> generateReconciliation(InitFirstMileAllocationDTO.ReconciliationDTO dto);
 }

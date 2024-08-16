@@ -8,10 +8,13 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
@@ -50,6 +53,7 @@ public class InitFirstMileAllocationDTO implements Serializable {
         * 单据状态：waitSubmit=待提交，approveIng=审核中，reject=审核不通过，approve=已审核
         */
         private String status;
+        private String statusName;
         /**
          * 备注
          */
@@ -218,6 +222,14 @@ public class InitFirstMileAllocationDTO implements Serializable {
          * 期初在途头程费用
          */
         private BigDecimal initTransitCost;
+        /**
+         * 期初在途头程费用
+         */
+        private BigDecimal initTransitTariff;
+        /**
+         * 期初暂估头程费用
+         */
+        private BigDecimal initEstimatedCost;
 
         /**
          * 期初暂估头程关税
@@ -289,5 +301,30 @@ public class InitFirstMileAllocationDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+    }
+
+    /**
+     * 对账单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReconciliationDTO {
+
+        /**
+         * detailId集合（期初明细表id）
+         */
+        @NotNull(message = "detailId集合不能为空")
+        private List<String> detailIds;
+
+        /**
+         * 对账单id（为空说明是新生成）
+         */
+        private String reconciliationId;
+
+        /**
+         * 周期
+         */
+        @NotNull(message = "周期不能为空")
+        private List<LocalDate> dateList;
     }
 }

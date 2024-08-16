@@ -256,16 +256,36 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return new PagingVO(pageData);
     }
     @Override
-    public PagingVO<FirstMileDeliveryDTO.ListDTO> pagingFirstMile(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO) {
+    public PagingVO<FirstMileDeliveryDTO.ListFirstMileDTO> pagingFirstMile(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<FirstMileDeliveryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        Page<FirstMileDeliveryDTO.ListFirstMileDTO> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<FirstMileDeliveryDTO.ListFirstMileDTO> pageData = this.baseMapper.pagingFirstMile(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
-            return new PagingVO(pageData);
+            return new PagingVO<>(pageData);
         }
         // 数据处理
-        fillList(pageData.getRecords());
-        return new PagingVO(pageData);
+        fillFirstMileList(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    private void fillFirstMileList(List<FirstMileDeliveryDTO.ListFirstMileDTO> records) {
+        if (CollectionUtils.isEmpty(records)){
+            return;
+        }
+        List<String> skuIds = records.stream().map(FirstMileDeliveryDTO.ListFirstMileDTO::getSkuId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIds)){
+            return;
+        }
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuVOList)){
+            return;
+        }
+        Map<String, String> skuMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+        records.forEach(listFirstMileDTO -> {
+            if (StrUtil.isNotBlank(listFirstMileDTO.getSkuId())){
+                listFirstMileDTO.setProductName(skuMap.get(listFirstMileDTO.getSkuId()));
+            }
+        });
     }
 
     @Override

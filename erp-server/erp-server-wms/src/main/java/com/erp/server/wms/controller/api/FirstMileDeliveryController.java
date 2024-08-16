@@ -555,14 +555,14 @@ public class FirstMileDeliveryController extends BaseController {
 
     /**
      * 期初明细分页列表
-     * @author Luo_WG
-     * @date: 2023-10-30
+     * @author zdy
+     * @date: 2024-8-15
      * @param dto
-     * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
+     * @return ApiResult<PagingVO<FirstMileDeliveryDTO.ListDTO>>
      */
     @PostMapping("/pagingFirstMile")
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
-    public ApiResult<PagingVO<FirstMileDeliveryDTO.ListDTO>> pagingFirstMile(@RequestBody @Validated PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
+    public ApiResult<PagingVO<FirstMileDeliveryDTO.ListFirstMileDTO>> pagingFirstMile(@RequestBody @Validated PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
         return success(firstMileDeliveryService.pagingFirstMile(dto));
     }
 }

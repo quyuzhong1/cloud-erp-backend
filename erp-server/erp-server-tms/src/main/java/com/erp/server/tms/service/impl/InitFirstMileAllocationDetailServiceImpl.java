@@ -103,7 +103,7 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
             //明细为空则清空
             lambdaUpdate().eq(InitFirstMileAllocationDetailEntity::getMainId, id).remove();
         }
-        List<InitFirstMileAllocationDetailEntity> oldDetailEntityList = this.listByMainId(id);
+        List<InitFirstMileAllocationDetailEntity> oldDetailEntityList = this.listByMainIds(Collections.singletonList(id));
         if (!CollectionUtils.isEmpty(oldDetailEntityList)) {
             List<String> oldDetailIds = oldDetailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getId).distinct().collect(Collectors.toList());
             List<String> notExistDetailIds = oldDetailIds.stream().filter(e -> !newDetailIds.contains(e)).distinct().collect(Collectors.toList());
@@ -119,15 +119,15 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
     /**
      * 根据主表id获取明细记录
      *
-     * @param mainId
+     * @param mainIds
      * @return
      */
     @Override
-    public List<InitFirstMileAllocationDetailEntity> listByMainId(String mainId) {
-        if (StrUtil.isBlank(mainId)) {
+    public List<InitFirstMileAllocationDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().eq(InitFirstMileAllocationDetailEntity::getMainId, mainId).list();
+        return lambdaQuery().in(InitFirstMileAllocationDetailEntity::getMainId, mainIds).list();
     }
 
     @Override
