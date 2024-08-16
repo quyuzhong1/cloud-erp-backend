@@ -95,4 +95,21 @@ public class DmpTaskFeignController {
     public List<DmpTaskMsgDTO> getWarnTaskReport(@RequestBody List<String> statusList){
         return dmpPushTaskService.getWarnTaskReport(statusList);
     }
+
+    /**
+     * 根据来源ID查询
+     * @param sourceIdList
+     * @return
+     * @date: 2024-08-15
+     * @author: tanmujin
+     */
+    @PostMapping("feign/dmp/listBySourceIds")
+    List<DmpPushTaskEntity> listBySourceIds(List<String> sourceIdList){
+        return dmpPushTaskService.lambdaQuery().in(DmpPushTaskEntity::getSourceId, sourceIdList).list();
+    }
+
+    @PostMapping("/push/deleteBySourceId")
+    void deletePushTaskBySourceId(String sourceId){
+        dmpPushTaskService.lambdaUpdate().eq(DmpPushTaskEntity::getSourceId, sourceId).remove();
+    }
 }

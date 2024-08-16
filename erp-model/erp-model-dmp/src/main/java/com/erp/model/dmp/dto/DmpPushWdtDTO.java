@@ -3,6 +3,7 @@ package com.erp.model.dmp.dto;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.model.dmp.entity.DmpPushWdtDetailEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
@@ -18,7 +19,7 @@ import java.util.List;
 public class DmpPushWdtDTO implements Serializable {
 
     @Data
-    public static class AddDTO{
+    public static class CommonDTO{
         /**
          * erp单据id
          */
@@ -58,5 +59,22 @@ public class DmpPushWdtDTO implements Serializable {
          * 明细
          */
         private List<DmpPushWdtDetailDTO> detailDTOList;
+
+        /**
+         * 映射状态
+         */
+        private String mappingStatus;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    public static class AddDTO extends CommonDTO{
+
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    public static class ViewDTO extends CommonDTO{
+        private String id;
     }
 }
