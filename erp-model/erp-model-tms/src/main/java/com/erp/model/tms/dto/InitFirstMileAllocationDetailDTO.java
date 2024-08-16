@@ -276,6 +276,12 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
         @NotBlank(message = "skuId不能为空")
         @Size(max = 19,message = "skuId最大长度不能超过19位")
         private String skuId;
+        /**
+         * skuNo
+         */
+        @NotBlank(message = "skuNo不能为空")
+        @Size(max = 19,message = "skuNo最大长度不能超过19位")
+        private String skuNo;
 
         /**
         * 产品名称

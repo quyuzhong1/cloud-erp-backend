@@ -341,7 +341,7 @@ public class InitFirstMileAllocationDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<InventorySkuCostDetailDTO.AddDTO> successList;
+        private List<InitFirstMileAllocationDetailDTO.AddDTO> successList;
 
         /**
          * 错误url

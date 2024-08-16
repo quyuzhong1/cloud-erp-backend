@@ -3,6 +3,8 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.UnitEnum;
+import com.common.core.enums.CurrencyEnum;
 import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
 import com.erp.server.tms.mapper.InitFirstMileAllocationDetailMapper;
 import com.erp.server.tms.service.InitFirstMileAllocationDetailService;
@@ -18,6 +20,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -92,6 +95,7 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void buildDetail(List<InitFirstMileAllocationDetailEntity> detailEntityList, String id) {
         if (CollectionUtils.isEmpty(detailEntityList)) {
             //明细为空则清空
@@ -110,8 +114,18 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
             //清空不存在的明细记录
             this.removeByIds(notExistDetailIds);
         }
-        detailEntityList.forEach(initFirstMileAllocationDetailEntity -> {
-            initFirstMileAllocationDetailEntity.setMainId(id);
+        detailEntityList.forEach(detailEntity -> {
+            detailEntity.setMainId(id);
+            if (Objects.isNull(detailEntity.getExchangeRate())){
+                detailEntity.setExchangeRate(BigDecimal.ONE);
+            }
+            if (StrUtil.isBlank(detailEntity.getCurrency())){
+                detailEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                detailEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+            }
+            if (StrUtil.isBlank(detailEntity.getWeightUnit())){
+                detailEntity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
+            }
         });
         this.saveOrUpdateBatch(detailEntityList);
     }
