@@ -99,4 +99,19 @@ public class WmsFirstMileDeliveryController {
     List<CfgAmzFulfillmentCenterEntity> getCfgAmzCenter(){
         return cfgAmzFulfillmentCenterService.list();
     }
+
+    /**
+     * 根据编码查询发货单明细
+     */
+    @PostMapping("/listDetailByCodes")
+    public List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(@RequestBody List<String> codes){
+        return firstMileDeliveryService.listDetailByCodes(codes, null);
+    }
+    /**
+     * 根据来源编码查询发货单明细
+     */
+    @PostMapping("/listDetailBySourceCodes")
+    public List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailBySourceCodes(@RequestBody List<String> sourceCodes){
+        return firstMileDeliveryService.listDetailByCodes(null, sourceCodes);
+    }
 }

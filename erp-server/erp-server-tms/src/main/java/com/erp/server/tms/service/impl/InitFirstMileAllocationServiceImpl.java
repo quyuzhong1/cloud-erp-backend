@@ -179,7 +179,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/initFirstMileAllocationExport.xlsx";
         String name = "期初头程分摊导出";
-        String date = com.common.core.utils.date.DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
         try {
@@ -316,7 +316,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "excel/initFirstMileAllocationImport.xlsx";
+        String path = "excel/initFirstMileAllocationTemplate.xlsx";
         String excelName = "期初头程分摊导入模板.xlsx";
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();

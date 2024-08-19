@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -73,7 +74,10 @@ public class InitFirstMileAllocationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+        /**
+         * 明细
+         */
+        @Valid
         private List<InitFirstMileAllocationDetailDTO.AddDTO> detailList;
     }
 
@@ -89,6 +93,10 @@ public class InitFirstMileAllocationDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+        /**
+         * 明细
+         */
+        @Valid
         private List<InitFirstMileAllocationDetailDTO.UpdateDTO> detailList;
     }
 

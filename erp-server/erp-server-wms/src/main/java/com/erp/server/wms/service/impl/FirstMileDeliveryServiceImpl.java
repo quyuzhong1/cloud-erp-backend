@@ -1746,6 +1746,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    public List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(List<String> codes,List<String> sourceCodes) {
+        if (CollectionUtils.isEmpty(codes) && CollectionUtils.isEmpty(sourceCodes)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listDetailByCodes(codes,sourceCodes);
+    }
+
+    @Override
     public Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
         if (CollectionUtils.isEmpty(dto.getIds()) || CollectionUtils.isEmpty(dto.getBillTypes())) {
             return false;
