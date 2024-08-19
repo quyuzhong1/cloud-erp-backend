@@ -1,14 +1,20 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.util.StrUtil;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingExtendDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SkuMappingExtendEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.WarehouseDeliveryTypeEnum;
+import com.erp.model.wms.enums.WarehouseManageTypeEnum;
 import com.erp.server.oms.mapper.SkuMappingExtendMapper;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingExtendService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.DictBasicService;
@@ -37,6 +43,9 @@ public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExte
 
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     @Override
     public List<SkuMappingExtendEntity> findByMainIds(List<String> mainIds) {
@@ -99,13 +108,19 @@ public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExte
         for (SkuMappingDTO.SkuMappingExtendListDTO dto : extendList) {
             // 是否已存在
             SkuMappingExtendEntity existEntity = entityMap.get(dto.getWarehouseManageType());
+            String msg;
+            String warehouseTypeName = WarehouseManageTypeEnum.getName(dto.getWarehouseManageType());
+            String warehouseDeliveryTypeName = WarehouseDeliveryTypeEnum.getNameByCode(dto.getWarehouseDeliveryType());
             if (null != existEntity){
                 existEntity.setDeliveryType(dto.getWarehouseDeliveryType());
+                msg = StrUtil.format("用户【{}】新增仓库类型为【{}】发货配置为【{}】", UserContext.getDefaultLoginUser().getUserName(),warehouseTypeName,warehouseDeliveryTypeName);
                 updateList.add(existEntity);
             } else {
                 SkuMappingExtendEntity saveEntity = new SkuMappingExtendEntity(entity.getId(), dto.getWarehouseManageType(), dto.getWarehouseDeliveryType());
+                msg = StrUtil.format("用户【{}】修改仓库类型为【{}】发货配置为【{}】", UserContext.getDefaultLoginUser().getUserName(),warehouseTypeName,warehouseDeliveryTypeName);
                 saveList.add(saveEntity);
             }
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), entity.getListingId(), "修改发货配置");
         }
 
         if (!CollectionUtils.isEmpty(saveList)){

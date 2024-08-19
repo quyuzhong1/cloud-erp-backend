@@ -181,9 +181,13 @@ public class SoB2cDeliveryDTO implements Serializable {
 
         private String platformSkuNo;
 
+        private String detailId;
+
         private Integer qty;
 
         private String sourceSkuId;
+
+        private String warehouseId;
 
         @Override
         public boolean equals(Object o) {

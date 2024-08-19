@@ -1738,7 +1738,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         //库存验证
-        checkInventory(entity, list, deliveryWarehouseIdList);
+        checkInventory(entity, list, deliveryWarehouseIdList,warehouseManageType);
         /**
          * 如果是API 对接的仓库
          * 下出库单的命令
@@ -1774,20 +1774,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param list
      * @param deliveryWarehouseIdList
      */
-    private void checkInventory(SoB2cEntity entity, List<SoB2cDetailEntity> list, List<String> deliveryWarehouseIdList) {
+    private void checkInventory(SoB2cEntity entity, List<SoB2cDetailEntity> list, List<String> deliveryWarehouseIdList,String warehouseManageType) {
         /**
          * 验证是否可用库存
          * 1、销售套装bom则需要判断子件是否存在库存
          * 2、非销售套装bom依然判断产品sku是否存在库存
          */
+        List<SoB2cDeliveryDTO.DeliverySkuDTO> deliverySkuList = listDeliverySku(entity.getShopId(), list, entity.getDictPlatform(), warehouseManageType, true);
+
         //skuId集合
-        List<String> skuIdList = list.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-        //bom子skuId
-        List<String> childSkuIdList = bomChildrenSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(childSkuIdList)) {
-            skuIdList.addAll(childSkuIdList);
-        }
+        List<String> skuIdList = deliverySkuList.stream().map(SoB2cDeliveryDTO.DeliverySkuDTO::getSkuId).distinct().collect(Collectors.toList());
         //查询可用库存
         InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
         skuInventoryDTO.setWarehouseIdList(deliveryWarehouseIdList);
@@ -1798,28 +1794,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             log.error("B2C销售订单【{}】未找到可用库存，skuIdList = {}，warehouseIdList = {}", entity.getCode(), skuIdList, deliveryWarehouseIdList);
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_INVENTORY, entity.getCode());
         }
-        for (SoB2cDetailEntity detailEntity : list) {
-            //子级BOM
-            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream()
-                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
-                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
-                    ).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(childList)) {
-                for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
-                    //验证是否存在可用库存
-                    Integer usableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId()))
-                            .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
-                    if (MathUtil.compareTo(detailEntity.getQty() * bomChildrenSkuDTO.getQuantity(), usableQty) > MathUtil.ZERO) {
-                        throw new ServiceException(ApiError.ERROR_SO_B2C_SKU_CHILD_NOT_INVENTORY, entity.getCode(), detailEntity.getSkuNo(), bomChildrenSkuDTO.getSkuNo(), detailEntity.getWarehouseName());
-                    }
-                }
-                continue;
+
+        for (SoB2cDeliveryDTO.DeliverySkuDTO deliverySkuDTO : deliverySkuList) {
+            SoB2cDetailEntity soB2cDetailEntity = list.stream().filter(v->v.getId().equals(deliverySkuDTO.getDetailId())).findFirst().orElse(null);
+            if(Objects.isNull(soB2cDetailEntity)){
+                throw new ServiceException("发货sku匹配不到明细");
             }
             //验证是否存在可用库存
-            Integer usableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId()))
+            Integer usableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(deliverySkuDTO.getSkuId()) && obj.getWarehouseId().equals(soB2cDetailEntity.getWarehouseId()))
                     .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
-            if (MathUtil.compareTo(detailEntity.getQty(), usableQty) > MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_SKU_NOT_INVENTORY, entity.getCode(), detailEntity.getSkuNo(), detailEntity.getWarehouseName());
+            Integer deliveryQty = soB2cDetailEntity.getQty() * deliverySkuDTO.getQty();
+            if (MathUtil.compareTo(deliveryQty, usableQty) > MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_SKU_NOT_INVENTORY, entity.getCode(), soB2cDetailEntity.getSkuNo(), soB2cDetailEntity.getWarehouseName());
             }
         }
     }
@@ -1974,6 +1960,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         deliverySku.setQty(quantity);
                         deliverySku.setSourceSkuId(skuId);
                         deliverySku.setPlatformSkuNo(platformSkuNo);
+                        deliverySku.setWarehouseId(detailEntity.getWarehouseId());
+                        deliverySku.setDetailId(detailEntity.getId());
                         resultList.add(deliverySku);
                     }
                 } else {
@@ -1984,6 +1972,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     deliverySku.setSourceSkuId(skuId);
                     deliverySku.setSkuNo(skuNo);
                     deliverySku.setPlatformSkuNo(platformSkuNo);
+                    deliverySku.setWarehouseId(detailEntity.getWarehouseId());
+                    deliverySku.setDetailId(detailEntity.getId());
                     resultList.add(deliverySku);
                 }
             }else{
@@ -1993,6 +1983,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 deliverySku.setQty(1);
                 deliverySku.setSkuNo(skuNo);
                 deliverySku.setSourceSkuId(detailEntity.getSkuId());
+                deliverySku.setWarehouseId(detailEntity.getWarehouseId());
+                deliverySku.setDetailId(detailEntity.getId());
                 resultList.add(deliverySku);
             }
         }
