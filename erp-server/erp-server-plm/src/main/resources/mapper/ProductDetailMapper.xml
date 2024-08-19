@@ -1385,9 +1385,9 @@
             pl.declare_unit,
             pl.declare_price AS declarePrice,
             pl.declare_currency_symbol AS declareCurrencySymbol,
-            pc.to_declare_price AS destDeclarePrice,
-            pc.to_currency AS destCurrency,
-            pc.to_currency_symbol AS destCurrencySymbol,
+            pl.dest_declare_price AS destDeclarePrice,
+            pl.dest_currency AS destCurrency,
+            pl.dest_currency_symbol AS destCurrencySymbol,
             pl.declare_element AS declareElement,
             pl.declare_model AS declareModel,
             pl.source_country AS sourceCountry,
@@ -1421,7 +1421,7 @@
         LEFT JOIN product_pack pp
         ON pp.sku_id=pd.id AND pp.is_deleted= FALSE
         LEFT JOIN product_customs pc
-        ON pc.sku_id=pd.id AND pc.is_deleted= FALSE and pc.country ='default'
+        ON pc.sku_id=pd.id AND pc.is_deleted= FALSE
         LEFT JOIN product_cost prc
         ON prc.sku_id=pd.id AND prc.is_deleted= FALSE
         WHERE pd.is_deleted=FALSE
