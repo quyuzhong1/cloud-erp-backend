@@ -1394,13 +1394,22 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         String bomType = BomTypeEnum.COMBINATION.getType();
 
         Map<String,Integer> qtyMap = new HashMap<>();
+        List<String> sourceCodeList = list.stream().map(v->v.getSourceCode()).distinct().collect(Collectors.toList());
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodeList);
        // 属性赋值
         for(FirstMileDeliveryDTO.ListDTO data : list) {
             if (StringUtils.isNotBlank(data.getPackingStatus())) {
                 data.setPackingStatusName(PackingTaskStatusEnum.getName(data.getPackingStatus()));
             }else{
-                data.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
-                data.setPackingStatusName(PackingTaskStatusEnum.WAIT.getName());
+                //回查要货申请关联的装箱
+                PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(data.getSourceCode())).findFirst().orElse(new PackingTaskEntity());
+                if(StringUtils.isBlank(packingTaskEntity.getPackingStatus())){
+                    data.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
+                    data.setPackingStatusName(PackingTaskStatusEnum.WAIT.getName());
+                }else{
+                    data.setPackingStatus(packingTaskEntity.getPackingStatus());
+                    data.setPackingStatusName(PackingTaskStatusEnum.getName(packingTaskEntity.getPackingStatus()));
+                }
             }
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
 
