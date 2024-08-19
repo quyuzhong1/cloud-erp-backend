@@ -140,6 +140,8 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         LambdaQueryWrapper<TransactionFlowEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TransactionFlowEntity::getSourceType, transactionDTO.getSourceType())
                 .eq(TransactionFlowEntity::getSourceId, transactionDTO.getSourceId())
+                .eq(TransactionFlowEntity::getDictInventoryStatus, transactionDTO.getInventoryStatus())
+                .eq(TransactionFlowEntity::getDictBizType, transactionDTO.getDictBizType())
                 .eq(TransactionFlowEntity::getIsUnapproved, false)
                 .select(TransactionFlowEntity::getId)
                 .last("limit 1");
