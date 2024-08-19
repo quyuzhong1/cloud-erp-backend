@@ -134,7 +134,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
                 String idWithPush = saveMiddleData(sourceId, sourceCode, sourceTypeEnum, combinationList, codeWithPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
                 List<DmpPushTaskEntity> pushTaskList = generateTask(combinationList, operateEnum, codeWithPush, thirdWarehouseCode, sourceCode, idWithPush, SyncStatusEnum.IN_SYNC, sourceTypeEnum);
                 if(CollectionUtils.isNotEmpty(pushTaskList)){
-                    dmpMqFeign.sendTask(pushTaskList);
+                    dmpMqFeign.delayLevel3SendTask(pushTaskList);
                 }
             }
 
