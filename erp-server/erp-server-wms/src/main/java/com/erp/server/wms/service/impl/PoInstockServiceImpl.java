@@ -695,7 +695,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
      * 将审核通过的采购入库单转换为其他入库单推送到旺店通
      *
      * @param entity 采购入库单 PoInstockEntity
-     * @param operateCode 操作代码 审核/反审核
+     * @param syncOperateEnum 操作代码 审核/反审核
      * @return void
      * @date: 2024-05-20
      * @author: tanmujin
@@ -715,6 +715,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             goods.setSpecNo(detailEntity.getSkuNo());
             goods.setNum(BigDecimal.valueOf(detailEntity.getStockInQty()));
             goods.setPositionNo(detailEntity.getWarehouseLocation());
+            goods.setWarehouseId(entity.getDeliveryWarehouseId());
             goodsList.add(goods);
         }
         abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), goodsList, SourceTypeEnum.OTHER_INSTOCK);
@@ -804,6 +805,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             goods.setSpecNo(detailEntity.getSkuNo());
             goods.setNum(BigDecimal.valueOf(detailEntity.getStockInQty()));
             goods.setPositionNo(detailEntity.getWarehouseLocation());
+            goods.setWarehouseId(entity.getDeliveryWarehouseId());
             goodsList.add(goods);
         }
 

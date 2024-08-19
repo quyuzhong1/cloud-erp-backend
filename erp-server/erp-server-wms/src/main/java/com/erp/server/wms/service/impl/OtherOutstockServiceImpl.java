@@ -1291,6 +1291,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             goods.setSpecNo(detailEntity.getSkuNo());
             goods.setNum(BigDecimal.valueOf(detailEntity.getActualQty()));
             goods.setPositionNo(detailEntity.getWarehouseLocation());
+            goods.setWarehouseId(entity.getWarehouseId());
             goodsList.add(goods);
         }
         abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), goodsList, SourceTypeEnum.OTHER_OUTSTOCK);
@@ -1317,6 +1318,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             goods.setSpecNo(detailEntity.getSkuNo());
             goods.setNum(BigDecimal.valueOf(detailEntity.getActualQty()));
             goods.setPositionNo(detailEntity.getWarehouseLocation());
+            goods.setWarehouseId(entity.getWarehouseId());
             goodsList.add(goods);
         }
 
