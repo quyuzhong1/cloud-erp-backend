@@ -1,7 +1,5 @@
 package com.erp.model.dmp.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.erp.model.dmp.entity.DmpPushWdtDetailEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -63,7 +61,7 @@ public class DmpPushWdtDTO implements Serializable {
         /**
          * 映射状态
          */
-        private String mappingStatus;
+        private String type;
     }
 
     @EqualsAndHashCode(callSuper = true)

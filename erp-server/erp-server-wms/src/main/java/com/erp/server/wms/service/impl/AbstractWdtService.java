@@ -35,8 +35,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -127,7 +125,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
                 throw new ServiceException("sku明细不能为空");
             }
             //保存原始数据
-            saveMiddleData(sourceId, sourceCode, sourceTypeEnum, goodsLists, null, warehouseId, thirdWarehouseCode, operateEnum, null);
+            saveMiddleData(sourceId, sourceCode, sourceTypeEnum, goodsLists, null, warehouseId, thirdWarehouseCode, operateEnum, "0");
             //仓位转换,然后拆分为有映射的和没有映射的
             Pair<List<T>, List<T>> pair = handleTransfer(goodsLists, warehouseId);
             if(! pair.getKey().isEmpty()){
@@ -143,7 +141,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             if(! pair.getValue().isEmpty()){
                 List<T> combinationListWithNoPush = combinationSku(pair.getValue(), operateEnum);
                 String codeWithNoPush = docNoGenHelper.generateCode(businessNoTypeEnum);
-                String idWithNoPush = saveMiddleData(sourceId, sourceCode, sourceTypeEnum, combinationListWithNoPush, codeWithNoPush, warehouseId, thirdWarehouseCode, operateEnum, "0");
+                String idWithNoPush = saveMiddleData(sourceId, sourceCode, sourceTypeEnum, combinationListWithNoPush, codeWithNoPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
                 List<DmpPushTaskEntity> pushTaskListNoPush = generateTask(combinationListWithNoPush, operateEnum, codeWithNoPush, thirdWarehouseCode, sourceCode, idWithNoPush, SyncStatusEnum.NO_NEED_SYNC, sourceTypeEnum);
             }
         }
@@ -187,68 +185,6 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             String idWithNoPush = saveMiddleData(viewDTO.getSourceId(), sourceCode, sourceTypeEnum, pair.getValue(), codeWithNoPush, warehouseId, thirdWarehouseCode, operateEnum, "0");
             List<DmpPushTaskEntity> pushTaskListNoPush = generateTask(pair.getValue(), operateEnum, codeWithNoPush, thirdWarehouseCode, sourceCode, idWithNoPush, SyncStatusEnum.NO_NEED_SYNC, sourceTypeEnum);
         }
-
-        /*if(listPair.getValue().isEmpty() && sourceTypeEnum.compareTo(SourceTypeEnum.OTHER_OUTSTOCK) == 0){
-            //全部有仓位映射,修改任务mq_data和同步状态
-            DmpPushTaskEntity entity = getStockOutTaskEntity(operateEnum, midTableId, thirdWarehouseCode, viewDTO, listPair, sourceCode);
-            dmpTaskFeign.updatePushTaskBySourceId(entity);
-            return;
-        }
-        if(listPair.getValue().isEmpty() && sourceTypeEnum.compareTo(SourceTypeEnum.OTHER_INSTOCK) == 0){
-            //全部有仓位映射,修改任务mq_data和同步状态
-            DmpPushTaskEntity entity = getStockInTaskEntity(operateEnum, midTableId, thirdWarehouseCode, viewDTO, listPair, sourceCode);
-            dmpTaskFeign.updatePushTaskBySourceId(entity);
-            return;
-        }*/
-        //部分有映射的,修改任务mq_data和同步状态
-
-        //部分没有映射的,生成新任务并无需推送
-        /*if(sourceTypeEnum.compareTo(SourceTypeEnum.OTHER_INSTOCK) == 0){
-            generateStockInTask();
-        }
-        if(sourceTypeEnum.compareTo(SourceTypeEnum.OTHER_OUTSTOCK) == 0){
-            generateStockOutTask();
-        }*/
-    }
-
-    private static <T extends CommonCreateBillGoodsReq> DmpPushTaskEntity getStockOutTaskEntity(SyncOperateEnum operateEnum, String midTableId, String thirdWarehouseCode, DmpPushWdtDTO.ViewDTO viewDTO, Pair<List<T>, List<T>> listPair, String sourceCode) {
-        CreateOtherStockoutRequest request = new CreateOtherStockoutRequest();
-        request.setOuterNo(viewDTO.getThirdCode());
-        request.setWarehouseNo(thirdWarehouseCode);
-        request.setIsCheck(Boolean.TRUE);
-        request.setGoodsList((List<CreateOtherStockoutRequest.GoodsList>) listPair.getValue());
-        request.setSourceId(midTableId);
-        request.setOperateCode(operateEnum.getCode());
-        request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        request.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
-        request.setCreateTime(LocalDateTime.now());
-        request.setRemark("原始单据号：" + sourceCode);
-
-        DmpPushTaskEntity entity = new DmpPushTaskEntity();
-        entity.setSourceId(midTableId);
-        entity.setMqData(JSONUtil.toJsonStr(request));
-        entity.setStatus(SyncStatusEnum.IN_SYNC.getCode());
-        return entity;
-    }
-
-    private static <T extends CommonCreateBillGoodsReq> DmpPushTaskEntity getStockInTaskEntity(SyncOperateEnum operateEnum, String midTableId, String thirdWarehouseCode, DmpPushWdtDTO.ViewDTO viewDTO, Pair<List<T>, List<T>> listPair, String sourceCode) {
-        CreateOtherStockinRequest request = new CreateOtherStockinRequest();
-        request.setOuterNo(viewDTO.getThirdCode());
-        request.setWarehouseNo(thirdWarehouseCode);
-        request.setIsCheck(Boolean.TRUE);
-        request.setGoodsList((List<CreateOtherStockinRequest.GoodsList>) listPair.getValue());
-        request.setSourceId(midTableId);
-        request.setOperateCode(operateEnum.getCode());
-        request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        request.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
-        request.setCreateTime(LocalDateTime.now());
-        request.setRemark("原始单据号：" + sourceCode);
-
-        DmpPushTaskEntity entity = new DmpPushTaskEntity();
-        entity.setSourceId(midTableId);
-        entity.setMqData(JSONUtil.toJsonStr(request));
-        entity.setStatus(SyncStatusEnum.IN_SYNC.getCode());
-        return entity;
     }
 
     /**
@@ -283,7 +219,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
      * @date: 2024-08-15
      * @author: tanmujin
      */
-    private String saveMiddleData(String sourceId, String sourceCode, SourceTypeEnum sourceTypeEnum, List<T> goodsLists, String outerCode, String sysWarehouseId, String thirdWarehouseCode, SyncOperateEnum operateEnum, String mappingStatus) {
+    private String saveMiddleData(String sourceId, String sourceCode, SourceTypeEnum sourceTypeEnum, List<T> goodsLists, String outerCode, String sysWarehouseId, String thirdWarehouseCode, SyncOperateEnum operateEnum, String type) {
         DmpPushWdtDTO.AddDTO dto = new DmpPushWdtDTO.AddDTO();
         dto.setSourceId(sourceId);
         dto.setSourceCode(sourceCode);
@@ -294,7 +230,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         dto.setOperateType(operateEnum.getCode());
         List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(goodsLists, DmpPushWdtDetailDTO.class);
         dto.setDetailDTOList(detailDTOList);
-        dto.setMappingStatus(mappingStatus);
+        dto.setType(type);
         return dmpPushWdtFeign.add(dto);
     }
 

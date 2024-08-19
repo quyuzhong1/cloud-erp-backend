@@ -61,8 +61,8 @@ public class DmpPushWdtEntity extends BaseEntity<DmpPushWdtEntity> {
     private String operateType;
 
     /**
-     * 1有仓位映射, 0无仓位映射
+     * 类型：0原始数据，1按仓位映射后数据
      */
-    @TableField("mapping_status")
-    private String mappingStatus;
+    @TableField("type")
+    private String type;
 }
