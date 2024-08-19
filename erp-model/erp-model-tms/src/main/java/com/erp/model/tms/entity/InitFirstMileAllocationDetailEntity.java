@@ -46,7 +46,7 @@ public class InitFirstMileAllocationDetailEntity extends BaseEntity<InitFirstMil
     @TableField("source_code")
     private String sourceCode;
     /**
-    * 数据来源类型：delivery=发货单
+    * 数据来源类型：firstMileDelivery=头程发货单
      * SourceTypeEnum
     */
     @TableField("source_type")

@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
@@ -140,6 +141,9 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
             }
             if (StrUtil.isBlank(detailEntity.getWeightUnit())){
                 detailEntity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
+            }
+            if (StrUtil.isBlank(detailEntity.getSourceType())){
+                detailEntity.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
             }
         });
         this.saveOrUpdateBatch(detailEntityList);
