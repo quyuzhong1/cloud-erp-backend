@@ -133,6 +133,9 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 					String message = jsonObject.getString("sub_message");
 					if(StringUtils.isBlank(message)) {
 						message = jsonObject.getString("msg");
+						if("http status error:502".equals(message) || "http响应内容解析异常，返回内容无法解析成json或xml结构".equals(message)) {
+							Thread.sleep(30000);
+						}
 					}
 					throw new ServiceException("调用旺店通奇门" + apiType + "接口报错，错误原因：" + message);
 				}

@@ -77,4 +77,34 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台出库
      */
     public static final String DMP_PLATFORM_OUTBOUND_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_wms_group";
+    
+    /**
+     * 新中台旺店通仓库
+     */
+    public static final String DMP_WDT_WAREHOUSE_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_warehouse_to_dmp_group";
+    
+    /**
+     * 新中台旺店通虚拟仓库
+     */
+    public static final String DMP_WDT_VIRTUALWAREHOUSE_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_virtualwarehouse_to_dmp_group";
+    
+    /**
+     * 新中台旺店通店铺
+     */
+    public static final String DMP_WDT_SHOP_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_shop_to_dmp_group";
+    
+    /**
+     * 新中台金蝶汇率
+     */
+    public static final String DMP_KINGDEE_EXCHANGERATE_TO_BI_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_exchangerate_to_bi_group";
+
+    /**
+     * 新中台金蝶产品
+     */
+    public static final String DMP_KINGDEE_PRODUCT_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_product_to_dmp_group";
+    
+    /**
+     * 新中台金蝶店铺
+     */
+    public static final String DMP_KINGDEE_SHOP_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_shop_to_dmp_group";
 }
