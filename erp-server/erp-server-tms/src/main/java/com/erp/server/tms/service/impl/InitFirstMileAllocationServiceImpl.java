@@ -356,26 +356,26 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         List<InitFirstMileAllocationDetailEntity> detailEntityList = initFirstMileAllocationDetailService.listByIds(detailIds);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("期初明细【{}】记录不存在", String.join(",", detailIds))));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",", detailIds), String.join(",", detailIds), StrUtil.format("期初明细【{}】记录不存在", String.join(",", detailIds))));
             return resultDTOS;
         }
         List<String> sourceIds = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
         if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)) {
-            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("头程发货单【{}】记录不存在", String.join(",", sourceIds))));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",", sourceIds), String.join(",", sourceIds), StrUtil.format("头程发货单【{}】记录不存在", String.join(",", sourceIds))));
             return resultDTOS;
         }
         //过滤未审核期初账单
         List<String> ids = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<InitFirstMileAllocationEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(entityList)) {
-            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("期初【{}】记录不存在", String.join(",", ids))));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",", ids), String.join(",", ids), StrUtil.format("期初【{}】记录不存在", String.join(",", ids))));
             return resultDTOS;
         }
         List<InitFirstMileAllocationEntity> unApproveList = entityList.stream().filter(e -> !ApproveStatusEnum.APPROVE.getStatus().equals(e.getStatus())).collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(unApproveList)) {
             List<String> codeList = unApproveList.stream().map(InitFirstMileAllocationEntity::getCode).distinct().collect(Collectors.toList());
-            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("期初编号【{}】未审核单据不能下推对账单", String.join(",", codeList))));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",", codeList), String.join(",", codeList), StrUtil.format("期初编号【{}】未审核单据不能下推对账单", String.join(",", codeList))));
             return resultDTOS;
         }
         //整理下推对账单数据
@@ -384,7 +384,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             List<String> existIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).distinct().collect(Collectors.toList());
             List<String> notExistIds = sourceIds.stream().filter(e -> !existIds.contains(e)).distinct().collect(Collectors.toList());
             List<String> notExistCodes = firstMileDeliveryEntityList.stream().filter(e -> !CollectionUtils.isEmpty(notExistIds) && notExistIds.contains(e.getId())).map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
-            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("头程发货单【{}】无关联物流单，请下推物流单后生成对账单", String.join(",", notExistCodes))));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",", notExistIds), String.join(",", notExistCodes), StrUtil.format("头程发货单【{}】无关联物流单，请下推物流单后生成对账单", String.join(",", notExistCodes))));
             return resultDTOS;
         }
         // 当前添加的主账单记录
