@@ -20,12 +20,15 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.service.DmpCfgOutputConvertMappingService;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.DistrictInfoBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.LineItemsBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -36,6 +39,8 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+    @Resource
+    private DmpCfgOutputConvertMappingService dmpCfgOutputConvertMappingService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -112,6 +117,38 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
             }
         }
         return map;
+    }
+
+    public static void main(String[] args) {
+
+    }
+
+    private void test() {
+
+//        dmpCfgOutputConvertMappingService.lambdaQuery().eq()
+/*        //1、 转换前原始数据
+        DmpSoInfoEntity dmpSoInfoEntity = new DmpSoInfoEntity();
+
+        //2、 转换后的数据
+        PlatformOrderDTO platformOrderDTO = new PlatformOrderDTO();
+
+
+        String[] keys = field.split("\\.");
+
+        for (String key : keys) {
+            if (data instanceof Map) {
+                data = ((Map<String, Object>) data).get(key);
+            } else if (data instanceof List) {
+                //如果是数组类型默认取第一个
+                List<Map<String, Object>> valueList = (List<Map<String, Object>>) data;
+                if (CollectionUtil.isNotEmpty(valueList)) {
+                    data = valueList.get(0).get(key);
+                }
+            } else {
+                return null;  // 如果路径不正确，返回null
+            }
+        }
+        DmpHandlerUtils.getValueByPath();*/
     }
 
     /**
