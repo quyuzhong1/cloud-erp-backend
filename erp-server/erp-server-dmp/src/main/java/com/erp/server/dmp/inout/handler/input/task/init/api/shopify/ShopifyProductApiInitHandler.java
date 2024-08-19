@@ -48,6 +48,8 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
         String shopifyShopDomain = tokenDTO.getShopDomain();
         String accessToken = tokenDTO.getAccessToken();
 
+//        System.setProperty("socksProxyHost", "127.0.0.1");
+//        System.setProperty("socksProxyPort", "7890");
         // Shopify产品下载所有(SDK已分页查询所有)
         ShopifyProducts products = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getProducts();
         if (CollectionUtils.isEmpty(products.values())) {
