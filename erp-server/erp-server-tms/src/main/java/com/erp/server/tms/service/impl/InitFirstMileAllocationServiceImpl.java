@@ -27,6 +27,7 @@ import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
 import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.enums.ReconciliationTypeEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.listener.InitFirstMileAllocationDetailExcelListener;
@@ -388,13 +389,13 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             BatchResultDTO updateResult;
             String id = logisticsBillEntity.getId();
             try {
-                updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap);
+                updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.INIT_PERIOD.getCode());
 
             } catch (Exception e) {
                 log.error("头程对账生成失败", e);
                 LogisticsBillEntity entity = tmsFirstMileLogisticService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    updateResult = BatchResultDTO.fail(id, id, "B物流单不存在, 头程对账生成失败");
+                    updateResult = BatchResultDTO.fail(id, id, "物流单不存在, 头程对账生成失败");
                     resultDTOS.add(updateResult);
                     continue;
                 }
