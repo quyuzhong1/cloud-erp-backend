@@ -182,14 +182,9 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             String codeWithPush = docNoGenHelper.generateCode(businessNoTypeEnum);
             String idWithPush = saveMiddleData(viewDTO.getSourceId(), sourceCode, sourceTypeEnum, pair.getKey(), codeWithPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
             List<DmpPushTaskEntity> pushTaskList = generateTask(pair.getKey(), operateEnum, codeWithPush, thirdWarehouseCode, sourceCode, idWithPush, SyncStatusEnum.IN_SYNC, sourceTypeEnum);
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    if(CollectionUtils.isNotEmpty(pushTaskList)){
-                        dmpMqFeign.sendTask(pushTaskList);
-                    }
-                }
-            });
+            if(CollectionUtils.isNotEmpty(pushTaskList)){
+                dmpMqFeign.sendTask(pushTaskList);
+            }
         }
 
         if(! pair.getValue().isEmpty()){
