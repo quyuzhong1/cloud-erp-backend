@@ -7,6 +7,7 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import java.util.Map;
  * @author Administrator
  *
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
@@ -32,11 +34,10 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
         }
 
         //订单拓展
-        DmpInputTaskEntity dmpInputExtensionsEntity = list.stream().filter(req -> "1823265128548686459".equals(req.getCfgInputId())).findFirst().orElse(null);
+        DmpInputTaskEntity dmpInputTaskExtensionsEntity = list.stream().filter(req -> "1823265128548686459".equals(req.getCfgInputId())).findFirst().orElse(null);
         List<ParamData> extensionsDataList = new ArrayList<>();
-        extensionsDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputExtensionsEntity.getId()));
+        extensionsDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskExtensionsEntity.getId()));
         List<Map<String, Object>> dmpInputExtensionsMongoChildList = mongoService.findMongoData(extensionsDataList, "shopify_extensions_data");
-
         List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
         if(CollUtil.isNotEmpty(detailList)) {
             for(Map<String, Object> detail : detailList) {
@@ -51,7 +52,7 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
                     detail.put("city", shippingAddressMap.get("city"));
                     detail.put("mainStreet", shippingAddressMap.get("address1"));
                     detail.put("secondStreet", shippingAddressMap.get("address2"));
-                    detail.put("mainPhone", shippingAddressMap.get("phone"));
+                    detail.put("receiverTelNumber", shippingAddressMap.get("phone"));
                     detail.put("secondPhone", shippingAddressMap.get("second_phone"));
                     detail.put("country", shippingAddressMap.get("countryCode"));
                     detail.put("postCode", shippingAddressMap.get("zip"));
@@ -61,10 +62,9 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
                 Object customerObj = detail.get("customer");
                 if (ObjectUtil.isNotEmpty(customerObj)) {
                     Map<String, Object> customerMap = (Map<String, Object>) customerObj;
-                    detail.put("secondPhone", customerMap.get("phone"));
+                    detail.put("mainPhone", customerMap.get("phone"));
                 }
-
-                Map<String, Object> extensionsMap = dmpInputExtensionsMongoChildList.stream().filter(req -> req.get("orderId").equals(detail.get("thirdCode"))).findFirst().orElse(null);
+                Map<String, Object> extensionsMap = dmpInputExtensionsMongoChildList.stream().filter(req -> String.valueOf(req.get("orderId")).equals(detail.get("orderId")+"")).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(extensionsMap)) {
                     detail.put("receiverTaxNo", extensionsMap.get("taxNo"));
                 }

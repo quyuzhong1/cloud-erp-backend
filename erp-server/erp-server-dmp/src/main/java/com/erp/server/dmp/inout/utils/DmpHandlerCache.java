@@ -43,6 +43,7 @@ import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.DmpCfgMqService;
 import com.erp.server.dmp.service.DmpCfgOutputBlackService;
+import com.netflix.client.ClientException;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
@@ -175,10 +176,21 @@ public class DmpHandlerCache implements CommandLineRunner{
 	}
 	
 	public List<OverseasProviderEntity> getOverseasProviderEntityList(Predicate<? super OverseasProviderEntity> paramPredicate) {
-		if(overseasProviderEntityCache == null) {
-			overseasProviderEntityCache = FeignQuery.create(OverseasProviderEntity.class)
-					.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-					.list();
+		int i = 0;
+		while(overseasProviderEntityCache == null) {
+			try {
+				overseasProviderEntityCache = FeignQuery.create(OverseasProviderEntity.class)
+						.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+						.list();
+			} catch (Exception e) {
+				Throwable cause = e.getCause();
+				if(cause instanceof ClientException && i < 3) {
+					try {Thread.sleep(10000);} catch (InterruptedException e1) {}
+				}else {
+					throw e;
+				}
+			}
+			i = i + 1;
 		}
 		return overseasProviderEntityCache.stream().filter(paramPredicate).collect(Collectors.toList());
 	}

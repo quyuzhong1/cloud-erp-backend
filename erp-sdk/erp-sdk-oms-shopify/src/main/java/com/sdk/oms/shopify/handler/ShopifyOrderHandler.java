@@ -65,10 +65,13 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
     @Resource
     private ShopifyGraphQLClientService shopifyGraphQLClientService;
 
+    @Resource
+    private ShopSdkServer shopSdkServer;
+
     @Override
     public List<PlatformShopifyOrderDTO> download(JobTaskDTO data) {
         // Shopify订单下载
-        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(data.getShopId());
+        ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(data.getShopId());
         if (null == shopInfoDTO) {
             log.error("[Shopify订单下载]从缓存中获取shopify token 失败: shopId={}", data.getShopId());
             return Collections.emptyList();
@@ -123,7 +126,7 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
     public PlatformShopifyOrderDTO downloadDetail(PlatformShopifyOrderDTO dto, JSONObject extendObj) {
         // Shopify订单下载
         String shopId = dto.getShopId();
-        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(shopId);
+        ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(shopId);
         if (null == shopInfoDTO) {
             log.error("[Shopify详情订单下载]从缓存中获取shopify token 失败: shopId={}",shopId);
             throw new ServiceException();

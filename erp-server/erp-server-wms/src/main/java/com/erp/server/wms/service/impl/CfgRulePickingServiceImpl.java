@@ -153,15 +153,16 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
      */
     @Override
     public List<LocationInventoryResultDTO> getRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto) {
-        Pair<List<LocationInventoryResultDTO>, List<String>> result = getSoB2CRuleOrderMatchResult(dto);
+        Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> result = getSoB2CRuleOrderMatchResult(dto);
         if (!CollectionUtils.isEmpty(result.getSecond())) {
-            throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, String.join(",", result.getSecond()));
+            String message = result.getSecond().entrySet().stream().map(v -> String.format("{sku:%s,缺货数量:%s}", v.getKey(), v.getValue())).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, message);
         }
         return result.getFirst();
     }
 
     @Override
-    public Pair<List<LocationInventoryResultDTO>, List<String>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto) {
+    public Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto) {
         log.warn("单据【{}】开始执行拣货策略，开始时间为{}", dto.getSourceCode(), System.currentTimeMillis());
         // 获取所有已启用规则
         List<CfgRulePickingEntity> cfgRulePickings = this.listOrderByPriority();
@@ -174,15 +175,17 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         // 查询所有规则对应的规则动作
         List<CfgRulePackingActionEntity> actions = cfgRulePackingActionService.listByRuleIds(cfgRuleIds);
         List<LocationInventoryResultDTO> result = new ArrayList<>();
-        List<String> stockSku = new ArrayList<>();
+        Map<String, Integer> stockSku = new HashMap<>();
         Map<String, Object> detailMap = new HashMap<>();
         detailMap.put("billType", dto.getBillType());
         detailMap.put("customerId", dto.getCustomerId());
+        detailMap.put("countryCode",dto.getCountryCode());
         detailMap.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
         Map<String, Object> map = new HashMap<>();
         map.put("detailList", Collections.singletonList(detailMap));
         map.put("billType", dto.getBillType());
         map.put("customerId", dto.getCustomerId());
+        map.put("countryCode",dto.getCountryCode());
         map.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
         // 获取所有符合条件的规则 使用异步流后需要重排序
         log.warn("单据【{}】开始过滤拣货策略，开始时间为{}", dto.getSourceCode(), System.currentTimeMillis());
@@ -209,6 +212,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                     .filter(v -> v.getQty() > 0)
                     .collect(Collectors.toList());
             for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inventory : inventoryByWarehouse) {
+                log.warn("单据【{}】执行拣货策略，规则{},sku{},仓位{},数量{}", dto.getSourceCode(), inventory.getRuleId(), inventory.getSkuNo(), inventory.getWarehouseLocation(), inventory.getQty());
                 LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
                 inventoryResultDTO.setSkuId(detail.getSkuId());
                 inventoryResultDTO.setSkuNo(detail.getSkuNo());
@@ -233,7 +237,11 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 }
             }
             if (0 != quantity.get()) {
-                stockSku.add(detail.getSkuNo());
+                if (stockSku.containsKey(detail.getSkuNo())) {
+                    stockSku.put(detail.getSkuNo(), stockSku.get(detail.getSkuNo()) + quantity.get());
+                }else {
+                    stockSku.put(detail.getSkuNo(), quantity.get());
+                }
                 result = result.stream().filter(v -> !v.getSkuNo().equals(detail.getSkuNo())).collect(Collectors.toList());
             }
         }

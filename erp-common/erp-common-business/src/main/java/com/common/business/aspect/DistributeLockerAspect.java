@@ -192,7 +192,9 @@ public class DistributeLockerAspect {
         for (Object obj : objects) {
             if(keyFields.equals("#") || keyFields.equals("")){
                 result.add(obj.toString());
-            } else {
+            } else if(obj instanceof String){
+                result.add(obj.toString());
+            }else {
                 result.addAll(getValuesFromObject(obj, keyFields.split(",")));
             }
         }
@@ -239,7 +241,11 @@ public class DistributeLockerAspect {
      */
     private List<Object> getValuesFromField(Object obj, String[] fieldPath, int index) {
         List<Object> results = new ArrayList<>();
-        if (obj == null || index >= fieldPath.length) {
+        if (obj == null) {
+            return results;
+        }
+        if(index >= fieldPath.length){
+            results.add(obj);
             return results;
         }
 

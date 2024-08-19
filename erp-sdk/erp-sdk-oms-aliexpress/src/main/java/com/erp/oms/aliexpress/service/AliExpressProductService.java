@@ -159,13 +159,15 @@ public static void main(String[] args) {
             endTime("2022-11-25 00:00:00").
             clientId("502978").
             clientSecret("DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY").
-            token("50000200123dJAvRobgSKEtBJjvZtxEAZfV17b52f96gJQg0OG9CCvBqT1l8Mocp35cG").
+            token("50000700312cJ4nYbrzErAqH159364aboXoPdAcJwjMuEzrGXEAudlrVcjGsjo4bIr30").
             apiName("aliexpress.postproduct.redefining.findproductinfolistquery").
             baseUrl("https://api-sg.aliexpress.com")
             .build();
 
+    // 32818224525
+    //1005002505576388
     try {
-        AliExpressProduct productInfo = service.getProductInfo(1005006946525861L, productRequest);
+        AliExpressProduct productInfo = service.getProductInfo(1005002505576388L, productRequest);
         System.out.println(JSONUtil.toJsonStr(productInfo));
     } catch (ApiException e) {
         e.printStackTrace();

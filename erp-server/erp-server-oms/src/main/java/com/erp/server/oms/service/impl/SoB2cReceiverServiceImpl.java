@@ -158,10 +158,11 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 if (null != dictCountryEntity && StringUtils.isBlank(entity.getCountryName())){
                     entity.setCountryName(dictCountryEntity.getNameCn());
                 }
+                newReceiverEntity.setId(entity.getId());
                 // 指定有值不更新
-                ReflectUtils.updateSpecifiedFieldsIfNotValue(entity, newReceiverEntity, SoB2cReceiverEntity.fieldsExistNotUpdate());
+                ReflectUtils.updateSpecifiedFieldsIfNotValue(newReceiverEntity, entity, SoB2cReceiverEntity.fieldsExistNotUpdate());
 
-                this.updateById(entity);
+                this.updateById(newReceiverEntity);
 //                if (!this.updateById(entity2)){
 //                    throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
 //                }

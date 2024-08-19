@@ -5018,19 +5018,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         //供应商信息
-        List<String> supplierIdList = skuList.stream().map(SkuInfoSimpleVO::getSupplierId).collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+//        List<String> supplierIdList = skuList.stream().map(SkuInfoSimpleVO::getSupplierId).collect(Collectors.toList());
+//        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+//
+//        Map<String, List<PurchasePriceDTO.SupplierSkuPrice>> suppelierMap = supplierSkuPriceList
+//                .stream()
+//                .collect(Collectors.groupingBy(PurchasePriceDTO.SupplierSkuPrice::getSupplierId));
+//
+//        for (SkuInfoSimpleVO skuVO : skuList) {
+//            List<PurchasePriceDTO.SupplierSkuPrice> supplierList = suppelierMap.get(skuVO.getSupplierId());
+//            if (CollectionUtils.isNotEmpty(supplierList)){
+//                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierList.get(0);
+//                //含税价
+//                skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+//            }
+//        }
 
-        Map<String, List<PurchasePriceDTO.SupplierSkuPrice>> suppelierMap = supplierSkuPriceList
-                .stream()
-                .collect(Collectors.groupingBy(PurchasePriceDTO.SupplierSkuPrice::getSupplierId));
-
+        List<String> skuNoList = skuList.stream().map(SkuInfoSimpleVO::getSkuNo).filter(StringUtils::isNotEmpty).distinct().collect(Collectors.toList());
+        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
         for (SkuInfoSimpleVO skuVO : skuList) {
-            List<PurchasePriceDTO.SupplierSkuPrice> supplierList = suppelierMap.get(skuVO.getSupplierId());
-            if (CollectionUtils.isNotEmpty(supplierList)){
-                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierList.get(0);
-                //含税价
-                skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+            if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
+                skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
             }
         }
         return skuList;

@@ -34,9 +34,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-
 /**
  * Shopify单元测试
  */
@@ -98,13 +95,16 @@ public class ErpServerOmsShopifyApplicationTests {
 
     @Test
     public void filterShopifyOrders() {
-        String accessToken = "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";
-        String shopifyShopDomain = "jim-shop-test.myshopify.com";
+        String accessToken = "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";
+        String shopifyShopDomain = "luna-shop-test.myshopify.com";
+
+        System.setProperty("socksProxyHost", "127.0.0.1");
+        System.setProperty("socksProxyPort", "7890");
 
         //1、通过检索订单列表，按指定条件获取订单ID，订单付款状态：部分付款，已付款，部分退款，已退款，已作废；订单创建时间：当天\
 //        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-11-27T00:00:00+08:00");
-        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2023-09-23T00:00:00+08:00");
-        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-08-22T00:00:00+08:00");
+        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-05-01T00:00:00-04:00");
+        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2024-08-16T00:00:00-04:00");
 
 
         List<ShopifyOrder> shopifyOrders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
@@ -281,7 +281,7 @@ public class ErpServerOmsShopifyApplicationTests {
         Map<String, SoB2cDetailEntity> detailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
 
         String shopId = mainEntity.getShopId();
-        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(shopId);
+        ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(shopId);
         if (null == shopInfoDTO) {
             log.error("[Shopify标记发货]从缓存中获取shopify token 失败: shopId={}", shopId);
             throw new ServiceException();

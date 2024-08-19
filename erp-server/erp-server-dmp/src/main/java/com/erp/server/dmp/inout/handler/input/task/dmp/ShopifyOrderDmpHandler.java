@@ -49,11 +49,11 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
         }
 
         //订单交易
-        DmpInputTaskEntity dmpInputTaskTransactionsEntity = list.stream().filter(req -> "1823265118759180922".equals(req.getCfgInputId())).findFirst().orElse(null);
-        List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskTransactionsEntity.getId()));
-        List<Map<String, Object>> dmpInputTransactionsMongoChildList = mongoService.findMongoData(paramDataList, "shopify_transactions_data");
+        DmpInputTaskEntity dmpInputTransactionsEntity = list.stream().filter(req -> "1823265118759180922".equals(req.getCfgInputId())).findFirst().orElse(null);
 
+        List<ParamData> paramDataList = new ArrayList<>();
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTransactionsEntity.getId()));
+        List<Map<String, Object>> dmpInputTransactionsMongoChildList = mongoService.findMongoData(paramDataList, "shopify_transactions_data");
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
@@ -104,6 +104,7 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                 }
                 //状态
                 Object fulfillmentStatusObj = dmpDataMap.get("fulfillmentStatus");
+                dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                 if (fulfillmentStatusObj != null) {
                     String fulfillmentStatus = String.valueOf(fulfillmentStatusObj);
                     dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
@@ -129,10 +130,12 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
 
 
                 //交易信息
-                Map<String, Object> transactionsMap = dmpInputTransactionsMongoChildList.stream().filter(req -> req.get("orderId").equals(dmpDataMap.get("thirdCode"))).findFirst().orElse(null);
+                Map<String, Object> transactionsMap = dmpInputTransactionsMongoChildList.stream()
+                        .filter(req -> String.valueOf(req.get("orderId")).equals(String.valueOf(dmpDataMap.get("thirdCode"))))
+                        .findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(transactionsMap)) {
                     dmpDataMap.put("payTime", transactionsMap.get("createdAt"));
-                    dmpDataMap.put("dictPayMethod", transactionsMap.get("gateway"));
+                    dmpDataMap.put("payMethod", transactionsMap.get("gateway"));
                 }
 
 
@@ -179,8 +182,11 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                         }
                     }
                     lableMap.put("refundedLineItemIds", refundedLineItemIds);
-
                 }
+
+                //卖家订单号
+                Object name = dmpDataMap.get("name");
+                lableMap.put("sellerOrderCode", name);
 
                 dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
             }
