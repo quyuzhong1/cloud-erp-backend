@@ -172,7 +172,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         }
         boolean removeSuccess = dmpTaskFeign.deletePushTaskBySourceId(midTableId);
         if(! pair.getKey().isEmpty()){
-            String codeWithPush = docNoGenHelper.generateCode(businessNoTypeEnum);
+            String codeWithPush = viewDTO.getThirdCode();
             String idWithPush = saveMiddleData(viewDTO.getSourceId(), sourceCode, sourceTypeEnum, pair.getKey(), codeWithPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
             List<DmpPushTaskEntity> pushTaskList = generateTask(pair.getKey(), operateEnum, codeWithPush, thirdWarehouseCode, sourceCode, idWithPush, SyncStatusEnum.IN_SYNC, sourceTypeEnum);
             if(CollectionUtils.isNotEmpty(pushTaskList)){
