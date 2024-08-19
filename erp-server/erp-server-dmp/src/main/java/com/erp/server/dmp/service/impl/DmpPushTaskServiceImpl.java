@@ -681,7 +681,8 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         List<DmpPushTaskEntity> updateEntityList = new ArrayList<>();
 
         for (DmpPushTaskFeignDTO dto : dtoList) {
-            DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
+            DmpPushTaskEntity entity = new DmpPushTaskEntity();
+            BeanMapper.copy(dto, entity);
             DmpSyncTaskDTO.OneDTO oneDTO = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
             DmpPushTaskEntity found = sourceIdEntityMap.get(oneDTO.getSourceId() + "#" + oneDTO.getSourceType());
             //存在则修改
