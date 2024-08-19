@@ -178,9 +178,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
     @Resource
-    private PickingDetailService pickingDetailService;
-
-    @Resource
     private RequisitionApplicationService requisitionApplicationService;
 
     @Resource
@@ -686,9 +683,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //要货申请主表数据
         List<String> mainIdList = requisitionApplicationDetailList.stream().map(RequisitionApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationService.listByIds(mainIdList);
-
-        //拣货单明细
-        List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(applicationDetailIdList);
 
         //出冻结库存
         List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();

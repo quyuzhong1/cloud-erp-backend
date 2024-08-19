@@ -114,7 +114,6 @@ public class DmpHandlerUtils {
 		return data;
 	}
 
-
 	public static Object getValueByPath(Map<String, Object> data, String path, String newKey) {
 		String[] keys = path.split("\\.");
 		Object value = data;

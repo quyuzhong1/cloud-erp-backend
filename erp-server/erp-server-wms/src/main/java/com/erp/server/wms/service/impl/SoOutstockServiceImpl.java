@@ -125,6 +125,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.rtfparserkit.rtf.Command.list;
+import static com.rtfparserkit.rtf.Command.v;
 
 /**
  * <p>
@@ -2376,6 +2377,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                             .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
                     SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
                     addDTO.setWarehouseLocation(Objects.isNull(notCancelBySoId.getBatchNo()) ? view.getWarehouseLocation() : "");
+                    addDTO.setSkuNo(view.getSkuNo());
+                    addDTO.setSkuId(view.getSkuId());
                     addDTO.setActualQty(view.getQty());
                     addDTO.setPlanQty(view.getQty());
                     addDTO.setSourceDetailId(detailEntity.getId());

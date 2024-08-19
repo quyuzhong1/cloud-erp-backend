@@ -28,6 +28,7 @@ public interface AsyncService {
     void updateLogisticWeight(LogisticsBillDTO.UpdateWeight updateWeight);
     /**
      * 异步标记发货
+     * (包含成功单据去重)
      *
      * @param soId              B2C订单ID
      * @param soCode            B2C订单单号

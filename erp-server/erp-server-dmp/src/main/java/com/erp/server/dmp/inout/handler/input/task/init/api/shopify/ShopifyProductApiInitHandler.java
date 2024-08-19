@@ -30,6 +30,9 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
     @Resource
     private ShopifyRestClientService shopifyRestClientService;
 
+    @Resource
+    private ShopSdkServer shopSdkServer;
+
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
@@ -37,7 +40,7 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
         //  根据店铺ID获取授权
-        ShopifyShopInfoDTO tokenDTO = ShopSdkServer.getTokenAndDomainByShopId(nextLevelId);
+        ShopifyShopInfoDTO tokenDTO = shopSdkServer.getTokenAndDomainByShopId(nextLevelId);
         if (null == tokenDTO) {
             log.error("[Shopify产品下载]从缓存中获取shopify token 失败: shopId={}", nextLevelId);
             return Collections.emptyList();

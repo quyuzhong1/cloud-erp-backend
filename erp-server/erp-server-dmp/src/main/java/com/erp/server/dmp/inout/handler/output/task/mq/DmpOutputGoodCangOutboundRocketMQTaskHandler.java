@@ -88,6 +88,7 @@ public class DmpOutputGoodCangOutboundRocketMQTaskHandler extends DmpOutputRocke
     	platformOutboundDTO.setOutBoundTime(dmpThirdOutboundEntity.getDateShipping());
 		platformOutboundDTO.setOrderStatus(erpOrderStatus);
     	platformOutboundDTO.setThirdOrderStatus(GoodCangEnums.OrderStatusEnum.getName(orderStatus));
+    	platformOutboundDTO.setTrackNo(dmpThirdOutboundEntity.getTrackingNo());
     	
         return platformOutboundDTO;
     }

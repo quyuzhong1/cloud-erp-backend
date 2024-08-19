@@ -12,20 +12,15 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
-import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClient;
-import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService;
-import com.sdk.oms.shopify.api.graphql.model.ShopifyOrderResponse;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
-import com.sdk.oms.shopify.api.rest.model.ShopifyAddress;
-import com.sdk.oms.shopify.api.rest.model.ShopifyOrder;
-import com.sdk.oms.shopify.dto.PlatformShopifyOrderDTO;
+import com.sdk.oms.shopify.api.rest.model.ShopifyTransaction;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -35,26 +30,19 @@ import java.util.stream.Collectors;
 @Slf4j
 @Scope("prototype")
 public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler {
-    /**
-     * 国家与个人税号 字段map
-     * key 国家code
-     * val 税号标签title
-     */
-    private static final Map<String, String> countryTaxMap;
 
-    static {
-        countryTaxMap = new HashMap<>();
-        countryTaxMap.put("BR", "CPF/CNPJ");
-    }
 
     @Resource
-    private ShopifyGraphQLClientService shopifyGraphQLClientService;
+    private ShopifyRestClientService shopifyRestClientService;
+
+    @Resource
+    private ShopSdkServer shopSdkServer;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+
         List<Map<String, Object>> findMongoData = null;
         String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        log.error("ShopifyOrderTransactionsApiInitHandler:" + parentStorageName);
         if (StringUtils.isNotBlank(parentStorageName)) {
             List<ParamData> paramDataList = new ArrayList<>();
             paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
@@ -64,48 +52,26 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
             return new ArrayList<>();
         }
 
-
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(findMongoData.get(0).get("nextLevelId").toString());
+        List<String> orderIds = findMongoData.stream().map(req -> req.get("orderId").toString()).distinct().collect(Collectors.toList());
+
+        ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(findMongoData.get(0).get("nextLevelId").toString());
         if (null == shopInfoDTO) {
             log.error("[Shopify订单交易信息下载]从缓存中获取shopify token 失败: shopId={}", findMongoData.get(0).get("nextLevelId").toString());
             throw new ServiceException();
         }
 
-
-
-        for (Map<String, Object> findMongoDatum : findMongoData) {
-            //特定国家需要查询税号
-
-            Object shippingAddressObj = findMongoDatum.get("shippingAddress");
-            if (ObjectUtils.isNotEmpty(shippingAddressObj)) {
-                Map<String, Object> shippingAddressMap = (Map<String, Object>) shippingAddressObj;
-
-                Object country = shippingAddressMap.get("countryCode");
-                if(countryTaxMap.containsKey(country)){
-                    String taxTitle = countryTaxMap.get(country);
-                    ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken());
-                    ShopifyOrderResponse order = shopifyGraphQLClient.getOrderLocalizationExtensions(findMongoDatum.get("orderId").toString());
-
-                    log.error("ShopifyOrderTransactionsApiInitHandler返回值:" + order);
-
-                    List<ShopifyOrderResponse.Data.Node.LocalizationExtensions.Nodes> nodes = Optional.of(order)
-                            .map(ShopifyOrderResponse::getData)
-                            .map(ShopifyOrderResponse.Data::getNode)
-                            .map(ShopifyOrderResponse.Data.Node::getLocalizationExtensions)
-                            .map(ShopifyOrderResponse.Data.Node.LocalizationExtensions::getNodes)
-                            .orElse(new ArrayList<>());
-                    String taxNo = nodes.stream().filter(v->taxTitle.equals(v.getTitle())).map(v->v.getValue()).findFirst().orElse("");
-                    order.setOrderId(findMongoDatum.get("orderId").toString());
-                    order.setTaxNo(taxNo);
-
-                    DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-                    dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(order));
-                    dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-                }
-
+        for (String orderId : orderIds) {
+            List<ShopifyTransaction> transactionList = shopifyRestClientService.getShopifyRestClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken())
+                    .getOrderTransactions(orderId);
+            if (CollectionUtils.isEmpty(transactionList)) {
+                continue;
             }
+
+            DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+            dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(transactionList));
+            dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         }
         return dmpInputTaskInitDTOList;
     }
