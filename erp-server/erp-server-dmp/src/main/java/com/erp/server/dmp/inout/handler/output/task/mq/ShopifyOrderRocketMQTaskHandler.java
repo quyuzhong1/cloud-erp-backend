@@ -186,11 +186,17 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 
         // 平台订单原始取消状态(已退款,部分退款)
         DmpBasicSystemCodeEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpSoInfoEntity.getReturnStatus());
-        if (!DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
+        if (dmpBasicSystemCodeEnum != null && !DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
             orderDTO.setIsCancel(Boolean.TRUE);
         } else {
             orderDTO.setIsCancel(Boolean.FALSE);
         }
+
+        JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
+        if (jsonObject.get("sellerOrderCode") != null) {
+            orderDTO.setSellerOrderCode(jsonObject.get("sellerOrderCode")+"");
+        }
+
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
