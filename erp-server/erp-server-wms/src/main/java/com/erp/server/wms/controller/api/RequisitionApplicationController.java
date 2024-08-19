@@ -14,11 +14,14 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
+import com.erp.server.wms.service.PickingListsService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import com.erp.server.wms.service.impl.PackingTaskServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -49,6 +53,8 @@ public class RequisitionApplicationController extends BaseController {
     private RequisitionApplicationService requisitionApplicationService;
     @Resource
     private PackingTaskService packingTaskService;
+    @Resource
+    private PickingListsService pickingListsService;
 
     /**
     * 新增
@@ -464,7 +470,9 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult<List<BatchResultDTO>> generatePackingTask(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<RequisitionApplicationEntity> entityList = requisitionApplicationService.listByIds(dto.getIds());
         List<String> sourceCodes = entityList.stream().map(RequisitionApplicationEntity::getCode).distinct().collect(Collectors.toList());
+        List<String> sourceIds = entityList.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodes);
+        List<PickingListsDTO.SourceView> pickingList = pickingListsService.listBySourceIds(sourceIds);
         List<BatchResultDTO> result = new ArrayList<>();
         for (String id : dto.getIds()) {
             RequisitionApplicationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
@@ -476,6 +484,11 @@ public class RequisitionApplicationController extends BaseController {
                 PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
                 if(Objects.nonNull(packingTaskEntity)){
                     result.add(BatchResultDTO.fail(id,entity.getCode(),"已生成装箱任务不可重复生成"));
+                    continue;
+                }
+                PickingListsDTO.SourceView sourceView = pickingList.stream().filter(v->v.getSourceId().equals(id)).findFirst().orElse(null);
+                if(Objects.isNull(sourceView)){
+                    result.add(BatchResultDTO.fail(id,entity.getCode(),"未生成拣货单，不能下推装箱任务"));
                     continue;
                 }
                 result.add(requisitionApplicationService.generatePackingTask(entity));

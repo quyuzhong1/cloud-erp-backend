@@ -43,14 +43,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.*;
-import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
-import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
-import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -59,7 +52,6 @@ import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
-import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
@@ -1362,6 +1354,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
         List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         list = list.stream().filter(v -> noInventorySkuIds.contains(v.getSkuId()) || v.getDeliveryQty() > 0).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(list)){
+            throw new ServiceException("下推明细为空");
+        }
         //一个发货计划单，生成一个要发货单
         Map<String, List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> map = list.stream().collect(Collectors.groupingBy(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId));
         List<String> sourceDetailIds = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceDetailId).distinct().collect(Collectors.toList());

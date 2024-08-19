@@ -54,8 +54,6 @@ import com.erp.model.wms.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
-import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
-import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.server.wms.convert.CartonConverter;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.convert.PackingConverter;
@@ -2044,21 +2042,34 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //关联单号是否已存在装箱任务
         List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(entity.getId(), sourceType);
         if (CollectionUtils.isNotEmpty(taskEntityList)){
-            return;
+            //存在装箱任务，更新数量
+            PackingTaskEntity packingTaskEntity = taskEntityList.get(0);
+            List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Arrays.asList(entity.getId()));
+            packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(RequisitionApplicationDetailEntity::getPickingQty).reduce(MathUtil.ZERO,Integer::sum));
+            List<PackingTaskDetailEntity> packingTaskDetailEntityList = packingTaskDetailService.listByMainIds(Arrays.asList(packingTaskEntity.getId()));
+            packingTaskDetailEntityList.forEach(obj->{
+                RequisitionApplicationDetailEntity updateDetail = detailEntityList.stream().filter(v->v.getId().equals(obj.getSourceDetailId())).findFirst().orElse(null);
+                if(Objects.nonNull(updateDetail)){
+                    obj.setDeliveryQty(updateDetail.getPickingQty());
+                }
+            });
+            this.updateById(packingTaskEntity);
+            packingTaskDetailService.updateBatchById(packingTaskDetailEntityList);
+        }else{
+            PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.requisitionToPackingTask(entity,sourceType);
+            //查询明细
+            List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Arrays.asList(entity.getId()));
+            packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(RequisitionApplicationDetailEntity::getPickingQty).reduce(MathUtil.ZERO,Integer::sum));
+            packingTaskEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.ZXRW));
+            this.save(packingTaskEntity);
+            // 操作日志
+            String msg = StrUtil.format("自动生成【{}】单据单号为【{}】", "装箱任务单" , packingTaskEntity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "新增操作");
+            List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.requisitionDetailToPackingTaskDetail(detailEntityList);
+            taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
+            //新增任务明细
+            packingTaskDetailService.saveBatch(taskDetailList);
         }
-        PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.requisitionToPackingTask(entity,sourceType);
-        //查询明细
-        List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(RequisitionApplicationDetailEntity::getPickingQty).reduce(MathUtil.ZERO,Integer::sum));
-        packingTaskEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.ZXRW));
-        this.save(packingTaskEntity);
-        // 操作日志
-        String msg = StrUtil.format("自动生成【{}】单据单号为【{}】", "装箱任务单" , packingTaskEntity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "新增操作");
-        List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.requisitionDetailToPackingTaskDetail(detailEntityList);
-        taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
-        //新增任务明细
-        packingTaskDetailService.saveBatch(taskDetailList);
     }
 
     @Override
@@ -2066,13 +2077,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<String> sourceDetailIds = new ArrayList<>(qtyMap.keySet());
         List<PackingTaskDetailEntity> detailEntityList = packingTaskDetailService.listBySourceIds(sourceDetailIds);
         detailEntityList.forEach(v->{
-            v.setDeliveryQty(qtyMap.get(v.getId()));
+            v.setDeliveryQty(qtyMap.get(v.getSourceDetailId()));
         });
         packingTaskDetailService.updateBatchById(detailEntityList);
-        List<String> ids = detailEntityList.stream().map(v->v.getMainId()).distinct().collect(Collectors.toList());
+        List<String> ids = detailEntityList.stream().map(PackingTaskDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> packingTaskEntityList = this.listByIds(ids);
+        List<PackingTaskDetailEntity> allDetailList = packingTaskDetailService.listByMainIds(ids);
         packingTaskEntityList.forEach(main->{
-            List<PackingTaskDetailEntity> currentDetailList = detailEntityList.stream().filter(v->v.getMainId().equals(main.getId())).collect(Collectors.toList());
+            List<PackingTaskDetailEntity> currentDetailList = allDetailList.stream().filter(v->v.getMainId().equals(main.getId())).collect(Collectors.toList());
             main.setDeliveryQty(currentDetailList.stream().map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum));
         });
         service.updateBatchById(packingTaskEntityList);

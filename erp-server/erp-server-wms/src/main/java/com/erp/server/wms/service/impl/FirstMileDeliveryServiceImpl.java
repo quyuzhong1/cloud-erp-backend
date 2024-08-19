@@ -1578,10 +1578,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
 
         //未装箱不能下推入库单
-        PackingTaskEntity packingTaskEntity = packingTaskService.getBySourceCode(entity.getCode());
-
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(Arrays.asList(entity.getCode(),entity.getSourceCode()));
+        PackingTaskEntity packingTaskEntity = CollectionUtils.isEmpty(packingTaskEntityList)?null:packingTaskEntityList.get(0);
         if (Objects.isNull(packingTaskEntity) || !PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.getPackingStatus())) {
-            throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND, entity.getCode());
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND);
         }
 
         // 查询关联目的仓
