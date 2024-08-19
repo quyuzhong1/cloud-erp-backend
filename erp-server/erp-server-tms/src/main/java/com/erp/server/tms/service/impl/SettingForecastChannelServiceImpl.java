@@ -152,7 +152,7 @@ public class SettingForecastChannelServiceImpl extends SuperServiceImpl<SettingF
                     throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_EXIST,logisticsChannelName);
                 }
                 if (ObjectUtil.isNotEmpty(exist.get(logisticsChannelId))) {
-                    throw new ServiceException(StrUtil.format("物流渠道【{}】选择项中重复，请选择其他物流渠道",logisticsChannelName));
+                    throw new ServiceException(StrUtil.format("物流渠道【{}】不可重复选择，请选择其他物流渠道",logisticsChannelName));
                 }
                 entity.setLogisticsChannelName(logisticsChannelName);
                 entity.setLogisticsChannelId(logisticsChannelId);

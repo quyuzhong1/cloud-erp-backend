@@ -35,6 +35,13 @@ public class DmpOutputTaskRecordEntity extends BaseEntity<DmpOutputTaskRecordEnt
     */
     @TableField("data_id")
     private String dataId;
+    
+    /**
+     * 推送编号
+     */
+     @TableField("source_code")
+     private String sourceCode;
+     
     /**
     * 推送状态：init=待推送,finish=推送成功,error=推送失败  枚举：DmpOutputTaskRecordStatusEnum
     */

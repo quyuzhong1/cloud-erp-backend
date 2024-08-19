@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -23,7 +24,9 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
+import com.erp.model.tms.enums.UnDeliverableDecisionEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
@@ -287,16 +290,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public BatchResultDTO delete(String id) {
         LogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            return BatchResultDTO.fail(id,id, "不存在");
         }
         List<SoB2cLogisticsEntity> b2cLogisticsList = soB2cFeign.listSoB2cLogisticsByChannelId(id);
         if(CollectionUtils.isNotEmpty(b2cLogisticsList)){
-            new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
+            return BatchResultDTO.fail(id,entity.getCode(), ApiError.ERROR_CHANNEL_QUOTE.msg);
         }
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
-
-
         removeById(id);
         List<String> channelIdList = Arrays.asList(id);
         //平台物流映射
@@ -307,10 +308,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelAddressService.removeByChannelIdList(channelIdList);
         //发货限制 黑名单
         logisticsChannelBlacklistService.removeByChannelIdList(channelIdList);
-
         //删除模板和渠道的关系表
         shippingTemplateRefChannelService.removeRef(channelIdList);
-
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
     }
@@ -399,7 +398,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (CollectionUtils.isEmpty(syncSourceIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().eq(LogisticsChannelEntity::getMainId, mainId).in(LogisticsChannelEntity::getSyncSourceId, syncSourceIdList).list();
+        return this.lambdaQuery().eq(LogisticsChannelEntity::getMainId, mainId)
+                .in(CollectionUtils.isNotEmpty(syncSourceIdList),LogisticsChannelEntity::getSyncSourceId, syncSourceIdList).list();
     }
 
     @Override
@@ -644,13 +644,22 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
         }
+        //设置默认值
+        String trackQueryType = logisticsChannelEntity.getTrackQueryType();
+        if (StringUtils.isBlank(trackQueryType) && StringUtils.isBlank(logisticsChannelEntity.getId())){
+            logisticsChannelEntity.setTrackQueryType(TrackQueryTypeEnum.TRANSPORT_NO.getCode());
+        }
+        String undeliverableDecision = logisticsChannelEntity.getUndeliverableDecision();
+        if (StringUtils.isBlank(undeliverableDecision) && StringUtils.isBlank(logisticsChannelEntity.getId())){
+            logisticsChannelEntity.setUndeliverableDecision(UnDeliverableDecisionEnum.DESTROY.getCode());
+        }
     }
 
     @Override
     public LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform) {
         LogisticsChannelEntity channelEntity = this.getById(logisticsChannelId);
         if (null == channelEntity){
-            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道id："+logisticsChannelId+"");
         }
         if (StringUtils.isBlank(dictPlatform)){
             throw new ServiceException("关联的销售平台不能为空");
@@ -696,5 +705,47 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
 //        List<LogisticsChannelDTO.PagingSelectDTO> list = records.stream().sorted(Comparator.comparing(LogisticsChannelDTO.PagingSelectDTO::getDisabled)).collect(Collectors.toList());
 //        pagResult.setRecords(list);
         return new PagingVO<>(pagResult);
+    }
+    /**
+     * 根据主表id，更新启用状态
+     * @param channelIds
+     * @param status
+     */
+    @Override
+    public void updateStatusByIds(List<String> channelIds, Boolean status) {
+        if (CollectionUtils.isEmpty(channelIds)){
+            return;
+        }
+        this.lambdaUpdate().in(LogisticsChannelEntity::getId, channelIds).set(LogisticsChannelEntity::getDisabled, status).update();
+    }
+
+    /**
+     * 发货配置
+     * @param dto
+     */
+    @Override
+    public void deliverySetting(LogisticsChannelDTO.DeliveryDTO dto) {
+        LogisticsChannelEntity old = this.getById(dto.getId());
+        if (null == old){
+            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道");
+        }
+        //更新配置
+        this.lambdaUpdate().eq(LogisticsChannelEntity::getId, dto.getId())
+                .set(LogisticsChannelEntity::getDeliveryType, dto.getDeliveryType())
+                .set(LogisticsChannelEntity::getUndeliverableDecision, dto.getUndeliverableDecision()).update();
+        String msgFormat = "由【%s】改为【%s】";
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】修改渠道【{}】发货方式【{}】不可达处理【{}】", UserContext.getDefaultLoginUser().getUserName(),old.getCode(),
+                String.format(msgFormat,DeliveryTypeEnum.getName(old.getDeliveryType()), DeliveryTypeEnum.getName(dto.getDeliveryType())),
+                String.format(msgFormat, UnDeliverableDecisionEnum.getName(old.getUndeliverableDecision()), UnDeliverableDecisionEnum.getName(dto.getUndeliverableDecision())));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), old.getId(), "发货配置");
+    }
+
+    @Override
+    public List<LogisticsChannelEntity> listByMainId(String id) {
+        if (StringUtils.isBlank(id)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(LogisticsChannelEntity::getMainId, id).list();
     }
 }

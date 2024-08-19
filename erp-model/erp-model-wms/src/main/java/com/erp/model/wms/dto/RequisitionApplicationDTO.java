@@ -1041,7 +1041,7 @@ public class RequisitionApplicationDTO implements Serializable {
         @NotBlank(message = "要货申请不能为空")
         private String id;
 
-        @Size(min = 1,max = 100,message = "至少存在一条明细,且明细条数不可大于100条,才可生成拣货单")
+        @Size(min = 1,message = "至少存在一条明细,才可生成拣货单")
         private List<String> detailIds;
     }
 
@@ -1155,6 +1155,11 @@ public class RequisitionApplicationDTO implements Serializable {
          * 店铺名称
          */
         private String shopName;
+
+        /**
+         * FBA货件编码
+         */
+        private String fbaShipmentCode;
     }
 
     @Data

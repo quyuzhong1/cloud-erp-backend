@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -85,7 +86,7 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * 审核
      * @param baseApproveParamDTO
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,TransferOutEntity entity);
 
     /**
      * 删除
@@ -110,7 +111,7 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * 反审核
      * @param ids
      */
-    void disApprove(List<String> ids);
+    BatchResultDTO disApprove(TransferOutEntity transferOutEntity);
 
     /**
      * 分步式调出单下推分布式调入单

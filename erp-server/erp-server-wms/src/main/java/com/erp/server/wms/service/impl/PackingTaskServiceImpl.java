@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -343,17 +344,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (Objects.isNull(packingTask)){
             throw new ServiceException(ApiError.ERROR_92141);
         }
-        SoDeliveryNoticeEntity soDeliveryNoticeEntity = null;
-        FirstMileDeliveryEntity firstMileDeliveryEntity = null;
-        if (PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())){
-            //待审核的数据可以上传装箱数据
-            soDeliveryNoticeEntity = soDeliveryNoticeService.getById(dto.getSourceId());
-            checkSoDeliveryNoticeStatus(soDeliveryNoticeEntity);
-        }else {
-            //待审核的数据可以上传装箱数据
-            firstMileDeliveryEntity = firstMileDeliveryService.getById(dto.getSourceId());
-            checkFirstMileStatus(firstMileDeliveryEntity);
-        }
+        checkSourceOrderStatus(packingTask);
         if (Objects.nonNull(isDeleteCarton) && isDeleteCarton){
             //删除原装箱信息
             wmsCartonSpecService.deleteCarton(dto.getTaskId());
@@ -371,6 +362,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             addDTO.setContent(dto.getContent());
             //不同物流属性配置校验
             List<String> skuIds = addDTO.getDetailList().stream().map(WmsCartonDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
+            if (StrUtil.isNotBlank(addDTO.getCartonId())){
+                List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(addDTO.getCartonId()));
+                if (CollectionUtils.isNotEmpty(detailEntityList)){
+                    //合并已存在装箱数据
+                    skuIds = Stream.concat(skuIds.stream(), detailEntityList.stream().map(WmsCartonDetailEntity::getSkuId).collect(Collectors.toList()).stream()).distinct().collect(Collectors.toList());
+                }
+            }
             wmsCartonSpecService.checkProductPropertyIds(packingTask.getSourceType(), skuIds);
             //重置装箱信息 根据配置进行更新装箱状态
             buildCartonSpecWeight(addDTO, type);
@@ -390,9 +388,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //当所有产品待装箱数量为0时，状态自动变更为已装箱
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(e -> Objects.nonNull(e) && e.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList) && PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())) {
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(packingTask.getSourceId());
             autoGenerateSoDeliveryNotice(packingTask,soDeliveryNoticeEntity);
         }else if (CollectionUtils.isEmpty(groupSkuDTOList) && (PickingSourceTypeEnum.FBA.getCode().equals(packingTask.getSourceType()) || PickingSourceTypeEnum.THIRD.getCode().equals(packingTask.getSourceType()))){
-            autoGenerateFirstMileDelivery(packingTask,firstMileDeliveryEntity);
+            FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getById(packingTask.getSourceId());
+            autoGenerateFirstMileDelivery(packingTask,firstMileDelivery);
         }
         //发送飞书通知
         this.sendNoticeMsg(dto.getTaskId(), dto.getOperation(), dto.getContent());
@@ -726,17 +726,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(PackingTaskEntity entity) {
-        SoDeliveryNoticeEntity soDeliveryNoticeEntity = null;
-        FirstMileDeliveryEntity firstMileDeliveryEntity = null;
-        if (PickingSourceTypeEnum.B2B.getCode().equals(entity.getSourceType())){
-            //待审核的数据可以上传装箱数据
-            soDeliveryNoticeEntity = soDeliveryNoticeService.getById(entity.getSourceId());
-            checkSoDeliveryNoticeStatus(soDeliveryNoticeEntity);
-        }else {
-            //待审核的数据可以上传装箱数据
-            firstMileDeliveryEntity = firstMileDeliveryService.getById(entity.getSourceId());
-            checkFirstMileStatus(firstMileDeliveryEntity);
-        }
+        //校验发货单审核状态
+        checkSourceOrderStatus(entity);
         //删除装箱任务及清单
         lambdaUpdate().eq(PackingTaskEntity::getId,entity.getId()).remove();
         packingTaskDetailService.removeByMainId(entity.getId());
@@ -852,6 +843,22 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtils.isNotEmpty(viewDTOList)) {
             //根据sku进行分类汇总
             List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = this.listGroupSkuById(packingTaskEntity.getId());
+            //不同物流属性配置校验
+            if (AdjustTypeEnum.LOAD.getCode().equals(adjustDTO.getAdjustType()) || AdjustTypeEnum.REPACKING.getCode().equals(adjustDTO.getAdjustType())){
+                //调整的sku
+                List<String> skuIds1 = adjustDTO.getCartonDetailList().stream().map(WmsCartonDTO.AdjustDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+                //已装sku
+                List<String> skuIds2 = Collections.emptyList();
+                if (AdjustTypeEnum.LOAD.getCode().equals(adjustDTO.getAdjustType())){
+                    skuIds2 = detailEntityList.stream().map(WmsCartonDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+                }
+                //搜索到的sku
+                List<String> skuIds3 = viewDTOList.stream().map(PackingTaskDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
+                List<String> skuIds4 = Stream.concat(skuIds1.stream(), skuIds2.stream()).distinct().collect(Collectors.toList());
+                //合并sku
+                List<String> skuIds = Stream.concat(skuIds3.stream(), skuIds4.stream()).distinct().collect(Collectors.toList());
+                wmsCartonSpecService.checkProductPropertyIds(packingTaskEntity.getSourceType(), skuIds);
+            }
             List<WmsCartonDTO.CartonDetailDTO> cartonDetailList = new ArrayList<>();
             for (WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO : groupSkuDTOList) {
                 PackingTaskDetailDTO.ViewDTO viewDTO = viewDTOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(null);
@@ -897,10 +904,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String pdaPackingSave(WmsCartonSpecDTO.AddDTO dto) {
+    public WmsCartonDTO.PrintDTO pdaPackingSave(WmsCartonSpecDTO.AddDTO dto) {
         dto.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
-        String code = this.stagingPacking(dto);
-        return getOutBoxNoBase64(code);
+        return this.stagingPacking(dto);
     }
 
     @Override
@@ -1082,7 +1088,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String stagingPacking(WmsCartonSpecDTO.AddDTO addDTO) {
+    public WmsCartonDTO.PrintDTO stagingPacking(WmsCartonSpecDTO.AddDTO addDTO) {
         if (Objects.isNull(addDTO.getBoxQty())){
             addDTO.setBoxQty(MathUtil.ONE);
         }
@@ -1107,16 +1113,16 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //校验累计装箱数量不可大于发货数量
         checkPackQtyByPickQty(packingTaskEntity, addDTO.getDetailList());
         String specId;
+        WmsCartonEntity wmsCartonEntity = null;
         //不存在则新增
         if (Objects.isNull(cartonEntity)){
             specId = wmsCartonSpecService.add(addDTO);
             List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(addDTO.getTaskId()));
-            WmsCartonEntity wmsCartonEntity = cartonEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSpecId().equals(specId)).findFirst().orElse(new WmsCartonEntity());
+            wmsCartonEntity = cartonEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSpecId().equals(specId)).findFirst().orElse(new WmsCartonEntity());
             //更新装箱状态
             this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),addDTO.getTaskId());
             //发送飞书通知
             this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
-            return packingTaskEntity.getSourceCode()+"-"+wmsCartonEntity.getBoxNo();
         }else {
             specId = cartonEntity.getSpecId();
             WmsCartonSpecEntity wmsCartonSpecEntity = wmsCartonSpecService.getById(specId);
@@ -1128,9 +1134,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),addDTO.getTaskId());
             //发送飞书通知
             this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
-            WmsCartonEntity wmsCartonEntity = wmsCartonService.getById(cartonId);
-            return packingTaskEntity.getSourceCode()+"-"+wmsCartonEntity.getBoxNo();
+            wmsCartonEntity = wmsCartonService.getById(cartonId);
         }
+        if (Objects.isNull(wmsCartonEntity)){
+            throw new ServiceException(ApiError.ERROR_92146);
+        }
+        return WmsCartonDTO.PrintDTO.builder()
+                .boxNo(wmsCartonEntity.getBoxNo())
+                .cartonId(wmsCartonEntity.getId())
+                .sourceCode(packingTaskEntity.getSourceCode())
+                .sourceId(packingTaskEntity.getSourceId())
+                .taskId(packingTaskEntity.getId())
+                .build();
     }
 
     @Override
@@ -1178,6 +1193,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
             throw new ServiceException(ApiError.ERROR_92141);
         }
+        //校验发货单状态
+        checkSourceOrderStatus(packingTaskEntity);
         WmsCartonEntity cartonEntity = wmsCartonService.getById(dto.getCartonId());
         if (Objects.isNull(cartonEntity)){
             throw new ServiceException(ApiError.ERROR_92146);
@@ -1199,18 +1216,40 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         return packingTaskEntity.getSourceCode() + "-" + boxNo;
     }
 
+    private void checkSourceOrderStatus(PackingTaskEntity packingTask) {
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = null;
+        FirstMileDeliveryEntity firstMileDeliveryEntity = null;
+        if (PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())){
+            //待审核的数据可以上传装箱数据
+            soDeliveryNoticeEntity = soDeliveryNoticeService.getById(packingTask.getSourceId());
+            checkSoDeliveryNoticeStatus(soDeliveryNoticeEntity);
+        }else {
+            //待审核的数据可以上传装箱数据
+            firstMileDeliveryEntity = firstMileDeliveryService.getById(packingTask.getSourceId());
+            checkFirstMileStatus(firstMileDeliveryEntity);
+        }
+    }
+
     private Integer updateAdjustData(WmsCartonDTO.AdjustSaveDTO dto) {
         String cartonId = dto.getCartonId();
         WmsCartonEntity wmsCartonEntity = wmsCartonService.getById(cartonId);
+        if (Objects.isNull(wmsCartonEntity)){
+            throw new ServiceException(ApiError.ERROR_92146);
+        }
+        WmsCartonSpecEntity cartonSpecEntity = wmsCartonSpecService.getById(wmsCartonEntity.getSpecId());
+        if (Objects.isNull(cartonSpecEntity)){
+            throw new ServiceException(ApiError.ERROR_92145);
+        }
         PackingTaskEntity packingTaskEntity = this.getById(wmsCartonEntity.getPackingTaskId());
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonId));
         //不同物流属性配置校验
-        List<String> skuIds = dto.getCartonDetailList().stream().map(WmsCartonDTO.AdjustDetailDTO::getSkuId).distinct().collect(Collectors.toList());
-//        List<String> skuIds2 = detailEntityList.stream().map(WmsCartonDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        //合并sku
-//        List<String> skuIds = Stream.concat(skuIds1.stream(), skuIds2.stream()).distinct().collect(Collectors.toList());
-        wmsCartonSpecService.checkProductPropertyIds(packingTaskEntity.getSourceType(), skuIds);
-
+        if (AdjustTypeEnum.LOAD.getCode().equals(dto.getAdjustType()) || AdjustTypeEnum.REPACKING.getCode().equals(dto.getAdjustType())){
+            List<String> skuIds1 = dto.getCartonDetailList().stream().map(WmsCartonDTO.AdjustDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+            List<String> skuIds2 = detailEntityList.stream().map(WmsCartonDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+            //合并sku
+            List<String> skuIds = Stream.concat(skuIds1.stream(), skuIds2.stream()).distinct().collect(Collectors.toList());
+            wmsCartonSpecService.checkProductPropertyIds(packingTaskEntity.getSourceType(), skuIds);
+        }
         List<WmsCartonDTO.AdjustDetailDTO> adjustDetailDTOList = dto.getCartonDetailList();
         for (WmsCartonDTO.AdjustDetailDTO adjustDetailDTO : adjustDetailDTOList){
             WmsCartonDetailEntity wmsCartonDetailEntity = detailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(adjustDetailDTO.getSkuId())).findFirst().orElse(null);
@@ -1247,11 +1286,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
         wmsCartonEntity.setPackingUserId(UserContext.getDefaultLoginUser().getUid());
         wmsCartonEntity.setPackingUserName(UserContext.getDefaultLoginUser().getUserName());
+        //称重状态更新为{未称重}且称重尺寸重量更新为空
+        wmsCartonEntity.setWeightingStatus(PackingWeightStatusEnum.UNWEIGHED.getCode());
         if (wmsCartonEntity.getBoxNo() == 0){
             Integer boxNo = wmsCartonService.getBoxNoByTaskId(dto.getTaskId());
             wmsCartonEntity.setBoxNo(Objects.isNull(boxNo)? 1 : boxNo + 1);
         }
         this.wmsCartonService.updateById(wmsCartonEntity);
+        //更新尺寸为空
+        wmsCartonSpecService.updateSizeDataEmpty(cartonSpecEntity);
         //更新装箱状态
         updatePackingStatus(listGroupSkuById(wmsCartonEntity.getPackingTaskId()),wmsCartonEntity.getPackingTaskId());
         return wmsCartonEntity.getBoxNo();
@@ -1494,6 +1537,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         String sourceCode = barCodeArr[0];
         String boxNo = barCodeArr[1];
+
+        if(sourceCode.contains(BusinessNoConstant.FHTZ)){
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByCode(sourceCode);
+            if(Objects.nonNull(soDeliveryNoticeEntity) && soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+                throw new ServiceException("发货通知单已审核，无法更新");
+            }
+        }else if(sourceCode.contains(BusinessNoConstant.FHD)){
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getByCode(sourceCode);
+            if(Objects.nonNull(firstMileDeliveryEntity) && firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+                throw new ServiceException("发货单已审核，无法更新");
+            }
+        }
 
         PackingTaskEntity packingTaskEntity = Optional.ofNullable(this.getBySourceCode(sourceCode)).orElseThrow(() -> new ServiceException("未生成装箱任务"));
         WmsCartonEntity wmsCartonEntity = Optional.ofNullable(wmsCartonService.getByTaskIdAndBoxNo(packingTaskEntity.getId(),boxNo)).orElseThrow(() -> new ServiceException("未找到该箱号装箱信息"));
@@ -1882,15 +1937,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_92251);
         }
-//        //已装箱状态并且已报关不允许再次修改装箱数据
-//        if (PackingTaskStatusEnum.PACKED.getCode().equals(soOutstock.getPackingStatus()) && WmsDeclareStatusEnum.FINISH.getCode().equals(soOutstock.getDeclareStatus())) {
-//            throw new ServiceException(ApiError.SO_OUTSTOCK_NOT_PACKING);
-//        }
-//
-//        //只允许B2B订单装箱
-//        if (!OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())) {
-//            throw new ServiceException(ApiError.B2B_ORDER_IS_PACK);
-//        }
     }
 
     /**
@@ -2100,7 +2146,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    public String getPrintBarCode(String cartonId) {
+    public WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId) {
         WmsCartonEntity cartonEntity = wmsCartonService.getById(cartonId);
         if (Objects.isNull(cartonEntity)){
             throw new ServiceException(ApiError.ERROR_92146);
@@ -2109,7 +2155,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
             throw new ServiceException(ApiError.ERROR_98001);
         }
-        return getOutBoxNoBase64(packingTaskEntity.getSourceCode()+"-"+cartonEntity.getBoxNo());
+        return WmsCartonDTO.PrintDTO.builder()
+                .boxNo(cartonEntity.getBoxNo())
+                .cartonId(cartonId)
+                .sourceCode(packingTaskEntity.getSourceCode())
+                .sourceId(packingTaskEntity.getSourceId())
+                .taskId(packingTaskEntity.getId())
+                .build();
     }
 
     @Override

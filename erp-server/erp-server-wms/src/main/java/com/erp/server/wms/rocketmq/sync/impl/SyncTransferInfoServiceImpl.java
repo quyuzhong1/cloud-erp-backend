@@ -36,10 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -95,7 +92,8 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             }
 
             if (ApproveStatusEnum.APPROVE.getStatus().equals(oldTransferInfo.getApproveStatus())) {
-                transferInfoService.disApprove(Arrays.asList(oldTransferInfo.getId()), Boolean.FALSE,Boolean.TRUE);
+                TransferInfoEntity transferInfoEntity = transferInfoService.getById(oldTransferInfo.getId());
+                transferInfoService.disApprove(transferInfoEntity, Boolean.FALSE, Boolean.TRUE);
             }
             if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(oldTransferInfo.getApproveStatus())) {
                 transferInfoService.cancelProcess(Arrays.asList(oldTransferInfo.getId()));
@@ -126,10 +124,10 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             throw new ServiceException(ApiError.ERROR_1042);
         }
         //审核
-        BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
-        paramDTO.setIds(Arrays.asList(id));
-        paramDTO.setType(WmsConstant.PASS);
-        transferInfoService.approve(paramDTO,Boolean.FALSE);
+        TransferInfoEntity entity = transferInfoService.getById(id);
+        if (Objects.nonNull(entity)){
+            transferInfoService.approve(entity,WmsConstant.PASS, "", null,Boolean.FALSE);
+        }
     }
 
 

@@ -3,10 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -20,15 +17,20 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.SingleApproveParamDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
+import com.erp.model.wms.entity.InitStockEntity;
+import com.erp.model.wms.entity.TransferApplicationEntity;
 import com.erp.server.wms.query.TransferApplicationQueryHandler;
 import com.erp.server.wms.service.TransferApplicationService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  *  调拨申请单
@@ -36,6 +38,7 @@ import java.util.List;
  * @author will
  * @since 2023-05-10
  */
+@Slf4j
 @RestController
 @LogSystemModule("调拨申请单")
 @RequestMapping("/transferApplication")
@@ -239,7 +242,7 @@ public class TransferApplicationController extends BaseController {
      * 批量审核
      * @author Will
      * @date: 2023/5/10 20:11
-     * @param baseApproveParamDTO
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核调拨申请单")
@@ -249,9 +252,23 @@ public class TransferApplicationController extends BaseController {
             menuCode = "wms:transferApplication:approve",
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        transferApplicationService.approve(baseApproveParamDTO);
-        return success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferApplicationEntity> entityList = transferApplicationService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferApplicationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"调拨申请单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferApplicationService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("调拨申请单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -287,9 +304,23 @@ public class TransferApplicationController extends BaseController {
             menuCode = "wms:transferApplication:disApprove",
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferApplicationService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferApplicationEntity> entityList = transferApplicationService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferApplicationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"调拨申请单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferApplicationService.disApprove(entity));
+            }catch (Exception e){
+                log.error("调拨申请单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

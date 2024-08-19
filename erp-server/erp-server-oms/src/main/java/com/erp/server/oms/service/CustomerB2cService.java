@@ -1,10 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerB2CDTO;
@@ -121,7 +118,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(BaseApproveParamDTO dto,CustomerB2cEntity entity);
 
     /**
      * @description: 结束审核
@@ -141,7 +138,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(CustomerB2cEntity entity);
 
     /**
      * 删除客户

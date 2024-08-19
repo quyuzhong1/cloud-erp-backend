@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.sys.mapper.DictGlobalAreaMapper">
-
-
-
-
+    <!--根据id删除记录-->
+    <delete id="deleteById">
+        delete from dict_global_area where id = #{id}
+    </delete>
     <!--根据国家id 集合获取到区域信息-->
     <select id="listByCountryIds" resultType="com.erp.model.sys.dto.DictGlobalAreaDTO$InfoDTO">
           SELECT

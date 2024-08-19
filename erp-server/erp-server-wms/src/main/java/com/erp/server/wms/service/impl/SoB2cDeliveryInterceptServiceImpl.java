@@ -266,6 +266,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 .channelId(entity.getLogisticsChannelId())
                 .transportNo(entity.getTransportNo())
                 .referenceNumber(soB2cEntity.getCode())
+                .platformCode(soB2cEntity.getPlatformCode())
                 .reason("b2c发货拦截单自动拦截")
                 .orderId(entity.getId())
                 .shopId(soB2cEntity.getShopId())
@@ -320,6 +321,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id) {
         SoB2cDeliveryInterceptEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -375,11 +377,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             List<SoOutstockEntity> soOutstockEntities = soOutstockService.listBySoIds(Arrays.asList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soOutstockEntities)) {
                 //查询已审核的出库单，进行反审核
-                List<String> approveIds = soOutstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
-                BaseIdsDTO.IdsDTO approveIdDto = new BaseIdsDTO.IdsDTO();
-                approveIdDto.setIds(approveIds);
-                if (CollectionUtils.isNotEmpty(approveIds)) {
-                    soOutstockService.disApprove(approveIdDto, Boolean.FALSE);
+                List<SoOutstockEntity> soOutstockEntityList = soOutstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).collect(Collectors.toList());
+//                BaseIdsDTO.IdsDTO approveIdDto = new BaseIdsDTO.IdsDTO();
+//                approveIdDto.setIds(approveIds);
+                if (CollectionUtils.isNotEmpty(soOutstockEntityList)) {
+                    soOutstockEntityList.forEach(soOutstockEntity -> {
+                        soOutstockService.disApprove(soOutstockEntity, Boolean.FALSE);
+                    });
                 }
 
                 //查询已提交的出库单，进行撤销
@@ -416,7 +420,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     // 移除波次
                     waveListDetailService.moveOut(soB2cDelivery.getId());
                 }
-                soB2cDeliveryService.updateStatus(Collections.singletonList(soB2cDelivery.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
             }
         } else {
             //拦截失败的订单正常自动出库流程
@@ -448,7 +451,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
                 //扣减冻结库存
                 soB2cDeliveryService.outFreezeVirtualInventory(soB2cDelivery);
-
                 //生成直接调拨单
                 Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
                 if (isPush) {

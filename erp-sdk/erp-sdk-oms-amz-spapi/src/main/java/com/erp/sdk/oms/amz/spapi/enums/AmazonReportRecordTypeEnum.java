@@ -42,6 +42,7 @@ public enum AmazonReportRecordTypeEnum {
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-fba
     // 亚马逊物流库存报告
     GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档", false, AmazonReportMongoInfoEnum.FBA_MYI_ALL_INVENTORY_DATA_MONGO_INFO),
+    GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA("GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA", "亚马逊物流管理库存 - 未存档", false, AmazonReportMongoInfoEnum.FBA_MYI_ALL_UNSUPPRESSED_INVENTORY_DATA_MONGO_INFO),
     GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告", false, AmazonReportMongoInfoEnum.RESERVED_INVENTORY_DATA_MONGO_INFO),
     GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告", false, AmazonReportMongoInfoEnum.FBA_INVENTORY_PLANNING_DATA_MONGO_INFO),
     GET_LEDGER_DETAIL_VIEW_DATA("GET_LEDGER_DETAIL_VIEW_DATA", "亚马逊物流库存账本详情报告", false, AmazonReportMongoInfoEnum.LEDGER_DETAIL_VIEW_DATA_MONGO_INFO),

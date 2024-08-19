@@ -1,16 +1,13 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
-import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
+import com.erp.model.wms.entity.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -114,17 +111,30 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @description: 审核
      * @author Will
      * @date: 2023/5/15 11:25
-     * @param baseApproveParamDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
+     * @param isSyncKingDee
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO,Boolean isSyncKingDee);
+    BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess,Boolean isSyncKingDee);
+    /**
+     * 虚拟仓库存扣减处理
+     * @author will
+     * @date 2024/8/13 18:04
+     * @param list
+     * @param detailList
+     */
+    void updateVirtualInventoryTransCore (List<TransferInfoEntity> list,List<TransferInfoDetailEntity> detailList);
     /**
      * @description: 反审核
      * @author Will
      * @date: 2023/5/15 11:26
-     * @param ids
+     * @param entity
+     * @param isPushKingDee
      * @return Boolean
      */
-    Boolean disApprove(List<String> ids, Boolean isPushKingDee,Boolean isManual);
+    BatchResultDTO disApprove(TransferInfoEntity entity, Boolean isPushKingDee,Boolean isManual);
     /**
      * @description: 取消流程
      * @author Will

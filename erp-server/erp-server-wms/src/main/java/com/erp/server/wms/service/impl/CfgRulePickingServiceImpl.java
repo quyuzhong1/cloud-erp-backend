@@ -22,17 +22,19 @@ import com.erp.model.wms.dto.pickingstrategy.CfgRuleActionDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.OutStockModeEnum;
+import com.erp.model.wms.entity.CfgRuleConditionEntity;
+import com.erp.model.wms.entity.CfgRulePackingActionEntity;
+import com.erp.model.wms.entity.CfgRulePickingEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.mapper.CfgRulePickingMapper;
 import com.erp.server.wms.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -49,6 +51,7 @@ import java.util.stream.Collectors;
  * @since 2024-05-28
  */
 @Service
+@Slf4j
 public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMapper, CfgRulePickingEntity> implements CfgRulePickingService {
 
     @Resource
@@ -150,6 +153,17 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
      */
     @Override
     public List<LocationInventoryResultDTO> getRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto) {
+        Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> result = getSoB2CRuleOrderMatchResult(dto);
+        if (!CollectionUtils.isEmpty(result.getSecond())) {
+            String message = result.getSecond().entrySet().stream().map(v -> String.format("{sku:%s,缺货数量:%s}", v.getKey(), v.getValue())).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, message);
+        }
+        return result.getFirst();
+    }
+
+    @Override
+    public Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto) {
+        log.warn("单据【{}】开始执行拣货策略，开始时间为{}", dto.getSourceCode(), System.currentTimeMillis());
         // 获取所有已启用规则
         List<CfgRulePickingEntity> cfgRulePickings = this.listOrderByPriority();
         if (CollectionUtils.isEmpty(cfgRulePickings)) {
@@ -157,105 +171,82 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         }
         List<String> cfgRuleIds = cfgRulePickings.stream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
         // 查询所有规则对应的规则条件
-        List<CfgRuleConditionDTO.ConditionElementDTO> conditions = cfgRuleConditionService.listByRuleIds(cfgRuleIds,RuleTypeEnum.PICKING_STRATEGY.getCode());
+        List<CfgRuleConditionDTO.ConditionElementDTO> conditions = cfgRuleConditionService.listByRuleIds(cfgRuleIds, RuleTypeEnum.PICKING_STRATEGY.getCode());
         // 查询所有规则对应的规则动作
         List<CfgRulePackingActionEntity> actions = cfgRulePackingActionService.listByRuleIds(cfgRuleIds);
         List<LocationInventoryResultDTO> result = new ArrayList<>();
-        List<WarehouseLocationEntity> locationList = warehouseLocationService.list();
+        Map<String, Integer> stockSku = new HashMap<>();
         Map<String, Object> detailMap = new HashMap<>();
         detailMap.put("billType", dto.getBillType());
         detailMap.put("customerId", dto.getCustomerId());
+        detailMap.put("countryCode",dto.getCountryCode());
         detailMap.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
         Map<String, Object> map = new HashMap<>();
         map.put("detailList", Collections.singletonList(detailMap));
         map.put("billType", dto.getBillType());
         map.put("customerId", dto.getCustomerId());
+        map.put("countryCode",dto.getCountryCode());
         map.put("deliveryWarehouseId", dto.getDeliveryWarehouseId());
-        Map<String, List<CfgRulePickingDTO.CfgExecutionDataDetailDTO>> warehouseGroupMap = dto.getDetails().stream().collect(Collectors.groupingBy(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getWarehouseId));
-        for (Map.Entry<String, List<CfgRulePickingDTO.CfgExecutionDataDetailDTO>> entry : warehouseGroupMap.entrySet()) {
-            for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : entry.getValue()) {
-                AtomicInteger quantity = new AtomicInteger(detail.getQty());
-                for (CfgRulePickingEntity picking : cfgRulePickings) {
+        // 获取所有符合条件的规则 使用异步流后需要重排序
+        log.warn("单据【{}】开始过滤拣货策略，开始时间为{}", dto.getSourceCode(), System.currentTimeMillis());
+        List<CfgRulePickingEntity> rules = cfgRulePickings.parallelStream()
+                .filter(v -> {
                     List<CfgRuleConditionDTO.ConditionElementDTO> conditionList = conditions.stream().
-                            filter(r -> r.getRuleId().equals(picking.getId())).
+                            filter(r -> r.getRuleId().equals(v.getId())).
                             sorted(Comparator.comparing(CfgRuleConditionDTO.ConditionElementDTO::getIndex)).collect(Collectors.toList());
                     List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
                     //获取到表达式,判断表达式是否匹配
-                    Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
-                    if (Boolean.TRUE.equals(matchResult)) {
-                        List<CfgRulePackingActionEntity> actionList = actions.stream()
-                                .filter(r -> r.getRuleId().equals(picking.getId()))
-                                .filter(r -> ObjectUtils.isEmpty(detail.getWarehouseId()) || r.getWarehouseId().equals(detail.getWarehouseId()))
-                                .sorted(Comparator.comparing(CfgRulePackingActionEntity::getIndex))
-                                .collect(Collectors.toList());
-                        handlerAction(actionList, result, locationList, detail, quantity);
-                        if (0 == quantity.get()) {
-                            break;
-                        }
-                    }
-                }
-                if (0 != quantity.get()) {
-                    throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, detail.getSkuNo());
-                }
-            }
-        }
-        return result;
-    }
-
-
-    private void handlerAction(List<CfgRulePackingActionEntity> actionList,
-                               List<LocationInventoryResultDTO> result,
-                               List<WarehouseLocationEntity> locationList,
-                               CfgRulePickingDTO.CfgExecutionDataDetailDTO detail, AtomicInteger quantity) {
-
-        // 循环仓位分配规则
-        for (CfgRulePackingActionEntity action : actionList) {
-            // 获取该规则下仓位
-            List<WarehouseLocationEntity> locations = locationList.stream()
-                    .filter(location -> action.getWarehouseId().equals(location.getWarehouseId()))
-                    .filter(location -> action.getWarehouseAreaId().equals(location.getParentId()))
-                    .filter(location -> !location.getDisabled())
+                    return spElServer.matchExpressionByConditionList(conditionElementList, map);
+                }).collect(Collectors.toList());
+        log.warn("单据【{}】完成过滤拣货策略，完成时间为{}", dto.getSourceCode(), System.currentTimeMillis());
+        List<String> warehouseIds = actions.parallelStream().map(CfgRulePackingActionEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> locationList = warehouseLocationService.listByWarehouseIds(warehouseIds);
+        List<String> skuIds = dto.getDetails().parallelStream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+        // 暂时只计算数量优先
+        List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryDTOS = cfgRulePackingActionService.listLocationByRule(rules, warehouseIds, skuIds);
+        for (CfgRulePickingDTO.CfgExecutionDataDetailDTO detail : dto.getDetails()) {
+            AtomicInteger quantity = new AtomicInteger(detail.getQty());
+            List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> inventoryByWarehouse = cfgRulePickingInventoryDTOS.stream()
+                    .filter(v -> v.getWarehouseId().equals(detail.getWarehouseId()))
+                    .filter(v -> v.getSkuId().equals(detail.getSkuId()))
+                    .filter(v -> v.getQty() > 0)
                     .collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(locations)) {
-                return;
-            }
-            List<String> locationCodes = locations.stream().map(WarehouseLocationEntity::getCode).collect(Collectors.toList());
-            if (OutStockModeEnum.FIFO.getCode().equals(action.getOutStockMode())) {
-                // todo FIFO 数据和表不支持，后续优化
-            } else {
-                List<InventoryEntity> inventoryList = inventoryService.list(Wrappers.<InventoryEntity>lambdaQuery()
-                        .eq(InventoryEntity::getSkuId, detail.getSkuId())
-                        .eq(InventoryEntity::getWarehouseId, action.getWarehouseId())
-                        .in(InventoryEntity::getWarehouseLocation, locationCodes)
-                        .ne(InventoryEntity::getQty, 0)
-                        .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
-                        .orderByDesc(InventoryEntity::getQty)
-                );
-                //循环计算需要占用多少库位及对应库存
-                for (InventoryEntity inventoryEntity : inventoryList) {
-                    LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
-                    inventoryResultDTO.setSkuId(detail.getSkuId());
-                    inventoryResultDTO.setSkuNo(detail.getSkuNo());
-                    WarehouseLocationEntity entity = locations.stream().filter(location -> location.getCode().equals(inventoryEntity.getWarehouseLocation()))
-                            .findFirst().orElse(new WarehouseLocationEntity());
-                    inventoryResultDTO.setWarehouseId(action.getWarehouseId());
-                    inventoryResultDTO.setWarehouseAreaId(action.getWarehouseAreaId());
-                    inventoryResultDTO.setWarehouseLocationId(entity.getId());
-                    inventoryResultDTO.setWarehouseLocation(inventoryEntity.getWarehouseLocation());
-                    inventoryResultDTO.setSourceDetailId(detail.getSourceDetailId());
-                    if (inventoryEntity.getQty() >= quantity.get()) {
-                        inventoryResultDTO.setQuantity(quantity.get());
-                        result.add(inventoryResultDTO);
-                        quantity.set(0);
-                        return;
-                    } else {
-                        inventoryResultDTO.setQuantity(inventoryEntity.getQty());
-                        quantity.set(quantity.get() - inventoryEntity.getQty());
-                        result.add(inventoryResultDTO);
-                    }
+            for (CfgRulePickingDTO.CfgRulePickingInventoryDTO inventory : inventoryByWarehouse) {
+                log.warn("单据【{}】执行拣货策略，规则{},sku{},仓位{},数量{}", dto.getSourceCode(), inventory.getRuleId(), inventory.getSkuNo(), inventory.getWarehouseLocation(), inventory.getQty());
+                LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
+                inventoryResultDTO.setSkuId(detail.getSkuId());
+                inventoryResultDTO.setSkuNo(detail.getSkuNo());
+                WarehouseLocationEntity entity = locationList.stream().filter(location -> location.getCode().equals(inventory.getWarehouseLocation()))
+                        .findFirst().orElse(new WarehouseLocationEntity());
+                inventoryResultDTO.setWarehouseId(inventory.getWarehouseId());
+                inventoryResultDTO.setWarehouseAreaId(inventory.getWarehouseAreaId());
+                inventoryResultDTO.setWarehouseLocationId(entity.getId());
+                inventoryResultDTO.setWarehouseLocation(inventory.getWarehouseLocation());
+                inventoryResultDTO.setSourceDetailId(detail.getSourceDetailId());
+                if (inventory.getQty() >= quantity.get()) {
+                    inventoryResultDTO.setQuantity(quantity.get());
+                    result.add(inventoryResultDTO);
+                    inventory.setQty(inventory.getQty() - quantity.get());
+                    quantity.set(0);
+                    break;
+                } else {
+                    inventoryResultDTO.setQuantity(inventory.getQty());
+                    quantity.set(quantity.get() - inventory.getQty());
+                    inventory.setQty(0);
+                    result.add(inventoryResultDTO);
                 }
             }
+            if (0 != quantity.get()) {
+                if (stockSku.containsKey(detail.getSkuNo())) {
+                    stockSku.put(detail.getSkuNo(), stockSku.get(detail.getSkuNo()) + quantity.get());
+                }else {
+                    stockSku.put(detail.getSkuNo(), quantity.get());
+                }
+                result = result.stream().filter(v -> !v.getSkuNo().equals(detail.getSkuNo())).collect(Collectors.toList());
+            }
         }
+        log.warn("单据【{}】完成执行拣货策略，完成时间为{}", dto.getSourceCode(), System.currentTimeMillis());
+        return Pair.create(result, stockSku);
     }
 
     private List<CfgRulePickingEntity> listOrderByPriority() {

@@ -312,6 +312,8 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO sync(VirtualWarehouseAllocationDetailEntity vwAllocationDetailEntity, VirtualWarehouseAllocationEntity vwAllocationEntity) {
         //获取合单表明细id
         VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehousePushHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
@@ -327,12 +329,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                         handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).collect(Collectors.toList()));
                 //修改中台任务状态并触发mq
                 List<String> sourceIds = handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getHandleDetailId).collect(Collectors.toList());
-                try {
-                    dmpMqFeign.batchSyncBySourceId(sourceIds);
-                } catch (Exception e) {
-                    log.info("手动同步失败：{}", e.getMessage());
-                    return BatchResultDTO.fail(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), "操作失败");
-                }
+                dmpMqFeign.batchSyncBySourceId(sourceIds);
             }
         }
         return BatchResultDTO.success(vwAllocationDetailEntity.getId(), vwAllocationEntity.getCode(), "操作成功");
@@ -428,7 +425,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
                 List<VirtualWarehouseAllocationDTO.DetailDto> detailDtos = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailList);
                 //获取所有的sku信息
                 List<String> skuIds = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-                List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+                List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
                 detailDtos.forEach(detailDto -> {
                     SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())).findFirst().orElse(null);
                     if (Objects.nonNull(skuVO)) {

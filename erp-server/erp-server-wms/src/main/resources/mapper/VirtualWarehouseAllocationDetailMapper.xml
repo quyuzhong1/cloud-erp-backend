@@ -73,7 +73,7 @@
         <if test="params.sysTypeName!=null and params.sysTypeName!=''">
             , sys_type_name=#{params.sysTypeName}
         </if>
-        <if test="params.finishDescription!=null and params.finishDescription!=''">
+        <if test="params.finishDescription!=null">
             , finish_description=#{params.finishDescription}
         </if>
         where id in

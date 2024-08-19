@@ -44,11 +44,11 @@ public class DownloadFastAndGenCfgTest {
     public void genCfgReportField() {
         // 报告下载的路径
 //        String url= "https://tortuga-prod-fe.s3-us-west-2.amazonaws.com/01eefe2a-4bc3-47b6-9ab6-bb4a851ab659.amzn1.tortuga.4.fe.T1C80YM5G5MN3L?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231221T073308Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIAX3R62LVBHWGWVBWT%2F20231221%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=737b2b2b924fe9366f95421dde0021b7e74c387b87df41cff5a187723159d003";
-        String filePath= "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
+        String filePath= "group1/M00/0B/B1/rBBkDGa0h_mAdN3IAAB34hBrWYc.T3U2NV";
         // 配置开始的ID号
-        Long id= 1690000000000000000L;
+        Long id= 1691000000000000000L;
         // 配置报告的下载类型
-        String recordType = "GET_LEDGER_DETAIL_VIEW_DATA";
+        String recordType = "GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA";
 
         Set<String> columnName = null;
         try {

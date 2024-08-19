@@ -101,6 +101,10 @@ public class LogisticsBillCostDTO implements Serializable {
          * 物流跟踪单号【可排序】
          */
         private String  trackNo;
+        /**
+         * 渠道id
+         */
+        private String  channelId;
 
         /**
          * 运输状态【可排序】

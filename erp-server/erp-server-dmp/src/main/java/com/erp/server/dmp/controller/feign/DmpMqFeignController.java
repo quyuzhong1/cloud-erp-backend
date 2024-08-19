@@ -67,7 +67,7 @@ public class DmpMqFeignController {
      */
     @PostMapping("/send/sendTask")
     public Boolean sendTask(@RequestBody  List<DmpPushTaskEntity> list){
-        dmpPushTaskService.sendTask(list);
+        dmpPushTaskService.sendTask(list, 0);
         return Boolean.TRUE;
     }
 
@@ -137,5 +137,15 @@ public class DmpMqFeignController {
     @PostMapping(value = "/batchSyncBySourceId")
     public Boolean batchSyncBySourceId(@RequestBody List<String> sourceIds) {
         return dmpPushTaskService.batchSyncBySourceId(sourceIds);
+    }
+
+    /**
+     * 发送MQ延时等级3消息(10秒后消费)
+     * @author Jim
+     */
+    @PostMapping("/send/delayLevel3SendTask")
+    public Boolean delayLevel3SendTask(@RequestBody List<DmpPushTaskEntity> list){
+        dmpPushTaskService.sendTask(list, 3);
+        return Boolean.TRUE;
     }
 }

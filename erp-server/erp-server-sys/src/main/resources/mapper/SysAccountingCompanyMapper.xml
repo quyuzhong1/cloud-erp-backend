@@ -6,7 +6,7 @@
         SELECT id,company_name,company_address,
         contact_name,contact_mobile,
         contact_address,currency,disabled,
-        create_time,is_deleted
+        create_time,is_deleted,kingdee_id
         FROM sys_accounting_company  sac WHERE is_deleted=false
         <if test="params.state!=null and params.state==1 ">
             AND sac.disabled =false

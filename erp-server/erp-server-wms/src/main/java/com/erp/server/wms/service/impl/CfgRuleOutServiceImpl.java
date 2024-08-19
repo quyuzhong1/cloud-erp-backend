@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -18,11 +20,15 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
+import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
+import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
 import com.erp.server.wms.service.CfgRuleOutService;
+import com.erp.server.wms.service.CfgSettingService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -56,6 +62,10 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -200,6 +210,8 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         CfgRuleOutEntity cfgProductPacking = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.CFG_PRODUCT_PACKING.getCode())).findFirst().orElse(new CfgRuleOutEntity());
         List<CfgRuleOutEntity> transferEntityList = cfgRuleOutEntities.stream().filter(entity -> entity.getType().equals(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode())).collect(Collectors.toList());
         CfgRuleOutDTO.CommonDTO commonDTO = new CfgRuleOutDTO.CommonDTO();
+        commonDTO.setEquipmentSortingPortDTO(BeanUtil.mapToBean(equipmentSortingPortEntity.getRuleContent(), CfgRuleOutDTO.EquipmentSortingPortDTO.class,true));;
+        commonDTO.setB2cAllowableDeviations(BeanUtil.mapToBean(b2cAllowableDeviationsEntity.getRuleContent(), CfgRuleOutDTO.B2cAllowableDeviations.class,true));
         if(Objects.nonNull(equipmentSortingPortEntity.getRuleContent())){
             commonDTO.setEquipmentSortingPortDTO(BeanUtil.toBeanIgnoreError(equipmentSortingPortEntity.getRuleContent(), CfgRuleOutDTO.EquipmentSortingPortDTO.class));
         }
@@ -436,6 +448,29 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         }
 
         return Boolean.FALSE;
+    }
+
+    @Override
+    public CfgRuleOutDTO.MatchTransferResultDTO matchTransferAndWarehouse(CfgRuleOutDTO.MatchTransferDTO dto) {
+        if (ObjectUtil.isEmpty(dto) || StrUtil.isBlank(dto.getWarehouseId())) {
+            throw new ServiceException("中转规则和发货仓库都不能为空");
+        }
+        Boolean isTransit = matchTransferRule(dto.getMatchTransferRuleDTO());
+        if (!isTransit) {
+            return new CfgRuleOutDTO.MatchTransferResultDTO(isTransit,"");
+        }
+        //中转仓
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+        if(ObjectUtil.isEmpty(cfgSettingEntity)){
+            throw new ServiceException("没有找到中转仓配置");
+        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
+        isTransit = !StrUtil.equals(transitSettingDTO.getWarehouseId(), dto.getWarehouseId());
+
+        return  new CfgRuleOutDTO.MatchTransferResultDTO(isTransit,isTransit ? transitSettingDTO.getWarehouseId() : "" );
     }
 
     /**

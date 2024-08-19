@@ -79,7 +79,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param productSkuExcelDTO productSkuExcelDTO
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailExcelDTO>
      **/
-    List<ProductDetailExcelDTO> getExportSkuExcel(@Param("params") ProductSkuExcelDTO productSkuExcelDTO);
+    List<ProductDetailExcelExportDTO> getExportSkuExcel(@Param("params") ProductSkuExcelDTO productSkuExcelDTO);
 
     List<BaseIdDTO> getNotFinish(@Param("skuIdList") List<String> skuIdList);
 

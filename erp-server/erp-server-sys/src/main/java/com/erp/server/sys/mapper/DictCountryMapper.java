@@ -52,5 +52,10 @@ public interface DictCountryMapper extends BaseMapper<DictCountryEntity> {
     List<DictCountryDTO.PagingViewDTO> listExport(@Param("params")DictCountryDTO.PagingParamDTO dto);
 
     IPage<DictCountryDTO.ListDTO> pagingSelect(Page query, @Param("params") DictCountryDTO.SelectDTO params);
-
+    /**
+     *
+     * @param id
+     * @return
+     */
+    void deleteById(@Param("id") String id);
 }

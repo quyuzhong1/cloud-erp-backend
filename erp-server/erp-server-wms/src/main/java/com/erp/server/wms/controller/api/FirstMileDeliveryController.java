@@ -470,9 +470,9 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/fbaDeliveryGenerateMachineSubmitAndApprove")
-    public ApiResult fbaDeliveryGenerateMachineSubmitAndApprove(@RequestBody @Validated List<FirstMileDeliveryDTO.GenerateMachineView> list) {
-        Boolean flag = firstMileDeliveryService.fbaDeliveryGenerateMachineSubmitAndApprove(list);
-        return flag ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> fbaDeliveryGenerateMachineSubmitAndApprove(@RequestBody @Validated List<FirstMileDeliveryDTO.GenerateMachineView> list) {
+        List<BatchResultDTO> resultDTOS = firstMileDeliveryService.fbaDeliveryGenerateMachineSubmitAndApprove(list);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

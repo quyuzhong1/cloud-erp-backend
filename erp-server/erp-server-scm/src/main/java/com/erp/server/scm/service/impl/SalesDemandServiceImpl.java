@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -27,6 +28,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.BiShopInfoDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -64,10 +66,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -222,35 +221,27 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
-        //根据ids查询
-        List<SalesDemandEntity> list = getList(ids);
+    public BatchResultDTO approve(SalesDemandEntity entity, String type, String comment, Boolean isNeedProcess) {
         //审核中允许审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
-        String type = baseApproveParamDTO.getType();
-
-        log.info("备货申请单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
-
+        log.info("备货申请单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             //审核通过 TODO(判断是否存在流程)
 
             //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
+            updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE.getStatus());
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             //中止当前审核流程
 
             //更新单据状态
-            updateApproveStatusForApprove(ids, ApproveStatusEnum.REJECT.getStatus());
+            updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个备货申请单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SALES_DEMAND.getCode(), pairList, "审核操作");
-        return Boolean.TRUE;
+        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个备货申请单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SALES_DEMAND.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
@@ -290,24 +281,20 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        //根据ids查询
-        List<SalesDemandEntity> list = getList(ids);
+    public BatchResultDTO disApprove(SalesDemandEntity entity) {
         //已审核允许反审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
-        log.info("备货申请单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
+        log.info("备货申请单反审核，id=【{}】", entity.getId());
 
         //取回流程 TODO
 
         //更新单据为待提交
-        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个备货申请单【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(), pairList, "反审核操作");
-        return Boolean.TRUE;
+        moduleOperateLogService.addModuleOperateLog(String.format("反审核了一个备货申请单【%s】", entity.getCode()), ModuleTypeEnum.SALES_DEMAND.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
@@ -513,7 +500,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         }
         //店铺
         if (StringUtils.isNotBlank(shopId)) {
-            DmpShopInfoDTO dmpShopInfoDTO = dmpTaskFeign.getShopById(shopId);
+            BiShopInfoDTO dmpShopInfoDTO = dmpTaskFeign.getShopById(shopId);
             if (ObjectUtils.isEmpty(dmpShopInfoDTO)) {
                 throw new ServiceException(ApiError.ERROR_9029);
             }

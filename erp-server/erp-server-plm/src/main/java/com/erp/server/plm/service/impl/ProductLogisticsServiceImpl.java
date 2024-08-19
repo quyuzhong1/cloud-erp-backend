@@ -86,6 +86,13 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     public Boolean saveOrUpdate(ProductLogisticsDTO productLogisticsDTO) {
         ProductLogisticsEntity logisticsEntity = new ProductLogisticsEntity();
         BeanMapper.copy(productLogisticsDTO, logisticsEntity);
+        //根据sku获取物流产品信息记录
+        if (StringUtils.isNotBlank(productLogisticsDTO.getSkuId())){
+            List<ProductLogisticsEntity> list = this.lambdaQuery().eq(ProductLogisticsEntity::getSkuId, productLogisticsDTO.getSkuId()).list();
+            if (CollectionUtils.isNotEmpty(list)){
+                logisticsEntity.setId(list.get(0).getId());
+            }
+        }
         boolean result = service.saveOrUpdate(logisticsEntity);
         this.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(logisticsEntity.getSkuId()));
         return result;
@@ -104,6 +111,16 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     public Boolean saveOrUpdateBatch(List<ProductLogisticsDTO> productLogisticsList) {
         List<ProductLogisticsEntity> list = BeanMapper.copyList(productLogisticsList, ProductLogisticsEntity.class);
         List<String> skuIdList = list.stream().map(ProductLogisticsEntity::getSkuId).collect(Collectors.toList());
+        //根据sku获取产品物流信息记录
+        if (CollectionUtils.isNotEmpty(skuIdList)){
+            List<ProductLogisticsEntity> oldList = this.lambdaQuery().in(ProductLogisticsEntity::getSkuId, skuIdList).list();
+            if (CollectionUtils.isNotEmpty(oldList)){
+                list.forEach(productLogisticsEntity -> {
+                    ProductLogisticsEntity logisticsEntity = oldList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(productLogisticsEntity.getSkuId())).findFirst().orElse(new ProductLogisticsEntity());
+                    productLogisticsEntity.setId(logisticsEntity.getId());
+                });
+            }
+        }
         boolean result = service.saveOrUpdateBatch(list);
         this.saveOrUpdateParentPropertyIdByChildSkuId(skuIdList);
         return result;

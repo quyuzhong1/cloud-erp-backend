@@ -45,6 +45,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -495,6 +496,23 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public PagingVO<WarehouseLocationExportVo> exportWarehouseLocation(PagingDTO<WarehouseLocationDTO.exportParamDto> dto) {
         Page<WarehouseLocationExportVo> page = baseMapper.listAllByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()) ,dto.getParams());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<WarehouseLocationDTO.CoreDTO> listArea(String warehouseId, String areaTypeCode) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    @Cacheable(cacheNames = "cache:wms:getWarehouseLocation",keyGenerator = "myKeyGenerator")
+    public WarehouseLocationEntity getWarehouseLocation(String warehouseId, String warehouseLocation,WarehouseLocationTypeEnum type) {
+        WarehouseLocationEntity warehouseLocationEntity = lambdaQuery()
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
+                .eq(WarehouseLocationEntity::getCode, warehouseLocation)
+                .eq(WarehouseLocationEntity::getType, type.getCode())
+                .last("limit 1")
+                .one();
+        return warehouseLocationEntity;
     }
 
 

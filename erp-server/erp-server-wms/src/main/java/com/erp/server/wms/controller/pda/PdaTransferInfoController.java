@@ -2,10 +2,7 @@ package com.erp.server.wms.controller.pda;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,14 +12,18 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.TransferInfoDTO;
+import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.wms.service.TransferInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * PDA:直接调拨单主表
@@ -30,6 +31,7 @@ import java.util.List;
  * @author Luo_WG
  * @since 2023-05-10
  */
+@Slf4j
 @RestController
 @LogSystemModule("PDA直接调拨单")
 @RequestMapping("/pdaTransferInfo")
@@ -37,7 +39,7 @@ public class PdaTransferInfoController extends BaseController {
 
     @Resource
     private TransferInfoService transferInfoService;
-    
+
     /**
      * 列表查询
      * @author Luo_WG
@@ -231,7 +233,7 @@ public class PdaTransferInfoController extends BaseController {
      * 批量审核
      * @author Luo_WG
      * @date: 2023/5/10 20:11
-     * @param baseApproveParamDTO
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核直接调拨单")
@@ -241,9 +243,23 @@ public class PdaTransferInfoController extends BaseController {
             menuCode = "wms:pdaTransferInfo:approve",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        transferInfoService.approve(baseApproveParamDTO,Boolean.TRUE);
-        return success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferInfoEntity> entityList = transferInfoService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"直接调拨单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInfoService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess(),Boolean.TRUE));
+            }catch (Exception e){
+                log.error("直接调拨单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -260,9 +276,23 @@ public class PdaTransferInfoController extends BaseController {
             menuCode = "wms:pdaTransferInfo:disApprove",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferInfoService.disApprove(dto.getIds(), Boolean.TRUE,Boolean.TRUE);
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferInfoEntity> entityList = transferInfoService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"直接调拨单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInfoService.disApprove(entity,Boolean.TRUE,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("直接调拨单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

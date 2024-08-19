@@ -8,11 +8,9 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -24,6 +22,10 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.DmpPushWdtDTO;
+import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -38,12 +40,15 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -54,6 +59,11 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
+import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -125,6 +135,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private WorkflowFeign workflowFeign;
 
     @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
+
+    @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource
@@ -139,6 +152,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Resource
     private MachineSubComponentsService machineSubComponentsService;
 
+    @Resource
+    private DmpPushWdtFeign dmpPushWdtFeign;
 
     @Resource
     private PoReturnService poReturnService;
@@ -153,12 +168,21 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private ScmTaskFeign scmTaskFeign;
 
     @Resource
+    private SyncWdtOtherInStockService syncWdtOtherInStockService;
+
+    @Resource
+    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
+
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
     @Resource
     private DmpMqFeign dmpMqFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private AbstractWdtService abstractWdtService;
+
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -535,89 +559,64 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
-        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
-        }
+    public BatchResultDTO approve(SoReturnInstockEntity entity, String type, String comment, Boolean isNeedProcess) {
         //判断是否是审核中的状态
-        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
-        ).count();
-
-        if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98006);
+        if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //TODO 待加审核流程
-        if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
+        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(SoReturnInstockEntity::getApproveUserId, userInfo.getUid())
                     .set(SoReturnInstockEntity::getApproveUserName, userInfo.getUserName())
                     .set(SoReturnInstockEntity::getApproveTime, LocalDateTime.now())
-                    .in(SoReturnInstockEntity::getId, ids)
+                    .eq(SoReturnInstockEntity::getId, entity.getId())
                     .update();
 
             //更新库存
-            inventoryTransCore(entityList);
+            inventoryTransCore(Collections.singletonList(entity));
 
             //发送金蝶
-            sendPushTask(entityList,SyncOperateEnum.OPERATE_APPROVE.getCode());
-        } else {
+            sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_APPROVE.getCode());
+            this.syncToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
+        }else {
             //审核不通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
-                    .in(SoReturnInstockEntity::getId, ids)
+                    .eq(SoReturnInstockEntity::getId, entity.getId())
                     .update();
         }
+
         //操作日志
-        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售退货通知单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "审核操作");
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids, Boolean isPushKingDee) {
-        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
-        }
+    public BatchResultDTO disApprove(SoReturnInstockEntity entity, Boolean isPushKingDee) {
         //已审核支持反审核
-
-        if (!isPushKingDee) {
-            entityList = entityList.stream().filter(x -> ApproveStatusEnum.APPROVE.equals(x.getApproveStatus())).collect(Collectors.toList());
-        } else {
-            //已审核支持反审核
-            long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                    && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
-            ).count();
-            if (count != entityList.size()) {
-                throw new ServiceException(ApiError.ERROR_99003);
-            }
+        if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
         }
-        //TODO 待加审核流程
-
-
         //修改状态为待提交
         lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                .in(SoReturnInstockEntity::getId, ids)
+                .eq(SoReturnInstockEntity::getId, entity.getId())
                 .update();
-
         //回滚库存
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
-        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+        InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, entity.getId());
+        inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         //反审核发送金蝶
         if (isPushKingDee) {
             //发送金蝶
-            sendPushTask(entityList,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
+        this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
         //操作日志
-        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog(String.format("反审核了一个销售退货通知单【%s】",entity.getCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
@@ -1241,11 +1240,21 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             throw new ServiceException(ApiError.ERROR_1042);
         }
         //自动审核
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setIds(ids);
-        baseApproveParamDTO.setType(ApproveType.PASS);
-        machineInfoService.approve(baseApproveParamDTO);
-
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<MachineInfoEntity> entityList = machineInfoService.listByIds(ids);
+        for (String id : ids) {
+            MachineInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"加工单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(machineInfoService.approve(entity,ApproveType.PASS,"",null));
+            }catch (Exception e){
+                log.error("加工单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
         //自动生成直接调拨单或者采购退货单
         generateSubordinateOrder(ids);
         return Boolean.TRUE;
@@ -1559,4 +1568,90 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         });
     }
 
+    private void syncToWdt(SoReturnInstockEntity entity,SyncOperateEnum operateEnum) {
+
+        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+
+        Set<String> warehouseIdSet = detailEntityList.stream().map(SoReturnInstockDetailEntity::getWarehouseId).collect(Collectors.toSet());
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(warehouseIdSet), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId, ThirdMappingDTO.WarehouseMappingDTO::getThirdWarehouseCode));
+        //过滤掉没有第三方仓库映射的明细
+        detailEntityList = detailEntityList.stream().filter(v->thirdWarehouseMap.containsKey(v.getWarehouseId())).collect(Collectors.toList());
+        List<DmpPushTaskFeignDTO> unSaveTaskList = new ArrayList<>();
+        List<DmpPushWdtDTO.AddDTO> wdtDtoList = new ArrayList<>();
+        Map<String, List<SoReturnInstockDetailEntity>> collectByWarehouseId = detailEntityList.stream().collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getWarehouseId));
+        for (Map.Entry<String, List<SoReturnInstockDetailEntity>> entry : collectByWarehouseId.entrySet()) {
+            String warehouseId = entry.getKey();
+            String thirdWarehouseCode = thirdWarehouseMap.get(warehouseId);
+            if(SyncOperateEnum.OPERATE_APPROVE.equals(operateEnum)){
+                List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
+                for (SoReturnInstockDetailEntity detailEntity : entry.getValue()) {
+                    CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+                    inGoods.setSpecNo(detailEntity.getSkuNo());
+                    inGoods.setNum(BigDecimal.valueOf(detailEntity.getRealQty()));
+                    inGoods.setPositionNo(detailEntity.getWarehouseLocation());
+                    inGoodsList.add(inGoods);
+                }
+                String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
+                List<CreateOtherStockinRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(inGoodsList);
+                List<CreateOtherStockinRequest.GoodsList> inCollectList = syncWdtOtherInStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
+                DmpPushTaskFeignDTO taskFeignDTO = syncWdtOtherInStockService.generateTask(inCollectList, operateEnum.getCode(), entity.getCode(), warehouseId, inCode, thirdWarehouseCode, false);
+                unSaveTaskList.add(taskFeignDTO);
+                //其他入库单的中间表数据
+                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity.getId(), entity.getCode(), operateEnum.getCode(), warehouseId, inCode, thirdWarehouseCode, inCollectList, SourceTypeEnum.OTHER_INSTOCK);
+                wdtDtoList.add(addDTO);
+            }
+            if(SyncOperateEnum.OPERATE_DISAPPROVE.equals(operateEnum)){
+                List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
+                for (SoReturnInstockDetailEntity detailEntity : entry.getValue()) {
+                    CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+                    outGoods.setSpecNo(detailEntity.getSkuNo());
+                    outGoods.setNum(BigDecimal.valueOf(detailEntity.getRealQty()));
+                    outGoods.setPositionNo(detailEntity.getWarehouseLocation());
+                    outGoodsList.add(outGoods);
+                }
+                String outCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
+                List<CreateOtherStockoutRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(outGoodsList);
+                List<CreateOtherStockoutRequest.GoodsList> outCollectList = syncWdtOtherOutStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
+                DmpPushTaskFeignDTO dmpPushTaskFeignDTO = syncWdtOtherOutStockService.generateTask(outCollectList, operateEnum.getCode(), entity.getCode(), warehouseId, outCode, thirdWarehouseCode, false);
+                unSaveTaskList.add(dmpPushTaskFeignDTO);
+                //其他出库单的中间表数据
+                DmpPushWdtDTO.AddDTO addDTO = generateWdtStockInInterim(entity.getId(), entity.getCode(), operateEnum.getCode(), warehouseId, outCode, thirdWarehouseCode, outCollectList, SourceTypeEnum.OTHER_OUTSTOCK);
+                wdtDtoList.add(addDTO);
+            }
+        }
+        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(unSaveTaskList);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
+                    dmpMqFeign.sendTask(dmpPushTaskList);
+                }
+            }
+        });
+
+        //批量保存中间表数据
+        dmpPushWdtFeign.addBatch(wdtDtoList);
+    }
+
+    /**
+     * 生成旺店通中间表数据
+     */
+    private DmpPushWdtDTO.AddDTO generateWdtStockInInterim(String sourceId, String sourceCode, String operateCode, String warehouseId, String thirdCode, String thirdWarehouseCode, List<? extends CommonCreateBillGoodsReq> inGoods, SourceTypeEnum sourceTypeEnum) {
+        DmpPushWdtDTO.AddDTO pushWdtDTO = new DmpPushWdtDTO.AddDTO();
+        pushWdtDTO.setSourceId(sourceId);
+        pushWdtDTO.setSourceCode(sourceCode);
+        pushWdtDTO.setThirdCode(thirdCode);
+        pushWdtDTO.setWarehouseId(warehouseId);
+        pushWdtDTO.setThirdWarehouseCode(thirdWarehouseCode);
+        pushWdtDTO.setThirdType(sourceTypeEnum.getCode());
+        pushWdtDTO.setOperateType(operateCode);
+        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(inGoods, DmpPushWdtDetailDTO.class);
+        pushWdtDTO.setDetailDTOList(detailDTOList);
+        return pushWdtDTO;
+    }
 }

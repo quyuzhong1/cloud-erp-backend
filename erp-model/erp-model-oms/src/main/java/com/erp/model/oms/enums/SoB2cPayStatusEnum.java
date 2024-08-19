@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
+
 /**
  * @author Will
  * @version 1.0
@@ -51,5 +53,14 @@ public enum SoB2cPayStatusEnum {
             }
         }
         return "";
+    }
+
+    /**
+     * 通过code查询
+     */
+    public static SoB2cPayStatusEnum getByCode(String code){
+        return Arrays.stream(SoB2cPayStatusEnum.values())
+                .filter(e-> e.code.equals(code))
+                .findFirst().orElse(null);
     }
 }

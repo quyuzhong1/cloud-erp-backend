@@ -27,6 +27,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -514,6 +515,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         List<String> skuIdList = detailList.stream().map(SoDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //币种列表
         List<String> currencyList = detailList.stream().map(SoDetailDTO.UpdateDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
@@ -531,7 +533,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             item.setSkuNo(skuNo);
-
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                item.setBomVersion(sonSkuList.get(MathUtil.ZERO).getBomVersion());
+            }
             String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             item.setCurrencySymbol(symbol);
@@ -1169,6 +1175,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         List<String> skuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //币种列表
         List<String> currencyList = detailList.stream().map(SoDetailDTO.AddDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
@@ -1189,7 +1196,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             item.setSkuNo(skuNo);
-
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                item.setBomVersion(sonSkuList.get(MathUtil.ZERO).getBomVersion());
+            }
             String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             item.setCurrencySymbol(symbol);
@@ -1609,10 +1620,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         //发货通知单下推数量
         Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                        && StrUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus()))
+                        && StrUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId())
+                )
                 .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
         if (frozenQty + totalNoticeQty > soDetailEntity.getQty()) {
-            throw new ServiceException(StrUtil.format("销售订单【{}】SKU【{}】“销售数量【{}】不得小于锁定数量与发货通知单审核数量之和【{}】",soInfoEntity.getCode(),soDetailEntity.getSkuNo(),soDetailEntity.getQty(),totalNoticeQty + frozenQty));
+            throw new ServiceException(StrUtil.format("销售订单【{}】SKU【{}】“销售数量【{}】不得小于锁定数量与发货通知单数量之和【{}】",soInfoEntity.getCode(),soDetailEntity.getSkuNo(),soDetailEntity.getQty(),totalNoticeQty + frozenQty));
         }
         soDetailEntity.setFrozenQty(frozenQty);
         this.updateById(soDetailEntity);
@@ -1670,7 +1682,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         for (SoDetailEntity soDetailEntity : soDetailEntityList) {
             Integer frozenQty = soParamList.stream().filter(obj -> StrUtil.equals(obj.getDetailId(), soDetailEntity.getId())).map(SoDetailDTO.UpdateFrozenQtyDTO::getFrozenQty).findFirst().orElse(MathUtil.ZERO);
-            soDetailEntity.setFrozenQty(soDetailEntity.getFrozenQty() - frozenQty);
+            soDetailEntity.setFrozenQty(frozenQty);
         }
         this.updateBatchById(soDetailEntityList);
     }
@@ -1742,6 +1754,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //发货通知单
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(updateDetailIdList);
 
+        //需要释放库存的明细
+        List<String> unLockIdList = new ArrayList<>();
+
         for (SoDetailDTO.UpdateDTO updateDTO : updateList) {
             //明细
             SoDetailEntity soDetailEntity = dbList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateDTO.getId())).findFirst().orElse(null);
@@ -1749,9 +1764,17 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 throw new ServiceException(ApiError.ERROR_92015);
             }
 
+            List<String> skuIdList = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))
+                    .map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+
             //有效数量
             Integer noticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            //SKU变更校验
+            if (noticeQty > MathUtil.ZERO && !StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId())) {
+                throw new ServiceException(StrUtil.format("SKU【{}】已下推发货通知单不支持变更SKU",soDetailEntity.getSkuNo()));
+            }
+            //销售数量校验
             if (noticeQty > updateDTO.getQty()) {
                 throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于发货通知单下推数量",soDetailEntity.getSkuNo()));
             }
@@ -1760,9 +1783,19 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                             && StrUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            //冻结数量
+            //销售数量不能小于（冻结数量+发货通知单审核数量）
             if (noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
                 throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
+            }
+            //仅判断冻结数量
+            if (StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
+                if (soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
+                    throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于冻结数量",soDetailEntity.getSkuNo()));
+                }
+            }
+            //有更新sku则需要释放库存
+            if (!StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
+                unLockIdList.add(soDetailEntity.getId());
             }
         }
         for (SoDetailEntity soDetailEntity : removeList) {
@@ -1770,11 +1803,21 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             long count = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).count();
             if (count > 0) {
-                throw new ServiceException(StrUtil.format("SKU【{}】以下推发货通知单不支持删除",soDetailEntity.getSkuNo()));
+                throw new ServiceException(StrUtil.format("SKU【{}】已下推发货通知单不支持删除",soDetailEntity.getSkuNo()));
             }
+            //删除明细释放库存
             if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
-                throw new ServiceException(StrUtil.format("SKU【{}】存在冻结数量【{}】不支持删除",soDetailEntity.getSkuNo(),soDetailEntity.getFrozenQty()));
+                unLockIdList.add(soDetailEntity.getId());
             }
+        }
+        //释放冻结库存
+        if (CollectionUtils.isNotEmpty(unLockIdList)) {
+            unLockIdList.forEach(obj -> batchUnLockVirtualInventory(obj));
+        }
+
+        //释放冻结库存
+        if (CollectionUtils.isNotEmpty(unLockIdList)) {
+            unLockIdList.forEach(obj -> batchUnLockVirtualInventory(obj));
         }
     }
 }

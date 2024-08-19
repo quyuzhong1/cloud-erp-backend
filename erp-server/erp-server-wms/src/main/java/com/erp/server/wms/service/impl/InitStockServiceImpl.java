@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -309,34 +310,28 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();// 提交审核的单据id
-        List<InitStockEntity> list = super.listByIds(ids);
-        ValidatorUtil.isTrue(CollUtil.isNotEmpty(list),()->new ServiceException("未找到期初库存数据"));
-        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
+    public BatchResultDTO approve(InitStockEntity entity, String type, String comment, Boolean isNeedProcess) {
         //只有审核中的数据允许审核
-        ids.stream().forEach(id->{
-            InitStockEntity initStockEntity = initStockEntityMap.get(id);
-            ValidatorUtil.isTrue(Objects.nonNull(initStockEntity),()->new ServiceException("期初库存数据不存在"));
-            ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()),()->new ServiceException("只有审核中数据支持审核"));
-        });
-        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(baseApproveParamDTO.getType());
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+        }
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(type);
         ApproveStatusEnum approveStatus = null;
         if(Objects.equals(ApproveTypeEnum.PASS, approveType)) { // 审核通过
             approveStatus = ApproveStatusEnum.APPROVE;
-            this.send2Inventory(initStockEntityMap);
+            this.send2Inventory(entity);
             // TODO 审核通过流程
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) { // 审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
             // TODO 中止当前审批流程
         }
 
-        log.info("审核 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        updateForApprove(ids, approveStatus.getStatus()); // 修改单据状态
+        log.info("审核 开始修改期初库存状态数据，id集合：【{}】", entity.getId());
+        updateForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus()); // 修改单据状态
         //操作日志
-        log.info("审核 开始修改期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        List<Pair<String, String>> pairList = list.stream().map(data -> new Pair<>(data.getId(), data.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个期初库存", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "审核操作");
+        log.info("审核 开始修改期初库存日志数据，id集合：【{}】", entity.getId());
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个期初库存【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.INIT_STOCK.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -368,25 +363,21 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void disApprove(List<String> ids) {
-        List<InitStockEntity> list = super.listByIds(ids);
-        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
-        ids.stream().forEach(id->{
-            InitStockEntity initStockEntity = initStockEntityMap.get(id);
-            ValidatorUtil.isTrue(Objects.nonNull(initStockEntity),()->new ServiceException("期初库存数据不存在"));
-            ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()),()->new ServiceException("只有已审核数据支持反审核"));
-        });
-        log.info("反审核 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+    public BatchResultDTO disApprove(InitStockEntity entity) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
+        }
+        log.info("反审核 开始修改期初库存状态数据，id集合：【{}】", entity.getId());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
-        updateForDisApprove(ids, approveStatus.getStatus()); // 修改单据状态为待提交
+        updateForDisApprove(entity.getId(), approveStatus.getStatus()); // 修改单据状态为待提交
 
-        log.info("反审核 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
+        log.info("反审核 开始记录操作日志，id集合：【{}】", entity.getId());
         // 操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个期初库存【%s】", ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "反审核操作");
+        operateLogService.addModuleOperateLog(String.format("反审核了一个期初库存【%s】", entity.getCode()), ModuleTypeEnum.INIT_STOCK.getCode(), entity.getId(), "反审核操作");
         // 库存交易反审核
-        inventoryTransCoreService.batchUnApprove(new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.INIT_STOCK, ids));
+        inventoryTransCoreService.unApprove(new InventoryUnApproveDTO(InventorySourceTypeEnum.INIT_STOCK, entity.getId()));
         // TODO 流程
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -476,29 +467,27 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         return new PagingVO<>(page);
     }
 
-    public void send2Inventory(Map<String, InitStockEntity> initStockEntityMap) {
-        Map<String, List<InitStockDetailEntity>> initStockDetailMap = initStockDetailService.findListByIds(new ArrayList<>(initStockEntityMap.keySet()));
+    public void send2Inventory(InitStockEntity entity) {
+        Map<String, List<InitStockDetailEntity>> initStockDetailMap = initStockDetailService.findListByIds(Collections.singletonList(entity.getId()));
         // 调用库存组件
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.INVENTORY_INIT.getCode());
         List<InOutStockDTO> stockMembers = Lists.newArrayList();
-        initStockEntityMap.forEach((id, initStock)->{
-            // 获取期初库存明细（此处优化，防止循环遍历慢）
-            List<InitStockDetailEntity> members = initStockDetailMap.get(id);
-            members.stream().forEach(member->{
-                InOutStockDTO inOutStockDTO = new InOutStockDTO();
-                inOutStockDTO.setWarehouseId(initStock.getWarehouseId());
-                inOutStockDTO.setSourceType(InventorySourceTypeEnum.INIT_STOCK);
-                inOutStockDTO.setWarehouseLocation(member.getWarehouseLocation());
-                inOutStockDTO.setSourceId(initStock.getId());
-                inOutStockDTO.setSourceCode(initStock.getCode());
-                inOutStockDTO.setBillDate(initStock.getBillDate());
-                inOutStockDTO.setSourceDetailId(member.getId());
-                inOutStockDTO.setSkuId(member.getSkuId());
-                inOutStockDTO.setSkuNo(member.getSkuNo());
-                inOutStockDTO.setQty(member.getQty());
-                stockMembers.add(inOutStockDTO);
-            });
+        // 获取期初库存明细（此处优化，防止循环遍历慢）
+        List<InitStockDetailEntity> members = initStockDetailMap.get(entity.getId());
+        members.stream().forEach(member->{
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.INIT_STOCK);
+            inOutStockDTO.setWarehouseLocation(member.getWarehouseLocation());
+            inOutStockDTO.setSourceId(entity.getId());
+            inOutStockDTO.setSourceCode(entity.getCode());
+            inOutStockDTO.setBillDate(entity.getBillDate());
+            inOutStockDTO.setSourceDetailId(member.getId());
+            inOutStockDTO.setSkuId(member.getSkuId());
+            inOutStockDTO.setSkuNo(member.getSkuNo());
+            inOutStockDTO.setQty(member.getQty());
+            stockMembers.add(inOutStockDTO);
         });
         inventoryInOutStockDTO.setParamList(stockMembers);
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
@@ -522,12 +511,12 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
 
     /**
      * 反审核更新审核状态、审核人、审核时间
-     * @param ids
+     * @param id
      * @param approveStatus
      */
     @Transactional(rollbackFor = Exception.class)
-    public void updateForDisApprove(List<String> ids, String approveStatus) {
-        this.lambdaUpdate().in(InitStockEntity::getId, ids)
+    public void updateForDisApprove(String id, String approveStatus) {
+        this.lambdaUpdate().eq(InitStockEntity::getId, id)
                 .set(InitStockEntity::getApproveUserId, "")
                 .set(InitStockEntity::getApproveUserName, "")
                 .set(InitStockEntity::getApproveStatus, approveStatus)

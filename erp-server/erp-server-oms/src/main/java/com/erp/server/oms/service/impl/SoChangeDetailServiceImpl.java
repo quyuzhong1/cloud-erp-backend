@@ -13,7 +13,6 @@ import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -26,7 +25,6 @@ import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -579,6 +577,11 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             soOutstockFeign.updateSoOutPrice(saveOrUpdateList);
             //关闭关联单据的关闭状态
             wmsTaskFeign.closeBySoDetailIds(closeSoDetailIdList);
+            //释放明细库存
+            List<String> idList = saveOrUpdateList.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(SoDetailEntity::getId).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(idList)) {
+                idList.forEach(obj -> soDetailService.batchUnLockVirtualInventory(obj));
+            }
         }
 
     }

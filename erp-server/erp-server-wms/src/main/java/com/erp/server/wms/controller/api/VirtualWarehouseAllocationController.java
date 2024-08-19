@@ -308,4 +308,17 @@ public class VirtualWarehouseAllocationController extends BaseController {
     public ApiResult<Boolean> updateRemark(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO){
         return success(virtualWarehouseAllocationService.updateRemark(updateRemarkDTO));
     }
+
+    /**
+     * 查询虚拟仓库存数据
+     * @author will
+     * @date 2024/8/2 10:34
+     * @param list
+     * @return ApiResult<VirtualInventoryQtyDTO>
+     */
+    @PostMapping("/listVirtualInventory")
+    public ApiResult<List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO>> getVirtualInventory(@RequestBody @Validated List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO> list){
+        return success(virtualWarehouseAllocationService.listVirtualInventory(list));
+    }
+
 }

@@ -131,11 +131,12 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * 审核
      *
      * @param dto
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-15 14:17
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(BaseApproveParamDTO dto, CustomerInfoEntity entity);
 
     /**
      * @param dto
@@ -151,12 +152,12 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     /**
      * 反审核
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-15 14:25
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(CustomerInfoEntity entity);
 
     /**
      * 删除客户

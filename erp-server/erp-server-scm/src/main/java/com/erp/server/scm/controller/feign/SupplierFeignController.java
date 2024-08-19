@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -8,16 +9,20 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 供应商feign控制器
  * @CreateTime: 2023-06-19  19:07
  * @Author: zhangchunlin
  */
+@Slf4j
 @AllArgsConstructor
 @RestController
 @RequestMapping(value = "/feign/supplier")
@@ -44,8 +49,23 @@ public class SupplierFeignController extends BaseController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/supplierApprove")
-    public Boolean supplierApprove(@RequestBody BaseApproveParamDTO dto) {
-        return supplierService.approve(dto);
+    public List<BatchResultDTO> supplierApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SupplierEntity> entityList = supplierService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SupplierEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"供应商不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(supplierService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("产品sku审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 
 

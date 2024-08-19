@@ -5,6 +5,8 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
+
 /**
  * 中台订单退货状态
  */
@@ -49,5 +51,15 @@ public enum  DmpOrderReturnStatusEnum implements EnumMessage {
             }
         }
         return "";
+    }
+
+
+    /**
+     * 通过code查询
+     */
+    public static DmpBasicSystemCodeEnum getByCode(String code){
+        return Arrays.stream(DmpBasicSystemCodeEnum.values())
+                .filter(e-> e.getCode().equals(code))
+                .findFirst().orElse(null);
     }
 }

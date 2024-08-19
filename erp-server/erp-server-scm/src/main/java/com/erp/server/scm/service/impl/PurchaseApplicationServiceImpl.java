@@ -234,71 +234,45 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
-        //根据ids查询
-        List<PurchaseApplicationEntity> list = getList(ids);
+    public BatchResultDTO approve(PurchaseApplicationEntity entity, String type, String comment, Boolean isNeedProcess) {
         //审核中允许审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
-        String type = baseApproveParamDTO.getType();
 
-        log.info("采购申请单【{}】，ids=【{}】",ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+        log.info("采购申请单【{}】，id=【{}】",ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             //审核通过 TODO
 
             //更新单据状态(后面有流程了可删)
-            updateApproveStatusForApprove(ids,ApproveStatusEnum.APPROVE.getStatus());
+            updateApproveStatusForApprove(entity.getId(),ApproveStatusEnum.APPROVE.getStatus());
         }
         //审核不通过
         if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             //中止当前审核流程
 
             //更新单据状态
-            updateApproveStatusForApprove(ids,ApproveStatusEnum.REJECT.getStatus());
+            updateApproveStatusForApprove(entity.getId(),ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购申请单",ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"审核操作");
-        return Boolean.TRUE;
+        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购申请单【%s】",ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),entity.getId(),"审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        //根据ids查询
-        List<PurchaseApplicationEntity> list = getList(ids);
+    public BatchResultDTO disApprove(PurchaseApplicationEntity entity) {
         //已审核允许反审核
-        long count = list.stream().filter(obj ->  !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
-        List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByPurchaseApplicationIds(ids);
-        if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_98017);
-        }
-        //只有未生成的单才能反审核
-        long createCount = detailList.stream().filter(obj -> !CreatePoTypeEnum.NOT_GENERATED.getStatus().equals(obj.getCreatePoType())).count();
-        if (createCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98030);
-        }
-        List<SubcontractOrderEntity> subcontractOrderList = subcontractOrderService.listBySourceId(ids);
-        if (CollectionUtils.isNotEmpty(subcontractOrderList)) {
-            throw new ServiceException(ApiError.ERROR_98090);
-        }
-
-        log.info("采购申请单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
-        //取回流程 TODO
-
+        log.info("采购申请单反审核，id=【{}】", entity.getId());
         //更新单据为待提交
-        updateApproveStatusForDisApprove(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForDisApprove(Collections.singletonList(entity.getId()),ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"反审核操作");
-        return Boolean.TRUE;
+        moduleOperateLogService.addModuleOperateLog(String.format("反审核了一个采购申请单【%s】", entity.getCode()), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),entity.getId(),"反审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
@@ -961,11 +935,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     /**
      * 审核后更新审核状态、审核人、审核时间
      */
-    private void updateApproveStatusForApprove(List<String> ids,String approveStatus) {
+    private void updateApproveStatusForApprove(String id,String approveStatus) {
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
 
-        this.lambdaUpdate().in(PurchaseApplicationEntity::getId,ids)
+        this.lambdaUpdate().eq(PurchaseApplicationEntity::getId,id)
                 .set(PurchaseApplicationEntity::getApproveUserId,userInfo.getUid())
                 .set(PurchaseApplicationEntity::getApproveUserName,userInfo.getUserName())
                 .set(PurchaseApplicationEntity::getApproveStatus,approveStatus)

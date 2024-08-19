@@ -1,6 +1,7 @@
 package com.erp.rpc.dmp.feign;
 
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -17,7 +18,7 @@ import java.util.List;
  * @description: DMP远程调用接口
  * @date: 2023/1/12 16:54
  */
-@FeignClient(value = "erp-dmp",path = "feign/dmp", contextId = "DmpMqFeign")
+@FeignClient(value = "erp-dmp",path = "feign/dmp", contextId = "DmpMqFeign",configuration = {FeignErrorDecoder.class})
 public interface DmpMqFeign {
 
     /**
@@ -89,4 +90,11 @@ public interface DmpMqFeign {
      */
     @PostMapping(value = "/batchSyncBySourceId")
     Boolean batchSyncBySourceId(@RequestBody List<String> sourceIds);
+
+    /**
+     * 发送MQ延时等级3消息(10秒后消费)
+     * @author Jim
+     */
+    @PostMapping("/send/delayLevel3SendTask")
+    Boolean delayLevel3SendTask(@RequestBody List<DmpPushTaskEntity> list);
 }

@@ -18,7 +18,9 @@ public enum ApiError implements Serializable {
     /**
      * 服务调用异常
      */
-    Default(10000000, "操作失败，请稍后再试"),
+    Default(9999, "系统异常，请联系【实施人员】协调开发人员排查"),
+    WARNING(8888, "系统警告..."),
+
     ERROR_5000(5000, "存在越权访问URL"),
     ERROR_5001(5001, "未授权访问!"),
 
@@ -403,6 +405,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_SKU(95159,"SKU【{}】不存在"),
     ERROR_95160(95160,"文件不可超过{}m"),
     REJECT_COMMENT_NOT_EMPTY(95161, "审核不通过必须填写审核意见"),
+    ERROR_95162(95162, "SKU【{}】记录不存在"),
 
 
 
@@ -415,7 +418,7 @@ public enum ApiError implements Serializable {
     ERROR_95163(95163, "未找到选择的BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
     ERROR_DOCS_NO(95165,"文档不存在"),
-	ERROR_95166(95166, "未找到BOM子件"),
+    ERROR_95166(95166, "未找到BOM子件"),
     ERROR_95167(95167,"变体类型已被关联，不可删除"),
     ERROR_95168(95168,"变体值已被关联，不可删除"),
     ERROR_95169(95169,"变体类型值不存在，或已被删除"),
@@ -876,11 +879,20 @@ public enum ApiError implements Serializable {
     ERROR_99125(99125,"异常单,取消发货的数据不支持拦截"),
     ERROR_99126(99126,"sku未拣货，不能进行分货"),
 
-    ERROR_99127(99127,"发货通知单【{}】总数量不能大于销售数量"),
+    ERROR_99127(99127,"发货通知单【{}】拣货数量不能大于发货数量"),
+    ERROR_99133(99133,"要货申请【{}】拣货数量不能大于批准数量"),
     ERROR_99128(99128,"组合产品【{}】的拣货数量与bom用量比例不一致，无法修改"),
     ERROR_99129(99129,"已下推销售出库单，不能重复下推"),
+    ERROR_99131(99131,"SKU【{}】存在库存,不可变更SPU"),
+    ERROR_99130(99130,"要货申请完成后，不能修改或删除拣货单"),
+
+    ERROR_99135(99135,"拣货单生成的移仓单，不支持反审核"),
 
     ERROR_99140(99140,"已生成拣货单，不能修改发货通知单"),
+    ERROR_99141(99141,"拣货单下推的发货单，不能修改仓位移动单"),
+
+    ERROR_99160(99160,"发货通知单已审核，不能生成拣货单"),
+    ERROR_99161(99161,"发货通知单已审核，不能修改或删除拣货单"),
     ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
@@ -907,6 +919,7 @@ public enum ApiError implements Serializable {
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
     LOCATION_MOVE_DETAIL_ADD(99091 , "仓位移动明细单保存失败"),
     LOCATION_MOVE_QTY_ERROR(99091 , "sku【{}】仓位移动数量不能大于可用库存数量"),
+    LOCATION_MOVE_FROZEN_QTY_ERROR(99091 , "sku【{}】仓位移动数量不能大于冻结库存数量"),
     SO_RETURN_RECEIVE_SKU_NOT_EXIST(99092 , "sku【{}】在退货签收单中不存在"),
     CURRENT_TARGET_WAREHOUSE_SAME(99039,"仓位移动当前仓和目的仓必须相同"),
     PURCHASE_SKU_NOT_EXIST(99092 , "sku【{}】在采购单中不存在"),
@@ -1103,6 +1116,13 @@ public enum ApiError implements Serializable {
     ERROR_ALLOCATION_UNIQUE_ERROR(92221,"“SKU【{}】- 实体仓【{}】- 调入虚拟仓【{}】”重复\n"),
     ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR(92222,"“SKU【{}】- 实体仓【{}】- 调入虚拟仓【{}】- 调出虚拟仓【{}】”重复\n"),
     ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR(92223,"“SKU【{}】- 实体仓【{}】- 调出虚拟仓【{}】”重复\n"),
+
+    ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST(92219,"平台【{}】、实体仓【{}】下未找到对应虚拟仓库"),
+    ERROR_VWSTOCK_NOTEMPRY(92230,"虚拟仓库存不为0，操作失败"),
+    ERROR_VWWSTOCK_NOTEMPRY(92231,"本虚拟仓在实体仓【{}】下库存不为0，操作失败"),
+    ERROR_THIRD_VIRTUAL_WAREHOUSE_BINDED(92232,"旺店通【{}】已与仓库【{}】关联"),
+    ERROR_NO_SYNC(92232,"没有同步信息"),
+    ERROR_CHECK_OUT_VIRTUAL_INVENTORY(92233,"SKU【{}】实体仓【{}】虚拟仓库存已分配【{}】，出库数量不能超过【{}】"),
     WAREHOUSE_AREA_EXIST(92142,"库区{}【{}】已存在"),
     POSITION_BINDING_EXIST(92143,"库区{}存在仓位绑定,无法删除或禁用"),
     WAREHOUSE_LOCATION_EXIST(92144, "仓位{}已存在"),
@@ -1113,12 +1133,7 @@ public enum ApiError implements Serializable {
     CFG_RULE_WAVE_ORDER_QTY_COMPARE(92152, "最小单数不能大于最大单数"),
     CFG_RULE_WAVE_QTY_COMPARE(92153, "最少商品数量不能大于最大商品数量"),
 
-    ERROR_PLATFORM_VIRTUAL_WAREHOUSE_NOT_EXIST(92219,"平台【{}】、实体仓【{}】下未找到对应虚拟仓库"),
-    ERROR_VWSTOCK_NOTEMPRY(92230,"虚拟仓库存不为0，操作失败"),
-    ERROR_VWWSTOCK_NOTEMPRY(92231,"本虚拟仓在实体仓【{}】下库存不为0，操作失败"),
-    ERROR_THIRD_VIRTUAL_WAREHOUSE_BINDED(92232,"旺店通【{}】已与仓库【{}】关联"),
-    ERROR_NO_SYNC(92232,"没有同步信息"),
-    ERROR_CHECK_OUT_VIRTUAL_INVENTORY(92233,"虚拟仓库存已分配【{}】，出库数量不能超过【{}】"),
+
     ERROR_VW_CHANNEL_ERROR(92234,"当前{}【{}】已经被虚拟仓【{}】绑定\n"),
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
     ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
@@ -1157,7 +1172,7 @@ public enum ApiError implements Serializable {
     ERROR_92017(92017,"只有待提交,暂存数据支持删除"),
     ERROR_92018(92018,"存在已被引用的单据,不能删除"),
     ERROR_92019(92019,"只有待提交,暂存,审核不通过数据支持作废"),
-	ERROR_92020(92020,"签收数量不能大于退货数量"),
+    ERROR_92020(92020,"签收数量不能大于退货数量"),
     ERROR_92021(92021,"只有已审核的退货通知单可以下推销售退货通知单"),
     ERROR_92022(92022,"在未作废 待提交,审核中,已审核的状态可导出合同或者发票"),
     ERROR_92023(92023,"sku【{}】在销售退货单中不存在"),
@@ -1169,7 +1184,7 @@ public enum ApiError implements Serializable {
     ERROR_92029(92029,"销售出库单详情不能为空"),
     ERROR_92030(92030,"应发数量不能大于库存数量"),
     ERROR_92031(92031,"应发数量不等于发货数量"),
-	ERROR_92032(92032,"只有已审核的销售退货签收单可以下推销售退货入库单"),
+    ERROR_92032(92032,"只有已审核的销售退货签收单可以下推销售退货入库单"),
     ERROR_92033(92033,"只有已审核的销售订单可以变更销售订单"),
     ERROR_92034(92034,"销售变更单不存在"),
     ERROR_92035(92035,"以下产品缺货【%s】"),
@@ -1184,7 +1199,7 @@ public enum ApiError implements Serializable {
     ERROR_92044(92044,"存在已使用的的客户不能进行停用"),
     ERROR_92045(92045,"sku【{}】实退总数量不能大于签收单的签收数量"),
     ERROR_92046(92046,"存在被销售订单引用的地址不能删除"),
-    ERROR_92047(92047,"存在销售订单处于变更中,无法反审核"),
+    ERROR_92047(92047,"销售订单处于变更中,无法反审核"),
     ERROR_92048(92048,"开始日期需要按升序"),
     ERROR_92049(92049,"销售订单变更数量不能小于下推的发货通知单的发货数量"),
     ERROR_92050(92050,"销售订单变更数量不能小于发货通知单实发数量"),
@@ -1465,7 +1480,7 @@ public enum ApiError implements Serializable {
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),
-;
+    ;
 
     public Integer code;
     public String msg;

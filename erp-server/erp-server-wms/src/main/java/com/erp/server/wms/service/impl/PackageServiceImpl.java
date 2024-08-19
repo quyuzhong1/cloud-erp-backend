@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -28,6 +29,8 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -39,6 +42,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -84,6 +88,9 @@ public class PackageServiceImpl implements PackageService {
     @Lazy
     @Resource
     private AsyncService asyncService;
+    @Autowired
+    private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
+
     @Override
     public PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO) {
         PackageDTO.ScanResultDTO scanResult = soB2cFeign.packageScanByCode(scanDTO.getCode());
@@ -169,12 +176,11 @@ public class PackageServiceImpl implements PackageService {
                 soB2cFeign.updateWeight(scanResult.getSoId(),scanResult.getLogisticsId(),weightByG);
             }
             //查询订单物流信息获取跟踪号
-            List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(entity.getId()));
-            if(CollectionUtils.isEmpty(soB2cLogisticsEntities)){
-                throw new ServiceException("订单物流信息为空");
-            }
-            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.get(0);
-
+            SoB2cLogisticsEntity soB2cLogisticsEntity = new SoB2cLogisticsEntity();
+            soB2cLogisticsEntity.setCode(scanResult.getTransportNo());
+            soB2cLogisticsEntity.setLogisticsChannelId(scanResult.getLogisticsChannelId());
+            soB2cLogisticsEntity.setTrackNo(scanResult.getTrackNo());
+            soB2cLogisticsEntity.setWeight(weightByG);
             // 更新发货单重量
             SoB2cDeliveryDTO.UpdateWeightDTO dto = SoB2cDeliveryDTO.UpdateWeightDTO.builder()
                     .soId(scanResult.getSoId())
@@ -183,6 +189,7 @@ public class PackageServiceImpl implements PackageService {
                     .build();
             soB2cDeliveryService.updateB2cDeliveryWeightBySoId(dto);
             scanResult.setWeight(weightByG);
+
             //更新物流商重量
             if(StringUtils.isNotBlank(soB2cLogisticsEntity.getCode()) && StringUtils.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
                 LogisticsBillDTO.UpdateWeight updateWeight = LogisticsBillDTO.UpdateWeight.builder()
@@ -277,18 +284,27 @@ public class PackageServiceImpl implements PackageService {
         }
         for (PackageForecastDTO.AddDTO item : addList) {
             try {
-                packageForecastService.add(item);
-                //自动发货
-                if (dto.getIsAutoOut()) {
-                    List<String> soIdList = item.getDetailList().stream().filter(v->!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus())).map(PackageForecastDetailDTO.AddDTO::getSoId).collect(Collectors.toList());
-                    // 异步推送到MQ
-                    soIdList.stream().peek(soId ->{
-                        SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
-                                soId, soId);
-                        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())){
-                            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
-                        }
-                    }).collect(Collectors.toList());
+                List<PackageForecastDetailDTO.AddDTO> detailList = item.getDetailList();
+                //有拦截单的订单返回错误
+                Map<String,String> hasDeliveryInterceptMap = detailList.stream().filter(PackageForecastDetailDTO.AddDTO::isHasDeliveryIntercept).collect(Collectors.toMap(PackageForecastDetailDTO.CommonDTO::getSoCode, v->StrUtil.format("{}/{}/{}",v.getSoCode(),v.getTransportNo(),v.getTrackNo()),(v1, v2)->v1));
+                if(MapUtil.isEmpty(hasDeliveryInterceptMap)){
+                    packageForecastService.add(item);
+                    //自动发货
+                    if (dto.getIsAutoOut()) {
+                        List<String> soIdList = item.getDetailList().stream().filter(v->!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus())).map(PackageForecastDetailDTO.AddDTO::getSoId).collect(Collectors.toList());
+                        // 异步推送到MQ
+                        soIdList.stream().peek(soId ->{
+                            SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
+                                    soId, soId);
+                            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())){
+                                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+                            }
+                        }).collect(Collectors.toList());
+                    }
+                }else{
+                    hasDeliveryInterceptMap.forEach((key,val)->{
+                        resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(),key, val+" 存在拦截单，无法组包，可操作移除后再进行组包"));
+                    });
                 }
             } catch (Exception e) {
                 log.error("添加组包预报异常 {}", e.getMessage());
@@ -310,7 +326,7 @@ public class PackageServiceImpl implements PackageService {
         if (ObjectUtil.isEmpty(scanResult)) {
             return weightDTO;
         }
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listBySourceIds(Arrays.asList(scanResult.getSoId()));
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listBySourceIds(Arrays.asList(scanResult.getSoId()),SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
         if (CollectionUtils.isEmpty(soB2cDeliveryList)) {
             return  weightDTO;
         }
@@ -334,6 +350,8 @@ public class PackageServiceImpl implements PackageService {
         List<PackageDTO.ScanResultDTO> list = soB2cFeign.listMergePackageBySoIds(ids);
         List<String> logisticsChannelIdList = list.stream().filter(a -> StringUtils.isNotBlank(a.getLogisticsChannelId())).
                 map(PackageDTO.ScanResultDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
+        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listBySourceIds(ids).stream().filter(v->!v.getHandleStatus().equals(SoB2cDeliveryInterceptStatusEnum.CANCEL.getStatus())).collect(Collectors.toList());
+
 
         List<LogisticsChannelDTO.BaseDTO> channelList = CollectionUtils.isNotEmpty(logisticsChannelIdList) ? logisticsFeign.listChannelInfoById(logisticsChannelIdList) : Collections.emptyList();
         for (PackageDTO.ScanResultDTO item : list) {
@@ -370,7 +388,11 @@ public class PackageServiceImpl implements PackageService {
             addDTO.setWeightUnit(weightUnit);
             addDTO.setTotalPackageWeight(totalPackageWeight);
             List<PackageForecastDetailDTO.AddDTO> addDetailList= BeanMapperUtils.copyList(PackageForecastDetailDTO.AddDTO.class,detailList);
-            addDetailList.forEach(addDetail->addDetail.setWeightUnit(weightUnit));
+            addDetailList.forEach(addDetail->{
+                addDetail.setWeightUnit(weightUnit);
+                SoB2cDeliveryInterceptEntity interceptEntity = soB2cDeliveryInterceptEntityList.stream().filter(v->v.getSoId().equals(addDetail.getSoId())).findFirst().orElse(null);
+                addDetail.setHasDeliveryIntercept(Objects.nonNull(interceptEntity) && addDetail.getIsIntercept());
+            });
             addDTO.setDetailList(addDetailList);
             result.add(addDTO);
         }

@@ -82,6 +82,8 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     private AsyncService asyncService;
     @Autowired
     private LogisticsFeign logisticsFeign;
+    @Autowired
+    private CfgSettingService cfgSettingService;
 
 
     @Override
@@ -185,6 +187,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                     LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(soB2cLogisticsEntity.getLogisticsChannelId());
                     if(Objects.nonNull(logisticsChannelEntity)){
                         viewDTO.setPaperSize(logisticsChannelEntity.getPaperSize());
+                        viewDTO.setPrinterName(cfgSettingService.getPrinterNameByPaperSize(logisticsChannelEntity.getPaperSize()));
                     }
                 }
             }

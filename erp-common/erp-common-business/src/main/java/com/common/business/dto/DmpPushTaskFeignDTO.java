@@ -73,4 +73,9 @@ public class DmpPushTaskFeignDTO {
      * 来源单据上级单据id
      */
     private String parentId;
+
+    /**
+     * 第三方单号
+     */
+    private String thirdCode;
 }

@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 
 import java.util.List;
 
@@ -20,20 +21,20 @@ public interface WarehouseLocationMoveDetailService extends SuperService<Warehou
     * @author Luo_WG
     * @date: 2023-08-24
     * @param dto
-    * @param mainId
+    * @param warehouseLocationMoveEntity
     * @return
     */
-    void add(WarehouseLocationMoveDTO.AddDTO dto, String mainId);
+    void add(WarehouseLocationMoveDTO.AddDTO dto, WarehouseLocationMoveEntity warehouseLocationMoveEntity);
 
     /**
     * 修改
     * @author Luo_WG
     * @date: 2023-08-24
     * @param dto
-    * @param mainId
+    * @param warehouseLocationMoveEntity
     * @return
     */
-    Boolean update(WarehouseLocationMoveDTO.UpdateDTO dto, String mainId);
+    Boolean update(WarehouseLocationMoveDTO.UpdateDTO dto, WarehouseLocationMoveEntity warehouseLocationMoveEntity);
 
     /**
      * 根据主表id查询详情

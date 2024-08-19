@@ -208,6 +208,11 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField(value = "frozen_qty")
     private Integer frozenQty;
+    /**
+     * bom 版本
+     */
+    @TableField(value = "bom_version")
+    private String bomVersion;
 
 
     @TableField(exist = false)

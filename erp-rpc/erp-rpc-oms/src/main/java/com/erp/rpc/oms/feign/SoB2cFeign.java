@@ -8,6 +8,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -292,7 +293,7 @@ public interface SoB2cFeign {
      * @param mainId
      * @param errorType
      * @author Lambda
-     * @return 
+     * @return
      * @create 2024-01-01 12:27
      */
     @PostMapping("/feign/soB2cError/getB2cError")
@@ -447,6 +448,16 @@ public interface SoB2cFeign {
     Boolean batchUpdateLogistics(@RequestBody List<SoB2cLogisticsEntity> list);
 
     /**
+     * 根据跟踪单号进行物流跟踪号更新
+     * @description
+     * @param trackDTOS
+     * @return
+     * @date 2024-02-26 16:41
+     * @author Lambda
+     */
+    @PostMapping("/feign/soB2c/updateTrackNoByTransportNo")
+    Boolean updateTrackNoByTransportNo(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS);
+    /**
      * 根据平台单号和平台查询B2C销售订单
      *
      * @date 2024-03-07
@@ -468,12 +479,12 @@ public interface SoB2cFeign {
 
     @PostMapping("/feign/soB2cError/deleteAll")
     void checkAndDeleteAllError(@RequestBody SoB2cErrorDTO.DeleteDetailDTO deleteDTO);
-    
+
     /**
      * 修改速卖通订单仓库
      * @Author Luo_WG
      * @Date 2024/2/1 10:44
-     * @param soId
+     * @param soOutstockDTO
      * @return void
      **/
     @PostMapping("/feign/soB2c/getDataCompareByCondition")
@@ -594,4 +605,12 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/listSoB2cData")
     SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO);
 
+
+    /**
+     * 根据销售订单更新跟踪单号
+     * @param soId
+     * @param trackNo
+     */
+    @PostMapping("/feign/soB2c/updateLogisticsBySoId")
+    void updateLogisticsBySoId(@RequestParam("soId") String soId, @RequestParam("trackNo") String trackNo);
 }

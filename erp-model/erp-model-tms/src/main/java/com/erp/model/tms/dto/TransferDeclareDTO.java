@@ -416,6 +416,11 @@ public class TransferDeclareDTO implements Serializable {
          */
         private String soCode;
         /**
+         * 组包单号
+         */
+        private String packageForecastCode;
+
+        /**
          * 物流渠道中文
          */
         private String logisticsChannelName;
@@ -752,5 +757,10 @@ public class TransferDeclareDTO implements Serializable {
          * 创建时间[可排序]
          */
         private LocalDateTime createTime;
+
+        /**
+         * 组包单号
+         */
+        private String packageForecastCode;
     }
 }

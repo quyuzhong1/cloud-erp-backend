@@ -3,21 +3,25 @@ package com.erp.model.wms.dto;
 import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.PickingSourceTypeEnum;
+import com.common.core.entity.ConditionElement;
+import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.validation.Valid;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -26,7 +30,7 @@ import java.util.Objects;
  *
  * @author lrp
  * @since 2024-06-28
-*/
+ */
 @Data
 @NoArgsConstructor
 public class CfgRuleOutDTO implements Serializable {
@@ -423,12 +427,6 @@ public class CfgRuleOutDTO implements Serializable {
         private B2cAllowableDeviations b2cAllowableDeviations = new B2cAllowableDeviations();
 
         /**
-         * 中转配置
-         */
-        @Valid
-        private List<TransferDTO> transferDTOList = new ArrayList<>();
-
-        /**
          * 装箱超重配置
          */
         @Valid
@@ -439,6 +437,12 @@ public class CfgRuleOutDTO implements Serializable {
          */
         private CfgProductPacking cfgProductPacking = new CfgProductPacking();
 
+
+        /**
+         * 中转配置
+         */
+        @Valid
+        private List<TransferDTO> transferDTOList = new ArrayList<>();
     }
 
     @Data
@@ -527,4 +531,39 @@ public class CfgRuleOutDTO implements Serializable {
          */
         private String destWarehouse;
     }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MatchTransferDTO{
+        /**
+         * 需要中转的仓库（发货仓库）
+         */
+        @NotBlank(message = "发货仓库Id")
+        private String warehouseId;
+
+        /**
+         * 中转规则不能为空
+         */
+        @NotNull(message = "匹配中转规则不能为空")
+        private MatchTransferRuleDTO matchTransferRuleDTO;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MatchTransferResultDTO{
+
+        /**
+         * 是否中转
+         */
+        private Boolean isTransit;
+
+        /**
+         * 中转仓库
+         */
+        private String transitWarehouseId;
+
+    }
+
 }

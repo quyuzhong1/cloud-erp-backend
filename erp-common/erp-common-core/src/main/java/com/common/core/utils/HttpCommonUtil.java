@@ -177,7 +177,7 @@ public class HttpCommonUtil {
 
 //            log.info(String.format("::::: sendHttp ::::: 请求地址 => %s, 请求方式 => %s, 请求参数 => %s, 返回参数 => %s, 错误信息 => %s ",
 //                    url, method, parameters, responseString, e));
-            return new ApiResult(response.code(), response.message(), responseString);
+            return new ApiResult(result.getCode(), result.getMsg(), responseString);
         } finally {
 
             Long end = System.currentTimeMillis();

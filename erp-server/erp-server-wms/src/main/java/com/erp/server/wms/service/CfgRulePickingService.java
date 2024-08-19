@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.entity.CfgRulePickingEntity;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
 import java.util.Map;
@@ -57,4 +58,11 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
      * @param dto 参数
      */
     List<LocationInventoryResultDTO> getRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto);
+    /**
+     * 限制来源单据只有一个,返回可能存在多个仓库id(来源单据sku对应拣货仓库可能不同), 需要根据warehouseId分组生成拣货单
+     * 根据传入参数获取sku对应库位及拣货数量
+     *
+     * @param dto 参数
+     */
+    Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto);
 }

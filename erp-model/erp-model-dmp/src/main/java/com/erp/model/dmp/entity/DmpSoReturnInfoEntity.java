@@ -179,6 +179,11 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
+    /**
+    * 单据时间
+    */
+    @TableField("bill_date")
+    private LocalDateTime billDate;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

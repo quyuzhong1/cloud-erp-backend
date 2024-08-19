@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -80,6 +81,14 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
          * 上架仓位名称
          */
         private String inWarehouseLocationName;
+        /**
+         * 取货仓位库存状态
+         */
+        private String outInventoryStatus;
+        /**
+         * 上架仓位库存状态
+         */
+        private String inInventoryStatus;
 
         /**
          * 移动数量
@@ -184,8 +193,12 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
          */
         private String remark;
 
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
 
-        public static WarehouseLocationMoveDetailDTO.AddDTO getLocationMoveDTO(String skuId, String skuNo, String outWarehouseLocation, String inWarehouseLocation, Integer qty, String warehouseId) {
+        public static WarehouseLocationMoveDetailDTO.AddDTO getLocationMoveDTO(String skuId, String skuNo, String outWarehouseLocation, String inWarehouseLocation, Integer qty, String warehouseId, String sourceDetailId) {
             WarehouseLocationMoveDetailDTO.AddDTO addDTO = new WarehouseLocationMoveDetailDTO.AddDTO();
             addDTO.setSkuId(skuId);
             addDTO.setSkuNo(skuNo);
@@ -193,6 +206,7 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
             addDTO.setInWarehouseLocation(inWarehouseLocation);
             addDTO.setQty(qty);
             addDTO.setWarehouseId(warehouseId);
+            addDTO.setSourceDetailId(sourceDetailId);
             return addDTO;
         }
     }
@@ -247,6 +261,10 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         @NotBlank(message = "取货仓位不能为空")
         @Size(max = 50, message = "取货仓位最大长度不能超过50位")
         private String outWarehouseLocation;
+        /**
+         * 取货仓位库存状态
+         */
+        private String outInventoryStatus;
 
         /**
          * 上架仓位
@@ -254,6 +272,11 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         @NotBlank(message = "上架仓位不能为空")
         @Size(max = 50, message = "上架仓位最大长度不能超过50位")
         private String inWarehouseLocation;
+
+        /**
+         * 上架仓位库存状态
+         */
+        private String inInventoryStatus;
 
         /**
          * 移动数量

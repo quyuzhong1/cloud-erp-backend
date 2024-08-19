@@ -1,122 +1,273 @@
 package com.erp.model.dmp.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Data;
-
-import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 /**
- * 店铺表
- * @TableName bi_shop_info
- */
+ * <p>
+ * 中台店铺表请求响应实体
+ * </p>
+ *
+ * @author Luo_WG
+ * @since 2024-08-07
+*/
 @Data
+@NoArgsConstructor
 public class DmpShopInfoDTO implements Serializable {
-    /**
-     * 主键id
-     */
-    private String id;
 
-    /**
-     * 平台店铺编号
-     */
-    private String platformShopNo;
+
+
 
     /**
-     * 平台店铺账户
-     */
-    private String accountUserName;
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
 
-    /**
-     * 平台店铺标识
-     */
-    private String accountStoreName;
+        /**
+        * 主键id
+        */
+        private String  id;
 
-    /**
-     * 店铺名称
-     */
-    private String name;
+        /**
+        * 平台创建时间
+        */
+        private LocalDateTime platformCreateTime;
 
-    /**
-     * 店铺站点
-     */
-    private String site;
+        /**
+        * 平台修改时间
+        */
+        private LocalDateTime platformUpdateTime;
 
-    /**
-     * 店铺状态
-     */
-    private Integer status;
+        /**
+        * 来源类型：管易，金蝶，马帮
+        */
+        private String sourceType;
 
-    /**
-     * 平台名称
-     */
-    private String platformName;
+        /**
+        * 订单来源平台（编码）：Amazon，AliExpress，shopify，...
+        */
+        private String sourcePlatform;
 
-    /**
-     * 财务编码
-     */
-    private String financeCode;
+        /**
+        * 单据编号（唯一）
+        */
+        private String billCode;
 
-    /**
-     * 创建时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createTime;
+        /**
+        * 销售平台原始单号
+        */
+        private String platformOriginalCode;
 
-    /**
-     * 平台标识
-     */
-    private String platformSign;
+        /**
+        * 平台店铺账户
+        */
+        private String accountUserName;
 
-    /**
-     * 负责人id
-     */
-    private String chargeId;
+        /**
+        * 店铺名称
+        */
+        private String name;
 
-    /**
-     * 负责人名称
-     */
-    private String chargeName;
+        /**
+        * site
+站点
+        */
+        private String site;
 
-    /**
-     * 部门id
-     */
-    private String deptId;
+        /**
+        * 店铺状态:true 禁用 false 启用
+        */
+        private String disabled;
 
-    /**
-     * 部门名称
-     */
-    private String deptName;
+        /**
+        * 企业id
+        */
+        private String companyId;
 
-    /**
-     * 店铺标识
-     */
-    private String storeSign;
+        /**
+        * 企业名称
+        */
+        private String companyName;
 
-    /**
-     * 启用时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate enableTime;
+        /**
+        * 唯一字段md5值
+        */
+        private String uniqueEncrypt;
+
+        /**
+        * 数据字段md5值
+        */
+        private String dataEncrypt;
+
+        /**
+        * 输入任务id
+        */
+        private String inputTaskId;
+
+        /**
+        * 转换id
+        */
+        private String convertId;
+
+        /**
+        * 下一层级id
+        */
+        private String nextLevelId;
 
 
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public String toString() {
-        return "DmpShopInfoEntity{" +
-                "platformShopNo='" + platformShopNo + '\'' +
-                ", accountUserName='" + accountUserName + '\'' +
-                ", accountStoreName='" + accountStoreName + '\'' +
-                ", name='" + name + '\'' +
-                ", site='" + site + '\'' +
-                ", status=" + status +
-                ", platformName='" + platformName + '\'' +
-                ", financeCode='" + financeCode + '\'' +
-                ", platformSign='" + platformSign + '\'' +
-                '}';
     }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 平台创建时间
+        */
+        private LocalDateTime platformCreateTime;
+
+        /**
+        * 平台修改时间
+        */
+        private LocalDateTime platformUpdateTime;
+
+        /**
+        * 来源类型：管易，金蝶，马帮
+        */
+        @NotBlank(message = "来源类型：管易，金蝶，马帮不能为空")
+        @Size(max = 32,message = "来源类型：管易，金蝶，马帮最大长度不能超过32位")
+        private String sourceType;
+
+        /**
+        * 订单来源平台（编码）：Amazon，AliExpress，shopify，...
+        */
+        @NotBlank(message = "订单来源平台（编码）：Amazon，AliExpress，shopify，...不能为空")
+        @Size(max = 32,message = "订单来源平台（编码）：Amazon，AliExpress，shopify，...最大长度不能超过32位")
+        private String sourcePlatform;
+
+        /**
+        * 单据编号（唯一）
+        */
+        @NotBlank(message = "单据编号（唯一）不能为空")
+        @Size(max = 64,message = "单据编号（唯一）最大长度不能超过64位")
+        private String billCode;
+
+        /**
+        * 销售平台原始单号
+        */
+        @NotBlank(message = "销售平台原始单号不能为空")
+        @Size(max = 64,message = "销售平台原始单号最大长度不能超过64位")
+        private String platformOriginalCode;
+
+        /**
+        * 平台店铺账户
+        */
+        @NotBlank(message = "平台店铺账户不能为空")
+        @Size(max = 255,message = "平台店铺账户最大长度不能超过255位")
+        private String accountUserName;
+
+        /**
+        * 店铺名称
+        */
+        @NotBlank(message = "店铺名称不能为空")
+        @Size(max = 255,message = "店铺名称最大长度不能超过255位")
+        private String name;
+
+        /**
+        * site站点
+        */
+        @NotBlank(message = "site站点不能为空")
+        @Size(max = 32,message = "site站点最大长度不能超过32位")
+        private String site;
+
+        /**
+        * 店铺状态:true 禁用 false 启用
+        */
+        @NotBlank(message = "店铺状态:true 禁用 false 启用不能为空")
+        @Size(max = 32,message = "店铺状态:true 禁用 false 启用最大长度不能超过32位")
+        private String disabled;
+
+        /**
+        * 企业id
+        */
+        @NotBlank(message = "企业id不能为空")
+        @Size(max = 32,message = "企业id最大长度不能超过32位")
+        private String companyId;
+
+        /**
+        * 企业名称
+        */
+        @NotBlank(message = "企业名称不能为空")
+        @Size(max = 255,message = "企业名称最大长度不能超过255位")
+        private String companyName;
+
+        /**
+        * 唯一字段md5值
+        */
+        private String uniqueEncrypt;
+
+        /**
+        * 数据字段md5值
+        */
+        private String dataEncrypt;
+
+        /**
+        * 输入任务id
+        */
+        @NotBlank(message = "输入任务id不能为空")
+        @Size(max = 19,message = "输入任务id最大长度不能超过19位")
+        private String inputTaskId;
+
+        /**
+        * 转换id
+        */
+        @NotBlank(message = "转换id不能为空")
+        @Size(max = 19,message = "转换id最大长度不能超过19位")
+        private String convertId;
+
+        /**
+        * 下一层级id
+        */
+        @NotBlank(message = "下一层级id不能为空")
+        @Size(max = 19,message = "下一层级id最大长度不能超过19位")
+        private String nextLevelId;
+
+
+    }
+
+
 }

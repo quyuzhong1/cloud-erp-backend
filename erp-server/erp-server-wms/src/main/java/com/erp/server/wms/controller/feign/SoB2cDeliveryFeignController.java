@@ -154,4 +154,27 @@ public class SoB2cDeliveryFeignController extends BaseController {
     void updateShipmentMark(List<String> ids, String code) {
         soB2cDeliveryService.updateShipmentMark(ids, code);
     }
+
+   /**
+    * 生成直接调拨单
+    * @author will
+    * @date 2024/8/1 9:47
+    * @param soId
+    * @return Boolean
+    */
+    @PostMapping("/afreshPushTransferInfo")
+    public Boolean afreshPushTransferInfo(@RequestBody String soId) {
+        return soB2cDeliveryService.afreshPushTransferInfo(soId);
+    }
+    /**
+     * 重试发货虚拟仓库存扣减
+     * @author will
+     * @date 2024/8/1 10:37
+     * @param soId
+     * @return Boolean
+     */
+    @PostMapping("/afreshOutFreezeVirtualInventory")
+    public Boolean afreshOutFreezeVirtualInventory(@RequestBody String soId) {
+        return soB2cDeliveryService.afreshOutFreezeVirtualInventory(soId);
+    }
 }

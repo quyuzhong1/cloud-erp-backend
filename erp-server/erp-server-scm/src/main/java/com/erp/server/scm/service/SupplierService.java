@@ -4,6 +4,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -105,22 +106,27 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     /**
      * 审核 供应商
      *
-     * @param dto
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-20 19:41
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(SupplierEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
-     * @param dto
-     * @param list
+     * @param type
+     * @param comment
+     * @param isNeedProcess
+     * @param entity
      * @return Boolean
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/11 12:02
      */
-    Boolean approveEnd(BaseApproveParamDTO dto, List<SupplierEntity> list);
+    Boolean approveEnd(SupplierEntity entity,String type, String comment, Boolean isNeedProcess);
 
 
     /**
@@ -151,12 +157,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     /**
      * 反审核
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-23 10:26
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(SupplierEntity entity);
 
     /**
      * 下载模板

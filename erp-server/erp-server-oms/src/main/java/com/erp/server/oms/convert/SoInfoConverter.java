@@ -111,6 +111,7 @@ public interface SoInfoConverter {
             @Mapping(target = "deliveryOrgName", source = "warehouseOrgName"),
             @Mapping(target = "orderType",  expression = "java(com.common.business.enums.OrderTypeEnum.B2B.getCode())"),
             @Mapping(target = "planDeliveryDate", source = "billDate"),
+            @Mapping(target = "billDate", source = "billDate"),
             @Mapping(target = "sellerId", source = "sellerId"),
             @Mapping(target = "sellerName", source = "sellerName"),
             @Mapping(target = "warehouseId", source = "warehouseId"),

@@ -25,10 +25,10 @@ public interface ProductCustomsMapper extends BaseMapper<ProductCustomsEntity> {
      * 根据产品id查询目的国海关编码
      * @Author Luo_WG
      * @Date 2023/6/15 16:52
-     * @param productId productId
+     * @param skuIds
      * @return java.util.List<com.erp.model.plm.entity.ProductCustomsEntity>
      **/
-    List<ProductCustomsEntity> listByProductId(String productId);
+    List<ProductCustomsEntity> listBySkuIds(List<String> skuIds);
 
     /**
      * 根据产品id查询目的国海关编码

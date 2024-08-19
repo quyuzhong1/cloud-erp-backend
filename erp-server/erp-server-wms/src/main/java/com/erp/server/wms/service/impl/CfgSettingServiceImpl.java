@@ -116,6 +116,26 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return Boolean.FALSE;
     }
 
+    @Override
+    public String getPrinterNameByPaperSize(String paperSize) {
+        if(null == paperSize){
+            return "";
+        }
+        CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.CFG_PRINT.getCode());
+        if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
+            return "";
+        }
+        CfgSettingValueDTO.CfgPrint dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.CfgPrint.class);
+        if(Objects.isNull(dto)){
+            return "";
+        }
+        List<CfgSettingValueDTO.CfgPrintDetail> cfgPrintDetails = dto.getCfgPrintDetails();
+        if(CollectionUtils.isEmpty(cfgPrintDetails)){
+            return "";
+        }
+        return cfgPrintDetails.stream().filter(v->v.getPaperSize().equals(paperSize)).findFirst().map(CfgSettingValueDTO.CfgPrintDetail::getPrinterName).orElse("");
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -176,6 +196,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 break;
             case FINISH_PACKING_NOTICE:
                 jsonObject = JSONUtil.parseObj(addDTO.getFinishPackingNoticeDTO());
+                break;
+            case CFG_PRINT:
+                jsonObject = JSONUtil.parseObj(addDTO.getCfgPrint());
                 break;
             default:
                 break;
@@ -241,6 +264,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case FINISH_PACKING_NOTICE:
                 CfgSettingValueDTO.FinishPackingNoticeDTO finishPackingNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FinishPackingNoticeDTO.class);
                 viewDTO.setFinishPackingNoticeDTO(finishPackingNoticeDTO);
+                break;
+            case CFG_PRINT:
+                CfgSettingValueDTO.CfgPrint cfgPrint = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.CfgPrint.class);
+                viewDTO.setCfgPrint(cfgPrint);
                 break;
             default:
                 break;

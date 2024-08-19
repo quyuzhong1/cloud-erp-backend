@@ -1,8 +1,10 @@
 package com.erp.server.wms.service;
 
-import com.erp.model.wms.dto.pickingstrategy.CfgRuleActionDTO;
-import com.erp.model.wms.entity.CfgRulePackingActionEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.pickingstrategy.CfgRuleActionDTO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
+import com.erp.model.wms.entity.CfgRulePackingActionEntity;
+import com.erp.model.wms.entity.CfgRulePickingEntity;
 
 import java.util.List;
 
@@ -40,4 +42,6 @@ public interface CfgRulePackingActionService extends SuperService<CfgRulePacking
      * @param cfgRuleIds 规则id
      */
     List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds);
+
+    List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds);
 }

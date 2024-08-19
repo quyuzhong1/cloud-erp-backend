@@ -109,11 +109,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      */
     private Boolean transferApplicationApproveEnd(EndProcessDTO dto) {
         //直接调拨单
-        List<TransferApplicationEntity> list = transferApplicationService.listByIds(Arrays.asList(dto.getBusinessId()));
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-        return transferApplicationService.approveEnd(baseApproveParamDTO,list);
+        TransferApplicationEntity entity = transferApplicationService.getById(dto.getBusinessId());
+        return transferApplicationService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", null);
     }
 
     /**

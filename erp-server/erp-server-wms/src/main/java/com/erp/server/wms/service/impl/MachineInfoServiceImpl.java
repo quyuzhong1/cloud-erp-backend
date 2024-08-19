@@ -8,10 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -34,11 +31,9 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
-import com.erp.model.wms.dto.inventory.InOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
-import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.MachineSourceTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
@@ -141,6 +136,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Resource
+    private SoDeliveryNoticeService soDeliveryNoticeService;
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -568,98 +565,72 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
-        //根据ids查询
-        List<MachineInfoEntity> list = getList(ids);
+    public BatchResultDTO approve(MachineInfoEntity entity, String type, String comment, Boolean isNeedProcess) {
         //审核中允许审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
-
-        String type = baseApproveParamDTO.getType();
-
-        log.info("加工单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
-
+        log.info("加工单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
-            log.info("加工单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
-            //审核通过 TODO(判断是否存在流程)
-
+            log.info("加工单【{}】审核通过，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
             //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
+            updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
-            updateInventoryTransCore(list);
-
+            updateInventoryTransCore(Collections.singletonList(entity));
             //审核发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             // 发送马帮
-            list.forEach(obj->{
-                // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤，后面会限制同步过来的不允许新增或移除SKU
-//                if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
-                syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
-//                }
-            });
+            syncMabangMachineService.syncDataToMabang(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
-            log.info("加工单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
-            //中止当前审核流程
-
+            log.info("加工单【{}】审核不通过，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
             //更新单据状态
-            updateApproveStatusForApprove(ids, ApproveStatusEnum.REJECT.getStatus());
+            updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个加工单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个加工单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.MACHINE_INFO.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        //根据ids查询
-        List<MachineInfoEntity> list = getList(ids);
+    public BatchResultDTO disApprove(MachineInfoEntity entity) {
         //已审核允许反审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
         //已存在直接调拨单
-        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(ids);
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(transferInfoList)) {
             List<String> codes = transferInfoList.stream().map(TransferInfoEntity::getSourceCode).collect(Collectors.toList());
             throw new ServiceException(ApiError.ERROR_MACHINE_EXIST_TRANSFER_INFO,codes);
         }
         //已存在采购退货单
-        List<PoReturnEntity> purchaseReturnOrderList = poReturnService.listBySourceIds(ids);
+        List<PoReturnEntity> purchaseReturnOrderList = poReturnService.listBySourceIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(purchaseReturnOrderList)) {
             List<String> codes = transferInfoList.stream().map(TransferInfoEntity::getSourceCode).collect(Collectors.toList());
             throw new ServiceException(ApiError.ERROR_MACHINE_EXIST_PURCHASE_RETURN,codes);
         }
 
-        log.info("加工单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
+        log.info("加工单反审核，id=【{}】", entity.getId());
 
         //取回流程 TODO
 
         //更新单据为待提交
-        updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForDisApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //回扣库存
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.MACHINE_INFO,ids);
-        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+        InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO(InventorySourceTypeEnum.MACHINE_INFO,entity.getId());
+        inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
 
         //反审核发送金蝶
-        sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         // 发送马帮
-        list.forEach(obj->{
-            // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤
-//            if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
-            syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-//            }
-        });
+        // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤
+        syncMabangMachineService.syncDataToMabang(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个加工单【%s】", ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "反审核操作");
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog(String.format("反审核了一个加工单【%s】", entity.getCode()), ModuleTypeEnum.MACHINE_INFO.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
@@ -753,7 +724,12 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setParamList(inOutStockList);
         if (WorkTypeEnum.ASSEMBLE.getCode().equals(entity.getWorkType())) {
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT.getCode());
+            SoDeliveryNoticeEntity notice = soDeliveryNoticeService.getDeliveryNoticeBySourceId(entity.getSourceId());
+            if ((SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType()) && ObjectUtils.isNotEmpty(notice))|| SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(entity.getSourceType())) {
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT_FREEZE.getCode());
+            }else {
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT.getCode());
+            }
         } else {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.DISASSEMBLE_IN_PARENT.getCode());
         }
@@ -797,7 +773,12 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setParamList(inOutStockList);
         if (WorkTypeEnum.ASSEMBLE.getCode().equals(entity.getWorkType())) {
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILDD.getCode());
+            SoDeliveryNoticeEntity notice = soDeliveryNoticeService.getDeliveryNoticeBySourceId(entity.getSourceId());
+            if ((SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType()) && ObjectUtils.isNotEmpty(notice))|| SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(entity.getSourceType())) {
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILD_FREEZE.getCode());
+            }else {
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILDD.getCode());
+            }
         } else {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.DISASSEMBLE_IN_CHILD.getCode());
         }

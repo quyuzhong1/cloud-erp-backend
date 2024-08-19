@@ -25,6 +25,7 @@ import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tiktok.dto.tiktok.shop.ShopsBean;
 import com.sdk.oms.tiktok.dto.tiktok.token.TokenDTO;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -187,6 +189,12 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         map.put("sellerBaseRegion", tokenDTO.getSellerBaseRegion());
         map.put("shopCipher", tokenDTO.getShopCipher());
         map.put("userType", tokenDTO.getUserType());
+
+        ShopsBean shopsBean = tokenDTO.getShopsBean();
+        if (ObjectUtil.isNotEmpty(shopsBean)) {
+            map.put("region", shopsBean.getRegion());
+            map.put("sellerType", shopsBean.getSellerType());
+        }
         shopInfo.setExtendData(map);
         shopAuthService.saveOrUpdate(shopAuth);
         dmpTaskFeign.createAndEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
@@ -199,7 +207,11 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setBaseUrl(cfgAppClient.getUrl());
         shopInfoDTO.setName(shopInfo.getName());
         shopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
-        shopInfoDTO.setSite(tokenDTO.getSellerBaseRegion());
+        if (ObjectUtil.isNotEmpty(shopsBean)) {
+            shopInfoDTO.setSite(shopsBean.getRegion());
+            shopInfoDTO.setSellerType(shopsBean.getSellerType());
+        }
+
         shopInfoDTO.setShopCipher(tokenDTO.getShopCipher());
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopId);
         redisUtil.set(tokenKey, shopInfoDTO, 7L*3600L*24L);
@@ -289,22 +301,6 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
 
         //更新店铺token
         shopAuthService.refreshToken(shopAuthEntity.getId(), accessToken, refreshToken, 7*3600*24, tokenExpireTime);
-
-        Map<String, Object> extendData = shopInfoEntity.getExtendData();
-        TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
-        shopInfoDTO.setId(shopAuthEntity.getShopId());
-        shopInfoDTO.setClientId(cfgAppClient.getClientId());
-        shopInfoDTO.setClientSecret(cfgAppClient.getClientSecret());
-        shopInfoDTO.setBaseUrl(cfgAppClient.getUrl());
-        shopInfoDTO.setName(tokenDTO.getSellerName());
-        shopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
-        shopInfoDTO.setSite(tokenDTO.getSellerBaseRegion());
-        shopInfoDTO.setShopCipher(String.valueOf(extendData.get("shopCipher")));
-
-        //设置缓存
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), dto.getShopId());
-        redisUtil.set(tokenKey, shopInfoDTO, 7*3600*24);
-
         return Boolean.TRUE;
     }
 

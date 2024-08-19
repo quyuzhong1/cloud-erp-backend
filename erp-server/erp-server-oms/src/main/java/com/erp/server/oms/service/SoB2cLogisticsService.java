@@ -7,6 +7,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -77,6 +78,15 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo);
 
     /**
+     * 更新中转信息
+     * @param mainId
+     * @param transportNo
+     * @param trackNo
+     * @return
+     */
+    Boolean updateTransferInfo(List<SoB2cLogisticsEntity> updateLogisticList);
+
+    /**
      * 平台订单明细更新或保存
      *
      * @Author Jim
@@ -136,7 +146,7 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     **/
    Boolean clearB2cLogisticsCode(List<String> soIdList);
 
-   Boolean updateWeight(String soId,String logisticsId, BigDecimal weightByG);
+   Boolean updateWeight(String soId, String logisticsId, BigDecimal weightByG, String operation);
 
     BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList);
     /**
@@ -147,4 +157,17 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @return SoB2cLogisticsEntity
      */
     SoB2cLogisticsEntity getByTrackNoOrTransportNo(String logisticsCode);
+
+    /**
+     * 根据销售订单更新跟踪单号
+     * @param soId
+     * @param trackNo
+     */
+    void updateLogisticsBySoId(String soId, String trackNo);
+
+    /**
+     * 根据运单号进行跟踪号更新
+     * @param trackDTOS
+     */
+    void updateTrackNoByTransportNo(List<LogisticsBillDTO.TrackDTO> trackDTOS);
 }

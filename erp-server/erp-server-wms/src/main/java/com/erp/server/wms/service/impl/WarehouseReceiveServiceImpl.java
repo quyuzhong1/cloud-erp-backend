@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
@@ -42,6 +43,7 @@ import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -546,50 +548,31 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds().stream().distinct().collect(Collectors.toList());
-        List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(warehouseReceiveList)) {
-            throw new ServiceException(ApiError.ERROR_98004);
-        }
-
-        //判断是否是审核中的状态
-        long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
-        ).count();
-
-        if (count != warehouseReceiveList.size()) {
-            throw new ServiceException(ApiError.ERROR_98006);
+    public BatchResultDTO approve(WarehouseReceiveEntity entity, String type, String comment, Boolean isNeedProcess,List<WarehouseReceiveDetailEntity> receiveDetailList) {
+        if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        //TODO 待加审核流程
-        if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
+        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             //审核通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                     .set(WarehouseReceiveEntity::getApproveUserId, userInfo.getUid())
                     .set(WarehouseReceiveEntity::getApproveUserName, userInfo.getUserName())
                     .set(WarehouseReceiveEntity::getApproveTime, LocalDateTime.now())
-                    .in(WarehouseReceiveEntity::getId, ids)
+                    .eq(WarehouseReceiveEntity::getId, entity.getId())
                     .update();
-
-            //审核通过发送金蝶
-//            warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             //根据条件生成质检单
-            createQcBill(ids);
-
+            createQcBill(Collections.singletonList(entity.getId()));
             // 更新库存数据
-            updateInventoryTransCore(warehouseReceiveList);
-
-            List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listDetailByMainIds(ids);
+            updateInventoryTransCore(Collections.singletonList(entity));
             List<String> podIds = receiveDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(podIds)) {
                 //修改到货状态
                 poReturnService.updateArrivalState(podIds);
             }
             //修改发货单确认状态
-            List<String> idByDeliverySource = warehouseReceiveList.stream().filter(v-> PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getId).distinct().collect(Collectors.toList());
-            List<String> detailIdsByDeliverySource = receiveDetailList.stream().filter(v->idByDeliverySource.contains(v.getMainId())).map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
+            List<String> detailIdsByDeliverySource = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+            if(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(entity.getSourceType()) && CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
                 srmDeliveryOrderFeign.confirmReceiveStatus(detailIdsByDeliverySource);
             }
         } else {
@@ -598,15 +581,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     .set(WarehouseReceiveEntity::getApproveUserId, userInfo.getUid())
                     .set(WarehouseReceiveEntity::getApproveUserName, userInfo.getUserName())
                     .set(WarehouseReceiveEntity::getApproveTime, LocalDateTime.now())
-                    .in(WarehouseReceiveEntity::getId, ids)
+                    .eq(WarehouseReceiveEntity::getId, entity.getId())
                     .update();
         }
         //操作日志
-        List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个收货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "审核操作");
-
-
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个收货单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
 
@@ -766,75 +746,56 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     /**
      * 批量反审核
      *
-     * @param ids ids
+     * @param entity
+     * @param receiveDetailList
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.ERROR_98004);
+    public BatchResultDTO disApprove(WarehouseReceiveEntity entity,List<WarehouseReceiveDetailEntity> receiveDetailList) {
+        if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
         }
-
-        //已审核支持反审核
-        long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
-        ).count();
-
-        if (count != warehouseReceiveList.size()) {
-            throw new ServiceException(ApiError.ERROR_99003);
-        }
-        //TODO 待加审核流程
-
         //下推入库单不能反审核
-        warehouseReceiveList.forEach(req -> {
-            List<PoInstockEntity> stockInBySourceId = poInstockService.getStockInBySourceId(req.getId());
-            List<PoInstockEntity> collect = stockInBySourceId.stream().filter(obj -> InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(collect)) {
-                throw new ServiceException(ApiError.ERROR_99011);
-            }
-            List<QcInfoEntity> qcList = qcInfoService.listQCBySourceId(req.getId());
-            if (CollectionUtils.isNotEmpty(qcList)) {
-                String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_99042,codes);
-            }
-        });
-
+        List<PoInstockEntity> stockInBySourceId = poInstockService.getStockInBySourceId(entity.getId());
+        List<PoInstockEntity> collect = stockInBySourceId.stream().filter(obj -> InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(collect)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99011.msg);
+        }
+        List<QcInfoEntity> qcList = qcInfoService.listQCBySourceId(entity.getId());
+        if (CollectionUtils.isNotEmpty(qcList)) {
+            String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format(ApiError.ERROR_99042.msg, codes));
+        }
         //修改状态为待提交
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .set(WarehouseReceiveEntity::getApproveUserId, "")
                 .set(WarehouseReceiveEntity::getApproveUserName, "")
                 .set(WarehouseReceiveEntity::getApproveTime, null)
-                .in(WarehouseReceiveEntity::getId, ids)
+                .eq(WarehouseReceiveEntity::getId, entity.getId())
                 .update();
 
-        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listDetailByMainIds(ids);
-        List<String> podIds = receiveDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        List<String> podIds = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(podIds)) {
             //修改到货状态
             poReturnService.updateArrivalState(podIds);
         }
 
         // 更新库存数据，回扣库存
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.WAREHOUSE_RECEIVE, ids);
-        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+        InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
+        inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.WAREHOUSE_RECEIVE);
+        inventoryUnApproveDTO.setBillId(entity.getId());
+        inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         //修改发货单确认状态
-        List<String> idByDeliverySource = warehouseReceiveList.stream().filter(v-> PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getId).distinct().collect(Collectors.toList());
-        List<String> detailIdsByDeliverySource = receiveDetailList.stream().filter(v->idByDeliverySource.contains(v.getMainId())).map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
+        List<String> detailIdsByDeliverySource = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        if(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(entity.getSourceType()) && CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
             srmDeliveryOrderFeign.unConfirmReceiveStatus(detailIdsByDeliverySource);
         }
-        //审核通过发送金蝶
-//        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
-
         //操作日志
-        List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个收货单【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "反审核操作");
-
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog(String.format("反审核了一个收货单【%s】",entity.getCode()), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     /**

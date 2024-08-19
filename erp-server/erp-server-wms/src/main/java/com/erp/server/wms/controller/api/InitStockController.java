@@ -4,6 +4,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -15,19 +16,27 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
+import com.erp.model.wms.entity.InitStockEntity;
+import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.server.wms.service.InitStockService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 期初库存管理
  * @author zhangchunlin
  * @since 2023-05-11
  */
+@Slf4j
 @AllArgsConstructor
 @RestController
 @LogSystemModule("期初库存")
@@ -156,7 +165,7 @@ public class InitStockController extends BaseController {
 
     /**
      * 审核
-     * @param baseApproveParamDTO
+     * @param dto
      * @return
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核初期库存")
@@ -166,9 +175,24 @@ public class InitStockController extends BaseController {
             menuCode = "wms:initStock:approve",
             serviceClass = InitStockService.class,
             keyIdName = "ids")
-    public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        initStockService.approve(baseApproveParamDTO);
-        return  success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<InitStockEntity> entityList = initStockService.listByIds(ids);
+        for (String id : ids) {
+            InitStockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"初期库存记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(initStockService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("初期库存审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -183,9 +207,24 @@ public class InitStockController extends BaseController {
             menuCode = "wms:initStock:disApprove",
             serviceClass = InitStockService.class,
             keyIdName = "ids")
-    public ApiResult<Void> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        initStockService.disApprove(dto.getIds());
-        return  success();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<InitStockEntity> entityList = initStockService.listByIds(dto.getIds());
+        for (String id : ids) {
+            InitStockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"初期库存记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(initStockService.disApprove(entity));
+            }catch (Exception e){
+                log.error("初期库存反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

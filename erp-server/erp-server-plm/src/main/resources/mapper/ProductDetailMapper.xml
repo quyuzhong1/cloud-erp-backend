@@ -320,10 +320,12 @@
     <select id="getNoSpecDetailById" resultType="com.erp.model.plm.dto.ProductNoDetailDTO">
         SELECT pi."id",
                pd.images_url,
+               pd.id as skuId,
                pd.sku_no,
                pd.product_state,
                pd.name,
                pd.name_en,
+               pi.spu_no as spuNo,
                pi.name    as spuName,
                pi.name_en as spuNameEn,
                pi.charge_name,
@@ -370,6 +372,7 @@
                pd.product_state,
                pd.name,
                pd.name_en,
+               pi.spu_no    as spuNo,
                pi.name    as spuName,
                pi.name_en as spuNameEn,
                pi.charge_name,
@@ -442,8 +445,9 @@
           AND pi.id = #{productId}
     </select>
 
-    <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ProductDetailExcelDTO">
+    <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ProductDetailExcelExportDTO">
         SELECT
+        pd.images_url as imageUrl,
         pi.spu_no as spuNo,
         pd.sku_no as skuNo,
         pi.category_id AS categoryId,

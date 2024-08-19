@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -8,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
+import com.erp.model.wms.entity.SoReturnReceiveEntity;
 
 import java.util.List;
 
@@ -103,17 +105,20 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @description: 审核
      * @author Will
      * @date: 2023/5/15 17:55
-     * @param baseApproveParamDTO
+     * @param entity
+     * @param comment
+     * @param type
+     * @param isNeedProcess
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(MachineInfoEntity entity, String type, String comment, Boolean isNeedProcess);
     /**
      * @description: 反审核
      * @author Will
      * @date: 2023/5/15 17:55
-     * @param ids
+     * @param entity
      * @return Boolean
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(MachineInfoEntity entity);
     /**
      * @description: 取消流程
      * @author Will

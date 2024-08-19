@@ -1544,6 +1544,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateCreatePoType(List<String> purchaseOrderIds) {
+        if (CollectionUtils.isEmpty(purchaseOrderIds)){
+            return;
+        }
         //关联信息
         List<PurchaseApplicationRefPoEntity> list = purchaseApplicationRefPoService.listByPurchaseOrderIds(purchaseOrderIds);
         if (CollectionUtils.isEmpty(list)) {

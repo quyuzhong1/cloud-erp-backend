@@ -61,6 +61,9 @@
         <where>
             ${params.sqlMap.default}
             and vi.is_deleted = false
+            <if test="params.hideZeroInventory">
+                and  vi.qty != 0
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
@@ -83,15 +86,11 @@
                vi.warehouse_id,
                vi.sku_id,
                vi.dict_inventory_status,
-               COALESCE(inv.qty,0) as qty,
                COALESCE(vi.qty,0) as virtualQty,
-               vi.virtual_warehouse_id
+               vi.virtual_warehouse_id,
+               (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty,
+               (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as frozenQty
         from virtual_inventory vi
-        left join (
-            select inv.sku_id,inv.warehouse_id,inv.dict_inventory_status,sum(qty) as qty from inventory inv where inv.is_deleted = false
-            group by inv.sku_id,inv.warehouse_id,inv.dict_inventory_status
-        ) inv on vi.sku_id = inv.sku_id and vi.warehouse_id = inv.warehouse_id
-              and vi.dict_inventory_status = inv.dict_inventory_status
         <where>
             vi.is_deleted = false
             and vi.sku_id in
@@ -107,11 +106,12 @@
 
     <!-- 库存差异分页查询 -->
     <select id="diffPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDTO">
-        select diff.warehouseId,diff.skuId,pd.sku_no as skuNo,wh.name as warehouseName,diff.virtualQty,diff.usableQty from (select
+        select diff.warehouseId,diff.skuId,pd.sku_no as skuNo,pd.name as productName,wh.name as warehouseName,diff.virtualQty,diff.usableQty,diff.frozenQty from (select
             vi.warehouse_id as warehouseId,
             vi.sku_id as skuId,
             COALESCE(sum(vi.qty),0) as virtualQty,
-            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty
+            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty,
+            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as frozenQty
         from virtual_inventory vi
         <where>
              vi.is_deleted = false
@@ -132,9 +132,15 @@
         where
             ${params.sqlMap.default}
         <if test="params.isDiff != null and params.isDiff == true">
-            and  virtualQty > usableQty
+            and  virtualQty > usableQty + frozenQty
         </if>
         <if test="params.isDiff != null and params.isDiff == false">
+            and  usableQty >= virtualQty + frozenQty
+        </if>
+        <if test="params.isExceed != null and params.isExceed == true">
+            and  virtualQty > usableQty
+        </if>
+        <if test="params.isExceed != null and params.isExceed == false">
             and  usableQty >= virtualQty
         </if>
     </select>
@@ -145,8 +151,9 @@
             select
             vi.sku_id,vi.warehouse_id,
             COALESCE(sum(vi.qty),0) as virtualQty,
-            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty
-            from virtual_inventory vi
+            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty,
+            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as frozenQty
+        from virtual_inventory vi
             <where>
                vi.is_deleted = false
                 <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -154,7 +161,7 @@
                 </if>
             </where>
             group by vi.sku_id,vi.warehouse_id
-            ) a where virtualQty > usableQty;
+            ) a where virtualQty > usableQty + frozenQty;
     </select>
 
     <!-- 库存差异明细分页查询 -->
@@ -186,7 +193,7 @@
 
     <!-- 虚拟库存数据 -->
     <select id="listDiffExportData" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDiffExportDataDTO">
-        select diff.skuId,pd.sku_no as skuNo,pd.name as productName,diff.warehouseId,wh.name as warehouseName,diff.virtualWarehouseId,diff.virtualQty,diff.virtualUsableQty,diff.virtualFrozenQty,diff.usableQty,diff.totalVirtualQty from (select
+        select diff.skuId,pd.sku_no as skuNo,pd.name as productName,diff.warehouseId,wh.name as warehouseName,diff.virtualWarehouseId,diff.virtualQty,diff.virtualUsableQty,diff.virtualFrozenQty,diff.usableQty,diff.frozenQty,diff.totalVirtualQty from (select
         vi.sku_id as skuId,
         vi.warehouse_id as warehouseId,
         vi.virtual_warehouse_id as virtualWarehouseId,
@@ -194,7 +201,8 @@
         (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
         (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and virtual_warehouse_id = vi.virtual_warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty,
         (select  COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id) as totalVirtualQty,
-        (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty
+        (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty,
+        (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as frozenQty
         from virtual_inventory vi
         <where>
              vi.is_deleted = false
@@ -213,7 +221,7 @@
         left join product_detail pd on diff.skuId = pd.id and pd.is_deleted = false
         left join warehouse wh on diff.warehouseId = wh.id and wh.is_deleted = false
         where ${params.sqlMap.default}
-        and diff.totalVirtualQty > diff.usableQty
+        and diff.totalVirtualQty > diff.usableQty + diff.frozenQty
     </select>
 
 
@@ -309,6 +317,27 @@
         </where>
         group by vi.warehouse_id,vi.sku_id
     </select>
+
+    <!-- 根据实体仓库查询虚拟库存数量 -->
+    <select id="listInventoryQtyByWarehouseId" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$WarehouseInventoryQtyDTO">
+        select
+            COALESCE(sum(vi.qty),0) as qty,
+            vi.warehouse_id,
+            vi.sku_id
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false and vi.warehouse_id in
+            <foreach collection="warehouseIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+            and vi.sku_id in
+            <foreach collection="skuIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </where>
+        group by vi.warehouse_id,vi.sku_id
+    </select>
+
     <select id="getBySkuIdAndVwId" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$CommonDTO">
         select <include refid="Base_Column_List"/>
             from virtual_inventory
@@ -318,7 +347,7 @@
     <!-- 查询仓库统计数据 -->
     <select id="listWarehouseStatistics"
             resultType="com.erp.model.wms.dto.VirtualInventoryDTO$WarehouseStatisticsExcelDTO">
-        select diff.sku_id,pd.sku_no as skuNo,pd.name as productName,diff.warehouse_id,wh.name as warehouseName,wh.kingdee_warehouse_code as warehouseCode,diff.usableQty,COALESCE(inv.usableQty,0) as distributionQty,(diff.usableQty - COALESCE(inv.usableQty,0)) as unDistributionQty from
+        select diff.sku_id,pd.sku_no as skuNo,pd.name as productName,diff.warehouse_id,wh.name as warehouseName,wh.kingdee_warehouse_code as warehouseCode,diff.usableQty,COALESCE(frozenDiff.frozenQty,0) as frozenQty,diff.usableQty + COALESCE(frozenDiff.frozenQty,0) as realQty,COALESCE(inv.usableQty,0) as distributionQty,(COALESCE(diff.usableQty,0) + COALESCE(frozenDiff.frozenQty,0) - COALESCE(inv.usableQty,0)) as unDistributionQty from
           (select
                vi.sku_id,
                vi.warehouse_id,
@@ -326,6 +355,13 @@
            from inventory vi
            where vi.is_deleted = false and vi.dict_inventory_status = 'usable'
            group by vi.sku_id , vi.warehouse_id) diff
+            left join (select
+            vi.sku_id,
+            vi.warehouse_id,
+            sum(vi.qty) as frozenQty
+            from inventory vi
+            where vi.is_deleted = false and vi.dict_inventory_status = 'frozen'
+            group by vi.sku_id , vi.warehouse_id) frozenDiff on frozenDiff.sku_id = diff.sku_id and frozenDiff.warehouse_id = diff.warehouse_id
            left join (
            select inv.sku_id , inv.warehouse_id ,sum(inv.qty) as usableQty from virtual_inventory inv
            where inv.is_deleted = false group by inv.sku_id , inv.warehouse_id
@@ -335,10 +371,10 @@
         <where>
             ${params.sqlMap.default}
             <if test="params.isDiff != null and params.isDiff == true">
-                and  COALESCE(inv.usableQty,0) > diff.usableQty
+                and  COALESCE(inv.usableQty,0) > COALESCE(diff.usableQty,0)  + COALESCE(frozenDiff.frozenQty,0)
             </if>
             <if test="params.isDiff != null and params.isDiff == false">
-                and  diff.usableQty >= COALESCE(inv.usableQty,0)
+                and  COALESCE(diff.usableQty,0)  + COALESCE(frozenDiff.frozenQty,0) >= COALESCE(inv.usableQty,0)
             </if>
         </where>
     </select>

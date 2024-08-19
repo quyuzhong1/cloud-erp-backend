@@ -205,8 +205,13 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
         	
             List<DmpSoOutstockPositionEntity> positionList = recIdMaps.get(item.getThirdDetailId());
             if(CollUtil.isNotEmpty(positionList)) {
-            	List<String> nullPositionNo = Arrays.asList("直发暂存" , "发货暂存待放回" , "下架暂存" , "销退质检" , "补货暂存" , "其它未上架" , "销退暂存" , "盘亏暂存" , "发货暂存" , "采购未上架");
-            	positionList.removeIf(p -> StringUtils.isNotBlank(p.getPositionNo()) && nullPositionNo.contains(p.getPositionNo()));
+            	List<String> nullPositionNo = Arrays.asList("直发暂存" , "发货暂存待放回" , "下架暂存" , "销退质检" , "补货暂存" , "其它未上架" , "销退暂存" , "盘亏暂存" , "发货暂存" , "采购未上架" , "空仓位");
+            	positionList.forEach(p -> {
+            		String positionNo = p.getPositionNo();
+            		if(StringUtils.isNotBlank(positionNo) && nullPositionNo.contains(positionNo)) {
+            			p.setPositionNo("");
+            		}
+            	});
             	if(CollUtil.isNotEmpty(positionList)) {
             		itemEntity.setPositionDetailsList(BeanUtil.copyToList(positionList, PositionDetailsList.class));
             	}
@@ -215,5 +220,10 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
             entityItemList.add(itemEntity);
         }
         return entityItemList;
+    }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("code");
     }
 }

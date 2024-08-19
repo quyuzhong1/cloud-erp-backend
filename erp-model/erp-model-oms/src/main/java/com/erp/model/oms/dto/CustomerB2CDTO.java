@@ -751,8 +751,6 @@ public class CustomerB2CDTO implements Serializable {
          */
         private String name;
 
-        private ApproveStatusEnum approveStatus;
-
         /**
          * 是否禁用
          * false 没有
@@ -963,12 +961,5 @@ public class CustomerB2CDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
-        private String approveStatus;
-
-        /**
-         * 是否禁用
-         * false 没有
-         */
-        private Boolean disabled;
     }
 }

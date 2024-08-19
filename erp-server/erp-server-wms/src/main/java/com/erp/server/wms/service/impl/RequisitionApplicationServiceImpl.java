@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -33,6 +34,13 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
@@ -151,7 +159,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -172,6 +179,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         // 新增明细
         requisitionApplicationDetailService.add(addDTO, requisitionApplicationEntity.getId());
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "要货申请" , requisitionApplicationEntity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "新增操作");
+
         return new BaseResultDTO.AddDTO(requisitionApplicationEntity.getId(), code);
     }
 
@@ -285,6 +296,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
                     .filter(req -> req.getParentSkuId().equals(handleListDTO.getSkuId())
                             && req.getBomVersion().equals(handleListDTO.getBomVersion())
+                            && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType())
                     ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 handleListDTO.setIsCombination(Boolean.TRUE);
@@ -779,11 +791,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (!Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus())) {
             throw new ServiceException(ApiError.WAIT_HANDLE_IS_CANCEL_PROCESS);
         }*/
-        pickingListsService.exist(id);
         //待处理撤销
         if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus())) {
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus());
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE_ING.getStatus())) {
+            pickingListsService.exist(id);
             //处理中撤销
             transferInfoService.requisitionApplicationCancelProcess(entity.getCode(), SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
             //获取明细
@@ -987,6 +999,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             String msg = StrUtil.format("用户【{}】绑定单号为【{}】货件号为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), requisitionApplicationEntity.getCode(), fbaShipmentEntity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "绑定货件");
+
+            //更新头程发货单中的FBA货件号
+            FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getOne(new LambdaQueryWrapper<FirstMileDeliveryEntity>()
+                    .eq(FirstMileDeliveryEntity::getSourceCode, requisitionApplicationEntity.getCode())
+                    .eq(FirstMileDeliveryEntity::getSourceType, SourceTypeEnum.REQUISITION_APPLICATION.getCode()));
+            if(firstMileDelivery != null){
+                firstMileDeliveryDetailService.lambdaUpdate()
+                        .eq(FirstMileDeliveryDetailEntity::getMainId, firstMileDelivery.getId())
+                        .set(FirstMileDeliveryDetailEntity::getFbaShipmentCode, requisitionApplicationEntity.getFbaShipmentCode())
+                        .update();
+            }
         }
         if(CollectionUtils.isNotEmpty(updateList)){
             service.updateBatchById(updateList);
@@ -1014,10 +1037,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 回写数量，处理组合数据
         List<String> skuIds = detailEntities.stream().map(RequisitionApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         for (RequisitionApplicationDetailEntity detailEntity : detailEntities) {
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
+                            && req.getBomVersion().equals(detailEntity.getBomVersion())
                             && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).findFirst().orElse(null);
             if (!ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
@@ -1034,6 +1058,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         .map(PickingDetailEntity::getQty)
                         .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty);
+            }
+            if (detailEntity.getApproveQty() < detailEntity.getPickingQty()) {
+                throw new ServiceException(ApiError.ERROR_99133, detailEntity.getSkuNo());
             }
         }
         requisitionApplicationDetailService.updateBatchById(detailEntities);
@@ -1368,6 +1395,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 } else {
                     detailAddDto.setWarehouseLocation("");
                 }
+                detailAddDto.setFbaShipmentCode(viewDTO.getFbaShipmentCode());
                 detailAddList.add(detailAddDto);
             }
 
@@ -1417,7 +1445,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
             ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(application.getChannelId());
             addDTO.setDeliveryWarehouseId(shopInfo.getWarehouseId());
+            addDTO.setCountryCode(shopInfo.getDictCountryCode());
         }else {
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(application.getChannelId());
+            if(Objects.nonNull(overseasProviderWarehouseEntity)){
+                addDTO.setCountryCode(overseasProviderWarehouseEntity.getCountry());
+            }
             addDTO.setDeliveryWarehouseId(application.getChannelId());
         }
         addDTO.setSourceId(application.getId());
@@ -1433,6 +1466,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             detail.setSkuNo(detailEntity.getSkuNo());
             detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
             detail.setSourceDetailId(detailEntity.getId());
+            detail.setBomVersion(detailEntity.getBomVersion());
             detailList.add(detail);
             detailEntity.setPickingQty(detailEntity.getApproveQty());
             updateDetails.add(detailEntity);
@@ -1561,6 +1595,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
+        //查询第三方SKU信息
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList, "", "","");
+
         for (RequisitionApplicationDTO.ListDTO listDTO : list) {
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
@@ -1610,7 +1647,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      */
     private void validateSubmit(RequisitionApplicationEntity entity) {
         // 待提交允许提交
-        if(!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus()) ) {
+        if (!entity.getStatus().equals(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus())) {
             throw new ServiceException(ApiError.IS_SUBMIT_IN_SUBMIT);
         }
         return;

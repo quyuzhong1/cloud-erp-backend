@@ -17,6 +17,10 @@ import java.util.List;
 public class ProductSkuExcelDTO extends PermissionsDTO {
 
     /**
+     * 导出字段
+     */
+    private List<String> exportFields;
+    /**
      * sku/spu/编号
      */
     private String no;

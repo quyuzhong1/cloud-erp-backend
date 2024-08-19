@@ -8,6 +8,7 @@ import com.erp.sdk.oms.amz.spapi.csv.ReportFbaMyiAllInventoryCsvEntity;
 import com.erp.sdk.oms.amz.spapi.csv.ReportReservedCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFbaInventoryPlanningMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFbaMyiAllInventoryMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportFbaMyiUnsuppressedInventoryMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportReservedMongoDTO;
 import com.erp.server.dmp.convert.tool.TypeConversionWorker;
 import org.apache.commons.lang3.StringUtils;
@@ -157,4 +158,45 @@ public interface DmpFbaInventoryConverter {
             return Integer.parseInt(numStr);
         }
     }
+
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            // 其他记录信息
+//            @Mapping(target = "name", source = "shopInfoEntity.warehouseName"),
+            @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\":listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
+            @Mapping(target = "productName", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\":listingInfoWithSkuMappingDTO.checkAndGetProductName())"),
+            @Mapping(target = "dataStartTime", expression = "java(java.time.OffsetDateTime.parse(dataStartTime))"),
+            @Mapping(target = "dataEndTime", expression = "java(java.time.OffsetDateTime.parse(dataEndTime))"),
+            @Mapping(target = "warehouseName", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(shopInfoEntity.getWarehouseName())? \"\":shopInfoEntity.getWarehouseName())"),
+            @Mapping(target = "warehouseId", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(shopInfoEntity.getWarehouseId())? \"\":shopInfoEntity.getWarehouseId())"),
+            // 库存报告管理信息
+            @Mapping(target = "asin", source = "esvEntity.asin"),
+            @Mapping(target = "msku", source = "esvEntity.sku"),
+            @Mapping(target = "fnSku", source = "esvEntity.fnsku"),
+            @Mapping(target = "deliveryChannels", expression = "java(esvEntity.switchDeliveryChannels())"),
+            @Mapping(target = "fbmFulfillableQty", expression = "java(esvEntity.mfnFulfillableQuantityCheckToInt())"),
+            @Mapping(target = "inboundWorkingQty", expression = "java(esvEntity.afnInboundWorkingQuantityCheckToInt())"),
+            @Mapping(target = "inboundShippedQty", expression = "java(esvEntity.afnInboundShippedQuantityCheckToInt())"),
+            @Mapping(target = "inboundReceivingQty", expression = "java(esvEntity.afnInboundReceivingQuantityCheckToInt())"),
+            @Mapping(target = "fulfillableQty", expression = "java(esvEntity.afnFulfillableQuantityCheckToInt())"),
+            @Mapping(target = "reservedQty", expression = "java(esvEntity.afnReservedQuantityCheckToInt())"),
+            @Mapping(target = "researchingQty", expression = "java(esvEntity.afnResearchingQuantityCheckToInt())"),
+            @Mapping(target = "unsellableQty", expression = "java(esvEntity.afnUnsellableQuantityCheckToInt())"),
+    })
+    FbaInventoryEntity reportFbaMyiUnSuppressedInventoryToEntity(
+            ReportFbaMyiUnsuppressedInventoryMongoDTO esvEntity,
+            ShopInfoEntity shopInfoEntity,
+            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO,
+            String dataStartTime,
+            String dataEndTime
+    );
 }

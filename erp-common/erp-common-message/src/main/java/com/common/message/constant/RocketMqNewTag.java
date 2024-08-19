@@ -41,4 +41,39 @@ public class RocketMqNewTag {
      * 新中台平台订单
      */
     public static final String DMP_PLATFORM_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_order_to_oms_tag";
+
+    /**
+     * 物流轨迹
+     */
+    public static final String DMP_TRACK123_TO_TMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_track123_to_tms_tag";
+
+    /**
+     * 新中台平台仓库
+     */
+    public static final String DMP_PLATFORM_WAREHOUSE_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_warehouse_to_wms_tag";
+
+    /**
+     * 新中台平台中转仓库
+     */
+    public static final String DMP_PLATFORM_TRANSFER_WAREHOUSE_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_transfer_warehouse_to_wms_tag";
+
+    /**
+     * 新中台平台区域
+     */
+    public static final String DMP_PLATFORM_REGION_TO_SYS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_region_to_sys_tag";
+
+    /**
+     * 新中台平台库存
+     */
+    public static final String DMP_PLATFORM_INVENTORY_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_inventory_to_wms_tag";
+
+    /**
+     * 新中台平台入库
+     */
+    public static final String DMP_PLATFORM_INBOUND_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_inbound_to_wms_tag";
+
+    /**
+     * 新中台平台出库
+     */
+    public static final String DMP_PLATFORM_OUTBOUND_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_outbound_to_wms_tag";
 }

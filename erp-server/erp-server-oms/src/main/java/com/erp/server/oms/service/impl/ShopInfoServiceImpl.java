@@ -492,6 +492,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setSalesOrgName(orgName);
         shopInfo.setChargeId(dto.getChargeId());
         shopInfo.setIossTaxNo(dto.getIossTaxNo());
+        shopInfo.setVoecTaxNo(dto.getVoecTaxNo());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));

@@ -275,13 +275,13 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();// 提交审核的单据id
+    public BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,TransferOutEntity entity) {
+        List<String> ids = Arrays.asList(entity.getId());// 提交审核的单据id
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(baseApproveParamDTO.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(baseApproveParamDTO.getComment())) {
             throw new ServiceException("审核不通过请填写审核意见");
         }
-        List<TransferOutEntity> list = super.listByIds(ids);
+        List<TransferOutEntity> list = Arrays.asList(entity);
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(list),()->new ServiceException("未找到分步式调出单数据"));
         Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
         // 只有审核中的数据允许审核
@@ -308,6 +308,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<Pair<String, String>> pairList = list.stream().
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "状态变更");
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -384,14 +385,10 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void disApprove(List<String> ids) {
-        List<TransferOutEntity> list = super.listByIds(ids);
-        Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
-        ids.stream().forEach(id->{
-            TransferOutEntity transferOutEntity = transferOutEntityMap.get(id);
-            ValidatorUtil.isTrue(Objects.nonNull(transferOutEntity),()->new ServiceException("分步式调出单数据不存在"));
-            ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()),()->new ServiceException("只有已审核数据支持反审核"));
-        });
+    public BatchResultDTO disApprove(TransferOutEntity transferOutEntity) {
+        List<String> ids = Arrays.asList(transferOutEntity.getId());
+        List<TransferOutEntity> list = Arrays.asList(transferOutEntity);
+        list.forEach(v-> ValidatorUtil.isTrue(Objects.equals(v.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()),()->new ServiceException("只有已审核数据支持反审核")));
         // 检查是否已经有下推单据
         List<TransferInEntity> transferInEntityList = transferInService.listBySourceIds(ids);
         if (CollectionUtils.isNotEmpty(transferInEntityList)) {
@@ -409,6 +406,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 库存交易反审核
         inventoryTransCoreService.batchUnApprove(new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_OUT, ids));
         // TODO 流程
+        return BatchResultDTO.success(transferOutEntity.getId(),transferOutEntity.getCode(),"操作成功");
     }
 
     @Override

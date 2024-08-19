@@ -116,6 +116,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         WDT_NULL_LOCATION.add("盘亏暂存");
         WDT_NULL_LOCATION.add("发货暂存");
         WDT_NULL_LOCATION.add("采购未上架");
+        WDT_NULL_LOCATION.add("空仓位");
     }
 
     /**
@@ -261,7 +262,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
                         findFirst().map(SkuVO::getSkuId).orElse("");
                 if (StringUtils.isBlank(skuId)) {
-                    throw new ServiceException(ApiError.ERROR_92055, detailEntity.getSkuNo());
+                    throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, detailEntity.getSkuNo());
                 }
                 String detailId = IdWorker.getIdStr();
                 detailEntity.setId(detailId);
@@ -291,7 +292,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
                             findFirst().map(SkuVO::getSkuId).orElse("");
                     if (StringUtils.isBlank(skuId)) {
-                        throw new ServiceException(ApiError.ERROR_92055, detailEntity.getSkuNo());
+                        throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, detailEntity.getSkuNo());
                     }
                     String detailId = IdWorker.getIdStr();
                     detailEntity.setId(detailId);
@@ -465,7 +466,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).
                     findFirst().map(SkuVO::getSkuId).orElse("");
             if (StringUtils.isBlank(skuId)) {
-                throw new ServiceException(ApiError.ERROR_92055, skuNo);
+                throw new ServiceException(ApiError.ERROR_SKU_NOTFOUND, skuNo);
             }
             SoOutstockDetailEntity detailEntity = new SoOutstockDetailEntity();
             String detailId = IdWorker.getIdStr();

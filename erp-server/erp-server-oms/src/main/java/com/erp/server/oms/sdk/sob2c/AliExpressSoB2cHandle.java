@@ -130,16 +130,10 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
      * @param mainEntity
      */
     public void aliExpressDeliveryQuery(PlatformOrderDTO dto, SoB2cDTO.PullOrderResultDTO resultDTO, SoB2cEntity mainEntity) {
-        String warehouseName = "";
-        if (CollectionUtils.isNotEmpty(dto.getDetails())) {
-            warehouseName = dto.getDetails().get(0).getWarehouseName();
-        }
         //如果有发货时间
         List<PlatformOrderLogisticsDTO> logisticsDTOS = dto.getLogisticsList().stream().filter(req -> req.getDeliveryTime() != null).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(logisticsDTOS) && StringUtils.isNotBlank(warehouseName)) {
-            if (resultDTO.getIsWarehouseEmpty()) {
-                return;
-            }
+        if (CollectionUtils.isNotEmpty(logisticsDTOS)) {
+
             //可能一个订单有多个发货单，并且sku 跟销售订单也不一致
             //根据仓库分组，同个仓库生成相同的销售出库单，销售出库单的sku和数量取速卖通返回的数据
             //根据平台sku查询Listing信息
@@ -211,7 +205,6 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
             });
         }
     }
-
     /**
      * 新增速卖通发货单
      * @param dto

@@ -181,7 +181,7 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @param dto
      * @return
      */
-    String pdaPackingSave(WmsCartonSpecDTO.AddDTO dto);
+    WmsCartonDTO.PrintDTO pdaPackingSave(WmsCartonSpecDTO.AddDTO dto);
 
     /**
      * 新增装箱-详情
@@ -202,7 +202,7 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @param dto
      * @return
      */
-    String stagingPacking(WmsCartonSpecDTO.AddDTO dto);
+    WmsCartonDTO.PrintDTO stagingPacking(WmsCartonSpecDTO.AddDTO dto);
 
     /**
      * 根据外部单号进行查询箱规详情
@@ -276,7 +276,7 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @param cartonId
      * @return
      */
-    String getPrintBarCode(String cartonId);
+    WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId);
 
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 

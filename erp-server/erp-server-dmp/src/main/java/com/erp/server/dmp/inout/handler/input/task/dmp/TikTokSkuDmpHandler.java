@@ -9,25 +9,33 @@ import com.common.business.utils.CollectionUtils;
 import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
+import com.common.core.utils.ObjectUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.dmp.entity.DmpProductInfoEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.erp.server.dmp.service.DmpProductInfoService;
 import jodd.util.StringUtil;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Scope("prototype")
 public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
 
 
-    @Override
+    @Resource
+    private DmpProductInfoService dmpProductInfoService;
+
+
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
         List<Map<String, Object>> dmpInputMongoChildEntityList = new ArrayList<>();
         List<ParamData> paramDataList = new ArrayList<>();
@@ -40,7 +48,7 @@ public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
                 Object skuObj = dmpInputMongoChild.get("skus");
                 if (skuObj != null) {
                     List<Map<String, Object>> skuList = (List<Map<String, Object>>) skuObj;
-
+                    //状态
                     skuList.forEach(l -> {
                         //创建时间
                         Object createTimeObj = dmpInputMongoChild.get("createTime");
@@ -59,6 +67,15 @@ public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
                         }
 
                         l.put("spuId", dmpInputMongoChild.get("fid"));
+                        l.put("skuNo", l.get("sellerSku"));
+
+                        Object price = l.get("price");
+                        if (ObjectUtil.isNotEmpty(price)) {
+                            Map<String,Object> priceMap = (Map<String,Object>) price;
+                            l.put("sellPrice", priceMap.get("salePrice"));
+                        }
+
+                        l.put("name", dmpInputMongoChild.get("title"));
 
                         List<Map<String, Object>> mainImages = (List<Map<String, Object>>) dmpInputMongoChild.get("mainImages");
                         if (CollectionUtil.isNotEmpty(mainImages)) {
@@ -89,8 +106,8 @@ public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
                         if (categoryChainsObj != null) {
                             List<Map<String, String>> categoryChainsList = (List<Map<String, String>>) categoryChainsObj;
                             if (CollectionUtil.isNotEmpty(categoryChainsList)) {
-                                l.put("parent_category_name", categoryChainsList.get(0).get("localName"));
-                                l.put("category_name", categoryChainsList.get(1).get("localName"));
+                                l.put("parentCategoryName", categoryChainsList.get(0).get("localName"));
+                                l.put("categoryName", categoryChainsList.get(1).get("localName"));
                             }
                         }
 
@@ -100,7 +117,7 @@ public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
                         if (CollectionUtil.isNotEmpty(salesAttributes)) {
                             String specifics = "";
                             for (Map<String, Object> salesAttribute : salesAttributes) {
-                                specifics = specifics + salesAttribute.get("name") + ":" + salesAttribute.get("valueName") +" ";
+                                specifics = specifics + salesAttribute.get("name") + ":" + salesAttribute.get("valueName") + " ";
                             }
                             specifics = specifics.trim();
                             l.put("specifics", specifics);
@@ -121,7 +138,7 @@ public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
                         if (packageWeightObj != null) {
                             Map<String, String> packageWeightMap = (Map<String, String>) packageWeightObj;
                             l.put("grossWeight", packageWeightMap.get("value"));
-                            l.put("packageUnit", packageWeightMap.get("unit"));
+                            l.put("weightUnit", packageWeightMap.get("unit"));
                         }
                         l.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
                         l.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
@@ -153,5 +170,4 @@ public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
             dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
         }
     }
-
 }

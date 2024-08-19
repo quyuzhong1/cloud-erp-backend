@@ -5,7 +5,11 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
+import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -71,9 +75,16 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @description: 审核
      * @author Will
      * @date: 2023/3/16 12:09
-     * @param baseApproveParamDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      */
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(PurchaseChangeEntity entity, String type, String comment, Boolean isNeedProcess,
+                           List<PurchaseChangeDetailEntity> purchaseChangeDetailEntityList,
+                           List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList,
+                           List<PoReturnDetailEntity> returnDetailEntityList,
+                           List<WarehouseReceiveDetailEntity> receiveDetailEntityList);
 
     /**
      * @description: 导出

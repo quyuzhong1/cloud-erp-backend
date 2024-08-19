@@ -16,6 +16,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.*;
+import com.erp.model.sys.dto.PlmCfgSettingDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.ProductConstant;
@@ -29,10 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -74,6 +72,8 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     @Resource
     private DmpMqFeign dmpMqFeign;
 
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     /**
      * 组装数据发送到金蝶
@@ -233,11 +233,24 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             //一级供应商
             resultMap.put("mainSupplier", productPurchaseEntity.getMainSupplier());
         }
+        //获取系统配置的物料属性控制
+        List<PlmCfgSettingDTO.MaterialAttributeControlDetail> materialAttributeControlDetailList = cfgSettingService.view().getMaterialAttributeControl().getDetailList();
+        if(CollectionUtils.isNotEmpty(materialAttributeControlDetailList)){
+            PlmCfgSettingDTO.MaterialAttributeControlDetail materialAttributeControlDetail = materialAttributeControlDetailList.stream().filter(v->v.getMaterialAttributeList().contains(productInfoEntity.getPropertyId())).findFirst().orElse(null);
+            if(Objects.nonNull(materialAttributeControlDetail)) {
+                resultMap.put("allowProduction", materialAttributeControlDetail.isAllowProduction());
+                resultMap.put("allowInventory", materialAttributeControlDetail.isAllowInventory());
+                resultMap.put("allowPurchase", materialAttributeControlDetail.isAllowPurchase());
+                resultMap.put("allowSubContract", materialAttributeControlDetail.isAllowSubContract());
+                resultMap.put("allowTransferAssets", materialAttributeControlDetail.isAllowTransferAssets());
+                resultMap.put("allowSale", materialAttributeControlDetail.isAllowSale());
+            }
+        }
         //服务和费用类型不允许库存
         if (StrUtil.equals(productInfoEntity.getProperty(), ProductConstant.PRODUCT_PROPERTY_COST)
                 || StrUtil.equals(productInfoEntity.getProperty(), ProductConstant.PRODUCT_PROPERTY_SERVICE))  {
             //不允许库存
-            resultMap.put("isStock", Boolean.FALSE);
+            resultMap.put("allowInventory", Boolean.FALSE);
         }
 
         //生成任务

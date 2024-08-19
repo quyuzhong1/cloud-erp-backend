@@ -13,9 +13,12 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.wms.dto.TransferInDTO;
+import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.server.wms.query.TransferInQueryHandler;
 import com.erp.server.wms.service.TransferInService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 调拨管理-分布式调入
@@ -37,6 +42,7 @@ import java.util.List;
 @RestController
 @LogSystemModule("分布式调入单")
 @RequestMapping("/transfer/in")
+@Slf4j
 public class TransferInController extends BaseController {
 
     @Resource
@@ -183,10 +189,24 @@ public class TransferInController extends BaseController {
             serviceClass = TransferInService.class,
             keyIdName = "ids"
     )
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = transferInService.approve(dto);
-        return result ? success() : failure();
-
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferInEntity> entityList = transferInService.listByIds(ids);
+        for (String id : ids) {
+            TransferInEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"分布式调入单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInService.approve(dto, entity));
+            }catch (Exception e){
+                log.error("分布式调入单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -220,9 +240,24 @@ public class TransferInController extends BaseController {
             serviceClass = TransferInService.class,
             keyIdName = "ids"
     )
-    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = transferInService.disApprove(dto);
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferInEntity> entityList = transferInService.listByIds(ids);
+        for (String id : ids) {
+            TransferInEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"分布式调出单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInService.disApprove(entity));
+            }catch (Exception e){
+                log.error("分布式调入单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

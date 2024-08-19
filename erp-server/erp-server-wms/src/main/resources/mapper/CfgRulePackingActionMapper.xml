@@ -4,18 +4,51 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.CfgRulePackingActionEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="warehouse_id" property="warehouseId" />
-        <result column="warehouse_area_id" property="warehouseAreaId" />
-        <result column="outbound_mode" property="outboundMode" />
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="warehouse_id" property="warehouseId"/>
+        <result column="warehouse_area_id" property="warehouseAreaId"/>
+        <result column="outbound_mode" property="outStockMode"/>
     </resultMap>
+    <select id="listLocationByRule"
+            resultType="com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO$CfgRulePickingInventoryDTO">
+        SELECT crp.id ruleId,
+        crpa.warehouse_id warehouseId,
+        crpa.warehouse_area_id warehouseAreaId,
+        inv.sku_id skuId,
+        inv.sku_no skuNo,
+        inv.warehouse_location warehouseLocation,
+        inv.qty,
+        crp.priority,
+        crp.update_time,
+        crpa.index
+        FROM cfg_rule_picking crp
+        INNER JOIN cfg_rule_picking_action crpa ON crpa.is_deleted = FALSE AND crpa.rule_id = crp.id
+        INNER JOIN inventory inv ON inv.is_deleted = FALSE and inv.warehouse_id = crpa.warehouse_id AND
+        inv.dict_inventory_status = 'usable' AND inv.qty > 0
+        INNER JOIN warehouse_location wl on wl.parent_id = crpa.warehouse_area_id and inv.warehouse_location = wl.code
+        and crpa.warehouse_id = wl.warehouse_id
+        WHERE crp.is_deleted = FALSE
+        AND crp.id IN
+        <foreach collection="ruleIds" item="ruleId" open="(" close=")" separator=",">
+            #{ruleId}
+        </foreach>
+        AND crpa.warehouse_id IN
+        <foreach collection="warehouseIds" item="warehouseId" open="(" close=")" separator=",">
+            #{warehouseId}
+        </foreach>
+        AND inv.sku_id IN
+        <foreach collection="skuIds" item="skuId" open="(" close=")" separator=",">
+            #{skuId}
+        </foreach>
+        ORDER BY crp.priority, crp.update_time desc, crpa.index, inv.sku_id, inv.qty desc
+    </select>
 
 </mapper>

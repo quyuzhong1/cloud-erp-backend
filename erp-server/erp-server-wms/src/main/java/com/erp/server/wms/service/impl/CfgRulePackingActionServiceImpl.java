@@ -4,13 +4,16 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleActionDTO;
+import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.entity.CfgRulePackingActionEntity;
+import com.erp.model.wms.entity.CfgRulePickingEntity;
 import com.erp.server.wms.mapper.CfgRulePackingActionMapper;
 import com.erp.server.wms.service.CfgRulePackingActionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -77,5 +80,14 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
     @Override
     public List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds) {
         return list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery().in(CfgRulePackingActionEntity::getRuleId, cfgRuleIds));
+    }
+
+    @Override
+    public List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds) {
+        if (CollectionUtils.isEmpty(rules)) {
+            return Collections.emptyList();
+        }
+        List<String> ruleIds = rules.parallelStream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
+        return baseMapper.listLocationByRule(ruleIds, warehouseIds, skuIds);
     }
 }

@@ -24,11 +24,9 @@ import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
 import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
-import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.service.DictBasicService;
-import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesBean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +34,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -182,6 +182,10 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                     log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                     return signShippedDetailList;
                 }
+                if (-999 == e.getCode() && e.getMessage().contains("系统已经重新路由")){
+                    //更新跟踪号，重新申明下单
+                    return reShipOrder(e, detailEntityList, request, signShippedDetailList, mainEntity);
+                }
                 log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                 throw new ServiceException("速卖通API标记发货失败:" + e.getMessage());
             } catch (Exception e) {
@@ -190,6 +194,60 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             }
         }
         return signShippedDetailList;
+    }
+
+    /**
+     * 重新进行声明发货
+     * @param serviceException
+     * @param detailEntityList
+     * @param request
+     * @param signShippedDetailList
+     * @param mainEntity
+     * @return
+     */
+    private List<String> reShipOrder(ServiceException serviceException, List<SoB2cDetailEntity> detailEntityList,
+                                     DeclareDeliverRequest request,List<String> signShippedDetailList,SoB2cEntity mainEntity) {
+        //重置参数 更新物流记录
+        //系统已经重新路由，旧单号[CNG00665032598857]暂无法使用，请使用新单号[UN055958577MU]声明发货
+        String message = serviceException.getMessage();
+        // 正则表达式，匹配方括号及其内部的内容
+        String regex = "\\[(.*?)\\]";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(message);
+        // 提取第一个方括号内的内容
+        String firstContent = "";
+        if (matcher.find()) {
+            firstContent = matcher.group(1); // 获取第一个方括号内部的内容
+        }
+        // 提取第二个方括号内的内容
+        String secondContent = "";
+        if (matcher.find()) {
+            secondContent = matcher.group(1); // 获取第二个方括号内部的内容
+        }
+        if (!firstContent.equals(request.getLogisticsNo()) || StrUtil.isBlank(firstContent) || StrUtil.isBlank(secondContent)){
+            //整合不符合格式则抛出异常
+            log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API更新物流单异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), message);
+            throw new ServiceException("速卖通API标记发货失败:" + serviceException.getMessage());
+        }
+        //更新物流记录
+        soB2cFeign.updateLogisticsBySoId(mainEntity.getId(), secondContent);
+        //重置发货声明订单号
+        request.setTrackingWebSite(secondContent);
+        try {
+            aliExpressOrderService.subDeclareDeliver(request);
+            signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+            return signShippedDetailList;
+        } catch (ServiceException e){
+            if (-353 == e.getCode()) {
+                log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+                return signShippedDetailList;
+            }
+            log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+            throw new ServiceException("速卖通API标记发货失败:" + e.getMessage());
+        } catch (Exception e) {
+            log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货失败 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+            throw new ServiceException("速卖通标记发货失败:" + e.getMessage());
+        }
     }
 
     @Override

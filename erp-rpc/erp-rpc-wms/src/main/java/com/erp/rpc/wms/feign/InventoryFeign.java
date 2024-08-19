@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.InventoryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -83,7 +84,13 @@ public interface InventoryFeign {
     @PostMapping("feign/inventory/listSkuInventoryByParam")
     List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryByParam(@RequestBody InventoryQtyDTO.SkuInventoryParamDTO paramDTO);
 
-
+    /**
+     * 根据sku获取库存列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/inventory/listInventoryBySkuIds")
+    List<InventoryEntity> listInventoryBySkuIds(@RequestBody InventoryQtyDTO.InventoryBySkuDTO dto);
    /**
     *获取sku 库存状态数量（调用方传输状态、多状态）特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
     * @author Will

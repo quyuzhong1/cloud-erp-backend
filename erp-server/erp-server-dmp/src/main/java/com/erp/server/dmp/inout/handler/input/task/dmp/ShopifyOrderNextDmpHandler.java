@@ -26,17 +26,25 @@ public class ShopifyOrderNextDmpHandler extends ShopifyOrderGetDetailDmpHandler 
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 				//商品售价(折扣后单价)
-				Object priceObj = dmpDataMap.get("price");
-				Object totalDiscountObj = dmpDataMap.get("totalDiscount");
-				Object quantityObj = dmpDataMap.get("quantity");
-				if (priceObj != null && totalDiscountObj != null && quantityObj != null) {
-					BigDecimal price = MathUtil.valueOf(priceObj);
-					BigDecimal totalDiscount = MathUtil.valueOf(totalDiscountObj);
-					BigDecimal quantity = MathUtil.valueOf(quantityObj);
-					//商品售价(折扣后单价)
-					dmpDataMap.put("sellPrice", price.subtract(totalDiscount.divide(quantity, 4, BigDecimal.ROUND_HALF_UP)));
+				Object priceObj = dmpDataMap.get("sellPriceOrigin");
+				Object totalDiscountObj = dmpDataMap.get("discountAmount");
+				Object quantityObj = dmpDataMap.get("qty");
+
+				BigDecimal price = BigDecimal.ZERO;
+				BigDecimal totalDiscount = BigDecimal.ZERO;
+				BigDecimal quantity = BigDecimal.ZERO;
+				if (priceObj != null) {
+					price = MathUtil.valueOf(priceObj);
 					//折扣后订单总金额
 					dmpDataMap.put("afterAmount", price.multiply(quantity));
+				}
+				if (totalDiscountObj != null) {
+					totalDiscount = MathUtil.valueOf(totalDiscountObj);
+				}
+				if (quantityObj != null) {
+					//商品售价(折扣后单价)
+					quantity = MathUtil.valueOf(quantityObj);
+					dmpDataMap.put("sellPrice", price.subtract(totalDiscount.divide(quantity, 4, BigDecimal.ROUND_HALF_UP)));
 				}
 			}
 		}

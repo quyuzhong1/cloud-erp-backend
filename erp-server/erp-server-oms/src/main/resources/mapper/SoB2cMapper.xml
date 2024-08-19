@@ -128,6 +128,7 @@
         sb2cd.warehouse_id as warehouseId,
         sb2cd.warehouse_name as warehouseName,
         sb2cd.warehouse_location as warehouseLocation,
+        sb2cd.virtual_warehouse_id as virtualWarehouseId,
         sb2c.buyer_remark as buyerRemark,
         sb2c.remark as remark,
         sb2cl.name,
@@ -633,31 +634,78 @@
 
     <!--查询组包扫描的数据 根据code-->
     <select id="packageScanByCode" resultType="com.erp.model.oms.dto.PackageDTO$ScanResultDTO">
-        SELECT
-        sb.id AS soId,
-        sb.code AS soCode,
-        sb.bill_status AS billStatus,
-        sb.package_status AS packageStatus,
-        sb.transfer_status AS transferStatus,
-        sb.shop_id AS shopId,
-        sbl.id AS logisticsId,
-        sbl.logistics_channel_id AS logisticsChannelId,
-        sbl.code AS transportNo,
-        sbl.track_no AS trackNo,
-        sbl.weight AS weight,
-        sbl.transfer_logistics_supplier_id,
-        sbl.transfer_logistics_channel_id
-        FROM so_b2c sb
-        LEFT JOIN so_b2c_logistics sbl
-        ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE
-        WHERE sb.is_deleted = FALSE
-        AND (sb.code = #{code}
-                  OR
-              #{code} = ANY(string_to_array(sbl.track_no,','))
-             OR
-              #{code} = sbl.code
-             )
-         limit 1
+        (
+            SELECT
+                sb.id AS soId,
+                sb.code AS soCode,
+                sb.bill_status AS billStatus,
+                sb.package_status AS packageStatus,
+                sb.transfer_status AS transferStatus,
+                sb.shop_id AS shopId,
+                sbl.id AS logisticsId,
+                sbl.logistics_channel_id AS logisticsChannelId,
+                sbl.code AS transportNo,
+                sbl.track_no AS trackNo,
+                sbl.weight AS weight,
+                sbl.transfer_logistics_supplier_id,
+                sbl.transfer_logistics_channel_id
+            FROM so_b2c sb
+                     INNER JOIN so_b2c_logistics sbl
+                                ON sb.id = sbl.main_id
+                                    AND sbl.is_deleted = FALSE
+            WHERE sb.is_deleted = FALSE
+              AND sb.code = #{code}
+            LIMIT 1
+        )
+        UNION ALL
+        (
+            SELECT
+                sb.id AS soId,
+                sb.code AS soCode,
+                sb.bill_status AS billStatus,
+                sb.package_status AS packageStatus,
+                sb.transfer_status AS transferStatus,
+                sb.shop_id AS shopId,
+                sbl.id AS logisticsId,
+                sbl.logistics_channel_id AS logisticsChannelId,
+                sbl.code AS transportNo,
+                sbl.track_no AS trackNo,
+                sbl.weight AS weight,
+                sbl.transfer_logistics_supplier_id,
+                sbl.transfer_logistics_channel_id
+            FROM so_b2c sb
+                     INNER JOIN so_b2c_logistics sbl
+                                ON sb.id = sbl.main_id
+                                    AND sbl.is_deleted = FALSE
+            WHERE sb.is_deleted = FALSE
+              and  #{code} = ANY(string_to_array(sbl.track_no,','))
+            LIMIT 1
+        )
+        UNION ALL
+        (
+            SELECT
+                sb.id AS soId,
+                sb.code AS soCode,
+                sb.bill_status AS billStatus,
+                sb.package_status AS packageStatus,
+                sb.transfer_status AS transferStatus,
+                sb.shop_id AS shopId,
+                sbl.id AS logisticsId,
+                sbl.logistics_channel_id AS logisticsChannelId,
+                sbl.code AS transportNo,
+                sbl.track_no AS trackNo,
+                sbl.weight AS weight,
+                sbl.transfer_logistics_supplier_id,
+                sbl.transfer_logistics_channel_id
+            FROM so_b2c sb
+                     INNER JOIN so_b2c_logistics sbl
+                                ON sb.id = sbl.main_id
+                                    AND sbl.is_deleted = FALSE
+            WHERE sb.is_deleted = FALSE
+              AND sbl.code =  #{code}
+            LIMIT 1
+        )
+        LIMIT 1
     </select>
 
     <!--分拨组包 分页-->
@@ -730,7 +778,8 @@
         sbl.weight AS weight,
         sbl.transfer_logistics_supplier_id,
         sbl.transfer_logistics_channel_id,
-        sb.dict_platform
+        sb.dict_platform,
+        sb.is_intercept as isIntercept
         FROM so_b2c sb
         LEFT JOIN so_b2c_logistics sbl
         ON sb.id = sbl.main_id AND sbl.is_deleted = FALSE

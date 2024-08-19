@@ -66,4 +66,6 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      * @return
      */
     List<ProductCustomsEntity> listBySkuIds(List<String> skuIds, String country);
+
+    ProductCustomsEntity getBySkuIdAndCountry(String skuId, String country);
 }

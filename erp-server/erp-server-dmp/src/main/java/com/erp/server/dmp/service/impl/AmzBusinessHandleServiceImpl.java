@@ -19,8 +19,12 @@ import com.erp.model.dmp.DmpPullOtherOutStockDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsAmazonFeign;
@@ -38,12 +42,11 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -77,30 +80,34 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
     private AmzBusinessHandleService amzBusinessHandleService;
 
     @Override
-//    // @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public Boolean checkAndSendSoOutStock(DmpPullSoOutStockDTO dto) {
         // 查询来源明细ID
-        List<SoB2cDetailEntity> detailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));
-        if (CollectionUtils.isEmpty(detailEntityList)){
-            throw new ServiceException("检查生成亚马逊FBA销售出库单失败,为找到明细:id=" + dto.getSoB2cId());
+//        List<SoB2cDetailEntity> detailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));
+//        if (CollectionUtils.isEmpty(detailEntityList)){
+//            throw new ServiceException("检查生成亚马逊FBA销售出库单失败,为找到明细:id=" + dto.getSoB2cId());
+//        }
+        // 查询异常内容
+        SoB2cErrorEntity b2cError = soB2cFeign.getB2cError(dto.getSoB2cId(), SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+        if(null == b2cError){
+            return true;
         }
-        List<String> sourceDetailIds = detailEntityList.stream()
-                .map(SoB2cDetailEntity::getSourceDetailId)
-                .collect(Collectors.toList());
 
         String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
         String platform = PlatformDictEnum.AMAZON.getCode();
         String business = BusinessTypeEnum.SO_OUT_STOCK.getCode();
         String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
+
+
         // 查询是否有为处理的记录来源
-        Query query = new Query();
-        query.addCriteria(
-                Criteria.where("amazonOrderId").is(dto.getPlatformCode())
-                        .and("amazonOrderItemId").in(sourceDetailIds)
-                        .and("isClean").ne(CleanStatusEnum.CLEANED.getCode())
-        );
-        List<PlatformAmazonFulfilledShipmentsDTO> list = mongoTemplate.find(query, PlatformAmazonFulfilledShipmentsDTO.class, tableName);
+        List<PlatformAmazonFulfilledShipmentsDTO> list = getPlatformAmazonFulfilledShipmentsDTOS(dto, b2cError, tableName);
         if (CollectionUtils.isEmpty(list)) {
+            // 移除历史异常
+            String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+            SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
+            deleteDTO.setMainId(dto.getSoB2cId());
+            deleteDTO.setType(type);
+            deleteDTO.setDetailIdList(Collections.singletonList(b2cError.getDetailId()));
+            soB2cFeign.deleteDetailError(deleteDTO);
             return true;
         }
 
@@ -162,7 +169,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
                 Criteria.where("amazonOrderId").is(dto.getPlatformCode())
                         // 亚马逊多渠道订单的OrderItemId=merchantOrderItemId
                         .and("merchantOrderItemId").in(sourceDetailIds)
-                        .and("isClean").ne(CleanStatusEnum.CLEANED.getCode())
+//                        .and("isClean").ne(CleanStatusEnum.CLEANED.getCode())
         );
         List<PlatformAmazonFulfilledShipmentsDTO> list = mongoTemplate.find(query, PlatformAmazonFulfilledShipmentsDTO.class, tableName);
         if (CollectionUtils.isEmpty(list)) {
@@ -213,7 +220,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
         return new PlatformOtherOutStockDTO(
                 sourceDTO.getAmazonOrderId(),
                 sourceDTO.getShopId(),
-                java.time.OffsetDateTime.parse(sourceDTO.getShipmentDateLocale()),
+                sourceDTO.getShipmentDateLocale(),
                 Collections.singletonList(detailDTO),
                 sourceDTO.getUniqueId(),
                 PlatformDictEnum.AMAZON.getCode()
@@ -238,5 +245,37 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
         updateParam.setIsClean(CleanStatusEnum.CLEANED.getCode());
         updateParam.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
         return JSONObject.parseObject(JSONObject.toJSONString(updateParam), MapUtil.class);
+    }
+
+    /**
+     * 查询待处理的出库信息
+     */
+    private List<PlatformAmazonFulfilledShipmentsDTO> getPlatformAmazonFulfilledShipmentsDTOS(DmpPullSoOutStockDTO dto, SoB2cErrorEntity b2cError, String tableName) {
+        Query query = new Query();
+        if (b2cError.getParamJson().startsWith("{")){
+            // json
+            PlatformSoOutStockDTO sourceDTO = JSONUtil.toBean(b2cError.getParamJson(), PlatformSoOutStockDTO.class);
+            if (null == sourceDTO){
+                throw new ServiceException("未找到出库信息内容");
+            }
+            List<String> shipmentItemIds = sourceDTO.getDetailList().stream()
+                    .map(PlatformSoOutStockDetailDTO::getPlatformDetailId)
+                    .collect(Collectors.toList());
+            query.addCriteria(
+                    Criteria.where("amazonOrderId").is(dto.getPlatformCode())
+                            .and("shipmentItemId").in(shipmentItemIds));
+        } else {
+            List<SoB2cDetailEntity> detailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));
+            SoB2cDetailEntity detailEntity = detailEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(b2cError.getDetailId())).findFirst().orElse(null);
+            if (null == detailEntity){
+                throw new ServiceException("未找到明细");
+            }
+            query.addCriteria(
+                    Criteria.where("amazonOrderId").is(dto.getPlatformCode())
+                            .and("amazonOrderItemId").is(detailEntity.getSourceDetailId())
+            );
+        }
+
+        return mongoTemplate.find(query, PlatformAmazonFulfilledShipmentsDTO.class, tableName);
     }
 }

@@ -1,10 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,13 +12,23 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import com.erp.server.wms.service.WarehouseReceiveDetailService;
 import com.erp.server.wms.service.WarehouseReceiveService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -29,6 +36,7 @@ import java.util.List;
  * @Author Luo_WG
  * @Date 2023/4/6 18:56
  **/
+@Slf4j
 @RestController
 @LogSystemModule("采购收货单")
 @RequestMapping("/warehouseReceive")
@@ -36,6 +44,8 @@ public class WarehouseReceiveController extends BaseController {
 
     @Resource
     private WarehouseReceiveService warehouseReceiveService;
+    @Resource
+    private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
     /**
      * 列表查询
@@ -186,7 +196,7 @@ public class WarehouseReceiveController extends BaseController {
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param dto baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购收货单")
@@ -196,9 +206,25 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:approve",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = warehouseReceiveService.approve(baseApproveParamDTO);
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<WarehouseReceiveEntity> entityList = warehouseReceiveService.listByIds(dto.getIds());
+        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listDetailByMainIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            WarehouseReceiveEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单记录不存在"));
+                continue;
+            }
+            List<WarehouseReceiveDetailEntity> detailEntityList = receiveDetailList.stream().filter(e -> e.getMainId().equals(id)).collect(Collectors.toList());
+            try {
+                resultDTOS.add(warehouseReceiveService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess(),detailEntityList));
+            }catch (Exception e){
+                log.error("采购收货单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -215,9 +241,25 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:disApprove",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = warehouseReceiveService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<WarehouseReceiveEntity> entityList = warehouseReceiveService.listByIds(dto.getIds());
+        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listDetailByMainIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            WarehouseReceiveEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单记录不存在"));
+                continue;
+            }
+            List<WarehouseReceiveDetailEntity> detailEntityList = receiveDetailList.stream().filter(e -> e.getMainId().equals(id)).collect(Collectors.toList());
+            try {
+                resultDTOS.add(warehouseReceiveService.disApprove(entity,detailEntityList));
+            }catch (Exception e){
+                log.error("采购收货单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

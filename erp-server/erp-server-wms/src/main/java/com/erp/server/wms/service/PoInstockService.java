@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -8,9 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.entity.PoInstockEntity;
-import com.erp.model.wms.entity.QcInfoEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
 
 import java.util.List;
 
@@ -127,21 +126,26 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
     Boolean invalid(List<String> ids, String remark);
 
     /**
-     * @param baseApproveParamDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @description: 审核
      * @author Will
      * @date: 2023/4/12 11:57
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(PoInstockEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
-     * @param ids
+     * @param entity
+     * @param returnEntityList
+     * @param issueEntityList
      * @return Boolean
      * @description: 反审核
      * @author Will
      * @date: 2023/4/12 11:58
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(PoInstockEntity entity, List<PoReturnEntity> returnEntityList, List<SubcontractIssueEntity> issueEntityList);
 
     /**
      * @param ids

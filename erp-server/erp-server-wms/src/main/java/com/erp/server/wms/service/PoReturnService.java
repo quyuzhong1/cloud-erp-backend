@@ -7,6 +7,8 @@ import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
+import com.erp.model.wms.entity.PoInstockEntity;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -88,19 +90,22 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      **/
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(PoReturnEntity entity, String type, String comment, Boolean isNeedProcess,List<PoReturnDetailEntity> poReturnDetailList);
 
     /**
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param ids ids
+     * @param entity
      * @return java.lang.Boolean
      **/
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(PoReturnEntity entity,List<PoReturnDetailEntity> detailEntityList);
 
     /**
      * 取消流程

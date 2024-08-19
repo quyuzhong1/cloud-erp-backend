@@ -3,10 +3,7 @@ package com.erp.server.scm.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -22,8 +19,17 @@ import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
+import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
+import com.erp.model.scm.entity.PurchaseApplicationEntity;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.server.scm.query.PurchaseApplicationQueryHandler;
+import com.erp.server.scm.service.PurchaseApplicationDetailService;
 import com.erp.server.scm.service.PurchaseApplicationService;
+import com.erp.server.scm.service.SubcontractOrderService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -35,7 +41,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 采购申请管理
@@ -43,6 +52,7 @@ import java.util.List;
  * @author will
  * @since 2023-03-15
  */
+@Slf4j
 @RestController
 @LogSystemModule("采购申请单")
 @RequestMapping("/purchaseApplication")
@@ -50,6 +60,10 @@ public class PurchaseApplicationController extends BaseController {
 
     @Resource
     private PurchaseApplicationService purchaseApplicationService;
+    @Resource
+    private PurchaseApplicationDetailService purchaseApplicationDetailService;
+    @Resource
+    private SubcontractOrderService subcontractOrderService;
 
     /**
      * 分页查询
@@ -220,7 +234,7 @@ public class PurchaseApplicationController extends BaseController {
      * 批量审核
      * @author Will
      * @date: 2023/3/15 17:54
-     * @param baseApproveParamDTO
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核采购申请单")
@@ -230,9 +244,23 @@ public class PurchaseApplicationController extends BaseController {
             menuCode = "scm:purchaseApplication:approve",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        purchaseApplicationService.approve(baseApproveParamDTO);
-        return success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchaseApplicationEntity> entityList = purchaseApplicationService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseApplicationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购申请单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseApplicationService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("采购申请单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -249,9 +277,41 @@ public class PurchaseApplicationController extends BaseController {
             menuCode = "scm:purchaseApplication:disApprove",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseApplicationService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchaseApplicationEntity> entityList = purchaseApplicationService.listByIds(dto.getIds());
+        List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByPurchaseApplicationIds(dto.getIds());
+        List<SubcontractOrderEntity> subcontractOrderList = subcontractOrderService.listBySourceId(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseApplicationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购申请单不存在"));
+                continue;
+            }
+            List<PurchaseApplicationDetailEntity> detailEntityList = detailList.stream().filter(e -> e.getPurchaseApplicationId().equals(id)).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(detailEntityList)) {
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98017.msg));
+                continue;
+            }
+            //只有未生成的单才能反审核
+            long createCount = detailEntityList.stream().filter(obj -> !CreatePoTypeEnum.NOT_GENERATED.getStatus().equals(obj.getCreatePoType())).count();
+            if (createCount > 0) {
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98030.msg));
+                continue;
+            }
+            List<SubcontractOrderEntity> subcontractOrderEntityList = subcontractOrderList.stream().filter(e -> e.getSourceId().equals(id)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(subcontractOrderEntityList)) {
+                resultDTOS.add(BatchResultDTO.fail(id,id,ApiError.ERROR_98090.msg));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseApplicationService.disApprove(entity));
+            }catch (Exception e){
+                log.error("采购申请单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

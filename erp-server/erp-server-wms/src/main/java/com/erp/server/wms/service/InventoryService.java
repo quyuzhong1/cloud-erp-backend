@@ -94,6 +94,16 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     Integer getUsableInventoryTotal(String warehouseId, String skuId);
 
     /**
+     * 查实际库存
+     * @author will
+     * @date 2024/8/6 20:02
+     * @param warehouseId
+     * @param skuId
+     * @return Integer
+     */
+    Integer getRealInventoryTotal(String warehouseId, String skuId);
+
+    /**
      * 新增或修改库存
      *
      * @param warehouseId       仓库ID
@@ -339,4 +349,10 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      */
     PagingVO<InventoryDTO.PagingViewDTO> exportInventoryAge(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto);
 
+    /**
+     * 根据sku获取库存列表
+     * @param dto
+     * @return
+     */
+    List<InventoryEntity> listInventoryBySkuIds(InventoryQtyDTO.InventoryBySkuDTO dto);
 }

@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseResultDTO;
@@ -235,7 +236,10 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
                     @Override
                     public void afterCommit() {
                         //发送mq
-                        dmpMqFeign.sendTask(dmpPushTaskEntityList);
+                        Boolean result = dmpMqFeign.sendTask(dmpPushTaskEntityList);
+                        if (Objects.isNull(result) || !result) {
+                            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                        }
                     }
                 });
             }

@@ -1,9 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -59,7 +56,7 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(BaseApproveParamDTO dto, TransferInEntity transferInEntity);
 
     /**
      * 撤销流程
@@ -86,7 +83,7 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean disApprove(BaseIdsDTO.IdsDTO dto);
+    BatchResultDTO disApprove(TransferInEntity entity);
 
     /**
      * 作废

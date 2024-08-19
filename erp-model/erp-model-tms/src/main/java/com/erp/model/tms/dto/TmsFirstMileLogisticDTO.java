@@ -640,6 +640,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         @ColumnWidth(20)
         private String transportNo;
         /**
+         * 跟踪号
+         */
+        private String trackNo;
+        /**
          * 柜号
          */
         @ExcelProperty(value = "柜号")

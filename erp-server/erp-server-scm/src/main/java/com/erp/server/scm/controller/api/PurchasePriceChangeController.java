@@ -5,7 +5,6 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -15,11 +14,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.server.scm.query.PurchasePriceChangeQueryHandler;
-import com.erp.server.scm.query.PurchasePriceQueryHandler;
 import com.erp.server.scm.service.PurchasePriceChangeService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +26,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 采购价目变更管理
@@ -35,6 +36,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-03-15
  */
+@Slf4j
 @RestController
 @LogSystemModule("采购价目表")
 @RequestMapping("/purchase/price/change")
@@ -249,9 +251,23 @@ public class PurchasePriceChangeController extends BaseController {
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购价目变更")
     @PostMapping("/approve")
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = purchasePriceChangeService.approve(dto);
-        return result == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchasePriceChangeEntity> entityList = purchasePriceChangeService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceChangeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购价目变更记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchasePriceChangeService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("采购价目审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

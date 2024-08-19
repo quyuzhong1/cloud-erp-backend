@@ -11,13 +11,11 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -38,12 +36,11 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
+import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
-import com.erp.model.wms.entity.PackageForecastDetailEntity;
-import com.erp.model.wms.entity.PackageForecastEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -56,10 +53,7 @@ import com.erp.rpc.tms.feign.TransferDeclareFeign;
 import com.erp.server.wms.constant.PackageForecastConstant;
 import com.erp.server.wms.convert.PackageForecastConverter;
 import com.erp.server.wms.mapper.PackageForecastMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.PackageForecastDetailService;
-import com.erp.server.wms.service.PackageForecastService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.*;
 import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.handover.*;
 import com.erp.tms.aliexpress.model.handover.request.CancelRequest;
@@ -137,8 +131,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     @Autowired
     private AliExpressHandoverService aliExpressHandoverService;
 
-    @Autowired
-    private AliExpressShipperService aliExpressShipperService;
+    @Resource
+    private SoOutstockService soOutstockService;
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
@@ -240,6 +234,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     private void fillPaging(List<PackageForecastDTO.PagingViewDTO> list) {
         List<String> ids = list.stream().map(PackageForecastDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         List<PackageForecastDetailEntity> allDetailEntityList = packageForecastDetailService.listDbByMainIds(ids);
+        List<String> soIds = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockList = soOutstockService.listBySoIds(soIds);
+        List<String> soCodes = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).distinct().collect(Collectors.toList());
+        List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(soCodes);
+        List<String> transferIds = transferDeclareDetailEntityList.stream().map(TransferDeclareDetailEntity::getMainId).collect(Collectors.toList());
+        List<TransferDeclareEntity> transferDeclareEntityList = CollectionUtils.isNotEmpty(transferIds)?FeignQuery.create(TransferDeclareEntity.class).in(TransferDeclareEntity::getId,transferIds).list():new ArrayList<>();
+
         for (PackageForecastDTO.PagingViewDTO pagingViewDTO : list) {
             List<PackageForecastDetailEntity> detailEntityList = allDetailEntityList.stream().filter(v->v.getMainId().equals(pagingViewDTO.getId())).collect(Collectors.toList());
             List<PackageForecastDTO.PagingDetailViewDTO> detailViewDTOList = new ArrayList<>();
@@ -255,11 +256,18 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 pagingDetailViewDTO.setWeight(packageForecastDetailEntity.getWeight());
                 pagingDetailViewDTO.setWeightUnit(packageForecastDetailEntity.getWeightUnit());
                 pagingDetailViewDTO.setMinPackageHandoverStatus(packageForecastDetailEntity.getHandoverStatus());
+                ApproveStatusEnum approveStatus = soOutstockList.stream().filter(s -> s.getSoId().equals(packageForecastDetailEntity.getSoId())).
+                        map(SoOutstockEntity::getApproveStatus).findFirst().orElse(ApproveStatusEnum.WAIT_SUBMIT);
+                pagingDetailViewDTO.setOutstockStatusName(ApproveStatusEnum.APPROVE.equals(approveStatus)?"已出库":"未出库");
                 detailViewDTOList.add(pagingDetailViewDTO);
             }
             pagingViewDTO.setDetailViewDTOList(detailViewDTOList);
         }
         for (PackageForecastDTO.PagingViewDTO item : list) {
+            String soCode = CollectionUtils.isNotEmpty(item.getDetailViewDTOList())?item.getDetailViewDTOList().get(0).getSoCode():"";
+            TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareDetailEntityList.stream().filter(v->v.getSoCode().equals(soCode)).findFirst().orElse(new TransferDeclareDetailEntity());
+            TransferDeclareEntity transferDeclareEntity = transferDeclareEntityList.stream().filter(v->v.getId().equals(transferDeclareDetailEntity.getMainId())).findFirst().orElse(new TransferDeclareEntity());
+            item.setTransferDeclareCode(transferDeclareEntity.getCode());
             String uploadStatus = item.getUploadStatus();
             String uploadStatusName = PackageUploadStatusEnum.getName(uploadStatus);
             item.setUploadStatusName(uploadStatusName);
@@ -973,9 +981,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
         deliveryEntity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
-
-        //扣减冻结库存
-        soB2cDeliveryService.outFreezeVirtualInventory(deliveryEntity);
     }
 
     /**

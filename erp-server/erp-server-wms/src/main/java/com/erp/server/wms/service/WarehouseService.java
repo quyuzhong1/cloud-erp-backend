@@ -2,10 +2,12 @@ package com.erp.server.wms.service;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -46,11 +48,11 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @author Will
      * @date: 2024/5/23 18:21
      * @param dto
-     * @return List<ListInventoryQtyDTO> 
+     * @return List<ListInventoryQtyDTO>
      */
     List<WarehouseDTO.ListInventoryQtyDTO> listWarehouseInventoryQty(WarehouseDTO.ListInventoryQtyParamDTO dto);
 
-    
+
     /**
      * 添加仓库
      * @author yl
@@ -60,7 +62,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     String add(WarehouseDTO.AddDTO dto);
 
-    
+
     /**
      * 修改仓库
      * @author yl
@@ -70,7 +72,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     String updateWarehouse(WarehouseDTO.UpdateDTO dto);
 
-    
+
     /**
      * 提交并审核
      * @author yl
@@ -80,7 +82,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     Boolean addAndSubmit(WarehouseDTO.AddDTO dto);
 
-    
+
     /**
      * 仓库提交审核
      * @author yl
@@ -90,7 +92,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     Boolean submit(List<String> ids);
 
-    
+
     /**
      * 更改仓库状态
      * @author yl
@@ -104,20 +106,23 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * 审核仓库
      * @author yl
      * @date 2023-03-22 11:45
-     * @param dto
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(WarehouseEntity entity, String type, String comment, Boolean isNeedProcess);
 
-    
+
     /**
      * 反审核
      * @author yl
      * @date 2023-03-22 11:59
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(WarehouseEntity entity);
 
     /**
      * 批量删除
@@ -137,7 +142,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     WarehouseDTO.UpdateDTO view(String id);
 
-    
+
     /**
      * 分页获取仓库数据
      * @author yl
@@ -166,7 +171,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     void downloadTemplate(HttpServletResponse response);
 
-    
+
     /**
      * 导入仓库数据
      * @author yl
@@ -177,7 +182,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
-    
+
     /**
      * 修改并审核
      * @author yl
@@ -285,6 +290,12 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return PagingVO<ListDTO>
      */
     PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> dto);
+
+    /**
+     * 查询所有仓库信息(不带权限控制) 不带权限控制的查询所有仓库信息
+     * @return List<WarehouseEntity>    仓库信息
+     */
+    List<WarehouseEntity> listWarehouseWithCaches();
 
 
     PagingVO<WarehouseExportExcelDTO> exportWarehouse(PagingDTO<WarehouseDTO.ExportDTO> dto);

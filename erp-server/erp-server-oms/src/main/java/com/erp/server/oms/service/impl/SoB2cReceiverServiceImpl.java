@@ -25,6 +25,7 @@ import com.erp.server.oms.service.SoB2cReceiverService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +56,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     @Resource
     private OperateLogService operateLogService;
 
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
 
@@ -156,10 +158,11 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 if (null != dictCountryEntity && StringUtils.isBlank(entity.getCountryName())){
                     entity.setCountryName(dictCountryEntity.getNameCn());
                 }
+                newReceiverEntity.setId(entity.getId());
                 // 指定有值不更新
-                ReflectUtils.updateSpecifiedFieldsIfNotValue(entity, newReceiverEntity, SoB2cReceiverEntity.fieldsExistNotUpdate());
+                ReflectUtils.updateSpecifiedFieldsIfNotValue(newReceiverEntity, entity, SoB2cReceiverEntity.fieldsExistNotUpdate());
 
-                this.updateById(entity);
+                this.updateById(newReceiverEntity);
 //                if (!this.updateById(entity2)){
 //                    throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
 //                }

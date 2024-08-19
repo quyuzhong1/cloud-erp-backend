@@ -28,7 +28,6 @@ import com.common.core.enums.ApiError;
 @Service
 public class DictCountryOrgServiceImpl extends SuperServiceImpl<DictCountryOrgMapper, DictCountryOrgEntity> implements DictCountryOrgService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DictCountryOrgDTO.AddDTO addDTO) {

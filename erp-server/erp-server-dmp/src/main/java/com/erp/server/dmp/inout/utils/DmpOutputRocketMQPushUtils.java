@@ -148,17 +148,7 @@ public class DmpOutputRocketMQPushUtils{
 			}
 			if(errorCount >= 3 && errorCount%3 == 0) {
 				status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
-				String requestData = dmpOutputTaskRecordEntity.getRequestData();
-				if(StringUtils.isNotBlank(requestData)) {
-					JSONObject parseObject = JSON.parseObject(requestData);
-					code = parseObject.getString("code");
-					if(StringUtils.isBlank(code)) {
-						code = parseObject.getString("fBillNo");
-						if(StringUtils.isBlank(code)) {
-							code = parseObject.getString("sourceId");
-						}
-					}
-				}
+				code = dmpOutputTaskRecordEntity.getSourceCode();
 			}
 		}
 		boolean update = dmpOutputTaskRecordService.lambdaUpdate()
@@ -184,7 +174,7 @@ public class DmpOutputRocketMQPushUtils{
 			bodyMap.put("msg_type", "text");
 			Map<String, String> contentMap = new HashMap<String, String>();
 			
-			contentMap.put("text", "中台【"+ namespace +"】环境告警：" + "输出任务记录id=【" + id + "】，code=【" + code + "】处理失败：" + message);
+			contentMap.put("text", "中台【"+ namespace +"】环境告警：" + "输出任务记录id=【" + id + "】，单据编号=【" + code + "】处理失败：" + message);
 			bodyMap.put("content", contentMap);
 			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
 		}

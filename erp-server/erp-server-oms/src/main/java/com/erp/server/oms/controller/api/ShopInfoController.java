@@ -156,7 +156,7 @@ public class ShopInfoController extends BaseController {
                     //提交
                     Boolean submitResult = customerInfoService.submit(ids);
                     if (submitResult) {
-                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE));
+                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
                     }
                 }
             }
@@ -210,17 +210,6 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/listAuth")
     public ApiResult<List<ShopInfoEntity>> listAuth(@RequestBody ShopDTO.PlatformDTO platformDTO) {
         List<ShopInfoEntity> list = shopInfoService.listAuth(platformDTO);
-        return success(list);
-    }
-    /**
-     * 获取店铺--showByAuth true已授权 false所有数据
-     *
-     * @return ApiResult<List < ShopInfoEntity>>
-     * @author hyj
-     */
-    @PostMapping("/pagingSelect")
-    public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
-        PagingVO<ShopDTO.ListDTO> list = shopInfoService.pagingSelect(dto);
         return success(list);
     }
 

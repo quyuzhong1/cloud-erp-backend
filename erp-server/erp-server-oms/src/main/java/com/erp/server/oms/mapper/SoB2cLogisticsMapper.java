@@ -3,6 +3,7 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -36,4 +37,10 @@ public interface SoB2cLogisticsMapper extends BaseMapper<SoB2cLogisticsEntity> {
      * @return SoB2cLogisticsEntity
      */
     SoB2cLogisticsEntity getByTrackNoOrTransportNo(@Param("logisticsCode") String logisticsCode);
+
+    /**
+     * 根据运单号进行跟踪号更新
+     * @param trackDTOS
+     */
+    void updateTrackNoByTransportNo(@Param("trackDTOS") List<LogisticsBillDTO.TrackDTO> trackDTOS);
 }

@@ -10,10 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -21,6 +18,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -450,7 +448,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     /**
      * 审核
      *
-     * @param dto
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-27 12:29
@@ -458,27 +459,22 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
-        List<PurchasePriceEntity> list = this.listByIds(ids);
-        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+    public BatchResultDTO approve(PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess) {
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //调用审核流程
-        approveProcess(list, dto);
-
+        approveProcess(entity, type, comment, isNeedProcess);
         //添加日志
-        List<Pair<String, String>> pairList = list.stream().
-                map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        batchAddModuleOperateLog(String.format("审核【%s】了一个采购价目", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "审核操作");
-        return Boolean.TRUE;
+        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购价目【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_PRICE.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     /**
-     * @param dto
-     * @param list
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 15:25
@@ -486,27 +482,27 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(BaseApproveParamDTO dto, List<PurchasePriceEntity> list) {
-        if (CollectionUtils.isEmpty(list)) {
+    public Boolean approveEnd(PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess) {
+        if (ObjectUtils.isEmpty(entity)) {
             return Boolean.TRUE;
         }
         Boolean result;
-        if (dto.getType().equals(ScmConstant.PASS)) {
+        if (type.equals(ScmConstant.PASS)) {
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
+            result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(approveStatus));
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
+            result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(rejectStatus));
         }
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
         //审核通过发送金蝶
-        if (dto.getType().equals(ScmConstant.PASS)) {
+        if (type.equals(ScmConstant.PASS)) {
             //发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -946,35 +942,21 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        List<PurchasePriceEntity> list = this.listByIds(ids);
-        long count = list.stream().filter(r -> !Objects.equals(ApproveStatusEnum.APPROVE, r.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+    public BatchResultDTO disApprove(PurchasePriceEntity entity,List<PurchasePriceDetailEntity> purchasePriceDetailEntities,List<PurchasePriceChangeDetailEntity> changeDetailEntityList) {
+        if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
-
-
-        for (PurchasePriceEntity purchasePriceEntity : list) {
-            List<PurchasePriceDetailEntity> purchasePriceDetailEntities = priceDetailService.listDetailByMainId(purchasePriceEntity.getId());
-            List<String> priceDetailIds = purchasePriceDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-            List<PurchasePriceChangeDetailEntity> purchasePriceChangeDetailEntities = purchasePriceChangeDetailService.listByPurchasePriceDetailIds(priceDetailIds);
-            if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailEntities)) {
-                throw new ServiceException(ApiError.ERROR_NOT_DISAPPROVE_CHANGE, purchasePriceEntity.getCode());
-            }
+        if (CollectionUtils.isNotEmpty(changeDetailEntityList)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_NOT_DISAPPROVE_CHANGE.msg, entity.getCode()));
         }
-
-        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.APPROVE)).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT);
+        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         if (result) {
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
-
+            moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "状态变更");
             //发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
-        return result;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
@@ -1036,36 +1018,24 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @description: 流程审核
      * @author Will
      * @date: 2023/7/3 15:24
-     * @param list
-     * @param dto
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      */
-    private void approveProcess (List<PurchasePriceEntity> list,BaseApproveParamDTO dto) {
-        ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
+    private void approveProcess (PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        list.forEach(obj -> {
-            ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-            approveDTO.setBusinessId(obj.getId());
-            approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE.getCode());
-            approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
-            approveDTO.setComment(dto.getComment());
-            approveDTO.setUserId(userInfo.getUid());
-            approveDTO.setVariablesMap(BeanUtil.beanToMap(obj));
-            resultList.add(approveDTO);
-        });
-        ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
-        Integer code = listApiResult.getCode();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
+        approveDTO.setComment(comment);
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
+        Integer code = result.getCode();
         if (200 != code) {
             throw new ServiceException(ApiError.ERROR_94006);
-        }
-        List<ProcessManagementDTO.ApproveResultDTO> data = listApiResult.getData();
-        List<String> updateIdList = data.stream()
-                .filter(obj -> ObjectUtils.isEmpty(obj.getIsExistProcess()) || !obj.getIsExistProcess())
-                .map(ProcessManagementDTO.ApproveResultDTO::getBusinessId)
-                .collect(Collectors.toList());
-
-        if (CollectionUtils.isNotEmpty(updateIdList)) {
-            List<PurchasePriceEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
-            approveEnd(dto,updateList);
         }
     }
 

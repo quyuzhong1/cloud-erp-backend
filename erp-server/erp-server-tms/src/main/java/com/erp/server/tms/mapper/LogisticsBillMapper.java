@@ -60,7 +60,7 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@author yl
      *@date 2023-11-16
      */
-    IPage<LogisticsBillDTO.PagingVO> paging(Page query,@Param("params")LogisticsBillDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
+    IPage<LogisticsBillDTO.PagingVO> paging(Page query,@Param("params")LogisticsBillDTO.PagingParamDTO params);
     /**
      * 导出
      *@parms dto
@@ -68,7 +68,7 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@author yl
      *@date 2023-11-16
      */
-    List<LogisticsBillDTO.PagingVO> listExport(@Param("params")LogisticsBillDTO.ExportDTO dto,@Param("statusList") List<String> statusList);
+    List<LogisticsBillDTO.PagingVO> listExport(@Param("params")LogisticsBillDTO.PagingParamDTO dto);
 
     /**
      * 获取物流单基础信息 根据跟踪号

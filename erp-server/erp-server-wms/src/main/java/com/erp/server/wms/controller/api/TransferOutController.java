@@ -3,10 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -16,15 +13,20 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.wms.dto.TransferOutDTO;
+import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.server.wms.query.TransferOutQueryHandler;
 import com.erp.server.wms.service.TransferOutService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 调拨管理-分布式调出
@@ -35,6 +37,7 @@ import java.util.List;
 @RestController
 @LogSystemModule("分布式调出单")
 @RequestMapping("/transfer/out")
+@Slf4j
 public class TransferOutController extends BaseController {
 
     private final TransferOutService transferOutService;
@@ -153,9 +156,24 @@ public class TransferOutController extends BaseController {
             menuCode = "wms:transfer:out:approve",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
-    public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        transferOutService.approve(dto);
-        return success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferOutEntity> entityList = transferOutService.listByIds(ids);
+        for (String id : ids) {
+            TransferOutEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"分布式调出单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferOutService.approve(dto, entity));
+            }catch (Exception e){
+                log.error("分布式调出单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -169,9 +187,24 @@ public class TransferOutController extends BaseController {
             menuCode = "wms:transfer:out:disApprove",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
-    public ApiResult<Void> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        transferOutService.disApprove(dto.getIds());
-        return  success();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferOutEntity> entityList = transferOutService.listByIds(ids);
+        for (String id : ids) {
+            TransferOutEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"分布式调出单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferOutService.disApprove(entity));
+            }catch (Exception e){
+                log.error("分布式调出单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

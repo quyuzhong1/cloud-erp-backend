@@ -39,4 +39,23 @@ public enum DeliveryTypeEnum implements EnumMessage {
     public String getName() {
         return name;
     }
+
+
+    public static String getName(String code) {
+        for (DeliveryTypeEnum deliveryTypeEnum : DeliveryTypeEnum.values()) {
+            if (code.equals(deliveryTypeEnum.getCode())) {
+                return deliveryTypeEnum.getName();
+            }
+        }
+        return "";
+    }
+
+    public static DeliveryTypeEnum getEnum(String code) {
+        for (DeliveryTypeEnum deliveryTypeEnum : DeliveryTypeEnum.values()) {
+            if (code.equals(deliveryTypeEnum.getCode())) {
+                return deliveryTypeEnum;
+            }
+        }
+        return null;
+    }
 }

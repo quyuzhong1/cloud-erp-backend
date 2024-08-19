@@ -4,6 +4,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
@@ -81,37 +82,24 @@ public class GetLogisticsTrackNoTaskJob {
                     //查询跟踪号
                     ApiResult<List<LogisticsOrderResponseVO>> orderResponse = logisticsService.queryOrderList(logisticsQuery);
                     List<LogisticsOrderResponseVO> resultList = orderResponse.getData();
-                    List<SoB2cLogisticsEntity> updateList = new ArrayList<>(resultList.size());
+                    if (CollectionUtils.isEmpty(resultList)){
+                        continue;
+                    }
+                    List<LogisticsBillDTO.TrackDTO> updateList = new ArrayList<>(resultList.size());
                     for (LogisticsOrderResponseVO item : resultList) {
                         String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
                                 map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
-                        Integer version = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
-                                map(SoB2cLogisticsDTO.TrackNoDTO::getVersion).findFirst().orElse(null);
-                        if (StringUtils.isNotBlank(b2cLogisticsId)) {
-                            List<String> trackNoList = new ArrayList<>(2);
-                            SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
-                            entity.setId(b2cLogisticsId);
-                            entity.setVersion(version);
-                            //跟踪单号
-                            String trackNo = item.getTrackNo();
-                            if (StringUtils.isBlank(trackNo) || "null".equals(trackNo)) {
-                                continue;
-                            }
-                            trackNoList.add(trackNo);
-                            Boolean more = item.getMore();
-                            if (Objects.nonNull(more) && more) {
-                                List<LogisticsOrderResponseVO> responseList = item.getLogisticsOrderResponseVOS();
-                                trackNoList.addAll(responseList.stream().map(LogisticsOrderResponseVO::getTrackNo).collect(Collectors.toList()));
-                            }
-                            String trackNoStr = trackNoList.stream().collect(Collectors.joining(","));
-                            if (StringUtils.isNotBlank(trackNoStr)) {
-                                entity.setTrackNo(trackNoStr);
-                                updateList.add(entity);
-                            }
+                        if (StringUtils.isNotBlank(b2cLogisticsId) && StringUtils.isNotBlank(item.getTrackNo())){
+                            LogisticsBillDTO.TrackDTO dto = LogisticsBillDTO.TrackDTO.builder()
+                                    .transportNo(item.getTransportNo())
+                                    .trackNo(item.getTrackNo())
+                                    .id(b2cLogisticsId)
+                                    .build();
+                            updateList.add(dto);
                         }
                     }
                     if (CollectionUtils.isNotEmpty(updateList)) {
-                        soB2cFeign.batchUpdateLogistics(updateList);
+                        soB2cFeign.updateTrackNoByTransportNo(updateList);
                     }
                 } catch (Exception e) {
                     log.error("查询物流跟踪号异常>>>>{}", e);
@@ -145,6 +133,7 @@ public class GetLogisticsTrackNoTaskJob {
                 }
                 item.setDeliveryNo(deliveryNo);
                 queryBase.setDeliveryNo(deliveryNo);
+                queryBase.setPlatformCode(item.getPlatformCode());
                 Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(authId,item.getShopId(), logisticsPlatform);
                 authMap.put("token", item.getShopToken());
                 queryBase.setAuthMap(authMap);

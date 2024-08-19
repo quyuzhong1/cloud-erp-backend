@@ -1,10 +1,7 @@
 package com.erp.server.wms.controller.pda;
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -14,19 +11,24 @@ import com.common.core.controller.BaseController;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.server.wms.service.SoReturnReceiveService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * PDA:销售退货签收单
  * @Author Luo_WG
  * @Date 2023/8/15 10:23
  **/
+@Slf4j
 @RestController
 @LogSystemModule("PDA销售退货签收单")
 @RequestMapping("/pdaSoReturnReceive")
@@ -184,7 +186,7 @@ public class PdaSoReturnReceiveController extends BaseController {
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售退货签收单")
@@ -194,9 +196,23 @@ public class PdaSoReturnReceiveController extends BaseController {
             menuCode = "wms:pdaSoReturnReceive:approve",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = soReturnReceiveService.approve(baseApproveParamDTO);
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoReturnReceiveEntity> entityList = soReturnReceiveService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoReturnReceiveEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"退货签收单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnReceiveService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("退货签收单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

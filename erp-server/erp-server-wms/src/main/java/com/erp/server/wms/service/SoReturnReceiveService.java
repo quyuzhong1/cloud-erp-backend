@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -96,19 +97,22 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      **/
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(SoReturnReceiveEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param ids ids
+     * @param entity
      * @return java.lang.Boolean
      **/
-    BatchResultDTO disApprove(List<String> ids);
+    BatchResultDTO disApprove(SoReturnReceiveEntity entity);
 
     /**
      * 取消流程

@@ -68,6 +68,7 @@
             lc.name as channelName,
             lbc.transport_no as transportNo,
             lbc.track_no as trackNo,
+            lbc.channel_id as channelId,
             lbc.logistics_bill_detail_id,
             lbd.transportStatus,
             lbc.actual_weight as actualWeight,

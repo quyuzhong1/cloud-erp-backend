@@ -307,9 +307,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
-        List<TransferInEntity> list = this.listByIds(ids);
+    public BatchResultDTO approve(BaseApproveParamDTO dto, TransferInEntity transferInEntity) {
+        List<String> ids = Arrays.asList(transferInEntity.getId());
+        List<TransferInEntity> list = Arrays.asList(transferInEntity);
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
@@ -337,7 +337,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
         }
-        return result;
+        return BatchResultDTO.success(transferInEntity.getId(),transferInEntity.getCode(),"审核成功");
     }
 
     /**
@@ -438,27 +438,22 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<TransferInEntity> list = this.listByIds(ids);
+    public BatchResultDTO disApprove(TransferInEntity entity) {
+        List<String> ids = Arrays.asList(entity.getId());
+        List<TransferInEntity> list = Arrays.asList(entity);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99066);
         }
-        //审核中
-        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         //待提交
         ApproveStatusEnum waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT;
         List<String> statusList = new ArrayList<>(2);
-        statusList.add(approveIngStatus);
         statusList.add(approveStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -467,14 +462,11 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         if (result) {
             InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_IN, ids);
             inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
-            //添加日志
-            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
             //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), rejectPairList, "状态变更");
         }
-        return result;
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
     /**

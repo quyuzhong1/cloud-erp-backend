@@ -67,8 +67,15 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 			
 			String requestParam = dmpInputWdtApiInitRequest.getRequestParam();
 			JSONObject parseObject = JSON.parseObject(requestParam);
-			parseObject.put("startTime", dmpInputWdtApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-			parseObject.put("endTime", dmpInputWdtApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+			if("wms.stockin.PreStockin.search".equals(apiType)) {
+				parseObject.put("mtFrom", dmpInputWdtApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+				parseObject.put("mtTo", dmpInputWdtApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+			}else if("setting.Shop.queryShop".equals(apiType) || "setting.Warehouse.queryWarehouse".equals(apiType)){
+				
+			}else {
+				parseObject.put("startTime", dmpInputWdtApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+				parseObject.put("endTime", dmpInputWdtApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));	
+			}
 			Class<?> paramsClass = Class.forName(className + "$Params");
 			Object params = paramsClass.newInstance();
 			for(Map.Entry<String , Object> parse: parseObject.entrySet()) {
@@ -134,6 +141,9 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 				
 				Integer total = data.getInteger("total_count");
 				JSONArray order = data.getJSONArray("order");
+				if(order == null) {
+					order = data.getJSONArray("details");
+				}
 				
 				currTotal = currTotal + order.size();
 				DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();

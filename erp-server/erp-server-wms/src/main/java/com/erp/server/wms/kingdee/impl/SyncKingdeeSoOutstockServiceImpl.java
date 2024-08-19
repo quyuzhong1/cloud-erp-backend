@@ -790,7 +790,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
+                dmpMqFeign.delayLevel3SendTask(Collections.singletonList(dmpPushTaskEntity));
             }
         });
 
@@ -878,13 +878,14 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                     return null;
                 }
 
-                soId = view.getId();
-                soCode = view.getCode();
-                receiveAddress = view.getReceiverDTO().getFirstAddress();
-                currency = view.getCurrency();
-                remark = view.getRemark();
+                if (Objects.nonNull(view)) {
+                    soId = view.getId();
+                    soCode = view.getCode();
+                    receiveAddress = view.getReceiverDTO().getFirstAddress();
+                    currency = view.getCurrency();
+                    remark = view.getRemark();
 
-                List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
+                    List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
                 BigDecimal itemTotalCost = detailList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 entity.setItemTotalCost(itemTotalCost);
                 entity.setOrderTotalCost(view.getAmount());
@@ -894,6 +895,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
             }
         }
+            }
+
 
         entity.setOrderNo(soCode);
         entity.setManStreet(receiveAddress);

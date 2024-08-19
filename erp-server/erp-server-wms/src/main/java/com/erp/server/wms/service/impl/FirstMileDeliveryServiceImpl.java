@@ -390,11 +390,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             List<String> skuNos = isCombinationList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
             List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
 
-            //校验组合SKU库存量是否满足调出，否则无法审核通过，提示：SKU【SKU编码】【发货仓】可用库存不足，无法审核发货单
+            //校验组合SKU库存量是否满足调出，否则无法审核通过，提示：SKU【SKU编码】【发货仓】冻结库存不足，无法审核发货单
             for (FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity : isCombinationList) {
                 //及时库存
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(firstMileDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
-                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), skuVO.getSkuId(), firstMileDeliveryDetailEntity.getWarehouseLocation());
+                Integer usableInventoryTotal = inventoryService.getInventoryTotal(entity.getInventoryOrgId() ,entity.getDeliveryWarehouseId(), skuVO.getSkuId(), firstMileDeliveryDetailEntity.getWarehouseLocation(), InventoryStatusEnum.FROZEN.getCode());
                 if (firstMileDeliveryDetailEntity.getDeliveryQty() > usableInventoryTotal) {
                     throw new ServiceException(ApiError.FBA_DELIVERY_INVENTORY_INSUFFICIENT, firstMileDeliveryDetailEntity.getSkuNo(), entity.getDeliveryWarehouseName());
                 }
@@ -499,13 +499,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
                 }
             } else {
-                detailAddDto.setRemark(entity.getSourceCode());
+                detailAddDto.setRemark(detailEntity.getFbaShipmentCode());
             }
 
             detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
-        return transferInfoService.add(addDTO);
+        return transferInfoService.addAndApprove(addDTO);
     }
 
     /**
@@ -570,9 +570,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //查找发货单下推的分步式调出单自动反审并删除
         List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceIds(Arrays.asList(id));
         //直接调拨单已审核先反审核
-        List<String> approveTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(approveTransferOutIds)) {
-            transferInfoService.disApprove(approveTransferOutIds, Boolean.FALSE,Boolean.TRUE);
+        if (CollectionUtils.isNotEmpty(transferInfoEntities)) {
+            transferInfoEntities.forEach(transferInfoEntity -> {
+                transferInfoService.disApprove(transferInfoEntity, Boolean.FALSE, Boolean.TRUE);
+            });
         }
         //直接调拨单审核中先撤销
         List<String> approveIngTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
@@ -780,22 +781,21 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 overseasWarehouseInboundService.updateInstockStatus(Arrays.asList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
             }
 
-            //判断是否中转
+            //匹配中转配置
             CfgRuleOutDTO.MatchTransferRuleDTO matchRuleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
             matchRuleDTO.setType(StockOutTransferTypeEnum.FIRST_MILE.getCode());
             matchRuleDTO.setReceiveCountry(entity.getCountryId());
             matchRuleDTO.setDestWarehouse(entity.getDestWarehouseId());
-            Boolean isMatch = cfgRuleOutService.matchTransferRule(matchRuleDTO);
-            if (isMatch){
+            Boolean isMatchRule = cfgRuleOutService.matchTransferRule(matchRuleDTO);
+            //发货仓与中转仓一致
+            CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = getTransitSettingDTO();
+            boolean isEqual = transitSettingDTO.getWarehouseId().equals(entity.getDeliveryWarehouseId());
+            if (isMatchRule && !isEqual){
                 //中转
-                String transferToUlanziId = generateTransferToUlanzi(entity, detailEntityList);
-                submitAndApprove(transferToUlanziId);
-
-                String transferFromUlanziId = generateTransferFromUlanzi(entity, detailEntityList);
-                submitAndApprove(transferFromUlanziId);
+               generateTransferToUlanzi(entity, detailEntityList);
+               generateTransferFromUlanzi(entity, detailEntityList);
             }else {
-                String transferOutId = generateTransferOut(entity, detailEntityList);
-                submitAndApprove(transferOutId);
+                generateTransferOut(entity, detailEntityList);
             }
 
             //走TMS自动生成物流单逻辑
@@ -1188,16 +1188,27 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    public Boolean fbaDeliveryGenerateMachineSubmitAndApprove(List<FirstMileDeliveryDTO.GenerateMachineView> list) {
+    public List<BatchResultDTO> fbaDeliveryGenerateMachineSubmitAndApprove(List<FirstMileDeliveryDTO.GenerateMachineView> list) {
         List<String> ids = fbaDeliveryGenerateMachine(list);
         //提审
         Boolean submit = machineInfoService.submit(ids);
         //审核
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setIds(ids);
-        baseApproveParamDTO.setType(ApproveType.PASS);
-        machineInfoService.approve(baseApproveParamDTO);
-        return submit;
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<MachineInfoEntity> entityList = machineInfoService.listByIds(ids);
+        for (String id : ids) {
+            MachineInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"加工单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(machineInfoService.approve(entity,ApproveType.PASS,"",null));
+            }catch (Exception e){
+                log.error("加工单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 
     /**
@@ -1517,23 +1528,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return sonItemList;
     }
 
-    /**
-     * 校验打包数量
-     * @param packDateDTOS
-     * @param firstMileDeliveryDetailEntities
-     */
-    private void checkDeliveryQty(List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities) {
-        for (WmsCartonSpecDTO.PackDateDTO packDateDTO : packDateDTOS) {
-            //发货数量
-            int deliveryQty = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(packDateDTO.getId())).mapToInt(req -> req.getDeliveryQty()).sum();
-            //待装箱数量=发货数量-所有已装箱数量
-            int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
-            if (deliveryQty < packQtySum) {
-                throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, packDateDTO.getBoxSpecNo(), packDateDTO.getSkuNo());
-            }
-        }
-    }
-
     @Override
     public OverseasWarehouseInboundDTO.ViewDTO getGenerateOverseasWarehouseInboundView(String id) {
         FirstMileDeliveryEntity entity = this.getById(id);
@@ -1618,7 +1612,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         for (OverseasWarehouseInboundDetailDTO.ViewDTO dto : detailViewList) {
             //装箱数量
-            int packQty = packDateDTOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(req -> req.getPackQty() * req.getBoxQty()).sum();
+            int packQty = packDateDTOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(WmsCartonSpecDTO.PackDateDTO::getPackQty).sum();
             if (packQty > dto.getDeliveryQty()) {
                 dto.setPackQty(dto.getDeliveryQty());
             } else {
@@ -1883,14 +1877,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(deliveryEntity.getDestWarehouseId(), deliveryEntity.getDeliveryWarehouseId()));
 
         //优蓝子中转仓
-        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
-        if(Objects.isNull(cfgSetting)){
-            throw new ServiceException("没有找到优蓝子中转仓配置");
-        }
-        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
-        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
-            throw new ServiceException("中转设置仓库不能为空");
-        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = getTransitSettingDTO();
         WarehouseEntity warehouseEntity = warehouseService.getOne(new LambdaQueryWrapper<WarehouseEntity>()
                 .eq(WarehouseEntity::getId, transitSettingDTO.getWarehouseId())
                 .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()));
@@ -1961,13 +1948,28 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
                 }
             } else {
-                detailAddDto.setRemark(deliveryEntity.getSourceCode());
+                detailAddDto.setRemark(deliveryDetail.getFbaShipmentCode());
             }
 
             detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
-        return transferInfoService.add(addDTO);
+        return transferInfoService.addAndApprove(addDTO);
+    }
+
+    /**
+     * 获取中转仓配置
+     */
+    private CfgSettingValueDTO.TransitSettingDTO getTransitSettingDTO() {
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
+        if(Objects.isNull(cfgSetting)){
+            throw new ServiceException("没有找到优蓝子中转仓配置");
+        }
+        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
+        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
+            throw new ServiceException("中转设置仓库不能为空");
+        }
+        return transitSettingDTO;
     }
 
     /**
@@ -2062,12 +2064,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
                 }
             } else {
-                detailAddDto.setRemark(entity.getSourceCode());
+                detailAddDto.setRemark((detailEntity.getFbaShipmentCode()));
             }
             detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
-        return transferInfoService.add(addDTO);
+        return transferInfoService.addAndApprove(addDTO);
     }
 
     /**
@@ -2108,7 +2110,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      * 提交并审核直接调拨单
      */
     private void submitAndApprove(String transferId) {
-        if (StringUtils.isBlank(transferId)) {
+        TransferInfoEntity entity = transferInfoService.getById(transferId);
+        if (StringUtils.isBlank(transferId) || Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
         }
         //提交
@@ -2117,7 +2120,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setIds(Arrays.asList(transferId));
         baseApproveParamDTO.setType(ApproveType.PASS);
-        transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
+        transferInfoService.approve(entity,ApproveType.PASS,"", null, Boolean.TRUE);
     }
 }
 

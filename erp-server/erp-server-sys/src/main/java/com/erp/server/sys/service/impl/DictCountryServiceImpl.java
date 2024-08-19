@@ -442,6 +442,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         DictCountryEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -451,20 +452,17 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         if(CollectionUtils.isNotEmpty(cityList)){
             throw new ServiceException("国家下存在省市，无法删除");
         }
-        Boolean result= this.removeById(id);
-        if (result ) {
-            //金蝶推送
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-                }
-            });
-            thirdpartyRefBusinessService.removeByBusinessId(id);
-
-        }
+        baseMapper.deleteById(id);
+        //金蝶推送
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
+        thirdpartyRefBusinessService.removeByBusinessId(id);
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
 
     }

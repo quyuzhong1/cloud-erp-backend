@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
@@ -109,10 +110,10 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 反审核
      * @author yl
      * @date 2023-05-19 12:10
-     * @param dto
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean disApprove(BaseIdsDTO.IdsDTO dto, Boolean isPushKingDee);
+    BatchResultDTO disApprove(SoOutstockEntity entity, Boolean isPushKingDee);
 
     /**
      * 撤销流程

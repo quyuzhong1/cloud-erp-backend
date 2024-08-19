@@ -132,7 +132,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private PoInstockService purchaseStorageService;
+    private PoInstockService poInstockService;
 
     @Resource
     private OperateLogService operateLogService;
@@ -766,12 +766,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         SysDepartmentUserNumberDTO depart = sysUserFeign.getDeptByUserId(userId);
         dto.setStockInDeptId(depart.getDepartmentId());
         //生成结果
-        String createResultId = purchaseStorageService.addAndSubmit(dto);
+        String createResultId = poInstockService.addAndSubmit(dto);
         if (StringUtils.isNotBlank(createResultId)) {
-            BaseApproveParamDTO approveParam = new BaseApproveParamDTO();
-            approveParam.setIds(Arrays.asList(createResultId));
-            approveParam.setType(ApproveTypeEnum.PASS.getStatus());
-            purchaseStorageService.approve(approveParam);
+            PoInstockEntity entity = poInstockService.getById(createResultId);
+            poInstockService.approve(entity,ApproveTypeEnum.PASS.getStatus(),"", null);
         }
     }
 
@@ -828,7 +826,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             warehouseReceiveService.generateStockInWhenQcFinish(receiveIdList);
         }
         //批量生成 入库单
-        purchaseStorageService.batchAdd(addList);
+        poInstockService.batchAdd(addList);
     }
 
     /**
@@ -1206,7 +1204,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             throw new ServiceException(ApiError.ERROR_99023);
         }
         //入库的
-        List<PoInstockEntity> stockInList = purchaseStorageService.getStockInBySourceIds(ids);
+        List<PoInstockEntity> stockInList = poInstockService.getStockInBySourceIds(ids);
         long stockInCount = stockInList.stream().filter(s -> !s.getInvalidStatus()).count();
         if (stockInCount > 0) {
             throw new ServiceException(ApiError.ERROR_99027);

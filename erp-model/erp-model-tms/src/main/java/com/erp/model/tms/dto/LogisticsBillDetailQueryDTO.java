@@ -34,7 +34,7 @@ public class LogisticsBillDetailQueryDTO implements Serializable {
      */
     private String trackQueryMode;
     /**
-     * 注册状态
+     * 注册状态 0 未注册 1 已注册
      */
     private Integer registerStatus;
     /**

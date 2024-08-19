@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = true)
-public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
+public class BaseEntity<T extends BaseEntity<T>> extends Model<T> {
     /**
      * 主键
      */

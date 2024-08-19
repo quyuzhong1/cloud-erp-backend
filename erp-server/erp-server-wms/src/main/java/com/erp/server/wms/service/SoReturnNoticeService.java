@@ -1,6 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
@@ -94,19 +94,22 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return java.lang.Boolean
      **/
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(SoReturnNoticeEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param ids ids
+     * @param entity
      * @return java.lang.Boolean
      **/
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(SoReturnNoticeEntity entity);
 
     /**
      * 取消流程

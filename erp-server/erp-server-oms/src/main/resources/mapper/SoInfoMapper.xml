@@ -82,7 +82,8 @@
             COALESCE(sum(sod.amount),0) as totalAmount,
             COALESCE(sum(sod.tax_amount),0) as totalTaxAmount,
             COALESCE(sum(sod.amount_local_currency),0) as amountLocalCurrency,
-            COALESCE(sum(sod.all_amount_local_currency),0) as allAmountLocalCurrency
+            COALESCE(sum(sod.all_amount_local_currency),0) as allAmountLocalCurrency,
+            COALESCE(sum(sod.frozen_qty),0) as totalFrozenQty
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
@@ -180,6 +181,7 @@
             si.bank_service_fee AS bankServiceFee,
             si.shipping_fee AS shippingFee,
             si.warehouse_id AS warehouseId,
+            si.virtual_warehouse_id AS virtualWarehouseId,
             si.warehouse_org_id AS warehouseOrgId,
             si.bill_date AS billDate,
             si.discount_amount AS discountAmount,
@@ -200,7 +202,8 @@
             sod.is_gift AS isGift,
             sod.is_reissue AS isReissue,
             sod.is_close AS isClose,
-            sod.platform_sku_no AS platformSkuNo
+            sod.platform_sku_no AS platformSkuNo,
+            sod.frozen_qty as frozenQty
         FROM so_detail sod
         INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false

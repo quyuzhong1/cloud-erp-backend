@@ -14,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.server.wms.query.SoReturnReceiveQueryHandler;
 import com.erp.server.wms.service.SoReturnReceiveService;
@@ -193,7 +194,7 @@ public class SoReturnReceiveController extends BaseController {
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售退货签收单")
@@ -203,9 +204,23 @@ public class SoReturnReceiveController extends BaseController {
             menuCode = "wms:soReturnReceive:approve",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = soReturnReceiveService.approve(baseApproveParamDTO);
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoReturnReceiveEntity> entityList = soReturnReceiveService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoReturnReceiveEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"退货签收单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnReceiveService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("退货签收单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -222,19 +237,20 @@ public class SoReturnReceiveController extends BaseController {
             menuCode = "wms:soReturnReceive:disApprove",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
             List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
             List<String> ids = dto.getIds();
+        List<SoReturnReceiveEntity> entityList = soReturnReceiveService.listByIds(dto.getIds());
             for (String id : ids) {
                 BatchResultDTO submit;
                 String flagCode = id;
                 try {
-                    SoReturnReceiveEntity soReturnReceive = soReturnReceiveService.getById(id);
-                    if (Objects.isNull(soReturnReceive)) {
+                    SoReturnReceiveEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+                    if (Objects.isNull(entity)) {
                         submit = BatchResultDTO.fail(id,flagCode, "退货签收单不存在");
                     } else {
-                        flagCode = soReturnReceive.getCode();
-                        submit = soReturnReceiveService.disApprove(Arrays.asList(id));
+                        flagCode = entity.getCode();
+                        submit = soReturnReceiveService.disApprove(entity);
                     }
                 } catch (Exception e) {
                     log.error("退货签收单反审核失败>>>>{}", e);

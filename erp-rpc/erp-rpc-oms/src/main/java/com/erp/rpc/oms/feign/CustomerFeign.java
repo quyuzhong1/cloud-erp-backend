@@ -1,6 +1,8 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SellerDTO;
@@ -108,7 +110,7 @@ public interface CustomerFeign {
      * @Date 2023/7/4 12:28
      **/
     @PostMapping("feign/customer/approve")
-    Boolean approve(@RequestBody BaseApproveParamDTO dto);
+    ApiResult<List<BatchResultDTO>> approve(@RequestBody BaseApproveParamDTO dto);
 
     /**
      * 售货员信息

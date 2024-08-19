@@ -18,10 +18,13 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.server.oms.query.SoInfoQueryHandler;
+import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +41,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -57,6 +61,9 @@ public class SoInfoController extends BaseController {
 
     @Resource
     private SoDetailService soDetailService;
+
+    @Resource
+    private SoChangeService soChangeService;
     /**
      * 获取 tab列表
      *
@@ -321,9 +328,24 @@ public class SoInfoController extends BaseController {
             serviceClass = SoInfoService.class,
             keyIdName = "ids"
     )
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = soInfoService.approve(dto);
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(ids);
+        for (String id : ids) {
+            SoInfoEntity entity = soInfoEntityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"销售订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soInfoService.approve(dto, entity));
+            }catch (Exception e){
+                log.error("B2B销售订单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -337,9 +359,25 @@ public class SoInfoController extends BaseController {
             serviceClass = SoInfoService.class,
             keyIdName = "ids"
     )
-    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soInfoService.disApprove(dto);
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(ids);
+        List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(ids);
+        for (String id : ids) {
+            SoInfoEntity entity = soInfoEntityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"销售订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soInfoService.disApprove(dto, entity,soChangeList ));
+            }catch (Exception e){
+                log.error("B2B销售订单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -701,12 +739,12 @@ public class SoInfoController extends BaseController {
     public ApiResult<SoInfoDTO.LockVirtualInventoryDTO> viewLockVirtualInventory(@RequestParam(value = "id") String id) {
         return success(soInfoService.viewLockVirtualInventory(id));
     }
-    
+
     /**
      * 批量锁定查询
      * @author will
      * @date 2024/7/15 15:03
-     * @param dto 
+     * @param dto
      * @return ApiResult<List<SoInfoDTO.BatchLockVirtualInventoryDTO>>
      */
     @PostMapping("/viewBatchLockVirtualInventory")

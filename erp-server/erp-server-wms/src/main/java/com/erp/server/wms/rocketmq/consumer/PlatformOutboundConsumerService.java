@@ -104,7 +104,6 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
         log.warn("第三方出库单参数>>>>>>>{}",JSONUtil.toJsonStr(dto));
@@ -143,14 +142,17 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
             // 主单待发货首次变成已发货才触发标记
             if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(curBillStatus)){
-                // 调用第三方平台SDK标记发货(独立事务)
-                String businessDesc = "第三方仓出库";
-                asyncService.asyncShipOrder(mainEntity.getId(),
-                        mainEntity.getCode(),
-                        mainEntity.getDictPlatform(),
-                        mainEntity.convertSubmitPlatformUniqueKey(),
-                        JSONUtil.toJsonStr(dto),
-                        businessDesc, false);
+                // 校验平台来源明细
+                if (soB2cFeign.checkPlatformShipOrder(mainEntity.getId())) {
+                    // 调用第三方平台SDK标记发货(独立事务)
+                    String businessDesc = "第三方仓出库";
+                    asyncService.asyncShipOrder(mainEntity.getId(),
+                            mainEntity.getCode(),
+                            mainEntity.getDictPlatform(),
+                            mainEntity.convertSubmitPlatformUniqueKey(),
+                            JSONUtil.toJsonStr(dto),
+                            businessDesc, false);
+                }
             }
 
             // 校验是否已生成销售出库单

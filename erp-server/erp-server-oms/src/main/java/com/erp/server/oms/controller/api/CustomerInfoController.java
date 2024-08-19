@@ -21,6 +21,7 @@ import com.erp.server.oms.query.CustomerInfoQueryHandler;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerB2bSellerChangeService;
 import com.erp.server.oms.service.CustomerInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +30,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售管理-客户管理
@@ -40,6 +43,7 @@ import java.util.List;
 @RestController
 @LogSystemModule("B2B客户列表")
 @RequestMapping("/customer")
+@Slf4j
 public class CustomerInfoController extends BaseController {
 
     @Resource
@@ -203,9 +207,25 @@ public class CustomerInfoController extends BaseController {
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids"
     )
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = customerInfoService.approve(dto);
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<CustomerInfoEntity> entityList = customerInfoService.listByIds(ids);
+        for (String id : ids) {
+            CustomerInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"客户信息不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(customerInfoService.approve(dto, entity));
+            }catch (Exception e){
+                log.error("B2B客户审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
     }
 
     /**
@@ -219,9 +239,24 @@ public class CustomerInfoController extends BaseController {
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids"
     )
-    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = customerInfoService.disApprove(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<CustomerInfoEntity> entityList = customerInfoService.listByIds(ids);
+        for (String id : ids) {
+            CustomerInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"客户信息不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(customerInfoService.disApprove(entity));
+            }catch (Exception e){
+                log.error("B2B客户反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

@@ -114,4 +114,13 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      * 获取无需库存或已拣货数量大于0得
      */
     List<SoDeliveryNoticeDetailEntity> listNoInventoryOrPicking(String id, List<String> noInventorySku);
+
+    /**
+     * 虚拟库存数据扣减处理
+     * @author will
+     * @date 2024/8/13 17:38
+     * @param id
+     * @param detailList
+     */
+    void handleVirtualInventory (String id,List<SoDeliveryNoticeDetailEntity> detailList);
 }

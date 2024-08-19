@@ -40,6 +40,15 @@ public class ProductAccessoriesServiceImpl extends ServiceImpl<ProductAccessorie
     public Boolean saveOrUpdateBatchAccessories(List<ProductAccessoriesDTO> productAccessoriesList) {
         if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
             List<ProductAccessoriesEntity> list = BeanMapper.copyList(productAccessoriesList, ProductAccessoriesEntity.class);
+            list.forEach(productAccessoriesEntity -> {
+                List<ProductAccessoriesEntity> entityList = this.lambdaQuery().eq(ProductAccessoriesEntity::getProductId, productAccessoriesEntity.getProductId())
+                        .eq(StringUtils.isNotBlank(productAccessoriesEntity.getParentSkuId()), ProductAccessoriesEntity::getParentSkuId, productAccessoriesEntity.getParentSkuId())
+                        .eq(StringUtils.isNotBlank(productAccessoriesEntity.getAccessoriesSkuId()), ProductAccessoriesEntity::getAccessoriesSkuId, productAccessoriesEntity.getAccessoriesSkuId())
+                        .list();
+                if (CollectionUtils.isNotEmpty(entityList)){
+                    productAccessoriesEntity.setId(entityList.get(0).getId());
+                }
+            });
             return this.saveOrUpdateBatch(list);
         }
         return true;

@@ -627,9 +627,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
-        List<CustomerB2cEntity> list = this.listByIds(ids);
+    public BatchResultDTO approve(BaseApproveParamDTO dto,CustomerB2cEntity entity) {
+        List<CustomerB2cEntity> list = Arrays.asList(entity);
 
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
@@ -643,7 +642,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<Pair<String, String>> pairList = list.stream().
                 map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个客户信息", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "审核操作");
-        return Boolean.TRUE;
+
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
     /**
@@ -695,17 +695,14 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      * @date 2023-05-15 14:25
      */
     @Override
-    public Boolean disApprove(List<String> ids) {
-        List<CustomerB2cEntity> list = this.listByIds(ids);
-        //审核中
-        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+    public BatchResultDTO disApprove(CustomerB2cEntity entity) {
+        List<CustomerB2cEntity> list = Arrays.asList(entity);
 
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         List<String> statusList = new ArrayList<>(2);
-        statusList.add(approveIngStatus);
         statusList.add(approveStatus);
 
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
@@ -713,21 +710,18 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             throw new ServiceException(ApiError.ERROR_98014);
         }
 
-        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
         //反审核
         if (result) {
             //添加日志
-            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "状态变更");
+            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER_B2C.getCode(), rejectPairList, "状态变更");
             //审核通过发送金蝶
 //            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
-        return result;
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
     /**
@@ -946,11 +940,6 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<CustomerB2CDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerB2CDTO.InfoDTO.class);
         List<ApproveStatusEnum> statusList = new ArrayList<>(1);
         statusList.add(ApproveStatusEnum.APPROVE);
-        for (CustomerB2CDTO.InfoDTO item : resultList) {
-            if (!statusList.contains(item.getApproveStatus())) {
-                item.setDisabled(true);
-            }
-        }
         resultList = resultList.stream().sorted(Comparator.comparing(CustomerB2CDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
         return resultList;
     }

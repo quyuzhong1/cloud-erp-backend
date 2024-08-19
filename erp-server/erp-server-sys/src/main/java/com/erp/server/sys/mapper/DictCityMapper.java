@@ -47,5 +47,10 @@ public interface DictCityMapper extends BaseMapper<DictCityEntity> {
     List<DictCityDTO.PagingViewDTO> provinceExport(@Param("params")DictCityDTO.ProvincePagingParamDTO dto);
 
     List<DictCityDTO.PagingViewDTO> cityExport(@Param("params")DictCityDTO.ProvincePagingParamDTO dto);
-
+    /**
+     *
+     * @param id
+     * @return
+     */
+    void deleteById(@Param("id") String id);
 }

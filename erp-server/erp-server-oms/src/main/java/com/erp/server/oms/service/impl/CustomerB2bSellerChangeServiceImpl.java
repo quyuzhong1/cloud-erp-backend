@@ -408,35 +408,18 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     }
 
     @Override
-    public List<BatchResultDTO> batchApprove(BaseApproveParamDTO baseApproveParamDTO) {
-        List<CustomerB2bSellerChangeEntity> entityList = listByIds(baseApproveParamDTO.getIds());
-        List<String> mainIds =entityList.stream().map(CustomerB2bSellerChangeEntity::getMainId).collect(Collectors.toList());
-        Map<String,CustomerInfoEntity> customerInfoEntityMap = customerInfoService.listByIds(mainIds).stream().collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
-        List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        for(CustomerB2bSellerChangeEntity entity : entityList){
-            CustomerInfoEntity customerInfoEntity = customerInfoEntityMap.get(entity.getMainId());
-            BatchResultDTO batchResultDTO = new BatchResultDTO();
-            resultDTOList.add(batchResultDTO);
-            if(Objects.isNull(customerInfoEntity)){
-                batchResultDTO = BatchResultDTO.fail(entity.getId(),"","客户信息已经删除");
-                batchResultDTO.setId(entity.getId());
-                batchResultDTO.setMsg("客户信息已经删除");
-                batchResultDTO.setSuccess(false);
-                continue;
-            }
-            batchResultDTO.setId(entity.getId());
-            batchResultDTO.setCode(customerInfoEntity.getCode());
-            batchResultDTO.setSuccess(true);
-            batchResultDTO.setMsg("审核成功");
-            if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)){
-                batchResultDTO.setMsg(ApiError.ERROR_98006.msg);
-                batchResultDTO.setSuccess(false);
-                continue;
-            }
-            //调用审核流程
-            service.approveProcess(entity, baseApproveParamDTO,batchResultDTO,customerInfoEntity);
+    public BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,CustomerB2bSellerChangeEntity entity,CustomerInfoEntity customerInfo) {
+        if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)){
+            return BatchResultDTO.fail(entity.getId(),customerInfo.getCode(),ApiError.ERROR_98006.msg);
         }
-        return resultDTOList;
+        BatchResultDTO batchResultDTO = new BatchResultDTO();
+        batchResultDTO.setId(entity.getId());
+        batchResultDTO.setCode(customerInfo.getCode());
+        batchResultDTO.setSuccess(true);
+        batchResultDTO.setMsg("审核成功");
+        //调用审核流程
+        service.approveProcess(entity, baseApproveParamDTO,batchResultDTO,customerInfo);
+        return BatchResultDTO.success(entity.getId(),customerInfo.getCode(),"操作成功");
     }
 
     @Transactional(rollbackFor = Exception.class)

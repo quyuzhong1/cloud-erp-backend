@@ -839,11 +839,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 申报信息规则信息整理
+     *
      * @param id
      * @param map
+     * @param isUpdatePackingWeight
      * @return
      */
-    BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate);
+    BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate, Boolean isUpdatePackingWeight);
 
     /**
      * 根据订单拆分 申报明细

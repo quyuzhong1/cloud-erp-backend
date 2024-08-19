@@ -15,15 +15,25 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.entity.PoInstockEntity;
+import com.erp.model.wms.entity.PoReturnEntity;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
 import com.erp.server.wms.query.PoInStockQueryHandler;
 import com.erp.server.wms.service.PoInstockService;
+import com.erp.server.wms.service.PoReturnService;
+import com.erp.server.wms.service.SubcontractIssueService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 采购入库单
@@ -31,6 +41,7 @@ import java.util.List;
  * @author will
  * @since 2023-04-10
  */
+@Slf4j
 @RestController
 @LogSystemModule("采购入库单")
 @RequestMapping("/poInStock")
@@ -38,7 +49,10 @@ public class PoInStockController extends BaseController {
 
     @Resource
     private PoInstockService poInstockService;
-
+    @Resource
+    private PoReturnService poReturnService;
+    @Autowired
+    private SubcontractIssueService subcontractIssueService;
     /**
      * 列表查询
      * @author Will
@@ -251,7 +265,7 @@ public class PoInStockController extends BaseController {
      * 批量审核
      * @author Will
      * @date: 2023/4/11 20:11
-     * @param baseApproveParamDTO
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购入库单")
@@ -261,9 +275,23 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:approve",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
-    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        poInstockService.approve(baseApproveParamDTO);
-        return success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto)     {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PoInstockEntity> entityList = poInstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoInstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购入库单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poInstockService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("采购入库单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -280,9 +308,27 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:disApprove",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = poInstockService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PoInstockEntity> entityList = poInstockService.listByIds(dto.getIds());
+        List<PoReturnEntity> purchaseReturnOrderList = poReturnService.listBySourceIds(dto.getIds());
+        List<SubcontractIssueEntity> subcontractIssueList = subcontractIssueService.listBySourceIdList(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoInstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购入库单记录不存在"));
+                continue;
+            }
+            List<PoReturnEntity> returnEntityList = purchaseReturnOrderList.stream().filter(e -> StringUtils.isNotBlank(e.getSourceId()) && e.getSourceId().equals(id)).collect(Collectors.toList());
+            List<SubcontractIssueEntity> issueEntityList = subcontractIssueList.stream().filter(e -> StringUtils.isNotBlank(e.getSourceId()) && e.getSourceId().equals(id)).collect(Collectors.toList());
+            try {
+                resultDTOS.add(poInstockService.disApprove(entity,returnEntityList, issueEntityList));
+            }catch (Exception e){
+                log.error("采购入库单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

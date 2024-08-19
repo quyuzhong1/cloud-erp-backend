@@ -229,5 +229,17 @@ public class LogisticsChannelController extends BaseController {
     public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listByLogisticsSupplierId(@RequestParam(value = "logisticsSupplierId") String  logisticsSupplierId){
         return success(logisticsChannelService.listByLogisticsSupplierId(logisticsSupplierId));
     }
-
+    /**
+     * 发货设置
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-11-02
+     */
+    @PostMapping("/deliverySetting")
+    public ApiResult deliverySetting(@RequestBody @Validated LogisticsChannelDTO.DeliveryDTO dto) {
+        logisticsChannelService.deliverySetting(dto);
+        return success();
+    }
 }

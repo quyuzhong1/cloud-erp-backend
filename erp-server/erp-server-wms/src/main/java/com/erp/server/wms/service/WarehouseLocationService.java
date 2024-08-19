@@ -290,6 +290,24 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     List<WarehouseLocationEntity> listByLocationName(String warehouseLocationName);
 
     /**
+     * 根据仓库ids和库位code查询库位列表
+     * @param warehouseIds
+     * @param warehouseLocationList
+     * @return
+     */
+    List<WarehouseLocationEntity> listByWarehouseIdsAndCodeList(List<String> warehouseIds, List<String> warehouseLocationList);
+
+    /**
+     * 查询库区
+     * @param warehouseId 仓库ID
+     * @param areaTypeCode 库区类型
+     * @return 库区列表
+     * @date: 2024-06-25
+     * @author: tanmujin
+     */
+    List<WarehouseLocationDTO.CoreDTO> listArea(String warehouseId, String areaTypeCode);
+
+    /**
      * 查询所有库区
      *
      * @date: 2024-06-26
@@ -309,15 +327,8 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     List<WarehouseLocationDTO.MappingDTO> listArea2LocationMapping(String warehouseId);
 
     /**
-     * 根据仓库ids和库位code集合查询库位列表
-     * @param warehouseIds
-     * @param warehouseLocationList
-     * @return
-     */
-    List<WarehouseLocationEntity> listByWarehouseIdsAndCodeList(List<String> warehouseIds, List<String> warehouseLocationList);
-
-    /**
      * 导出库位
      */
     PagingVO<WarehouseLocationExportVo> exportWarehouseLocation(PagingDTO<WarehouseLocationDTO.exportParamDto> dto);
+    WarehouseLocationEntity getWarehouseLocation(String warehouseId, String warehouseLocation, WarehouseLocationTypeEnum type);
 }

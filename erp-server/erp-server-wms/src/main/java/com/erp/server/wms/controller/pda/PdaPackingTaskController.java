@@ -153,14 +153,13 @@ public class PdaPackingTaskController extends BaseController {
     @DataIdempotent(keyIdName = "dto.taskId")
     @PostMapping("/stagingPacking")
     @LogAction(value = LogActionEnum.INSERT, desc = "暂存本箱")
-    public ApiResult<String> stagingPacking(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
+    public ApiResult<WmsCartonDTO.PrintDTO> stagingPacking(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
         dto.setOperation("装箱操作");
         dto.setContent("暂存本箱");
         if (StringUtils.isBlank(dto.getPackingStatus())){
             dto.setPackingStatus(PackingTaskStatusEnum.INCOMPLETE.getCode());
         }
-        String code = packingTaskService.stagingPacking(dto);
-        return success(code);
+        return success(packingTaskService.stagingPacking(dto));
     }
 
     /**
@@ -173,11 +172,10 @@ public class PdaPackingTaskController extends BaseController {
     @DataIdempotent(keyIdName = "dto.taskId")
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "完成并打印本箱")
-    public ApiResult<String> pdaPackingSave(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
+    public ApiResult<WmsCartonDTO.PrintDTO> pdaPackingSave(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
         dto.setOperation("装箱操作");
         dto.setContent("完成装箱");
-        String code = packingTaskService.pdaPackingSave(dto);
-        return success(code);
+        return success(packingTaskService.pdaPackingSave(dto));
     }
 
     /**
@@ -261,7 +259,7 @@ public class PdaPackingTaskController extends BaseController {
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
     @GetMapping("/getPrintBarCode")
-    public ApiResult<String> getPrintBarCode(@RequestParam("cartonId") String cartonId) {
+    public ApiResult<WmsCartonDTO.PrintDTO> getPrintBarCode(@RequestParam("cartonId") String cartonId) {
         return success(packingTaskService.getPrintBarCode(cartonId));
     }
 }

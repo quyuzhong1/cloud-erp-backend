@@ -15,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -26,6 +27,7 @@ import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.server.scm.query.SupplierQueryHandler;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,6 +48,7 @@ import java.util.Objects;
  * @author yl
  * @since 2023-03-15
  */
+@Slf4j
 @RestController
 @LogSystemModule("供应商列表")
 @RequestMapping("/supplier")
@@ -304,9 +308,23 @@ public class SupplierController extends BaseController {
             serviceClass = SupplierService.class,
             keyIdName = "ids"
     )
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = supplierService.approve(dto);
-        return result == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SupplierEntity> entityList = supplierService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SupplierEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"供应商不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(supplierService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+            }catch (Exception e){
+                log.error("产品sku审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -325,9 +343,23 @@ public class SupplierController extends BaseController {
             serviceClass = SupplierService.class,
             keyIdName = "ids"
     )
-    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = supplierService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SupplierEntity> entityList = supplierService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SupplierEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"供应商不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(supplierService.disApprove(entity));
+            }catch (Exception e){
+                log.error("产品sku审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

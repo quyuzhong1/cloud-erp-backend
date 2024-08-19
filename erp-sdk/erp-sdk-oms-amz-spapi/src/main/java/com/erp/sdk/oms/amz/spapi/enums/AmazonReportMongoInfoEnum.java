@@ -24,6 +24,7 @@ public enum AmazonReportMongoInfoEnum {
 
     MERCHANT_LISTINGS_ALL_DATA_MONGO_INFO("所有商品信息报告", MongoTableNameContant.DATA_REPORT_AMZ_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class, "amzReportAllListingHandler"),
     FBA_MYI_ALL_INVENTORY_DATA_MONGO_INFO("亚马逊物流管理库存", MongoTableNameContant.DATA_REPORT_AMZ_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryCsvEntity.class, ReportFbaMyiAllInventoryMongoDTO.class, "amzReportFbaMyiAllInventoryHandler"),
+    FBA_MYI_ALL_UNSUPPRESSED_INVENTORY_DATA_MONGO_INFO("亚马逊物流管理库存(未归档)", MongoTableNameContant.DATA_REPORT_AMZ_FBA_MYI_UNSUPPRESSED_INVENTORY, ReportFbaMyiUnsuppressedInventoryCsvEntity.class, ReportFbaMyiUnsuppressedInventoryMongoDTO.class, "amzReportFbaMyiUnsuppressedInventoryHandler"),
     RESERVED_INVENTORY_DATA_MONGO_INFO("亚马逊物流预留库存报告", MongoTableNameContant.DATA_REPORT_AMZ_RESERVED, ReportReservedCsvEntity.class, ReportReservedMongoDTO.class, "amzReportReservedInventoryHandler"),
     FBA_INVENTORY_PLANNING_DATA_MONGO_INFO("亚马逊物流管理库存状况报告", MongoTableNameContant.DATA_REPORT_AMZ_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningCsvEntity.class, ReportFbaInventoryPlanningMongoDTO.class, "amzReportFbaInventoryPlanningHandler"),
     LEDGER_DETAIL_VIEW_DATA_MONGO_INFO("亚马逊物流库存账本详情报告", null, null, null, "amzReportLedgerDetailViewHandler"),

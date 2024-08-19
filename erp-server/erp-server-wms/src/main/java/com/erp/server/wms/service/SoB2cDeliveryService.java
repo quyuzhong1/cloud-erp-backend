@@ -152,6 +152,15 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds);
 
     /**
+     * 根据状态查询
+     * @author will
+     * @date 2024/8/13 15:50
+     * @param sourceIds
+     * @param notStatus
+     * @return List<SoB2cDeliveryEntity>
+     */
+    List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds, String notStatus);
+    /**
      * 回滚冻结的库存
      *
      * @param ids
@@ -190,12 +199,28 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     BatchResultDTO delivery(String id, String deliveryType);
 
     /**
+     * 扣减冻结库存（库存不够生成异常）
+     * @author will
+     * @date 2024/7/21 9:47
+     * @param entity
+     */
+    Boolean generateOutFreezeError (SoB2cDeliveryEntity entity);
+
+    /**
+     * 清除扣减冻结异常
+     * @author will
+     * @date 2024/8/8 22:08
+     * @param entity
+     */
+    void cleanErrorSignFreeze (SoB2cDeliveryEntity entity);
+
+    /**
      * 扣减冻结库存
      * @author will
      * @date 2024/7/21 9:47
      * @param entity
      */
-    void outFreezeVirtualInventory (SoB2cDeliveryEntity entity);
+    Boolean outFreezeVirtualInventory (SoB2cDeliveryEntity entity);
 
     /**
      * 生成销售出库单
@@ -206,7 +231,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @author Lambda
      * @create 2024-01-26 10:17
      */
-    void generateB2cSoOutstock(SoB2cDeliveryEntity entity);
+    Boolean generateB2cSoOutstock(SoB2cDeliveryEntity entity);
 
     Boolean updateB2cDeliveryWeightBySoId(SoB2cDeliveryDTO.UpdateWeightDTO dto);
 
@@ -338,7 +363,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param soB2cDeliveryEntity         发货单
      * @param soB2cDeliveryDetailEntities 发货单明细
      */
-    void generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities);
+    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities);
 
     /**
      * B2C生成拣货单 (规则前置执行)
@@ -347,19 +372,37 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param soB2cDeliveryDetailEntities 发货单明细
      * @param results 前置规则返回的仓位
      */
-    void generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results);
+    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results);
     /**
      * 取消发货
      */
     BatchResultDTO cancelShipment(String id, List<SoB2cDeliveryDTO.CancelShipmentDTO> detail);
     /**
-     * 发货出库
+     * 发货生成直接调拨单
      * @author will
      * @date 2024/7/11 10:42
      * @param entity
      * @return Boolean
      */
     Boolean pushTransferInfo(SoB2cDeliveryEntity entity);
+
+    /**
+     * 发货生成直接调拨单
+     * @author will
+     * @date 2024/7/11 10:42
+     * @param entity
+     * @return Boolean
+     */
+    Boolean pushTransferInfoError(SoB2cDeliveryEntity entity);
+
+    /**
+     * 重试生成直接调拨单
+     * @author will
+     * @date 2024/8/1 10:00
+     * @param soId
+     * @return Boolean
+     */
+    Boolean afreshPushTransferInfo(String soId);
     /**
      * 重新出库
      * @author will
@@ -376,6 +419,14 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return BatchResultDTO
      */
     BatchResultDTO handleErrorData(String id);
+    /**
+     * 重试发货虚拟仓库存扣减
+     * @author will
+     * @date 2024/8/1 10:37
+     * @param soId
+     * @return Boolean
+     */
+    Boolean afreshOutFreezeVirtualInventory(String soId);
 
     /**
      * 导出发货单

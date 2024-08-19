@@ -205,6 +205,21 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         return CollUtil.isEmpty(list) ? 0 : list.stream().mapToInt(InventoryEntity::getQty).sum();
     }
 
+    @Override
+    public Integer getRealInventoryTotal(String warehouseId, String skuId) {
+        // 查询仓库组织
+        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+        Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException("仓库信息不存在"));
+        LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, warehouseEntity.getOrgId())
+                .eq(InventoryEntity::getSkuId, skuId)
+                .in(InventoryEntity::getDictInventoryStatus,Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+
+        List<InventoryEntity> list = baseMapper.selectList(queryWrapper);
+        return CollUtil.isEmpty(list) ? 0 : list.stream().mapToInt(InventoryEntity::getQty).sum();
+    }
+
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public InventorySaveDTO addOrUpdate(String warehouseId, String orgId, String warehouseLocation, String skuId, String skuNo, String inventoryStatus, Integer qty) {
@@ -718,7 +733,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
      * @author Will
      * @date: 2023/10/17 18:24
      */
-    private List<Map<String, Object>> listKingdeeInventory(List<String> skuNoList, List<String> warehouseCodeList, List<String> orgCodeList) {
+    private List<Map<String, Object>> listKingdeeInventory (List<String> skuNoList,List<String> warehouseCodeList,List<String> orgCodeList) {
         DmpSyncKingdeeDTO.ParamDTO paramDTO = new DmpSyncKingdeeDTO.ParamDTO();
         paramDTO.setFormId("STK_Inventory");
         paramDTO.setFieldKeys("FMaterialId.FNumber,FStockId.FNumber,FStockOrgId.FNumber,FBASEQTY,FMaterialid.FSTOREURNOM,FMaterialid.FSTOREURNUM");
@@ -1344,6 +1359,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 //        // 导出Excel
 //        exportInventoryAgeExcel(resultList, response);
         return null;
+    }
+
+    @Override
+    public List<InventoryEntity> listInventoryBySkuIds(InventoryQtyDTO.InventoryBySkuDTO dto) {
+        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuIdList())){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().select(InventoryEntity::getId,InventoryEntity::getSkuId,InventoryEntity::getSkuNo, InventoryEntity::getQty,
+                        InventoryEntity::getWarehouseId,InventoryEntity::getDictInventoryStatus, InventoryEntity::getWarehouseLocation)
+                .in(InventoryEntity::getSkuId, dto.getSkuIdList()).list();
     }
 
     @Override

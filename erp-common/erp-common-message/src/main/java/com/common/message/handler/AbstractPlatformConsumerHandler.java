@@ -1,5 +1,6 @@
 package com.common.message.handler;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
@@ -65,7 +66,12 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
                 updateMongodbData(platform, uniqueId, 0);
                 return;
             }
-            updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
+            String msg = SyncStatusEnum.SUCCESS_SYNC.getName();
+            if (Objects.nonNull(handle.getData())){
+                //记录正确响应数据返回-留痕
+                msg = JSONUtil.toJsonStr(handle.getData());
+            }
+            updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.SUCCESS_SYNC, msg);
             updateMongodbData(platform, uniqueId, 2);
         }catch (Throwable e) {
             try {

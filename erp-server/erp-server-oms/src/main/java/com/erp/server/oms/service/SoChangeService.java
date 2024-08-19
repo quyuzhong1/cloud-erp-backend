@@ -1,10 +1,12 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
@@ -96,7 +98,7 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(BaseApproveParamDTO dto, SoChangeEntity entity);
 
     /**
      * @description: 结束审核

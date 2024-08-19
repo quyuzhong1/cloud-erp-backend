@@ -13,7 +13,6 @@ import javax.annotation.Resource;
 
 import java.math.BigDecimal;
 
-import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerOmsApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
@@ -24,6 +23,6 @@ class SoB2cLogisticsServiceImplTest {
     private SoB2cLogisticsService soB2cLogisticsService;
     @Test
     void updateWeight() {
-        soB2cLogisticsService.updateWeight("1780914177058017281","1780914177171263490",new BigDecimal("123456789123.1234472542446464345457"));
+        soB2cLogisticsService.updateWeight("1780914177058017281","1780914177171263490",new BigDecimal("123456789123.1234472542446464345457"), "");
     }
 }

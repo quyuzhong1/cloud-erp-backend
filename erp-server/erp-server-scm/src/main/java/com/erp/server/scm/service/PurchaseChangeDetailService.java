@@ -45,7 +45,7 @@ public interface PurchaseChangeDetailService extends SuperService<PurchaseChange
      * @author Will
      * @date: 2023/10/12 15:25
      * @param list
-     * @param purchaseChangeIdList
+     * @param purchaseChangeId
      */
-    void checkPurchasePrice (List<PurchaseChangeDetailEntity> list,List<String> purchaseChangeIdList);
+    void checkPurchasePrice (List<PurchaseChangeDetailEntity> list,String purchaseChangeId);
 }

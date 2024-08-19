@@ -382,7 +382,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     public BatchResultDTO cancelProcess(String id) {
         SubcontractIssueEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外发料单数据"));
         // 只有审核中的单据允许撤销
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
 

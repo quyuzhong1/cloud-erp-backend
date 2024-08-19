@@ -13,16 +13,26 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
+import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.server.oms.query.CustomerInfoQueryHandler;
 import com.erp.server.oms.service.CustomerB2bSellerChangeService;
+import com.erp.server.oms.service.CustomerInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * b2b客户销售员变更单
@@ -39,6 +49,8 @@ public class CustomerB2bSellerChangeController extends BaseController {
     @Resource
     private CustomerB2bSellerChangeService customerB2bSellerChangeService;
 
+    @Resource
+    private CustomerInfoService customerInfoService;
     /**
      * 获取tabFlag
      */
@@ -165,9 +177,31 @@ public class CustomerB2bSellerChangeController extends BaseController {
             menuCode = "oms:customerB2bSellerChange:update",
             serviceClass = CustomerB2bSellerChangeService.class,
             keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchApprove(baseApproveParamDTO);
-        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<CustomerB2bSellerChangeEntity> entityList = customerB2bSellerChangeService.listByIds(ids);
+        List<String> mainIds =entityList.stream().map(CustomerB2bSellerChangeEntity::getMainId).collect(Collectors.toList());
+        Map<String,CustomerInfoEntity> customerInfoEntityMap = customerInfoService.listByIds(mainIds).stream().collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        for (String id : ids) {
+            CustomerB2bSellerChangeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"客户变更销售员信息不存在"));
+                continue;
+            }
+            CustomerInfoEntity customerInfoEntity = customerInfoEntityMap.get(entity.getMainId());
+            if(Objects.isNull(customerInfoEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"客户信息不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(customerB2bSellerChangeService.approve(dto, entity,customerInfoEntity));
+            }catch (Exception e){
+                log.error("B2B客户变更销售员审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), customerInfoEntity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

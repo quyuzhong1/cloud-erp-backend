@@ -3,7 +3,6 @@ package com.erp.server.dmp.inout.handler.input.create;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +26,7 @@ import com.erp.server.dmp.service.DmpInputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.lang.Pair;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -41,7 +41,7 @@ public class DmpInputCompensateCreateHandler extends DmpInputBaseCreateHandler{
 	@Autowired
 	private DmpCfgInputDetailService dmpCfgInputDetailService;
 	@Autowired
-	private DmpCfgInputCompensateService DmpCfgInputCompensateService;
+	private DmpCfgInputCompensateService dmpCfgInputCompensateService;
 	@Autowired
 	private DmpInputTaskService dmpInputTaskService;
 	
@@ -63,10 +63,10 @@ public class DmpInputCompensateCreateHandler extends DmpInputBaseCreateHandler{
 		}
 		
 		Map<String, String> idNextLevelIdMap = dmpCfgInputDetailEntityList.stream().collect(Collectors.toMap(DmpCfgInputDetailEntity::getId, DmpCfgInputDetailEntity::getNextLevelId));
-		List<DmpCfgInputCompensateEntity> dmpCfgInputCompensateEntityList = DmpCfgInputCompensateService.lambdaQuery()
+		List<DmpCfgInputCompensateEntity> dmpCfgInputCompensateEntityList = dmpCfgInputCompensateService.lambdaQuery()
 				.in(DmpCfgInputCompensateEntity::getMainId, idNextLevelIdMap.keySet())
 				.eq(DmpCfgInputCompensateEntity::getDisabled, Boolean.FALSE)
-				.le(DmpCfgInputCompensateEntity::getNextTime, new Date())
+				.last(" and next_time <= NOW() - (INTERVAL '1 seconds' *  dealy_time) ")
 				.list();
 		if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {
 			log.info("输入信息数据代码【{}】没有符合条件的补偿任务" ,  dmpCfgInputEntity.getCode());
@@ -75,56 +75,61 @@ public class DmpInputCompensateCreateHandler extends DmpInputBaseCreateHandler{
 		
 		List<DmpInputTaskEntity> dmpInputTaskEntityList = new ArrayList<>();
 		DmpInputTaskEntity dmpInputTaskEntity = null;
+		
+		List<Pair<LocalDateTime, LocalDateTime>> timeList = null;
 		for(DmpCfgInputCompensateEntity dmpCfgInputCompensateEntity : dmpCfgInputCompensateEntityList) {
 			String type = dmpCfgInputCompensateEntity.getType();
 			Integer intervalTime = dmpCfgInputCompensateEntity.getIntervalTime();
-			if(DmpCfgInputCompensateTypeEnum.DAY.getCode().equals(type)) {
-				
-			}else if(DmpCfgInputCompensateTypeEnum.WEEK.getCode().equals(type)) {
-				
-			}else if(DmpCfgInputCompensateTypeEnum.MONTH.getCode().equals(type)) {
-				
+			LocalDateTime startTime = dmpCfgInputCompensateEntity.getLastTime();
+			LocalDateTime endTime = dmpCfgInputCompensateEntity.getNextTime();
+			timeList = new ArrayList<>();
+			timeList.add(new Pair<>(startTime, endTime));
+			if(intervalTime != null && intervalTime > 0) {
+				long between = LocalDateTimeUtil.between(startTime, endTime , ChronoUnit.SECONDS);
+				if(between > intervalTime) {
+					timeList = new ArrayList<>();
+					while(between > 0) {
+						LocalDateTime offset = LocalDateTimeUtil.offset(startTime, intervalTime, ChronoUnit.SECONDS);
+						if(offset.isAfter(endTime)) {
+							offset = endTime;
+						}
+						timeList.add(new Pair<>(startTime, offset));
+						startTime = offset;
+						between = between - intervalTime;
+					}
+				}
 			}
 			
-			dmpInputTaskEntity = new DmpInputTaskEntity();
-			dmpInputTaskEntity.setCfgInputId(cfgInputId);
-			dmpInputTaskEntity.setNextLevelId(idNextLevelIdMap.get(dmpCfgInputCompensateEntity.getMainId()));
-			/**
-			currTime	        	overrideTime	StartTime				dealyTime	EndTime					LastTime				NextTime				IntervalTime
-			2024-06-19 18:10:00		1800			2024-06-18 17:30:00		4*3600		2024-06-19 12:00:00		2024-06-19 12:00:00		2024-06-20 18:00:00		24*3600
-			2024-06-20 18:10:00		1800			2024-06-19 11:30:00		4*3600		2024-06-20 12:00:00		2024-06-20 12:00:00		2024-06-21 18:00:00		24*3600
-			2024-06-21 18:10:00		1800			2024-06-20 11:30:00		4*3600		2024-06-21 12:00:00		2024-06-21 12:00:00		2024-06-22 18:00:00		24*3600
-			 */
-			
-			LocalDateTime startTime = LocalDateTime.now();
-			LocalDateTime lastTime = dmpCfgInputCompensateEntity.getLastTime();
-			if(lastTime != null) {
-				startTime = lastTime;
+			for(Pair<LocalDateTime, LocalDateTime> time : timeList) {
+				dmpInputTaskEntity = new DmpInputTaskEntity();
+				dmpInputTaskEntity.setCfgInputId(cfgInputId);
+				dmpInputTaskEntity.setNextLevelId(idNextLevelIdMap.get(dmpCfgInputCompensateEntity.getMainId()));
+				
+				dmpInputTaskEntity.setStartTime(time.getKey());
+				dmpInputTaskEntity.setEndTime(time.getValue());
+				dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
+				dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.COMPENSATE.getCode());
+				dmpInputTaskEntity.setExecTimeout(dmpCfgInputCompensateEntity.getExecTimeout());
+				dmpInputTaskEntity.setExtendJson(dmpCfgInputCompensateEntity.getExtendJson());
+				
+				dmpInputTaskEntityList.add(dmpInputTaskEntity);
 			}
-			Integer overrideTime = dmpCfgInputCompensateEntity.getOverrideTime();
-			if(overrideTime != null && overrideTime != 0) {
-				startTime = LocalDateTimeUtil.offset(lastTime, overrideTime * -1, ChronoUnit.SECONDS);
-			}
-			dmpInputTaskEntity.setStartTime(startTime);
-			
-			LocalDateTime nextTime = dmpCfgInputCompensateEntity.getNextTime();
-			LocalDateTime endTime = nextTime;
-			long dealyTime = Long.valueOf(type);
-			endTime = LocalDateTimeUtil.offset(endTime, dealyTime * -1, ChronoUnit.SECONDS);
-			
-			dmpInputTaskEntity.setEndTime(endTime);
-			dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
-			dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.COMPENSATE.getCode());
-			dmpInputTaskEntity.setExecTimeout(dmpCfgInputCompensateEntity.getExecTimeout());
-			
-			dmpInputTaskEntityList.add(dmpInputTaskEntity);
 			
 			dmpCfgInputCompensateEntity.setLastTime(endTime);
-			dmpCfgInputCompensateEntity.setNextTime(LocalDateTimeUtil.offset(nextTime, intervalTime, ChronoUnit.SECONDS));
+			if(DmpCfgInputCompensateTypeEnum.DAY.getCode().equals(type)) {
+				dmpCfgInputCompensateEntity.setNextTime(LocalDateTimeUtil.offset(endTime, 1, ChronoUnit.DAYS));
+			}else if(DmpCfgInputCompensateTypeEnum.WEEK.getCode().equals(type)) {
+				dmpCfgInputCompensateEntity.setNextTime(LocalDateTimeUtil.offset(endTime, 1, ChronoUnit.WEEKS));
+			}else if(DmpCfgInputCompensateTypeEnum.MONTH.getCode().equals(type)) {
+				dmpCfgInputCompensateEntity.setNextTime(LocalDateTimeUtil.offset(endTime, 1, ChronoUnit.MONTHS));
+			}
 		}
-		dmpInputTaskService.saveBatch(dmpInputTaskEntityList);
-		
-		DmpCfgInputCompensateService.updateBatchById(dmpCfgInputCompensateEntityList);
+		if(CollUtil.isNotEmpty(dmpInputTaskEntityList)) {
+			dmpInputTaskService.saveBatch(dmpInputTaskEntityList);
+		}
+		if(CollUtil.isNotEmpty(dmpCfgInputCompensateEntityList)) {
+			dmpCfgInputCompensateService.updateBatchById(dmpCfgInputCompensateEntityList);
+		}
 		
 		return dmpInputTaskEntityList;
 	}

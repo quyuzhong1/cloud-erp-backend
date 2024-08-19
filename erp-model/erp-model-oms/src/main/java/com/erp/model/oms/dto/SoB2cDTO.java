@@ -1192,16 +1192,6 @@ public class SoB2cDTO implements Serializable {
         private Boolean isCover;
 
         /**
-         * 物流渠道id
-         */
-        private String logisticsChannelId;
-
-        /**
-         * 仓库 http://172.16.100.11:3002/project/92/interface/api/22930
-         */
-        private String warehouseId;
-
-        /**
          * 明细数据
          */
         @Valid
@@ -2263,6 +2253,11 @@ public class SoB2cDTO implements Serializable {
          * 发货时间
          */
         private LocalDateTime deliveryTime;
+
+        /**
+         * 物流信息
+         */
+        List<SoB2cLogisticsEntity> soB2cLogisticsList;
     }
 
 
@@ -2398,11 +2393,16 @@ public class SoB2cDTO implements Serializable {
          * 产品skuId
          */
         private String skuId;
+        private String parentSkuId;
 
         /**
          * 产品sku编号
          */
         private String skuNo;
+        /**
+         * 父级sku用于记录bom拆分时原sku
+         */
+        private String parentSkuNo;
 
         /**
          * 产品名称
@@ -2445,6 +2445,16 @@ public class SoB2cDTO implements Serializable {
         private String  warehouseName;
 
         /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+
+        /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+
+        /**
          * 仓位
          */
         private String warehouseLocation;
@@ -2473,6 +2483,11 @@ public class SoB2cDTO implements Serializable {
          * 可用数量
          */
         private Integer useableQty;
+
+        /**
+         * 虚拟仓可用数量
+         */
+        private Integer virtualUsableQty;
 
         /**
          * 是否缺货
@@ -2841,4 +2856,49 @@ public class SoB2cDTO implements Serializable {
         @NotBlank(message = "仓库名称不能为空")
         private String warehouseName;
     }
+
+
+    /**
+     * 子件缺货信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class VirtualChildScarceDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 子件虚拟仓缺货数量
+         */
+        private Integer virtualScarceQty;
+
+        /**
+         * 子件虚拟仓可用数量
+         */
+        private Integer childUsableQty;
+
+        /**
+         * 子级SKU按bom转换后可用数量（父级维度）
+         */
+        private Integer parentUsableQty;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+    }
+
 }

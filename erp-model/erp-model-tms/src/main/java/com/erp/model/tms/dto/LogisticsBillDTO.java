@@ -1,5 +1,7 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -18,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -71,6 +74,9 @@ public class LogisticsBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO{
+        /**
+         * 明细id
+         */
         private List<String> ids;
     }
 
@@ -81,81 +87,15 @@ public class LogisticsBillDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 类型
-         * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatusGroup
+         * sqlMap 默认key default
          */
-        @NotBlank(message = "类型不能为空")
-        private String  type;
-
-
-        /**
-         * 订单号集合
-         */
-        private List<String> orderNoList;
-
-        /**
-         * 物流单号
-         */
-        private List<String>  trackNoList;
-        /**
-         * 销售平台
-         * 来源 http://172.16.100.11:3002/project/110/interface/api/13435  key=salesPlatform
-         */
-        private List<String>  salesPlatformList;
-
-
-        /**
-         * 订单类型
-         * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=orderType
-         */
-        private List<String>  orderTypeList;
-
-
-        /**
-         * 店铺
-         */
-        private List<String>  shopIdList;
-
-        /**
-         * 下单时间
-         */
-        private List<LocalDate>  orderTimeList;
-
-
-        /**
-         * 发货时间
-         */
-        private List<LocalDate>  deliveryTimeList;
-
-        /**
-         * 物流渠道
-         * 来源 http://172.16.100.11:3002/project/128/interface/api/25999
-         */
-        private List<String> channelIdList;
-
-
-        /**
-         * 包裹状态
-         * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatus
-         */
-        private List<String> trackStatusList;
-
-        /**
-         * 排除的类型
-         */
-        private List<String> excludeOrderTypeList;
-
-        /**
-         * 平台订单号
-         */
-        private String platformCode;
-
-        /**
-         * 发货类型 http://172.16.100.11:3002/project/128/interface/api/25522 key=shipmentType
-         */
-        private List<String> shipmentTypeList;
+        private Map<String,String> sqlMap;
     }
 
     /**
@@ -166,12 +106,13 @@ public class LogisticsBillDTO implements Serializable {
     public static class PagingVO {
 
         /**
-         * id
+         * 主表id
          */
         private String id;
-
-
-
+        /**
+         * 明细id
+         */
+        private String detailId;
         /**
          * 销售平台 [可排序]
          */
@@ -264,9 +205,19 @@ public class LogisticsBillDTO implements Serializable {
 
 
         /**
-         * 物流单[可排序]
+         * 跟踪号[可排序]
          */
         private String trackNo;
+        /**
+         * 运单号[可排序]
+         */
+        private String transportNo;
+        /**
+         * 轨迹查询单号（运单号transportNo跟踪号trackNo）
+         * TrackQueryTypeEnum
+         * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = trackQueryType
+         */
+        private String trackQueryType;
 
         /**
          * 运输天数
@@ -293,6 +244,10 @@ public class LogisticsBillDTO implements Serializable {
          * 最新更新时间
          */
         private LocalDateTime updateTime;
+        /**
+         * 物流轨迹更新时间
+         */
+        private LocalDateTime trackTime;
 
     }
 
@@ -693,6 +648,11 @@ public class LogisticsBillDTO implements Serializable {
         private String iossTaxNo;
 
         /**
+         * VOEC税号
+         */
+        private String voecTaxNo;
+
+        /**
          * 币别
          */
         private String currency;
@@ -711,6 +671,10 @@ public class LogisticsBillDTO implements Serializable {
 
         private String orderCode;
 
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
         /**
          * 销售平台
          */
@@ -764,7 +728,7 @@ public class LogisticsBillDTO implements Serializable {
         /**
          * 跟踪单号
          */
-        private List<String> trackNoList;
+        private String trackNo;
 
 
     }
@@ -787,6 +751,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         @NotBlank(message = "客户参考号不能为空")
         private String referenceNumber;
+
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
 
         /**
          * 运单号（运单号和跟踪单号不能都为空）
@@ -1093,5 +1062,25 @@ public class LogisticsBillDTO implements Serializable {
          * 物流单
          */
         private List<String> ids;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TrackDTO {
+        /**
+         * 运单号
+         */
+        private  String transportNo;
+        /**
+         * 跟踪号
+         */
+        private  String trackNo;
+        /**
+         * so_b2c_logistics.id
+         * 销售物流单id
+         */
+        private  String id;
     }
 }

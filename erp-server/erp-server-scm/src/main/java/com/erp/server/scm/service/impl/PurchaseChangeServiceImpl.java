@@ -7,10 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -70,6 +67,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.rtfparserkit.rtf.Command.list;
 
 /**
  * <p>
@@ -261,48 +260,31 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
-        //根据ids查询
-        List<PurchaseChangeEntity> list = getList(ids);
+    public BatchResultDTO approve(PurchaseChangeEntity entity, String type, String comment, Boolean isNeedProcess,
+                                  List<PurchaseChangeDetailEntity> purchaseChangeDetailEntityList,
+                                  List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList,
+                                  List<PoReturnDetailEntity> returnDetailEntityList,
+                                  List<WarehouseReceiveDetailEntity> receiveDetailEntityList) {
         //审核中允许审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
-        String type = baseApproveParamDTO.getType();
-
         //验证存货核算是否关账
-        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getReceiveOrgId(),obj.getChangeDate())
-                        ,new InventoryClosedRecordDTO.ClosedParamDTO(obj.getPurchaseOrgId(),obj.getChangeDate()))).
-                distinct().collect(Collectors.toList());
+        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = new ArrayList<>(2);
+        closedParamList.add(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getReceiveOrgId(),entity.getChangeDate()));
+        closedParamList.add(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(),entity.getChangeDate()));
         inventoryCloseRecordFeign.checkHsClosed(closedParamList);
-
-        log.info("采购变更单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+        log.info("采购变更单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
-            //审核通过 TODO
-
-            //查询原采购订单明细信息
-            List<PurchaseChangeDetailEntity> originPurchaseChangeDetailList = purchaseChangeDetailService.listByPurchaseChangeIds(ids);
-            List<String> purchaseOrderDetailIds = originPurchaseChangeDetailList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-            List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList =  purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
-
             //更新单据状态(后面有流程了可删)
-            updateApproveStatusForApprove(ids,ApproveStatusEnum.APPROVE.getStatus());
-
+            updateApproveStatusForApprove(entity.getId(),ApproveStatusEnum.APPROVE.getStatus());
             //验证并更新采购订单原有数据
-            updatePurchaseOrderData(list,ids);
-
+            updatePurchaseOrderData(entity,purchaseChangeDetailEntityList);
             //更新采购申请单生成PO类型
-            updatePurchaseOrderCreatePoType(list);
-
+            purchaseOrderService.updateCreatePoType(Collections.singletonList(entity.getPurchaseOrderId()));
             //修改到货状态
-            List<PurchaseChangeDetailEntity> purchaseChangeDetailList = purchaseChangeDetailService.listByPurchaseChangeIds(ids);
-            List<String> podIds = purchaseChangeDetailList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-            List<PoReturnDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
-            List<WarehouseReceiveDetailEntity> receiveDetailEntityList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
-            purchaseChangeDetailList.forEach(req -> {
+            purchaseChangeDetailEntityList.forEach(req -> {
                 Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
                 Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -316,19 +298,15 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             });
 
             // 更新库存信息
-            updateInventoryTransCore(purchaseChangeDetailList, originPurchaseOrderDetailEntityList);
+            updateInventoryTransCore(purchaseChangeDetailEntityList, purchaseOrderDetailEntityList);
 
             //推送金蝶
-            List<DmpPushTaskEntity> resultList = new ArrayList<>();
-            list.forEach(obj -> {
-                DmpPushTaskEntity pushTaskEntity = syncKingdeePurchaseChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
-                resultList.add(pushTaskEntity);
-            });
+            DmpPushTaskEntity pushTaskEntity = syncKingdeePurchaseChangeService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                 @Override
                 public void afterCommit() {
-                    dmpMqFeign.sendTask(resultList);
+                    dmpMqFeign.sendTask(Collections.singletonList(pushTaskEntity));
                 }
             });
         }
@@ -337,12 +315,11 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             //中止当前审核流程
 
             //更新单据状态
-            updateApproveStatusForApprove(ids,ApproveStatusEnum.REJECT.getStatus());
+            updateApproveStatusForApprove(entity.getId(),ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购变更单",ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"审核操作");
-        return Boolean.TRUE;
+        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购变更单【%s】",ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),entity.getId(),"审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     /**
@@ -554,11 +531,11 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     /**
      * 审核后更新审核状态、审核人、审核时间
      */
-    private void updateApproveStatusForApprove(List<String> ids,String approveStatus) {
+    private void updateApproveStatusForApprove(String id,String approveStatus) {
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
 
-        this.lambdaUpdate().in(PurchaseChangeEntity::getId,ids)
+        this.lambdaUpdate().eq(PurchaseChangeEntity::getId,id)
                 .set(PurchaseChangeEntity::getApproveUserId,userInfo.getUid())
                 .set(PurchaseChangeEntity::getApproveUserName,userInfo.getUserName())
                 .set(PurchaseChangeEntity::getApproveStatus,approveStatus)
@@ -586,19 +563,15 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
      * @description: 审核通过更新采购订单数据
      * @author Will
      * @date: 2023/3/31 16:33
-     * @param ids
+     * @param purchaseChangeEntity
+     * @param purchaseChangeDetailList
      */
-    private void updatePurchaseOrderData (List<PurchaseChangeEntity> list,List<String> ids) {
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-
-        List<PurchaseChangeDetailEntity> purchaseChangeDetailList = purchaseChangeDetailService.listByPurchaseChangeIds(ids);
+    private void updatePurchaseOrderData (PurchaseChangeEntity purchaseChangeEntity,List<PurchaseChangeDetailEntity> purchaseChangeDetailList) {
         if (CollectionUtils.isEmpty(purchaseChangeDetailList)) {
             throw new ServiceException(ApiError.ERROR_98043);
         }
         //审核时明细数量验证
-        purchaseChangeDetailService.checkPurchasePrice(purchaseChangeDetailList,ids);
+        purchaseChangeDetailService.checkPurchasePrice(purchaseChangeDetailList, purchaseChangeEntity.getId());
 
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = new ArrayList<>();
         for (PurchaseChangeDetailEntity detailEntity : purchaseChangeDetailList) {
@@ -657,21 +630,6 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
         });
-    }
-
-    /**
-     * @description: 更新采购申请单生成PO类型
-     * @author Will
-     * @date: 2023/4/3 17:16
-     * @param list
-     */
-    private void updatePurchaseOrderCreatePoType (List<PurchaseChangeEntity> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        List<String> purchaseOrderIds = list.stream().map(PurchaseChangeEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
-            //更新采购申请单生成PO类型
-            purchaseOrderService.updateCreatePoType(purchaseOrderIds);
     }
 
     /**

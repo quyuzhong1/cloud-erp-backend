@@ -4,6 +4,7 @@ import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.server.wms.service.FbaInventoryService;
 import com.erp.server.wms.service.QcInfoService;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/feign/fbaInventory")
-public class FbaInventoryFeignController extends BaseController {
+public class FbaInventoryFeignController extends BaseController implements WmsFbaInventoryFeign {
 
     @Resource
     private FbaInventoryService fbaInventoryService;

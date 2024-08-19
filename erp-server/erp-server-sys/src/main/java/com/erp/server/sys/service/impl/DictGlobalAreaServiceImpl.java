@@ -69,6 +69,7 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(DictGlobalAreaDTO.UpdateDTO dto) {
         String id = dto.getId();
         DictGlobalAreaEntity entity = this.getById(id);
@@ -279,26 +280,24 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
         if(CollectionUtils.isNotEmpty(countryList)){
             throw new ServiceException("区域下存在国家，无法删除");
         }
-        Boolean result= this.removeById(id);
-        if (result ) {
-            //金蝶推送
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeGlobalAreaService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-                }
-            });
-            thirdpartyRefBusinessService.removeByBusinessId(id);
-
-        }
-
+        //删除记录
+        baseMapper.deleteById(id);
+        //金蝶推送
+        DmpPushTaskEntity pushTaskEntity = syncKingdeeGlobalAreaService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
+        thirdpartyRefBusinessService.removeByBusinessId(id);
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addGlobalArea(DictGlobalAreaDTO.AddDTO dto) {
         DictGlobalAreaEntity entity = new DictGlobalAreaEntity();
         String regionName = dto.getRegionName();

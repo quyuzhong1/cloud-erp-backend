@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -37,6 +38,7 @@ import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.VwAllocationAllocationCancelExcelDTO;
 import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
 import com.erp.model.wms.dto.excel.VwAllocationAllocationTransferExcelDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -46,6 +48,7 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.VwAllocationDirectionEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.VirtualWarehouseAllocationCancelExcelListener;
@@ -55,6 +58,7 @@ import com.erp.server.wms.mapper.VirtualWarehouseAllocationMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.FastArrayList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -109,6 +113,11 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Resource
     @Lazy
     private VirtualWarehouseAllocationServiceImpl service;
+
+    @Resource
+    private InventoryService inventoryService;
+
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     private static final int size = 2000;
@@ -205,7 +214,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<VirtualInventoryDTO.ViewQtyDTO> qtyDTOList = virtualInventoryService.getQty(qtyTypeDTO);
         //获取所有的sku信息
         List<String> skuIds = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<VirtualWarehouseAllocationDTO.DetailDto> detailDtos = BeanMapperUtils.copyList(VirtualWarehouseAllocationDTO.DetailDto.class, detailList);
         detailDtos.forEach(detailDto -> {
             SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())).findFirst().orElse(null);
@@ -271,7 +280,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     private void setInfo(List<VirtualWarehouseAllocationDTO.ListDTO> records) {
         List<String> skuIds = records.stream().map(record -> record.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         if (CollectionUtils.isNotEmpty(skuVOList)) {
             records.forEach(record -> {
                 SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), record.getSkuId())).findFirst().orElse(null);
@@ -314,13 +323,14 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         String msg = StrUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
         //进行合单并创建中台任务数据进行同步
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
 //                virtualWarehouseAllocationHandleService.handleData(allocationEntity);
-                CompletableFuture.runAsync(() -> virtualWarehousePushHandleService.handleData(allocationEntity));
-            }
-        });
+//                CompletableFuture.runAsync(() -> virtualWarehousePushHandleService.handleData(allocationEntity));
+//            }
+//        });
+        virtualWarehousePushHandleService.handleData(allocationEntity);
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -611,7 +621,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<String> fromVmIds = detailList.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         vmIds.addAll(fromVmIds);
         //获取所有的sku、仓库、虚拟仓信息
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
         List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(vmIds);
         String type = virtualWarehouseAllocationEntity.getType();
@@ -857,6 +867,74 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             setInfo(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO> listVirtualInventory(List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO> list) {
+        List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO> resultList = new FastArrayList();
+        //仓库Id集合
+        List<String> warehouseIdList = list.stream().map(VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        //skuId集合
+        List<String> skuIdList = list.stream().map(VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> virtualWarehouseIdList = new ArrayList<>();
+        //虚拟仓Id集合
+        List<String> toVirtualWarehouseIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getToVirtualWarehouseId()))
+                .map(VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO::getToVirtualWarehouseId).distinct().collect(Collectors.toList());
+        virtualWarehouseIdList.addAll(toVirtualWarehouseIdList);
+        List<String> fromVirtualWarehouseIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getFromVirtualWarehouseId()))
+                .map(VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO::getFromVirtualWarehouseId).distinct().collect(Collectors.toList());
+        virtualWarehouseIdList.addAll(fromVirtualWarehouseIdList);
+
+        //实际可用库存
+        InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+        dto.setWarehouseIdList(warehouseIdList);
+        dto.setSkuIdList(skuIdList);
+        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
+
+        //实体仓可分配库存
+        List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList = virtualInventoryService.listInventoryQtyByWarehouseId(warehouseIdList, skuIdList);
+
+        //虚拟仓可用库存
+        VirtualInventoryDTO.VirtualInventoryParamDTO inventoryParamDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
+        inventoryParamDTO.setWarehouseIdList(warehouseIdList);
+        inventoryParamDTO.setSkuIdList(skuIdList);
+        inventoryParamDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
+        inventoryParamDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyList = CollectionUtils.isEmpty(virtualWarehouseIdList) ?
+                new ArrayList<>() : virtualInventoryService.listInventoryQty(inventoryParamDTO);
+
+        for (VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO paramDTO : list) {
+            VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO resultDTO = new VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO();
+            BeanMapperUtils.copy(paramDTO,resultDTO);
+            //实体仓可用库存
+            Integer warehouseUsableQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId())
+                            && StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
+                            && StrUtil.equals(obj.getInventoryStatus(),InventoryStatusEnum.USABLE.getCode())
+                    )
+                    .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
+            resultDTO.setWarehouseUsableQty(warehouseUsableQty);
+            //实体仓已分配库存
+            Integer distributionQty = warehouseInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
+                            && StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()))
+                    .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).findFirst().orElse(MathUtil.ZERO);
+            resultDTO.setDistributionQty(ObjectUtil.isEmpty(distributionQty) ? MathUtil.ZERO : distributionQty);
+
+            //实体仓实际库存
+            Integer warehouseRealQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId())
+                            && StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()))
+                    .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
+            resultDTO.setUnDistributionQty(warehouseRealQty - resultDTO.getDistributionQty());
+
+            Integer toVirtualWarehouseUsableQty = virtualInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()) && StrUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getToVirtualWarehouseId()))
+                    .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
+            resultDTO.setToVirtualWarehouseUsableQty(toVirtualWarehouseUsableQty);
+            Integer fromVirtualWarehouseUsableQty = virtualInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()) && StrUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getFromVirtualWarehouseId()))
+                    .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
+            resultDTO.setFromVirtualWarehouseUsableQty(fromVirtualWarehouseUsableQty);
+            resultList.add(resultDTO);
+        }
+        return resultList;
     }
 
 }

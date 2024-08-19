@@ -109,12 +109,38 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
     Integer getInventoryQtyByWarehouseId(String warehouseId,String skuId);
 
     /**
+     * 根据实体仓库查询虚拟库存数量
+     * @author will
+     * @date 2024/8/8 9:57
+     * @param warehouseIdList
+     * @param skuIdList
+     * @return List<WarehouseInventoryQtyDTO>
+     */
+    List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> listInventoryQtyByWarehouseId(List<String> warehouseIdList, List<String> skuIdList);
+
+    /**
      * 根据sku和虚拟仓id获取是否存在关联关系
      * @param skuId
      * @param id
      * @return
      */
     List<VirtualInventoryDTO.CommonDTO> getBySkuIdAndVwId(String skuId, String id);
+    /**
+     * bom库存信息
+     * @author will
+     * @date 2024/8/6 15:11
+     * @param paramDTO
+     * @return List<BomReturnDTO>
+     */
+    List<VirtualInventoryDTO.BomReturnDTO> listBomVirtual(VirtualInventoryDTO.BomParamDTO paramDTO);
+    /**
+     * SKU可用库存
+     * @author will
+     * @date 2024/8/8 18:28
+     * @param paramList
+     * @return SkuReturnDTO
+     */
+    List<VirtualInventoryDTO.SkuReturnDTO> listSkuVirtualInventoryQty(List<VirtualInventoryDTO.BomParamDTO> paramList);
 
     PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto);
 }

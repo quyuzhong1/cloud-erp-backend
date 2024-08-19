@@ -52,4 +52,11 @@ public class RedisKeyConstant {
      * 计划单号
      */
     public static String SKU_OCCUPY_CODE="SKU_OCCUPY_CODE:{}_{}";
+
+    /**
+     * 结算汇率缓存,目标币别+原币别
+     */
+    public static String SETTLEMENT_EXCHANGE_RATE = "SETTLEMENT_EXCHANGE_RATE:{}_{}";
+
+    public static final String SO_B2C_ORDER_KEY = "SO_B2C_ORDER_KEY";
 }

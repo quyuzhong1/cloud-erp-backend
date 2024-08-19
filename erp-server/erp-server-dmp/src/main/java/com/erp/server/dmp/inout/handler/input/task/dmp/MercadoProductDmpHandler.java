@@ -36,8 +36,6 @@ public class MercadoProductDmpHandler extends DmpInputDbConvertDmpHandler{
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-        super.afterConvertData(dmpInputDataDmpRelationMaps);
-
         String parentTaskId = dmpInputTaskEntity.getParentTaskId();
         List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, parentTaskId).list();
         if (CollectionUtil.isEmpty(list)) {
@@ -54,13 +52,13 @@ public class MercadoProductDmpHandler extends DmpInputDbConvertDmpHandler{
                 //创建时间
                 Object createTimeObj = mongoDataMap.get("dateCreated");
                 if(createTimeObj != null) {
-                    dmpDataMap.put("dmpDataMap", createTimeObj);
+                    dmpDataMap.put("platformCreateTime", createTimeObj);
                 }
 
                 //修改时间
                 Object updateTimeObj = mongoDataMap.get("lastUpdated");
                 if(updateTimeObj != null) {
-                    dmpDataMap.put("dmpDataMap", updateTimeObj);
+                    dmpDataMap.put("platformUpdateTime", updateTimeObj);
                 }
             }
         }

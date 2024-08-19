@@ -95,4 +95,10 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
     void updateSpec(WmsCartonSpecEntity specEntity);
 
     WmsCartonSpecEntity getByTaskIdAndBoxNo(String packingTaskId, String boxNo);
+
+    /**
+     * 置空规格数据
+     * @param cartonSpecEntity
+     */
+    void updateSizeDataEmpty(WmsCartonSpecEntity cartonSpecEntity);
 }

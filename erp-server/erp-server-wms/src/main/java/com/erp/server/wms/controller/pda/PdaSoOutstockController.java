@@ -30,6 +30,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * PDA:销售出库单
@@ -244,9 +245,23 @@ public class PdaSoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
     )
-    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soOutstockService.disApprove(dto, Boolean.TRUE);
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoOutstockEntity> entityList = soOutstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoOutstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"销售出库单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soOutstockService.disApprove(entity, Boolean.TRUE));
+            }catch (Exception e){
+                log.error("销售出库单反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

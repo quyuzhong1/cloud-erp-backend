@@ -36,4 +36,16 @@ public class CfgRuleOutFeignController extends BaseController {
     public Boolean matchTransferRule(@RequestBody @Validated CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO) {
         return cfgRuleOutService.matchTransferRule(ruleDTO);
     }
+
+    /**
+     * 是否匹配中转规则和发货仓库
+     * @author will
+     * @date 2024/7/18 21:19
+     * @param ruleDTO
+     * @return Boolean
+     */
+    @PostMapping("/matchTransferAndWarehouse")
+    public CfgRuleOutDTO.MatchTransferResultDTO matchTransferAndWarehouse(@RequestBody @Validated CfgRuleOutDTO.MatchTransferDTO ruleDTO) {
+        return cfgRuleOutService.matchTransferAndWarehouse(ruleDTO);
+    }
 }

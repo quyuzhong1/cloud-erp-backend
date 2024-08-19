@@ -197,17 +197,17 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     private String shipmentMark;
 
     /**
-     * 同类波次标识
-     */
-    @TableField(exist = false)
-    private String sameWaveStr;
-
-
-    /**
      * 批次号
      */
     @TableField(exist = false)
     private String batchNo;
+
+
+    /**
+     * 同类波次标识
+     */
+    @TableField(exist = false)
+    private String sameWaveStr;
 
 
     public static final String CODE = "code";

@@ -28,6 +28,10 @@ public class LogisticsQueryBaseVO implements Serializable {
      */
     String deliveryNo;
     /**
+     * 平台订单号
+     */
+    String platformCode;
+    /**
      * 订单id(erp销售订单id)
      */
     String orderId;

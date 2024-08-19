@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -16,11 +17,14 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.DmpSoReceiverEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -179,7 +183,20 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         orderDTO.setInvalidStatus(dmpSoInfoEntity.getInvalidStatus());
         // 作废类型（manual手动作废，automatic自动作废）
         orderDTO.setInvalidType(dmpSoInfoEntity.getInvalidStatus() ? "automatic" : "");
-        orderDTO.setIsCancel(Boolean.FALSE);
+
+        // 平台订单原始取消状态(已退款,部分退款)
+        DmpBasicSystemCodeEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpSoInfoEntity.getReturnStatus());
+        if (dmpBasicSystemCodeEnum != null && !DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
+            orderDTO.setIsCancel(Boolean.TRUE);
+        } else {
+            orderDTO.setIsCancel(Boolean.FALSE);
+        }
+
+        JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
+        if (jsonObject.get("sellerOrderCode") != null) {
+            orderDTO.setSellerOrderCode(jsonObject.get("sellerOrderCode")+"");
+        }
+
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
@@ -187,7 +204,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntity, dmpSoDetailEntityList);
         orderDTO.setDetails(details);
-
         //B2C销售订单买家信息表
         orderDTO.setReceiver(parseReceiver(dmpSoInfoEntity, dmpSoReceiverEntityList.get(0)));
         //B2C销售订单物流信息表
@@ -236,7 +252,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         detailDTO.setWarehouseId("");
         // 数量
         detailDTO.setQty(soDetailEntity.getQty());
-
         // 金额
         detailDTO.setAmount(soDetailEntity.getAfterAmount());
         // 单价
@@ -251,8 +266,22 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
         detailDTO.setSourceDetailId(soDetailEntity.getThirdDetailId());
-        // 标签json
-        detailDTO.setLabelJson("");
+
+        // 当前明细标签
+        Map<String, Object> lableMap = new HashMap<>();
+        JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
+        if (jsonObject.get("refundedLineItemIds") != null) {
+            List<String> refundedLineItemIds = (List<String>) jsonObject.get("refundedLineItemIds");
+            if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(soDetailEntity.getThirdDetailId())) {
+                lableMap.put("isRefunded", true);
+                detailDTO.setIsDetailRefund(true);
+            } else {
+                lableMap.put("isRefunded", false);
+            }
+        }
+
+        detailDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
+
         // 库存组织id
         detailDTO.setWarehouseOrgId("");
         // 库存组织名称
@@ -276,7 +305,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         if (Objects.isNull(soReceiverEntity)) {
             return null;
         }
-
         return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(soReceiverEntity.getBuyerId()))
                 .customerId(soReceiverEntity.getBuyerId())
@@ -285,7 +313,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 .telNumber(soReceiverEntity.getMainPhone())
                 .receiverTelNumber(soReceiverEntity.getReceiverTelNumber())
                 .email(soReceiverEntity.getEmail())
-                .country(dmpSoInfoEntity.getCurrencyCode())
+                .country(soReceiverEntity.getCountry())
                 .provinceName(soReceiverEntity.getProvince())
                 .cityName(soReceiverEntity.getCity())
                 .districtName(soReceiverEntity.getDistrict())
@@ -319,8 +347,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 .code(dmpSoInfoEntity.getLogisticsCode())
                 .name(name)
                 .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
-                .logisticsChannelId(dmpSoInfoEntity.getLogisticsChannelId())
-                .logisticsChannelName(dmpSoInfoEntity.getLogisticsChannelName())
                 .estimatedShippingCost(cost)
                 .actualShippingCost(BigDecimal.ZERO)
                 .accessoriesCostCurrency("")
@@ -340,29 +366,14 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
      * @return java.util.List<com.common.business.dto.PlatformOrderFinanceDTO>
      **/
     private static PlatformOrderFinanceDTO parseFinances(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntities) {
-        BigDecimal taxAmount = BigDecimal.ZERO;
-        BigDecimal taxRate = BigDecimal.ZERO;
-        for (DmpSoDetailEntity dmpSoDetailEntity : dmpSoDetailEntities) {
-            JSONObject jsonObject = JSONObject.parseObject(dmpSoDetailEntity.getExtendData());
-
-            List<Map<String, Object>> mapList = (List<Map<String, Object>>) jsonObject.get("itemTax");
-            BigDecimal amount = mapList.stream()
-                    .filter(req -> StringUtils.isNotBlank(req.get("taxType")+"") && "SALES_TAX".equalsIgnoreCase(req.get("taxType")+""))
-                    .map(req -> MathUtil.valueOf(req.get("taxAmount")))
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            BigDecimal rate = mapList.stream()
-                    .map(req -> MathUtil.valueOf(req.get("taxRate")))
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-
-            taxAmount = taxAmount.add(amount);
-            taxRate = taxRate.add(rate);
-        }
-
         return PlatformOrderFinanceDTO.builder()
                 .currency(dmpSoInfoEntity.getCurrencyCode())
                 .shippingCost(dmpSoInfoEntity.getShippingAmount())
-                .platformRate(taxRate)
-                .platformCost(taxAmount)
                 .build();
+    }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("platformCode");
     }
 }

@@ -60,7 +60,7 @@ public interface CustomerB2bSellerChangeService extends SuperService<CustomerB2b
 
     List<BatchResultDTO> batchCancel(List<String> ids);
 
-    List<BatchResultDTO> batchApprove(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,CustomerB2bSellerChangeEntity entity,CustomerInfoEntity customerInfo);
 
     Boolean approveEnd(BaseApproveParamDTO dto, CustomerB2bSellerChangeEntity entity,BatchResultDTO batchResultDTO,CustomerInfoEntity customerInfoEntity );
 

@@ -293,6 +293,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<String> splitDetailIds =  allSoB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSplitDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         //原来
         List<SoB2cDetailEntity> allOriginDetailList = soB2cDetailService.listContainDeleted(splitDetailIds);
+        List<String> originDetailSplitIds = allOriginDetailList.stream().map(SoB2cDetailEntity::getSplitDetailId).collect(Collectors.toList());
+        allOriginDetailList = allOriginDetailList.stream().filter(v->!originDetailSplitIds.contains(v.getId())).collect(Collectors.toList());
+        splitDetailIds = splitDetailIds.stream().filter(v->!originDetailSplitIds.contains(v)).collect(Collectors.toList());
         List<SoB2cDetailEntity> sameSplitDetailList = soB2cDetailService.listBySplitId(splitDetailIds);
         List<String> sameSplitMainIds = sameSplitDetailList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> sameMainList = new ArrayList<>();

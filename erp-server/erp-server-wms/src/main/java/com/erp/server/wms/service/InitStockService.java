@@ -2,12 +2,14 @@ package com.erp.server.wms.service;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
 import com.erp.model.wms.entity.InitStockEntity;
+import com.erp.model.wms.entity.MachineInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -86,9 +88,12 @@ public interface InitStockService extends SuperService<InitStockEntity> {
 
     /**
      * 批量审核
-     * @param baseApproveParamDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(InitStockEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
      * 删除
@@ -98,9 +103,9 @@ public interface InitStockService extends SuperService<InitStockEntity> {
 
     /**
      * 反审核
-     * @param ids
+     * @param entity
      */
-    void disApprove(List<String> ids);
+    BatchResultDTO disApprove(InitStockEntity entity);
 
     /**
      * 作废

@@ -39,4 +39,11 @@ public interface DictGlobalAreaMapper extends BaseMapper<DictGlobalAreaEntity> {
      * @return
      */
     List<DictGlobalAreaDTO.PagingViewDTO> listExport(@Param("params")DictGlobalAreaDTO.PagingParamDTO dto);
+
+    /**
+     *
+     * @param id
+     * @return
+     */
+    void deleteById(@Param("id") String id);
 }

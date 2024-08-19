@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -9,6 +10,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.SingleApproveParamDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
+import com.erp.model.wms.entity.InitStockEntity;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 
 import java.util.List;
@@ -107,18 +109,23 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @description: 审核
      * @author Will
      * @date: 2023/5/10 18:56
-     * @param baseApproveParamDTO
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    BatchResultDTO approve(TransferApplicationEntity entity, String type, String comment, Boolean isNeedProcess);
     /**
      * @description: 审核结束
      * @author Will
      * @date: 2023/8/2 15:09
-     * @param dto
-     * @param list
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
      * @return Boolean
      */
-    Boolean approveEnd(BaseApproveParamDTO dto, List<TransferApplicationEntity> list);
+    Boolean approveEnd(TransferApplicationEntity entity, String type, String comment, Boolean isNeedProcess);
     /**
      * 单个单据的审核
      * @Author Luo_WG
@@ -131,10 +138,10 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @description: 反审核
      * @author Will
      * @date: 2023/5/10 18:56
-     * @param ids
+     * @param entity
      * @return Boolean
      */
-    Boolean disApprove(List<String> ids);
+    BatchResultDTO disApprove(TransferApplicationEntity entity);
     /**
      * @description: 取消流程
      * @author Will

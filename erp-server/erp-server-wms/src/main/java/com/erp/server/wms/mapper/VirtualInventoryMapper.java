@@ -123,6 +123,16 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      */
     Integer getInventoryQtyByWarehouseId(@Param("warehouseId") String warehouseId,@Param("skuId")String skuId);
 
+    /**
+     * 根据实体仓库查询虚拟库存数量
+     * @author will
+     * @date 2024/6/18 9:24
+     * @param warehouseIdList
+     * @param skuIdList
+     * @return Integer
+     */
+    List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> listInventoryQtyByWarehouseId(@Param("warehouseIdList") List<String> warehouseIdList,@Param("skuIdList")List<String> skuIdList);
+
     List<VirtualInventoryDTO.CommonDTO> getBySkuIdAndVwId(@Param("skuId")String skuId, @Param("virtualWarehouseId")String virtualWarehouseId);
     /**
      * 查询仓库统计数据
