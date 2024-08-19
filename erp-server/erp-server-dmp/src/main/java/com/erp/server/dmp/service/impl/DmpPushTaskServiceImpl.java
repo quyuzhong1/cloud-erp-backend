@@ -333,7 +333,10 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 }
                 //旺店通
                 if(PlatformEnum.WANGDIAN.getDesc().equals(targetPlatformName)){
-                    paramDetailList = value.stream().filter(obj -> obj.getStatus().equals(SyncStatusEnum.NO_NEED_SYNC.getCode())).map(obj -> new DmpSyncMqDTO.SyncParamDetailDTO(obj.getSourceId(), obj.getSyncOperate())).collect(Collectors.toList());
+                    paramDetailList = value.stream()
+                            .filter(obj -> obj.getStatus().equals(SyncStatusEnum.NO_NEED_SYNC.getCode()) || obj.getStatus().equals(SyncStatusEnum.FAILED_SYNC.getCode()))
+                            .map(obj -> new DmpSyncMqDTO.SyncParamDetailDTO(obj.getSourceId(), obj.getSyncOperate()))
+                            .collect(Collectors.toList());
                     findWdtDataAndSendMq(paramDetailList,sourceType);
                 }
             }catch (Exception e){
