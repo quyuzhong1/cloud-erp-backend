@@ -53,8 +53,8 @@ public class WmsSyncTaskController {
      * @date: 2024-08-15
      * @author: tanmujin
      */
-    @PostMapping("/feign/wmsSyncTask/findWdtDataSendSyncTask")
-    void findWdtDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO){
+    @PostMapping("/findWdtDataSendSyncTask")
+    void findWdtDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO){
         syncTaskService.findWdtDataSendSyncTask(syncParamDTO);
     }
 }

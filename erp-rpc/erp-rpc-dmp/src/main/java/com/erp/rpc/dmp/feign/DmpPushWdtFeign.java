@@ -39,6 +39,6 @@ public interface DmpPushWdtFeign {
      * @date: 2024-08-15
      * @author: tanmujin
      */
-    @GetMapping("/listByIds")
-    List<DmpPushWdtDTO.ViewDTO> listByIds(List<String> ids);
+    @PostMapping("/listByIds")
+    List<DmpPushWdtDTO.ViewDTO> listByIds(@RequestBody List<String> ids);
 }

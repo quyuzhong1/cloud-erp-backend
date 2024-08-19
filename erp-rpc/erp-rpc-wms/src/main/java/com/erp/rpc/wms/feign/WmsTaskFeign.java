@@ -342,5 +342,5 @@ public interface WmsTaskFeign {
      * @author: tanmujin
      */
     @PostMapping("/feign/wmsSyncTask/findWdtDataSendSyncTask")
-    void findWdtDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+    void findWdtDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }
