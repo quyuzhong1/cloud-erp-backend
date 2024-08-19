@@ -311,7 +311,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (count > 0) {
             throw new ServiceException(new ApiResult(10000,"只允许推送自研ERP>>>>(金蝶、马帮)的数据"));
         }
-        Map<String, List<DmpPushTaskEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getTargetPlatformName().concat(obj.getTargetPlatformName())));
+        Map<String, List<DmpPushTaskEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getTargetPlatformName().concat(obj.getTargetPlatformName()).concat(obj.getSourceType())));
         for (Map.Entry<String, List<DmpPushTaskEntity>> entry : map.entrySet()) {
             List<DmpPushTaskEntity> value = entry.getValue();
             //来源类型
@@ -333,6 +333,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 }
                 //旺店通
                 if(PlatformEnum.WANGDIAN.getDesc().equals(targetPlatformName)){
+                    paramDetailList = value.stream().filter(obj -> obj.getStatus().equals(SyncStatusEnum.NO_NEED_SYNC.getCode())).map(obj -> new DmpSyncMqDTO.SyncParamDetailDTO(obj.getSourceId(), obj.getSyncOperate())).collect(Collectors.toList());
                     findWdtDataAndSendMq(paramDetailList,sourceType);
                 }
             }catch (Exception e){

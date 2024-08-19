@@ -256,8 +256,8 @@ public interface DmpTaskFeign {
      * @author: tanmujin
      */
     @PostMapping("feign/dmp/listBySourceIds")
-    List<DmpPushTaskEntity> listBySourceIds(List<String> sourceIdList);
+    List<DmpPushTaskEntity> listBySourceIds(@RequestBody List<String> sourceIdList);
 
     @PostMapping("feign/dmp/push/deleteBySourceId")
-    void deletePushTaskBySourceId(String sourceId);
+    boolean deletePushTaskBySourceId(@RequestBody String sourceId);
 }

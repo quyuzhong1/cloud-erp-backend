@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.feign;
 
 import com.erp.model.dmp.dto.DmpTaskMsgDTO;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
@@ -104,12 +106,12 @@ public class DmpTaskFeignController {
      * @author: tanmujin
      */
     @PostMapping("feign/dmp/listBySourceIds")
-    List<DmpPushTaskEntity> listBySourceIds(List<String> sourceIdList){
+    List<DmpPushTaskEntity> listBySourceIds(@RequestBody List<String> sourceIdList){
         return dmpPushTaskService.lambdaQuery().in(DmpPushTaskEntity::getSourceId, sourceIdList).list();
     }
 
     @PostMapping("/push/deleteBySourceId")
-    void deletePushTaskBySourceId(String sourceId){
-        dmpPushTaskService.lambdaUpdate().eq(DmpPushTaskEntity::getSourceId, sourceId).remove();
+    boolean deletePushTaskBySourceId(@RequestBody String sourceId){
+        return dmpPushTaskService.lambdaUpdate().eq(DmpPushTaskEntity::getSourceId, sourceId).remove();
     }
 }

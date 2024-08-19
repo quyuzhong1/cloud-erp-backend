@@ -18,6 +18,7 @@ public interface DmpPushWdtFeign {
 
     /**
      * 新增旺店通中间表数据
+     * @return 中间表ID
      */
     @PostMapping("/add")
     String add(@RequestBody DmpPushWdtDTO.AddDTO dto);

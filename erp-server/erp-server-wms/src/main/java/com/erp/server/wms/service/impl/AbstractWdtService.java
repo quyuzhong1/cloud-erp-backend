@@ -135,14 +135,9 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
                 String codeWithPush = docNoGenHelper.generateCode(businessNoTypeEnum);
                 String idWithPush = saveMiddleData(sourceId, sourceCode, sourceTypeEnum, combinationList, codeWithPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
                 List<DmpPushTaskEntity> pushTaskList = generateTask(combinationList, operateEnum, codeWithPush, thirdWarehouseCode, sourceCode, idWithPush, SyncStatusEnum.IN_SYNC, sourceTypeEnum);
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                    @Override
-                    public void afterCommit() {
-                        if(CollectionUtils.isNotEmpty(pushTaskList)){
-                            dmpMqFeign.sendTask(pushTaskList);
-                        }
-                    }
-                });
+                if(CollectionUtils.isNotEmpty(pushTaskList)){
+                    dmpMqFeign.sendTask(pushTaskList);
+                }
             }
 
             if(! pair.getValue().isEmpty()){
@@ -177,7 +172,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             log.error("查询&同步时没有找到仓位映射, 取消推送: {} {}", midTableId, warehouseId);
             return;
         }
-        dmpTaskFeign.deletePushTaskBySourceId(midTableId);
+        boolean removeSuccess = dmpTaskFeign.deletePushTaskBySourceId(midTableId);
         if(! pair.getKey().isEmpty()){
             String codeWithPush = docNoGenHelper.generateCode(businessNoTypeEnum);
             String idWithPush = saveMiddleData(viewDTO.getSourceId(), sourceCode, sourceTypeEnum, pair.getKey(), codeWithPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
@@ -284,7 +279,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
     /**
      * 保存原始数据
      * @param
-     * @return
+     * @return 中间表ID
      * @date: 2024-08-15
      * @author: tanmujin
      */
