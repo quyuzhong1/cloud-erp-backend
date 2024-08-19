@@ -13,6 +13,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WarehouseDeliveryTypeEnum;
 import com.erp.model.wms.enums.WarehouseManageTypeEnum;
+import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.mapper.SkuMappingExtendMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingExtendService;
@@ -46,6 +47,9 @@ public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExte
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private SkuMappingExtendService service;
 
     @Override
     public List<SkuMappingExtendEntity> findByMainIds(List<String> mainIds) {
@@ -129,5 +133,33 @@ public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExte
         if (!CollectionUtils.isEmpty(updateList)){
             this.updateBatchById(updateList);
         }
+    }
+
+    @Override
+    public void copyBySkuMapping(SkuMappingEntity originSkuMapping, List<SkuMappingEntity> allSkuMappingList) {
+        if(Objects.isNull(originSkuMapping)){
+            return;
+        }
+        allSkuMappingList = allSkuMappingList.stream().filter(v->!v.getId().equals(originSkuMapping.getId())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(allSkuMappingList)){
+            return;
+        }
+        List<String> otherMains = allSkuMappingList.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<SkuMappingExtendEntity> otherSkuMappingExtendEntityList = this.findByMainIds(otherMains);
+        List<SkuMappingExtendEntity> currentExtendList = this.findByMainIds(Arrays.asList(originSkuMapping.getId()));
+        List<String> deleteIds = otherSkuMappingExtendEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        this.removeByIds(deleteIds);
+        if(CollectionUtils.isEmpty(currentExtendList)){
+            return;
+        }
+        List<SkuMappingExtendEntity> addList = new ArrayList<>();
+        for (SkuMappingEntity skuMappingEntity : allSkuMappingList) {
+            for (SkuMappingExtendEntity skuMappingExtendEntity : currentExtendList) {
+                SkuMappingExtendEntity addEntity = SkuMappingConverter.INSTANCE.copySkuMappingExtendEntity(skuMappingExtendEntity);
+                addEntity.setMainId(skuMappingEntity.getId());
+                addList.add(addEntity);
+            }
+        }
+        service.saveBatch(addList);
     }
 }
