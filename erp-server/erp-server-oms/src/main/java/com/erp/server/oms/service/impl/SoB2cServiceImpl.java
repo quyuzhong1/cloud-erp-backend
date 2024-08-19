@@ -7238,7 +7238,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 existDTO.getIds().add(soB2cEntity.getId());
             }
         }
-        transferDeclareDTOList.forEach(this::orderForecast);
+        transferDeclareDTOList.forEach(soB2cService::orderForecast);
         return new ArrayList<>();
     }
 
@@ -7365,7 +7365,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 existDTO.getIds().add(soB2cEntity.getId());
             }
         }
-        transferDeclareDTOList.forEach(v -> resultDTOList.addAll(this.orderForecast(v)));
+        transferDeclareDTOList.forEach(v -> resultDTOList.addAll(soB2cService.orderForecast(v)));
         return resultDTOList;
     }
 
