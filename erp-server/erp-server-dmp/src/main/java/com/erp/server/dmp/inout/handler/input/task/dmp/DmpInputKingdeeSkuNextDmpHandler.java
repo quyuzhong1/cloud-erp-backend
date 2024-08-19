@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -46,6 +47,36 @@ public class DmpInputKingdeeSkuNextDmpHandler extends DmpInputKingdeeNextDmpHand
 		        	}
 		        }
 		        
+		        Object F_SSRQObj = dmpDataMap.get("F_SSRQ");
+		        if(F_SSRQObj != null) {
+		        	String F_SSRQ = F_SSRQObj.toString();
+		        	if (StringUtils.isNotBlank(F_SSRQ) && !"null".equals(F_SSRQ)){
+		        		dmpDataMap.put("listingTime", LocalDateTime.parse(F_SSRQ));
+			        }
+		        }
+		        
+		        String itemProperty = "";
+		        Object FErpClsID = dmpDataMap.get("FErpClsID");
+		        if(FErpClsID != null) {
+		        	switch (FErpClsID.toString()) {
+		            case "1" :
+		                itemProperty = "外购";
+		                break;
+		            case "2" :
+		                itemProperty = "自制";
+		                break;
+		            case "3" :
+		                itemProperty = "委外";
+		                break;
+		            case "6" :
+		                itemProperty = "服务";
+		                break;
+		            default:
+		                itemProperty = "";
+		                break;
+		        	}
+		        }
+		        dmpDataMap.put("prodcutProperty", itemProperty);
 			}
 		}
 	}
