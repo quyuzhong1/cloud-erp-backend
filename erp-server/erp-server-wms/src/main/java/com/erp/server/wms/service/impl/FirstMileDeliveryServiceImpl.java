@@ -1682,6 +1682,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         return this.lambdaQuery().eq(FirstMileDeliveryEntity::getCode, code).last("limit 1").one();
     }
+
+    @Override
+    public FirstMileDeliveryEntity getBySourceCode(String code) {
+        if (StringUtils.isBlank(code)){
+            return null;
+        }
+        return this.lambdaQuery().eq(FirstMileDeliveryEntity::getSourceCode, code).last("limit 1").one();
+    }
+
     @Override
     public Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
         if (CollectionUtils.isEmpty(dto.getIds()) || CollectionUtils.isEmpty(dto.getBillTypes())) {

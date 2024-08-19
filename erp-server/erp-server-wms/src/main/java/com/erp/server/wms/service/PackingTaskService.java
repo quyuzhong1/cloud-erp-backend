@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -236,10 +237,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      */
     List<PackingTaskDTO.StatusDTO> selectPackingStatusByIds(List<String> packingTaskIds, List<String> sourceCodeList);
 
-    /**
-     * 从历史装箱数据补充装箱任务和装箱详情
-     */
-    void initPackingTaskData();
 
     /**
      * 模糊搜索-支持分页
@@ -255,10 +252,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      */
     List<WmsCartonSpecDTO.SpecDTO> getCartonSpecByTaskId(String taskId);
 
-    /**
-     * 更新历史装箱状态
-     */
-    void initPackingTaskStatus();
 
     /**
      * 更新任务状态
@@ -279,4 +272,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId);
 
     void addPackingByRequisition(RequisitionApplicationEntity entity);
+
+    void updateDetailQty(Map<String, Integer> qtyMap);
 }

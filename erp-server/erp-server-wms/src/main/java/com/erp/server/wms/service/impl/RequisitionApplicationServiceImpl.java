@@ -59,6 +59,7 @@ import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
@@ -1085,6 +1086,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
         }
         requisitionApplicationDetailService.updateBatchById(detailEntities);
+        Map<String, Integer> qtyMap = detailEntities.stream().collect(Collectors.toMap(v->v.getId(),v->v.getPickingQty()));
+        packingTaskService.updateDetailQty(qtyMap);
     }
 
     @Override
