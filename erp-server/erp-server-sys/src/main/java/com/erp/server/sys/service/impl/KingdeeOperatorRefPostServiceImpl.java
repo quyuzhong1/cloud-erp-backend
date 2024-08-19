@@ -210,7 +210,6 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
             //表示没有
             if (Objects.isNull(dbEntity)) {
                 KingdeeOperatorRefPostEntity addEntity = new KingdeeOperatorRefPostEntity();
-                addEntity.setCode(code);
                 addEntity.setUseOrgId(useOrgId);
                 addEntity.setUseOrgName(useOrgName);
                 addEntity.setUseOrgName(useOrgName);
@@ -219,12 +218,10 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
                 addEntity.setKingdeeId(kingdeeId);
                 saveOrUpdateList.add(addEntity);
             } else {
-                if (!dbEntity.getCode().equals(code) ||
-                        !dbEntity.getUseOrgId().equals(orgInfo.getId()) ||
+                if (!dbEntity.getUseOrgId().equals(orgInfo.getId()) ||
                         !dbEntity.getTypeCode().equals(typeCode) ||
                         !dbEntity.getUserPostId().equals(userPostId)
                 ) {
-                    dbEntity.setCode(code);
                     dbEntity.setUseOrgId(useOrgId);
                     dbEntity.setUseOrgName(useOrgName);
                     dbEntity.setTypeCode(typeCode);
@@ -266,16 +263,15 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
                 }
             });
         }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
 
     @Override
-    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId, String syncKingdeeCode) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(KingdeeOperatorRefPostEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), KingdeeOperatorRefPostEntity::getKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncKingdeeCode), KingdeeOperatorRefPostEntity::getCode, syncKingdeeCode)
                 .update();
     }
 

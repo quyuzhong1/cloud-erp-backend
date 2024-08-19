@@ -50,7 +50,7 @@ public interface KingdeeOperatorRefPostService extends SuperService<KingdeeOpera
     BatchResultDTO delete(String id);
 
 
-    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId, String syncKingdeeCode);
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId);
 
 
     /**

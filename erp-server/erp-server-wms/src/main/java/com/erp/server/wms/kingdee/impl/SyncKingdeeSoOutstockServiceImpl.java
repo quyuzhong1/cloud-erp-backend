@@ -400,8 +400,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //客户信息
         List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
 
-        //部门信息
-        SysDepartmentDTO dept =StringUtils.isNotBlank(deptId)? sysUserFeign.getUserDeptById(deptId):null;
         //查询供应商信息
         SupplierEntity supplierEntity = null;
         if (StringUtils.isNotBlank(entity.getCarrierId())) {
@@ -432,9 +430,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             //平台类型
             resultMap.put("platformType", salesPlatformCode);
         }
-        //销售部门
-        if (ObjectUtil.isNotEmpty(dept)) {
-            resultMap.put("salesDeptCode", dept.getCode());
+
+        //部门
+        if  (StringUtils.isNotBlank(deptId)) {
+            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+            dto.setDeptId(entity.getSalesDeptId());
+            dto.setOrgId(entity.getSalesOrgId());
+            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+            if (ObjectUtil.isNotEmpty(deptKingdee)) {
+                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
+            }
         }
         //销售组织
         String salesOrgId = soB2cEntity.getOrgId();
@@ -499,6 +504,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
 
         //————————————————————物料信息——————————————————————
+
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getWarehouseId()));
+
         List<Map<String, Object>> fEntityList = new ArrayList<>();
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             SoB2cDetailEntity soB2cDetailEntity = soB2cDetailList.stream().filter(s -> s.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
@@ -528,8 +537,13 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
                 map.put("warehouseCode", warehouseCode);
             }
-
-            map.put("warehouseLocation", detailEntity.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                map.put("warehouseLocation", detailEntity.getWarehouseLocation());
+            }
             map.put("remark", detailEntity.getRemark());
             //销售订单金蝶id
             String soSyncKingdeeId=Objects.nonNull(soB2cDetailEntity)? soB2cDetailEntity.getKingdeeDetailId():"";
