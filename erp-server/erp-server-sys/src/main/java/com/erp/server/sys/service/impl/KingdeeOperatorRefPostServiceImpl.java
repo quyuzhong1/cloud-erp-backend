@@ -28,12 +28,6 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.KingdeeOperatorRefPostMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeOperatorService;
-import com.erp.server.sys.service.KingdeeOperatorRefPostService;
-import com.erp.server.sys.service.KingdeeUserRefPostService;
-import com.erp.server.sys.service.SysAccountingCompanyService;
-import com.erp.server.sys.service.SysUserInfoService;
-import com.erp.server.sys.service.*;
-import com.erp.server.sys.service.*;
 import com.erp.server.sys.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -254,6 +248,8 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         KingdeeOperatorRefPostEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶业务员"));
