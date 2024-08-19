@@ -345,7 +345,7 @@
         ${params.sqlMap.default}
         and fd.is_deleted = FALSE and fd.approve_status = 'approve'
         <!--数据权限-->
-        <if test="params.permissionSql != null and params.permissionSql != ''">
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
         ORDER BY
@@ -355,5 +355,39 @@
             </foreach>
         </if>
         fd.create_time DESC, fd.code, fdd.id
+    </select>
+    <select id="listDetailByCodes" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ListFirstMileDTO">
+        SELECT
+        fd.id as sourceId,
+        fdd.id as sourceDetailId,
+        fd.code as sourceCode,
+        'delivery' as sourceType,
+        fd.source_code AS businessCode,
+        fd.demand_type AS businessType,
+        fd.shop_id AS shopId,
+        fd.shop_name AS shopName,
+        fd.delivery_warehouse_id AS warehouseId,
+        fd.delivery_warehouse_name AS warehouseName,
+        fdd.sku_id AS skuId,
+        fdd.sku_no AS skuNo,
+        fdd.product_name AS productName,
+        fdd.stock_sku AS stockSku,
+        fdd.plan_qty AS planQty,
+        fdd.delivery_qty AS deliveryQty
+        FROM first_mile_delivery_detail fdd
+        LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        WHERE fd.is_deleted = FALSE and fd.approve_status = 'approve'
+        <if test="codes != null and codes.size > 0">
+            and fd.code in
+            <foreach collection="codes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="sourceCodes != null and sourceCodes.size > 0">
+            and fd.source_code in
+            <foreach collection="sourceCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
     </select>
 </mapper>

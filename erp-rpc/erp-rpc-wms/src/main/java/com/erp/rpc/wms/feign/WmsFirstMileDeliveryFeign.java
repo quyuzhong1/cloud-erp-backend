@@ -48,6 +48,16 @@ public interface WmsFirstMileDeliveryFeign {
     @PostMapping("/feign/firstMileDelivery/listByIds")
     List<FirstMileDeliveryEntity> listByIds(@RequestBody List<String> ids);
     /**
+     * 根据编码查询发货单明细
+     */
+    @PostMapping("/feign/firstMileDelivery/listDetailByCodes")
+    List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(@RequestBody List<String> codes);
+    /**
+     * 根据来源编码查询发货单明细
+     */
+    @PostMapping("/feign/firstMileDelivery/listDetailBySourceCodes")
+    List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailBySourceCodes(@RequestBody List<String> sourceCodes);
+    /**
      * 查询可以生成报关单的发货单
      */
     @PostMapping("/feign/firstMileDelivery/getCanGenerateDeclare")

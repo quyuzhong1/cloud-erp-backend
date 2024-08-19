@@ -40,71 +40,72 @@ public class InitFirstMileAllocationDetailExcelDTO implements Serializable {
     /**
      * 仓库
      */
-    @ExcelProperty(value = "仓库", index = 1)
+    @ExcelProperty(value = "仓库", index = 3)
     @FieldValid(fieldName = "仓库）",maxLength = 200)
     private String  warehouseName;
     /**
      * SKU
      */
-    @ExcelProperty(value = "*SKU", index = 1)
+    @ExcelProperty(value = "*SKU", index = 4)
     @FieldValid(fieldName = "SKU）",maxLength = 200)
     private String  skuNo;
     /**
      * 产品名称
      */
-    @ExcelProperty(value = "产品名称", index = 1)
+    @ExcelProperty(value = "产品名称", index = 5)
     @FieldValid(fieldName = "产品名称）",maxLength = 200)
     private String  productName;
     /**
      * 初始签收数量
      */
-    @ExcelProperty(value = "*初始签收数量", index = 1)
+    @ExcelProperty(value = "*初始签收数量", index = 6)
     @FieldValid(fieldName = "初始签收数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private Integer  initReceiveQty;
     /**
      * 期初在途头程费用
      */
-    @ExcelProperty(value = "*期初在途头程费用", index = 1)
+    @ExcelProperty(value = "*期初在途头程费用", index = 7)
     @FieldValid(fieldName = "期初在途头程费用",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private BigDecimal initTransitCost;
     /**
      * 期初在途头程关税
      */
-    @ExcelProperty(value = "*期初在途头程关税", index = 1)
+    @ExcelProperty(value = "*期初在途头程关税", index = 8)
     @FieldValid(fieldName = "期初在途头程关税",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private BigDecimal initTransitTariff;
     /**
      * *期初暂估头程费用
      */
-    @ExcelProperty(value = "*期初暂估头程费用", index = 1)
+    @ExcelProperty(value = "*期初暂估头程费用", index = 9)
     @FieldValid(fieldName = "期初暂估头程费用",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private BigDecimal initEstimatedCost;
     /**
      * *期初暂估头程关税
      */
-    @ExcelProperty(value = "*期初暂估头程关税", index = 1)
+    @ExcelProperty(value = "*期初暂估头程关税", index = 10)
     @FieldValid(fieldName = "期初暂估头程关税",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private BigDecimal initEstimatedTariff;
     /**
      * *分摊重量(KG)
      */
-    @ExcelProperty(value = "*分摊重量(KG)", index = 1)
+    @ExcelProperty(value = "*分摊重量(KG)", index = 11)
     @FieldValid(fieldName = "分摊重量(KG)",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private BigDecimal weightAllocation;
     /**
      * *产品成本
      */
-    @ExcelProperty(value = "*产品成本", index = 1)
+    @ExcelProperty(value = "*产品成本", index = 12)
     @FieldValid(fieldName = "产品成本",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private BigDecimal productCost;
     /**
      * 币种（默认CNY）
      */
-    @ExcelProperty(value = "币种（默认CNY）", index = 1)
+    @ExcelProperty(value = "币种（默认CNY）", index = 13)
     @FieldValid(fieldName = "币种",enumClass = CurrencyEnum.class)
     private BigDecimal currency;
     /**
      * 错误信息
      */
+    @ExcelProperty(value = "错误数据", index = 14)
     private String errorMsg;
 }

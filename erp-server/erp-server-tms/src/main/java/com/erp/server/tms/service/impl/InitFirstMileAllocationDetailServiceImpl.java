@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
@@ -11,7 +12,6 @@ import com.erp.server.tms.service.InitFirstMileAllocationDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +107,22 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
             //明细为空则清空
             lambdaUpdate().eq(InitFirstMileAllocationDetailEntity::getMainId, id).remove();
         }
+        //检查数据是否已存在
+        List<String> sourceIds = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<InitFirstMileAllocationDetailEntity> existDetailEntityList = this.listBySourceIds(sourceIds);
+        detailEntityList.forEach(detailEntity -> {
+            if (!CollectionUtils.isEmpty(existDetailEntityList)){
+                InitFirstMileAllocationDetailEntity entity = existDetailEntityList.stream().filter(e -> Objects.nonNull(e)
+                        && !Objects.equals(id, e.getMainId())
+                        && Objects.equals(e.getSourceId(), detailEntity.getSourceId())
+                        && Objects.equals(e.getSourceDetailId(), detailEntity.getSourceDetailId())
+                        && Objects.equals(e.getSkuId(), detailEntity.getSkuId())).findFirst().orElse(null);
+                if (Objects.nonNull(entity)){
+                    throw new ServiceException(StrUtil.format("发货单【{}】SKU【{}】已存在", entity.getSourceCode(),entity.getSkuNo()));
+                }
+            }
+        });
+
         List<InitFirstMileAllocationDetailEntity> oldDetailEntityList = this.listByMainIds(Collections.singletonList(id));
         if (!CollectionUtils.isEmpty(oldDetailEntityList)) {
             List<String> oldDetailIds = oldDetailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getId).distinct().collect(Collectors.toList());
@@ -126,8 +142,18 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
             if (StrUtil.isBlank(detailEntity.getWeightUnit())){
                 detailEntity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
             }
+            if (StrUtil.isBlank(detailEntity.getSourceType())){
+                detailEntity.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+            }
         });
         this.saveOrUpdateBatch(detailEntityList);
+    }
+    @Override
+    public List<InitFirstMileAllocationDetailEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(InitFirstMileAllocationDetailEntity::getSourceId,sourceIds).list();
     }
 
     /**

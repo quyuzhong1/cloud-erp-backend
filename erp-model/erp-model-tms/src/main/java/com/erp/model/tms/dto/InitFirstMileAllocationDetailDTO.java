@@ -224,7 +224,7 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
         /**
         * 数据来源类型：delivery=发货单
         */
-        @NotBlank(message = "数据来源类型：delivery=发货单不能为空")
+//        @NotBlank(message = "数据来源类型：delivery=发货单不能为空")
         @Size(max = 30,message = "数据来源类型：delivery=发货单最大长度不能超过30位")
         private String sourceType;
 
@@ -238,35 +238,35 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
         /**
         * 业务来源类型：FBA=FBA，第三方仓=thirdWarehouse
         */
-        @NotBlank(message = "业务来源类型：FBA=FBA，第三方仓=thirdWarehouse不能为空")
+//        @NotBlank(message = "业务来源类型：FBA=FBA，第三方仓=thirdWarehouse不能为空")
         @Size(max = 30,message = "业务来源类型：FBA=FBA，第三方仓=thirdWarehouse最大长度不能超过30位")
         private String businessType;
 
         /**
         * 店铺id
         */
-        @NotBlank(message = "店铺id不能为空")
+//        @NotBlank(message = "店铺id不能为空")
         @Size(max = 19,message = "店铺id最大长度不能超过19位")
         private String shopId;
 
         /**
         * 店铺名称
         */
-        @NotBlank(message = "店铺名称不能为空")
+//        @NotBlank(message = "店铺名称不能为空")
         @Size(max = 64,message = "店铺名称最大长度不能超过64位")
         private String shopName;
 
         /**
         * 仓库ID
         */
-        @NotBlank(message = "仓库ID不能为空")
+//        @NotBlank(message = "仓库ID不能为空")
         @Size(max = 19,message = "仓库ID最大长度不能超过19位")
         private String warehouseId;
 
         /**
         * 仓库名称
         */
-        @NotBlank(message = "仓库名称不能为空")
+//        @NotBlank(message = "仓库名称不能为空")
         @Size(max = 64,message = "仓库名称最大长度不能超过64位")
         private String warehouseName;
 
@@ -286,7 +286,7 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
         /**
         * 产品名称
         */
-        @NotBlank(message = "产品名称不能为空")
+//        @NotBlank(message = "产品名称不能为空")
         @Size(max = 500,message = "产品名称最大长度不能超过500位")
         private String productName;
 
@@ -338,28 +338,28 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
         /**
         * 汇率
         */
-        @NotNull(message = "汇率不能为空")
+//        @NotNull(message = "汇率不能为空")
         @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
         private BigDecimal exchangeRate;
 
         /**
         * 重量单位
         */
-        @NotBlank(message = "重量单位不能为空")
+//        @NotBlank(message = "重量单位不能为空")
         @Size(max = 30,message = "重量单位最大长度不能超过30位")
         private String weightUnit;
 
         /**
         * 币种
         */
-        @NotBlank(message = "币种不能为空")
+//        @NotBlank(message = "币种不能为空")
         @Size(max = 30,message = "币种最大长度不能超过30位")
         private String currency;
 
         /**
         * 币别符号
         */
-        @NotBlank(message = "币别符号不能为空")
+//        @NotBlank(message = "币别符号不能为空")
         @Size(max = 20,message = "币别符号最大长度不能超过20位")
         private String currencySymbol;
 

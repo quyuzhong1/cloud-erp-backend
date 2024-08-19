@@ -27,6 +27,7 @@ import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
 import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.enums.ReconciliationTypeEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.listener.InitFirstMileAllocationDetailExcelListener;
@@ -179,7 +180,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/initFirstMileAllocationExport.xlsx";
         String name = "期初头程分摊导出";
-        String date = com.common.core.utils.date.DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
         try {
@@ -316,7 +317,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "excel/initFirstMileAllocationImport.xlsx";
+        String path = "excel/initFirstMileAllocationTemplate.xlsx";
         String excelName = "期初头程分摊导入模板.xlsx";
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -388,13 +389,13 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             BatchResultDTO updateResult;
             String id = logisticsBillEntity.getId();
             try {
-                updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap);
+                updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.INIT_PERIOD.getCode());
 
             } catch (Exception e) {
                 log.error("头程对账生成失败", e);
                 LogisticsBillEntity entity = tmsFirstMileLogisticService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    updateResult = BatchResultDTO.fail(id, id, "B物流单不存在, 头程对账生成失败");
+                    updateResult = BatchResultDTO.fail(id, id, "物流单不存在, 头程对账生成失败");
                     resultDTOS.add(updateResult);
                     continue;
                 }

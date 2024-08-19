@@ -101,4 +101,10 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
 
     List<TmsDeclareBillDTO.DeliveryDTO> getGenerateDeclare(@Param("params") TmsDeclareBillDTO.QuerySourceDTO dto);
 
+    /**
+     * 根据编码获取发货明细列表
+     * @param codes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(@Param("codes") List<String> codes,@Param("sourceCodes") List<String> sourceCodes);
 }

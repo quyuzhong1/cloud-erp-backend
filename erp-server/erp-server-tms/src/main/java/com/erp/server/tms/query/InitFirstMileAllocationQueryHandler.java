@@ -20,7 +20,20 @@ import java.util.stream.Collectors;
 public class InitFirstMileAllocationQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        //tab列表
+        if ("tab".equals(field)) {
+            return getTabSql(value);
+        }
         return null;
+    }
+
+    private String getTabSql(Object value) {
+        if (Objects.equals("", value) || Objects.equals("all", value)){
+            return this.getQueryAllSql();
+        }else {
+            this.buildDefaultDTO("a.status", value);
+        }
+        return super.getSplicingSQL();
     }
 }
 

@@ -307,4 +307,12 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     BatchResultDTO generateLogisticsBill(FirstMileDeliveryEntity firstMileDeliveryEntity);
+
+    /**
+     * 根据编码获取明细列表
+     * @param codes 编码
+     * @param sourceCodes 来源编码
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(List<String> codes,List<String> sourceCodes);
 }
