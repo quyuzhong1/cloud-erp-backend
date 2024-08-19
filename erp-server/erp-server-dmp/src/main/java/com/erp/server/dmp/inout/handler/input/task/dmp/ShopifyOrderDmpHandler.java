@@ -135,7 +135,7 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                         .findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(transactionsMap)) {
                     dmpDataMap.put("payTime", transactionsMap.get("createdAt"));
-                    dmpDataMap.put("dictPayMethod", transactionsMap.get("gateway"));
+                    dmpDataMap.put("payMethod", transactionsMap.get("gateway"));
                 }
 
 
