@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
 import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
+import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.server.tms.mapper.InventorySkuCostDetailMapper;
 import com.erp.server.tms.service.InventorySkuCostDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -109,18 +110,18 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void buildDetail(List<InventorySkuCostDetailEntity> detailEntityList, String id) {
+    public void buildDetail(List<InventorySkuCostDetailEntity> detailEntityList, InventorySkuCostEntity entity) {
         if (CollectionUtils.isEmpty(detailEntityList)) {
             //明细为空则清空
-            lambdaUpdate().eq(InventorySkuCostDetailEntity::getMainId, id).remove();
+            lambdaUpdate().eq(InventorySkuCostDetailEntity::getMainId, entity.getId()).remove();
             return;
         }
         List<String> newDetailIds = detailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getId())).map(InventorySkuCostDetailEntity::getId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(newDetailIds)) {
             //明细为空则清空
-            lambdaUpdate().eq(InventorySkuCostDetailEntity::getMainId, id).remove();
+            lambdaUpdate().eq(InventorySkuCostDetailEntity::getMainId, entity.getId()).remove();
         }
-        List<InventorySkuCostDetailEntity> oldDetailEntityList = this.listByMainIds(Collections.singletonList(id));
+        List<InventorySkuCostDetailEntity> oldDetailEntityList = this.listByMainIds(Collections.singletonList(entity.getId()));
         if (!CollectionUtils.isEmpty(oldDetailEntityList)) {
             List<String> oldDetailIds = oldDetailEntityList.stream().map(InventorySkuCostDetailEntity::getId).distinct().collect(Collectors.toList());
             List<String> notExistDetailIds = oldDetailIds.stream().filter(e -> !newDetailIds.contains(e)).distinct().collect(Collectors.toList());
@@ -128,7 +129,10 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
             this.removeByIds(notExistDetailIds);
         }
         detailEntityList.forEach(inventorySkuCostDetailEntity -> {
-            inventorySkuCostDetailEntity.setMainId(id);
+            inventorySkuCostDetailEntity.setMainId(entity.getId());
+            if (StrUtil.isBlank(inventorySkuCostDetailEntity.getUnit())){
+                inventorySkuCostDetailEntity.setUnit("pcs");
+            }
         });
         this.saveOrUpdateBatch(detailEntityList);
     }

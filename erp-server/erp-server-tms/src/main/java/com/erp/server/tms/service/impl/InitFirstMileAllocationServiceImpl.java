@@ -131,6 +131,9 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         if (!CollectionUtils.isEmpty(updateDTO.getDetailList())) {
             List<InitFirstMileAllocationDetailEntity> detailEntityList = BeanMapperUtils.copyList(InitFirstMileAllocationDetailEntity.class, updateDTO.getDetailList());
             initFirstMileAllocationDetailService.buildDetail(detailEntityList, initFirstMileAllocationEntity.getId());
+        }else {
+            //明细为空则清空
+            initFirstMileAllocationDetailService.removeByMainId(initFirstMileAllocationEntity.getId());
         }
         // 记录主单操作日志
         log.info("编辑 开始记录期初头程分摊日志数据，单号：【{}】", initFirstMileAllocationEntity.getCode());
@@ -317,7 +320,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "excel/initFirstMileAllocationTemplate.xlsx";
+        String path = "excel/initFirstMileAllocationDetailTemplate.xlsx";
         String excelName = "期初头程分摊导入模板.xlsx";
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -380,7 +383,8 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         if (sourceIds.size() != logisticsBillEntityList.size()) {
             List<String> existIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).distinct().collect(Collectors.toList());
             List<String> notExistIds = sourceIds.stream().filter(e -> !existIds.contains(e)).distinct().collect(Collectors.toList());
-            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("头程发货单【{}】记录不存在物流单", String.join(",", notExistIds))));
+            List<String> notExistCodes = firstMileDeliveryEntityList.stream().filter(e -> !CollectionUtils.isEmpty(notExistIds) && notExistIds.contains(e.getId())).map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+            resultDTOS.add(BatchResultDTO.fail("", "", StrUtil.format("头程发货单【{}】无关联物流单，请下推物流单后生成对账单", String.join(",", notExistCodes))));
             return resultDTOS;
         }
         // 当前添加的主账单记录

@@ -313,7 +313,7 @@ public class InventorySkuCostController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载期初导入模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载SKU成本导入模板")
     @GetMapping("/downloadTemplate")
     public ApiResult<?> downloadTemplate(HttpServletResponse response) {
         inventorySkuCostService.downloadTemplate(response);

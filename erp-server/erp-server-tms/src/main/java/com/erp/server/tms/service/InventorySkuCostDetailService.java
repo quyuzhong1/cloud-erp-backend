@@ -3,6 +3,7 @@ import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
+import com.erp.model.tms.entity.InventorySkuCostEntity;
 
 import java.util.List;
 
@@ -50,7 +51,7 @@ public interface InventorySkuCostDetailService extends SuperService<InventorySku
     /**
      * 处理明细数据
      * @param detailEntityList
-     * @param id
+     * @param entity
      */
-    void buildDetail(List<InventorySkuCostDetailEntity> detailEntityList, String id);
+    void buildDetail(List<InventorySkuCostDetailEntity> detailEntityList, InventorySkuCostEntity entity);
 }

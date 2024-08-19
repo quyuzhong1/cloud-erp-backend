@@ -77,7 +77,6 @@ public class InitFirstMileAllocationDTO implements Serializable {
         /**
          * 明细
          */
-        @Valid
         private List<InitFirstMileAllocationDetailDTO.AddDTO> detailList;
     }
 
@@ -96,7 +95,6 @@ public class InitFirstMileAllocationDTO implements Serializable {
         /**
          * 明细
          */
-        @Valid
         private List<InitFirstMileAllocationDetailDTO.UpdateDTO> detailList;
     }
 

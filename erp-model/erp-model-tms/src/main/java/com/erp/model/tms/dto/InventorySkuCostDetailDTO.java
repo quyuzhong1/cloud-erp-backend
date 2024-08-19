@@ -108,14 +108,14 @@ public class InventorySkuCostDetailDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
+//        @NotBlank(message = "备注不能为空")
         @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
         /**
         * 主表id
         */
-        @NotBlank(message = "主表id不能为空")
+//        @NotBlank(message = "主表id不能为空")
         @Size(max = 19,message = "主表id最大长度不能超过19位")
         private String mainId;
 
@@ -129,14 +129,14 @@ public class InventorySkuCostDetailDTO implements Serializable {
         /**
         * 产品名称
         */
-        @NotBlank(message = "产品名称不能为空")
+//        @NotBlank(message = "产品名称不能为空")
         @Size(max = 500,message = "产品名称最大长度不能超过500位")
         private String productName;
 
         /**
         * 单位（pcs,ml）
         */
-        @NotBlank(message = "单位（pcs,ml）不能为空")
+//        @NotBlank(message = "单位（pcs,ml）不能为空")
         @Size(max = 20,message = "单位（pcs,ml）最大长度不能超过20位")
         private String unit;
 

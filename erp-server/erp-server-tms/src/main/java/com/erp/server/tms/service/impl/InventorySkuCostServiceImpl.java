@@ -16,17 +16,16 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.TabApproveStatusEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
-import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.server.tms.listener.InitFirstMileAllocationDetailExcelListener;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.listener.InventorySkuCostDetailExcelListener;
 import com.erp.server.tms.mapper.InventorySkuCostMapper;
 import com.erp.server.tms.service.InventorySkuCostDetailService;
@@ -50,8 +49,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -78,6 +79,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private InventorySkuCostDetailService inventorySkuCostDetailService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -98,7 +101,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         // 新增明细
         if (!CollectionUtils.isEmpty(addDTO.getDetailList())) {
             List<InventorySkuCostDetailEntity> detailEntityList = BeanMapperUtils.copyList(InventorySkuCostDetailEntity.class, addDTO.getDetailList());
-            inventorySkuCostDetailService.buildDetail(detailEntityList, inventorySkuCostEntity.getId());
+            inventorySkuCostDetailService.buildDetail(detailEntityList, inventorySkuCostEntity);
         }
         return new BaseResultDTO.AddDTO(inventorySkuCostEntity.getId(), inventorySkuCostEntity.getCode());
     }
@@ -123,7 +126,10 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         // 修改明细
         if (!CollectionUtils.isEmpty(updateDTO.getDetailList())) {
             List<InventorySkuCostDetailEntity> detailEntityList = BeanMapperUtils.copyList(InventorySkuCostDetailEntity.class, updateDTO.getDetailList());
-            inventorySkuCostDetailService.buildDetail(detailEntityList, inventorySkuCostEntity.getId());
+            inventorySkuCostDetailService.buildDetail(detailEntityList, inventorySkuCostEntity);
+        }else {
+            //明细为空则清空
+            inventorySkuCostDetailService.removeByMainId(inventorySkuCostEntity.getId());
         }
         // 记录主单操作日志
         log.info("编辑 开始记录SKU成本日志数据，单号：【{}】", inventorySkuCostEntity.getCode());
@@ -246,7 +252,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         // 填充字段值
         fillPagingDb(list);
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/initFirstMileAllocationExport.xlsx";
+        String excelPath = "excel/inventorySkuCostExport.xlsx";
         String name = "SKU成本导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
@@ -260,8 +266,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "excel/initFirstMileAllocationImport.xlsx";
-        String excelName = "期初头程分摊导入模板.xlsx";
+        String path = "excel/inventorySkuCostDetailTemplate.xlsx";
+        String excelName = "SKU成本导入模板.xlsx";
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -307,7 +313,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         InventorySkuCostDTO.ImportDTO importDTO = new InventorySkuCostDTO.ImportDTO();
         String url = "";
         if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "采购申请错误数据.xlsx";
+            String fileName = "SKU成本错误数据.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, PurchaseApplicationImportExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
@@ -350,6 +356,18 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         }
         if (StrUtil.isBlank(inventorySkuCostEntity.getStatus())) {
             inventorySkuCostEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+        }
+        if (StrUtil.isBlank(inventorySkuCostEntity.getCurrency())){
+            inventorySkuCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            inventorySkuCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+        }
+        if (Objects.isNull(inventorySkuCostEntity.getExchangeRate())){
+            //获取dmp汇率
+            String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            BigDecimal rate = dmpTaskFeign.getRate(currentDate, inventorySkuCostEntity.getCurrency());
+            if (Objects.nonNull(rate)){
+                inventorySkuCostEntity.setExchangeRate(rate);
+            }
         }
     }
 

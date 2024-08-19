@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -137,40 +138,41 @@ public class InventorySkuCostDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
+//        @NotBlank(message = "备注不能为空")
         @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
         /**
         * 单据状态：waitSubmit=待提交，approveIng=审核中，reject=审核不通过，approve=已审核
         */
-        @NotBlank(message = "单据状态：waitSubmit=待提交，approveIng=审核中，reject=审核不通过，approve=已审核不能为空")
+//        @NotBlank(message = "单据状态：waitSubmit=待提交，approveIng=审核中，reject=审核不通过，approve=已审核不能为空")
         @Size(max = 30,message = "单据状态：waitSubmit=待提交，approveIng=审核中，reject=审核不通过，approve=已审核最大长度不能超过30位")
         private String status;
 
         /**
         * 分摊月份
         */
+        @NotNull(message = "分摊月份不能为空")
         private LocalDate allocatedMonth;
 
         /**
         * 币种
         */
-        @NotBlank(message = "币种不能为空")
+//        @NotBlank(message = "币种不能为空")
         @Size(max = 30,message = "币种最大长度不能超过30位")
         private String currency;
 
         /**
         * 币别符号
         */
-        @NotBlank(message = "币别符号不能为空")
+//        @NotBlank(message = "币别符号不能为空")
         @Size(max = 20,message = "币别符号最大长度不能超过20位")
         private String currencySymbol;
 
         /**
         * 汇率（兑换人民币汇率）
         */
-        @NotNull(message = "汇率（兑换人民币汇率）不能为空")
+//        @NotNull(message = "汇率（兑换人民币汇率）不能为空")
         @Digits(integer = 12, fraction = 4, message = "汇率（兑换人民币汇率）整数位不能超过12位，小数位不能超过4位")
         private BigDecimal exchangeRate;
 
@@ -224,11 +226,11 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private String id;
         /**
-         * 单据编号
+         * 单据编号 【可排序】
          */
         private String code;
         /**
-         * 单据状态
+         * 单据状态【可排序】
          */
         private String status;
         /**
@@ -236,7 +238,7 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private String statusName;
         /**
-         * 分摊月份
+         * 分摊月份【可排序】
          */
         private LocalDate allocatedMonth;
         /**
@@ -252,7 +254,7 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private String companyId;
         /**
-         * 核算公司名称
+         * 核算公司名称【可排序】
          */
         private String companyName;
         /**
@@ -264,7 +266,7 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private String skuId;
         /**
-         * SKU
+         * SKU【可排序】
          */
         private String skuNo;
         /**
@@ -276,9 +278,17 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private String unit;
         /**
-         * 产品成本
+         * 单位成本【可排序】
          */
         private BigDecimal productCost;
+        /**
+         * 创建人【可排序】
+         */
+        private String createUserName;
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDate createTime;
     }
 
     /**
