@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.server.dmp.mapper.CfgSettingMapper;
@@ -11,10 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -71,17 +69,23 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     }
 
     @Override
-    public Boolean isPushKingdeeWarehouseLocation(String warehouseId) {
+    public List<CfgSettingDTO.WarehouseLocationSettingDTO> isPushKingdeeWarehouseLocation(List<String> warehouseIdList) {
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> resultList = new ArrayList<>();
         String value = getValue(SettingEnum.PUSH_KINGDEE_WAREHOUSE_LOCATION_LIST);
         //未配置则不推送金蝶
         if (StrUtil.isBlank(value)) {
             log.warn("未配置推送金蝶仓位的仓库信息");
-            return Boolean.FALSE;
+            return new ArrayList<>();
         }
-        List<String> warehouseIdList = Arrays.stream(value.split(",")).distinct().collect(Collectors.toList());
-        if (warehouseIdList.contains(warehouseId)) {
-            return Boolean.TRUE;
+        List<String> pushWarehouseIdList = Arrays.stream(value.split(",")).distinct().collect(Collectors.toList());
+
+        for (String warehouseId : warehouseIdList) {
+            CfgSettingDTO.WarehouseLocationSettingDTO settingDTO = new CfgSettingDTO.WarehouseLocationSettingDTO();
+            settingDTO.setWarehouseId(warehouseId);
+            Boolean isPush = pushWarehouseIdList.contains(warehouseId) ? Boolean.TRUE : Boolean.FALSE;
+            settingDTO.setIsPush(isPush);
+            resultList.add(settingDTO);
         }
-        return Boolean.FALSE;
+        return resultList;
     }
 }

@@ -1,6 +1,7 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -15,6 +16,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
@@ -24,6 +26,7 @@ import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherInstockService;
@@ -60,6 +63,10 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -134,6 +141,9 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
             throw new ServiceException(ApiError.ERROR_99060);
         }
 
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getWarehouseId()));
+
         List<JSONObject> list = new ArrayList<>();
         for (OtherInstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -157,8 +167,14 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
                 jsonObject.set("orgCode", orgCode);
             }
-            //仓位
-            jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            }
+
             //备注
             jsonObject.set("remark", detail.getRemark());
 

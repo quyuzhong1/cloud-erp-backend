@@ -1,6 +1,7 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -16,6 +17,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -23,6 +25,7 @@ import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
@@ -62,6 +65,8 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
     @Resource
     private WarehouseService warehouseService;
 
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -138,6 +143,8 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         //仓库
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
 
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(warehouseIds);
 
         List<JSONObject> list = new ArrayList<>();
         for (TransferInfoDetailEntity detail : detailList) {
@@ -168,10 +175,21 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
                 //调出仓库
                 jsonObject.set("outWarehouseCode", outWarehouseCode);
             }
-            //调出仓位
-            jsonObject.set("outWarehouseLocation", detail.getOutWarehouseLocation());
-            //调入仓位
-            jsonObject.set("inWarehouseLocation", detail.getInWarehouseLocation());
+            //是否下推调入仓位
+            Boolean isPushIn = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detail.getInWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPushIn) {
+                //调入仓位
+                jsonObject.set("inWarehouseLocation", detail.getInWarehouseLocation());
+            }
+            //是否下推调出仓位
+            Boolean isPushOut = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detail.getOutWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPushOut) {
+                //调出仓位
+                jsonObject.set("outWarehouseLocation", detail.getOutWarehouseLocation());
+            }
+
             //备注
             jsonObject.set("remark", detail.getRemark());
 

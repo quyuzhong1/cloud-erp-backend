@@ -74,7 +74,7 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             updateMongodbData(platform, uniqueId, 2);
         }catch (Throwable e) {
             try {
-                updateSyncTaskStatus(new DmpSyncMqDTO.ParamDTO(dmpSyncTaskId,version, SyncStatusEnum.SUCCESS_SYNC.getCode(), ExceptionUtil.stacktraceToString(e, 2000)));
+                updateSyncTaskStatus(new DmpSyncMqDTO.ParamDTO(dmpSyncTaskId,version, SyncStatusEnum.FAILED_SYNC.getCode(), ExceptionUtil.stacktraceToString(e, 2000)));
                 log.error("平台数据消费异常", e);
                 //异常预警
                 sendWarnMsg(dmpSyncTaskId, e.getMessage());

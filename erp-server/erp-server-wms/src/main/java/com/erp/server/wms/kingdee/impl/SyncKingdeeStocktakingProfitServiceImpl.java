@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -9,12 +10,14 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStocktakingProfitService;
 import com.erp.server.wms.service.StocktakingProfitLossDetailService;
@@ -54,6 +57,9 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     /**
      * 同步金蝶
@@ -115,6 +121,10 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         }
         //仓库组织 货主
         resultMap.put("warehouseOrgCode", warehouseOrgCode);
+
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(warehouseIdList);
+
         List<JSONObject> list = new ArrayList<>(detailDbList.size());
         for (StocktakingProfitLossDetailDTO.ViewDTO item : detailDbList) {
             JSONObject jsonObject = new JSONObject();
@@ -127,7 +137,14 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             Integer inventoryQty = item.getFrozenQty() + item.getUsableQty();
             jsonObject.set("inventoryQty", inventoryQty);
-            jsonObject.set("warehouseLocation", item.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), item.getWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                jsonObject.set("warehouseLocation", item.getWarehouseLocation());
+            }
+
             jsonObject.set("warehouseOrgCode", warehouseOrgCode);
             jsonObject.set("diffQty", Math.abs(item.getDiffQty()));
             list.add(jsonObject);

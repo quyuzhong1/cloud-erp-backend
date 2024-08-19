@@ -191,11 +191,11 @@ public interface DmpTaskFeign {
      * 查询仓库是否支持推送仓位
      * @author will
      * @date 2024/8/15 18:29
-     * @param warehouseId
-     * @return Boolean
+     * @param warehouseIdList
+     * @return CfgSettingDTO.WarehouseLocationSettingDTO
      */
     @PostMapping("feign/dmp/cfgSetting/isPushKingdeeWarehouseLocation")
-    Boolean isPushKingdeeWarehouseLocation(@RequestBody String warehouseId);
+    List<CfgSettingDTO.WarehouseLocationSettingDTO> isPushKingdeeWarehouseLocation(@RequestBody List<String> warehouseIdList);
 
     /**
      * 根据type查询所有配置

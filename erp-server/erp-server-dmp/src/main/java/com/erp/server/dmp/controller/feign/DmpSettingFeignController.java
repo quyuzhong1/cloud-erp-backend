@@ -1,5 +1,6 @@
 package com.erp.server.dmp.controller.feign;
 
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.server.dmp.service.CfgSettingService;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,11 +36,11 @@ public class DmpSettingFeignController {
      * 查询仓库是否支持推送仓位
      * @author will
      * @date 2024/8/15 18:24
-     * @param warehouseId
-     * @return Boolean
+     * @param warehouseIdList
+     * @return CfgSettingDTO.WarehouseLocationSettingDTO
      */
     @PostMapping ("/cfgSetting/isPushKingdeeWarehouseLocation")
-    public Boolean isPushKingdeeWarehouseLocation(@RequestBody String warehouseId) {
-        return cfgSettingService.isPushKingdeeWarehouseLocation(warehouseId);
+    public List<CfgSettingDTO.WarehouseLocationSettingDTO> isPushKingdeeWarehouseLocation(@RequestBody List<String> warehouseIdList) {
+        return cfgSettingService.isPushKingdeeWarehouseLocation(warehouseIdList);
     }
 }
