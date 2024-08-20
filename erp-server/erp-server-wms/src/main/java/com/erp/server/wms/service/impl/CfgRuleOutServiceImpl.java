@@ -244,7 +244,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         String sortingPort = resultDTO.getPort();
         if(sortingPort.equals(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode())){
             if(resultDTO.getUpdateError()){
-                if(!soB2cEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())){
+                if(!soB2cEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()) && !entity.getStatus().equals(SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())){
                     entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
                     entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
                 }
