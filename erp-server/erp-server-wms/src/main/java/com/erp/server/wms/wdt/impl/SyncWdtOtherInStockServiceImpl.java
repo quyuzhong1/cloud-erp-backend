@@ -16,6 +16,7 @@ import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -64,6 +65,9 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
         for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
             if(goods.getPositionNo().equals("TC-JHZC") || goods.getPositionNo().equals("B2B-JHZC")){
                 goods.setPositionNo(goods.getPositionNo() + "1");
+            }
+            if(StringUtils.isBlank(goods.getPositionNo())){
+                goods.setPositionNo("空仓位");
             }
         }
 
