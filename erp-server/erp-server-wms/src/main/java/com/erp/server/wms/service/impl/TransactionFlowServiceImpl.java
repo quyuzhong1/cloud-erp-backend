@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -33,8 +34,10 @@ import com.erp.model.wms.dto.inventory.InventoryDTO.InOutStockSummaryPagingViewD
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO.ListDailyInventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.InventoryFlowOverrideRecordTypeEnum;
+import com.erp.model.wms.entity.InventoryHisEntity;
+import com.erp.model.wms.entity.TransactionFlowEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -64,10 +67,8 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -108,9 +109,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Resource
     private DmpMqFeign dmpMqFeign;
-
-    @Resource
-    private InventoryFlowOverrideRecordService inventoryFlowOverrideRecordService;
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
