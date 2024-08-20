@@ -1,0 +1,66 @@
+package com.erp.server.tms.service;
+import com.common.business.vo.PagingVO;
+import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
+import com.common.business.service.SuperService;
+import com.common.business.dto.base.*;
+import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
+/**
+ * <p>
+ * 头程费用分摊 服务类
+ * </p>
+ *
+ * @author zdy
+ * @since 2024-08-20
+ */
+public interface FirstMileCostAllocationService extends SuperService<FirstMileCostAllocationEntity> {
+
+    /**
+    * 新增
+    * @author zdy
+    * @date: 2024-08-20
+    * @param dto
+    * @return
+    */
+    BaseResultDTO.AddDTO add(FirstMileCostAllocationDTO.AddDTO dto);
+
+    /**
+    * 修改
+    * @author zdy
+    * @date: 2024-08-20
+    * @param dto
+    * @return
+    */
+    Boolean update(FirstMileCostAllocationDTO.UpdateDTO dto);
+
+    /**
+     * 分页统计
+     * @param dto
+     * @return
+     */
+    List<FirstMileCostAllocationDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<FirstMileCostAllocationDTO.PagingVO> paging(PagingDTO<FirstMileCostAllocationDTO.PagingParamDTO> dto);
+
+    /**
+     * 删除
+     * @param entity
+     * @return
+     */
+    BatchResultDTO delete(FirstMileCostAllocationEntity entity);
+
+    /**
+     * 导出excel
+     * @param dto
+     * @param response
+     */
+    void exportExcel(FirstMileCostAllocationDTO.PagingParamDTO dto, HttpServletResponse response);
+}

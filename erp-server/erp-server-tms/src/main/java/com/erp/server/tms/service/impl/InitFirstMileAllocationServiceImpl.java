@@ -410,9 +410,6 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         return resultDTOS;
     }
 
-    private void handleImportSuccessList(List<InitFirstMileAllocationDetailExcelDTO> successList, List<InitFirstMileAllocationDetailExcelDTO> errorList) {
-    }
-
     private void updateApproveStatusForApprove(List<String> ids, String status) {
         if (CollectionUtils.isEmpty(ids) || StringUtils.isBlank(status)) {
             return;
