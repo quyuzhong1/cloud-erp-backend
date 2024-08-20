@@ -299,8 +299,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     }
 
     @Override
-    public InventorySkuCostDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
-        InventorySkuCostDetailExcelListener excelListenerUtil = new InventorySkuCostDetailExcelListener();
+    public InventorySkuCostDTO.ImportDTO importFile(MultipartFile excelFile, List<InventorySkuCostDetailDTO.AddDTO> detailList, HttpServletResponse response) {
+        InventorySkuCostDetailExcelListener excelListenerUtil = new InventorySkuCostDetailExcelListener(detailList);
         try {
             EasyExcel.read(excelFile.getInputStream(), InventorySkuCostDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {

@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -110,11 +111,13 @@ public interface InventorySkuCostService extends SuperService<InventorySkuCostEn
 
     /**
      * 导出excel
+     *
      * @param excelFile
+     * @param detailList
      * @param response
      * @return
      */
-    InventorySkuCostDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+    InventorySkuCostDTO.ImportDTO importFile(MultipartFile excelFile, List<InventorySkuCostDetailDTO.AddDTO> detailList, HttpServletResponse response);
 
     /**
      * 详情

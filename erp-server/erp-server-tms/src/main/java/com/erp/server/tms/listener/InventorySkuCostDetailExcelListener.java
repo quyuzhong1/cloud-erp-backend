@@ -9,6 +9,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 期初头程分摊
@@ -39,9 +41,9 @@ public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<I
      */
     @Getter
     private List<InventorySkuCostDetailDTO.AddDTO> successList = new ArrayList<>();
-
-    public InventorySkuCostDetailExcelListener() {
-
+    private List<InventorySkuCostDetailDTO.AddDTO> detailList;
+    public InventorySkuCostDetailExcelListener(List<InventorySkuCostDetailDTO.AddDTO> detailList) {
+        this.detailList = CollectionUtils.isEmpty(detailList) ? Collections.emptyList() : detailList;
     }
 
    /**
@@ -61,34 +63,42 @@ public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<I
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        //添加数据用于判断是否为空
-        dataList.add(excelDTO);
-        //数据copy
-        BeanMapperUtils.copy(excelDTO, addDTO);
-        if (StrUtil.isNotBlank(addDTO.getSkuNo())){
-            List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.listBySkuNos(Collections.singletonList(addDTO.getSkuNo()));
-            if (CollectionUtils.isEmpty(productDetailEntityList)){
-                errorMsgList.add(StrUtil.format("SKU【{}】不存在",addDTO.getSkuNo()));
-            }else {
-                addDTO.setSkuId(productDetailEntityList.get(0).getId());
+        //判断是否存在明细
+        if (CollectionUtils.isNotEmpty(detailList)){
+            InventorySkuCostDetailDTO.AddDTO addDTO1 = detailList.stream().filter(e -> Objects.equals(e.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
+            if (Objects.nonNull(addDTO1)){
+                errorMsgList.add(StrUtil.format("SKU【{}】已存在",addDTO1.getSkuNo()));
             }
         }
-        if (StrUtil.isBlank(addDTO.getUnit())){
-            addDTO.setUnit("pcs");
-        }
-        if (StrUtil.isBlank(addDTO.getProductName())){
-            if (StrUtil.isNotBlank(addDTO.getSkuId())){
-                List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(addDTO.getSkuId()));
-                if (CollectionUtils.isEmpty(skuVOList)){
-                    errorMsgList.add(StrUtil.format("SKU【{}】产品名称不存在",addDTO.getSkuNo()));
+        if (CollectionUtils.isEmpty(errorMsgList)){
+            //数据copy
+            BeanMapperUtils.copy(excelDTO, addDTO);
+            if (StrUtil.isNotBlank(addDTO.getSkuNo())){
+                List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.listBySkuNos(Collections.singletonList(addDTO.getSkuNo()));
+                if (CollectionUtils.isEmpty(productDetailEntityList)){
+                    errorMsgList.add(StrUtil.format("SKU【{}】不存在",addDTO.getSkuNo()));
                 }else {
-                    addDTO.setProductName(skuVOList.get(0).getSkuName());
+                    addDTO.setSkuId(productDetailEntityList.get(0).getId());
+                }
+            }
+            if (StrUtil.isBlank(addDTO.getUnit())){
+                addDTO.setUnit("pcs");
+            }
+            if (StrUtil.isBlank(addDTO.getProductName())){
+                if (StrUtil.isNotBlank(addDTO.getSkuId())){
+                    List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(addDTO.getSkuId()));
+                    if (CollectionUtils.isEmpty(skuVOList)){
+                        errorMsgList.add(StrUtil.format("SKU【{}】产品名称不存在",addDTO.getSkuNo()));
+                    }else {
+                        addDTO.setProductName(skuVOList.get(0).getSkuName());
+                    }
                 }
             }
         }
-
+        //添加数据用于判断是否为空
+        dataList.add(excelDTO);
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;

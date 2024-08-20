@@ -9,13 +9,10 @@ import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
-import com.erp.model.tms.dto.excel.TmsWarehouseMappingExcelDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
-import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +29,10 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
     //头程发货单记录
     private final WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign = SpringUtil.getBean(WmsFirstMileDeliveryFeign.class);
     /**
+     * 明细中已存在的明细
+     */
+    private List<InitFirstMileAllocationDetailDTO.AddDTO> detailList;
+    /**
      * 错误信息
      */
     @Getter
@@ -47,8 +48,8 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
     @Getter
     private List<InitFirstMileAllocationDetailDTO.AddDTO> successList = new ArrayList<>();
 
-    public InitFirstMileAllocationDetailExcelListener() {
-
+    public InitFirstMileAllocationDetailExcelListener(List<InitFirstMileAllocationDetailDTO.AddDTO> detailList) {
+        this.detailList = CollectionUtils.isNotEmpty(detailList) ? detailList : new ArrayList<>();
     }
 
    /**
@@ -68,30 +69,40 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        BeanMapperUtils.copy(excelDTO, addDTO);
-        //补充明细数据
-        if (StrUtil.isNotBlank(excelDTO.getSourceCode())){
-            List<FirstMileDeliveryDTO.ListFirstMileDTO> firstMileDTOS = wmsFirstMileDeliveryFeign.listDetailByCodes(Collections.singletonList(excelDTO.getSourceCode()));
-            if (CollectionUtils.isEmpty(firstMileDTOS)){
-                errorMsgList.add(StrUtil.format("发货单【{}】未审核或不存在",excelDTO.getSourceCode()));
+        //校验数据是否已存在
+        if (CollectionUtils.isNotEmpty(detailList)){
+            InitFirstMileAllocationDetailDTO.AddDTO addDTO1 = detailList.stream().filter(e -> (Objects.equals(e.getBusinessCode(), excelDTO.getBusinessCode()) || Objects.equals(e.getSourceCode(), excelDTO.getSourceCode()))
+                    && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
+            if (Objects.nonNull(addDTO1)){
+                errorMsgList.add(StrUtil.format("发货单【{}】业务单号【{}】SKU【{}】已存在", addDTO1.getSourceCode(),addDTO1.getBusinessCode(),addDTO1.getSkuNo()));
             }
-            FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo())).findFirst().orElse(null);
-            if (Objects.isNull(firstMileDTO)){
-                errorMsgList.add(StrUtil.format("发货单【{}】明细中SKU【{}】不存在",excelDTO.getSourceCode(), excelDTO.getSkuNo()));
-            }else {
-                initExcel(firstMileDTO,addDTO);
-            }
-        }else if (StrUtil.isNotBlank(excelDTO.getBusinessCode())){
-            //根据业务单号进行查询发货单
-            List<FirstMileDeliveryDTO.ListFirstMileDTO> firstMileDTOS = wmsFirstMileDeliveryFeign.listDetailBySourceCodes(Collections.singletonList(excelDTO.getBusinessCode()));
-            if (CollectionUtils.isEmpty(firstMileDTOS)){
-                errorMsgList.add(StrUtil.format("业务单号【{}】关联的发货单未审核或不存在",excelDTO.getBusinessCode()));
-            }
-            FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo())).findFirst().orElse(null);
-            if (Objects.isNull(firstMileDTO)){
-                errorMsgList.add(StrUtil.format("业务单号【{}】明细中SKU【{}】不存在",excelDTO.getBusinessCode(), excelDTO.getSkuNo()));
-            }else {
-                initExcel(firstMileDTO,addDTO);
+        }
+        if (CollectionUtils.isEmpty(errorMsgList)){
+            BeanMapperUtils.copy(excelDTO, addDTO);
+            //补充明细数据
+            if (StrUtil.isNotBlank(excelDTO.getSourceCode())){
+                List<FirstMileDeliveryDTO.ListFirstMileDTO> firstMileDTOS = wmsFirstMileDeliveryFeign.listDetailByCodes(Collections.singletonList(excelDTO.getSourceCode()));
+                if (CollectionUtils.isEmpty(firstMileDTOS)){
+                    errorMsgList.add(StrUtil.format("发货单【{}】未审核或不存在",excelDTO.getSourceCode()));
+                }
+                FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo())).findFirst().orElse(null);
+                if (Objects.isNull(firstMileDTO)){
+                    errorMsgList.add(StrUtil.format("发货单【{}】明细中SKU【{}】不存在",excelDTO.getSourceCode(), excelDTO.getSkuNo()));
+                }else {
+                    initExcel(firstMileDTO,addDTO);
+                }
+            }else if (StrUtil.isNotBlank(excelDTO.getBusinessCode())){
+                //根据业务单号进行查询发货单
+                List<FirstMileDeliveryDTO.ListFirstMileDTO> firstMileDTOS = wmsFirstMileDeliveryFeign.listDetailBySourceCodes(Collections.singletonList(excelDTO.getBusinessCode()));
+                if (CollectionUtils.isEmpty(firstMileDTOS)){
+                    errorMsgList.add(StrUtil.format("业务单号【{}】关联的发货单未审核或不存在",excelDTO.getBusinessCode()));
+                }
+                FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo())).findFirst().orElse(null);
+                if (Objects.isNull(firstMileDTO)){
+                    errorMsgList.add(StrUtil.format("业务单号【{}】明细中SKU【{}】不存在",excelDTO.getBusinessCode(), excelDTO.getSkuNo()));
+                }else {
+                    initExcel(firstMileDTO,addDTO);
+                }
             }
         }
         //添加数据用于判断是否为空
