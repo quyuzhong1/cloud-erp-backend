@@ -3,6 +3,7 @@ import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
     /**
      * 根据出库配置返回分拣口
      */
-    CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto);
+    CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto, SoB2cDeliveryEntity entity);
     /**
      * 处理偏差
      * @author will

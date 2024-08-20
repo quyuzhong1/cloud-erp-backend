@@ -55,16 +55,6 @@ public class CfgRuleOutController extends BaseController {
     public ApiResult<CfgRuleOutDTO.CommonDTO> view() {
         return success(cfgRuleOutService.view());
     }
-    /**
-     * 根据出库配置返回分拣口
-     * @author lrp
-     * @date:  2024-06-28
-     * @return ApiResult<String>
-     */
-    @PostMapping("/getSortingPort")
-    public ApiResult<String> getSortingPort(@RequestBody CfgRuleOutDTO.SortingPortRuleDTO dto) {
-        return success(cfgRuleOutService.getSortingPort(dto).getPort());
-    }
 
     /**
      * 匹配中转仓配置

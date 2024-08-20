@@ -985,7 +985,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .deliveryOrderId(entity.getId())
                 .build();
         //返回分检口
-        CfgRuleOutDTO.SortingPortResultDTO portResultDTO = cfgRuleOutService.getSortingPort(sortingPortRuleDTO);
+        CfgRuleOutDTO.SortingPortResultDTO portResultDTO = cfgRuleOutService.getSortingPort(sortingPortRuleDTO,entity);
         String sortingPort = portResultDTO.getPort();
         //更新发货单
         this.updateById(entity);

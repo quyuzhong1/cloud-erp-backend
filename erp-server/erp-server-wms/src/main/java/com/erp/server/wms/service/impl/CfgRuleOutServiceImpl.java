@@ -22,9 +22,11 @@ import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
 import com.erp.server.wms.service.CfgRuleOutService;
 import com.erp.server.wms.service.CfgSettingService;
@@ -233,15 +235,15 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     }
 
     @Override
-    public CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto) {
+    public CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto, SoB2cDeliveryEntity entity) {
         ValidatorUtil.validateEntity(dto);
         CfgRuleOutDTO.CommonDTO commonDTO = this.view();
         CfgRuleOutDTO.SortingPortResultDTO resultDTO = this.getSortingPort(commonDTO,dto);
         String sortingPort = resultDTO.getPort();
         if(sortingPort.equals(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode())){
             if(resultDTO.getUpdateError()){
-                //更新异常
-                soB2cDeliveryService.updateAbnormal(Arrays.asList(dto.getDeliveryOrderId()), AbnormalCauseEnum.EQUIPMENT_SORTING);
+                entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
+                entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
             }
         }
         return resultDTO;
