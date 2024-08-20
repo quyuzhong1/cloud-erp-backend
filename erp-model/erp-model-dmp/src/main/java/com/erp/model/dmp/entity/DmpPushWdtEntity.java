@@ -59,4 +59,10 @@ public class DmpPushWdtEntity extends BaseEntity<DmpPushWdtEntity> {
      */
     @TableField("operate_type")
     private String operateType;
+
+    /**
+     * 类型：0原始数据，1按仓位映射后数据
+     */
+    @TableField("type")
+    private String type;
 }

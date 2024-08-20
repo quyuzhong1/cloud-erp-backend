@@ -247,4 +247,17 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/dmp/getWarnTaskReport")
     List<DmpTaskMsgDTO> getWarnTaskReport(@RequestBody List<String> statusList);
+
+    /**
+     * 根据来源ID查询
+     * @param sourceIdList
+     * @return
+     * @date: 2024-08-15
+     * @author: tanmujin
+     */
+    @PostMapping("feign/dmp/listBySourceIds")
+    List<DmpPushTaskEntity> listBySourceIds(@RequestBody List<String> sourceIdList);
+
+    @PostMapping("feign/dmp/push/deleteBySourceId")
+    boolean deletePushTaskBySourceId(@RequestBody String sourceId);
 }

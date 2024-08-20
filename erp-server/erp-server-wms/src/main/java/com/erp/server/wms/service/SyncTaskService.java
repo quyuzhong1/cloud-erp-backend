@@ -15,4 +15,13 @@ public interface SyncTaskService {
      * @return void
      **/
     void findMaBangDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+    /**
+     * 查询旺店通数据重新发送
+     * @param syncParamDTO
+     * @return
+     * @date: 2024-08-15
+     * @author: tanmujin
+     */
+    void findWdtDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }
