@@ -117,6 +117,7 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
     }
     private void initExcel(FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO, InitFirstMileAllocationDetailDTO.AddDTO addDTO){
         addDTO.setSourceId(firstMileDTO.getSourceId());
+        addDTO.setSourceCode(firstMileDTO.getSourceCode());
         addDTO.setSourceDetailId(firstMileDTO.getSourceDetailId());
         addDTO.setSourceType(firstMileDTO.getSourceType());
         addDTO.setBusinessCode(firstMileDTO.getBusinessCode());
