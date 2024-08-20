@@ -226,7 +226,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 transactionDTO.setTransactionNo(transactionNo);
                 transactionDTO.setTransactionRuleId(rule.getId());
                 // 待检，在途设置为空仓位出入库
-                boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(flow.getInventoryStatus());
+                boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(rule.getInventoryStatus());
                 if (qcTransitNotLocation){
                     flow.setWarehouseLocation("");
                 }
