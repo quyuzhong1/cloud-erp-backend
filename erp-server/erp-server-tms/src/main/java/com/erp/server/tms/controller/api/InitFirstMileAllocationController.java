@@ -129,7 +129,7 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/approve")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",
-//            menuCode = "scm:initFirstMileAllocation:approve",
+//            menuCode = "tms:initFirstMileAllocation:approve",
 //            serviceClass = InitFirstMileAllocationService.class,
 //            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
@@ -158,7 +158,7 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:initFirstMileAllocation:disApprove",
+            menuCode = "tms:initFirstMileAllocation:disApprove",
             serviceClass = InitFirstMileAllocationService.class,
             keyIdName = "ids"
     )
@@ -187,7 +187,7 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/cancel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:initFirstMileAllocation:cancel",
+            menuCode = "tms:initFirstMileAllocation:cancel",
             serviceClass = InitFirstMileAllocationService.class,
             keyIdName = "ids"
     )
@@ -216,7 +216,7 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:initFirstMileAllocation:submit",
+            menuCode = "tms:initFirstMileAllocation:submit",
             serviceClass = InitFirstMileAllocationService.class,
             keyIdName = "ids"
     )
@@ -263,7 +263,7 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:initFirstMileAllocation:submit",
+            menuCode = "tms:initFirstMileAllocation:submit",
             serviceClass = InitFirstMileAllocationService.class,
             keyIdName = "ids"
     )
@@ -292,7 +292,7 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/generateFirstMileReconciliation")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:initFirstMileAllocation:generateReconciliation",
+            menuCode = "tms:initFirstMileAllocation:generateReconciliation",
             serviceClass = InitFirstMileAllocationService.class,
             keyIdName = "ids"
     )

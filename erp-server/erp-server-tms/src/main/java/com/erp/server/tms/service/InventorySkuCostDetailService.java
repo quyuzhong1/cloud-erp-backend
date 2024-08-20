@@ -1,4 +1,6 @@
 package com.erp.server.tms.service;
+import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -54,4 +56,11 @@ public interface InventorySkuCostDetailService extends SuperService<InventorySku
      * @param entity
      */
     void buildDetail(List<InventorySkuCostDetailEntity> detailEntityList, InventorySkuCostEntity entity);
+
+    /**
+     * 根据sku查询明细列表
+     * @param skuIds
+     * @return
+     */
+    List<InventorySkuCostDTO.PagingVO> listDetailBySkuIds(List<String> skuIds);
 }

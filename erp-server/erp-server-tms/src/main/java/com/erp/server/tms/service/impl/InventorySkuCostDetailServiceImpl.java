@@ -3,9 +3,13 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
 import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.tms.mapper.InventorySkuCostDetailMapper;
 import com.erp.server.tms.service.InventorySkuCostDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -27,6 +31,8 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
+
 /**
  * <p>
  * SKU成本明细 服务实现类
@@ -40,6 +46,8 @@ import org.springframework.util.CollectionUtils;
 public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<InventorySkuCostDetailMapper, InventorySkuCostDetailEntity> implements InventorySkuCostDetailService {
     @Autowired
     private OperateLogService operateLogService;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -121,6 +129,21 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
             //明细为空则清空
             lambdaUpdate().eq(InventorySkuCostDetailEntity::getMainId, entity.getId()).remove();
         }
+        //检查数据是否已存在
+        List<String> skuIds = detailEntityList.stream().map(InventorySkuCostDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<InventorySkuCostDTO.PagingVO> existDetailEntityList = this.listDetailBySkuIds(skuIds);
+        detailEntityList.forEach(detailEntity -> {
+            if (!CollectionUtils.isEmpty(existDetailEntityList)){
+                InventorySkuCostDTO.PagingVO pagingVO = existDetailEntityList.stream().filter(e -> Objects.nonNull(e)
+                        && !Objects.equals(entity.getId(), e.getId())
+                        && Objects.equals(e.getAllocatedMonth(), entity.getAllocatedMonth())
+                        && Objects.equals(e.getSkuId(), detailEntity.getSkuId())
+                        && Objects.equals(e.getSkuNo(), detailEntity.getSkuNo())).findFirst().orElse(null);
+                if (Objects.nonNull(pagingVO)){
+                    throw new ServiceException(StrUtil.format("SKU成本中【{}】SKU【{}】分摊月份【{}】已存在", pagingVO.getCode(),pagingVO.getSkuNo(),pagingVO.getAllocatedMonthStr()));
+                }
+            }
+        });
         List<InventorySkuCostDetailEntity> oldDetailEntityList = this.listByMainIds(Collections.singletonList(entity.getId()));
         if (!CollectionUtils.isEmpty(oldDetailEntityList)) {
             List<String> oldDetailIds = oldDetailEntityList.stream().map(InventorySkuCostDetailEntity::getId).distinct().collect(Collectors.toList());
@@ -128,13 +151,26 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
             //清空不存在的明细记录
             this.removeByIds(notExistDetailIds);
         }
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         detailEntityList.forEach(inventorySkuCostDetailEntity -> {
             inventorySkuCostDetailEntity.setMainId(entity.getId());
             if (StrUtil.isBlank(inventorySkuCostDetailEntity.getUnit())){
                 inventorySkuCostDetailEntity.setUnit("pcs");
             }
+            SkuVO skuVO = skuVOList.stream().filter(e -> e.getSkuId().equals(inventorySkuCostDetailEntity.getSkuId())).findFirst().orElse(null);
+            if (Objects.nonNull(skuVO)){
+                inventorySkuCostDetailEntity.setProductName(skuVO.getSkuName());
+            }
         });
         this.saveOrUpdateBatch(detailEntityList);
+    }
+
+    @Override
+    public List<InventorySkuCostDTO.PagingVO> listDetailBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listDetailBySkuIds(skuIds);
     }
 
 

@@ -102,7 +102,7 @@ public class InitFirstMileAllocationDetailExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "币种（默认CNY）", index = 13)
     @FieldValid(fieldName = "币种",enumClass = CurrencyEnum.class)
-    private BigDecimal currency;
+    private String currency;
     /**
      * 错误信息
      */

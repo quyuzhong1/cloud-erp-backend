@@ -68,6 +68,10 @@ public class InventorySkuCostDTO implements Serializable {
         * 分摊月份
         */
         private LocalDate allocatedMonth;
+        /**
+         * 分摊月份【导出使用】
+         */
+        private String allocatedMonthStr;
 
         /**
         * 币种
@@ -241,6 +245,10 @@ public class InventorySkuCostDTO implements Serializable {
          * 分摊月份【可排序】
          */
         private LocalDate allocatedMonth;
+        /**
+         * 分摊月份【导出使用】 yyyy-MM
+         */
+        private String allocatedMonthStr;
         /**
          *币种
          */

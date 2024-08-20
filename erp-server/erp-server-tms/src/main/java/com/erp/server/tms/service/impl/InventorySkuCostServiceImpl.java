@@ -19,13 +19,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
-import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.tms.listener.InventorySkuCostDetailExcelListener;
 import com.erp.server.tms.mapper.InventorySkuCostMapper;
 import com.erp.server.tms.service.InventorySkuCostDetailService;
@@ -53,6 +54,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -81,6 +83,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     private InventorySkuCostDetailService inventorySkuCostDetailService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -165,8 +169,14 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        List<String> skuIds = list.stream().map(InventorySkuCostDTO.PagingVO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         list.forEach(e -> {
             e.setStatusName(ApproveStatusEnum.getName(e.getStatus()));
+            SkuVO skuVO = skuVOList.stream().filter(f -> Objects.equals(e.getSkuId(), f.getSkuId())).findFirst().orElse(null);
+            if (Objects.nonNull(skuVO)){
+                e.setProductName(skuVO.getSkuName());
+            }
         });
     }
 
@@ -324,9 +334,6 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         return importDTO;
     }
 
-    private void handleImportSuccessList(List<InitFirstMileAllocationDetailExcelDTO> successList, List<InitFirstMileAllocationDetailExcelDTO> errorList) {
-    }
-
     @Override
     public InventorySkuCostDTO.ViewDTO view(String id) {
         InventorySkuCostEntity entity = this.getById(id);
@@ -336,6 +343,10 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         InventorySkuCostDTO.ViewDTO viewDTO = new InventorySkuCostDTO.ViewDTO();
         BeanMapperUtils.copy(entity, viewDTO);
         viewDTO.setStatusName(ApproveStatusEnum.getName(viewDTO.getStatus()));
+        if (Objects.nonNull(viewDTO.getAllocatedMonth())){
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            viewDTO.setAllocatedMonthStr(viewDTO.getAllocatedMonth().format(formatter));
+        }
         List<InventorySkuCostDetailEntity> detailEntityList = inventorySkuCostDetailService.listByMainIds(Collections.singletonList(id));
         if (!CollectionUtils.isEmpty(detailEntityList)) {
             List<InventorySkuCostDetailDTO.ViewDTO> viewDTOList = BeanMapperUtils.copyList(InventorySkuCostDetailDTO.ViewDTO.class, detailEntityList);
@@ -362,11 +373,15 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             inventorySkuCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         }
         if (Objects.isNull(inventorySkuCostEntity.getExchangeRate())){
-            //获取dmp汇率
-            String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            BigDecimal rate = dmpTaskFeign.getRate(currentDate, inventorySkuCostEntity.getCurrency());
-            if (Objects.nonNull(rate)){
-                inventorySkuCostEntity.setExchangeRate(rate);
+            if (CurrencyEnum.CNY.getCurrencyCode().equals(inventorySkuCostEntity.getCurrency())){
+                inventorySkuCostEntity.setExchangeRate(BigDecimal.ONE);
+            }else {
+                //获取dmp汇率
+                String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                BigDecimal rate = dmpTaskFeign.getRate(currentDate, inventorySkuCostEntity.getCurrency());
+                if (Objects.nonNull(rate)){
+                    inventorySkuCostEntity.setExchangeRate(rate);
+                }
             }
         }
     }

@@ -3,13 +3,11 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.server.tms.query.InventorySkuCostQueryHandler;
 import com.erp.server.tms.service.TmsFirstMileReconciliationService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -18,7 +16,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,7 +25,6 @@ import com.erp.server.tms.service.InventorySkuCostService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.InventorySkuCostDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
@@ -133,7 +129,7 @@ public class InventorySkuCostController extends BaseController {
     @PostMapping("/approve")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",
-//            menuCode = "scm:inventorySkuCost:approve",
+//            menuCode = "tms:inventorySkuCost:approve",
 //            serviceClass = inventorySkuCostService.class,
 //            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
@@ -162,7 +158,7 @@ public class InventorySkuCostController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:inventorySkuCost:disApprove",
+            menuCode = "tms:inventorySkuCost:disApprove",
             serviceClass = InventorySkuCostService.class,
             keyIdName = "ids"
     )
@@ -191,7 +187,7 @@ public class InventorySkuCostController extends BaseController {
     @PostMapping("/cancel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:inventorySkuCost:cancel",
+            menuCode = "tms:inventorySkuCost:cancel",
             serviceClass = InventorySkuCostService.class,
             keyIdName = "ids"
     )
@@ -220,7 +216,7 @@ public class InventorySkuCostController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:inventorySkuCost:submit",
+            menuCode = "tms:inventorySkuCost:submit",
             serviceClass = InventorySkuCostService.class,
             keyIdName = "ids"
     )
@@ -267,7 +263,7 @@ public class InventorySkuCostController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:inventorySkuCost:submit",
+            menuCode = "tms:inventorySkuCost:submit",
             serviceClass = InventorySkuCostService.class,
             keyIdName = "ids"
     )

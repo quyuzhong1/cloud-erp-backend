@@ -22,20 +22,20 @@ public class InventorySkuCostDetailExcelDTO implements Serializable {
      * SKU
      */
     @ExcelProperty(value = "*SKU", index = 0)
-    @FieldValid(fieldName = "SKU）",isNotBlank = true,maxLength = 200)
+    @FieldValid(fieldName = "SKU",isNotBlank = true,maxLength = 100)
     private String  skuNo;
     /**
      * 产品名称
      */
     @ExcelProperty(value = "产品名称", index = 1)
-    @FieldValid(fieldName = "产品名称）",maxLength = 200)
+    @FieldValid(fieldName = "产品名称",maxLength = 200)
     private String  productName;
     /**
      * 单位(pcs)
      */
     @ExcelProperty(value = "单位(pcs)", index = 2)
-    @FieldValid(fieldName = "单位",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
-    private Integer  unit;
+    @FieldValid(fieldName = "单位",maxLength = 10)
+    private String  unit;
     /**
      * *产品成本
      */
@@ -47,7 +47,7 @@ public class InventorySkuCostDetailExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "币种(默认CNY)", index = 4)
     @FieldValid(fieldName = "币种",enumClass = CurrencyEnum.class)
-    private BigDecimal currency;
+    private String currency;
     /**
      * 错误信息
      */
