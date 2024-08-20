@@ -65,6 +65,77 @@ public class DmpThirdWarehouseInfoEntity extends BaseEntity<DmpThirdWarehouseInf
     */
     @TableField("country_code")
     private String countryCode;
+    
+    /**
+     * 地址
+     */
+    @TableField("address")
+    private String address;
+    /**
+     * 联系人
+     */
+    @TableField("contacts")
+    private String contacts;
+    /**
+     * 联系人电话
+     */
+    @TableField("tel_number")
+    private String telNumber;
+    /**
+     * 固话
+     */
+    @TableField("telno")
+    private String telno;
+    /**
+     * 邮编
+     */
+    @TableField("zip")
+    private String zip;
+    /**
+     * 省份
+     */
+    @TableField("province")
+    private String province;
+    /**
+     * 城市
+     */
+    @TableField("city")
+    private String city;
+    /**
+     * 区县
+     */
+    @TableField("district")
+    private String district;
+    
+    /**
+     * 子类型：0:默认,1:旺店通,2:菜鸟,3:百世WMS,4:巨沃,5:心怡WMS,6:科捷,7:吉客云,8:中通WMS,9:通天晓,10:酷仓宝WMS,11:景天WMS,12:网店管家笛佛WMS,13:九曳WMS,14:万里牛,15:麓客WMS,16:青图WMS(ERP),17:安鲜达WMS,18:顺丰WMS,19苏宁WMS,20:雅澳E,21:EMS,22:递四方,23:中邮WMS,24:云腾WMS,25:天图WMS;26:但丁WMS,27:e仓宝,28:仓卫士,29:山橙WMS,30橙蚁WMS,31:中山邮政WMS,32:赢路WMS,33:无忧WMS,34:筋斗云WMS,35:韵达WMS,36:GEEK
+     */
+    @TableField("sub_type")
+    private String subType;
+     
+     /**
+      * 备注
+      */
+    @TableField("remark")
+    private String remark;
+    
+    /**
+     * 分类，实体仓和虚拟仓
+     */
+   @TableField("category")
+   private String category;
+   
+   /**
+    * 虚拟仓对应的实体仓
+    */
+  @TableField("warehouse_list")
+  private String warehouseList;
+    
+    /**
+     * 是否禁用/停用 true 是 false 不是
+     */
+    private Boolean disabled;
+    
     /**
     * 输入任务id
     */

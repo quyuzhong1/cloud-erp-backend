@@ -1,8 +1,10 @@
 package com.erp.server.wms.wdt.impl;
 
+import org.apache.commons.math3.util.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -10,7 +12,9 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.wms.entity.WdtWarehouseLocationMappingEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.server.wms.mapper.WdtWarehouseLocationMappingMapper;
 import com.erp.server.wms.service.impl.AbstractWdtService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -37,8 +41,10 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private WdtWarehouseLocationMappingMapper wdtWarehouseLocationMappingMapper;
 
-    public DmpPushTaskFeignDTO generateTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode) {
+    public DmpPushTaskFeignDTO generateTask(List<CreateOtherStockoutRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode, String sysWarehouseId) {
         CreateOtherStockoutRequest request = new CreateOtherStockoutRequest();
         request.setOuterNo(outerCode);
 
@@ -73,7 +79,7 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
         }
 
         request.setWarehouseNo(thirdWarehouseCode);
-        request.setisCheck(Boolean.TRUE);
+        request.setIsCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
         request.setSourceId(outerCode);
         request.setOperateCode(operateCode);
@@ -81,6 +87,7 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
         request.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
         request.setCreateTime(LocalDateTime.now());
         request.setRemark("原始单据号：" + sourceCode);
+        request.setSourceCode(sourceCode);
 
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
@@ -97,7 +104,7 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
         return dmpSyncTaskDTO;
     }
 
-    @Override
+//    @Override
     public List<CreateOtherStockoutRequest.GoodsList> sumBySkuAndPositionNo(List<CreateOtherStockoutRequest.GoodsList> goodsList) {
         Map<String, List<CreateOtherStockoutRequest.GoodsList>> outCollect = goodsList.stream().collect(Collectors.groupingBy(item -> item.getSpecNo() + "#" + item.getPositionNo()));
         List<CreateOtherStockoutRequest.GoodsList> outCollectList = new ArrayList<>();
@@ -115,5 +122,24 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
             outCollectList.add(goods);
         }
         return outCollectList;
+    }
+
+//    @Override
+    public Pair<List<CreateOtherStockoutRequest.GoodsList>, List<CreateOtherStockoutRequest.GoodsList>> splitGoodsList(String sysWarehouseId, List<CreateOtherStockoutRequest.GoodsList> goodsList){
+        List<WdtWarehouseLocationMappingEntity> mappingList = wdtWarehouseLocationMappingMapper.selectList(new LambdaQueryWrapper<WdtWarehouseLocationMappingEntity>()
+                .eq(WdtWarehouseLocationMappingEntity::getSysWarehouseId, sysWarehouseId));
+        Map<String, String> wdtLocationMap = mappingList.stream().collect(Collectors.toMap(item -> item.getSysWarehouseId() + "#" + item.getSysWarehouseLocation(), item1 -> item1.getThirdWarehouseLocation()));
+        List<CreateOtherStockoutRequest.GoodsList> needPushList = new ArrayList<>();
+        List<CreateOtherStockoutRequest.GoodsList> noNeedPushList = new ArrayList<>();
+        for (CreateOtherStockoutRequest.GoodsList goods : goodsList) {
+            String key = sysWarehouseId + "#" + goods.getPositionNo();
+            if(wdtLocationMap.containsKey(key)){
+                goods.setPositionNo(wdtLocationMap.get(key));
+                needPushList.add(goods);
+            }else {
+                noNeedPushList.add(goods);
+            }
+        }
+        return new Pair<>(needPushList, noNeedPushList);
     }
 }

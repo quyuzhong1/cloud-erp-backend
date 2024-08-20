@@ -34,6 +34,15 @@ public enum SyncOperateEnum {
         this.desc = desc;
     }
 
+    public static SyncOperateEnum getByCode(String code) {
+        for (SyncOperateEnum operateEnum : values()) {
+            if (operateEnum.getCode().equals(code)) {
+                return operateEnum;
+            }
+        }
+        return null;
+    }
+
     public String getCode() {
         return code;
     }

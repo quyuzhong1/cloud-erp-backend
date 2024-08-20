@@ -23,10 +23,13 @@ public interface DmpPushWdtService extends SuperService<DmpPushWdtEntity> {
 
     /**
      * 批量保存
+     *
      * @param dtoList
      * @return
      * @date: 2024-07-25
      * @author: tanmujin
      */
     Boolean addBatch(List<DmpPushWdtDTO.AddDTO> dtoList);
+
+    List<DmpPushWdtDTO.ViewDTO> listByIdList(List<String> ids);
 }
