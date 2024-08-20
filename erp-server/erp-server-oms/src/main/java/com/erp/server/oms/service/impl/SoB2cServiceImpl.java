@@ -2021,7 +2021,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     public void thirdWarehouseCreateOutStock(SoB2cEntity entity, String warehouseId,String warehouseManageType , String logisticsChannelId, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList) {
         //合并相同sku的明细
-        Map<String,Integer> sameSkuMap = detailList.stream().collect(Collectors.toMap(v->v.getSkuId()+v.getPlatformSkuNo(), SoB2cDetailEntity::getQty, Integer:: sum));
+        Map<String,Integer> sameSkuMap = detailList.stream().collect(Collectors.toMap(v->v.getId(), SoB2cDetailEntity::getQty, Integer:: sum));
         List<SoB2cDeliveryDTO.DeliverySkuDTO> wantSkuList = listDeliverySku(entity.getShopId(), detailList, entity.getDictPlatform(), warehouseManageType, false);
         List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList = new ArrayList<>();
         String mainId = entity.getId();
@@ -2057,7 +2057,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType);
         List<ThirdWarehouseCreateOutboundReq.Item> itemList = new ArrayList<>(detailList.size());
         for (SoB2cDeliveryDTO.DeliverySkuDTO deliverySkuDTO : wantSkuList) {
-            Integer qty = sameSkuMap.get(deliverySkuDTO.getSourceSkuId()+deliverySkuDTO.getPlatformSkuNo());
+            Integer qty = sameSkuMap.get(deliverySkuDTO.getDetailId());
             if(qty == null){
                 throw new ServiceException(StrUtil.format("发货sku{}查不到原sku",deliverySkuDTO.getSkuNo()));
             }
