@@ -225,8 +225,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
 //                transactionDTO.setId(flow.getId());
                 transactionDTO.setTransactionNo(transactionNo);
                 transactionDTO.setTransactionRuleId(rule.getId());
-                // 待检，在途，冻结无库位设置默认空库位
-                boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(flow.getInventoryStatus()) && ObjectUtil.isEmpty(flow.getWarehouseLocation());
+                // 待检，在途设置为空仓位出入库
+                boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(flow.getInventoryStatus());
                 if (qcTransitNotLocation){
                     flow.setWarehouseLocation("");
                 }
@@ -390,8 +390,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
 
         transactionFlowList.forEach(flow->{
             InventoryTransactionDTO transactionDTO = new InventoryTransactionDTO();
-            // 待检，在途，冻结无库位设置默认空库位
-            boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(InventoryStatusEnum.getByCode(flow.getDictInventoryStatus())) && ObjectUtil.isEmpty(flow.getWarehouseLocation());
+            // 待检，在途 设置空库位出入库
+            boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(InventoryStatusEnum.getByCode(flow.getDictInventoryStatus()));
             if (qcTransitNotLocation){
                 flow.setWarehouseLocation("");
             }
