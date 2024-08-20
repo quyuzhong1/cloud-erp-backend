@@ -1882,11 +1882,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDeliveryDTO.DeliverySkuDTO> resultList = new ArrayList<>(10);
         List<String> skuIds = soDetailList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<String> platformNos = soDetailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
+        List<String> platformSpuNoList = soDetailList.stream().map(SoB2cDetailEntity::getPlatformSpuNo).distinct().collect(Collectors.toList());
 
         ListingInfoParamDTO param = new ListingInfoParamDTO();
         param.setPlatform(platform);
         param.setSkuIdList(skuIds);
         param.setPlatformSkuNoList(platformNos);
+        param.setPlatformSpuNoList(platformSpuNoList);
         param.setShopIdList(Arrays.asList(shopId));
         param.setIsExpire(false);
         //子件发货
