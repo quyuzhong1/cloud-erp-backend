@@ -298,6 +298,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
         inStockEntity.setCode(code);
         inStockEntity.setApproveTime(approveTime);
+        inStockEntity.setBillDate(approveTime.toLocalDate());
         if (Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
             //暂时使用空仓位
             detailList.forEach(v -> v.setWarehouseLocation(""));
