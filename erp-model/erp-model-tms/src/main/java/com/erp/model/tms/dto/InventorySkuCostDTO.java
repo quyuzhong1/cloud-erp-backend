@@ -192,7 +192,7 @@ public class InventorySkuCostDTO implements Serializable {
         /**
         * 核算公司名称
         */
-        @NotBlank(message = "核算公司名称不能为空")
+//        @NotBlank(message = "核算公司名称不能为空")
         @Size(max = 100,message = "核算公司名称最大长度不能超过100位")
         private String companyName;
 

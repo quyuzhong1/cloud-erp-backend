@@ -22,11 +22,13 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.InventorySkuCostDetailExcelListener;
 import com.erp.server.tms.mapper.InventorySkuCostMapper;
 import com.erp.server.tms.service.InventorySkuCostDetailService;
@@ -85,6 +87,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -382,6 +386,12 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 if (Objects.nonNull(rate)){
                     inventorySkuCostEntity.setExchangeRate(rate);
                 }
+            }
+        }
+        if (StrUtil.isNotBlank(inventorySkuCostEntity.getCompanyId())){
+            SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(inventorySkuCostEntity.getCompanyId());
+            if (Objects.nonNull(company)){
+                inventorySkuCostEntity.setCompanyName(company.getCompanyName());
             }
         }
     }
