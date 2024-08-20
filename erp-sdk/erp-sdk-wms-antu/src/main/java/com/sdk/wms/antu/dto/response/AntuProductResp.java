@@ -33,6 +33,10 @@ public class AntuProductResp extends CleanBaseDTO implements Serializable {
     @JSONField(name = "product_title")
     private String productTitle;
 
+    //产品标题英文
+    @JSONField(name = "product_title_en")
+    private String productTitleEn;
+
     //重量
     @JSONField(name = "product_weight")
     private Float productWeight;
@@ -116,6 +120,10 @@ public class AntuProductResp extends CleanBaseDTO implements Serializable {
     //客户代码
     @JSONField(name = "companyCode")
     private String companyCode;
+
+    //产品图片
+    @JSONField(name = "product_img")
+    private String productImg;
 
     //产品仓库属性
     @JSONField(name = "warehouse_attribute")

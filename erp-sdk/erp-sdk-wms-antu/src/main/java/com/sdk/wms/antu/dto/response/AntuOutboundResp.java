@@ -18,7 +18,7 @@ public class AntuOutboundResp extends CleanBaseDTO implements Serializable {
     @JSONField(name = "order_code")
     private String orderCode;
 
-    //入库单状态
+    //客户参考号
     @JSONField(name = "reference_no")
     private String referenceNo;
 

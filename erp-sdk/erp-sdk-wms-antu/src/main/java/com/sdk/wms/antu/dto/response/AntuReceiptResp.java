@@ -1,6 +1,7 @@
 package com.sdk.wms.antu.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.common.business.config.FastJson2LocalDateTimeDeserializer;
 import com.common.business.dto.CleanBaseDTO;
 import lombok.*;
 
@@ -99,6 +100,10 @@ public class AntuReceiptResp extends CleanBaseDTO implements Serializable {
     //SKU种类
     @JSONField(name = "sku_species")
     private Integer skuSpecies;
+
+    //SKU种类
+    @JSONField(name = "warehouse_shelf_time",deserializeUsing = FastJson2LocalDateTimeDeserializer.class)
+    private LocalDateTime warehouseShelfTime;
 
 
     @JSONField(name = "items")

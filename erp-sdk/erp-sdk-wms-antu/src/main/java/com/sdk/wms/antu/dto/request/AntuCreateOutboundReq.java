@@ -48,6 +48,10 @@ public class AntuCreateOutboundReq {
     @JSONField(name = "city")
     private String city;
 
+    //区域
+    @JSONField(name = "district")
+    private String district;
+
     //地址1 (length:30)
     @JSONField(name = "address1")
     private String address1;
@@ -87,6 +91,10 @@ public class AntuCreateOutboundReq {
     //收件人邮箱
     @JSONField(name = "email")
     private String email;
+
+    //收件人证件号
+    @JSONField(name = "license")
+    private String license;
 
     //平台店铺
     @JSONField(name = "platform_shop")
