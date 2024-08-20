@@ -1,8 +1,6 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -68,8 +66,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.Temporal;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -349,49 +347,29 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void overrideInventoryFlow(Map.Entry<String, LocalDate> orgStartTimeMap, LocalDateTime startTime, String inventoryId, String orgName) {
-        log.info("重算库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startTime);
-        // 更新库存流水
-        LocalDate startDate = ObjectUtil.isNotEmpty(startTime) ? startTime.toLocalDate() : orgStartTimeMap.getValue();
-        //  1. 查询大于最小时间的需要重算的流水记录
-        List<TransactionFlowEntity> lockTableList = lambdaQuery()
+    public void overrideInventoryFlow(LocalDate startDate, String inventoryId, String orgName) {
+        log.info("###TransactionFlowServiceImpl:::overrideInventoryFlow startDate ={} orgName ={} 库存流水重算开始 inventory_id={}, start_time={}",  startDate, orgName, inventoryId, LocalDateTime.now() );
+        List<TransactionFlowEntity> flowList = lambdaQuery()
                 .ge(TransactionFlowEntity::getBillDate, startDate)
-                .eq(TransactionFlowEntity::getOrgId, orgStartTimeMap.getKey())
-                .eq(ObjUtil.isNotEmpty(inventoryId), TransactionFlowEntity::getInventoryId, inventoryId)
+                .eq(TransactionFlowEntity::getInventoryId, inventoryId)
                 .last("for update")
                 .list();
-        if(CollUtil.isEmpty(lockTableList)) {
+        if(CollUtil.isEmpty(flowList)) {
             log.warn("未找到需要重算的库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate);
-            return;
         }
-        // 2. 对需要重算流水排序
-        Map<String, List<TransactionFlowEntity>> flowMap = lockTableList.stream()
-                .sorted(Comparator.comparing(TransactionFlowEntity::getBillDate)
+        flowList= flowList.stream().sorted(Comparator.comparing(TransactionFlowEntity::getBillDate)
                         .thenComparing(TransactionFlowEntity::getTradeTime)
-                        .thenComparing(TransactionFlowEntity::getId)
-                )
-                .collect(Collectors.groupingBy(TransactionFlowEntity::getInventoryId, Collectors.toList()));
-
-        // 3. 进行流水重算
-        flowMap.keySet().stream().forEach(flow -> {
-
-            log.info("重算库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, flow, startTime);
-            List<TransactionFlowEntity> flowList = flowMap.get(flow);
-            InventoryHisEntity hisEntity = inventoryHisService.findLastInventory(flow, startDate.minusDays(1));
-            if(ObjectUtil.isEmpty(hisEntity)){
-                hisEntity = new InventoryHisEntity(flow, startDate.minusDays(1),0);
-            }
-            // 重算库存流水
-            overrideFlowByInventoryId(flowList, hisEntity);
-            // 重算历史库存
-            inventoryHisService.overrideInventoryHis(flowList, hisEntity);
-
-        });
-        if(StrUtil.isEmpty(inventoryId) && ObjectUtil.isNotEmpty(orgStartTimeMap)){
-            inventoryFlowOverrideRecordService.save(new InventoryFlowOverrideRecordEntity(LocalDateTime.of(startDate, LocalTime.MIN),LocalDateTime.now(), orgStartTimeMap.getKey(),orgName, InventoryFlowOverrideRecordTypeEnum.AUTO));
+                        .thenComparing(TransactionFlowEntity::getId))
+                .collect(Collectors.toList());
+        InventoryHisEntity hisEntity = inventoryHisService.findLastInventory(inventoryId, startDate.minusDays(1));
+        if(ObjectUtil.isEmpty(hisEntity)){
+            hisEntity = new InventoryHisEntity(inventoryId, startDate.minusDays(1),0);
         }
-
-
+        // 重算库存流水
+        overrideFlowByInventoryId(flowList, hisEntity);
+        // 重算历史库存
+        inventoryHisService.overrideInventoryHis(flowList, hisEntity);
+        log.info("###TransactionFlowServiceImpl:::overrideInventoryFlow 库存流水重算完成 inventory_id={}, end_time={}",  inventoryId, LocalDateTime.now());
     }
 
     @Override
@@ -430,6 +408,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+    }
+
+    @Override
+    public List<String> listByOrgId(LocalDate startDate, String orgId, String inventoryId) {
+        return baseMapper.listByOrgId(startDate, orgId, inventoryId);
     }
 
     /**

@@ -119,12 +119,11 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
     /**
      * 库存流水重算方法
      *
-     * @param orgStartTimeMap  最小开始时间
-     * @param startTime      用户输入开始重算时间
+     * @param startDate      用户输入开始重算时间
      * @param inventoryId    库存id
      * @param  orgName         组织名称
      */
-    void overrideInventoryFlow(Map.Entry<String, LocalDate> orgStartTimeMap, LocalDateTime startTime, String inventoryId, String orgName);
+    void overrideInventoryFlow(LocalDate startDate, String inventoryId, String orgName);
 
     /**
      * @description: 每日库存
@@ -142,4 +141,13 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
      * @param response
      */
     void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 通过组织id查询存在流水的库存id
+     * @param startDate 开始时间
+     * @param orgId 组织id
+     * @param inventoryId 库存id
+     * @return  List<String>
+     */
+    List<String> listByOrgId(LocalDate startDate, String orgId, String inventoryId);
 }

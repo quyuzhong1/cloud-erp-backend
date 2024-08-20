@@ -3,13 +3,13 @@ package com.erp.server.wms.schedule;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.StopWatch;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.InventoryClosedRecordEnum;
-import com.erp.model.wms.entity.InventoryClosedRecordEntity;
-import com.erp.model.wms.entity.InventoryEntity;
-import com.erp.model.wms.entity.TransactionFlowEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.InventoryFlowOverrideRecordTypeEnum;
 import com.erp.server.wms.service.*;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -20,8 +20,11 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -54,13 +57,15 @@ public class InventoryFlowRecalculateJob {
         String jobParam = XxlJobHelper.getJobParam();
         XxlJobHelper.log("库存流水重算定时任务参数：{}", jobParam);
         LocalDateTime startTime = null;
-        String inventoryId = null;
+        String inventoryId;
         String inventoryOrgId = null;
         if (StrUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             startTime = jsonParam.getLocalDateTime("startTime", LocalDateTime.parse("2023-07-06T00:00:00"));
             inventoryId = jsonParam.getStr("inventoryId");
             inventoryOrgId = jsonParam.getStr("inventoryOrgId");
+        } else {
+            inventoryId = null;
         }
         if(StrUtil.isNotBlank(inventoryId)){
             InventoryEntity inventory = inventoryService.getById(inventoryId);
@@ -94,8 +99,26 @@ public class InventoryFlowRecalculateJob {
         for (Map.Entry<String, LocalDate> orgStartTimeMap : startTimeMap.entrySet()) {
             sw.start("task start orgStartTimeMap = " + orgStartTimeMap);
             String orgName = orgMap.get(orgStartTimeMap.getKey());
+            log.info("重算库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startTime);
+            // 更新库存流水
+            LocalDate startDate = ObjectUtil.isNotEmpty(startTime) ? startTime.toLocalDate() : orgStartTimeMap.getValue();
+            // 1. 查询当前组织下所有存在流水的库存id
+            List<String> inventoryIdList = transactionFlowService.listByOrgId(startDate, orgStartTimeMap.getKey(), inventoryId);
+            if(CollUtil.isEmpty(inventoryIdList)) {
+                log.warn("未找到需要重算的库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate);
+                continue;
+            }
             try {
-                transactionFlowService.overrideInventoryFlow(orgStartTimeMap, startTime, inventoryId,orgName);
+                // 多线程更新库存流水
+                CompletableFuture<Void> allOf = CompletableFuture.allOf(inventoryIdList.stream()
+                        .map(invId -> CompletableFuture.runAsync(() ->
+                                transactionFlowService.overrideInventoryFlow(startDate, invId, orgName))
+                        ).toArray(CompletableFuture[]::new));
+                allOf.thenRun(() -> log.info("###TransactionFlowServiceImpl:::overrideInventoryFlow 库存流水重算，所有任务执行完毕 组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate)).join();
+                if(StrUtil.isEmpty(inventoryId) && ObjectUtil.isNotEmpty(orgStartTimeMap)){
+                    inventoryFlowOverrideRecordService.save(new InventoryFlowOverrideRecordEntity(LocalDateTime.of(startDate, LocalTime.MIN),LocalDateTime.now(), orgStartTimeMap.getKey(),orgName, InventoryFlowOverrideRecordTypeEnum.AUTO));
+                }
+
             }catch (Exception e){
                 log.error("inventoryId = {} 组织名称 = {} 重算异常", inventoryId, orgName, e);
                 XxlJobHelper.log("inventoryId = {} 组织名称 = {} 重算异常", inventoryId, orgName, e);

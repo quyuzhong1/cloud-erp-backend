@@ -768,5 +768,18 @@
         </if>
         group by tf.sku_id,tf.warehouse_id
     </select>
+    <select id="listByOrgId" resultType="java.lang.String">
+        SELECT inventory_id from transaction_flow where is_deleted = false
+        <if test=" null != orgId and '' != orgId  ">
+            and org_id =#{orgId}
+        </if>
+        <if test=" null != inventoryId and '' != inventoryId  ">
+            and inventory_id =#{inventoryId}
+        </if>
+        <if test=" null != startDate">
+            and bill_date >= #{startDate}
+        </if>
+        GROUP BY inventory_id
+    </select>
 
 </mapper>
