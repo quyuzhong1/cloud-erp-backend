@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
@@ -13,6 +14,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -29,6 +31,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -124,31 +127,75 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     }
 
     private void test() {
-
-//        dmpCfgOutputConvertMappingService.lambdaQuery().eq()
-/*        //1、 转换前原始数据
+      /*  //1、 转换前原始数据
         DmpSoInfoEntity dmpSoInfoEntity = new DmpSoInfoEntity();
-
+        Map<String, Object> dmpSoInfoMap = BeanUtil.beanToMap(dmpSoInfoEntity);
         //2、 转换后的数据
         PlatformOrderDTO platformOrderDTO = new PlatformOrderDTO();
+        Map<String, Object> platformOrderMap = BeanUtil.beanToMap(dmpSoInfoEntity);
 
+        //转换键
+        List<DmpCfgOutputConvertMappingEntity> list = dmpCfgOutputConvertMappingService.lambdaQuery().eq(DmpCfgOutputConvertMappingEntity::getMainId, "").list();
 
-        String[] keys = field.split("\\.");
+        for (DmpCfgOutputConvertMappingEntity dmpCfgOutputConvertMappingEntity : list) {
+            if (dmpCfgOutputConvertMappingEntity.getOriginalKey()) {
 
-        for (String key : keys) {
-            if (data instanceof Map) {
-                data = ((Map<String, Object>) data).get(key);
-            } else if (data instanceof List) {
-                //如果是数组类型默认取第一个
-                List<Map<String, Object>> valueList = (List<Map<String, Object>>) data;
-                if (CollectionUtil.isNotEmpty(valueList)) {
-                    data = valueList.get(0).get(key);
-                }
-            } else {
-                return null;  // 如果路径不正确，返回null
             }
+
+            String[] keys = dmpCfgOutputConvertMappingEntity.getOriginalKey().split("\\.");
+            if (keys.length > 2) {
+                throw new ServiceException("字段：" + dmpCfgOutputConvertMappingEntity.getOriginalKey() + "只能使用一个'.'只支持嵌套两层");
+            }
+            for (String key : keys) {
+                if (dmpSoInfoMap instanceof Map) {
+                    dmpSoInfoMap = (Map<String, Object>) dmpSoInfoMap.get(key);
+                } else if (dmpSoInfoMap instanceof List) {
+                    //如果是数组类型默认取第一个
+                    List<Map<String, Object>> valueList = (List<Map<String, Object>>) dmpSoInfoMap;
+                    if (CollectionUtil.isNotEmpty(valueList)) {
+                        data = valueList.get(0).get(key);
+                    }
+                } else {
+                    return null;  // 如果路径不正确，返回null
+                }
+            }
+
         }
+
+
+        //转换前
+
+
+
         DmpHandlerUtils.getValueByPath();*/
+    }
+
+    /**
+     * 获取对象的所有字段及其类型
+     *
+     * @param obj 传入的对象
+     * @return 字段名称及类型的Map
+     */
+    public static Map<String, String> getFieldsAndTypes(Object obj) {
+        Map<String, String> fieldMap = new HashMap<>();
+
+        // 获取对象的实际类
+        Class<?> clazz = obj.getClass();
+
+        // 获取所有声明的字段
+        Field[] fields = clazz.getDeclaredFields();
+
+        for (Field field : fields) {
+            // 获取字段名称
+            String fieldName = field.getName();
+            // 获取字段类型
+            String fieldType = field.getType().getName();
+
+            // 将字段名称和类型存入Map
+            fieldMap.put(fieldName, fieldType);
+        }
+
+        return fieldMap;
     }
 
     /**
