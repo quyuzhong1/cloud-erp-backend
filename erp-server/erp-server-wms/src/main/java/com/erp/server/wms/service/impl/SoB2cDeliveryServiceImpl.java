@@ -79,7 +79,6 @@ import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -985,7 +984,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .deliveryOrderId(entity.getId())
                 .build();
         //返回分检口
-        CfgRuleOutDTO.SortingPortResultDTO portResultDTO = cfgRuleOutService.getSortingPort(sortingPortRuleDTO,entity);
+        CfgRuleOutDTO.SortingPortResultDTO portResultDTO = cfgRuleOutService.getSortingPort(sortingPortRuleDTO,entity, soB2cEntity);
         String sortingPort = portResultDTO.getPort();
         //更新发货单
         this.updateById(entity);

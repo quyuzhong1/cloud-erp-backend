@@ -18,6 +18,8 @@ import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
@@ -235,15 +237,17 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     }
 
     @Override
-    public CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto, SoB2cDeliveryEntity entity) {
+    public CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto, SoB2cDeliveryEntity entity, SoB2cEntity soB2cEntity) {
         ValidatorUtil.validateEntity(dto);
         CfgRuleOutDTO.CommonDTO commonDTO = this.view();
         CfgRuleOutDTO.SortingPortResultDTO resultDTO = this.getSortingPort(commonDTO,dto);
         String sortingPort = resultDTO.getPort();
         if(sortingPort.equals(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode())){
             if(resultDTO.getUpdateError()){
-                entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
-                entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
+                if(!soB2cEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())){
+                    entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
+                    entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
+                }
             }
         }
         return resultDTO;
