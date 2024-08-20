@@ -13,7 +13,6 @@ import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.WdtWarehouseLocationMappingMapper;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
