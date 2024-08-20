@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.server.tms.query.InventorySkuCostQueryHandler;
@@ -319,14 +320,14 @@ public class InventorySkuCostController extends BaseController {
      * 导入Excel
      * @author zdy
      * @date: 2024/8/14 9:39
-     * @param excelFile
+     * @param excelImportDTO
      * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
     @PostMapping("/importFile")
-    public ApiResult<InventorySkuCostDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        InventorySkuCostDTO.ImportDTO dto = inventorySkuCostService.importFile(excelFile,response);
+    public ApiResult<InventorySkuCostDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") InventorySkuCostDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        InventorySkuCostDTO.ImportDTO dto = inventorySkuCostService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getDetailList(),response);
         return success(dto);
     }
     /**

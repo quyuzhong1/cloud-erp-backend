@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -107,10 +108,11 @@ public interface InitFirstMileAllocationService extends SuperService<InitFirstMi
     /**
      * 导入excel
      * @param excelFile
+     * @param detailList
      * @param response
      * @return
      */
-    InitFirstMileAllocationDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+    InitFirstMileAllocationDTO.ImportDTO importFile(MultipartFile excelFile, List<InitFirstMileAllocationDetailDTO.AddDTO> detailList, HttpServletResponse response);
 
     /**
      * 下载导入模板

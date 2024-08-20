@@ -283,8 +283,8 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
      * @return
      */
     @Override
-    public InitFirstMileAllocationDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
-        InitFirstMileAllocationDetailExcelListener excelListenerUtil = new InitFirstMileAllocationDetailExcelListener();
+    public InitFirstMileAllocationDTO.ImportDTO importFile(MultipartFile excelFile,List<InitFirstMileAllocationDetailDTO.AddDTO> detailList, HttpServletResponse response) {
+        InitFirstMileAllocationDetailExcelListener excelListenerUtil = new InitFirstMileAllocationDetailExcelListener(detailList);
         try {
             EasyExcel.read(excelFile.getInputStream(), InitFirstMileAllocationDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -307,9 +307,9 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         InitFirstMileAllocationDTO.ImportDTO importDTO = new InitFirstMileAllocationDTO.ImportDTO();
         String url = "";
         if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "采购申请错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, PurchaseApplicationImportExcelDTO.class);
-            if (file != null && !file.isDirectory()) {
+            String fileName = "期初错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, InitFirstMileAllocationDetailExcelDTO.class);
+            if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }

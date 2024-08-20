@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
 import com.erp.server.tms.query.InitFirstMileAllocationQueryHandler;
 import com.erp.server.tms.service.TmsFirstMileReconciliationService;
@@ -333,14 +334,14 @@ public class InitFirstMileAllocationController extends BaseController {
      * 导入Excel
      * @author zdy
      * @date: 2024/8/14 9:39
-     * @param excelFile
+     * @param excelImportDTO
      * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
     @PostMapping("/importFile")
-    public ApiResult<InitFirstMileAllocationDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        InitFirstMileAllocationDTO.ImportDTO dto = initFirstMileAllocationService.importFile(excelFile,response);
+    public ApiResult<InitFirstMileAllocationDTO.ImportDTO> importFile(@ModelAttribute @Validated InitFirstMileAllocationDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        InitFirstMileAllocationDTO.ImportDTO dto = initFirstMileAllocationService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getDetailList(),response);
         return success(dto);
     }
     /**

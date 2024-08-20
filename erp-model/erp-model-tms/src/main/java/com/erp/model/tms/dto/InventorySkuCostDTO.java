@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -190,7 +192,7 @@ public class InventorySkuCostDTO implements Serializable {
         /**
         * 核算公司名称
         */
-        @NotBlank(message = "核算公司名称不能为空")
+//        @NotBlank(message = "核算公司名称不能为空")
         @Size(max = 100,message = "核算公司名称最大长度不能超过100位")
         private String companyName;
 
@@ -329,5 +331,18 @@ public class InventorySkuCostDTO implements Serializable {
          * 错误url
          */
         private String errorUrl;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ExcelImportDTO {
+        /**
+         * 导入文件
+         */
+        @NotNull(message = "导入文件不能为空")
+        private MultipartFile excelFile;
+        /**
+         * 明细
+         */
+        private List<InventorySkuCostDetailDTO.AddDTO> detailList;
     }
 }
