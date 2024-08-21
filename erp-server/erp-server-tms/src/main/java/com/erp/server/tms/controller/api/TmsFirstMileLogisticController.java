@@ -16,6 +16,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumCacheUtils;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.server.tms.query.TmsFirstMileLogisticQueryHandler;
 import com.erp.server.tms.schedule.FmLogisticWarnJob;
@@ -34,8 +36,11 @@ import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 头程物流单
@@ -311,7 +316,22 @@ public class TmsFirstMileLogisticController extends BaseController {
             serviceClass = TmsFirstMileLogisticService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.delete(dto.getIds());
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<LogisticsBillEntity> entityList = tmsFirstMileLogisticService.listByIds(ids);
+        for (String id : ids) {
+            LogisticsBillEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"头程物流单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(tmsFirstMileLogisticService.delete(entity));
+            }catch (Exception e){
+                log.error("头程物流单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCounterNo(), e.getMessage()));
+            }
+        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

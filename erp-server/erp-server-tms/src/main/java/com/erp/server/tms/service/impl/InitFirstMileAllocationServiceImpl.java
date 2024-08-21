@@ -19,7 +19,6 @@ import com.common.business.enums.TabApproveStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
@@ -254,30 +253,14 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(InitFirstMileAllocationEntity entity) {
         //校验记录是否已被使用 费用分摊是否已使用
-        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(entity);
-        if (!resultDTO.getSuccess()){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "期初费用分摊已使用不能修改");
+        //校验记录是否已被使用 费用分摊是否已使用
+        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.getByInitFirstMileId(entity.getId());
+        if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "期初费用分摊已使用不能删除");
         }
         initFirstMileAllocationDetailService.removeByMainId(entity.getId());
         this.lambdaUpdate().eq(InitFirstMileAllocationEntity::getId, entity.getId()).remove();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除记录操作成功");
-    }
-
-    /**
-     * 检查期初费用分摊是否下推费用分摊
-     * @param entity
-     * @return
-     */
-    private BatchResultDTO checkHasFirstMileCostAllocation(InitFirstMileAllocationEntity entity){
-        if (Objects.isNull(entity) || StrUtil.isBlank(entity.getId())){
-            return BatchResultDTO.success();
-        }
-        //校验记录是否已被使用 费用分摊是否已使用
-        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.getByInitFirstMileId(entity.getId());
-        if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "期初费用分摊已使用不能修改");
-        }
-        return BatchResultDTO.success();
     }
 
     @Override

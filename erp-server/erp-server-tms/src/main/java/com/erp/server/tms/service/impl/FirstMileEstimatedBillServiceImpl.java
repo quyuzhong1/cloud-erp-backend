@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -142,5 +143,12 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         }else {
             baseMapper.listAll(dto);
         }*/
+    }
+
+    @Override
+    public void removeByLogisticsBillId(String logisticsBillId) {
+        if (StrUtil.isNotBlank(logisticsBillId)){
+            this.lambdaUpdate().eq(FirstMileEstimatedBillEntity::getLogisticsBillId,logisticsBillId).remove();
+        }
     }
 }

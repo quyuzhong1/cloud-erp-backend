@@ -20,7 +20,6 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
@@ -256,9 +255,9 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     @Override
     public BatchResultDTO delete(InventorySkuCostEntity entity) {
         //校验记录是否已被使用 费用分摊是否已使用
-        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(entity);
-        if (!resultDTO.getSuccess()){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已下推费用分摊不能删除");
+        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.getBySkuCostId(entity.getId());
+        if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "SKU成本已使用不能删除");
         }
         inventorySkuCostDetailService.removeByMainId(entity.getId());
         this.lambdaUpdate().eq(InventorySkuCostEntity::getId, entity.getId()).remove();
@@ -431,22 +430,5 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         } else {
             return MathUtil.ZERO;
         }
-    }
-
-    /**
-     * 检查期SKU成本是否下推费用分摊
-     * @param entity
-     * @return
-     */
-    private BatchResultDTO checkHasFirstMileCostAllocation(InventorySkuCostEntity entity){
-        if (Objects.isNull(entity) || StrUtil.isBlank(entity.getId())){
-            return BatchResultDTO.success();
-        }
-        //校验记录是否已被使用 费用分摊是否已使用
-        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.getBySkuCostId(entity.getId());
-        if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "SKU成本已使用不能修改");
-        }
-        return BatchResultDTO.success();
     }
 }
