@@ -247,6 +247,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Transactional(rollbackFor = Exception.class)
     public String disApproveAndGenerate(String dbId, DmpSoPrestockInfoDTO.PrestockDTO dto) {
         service.disApprove(dbId);
+        service.delete(Arrays.asList(dbId));
         OtherInstockEntity otherInstockEntity = this.buildWdtPreStock(dto);
         return service.addAndApprove(otherInstockEntity);
     }

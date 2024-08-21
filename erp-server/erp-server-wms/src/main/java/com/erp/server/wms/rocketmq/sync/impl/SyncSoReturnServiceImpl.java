@@ -264,6 +264,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     @Transactional(rollbackFor = Exception.class)
     public void disApproveAndGenerate(SoReturnInstockEntity entity, OtherInstockEntity dbOtherInstockEntity, SoReturnInstockEntity newEntity) {
         soReturnInstockService.disApprove(entity,Boolean.TRUE);
+        soReturnInstockService.delete(Arrays.asList(entity.getId()));
         service.saveWdtReturnData(newEntity,dbOtherInstockEntity);
     }
 
