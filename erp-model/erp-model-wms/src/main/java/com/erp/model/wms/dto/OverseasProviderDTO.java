@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -196,25 +197,16 @@ public class OverseasProviderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
-        /**
-         * 服务商名称
-         */
-        private String name;
 
         /**
-         * 授权状态
+         * 页面高级查询
          */
-        private String authStatus;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 更新人
+         * sqlMap 默认key default
          */
-        private List<String> updateUserIdList;
-
-        /**
-         * 更新时间
-         */
-        private List<LocalDate> updateTimeList;
+        private Map<String,String> sqlMap;
     }
 
 

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -82,6 +83,7 @@ public class OverseasProviderController extends BaseController {
             menuCode = "wms:overseasProvider:paging",
             tableAlias = "op"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<OverseasProviderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasProviderDTO.PagingParamDTO> dto) {
         PagingVO<OverseasProviderDTO.ListDTO> result = overseasProviderService.paging(dto);
         return success(result);

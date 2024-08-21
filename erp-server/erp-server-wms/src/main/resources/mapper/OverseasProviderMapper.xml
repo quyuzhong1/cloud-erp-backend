@@ -47,24 +47,8 @@
             update_user_name AS updateUserName,
             update_user_id AS updateUserId
         FROM overseas_provider
-        WHERE is_deleted = FALSE
-        <if test="params.name != null and params.name != '' ">
-            AND name ILIKE concat('%', #{params.name}::text ,'%')
-        </if>
-        <if test="params.authStatus != null and params.authStatus != '' ">
-            AND auth_status ILIKE concat('%', #{params.authStatus}::text ,'%')
-        </if>
-        <if test="params.updateUserIdList != null and params.updateUserIdList != '' ">
-            AND update_user_id in
-            <foreach collection="params.updateUserIdList" item="updateUserId" open="(" close=")" separator=",">
-                #{updateUserId}
-            </foreach>
-        </if>
-        <if test="params.updateTimeList != null and params.updateTimeList != '' ">
-            and update_time >= #{params.updateTimeList[0]}
-            and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > update_time
-        </if>
-
+        WHERE  ${params.sqlMap.default}
+        and is_deleted = FALSE
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
