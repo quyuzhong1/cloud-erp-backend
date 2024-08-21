@@ -148,6 +148,7 @@ public class FileTaskContext {
      */
     @Transactional(readOnly = true)
     public IPage<FileTaskVO> paging(PagingDTO<FileTaskParamsDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         return fileTaskRepository.getFileTasks(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
     }
 
