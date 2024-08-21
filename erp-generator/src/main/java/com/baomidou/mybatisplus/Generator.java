@@ -461,9 +461,6 @@ public class Generator {
     		if(split2.length == 1) {
     			split2 = split[1].split(",");
     		}
-    		if(split2.length == 1) {
-    			return null;
-    		}
     		Map<String, String> enumNameMap = new LinkedHashMap<>();
     		for(String s : split2) {
     			String[] split3 = s.split("=");
