@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -20,6 +22,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
@@ -34,6 +37,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WmsLocalPushMessageEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -49,6 +53,8 @@ import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.WmsLocalPushMessageService;
+
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -117,6 +123,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    
+    @Resource
+    private WmsLocalPushMessageService wmsLocalPushMessageService;
 
     /**
      * 发送消息同步金蝶
@@ -725,23 +734,34 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
      */
     private DmpPushTaskEntity saveTask(SoOutstockEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
-        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-        dmpSyncTaskDTO.setSourceId(entity.getId());
-        dmpSyncTaskDTO.setSourceCode(entity.getCode());
-        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
-        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName());
-        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        dmpSyncTaskDTO.setSyncOperate(operate);
-        // B2C订单不推送到金蝶
-        if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
-            dmpSyncTaskDTO.setParentId("");
-        } else {
-            dmpSyncTaskDTO.setParentId(entity.getSoId());
-        }
-        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+//        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+//        dmpSyncTaskDTO.setSourceId(entity.getId());
+//        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+//        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+//        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+//        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName());
+//        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+//        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+//        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+//        dmpSyncTaskDTO.setSyncOperate(operate);
+//        // B2C订单不推送到金蝶
+//        if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
+//            dmpSyncTaskDTO.setParentId("");
+//        } else {
+//            dmpSyncTaskDTO.setParentId(entity.getSoId());
+//        }
+        
+        WmsLocalPushMessageEntity wmsLocalPushMessageEntity = new WmsLocalPushMessageEntity();
+        wmsLocalPushMessageEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        wmsLocalPushMessageEntity.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+        wmsLocalPushMessageEntity.setSourceId(entity.getId());
+        wmsLocalPushMessageEntity.setSourceCode(entity.getCode());
+        wmsLocalPushMessageEntity.setSyncOperate(operate);
+        wmsLocalPushMessageEntity.setPushData(JSON.toJSONString(resultMap));
+        
+        wmsLocalPushMessageService.save(wmsLocalPushMessageEntity);
+        
+        return null;
     }
 
     /**

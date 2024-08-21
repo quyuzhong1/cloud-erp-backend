@@ -3212,12 +3212,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             resultList.add(pushTaskEntity);
         });
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(resultList);
+//            }
+//        });
     }
 
 

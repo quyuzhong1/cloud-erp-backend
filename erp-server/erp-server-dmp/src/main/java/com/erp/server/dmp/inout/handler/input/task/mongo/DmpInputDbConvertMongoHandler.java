@@ -1,14 +1,11 @@
 package com.erp.server.dmp.inout.handler.input.task.mongo;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
-
-import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 
 import cn.hutool.core.collection.CollUtil;
 
@@ -21,15 +18,15 @@ import cn.hutool.core.collection.CollUtil;
 @Scope("prototype")
 public class DmpInputDbConvertMongoHandler extends DmpInputBaseMongoHandler{
 	
-	@Autowired
-	private DmpHandlerCache dmpHandlerCache;
-	
 	@Override
 	protected List<String> convertKey(String originalKey) {
 		Map<String, List<String>> keyMapping = dmpHandlerCache.getDmpCfgInputConvertMapping(convertId);
-		List<String> convertKey = keyMapping.get(originalKey);
-		if(CollUtil.isEmpty(convertKey)) {
-			convertKey = new ArrayList<>();
+		List<String> convertKey = Collections.singletonList(originalKey);
+		if(keyMapping != null) {
+			List<String> dbKeyMapping = keyMapping.get(originalKey);
+			if(CollUtil.isNotEmpty(dbKeyMapping)) {
+				convertKey = dbKeyMapping;
+			}
 		}
 		return convertKey;
 	}
