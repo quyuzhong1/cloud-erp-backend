@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 import java.time.LocalDateTime;
 
 /**
- * 
+ * 头程暂估账单实体
  * @date 2024-08-16
  * @author tanmujin
  */
@@ -19,8 +19,15 @@ import java.time.LocalDateTime;
 @Accessors(chain = true)
 @TableName("first_mile_estimated_bill")
 public class FirstMileEstimatedBillEntity extends BaseEntity<FirstMileEstimatedBillEntity> {
+
+    /**
+     * 头程物流单ID
+     */
+    @TableField("logistics_bill_id")
+    private String logisticsBillId;
     /**
      * 暂估账单状态
+     * ConfirmStatusEnum
      */
     @TableField("status")
     private String status;
