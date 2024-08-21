@@ -225,4 +225,11 @@ public interface RedisCacheConstants {
      */
     String MERGE_PACKAGE_RETRY_COUNT_KEY = "merge_package_retry_count_key:{}";
 
+
+
+    /**
+     * 中台拉取track123标记
+     */
+    String DMP_TRACK123_TRACK_NO = "dmp_track123_track_no:{}";
+
 }
