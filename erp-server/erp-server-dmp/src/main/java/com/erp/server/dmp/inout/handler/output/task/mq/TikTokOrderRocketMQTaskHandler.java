@@ -15,14 +15,17 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.inout.utils.DmpMappingUtils;
 import com.erp.server.dmp.service.DmpCfgOutputConvertMappingService;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.DistrictInfoBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.LineItemsBean;
@@ -44,6 +47,9 @@ import java.util.stream.Collectors;
 public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
     @Resource
     private DmpCfgOutputConvertMappingService dmpCfgOutputConvertMappingService;
+
+    @Resource
+    private DmpMappingUtils dmpMappingUtils;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -124,79 +130,48 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
     public static void main(String[] args) {
 
-    }
-
-    private void test() {
-      /*  //1、 转换前原始数据
+        // 1. 转换前原始数据
         DmpSoInfoEntity dmpSoInfoEntity = new DmpSoInfoEntity();
-        Map<String, Object> dmpSoInfoMap = BeanUtil.beanToMap(dmpSoInfoEntity);
-        //2、 转换后的数据
+        List<DmpSoDetailEntity> dmpSoDetailEntities = new ArrayList<>();
+        DmpSoDetailEntity dmpSoDetailEntity = new DmpSoDetailEntity();
+        dmpSoDetailEntity.setSkuId("123");
+        dmpSoDetailEntity.setSkuName("test");
+        dmpSoDetailEntities.add(dmpSoDetailEntity);
+
+        DmpSoDetailEntity dmpSoDetailEntity2 = new DmpSoDetailEntity();
+        dmpSoDetailEntity2.setSkuId("345666AA");
+        dmpSoDetailEntities.add(dmpSoDetailEntity2);
+
+
+        // 2. 转换后的数据
         PlatformOrderDTO platformOrderDTO = new PlatformOrderDTO();
-        Map<String, Object> platformOrderMap = BeanUtil.beanToMap(dmpSoInfoEntity);
 
-        //转换键
-        List<DmpCfgOutputConvertMappingEntity> list = dmpCfgOutputConvertMappingService.lambdaQuery().eq(DmpCfgOutputConvertMappingEntity::getMainId, "").list();
+        List<DmpCfgOutputConvertMappingEntity> list = new ArrayList<>();
+        DmpCfgOutputConvertMappingEntity entity1 = new DmpCfgOutputConvertMappingEntity();
+        entity1.setOriginalKey("skuId");
+        entity1.setConvertKey("details.skuId");
+        list.add(entity1);
 
-        for (DmpCfgOutputConvertMappingEntity dmpCfgOutputConvertMappingEntity : list) {
-            if (dmpCfgOutputConvertMappingEntity.getOriginalKey()) {
+        DmpCfgOutputConvertMappingEntity entity2 = new DmpCfgOutputConvertMappingEntity();
+        entity2.setOriginalKey("skuName");
+        entity2.setConvertKey("details.skuName");
+        list.add(entity1);
+
+        Map<String, Object> map = DmpHandlerUtils.convertAndMapFields(dmpSoDetailEntities, platformOrderDTO, list);
+
+
+        Map<String, String> fieldsAndTypes = DmpHandlerUtils.getFieldsAndTypes(dmpSoDetailEntities);
+        for (Map.Entry<String, String> stringStringEntry : fieldsAndTypes.entrySet()) {
+            if (stringStringEntry.getKey().equals("java.util.list")) {
 
             }
-
-            String[] keys = dmpCfgOutputConvertMappingEntity.getOriginalKey().split("\\.");
-            if (keys.length > 2) {
-                throw new ServiceException("字段：" + dmpCfgOutputConvertMappingEntity.getOriginalKey() + "只能使用一个'.'只支持嵌套两层");
-            }
-            for (String key : keys) {
-                if (dmpSoInfoMap instanceof Map) {
-                    dmpSoInfoMap = (Map<String, Object>) dmpSoInfoMap.get(key);
-                } else if (dmpSoInfoMap instanceof List) {
-                    //如果是数组类型默认取第一个
-                    List<Map<String, Object>> valueList = (List<Map<String, Object>>) dmpSoInfoMap;
-                    if (CollectionUtil.isNotEmpty(valueList)) {
-                        data = valueList.get(0).get(key);
-                    }
-                } else {
-                    return null;  // 如果路径不正确，返回null
-                }
-            }
-
         }
 
+        System.out.println(map);
 
-        //转换前
-
-
-
-        DmpHandlerUtils.getValueByPath();*/
     }
 
-    /**
-     * 获取对象的所有字段及其类型
-     *
-     * @param obj 传入的对象
-     * @return 字段名称及类型的Map
-     */
-    public static Map<String, String> getFieldsAndTypes(Object obj) {
-        Map<String, String> fieldMap = new HashMap<>();
 
-        // 获取对象的实际类
-        Class<?> clazz = obj.getClass();
-
-        // 获取所有声明的字段
-        Field[] fields = clazz.getDeclaredFields();
-
-        for (Field field : fields) {
-            // 获取字段名称
-            String fieldName = field.getName();
-            // 获取字段类型
-            String fieldType = field.getType().getName();
-
-            // 将字段名称和类型存入Map
-            fieldMap.put(fieldName, fieldType);
-        }
-
-        return fieldMap;
-    }
 
     /**
      * 解析订单数据
@@ -208,6 +183,14 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         }
         //设置对应关系
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
+/*
+        Map<String, Object> entityMap = BeanUtil.beanToMap(dmpSoInfoEntity);
+        entityMap.put("dmpSoDetailEntityList", dmpSoDetailEntityList);
+        entityMap.put("dmpSoReceiverEntity", dmpSoReceiverEntityList.get(0));
+        cn.hutool.json.JSONObject entries = dmpMappingUtils.dmpApiFieldJson(entityMap, cfgOutputId);
+
+        System.out.println(entries);*/
+
 
         //平台订单号
         orderDTO.setPlatformCode(dmpSoInfoEntity.getThirdCode());
@@ -219,8 +202,8 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setShopId(dmpSoInfoEntity.getNextLevelId());
 
         //订单金额
-        BigDecimal amount = NumberUtil.toBigDecimal(dmpSoInfoEntity.getPayAmount());
-        orderDTO.setAmount(amount);
+        orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
+
         //币别
         orderDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
 
@@ -257,7 +240,6 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
-        orderDTO.setInvalidStatus(Boolean.FALSE);
 
         //付款状态
         if (dmpSoInfoEntity.getPayTime() != null) {
@@ -286,7 +268,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setDetails(details);
 
         //B2C销售订单买家信息表
-        orderDTO.setReceiver(parseReceiver(dmpSoInfoEntity, dmpSoReceiverEntityList.get(0)));
+        orderDTO.setReceiver(parseReceiver(dmpSoReceiverEntityList.get(0)));
         //B2C销售订单物流信息表
         orderDTO.setLogisticsList(parseLogistics(dmpSoInfoEntity));
         //B2C销售订单财务信息表
@@ -376,7 +358,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
      * @param soReceiverEntity
      * @return java.util.List<com.common.business.dto.PlatformOrderReceiverDTO>
      **/
-    private static PlatformOrderReceiverDTO parseReceiver(DmpSoInfoEntity dmpSoInfoEntity, DmpSoReceiverEntity soReceiverEntity) {
+    private static PlatformOrderReceiverDTO parseReceiver(DmpSoReceiverEntity soReceiverEntity) {
         if (Objects.isNull(soReceiverEntity)) {
             return null;
         }
