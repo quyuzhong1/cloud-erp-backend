@@ -229,6 +229,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(rule.getInventoryStatus());
                 if (qcTransitNotLocation){
                     flow.setWarehouseLocation("");
+                }else {
+                    flow.setWarehouseLocation(flow.getWarehouseLocation());
                 }
                 // 库存基础信息
                 InventoryStockBaseDTO stockBaseDTO = new InventoryStockBaseDTO();
@@ -394,6 +396,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(InventoryStatusEnum.getByCode(flow.getDictInventoryStatus()));
             if (qcTransitNotLocation){
                 flow.setWarehouseLocation("");
+            }else {
+                flow.setWarehouseLocation(flow.getWarehouseLocation());
             }
             // 交易头部信息
             transactionDTO.setId(flow.getId());

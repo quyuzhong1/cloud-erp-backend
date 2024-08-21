@@ -1,16 +1,20 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.InventoryClosedRecordEnum;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.InventoryClosedRecordEntity;
+import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.InventoryFlowOverrideRecordEntity;
 import com.erp.model.wms.enums.InventoryFlowOverrideRecordTypeEnum;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.InventoryClosedRecordService;
+import com.erp.server.wms.service.InventoryFlowOverrideRecordService;
+import com.erp.server.wms.service.InventoryService;
+import com.erp.server.wms.service.TransactionFlowService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -21,7 +25,6 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -40,8 +43,6 @@ public class InventoryFlowRecalculateJob {
 
     @Resource
     private TransactionFlowService transactionFlowService;
-    @Resource
-    private InventoryHisService inventoryHisService;
     @Resource
     private InventoryService inventoryService;
     @Resource
