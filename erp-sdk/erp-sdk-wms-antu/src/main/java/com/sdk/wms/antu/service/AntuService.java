@@ -93,13 +93,13 @@ public class AntuService {
     /**
      * 获取物流产品
      */
-    public AntuResponse<List<AntuInventoryLogisticsProductsResp>> getShippingMethod(String warehouseCode){
+    public AntuResponse<List<AntuLogisticsProductsResp>> getShippingMethod(String warehouseCode){
         Map<String,Object> paramsMap = new HashMap<>();
         if(StringUtils.isNotBlank(warehouseCode)){
             paramsMap.put("warehouseCode",warehouseCode);
         }
         String response = AntuUtils.callService(AntuConstants.GET_SHIPPING_METHOD,paramsMap);
-        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuInventoryLogisticsProductsResp>>>() {}.getType());
+        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuLogisticsProductsResp>>>() {}.getType());
     }
 
     /**
