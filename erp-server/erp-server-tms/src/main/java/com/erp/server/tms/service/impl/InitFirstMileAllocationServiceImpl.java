@@ -120,11 +120,6 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         InitFirstMileAllocationEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "期初头程分摊"));
 
-        //校验记录是否已被使用 费用分摊是否已使用
-        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(old);
-        if (!resultDTO.getSuccess()){
-            throw new ServiceException(StrUtil.format("期初头程分摊【{}】已下推费用分摊不能修改明细", old.getCode()));
-        }
         InitFirstMileAllocationEntity initFirstMileAllocationEntity = BeanMapperUtils.map(InitFirstMileAllocationEntity.class, updateDTO);
         // 数据处理
         handleData(initFirstMileAllocationEntity);
@@ -227,11 +222,6 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.msg);
-        }
-        //校验记录是否已被使用 费用分摊是否已使用
-        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(entity);
-        if (!resultDTO.getSuccess()){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "期初头程分摊已下推费用分摊不能反审核");
         }
         log.info("期初头程分摊记录反审核，code=【{}】", entity.getCode());
         //更新单据为待提交

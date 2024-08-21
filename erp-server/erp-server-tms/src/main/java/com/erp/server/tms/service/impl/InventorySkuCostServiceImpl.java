@@ -127,11 +127,6 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     public Boolean update(InventorySkuCostDTO.UpdateDTO updateDTO) {
         InventorySkuCostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "SKU成本"));
-        //校验记录是否已被使用 费用分摊是否已使用
-        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(old);
-        if (!resultDTO.getSuccess()){
-            throw new ServiceException(StrUtil.format("SKU成本【{}】已下推费用分摊不能修改明细", old.getCode()));
-        }
         InventorySkuCostEntity inventorySkuCostEntity = BeanMapperUtils.map(InventorySkuCostEntity.class, updateDTO);
 
         // 数据处理
@@ -222,11 +217,6 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.msg);
-        }
-        //校验记录是否已被使用 费用分摊是否已使用
-        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(entity);
-        if (!resultDTO.getSuccess()){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "SKU成本已下推费用分摊不能反审核");
         }
         log.info("SKU成本记录反审核，code=【{}】", entity.getCode());
         //更新单据为待提交
