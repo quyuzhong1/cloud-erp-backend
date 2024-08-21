@@ -63,6 +63,8 @@ public class ShopifyOrderTransactionsApiInitHandler extends DmpInputInitHandler 
         }
 
         for (String orderId : orderIds) {
+//            System.setProperty("socksProxyHost", "127.0.0.1");
+//            System.setProperty("socksProxyPort", "7890");
             List<ShopifyTransaction> transactionList = shopifyRestClientService.getShopifyRestClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken())
                     .getOrderTransactions(orderId);
             if (CollectionUtils.isEmpty(transactionList)) {

@@ -23,6 +23,7 @@ import com.erp.server.dmp.inout.handler.input.create.DmpInputHistoryCreateHandle
 import com.erp.server.dmp.inout.handler.input.create.DmpInputHotfixCreateHandler;
 import com.erp.server.dmp.inout.handler.input.create.DmpInputNormalCreateHandler;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -122,11 +123,13 @@ public class DmpInputCreateFactory{
 		List<DmpInputFinishResponse> dmpInputFinishResponseList = new ArrayList<>();
 		DmpInputCreateResponse dmpInputCreateResponse = this.createHotfixInputTask(dmpInputHotfixCreateRequest);
 		List<DmpInputTaskEntity> afterDmpInputTaskEntityList = dmpInputCreateResponse.getAfterDmpInputTaskEntityList();
-		for(DmpInputTaskEntity dmpInputTaskEntity : afterDmpInputTaskEntityList) {
-			DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
-			dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
-			dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
-			dmpInputFinishResponseList.add(dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest));
+		if(CollUtil.isNotEmpty(afterDmpInputTaskEntityList)) {
+			for(DmpInputTaskEntity dmpInputTaskEntity : afterDmpInputTaskEntityList) {
+				DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+				dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
+				dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
+				dmpInputFinishResponseList.add(dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest));
+			}
 		}
 		return dmpInputFinishResponseList;
 	}
@@ -141,11 +144,13 @@ public class DmpInputCreateFactory{
 		List<DmpInputFinishResponse> dmpInputFinishResponseList = new ArrayList<>();
 		DmpInputCreateResponse dmpInputCreateResponse = this.createChildInputTask(dmpInputChildCreateRequest);
 		List<DmpInputTaskEntity> afterDmpInputTaskEntityList = dmpInputCreateResponse.getAfterDmpInputTaskEntityList();
-		for(DmpInputTaskEntity dmpInputTaskEntity : afterDmpInputTaskEntityList) {
-			DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
-			dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
-			dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
-			dmpInputFinishResponseList.add(dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest));
+		if(CollUtil.isNotEmpty(afterDmpInputTaskEntityList)) {
+			for(DmpInputTaskEntity dmpInputTaskEntity : afterDmpInputTaskEntityList) {
+				DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+				dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
+				dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
+				dmpInputFinishResponseList.add(dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest));
+			}
 		}
 		return dmpInputFinishResponseList;
 	}

@@ -27,4 +27,9 @@ public class CommonCreateBillGoodsReq {
 	 * 仓位
 	 */
 	private String positionNo;
+
+	/**
+	 * 仓库ID
+	 */
+	private String warehouseId;
 }

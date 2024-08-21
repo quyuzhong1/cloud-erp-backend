@@ -118,6 +118,7 @@ public class DmpInoutController extends BaseController {
     	}
     	typeCacheMap.put("dmpCfgMqEntity", rocketMQDmpCfgMqCache);
     	typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
+    	typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
     	
     	return success(typeCacheMap);
     }

@@ -136,6 +136,13 @@ public class DmpSkuInfoEntity extends BaseEntity<DmpSkuInfoEntity> {
     */
     @TableField("package_length")
     private BigDecimal packageLength;
+    
+    /**
+     * 上线时间
+     */
+    @TableField("listing_time")
+    private LocalDateTime listingTime;
+    
     /**
     * 主表id
     */

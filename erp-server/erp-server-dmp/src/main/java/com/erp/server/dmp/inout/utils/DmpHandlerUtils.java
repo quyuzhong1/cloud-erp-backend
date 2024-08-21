@@ -3,13 +3,20 @@ package com.erp.server.dmp.inout.utils;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import cn.hutool.core.collection.CollectionUtil;
 import org.apache.commons.lang.StringUtils;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Sequence;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
@@ -17,8 +24,13 @@ import com.erp.model.dmp.entity.DmpCfgInputEntity;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.http.HttpUtil;
 
 public class DmpHandlerUtils {
+	
+	private static String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 	
 	private static Sequence sequence = new Sequence();
 	
@@ -114,7 +126,6 @@ public class DmpHandlerUtils {
 		return data;
 	}
 
-
 	public static Object getValueByPath(Map<String, Object> data, String path, String newKey) {
 		String[] keys = path.split("\\.");
 		Object value = data;
@@ -151,4 +162,19 @@ public class DmpHandlerUtils {
 
 		return value;
 	}
+	
+	public static void sendFeiShuMsg(String message) {
+		Map<String, Object> bodyMap = new HashMap<String, Object>();
+		bodyMap.put("msg_type", "text");
+		Map<String, String> contentMap = new HashMap<String, String>();
+		
+		contentMap.put("text", "中台【"+ namespace +"】环境告警：" + message);
+		bodyMap.put("content", contentMap);
+		String url = "https://open.feishu.cn/open-apis/bot/v2/hook/8002a820-b24d-4ed3-87e0-8b5b867cc9e3";
+		if("prod".equals(namespace)) {
+			url = "https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc";
+		}
+		HttpUtil.post(url, JSON.toJSONString(bodyMap));
+	}
+	
 }
