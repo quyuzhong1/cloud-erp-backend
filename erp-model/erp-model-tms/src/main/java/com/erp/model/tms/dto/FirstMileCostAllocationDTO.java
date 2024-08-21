@@ -69,7 +69,14 @@ public class FirstMileCostAllocationDTO implements Serializable {
         * 物流单明细id
         */
         private String logisticsBillDetailId;
-
+        /**
+         * 期初费用分摊id
+         */
+        private String initFirstMileId;
+        /**
+         * 期初费用分摊明细id
+         */
+        private String initFirstMileDetailId;
         /**
         * 暂估账单id
         */
@@ -260,6 +267,18 @@ public class FirstMileCostAllocationDTO implements Serializable {
         @NotBlank(message = "暂估账单id不能为空")
         @Size(max = 19,message = "暂估账单id最大长度不能超过19位")
         private String estimatedBillId;
+        /**
+         * 期初费用分摊id
+         */
+        @NotBlank(message = "期初费用分摊id不能为空")
+        @Size(max = 19,message = "期初费用分摊id最大长度不能超过19位")
+        private String initFirstMileId;
+        /**
+         * 期初费用分摊明细id
+         */
+        @NotBlank(message = "期初费用分摊明细id不能为空")
+        @Size(max = 19,message = "期初费用分摊明细id最大长度不能超过19位")
+        private String initFirstMileDetailId;
 
         /**
         * SKU成本id
@@ -468,6 +487,14 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 物流单明细id
          */
         private String logisticsBillDetailId;
+        /**
+         * 期初费用分摊id
+         */
+        private String initFirstMileId;
+        /**
+         * 期初费用分摊明细id
+         */
+        private String initFirstMileDetailId;
 
         /**
          * 暂估账单id
@@ -510,12 +537,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 发货单id
          */
-        @TableField("source_id")
         private String sourceId;
         /**
          * 发货单编码
          */
-        @TableField("source_code")
         private String sourceCode;
 
         /**

@@ -51,6 +51,16 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     @TableField("logistics_bill_detail_id")
     private String logisticsBillDetailId;
     /**
+     * 期初费用分摊id
+     */
+    @TableField("init_first_mile_id")
+    private String initFirstMileId;
+    /**
+     * 期初费用分摊明细id
+     */
+    @TableField("logistics_bill_detail_id")
+    private String initFirstMileDetailId;
+    /**
     * 暂估账单id
     */
     @TableField("estimated_bill_id")

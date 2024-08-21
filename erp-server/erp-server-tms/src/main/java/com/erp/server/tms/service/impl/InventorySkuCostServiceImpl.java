@@ -31,6 +31,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.InventorySkuCostDetailExcelListener;
 import com.erp.server.tms.mapper.InventorySkuCostMapper;
+import com.erp.server.tms.service.FirstMileCostAllocationService;
 import com.erp.server.tms.service.InventorySkuCostDetailService;
 import com.erp.server.tms.service.InventorySkuCostService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -39,6 +40,7 @@ import com.erp.server.tms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -89,6 +91,9 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Lazy
+    @Resource
+    private FirstMileCostAllocationService firstMileCostAllocationService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -122,6 +127,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     public Boolean update(InventorySkuCostDTO.UpdateDTO updateDTO) {
         InventorySkuCostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "SKU成本"));
+        //校验记录是否已被使用 费用分摊是否已使用
+        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(old);
+        if (!resultDTO.getSuccess()){
+            throw new ServiceException(StrUtil.format("SKU成本【{}】已下推费用分摊不能修改明细", old.getCode()));
+        }
         InventorySkuCostEntity inventorySkuCostEntity = BeanMapperUtils.map(InventorySkuCostEntity.class, updateDTO);
 
         // 数据处理
@@ -213,6 +223,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.msg);
         }
+        //校验记录是否已被使用 费用分摊是否已使用
+        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(entity);
+        if (!resultDTO.getSuccess()){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "SKU成本已下推费用分摊不能反审核");
+        }
         log.info("SKU成本记录反审核，code=【{}】", entity.getCode());
         //更新单据为待提交
         updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -250,7 +265,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public BatchResultDTO delete(InventorySkuCostEntity entity) {
-        //TODO 校验记录是否已被使用 费用分摊是否已使用
+        //校验记录是否已被使用 费用分摊是否已使用
+        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(entity);
+        if (!resultDTO.getSuccess()){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已下推费用分摊不能删除");
+        }
         inventorySkuCostDetailService.removeByMainId(entity.getId());
         this.lambdaUpdate().eq(InventorySkuCostEntity::getId, entity.getId()).remove();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除记录操作成功");
@@ -422,5 +441,22 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         } else {
             return MathUtil.ZERO;
         }
+    }
+
+    /**
+     * 检查期SKU成本是否下推费用分摊
+     * @param entity
+     * @return
+     */
+    private BatchResultDTO checkHasFirstMileCostAllocation(InventorySkuCostEntity entity){
+        if (Objects.isNull(entity) || StrUtil.isBlank(entity.getId())){
+            return BatchResultDTO.success();
+        }
+        //校验记录是否已被使用 费用分摊是否已使用
+        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.getBySkuCostId(entity.getId());
+        if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "SKU成本已使用不能修改");
+        }
+        return BatchResultDTO.success();
     }
 }

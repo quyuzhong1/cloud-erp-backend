@@ -54,7 +54,16 @@
         remark, reconciliation_id, reconciliation_code, logistics_bill_id, logistics_bill_detail_id, estimated_bill_id, sku_cost_id, sku_cost_detail_id, weight_allocation_id, report_period_id, account_period, status, supplier_id, supplier_name, business_code, business_type, transport_no, reconciliation_month, shop_id, shop_name, from_warehouse_id, from_warehouse_name, to_warehouse_id, to_warehouse_name, to_country, delivery_time
     </sql>
     <select id="tabList" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$TabListDTO">
-
+        SELECT
+            COUNT(*) AS count,
+            a.status AS tabFlag
+        FROM  first_mile_cost_allocation a
+                  LEFT JOIN  first_mile_sku_cost_allocation ca ON ca.main_id=a.id and ca.is_deleted=false
+        WHERE  a.is_deleted=false
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY status
     </select>
     <select id="paging" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
 

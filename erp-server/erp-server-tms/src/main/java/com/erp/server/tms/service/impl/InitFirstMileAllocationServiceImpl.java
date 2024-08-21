@@ -23,10 +23,7 @@ import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
-import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
-import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.ReconciliationTypeEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
@@ -38,6 +35,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -85,6 +83,9 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     private LogisticsBillService logisticsBillService;
     @Resource
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
+    @Lazy
+    @Resource
+    private FirstMileCostAllocationService firstMileCostAllocationService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -118,8 +119,13 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public Boolean update(InitFirstMileAllocationDTO.UpdateDTO updateDTO) {
         InitFirstMileAllocationEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "期初头程分摊"));
-        InitFirstMileAllocationEntity initFirstMileAllocationEntity = BeanMapperUtils.map(InitFirstMileAllocationEntity.class, updateDTO);
 
+        //校验记录是否已被使用 费用分摊是否已使用
+        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(old);
+        if (!resultDTO.getSuccess()){
+            throw new ServiceException(StrUtil.format("期初头程分摊【{}】已下推费用分摊不能修改明细", old.getCode()));
+        }
+        InitFirstMileAllocationEntity initFirstMileAllocationEntity = BeanMapperUtils.map(InitFirstMileAllocationEntity.class, updateDTO);
         // 数据处理
         handleData(initFirstMileAllocationEntity);
         log.info("编辑 开始修改期初头程分摊数据，单号：【{}】", old.getCode());
@@ -222,6 +228,11 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.msg);
         }
+        //校验记录是否已被使用 费用分摊是否已使用
+        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(entity);
+        if (!resultDTO.getSuccess()){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "期初头程分摊已下推费用分摊不能反审核");
+        }
         log.info("期初头程分摊记录反审核，code=【{}】", entity.getCode());
         //更新单据为待提交
         updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -252,10 +263,31 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(InitFirstMileAllocationEntity entity) {
-        //TODO 校验记录是否已被使用 费用分摊是否已使用
+        //校验记录是否已被使用 费用分摊是否已使用
+        BatchResultDTO resultDTO = checkHasFirstMileCostAllocation(entity);
+        if (!resultDTO.getSuccess()){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "期初费用分摊已使用不能修改");
+        }
         initFirstMileAllocationDetailService.removeByMainId(entity.getId());
         this.lambdaUpdate().eq(InitFirstMileAllocationEntity::getId, entity.getId()).remove();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除记录操作成功");
+    }
+
+    /**
+     * 检查期初费用分摊是否下推费用分摊
+     * @param entity
+     * @return
+     */
+    private BatchResultDTO checkHasFirstMileCostAllocation(InitFirstMileAllocationEntity entity){
+        if (Objects.isNull(entity) || StrUtil.isBlank(entity.getId())){
+            return BatchResultDTO.success();
+        }
+        //校验记录是否已被使用 费用分摊是否已使用
+        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.getByInitFirstMileId(entity.getId());
+        if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "期初费用分摊已使用不能修改");
+        }
+        return BatchResultDTO.success();
     }
 
     @Override

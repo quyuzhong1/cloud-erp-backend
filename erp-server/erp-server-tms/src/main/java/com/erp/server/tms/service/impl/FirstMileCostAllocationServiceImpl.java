@@ -163,10 +163,28 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
+
+    @Override
+    public List<FirstMileCostAllocationEntity> getByInitFirstMileId(String firstMileId) {
+        if (StrUtil.isBlank(firstMileId)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(FirstMileCostAllocationEntity::getInitFirstMileId,firstMileId).list();
+    }
+
+    @Override
+    public List<FirstMileCostAllocationEntity> getBySkuCostId(String skuCostId) {
+        if (StrUtil.isBlank(skuCostId)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(FirstMileCostAllocationEntity::getSkuCostId,skuCostId).list();
+    }
+
     private void fillPagingDb(List<FirstMileCostAllocationDTO.PagingVO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        //TODO 添加分摊明细
         list.forEach(e -> {
             e.setStatusName(ApproveStatusEnum.getName(e.getStatus()));
         });
