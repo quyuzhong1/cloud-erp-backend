@@ -267,33 +267,33 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     /**
      * 导出数据
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-15 9:19
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      */
-    Boolean allExport(ProductSearchDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean allExport(ProductSearchDTO.ExportDTO dto);
 
     /**
      * 我的项目导出
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-15 10:02
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      */
-    Boolean myProjectExport(ProductSearchDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean myProjectExport(ProductSearchDTO.ExportDTO dto);
 
     /**
      * 收藏项目导出
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-15 10:10
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      */
-    Boolean collectExport(ProductSearchDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean collectExport(ProductSearchDTO.ExportDTO dto);
 
     /**
      * @description: 根据负责人id查询

@@ -23,9 +23,5 @@ public interface FileEventHandler {
      */
     FileTaskEventEnum getEvent();
 
-    /**
-     * 获取excel路径
-     */
-    String getExcelPath();
 
 }

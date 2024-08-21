@@ -2,28 +2,26 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.server.tms.service.LogisticsAddressService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.LogisticsAddressService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,13 +66,8 @@ public class LogisticsAddressController extends BaseController {
      * @return
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:logisticsAddress:paging",
-            tableAlias = "la"
-    )
-    public ApiResult exportExcel(@Validated @RequestBody LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = logisticsAddressService.exportExcel(dto, response);
+    public ApiResult exportExcel(@Validated @RequestBody LogisticsAddressDTO.ExportDTO dto) {
+        Boolean result = logisticsAddressService.exportExcel(dto);
         return result ? success() : failure();
     }
 

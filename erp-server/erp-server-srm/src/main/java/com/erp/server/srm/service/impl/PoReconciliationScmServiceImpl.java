@@ -22,7 +22,6 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -40,6 +39,7 @@ import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmDictFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
@@ -56,12 +56,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_SCM;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT;
 
 /**
  * <p>
@@ -97,7 +100,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
 
     @Autowired
     private ScmDictFeign scmDictFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -201,7 +205,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
-    public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("对账单导出", EXPORT_SRM_PO_RECONCILIATION_SCM.getCode(), dto);
         List<PoReconciliationDTO.ListDTO> list = this.baseMapper.listExport(dto);
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -267,11 +272,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             String name = "对账单导出";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date).append(name);
-            try {
-                new ExcelPrintUtils().patchExport(detailDTOList,exportDTO, response, sb.toString(), excelPath);
-            } catch (Exception e) {
-                throw new ServiceException(ApiError.ERROR_1015);
-            }
+//            try {
+//                new ExcelPrintUtils().patchExport(detailDTOList,exportDTO, response, sb.toString(), excelPath);
+//            } catch (Exception e) {
+//                throw new ServiceException(ApiError.ERROR_1015);
+//            }
         }
     }
 
@@ -281,7 +286,9 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
-    public void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public void exportList(PoReconciliationDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("对账单Excel导出", EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT.getCode(), dto);
+
         List<PoReconciliationDTO.ListDTO> list = this.baseMapper.listExport(dto);
         if(CollUtil.isEmpty(list)) {
             return;
@@ -294,11 +301,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         String name = "对账单Excel导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+//        try {
+//            new ExcelPrintUtils().patchExport(list, response, excelPath);
+//        } catch (Exception e) {
+//            throw new ServiceException(ApiError.ERROR_1015);
+//        }
     }
 
     @Override

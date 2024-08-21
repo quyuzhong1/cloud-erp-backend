@@ -6,7 +6,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
@@ -24,6 +23,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.*;
@@ -31,6 +31,7 @@ import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsFbaOverseasFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
@@ -46,10 +47,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_SUPPLIER;
 
 /**
  * <p>
@@ -89,7 +92,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
     @Autowired
     private LogisticsAuthService logisticsAuthService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -345,21 +349,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     }
 
     @Override
-    public Boolean export(LogisticsSupplierDTO.ExportDTO dto, HttpServletResponse response) {
-        List<LogisticsSupplierDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-        fillPagingData(list,dto);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/logisticsSupplier.xlsx";
-        String name = "物流商列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("物流商导出出错 {}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean export(LogisticsSupplierDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("物流商列表", EXPORT_TMS_LOGISTICS_SUPPLIER.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -428,6 +419,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         }
         return this.lambdaQuery().in(LogisticsSupplierEntity::getSupplierName, supplierNameList).list();
     }
+
+    @Override
+    public PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto) {
+        Page<LogisticsSupplierDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        fillPagingData(page.getRecords(), dto.getParams());
+        return new PagingVO<>(page);
+    }
+
 
 
     /**

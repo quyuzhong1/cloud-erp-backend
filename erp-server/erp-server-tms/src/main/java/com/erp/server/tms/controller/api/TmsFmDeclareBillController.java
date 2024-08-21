@@ -17,6 +17,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.query.TmsFmDeclareQueryHandler;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,10 +25,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * 头程报关单
@@ -43,7 +45,8 @@ public class TmsFmDeclareBillController extends BaseController {
 
     @Resource
     private TmsDeclareBillService tmsDeclareBillService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     /**
      * tabList
      * @author lrp
@@ -239,10 +242,8 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单")
-    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-    public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
-        pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-        tmsDeclareBillService.export(pagingParamDTO,response);
+    public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
+        downloadTaskFeign.saveDownloadTask("头程报关单导出", EXPORT_TMS_TMS_FM_DECLARE_BILL.getCode(), pagingParamDTO);
         return success();
     }
 
@@ -251,10 +252,8 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
-    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-    public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
-        pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-        tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
+    public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO){
+        downloadTaskFeign.saveDownloadTask("头程报关单导出", EXPORT_TMS_TMS_FM_DECLARE_BILL_DECLARE.getCode(), pagingParamDTO);
         return success();
     }
 }

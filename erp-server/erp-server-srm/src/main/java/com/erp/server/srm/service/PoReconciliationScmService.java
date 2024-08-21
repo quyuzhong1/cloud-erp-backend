@@ -10,7 +10,6 @@ import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -54,9 +53,8 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @author Will
      * @date: 2024/1/20 12:21
      * @param dto
-     * @param response
      */
-    void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportList(PoReconciliationDTO.PagingParamDTO dto);
     /**
      * @description: 采方确认
      * @author Will
@@ -115,13 +113,12 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      */
     List<PoReconciliationDTO.TabListDTO> tabList(PermissionsDTO dto);
     /**
+     * @param dto
      * @description: 导出对账单
      * @author Will
      * @date: 2024/1/25 10:45
-     * @param dto
-     * @param response
      */
-    void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto);
     /**
      * @description: 查询待供方确认
      * @author Will

@@ -10,7 +10,10 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -21,7 +24,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -33,6 +35,7 @@ import com.erp.model.scm.enums.PurchasePriceChangeTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -51,11 +54,12 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_PRICE_CHANGE;
 
 /**
  * <p>
@@ -112,7 +116,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private DmpMqFeign dmpMqFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     /**
      * 添加采购价目变更
      *
@@ -716,91 +721,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public void export(PurchasePriceChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
-
-        //获取导出数据
-        List<PurchasePriceChangeDTO.PagingViewDTO> viewList = baseMapper.listExport(dto);
-        if (CollectionUtils.isEmpty(viewList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-
-        List<PurchasePriceChangeExportExcelDTO> resultList = new ArrayList<>(viewList.size());
-
-        List<String> skuIds = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
-
-        //采购价目变更详情id
-        List<String> changeDetailIdList = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getChangeDetailId).collect(Collectors.toList());
-
-        //采购价目详情表id
-        List<String> purchasePriceDetailIds = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getPurchasePriceDetailId).collect(Collectors.toList());
-        //历史的
-        List<PurchasePriceHistoryEntity> historyList = purchasePriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
-        //获取到对应的价目明细
-        List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(purchasePriceDetailIds);
-
-        //最新审核人
-        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        viewList.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), obj.getId()));
-        });
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
-        if (CollectionUtils.isNotEmpty(dtoList)) {
-            listApiResult = workflowFeign.curApprover(dtoList);
-            Integer code = listApiResult.getCode();
-            if (200 != code) {
-                throw new ServiceException(ApiError.ERROR_500);
-            }
-        }
-
-        for (PurchasePriceChangeDTO.PagingViewDTO item : viewList) {
-            PurchasePriceChangeExportExcelDTO excelDTO = new PurchasePriceChangeExportExcelDTO();
-            BeanMapper.copy(item, excelDTO);
-            //sku信息
-            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
-            excelDTO.setProductName(skuVO.getSkuName());
-            //历史报价
-            PurchasePriceHistoryEntity historyEntity = historyList.stream().filter(h -> h.getChangeDetailId().equals(item.getChangeDetailId())).findFirst().orElse(null);
-            //现有报价
-            PurchasePriceDetailEntity priceDetailEntity = purchasePriceDetailList.stream().filter(p -> p.getId().equals(item.getPurchasePriceDetailId())).findFirst().orElse(null);
-            if (historyEntity != null) {
-                excelDTO.setOldTaxPrice(historyEntity.getTaxPrice());
-                if (historyEntity.getTaxRate() != null) {
-                    excelDTO.setOldTaxRate(historyEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
-                    //升降比例
-                    BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), historyEntity.getTaxPrice()), historyEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
-                    excelDTO.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
-                }
-            } else {
-                if (priceDetailEntity != null) {
-                    excelDTO.setOldTaxPrice(priceDetailEntity.getTaxPrice());
-                    if (priceDetailEntity.getTaxRate() != null) {
-                        excelDTO.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
-                        //升降比例
-                        BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), priceDetailEntity.getTaxPrice()), priceDetailEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
-                        excelDTO.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
-                    }
-                }
-            }
-            ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
-            excelDTO.setApproveStatusName(approveStatusEnum.getName());
-            Integer minQty = item.getMinQty();
-            Integer maxQty = item.getMaxQty();
-            excelDTO.setQtySection(minQty + "-" + maxQty);
-            //最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                excelDTO.setApproveUserName(curApprove);
-            }
-            excelDTO.setApproveTime(item.getApproveTime());
-            resultList.add(excelDTO);
-        }
-        String fileName = "采购调价数据";
-        try {
-            ExcelUtil.export(fileName, "采购调价数据", resultList, PurchasePriceChangeExportExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void export(PurchasePriceChangeDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("采购调价数据", EXPORT_SCM_PURCHASE_PRICE_CHANGE.getCode(), dto);
     }
 
     /**
@@ -974,5 +896,86 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public PagingVO<PurchasePriceChangeExportExcelDTO> exportPurchasePriceChange(PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto) {
+
+        //获取导出数据
+        Page<PurchasePriceChangeDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
+        }
+
+        List<PurchasePriceChangeExportExcelDTO> resultList = new ArrayList<>();
+
+        List<String> skuIds = page.getRecords().stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
+
+        //采购价目变更详情id
+        List<String> changeDetailIdList = page.getRecords().stream().map(PurchasePriceChangeDTO.PagingViewDTO::getChangeDetailId).collect(Collectors.toList());
+
+        //采购价目详情表id
+        List<String> purchasePriceDetailIds = page.getRecords().stream().map(PurchasePriceChangeDTO.PagingViewDTO::getPurchasePriceDetailId).collect(Collectors.toList());
+        //历史的
+        List<PurchasePriceHistoryEntity> historyList = purchasePriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
+        //获取到对应的价目明细
+        List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(purchasePriceDetailIds);
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        page.getRecords().forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), obj.getId())));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(ApiError.ERROR_500);
+            }
+        }
+
+        for (PurchasePriceChangeDTO.PagingViewDTO item : page.getRecords()) {
+            PurchasePriceChangeExportExcelDTO excelDTO = new PurchasePriceChangeExportExcelDTO();
+            BeanMapper.copy(item, excelDTO);
+            //sku信息
+            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
+            excelDTO.setProductName(skuVO.getSkuName());
+            //历史报价
+            PurchasePriceHistoryEntity historyEntity = historyList.stream().filter(h -> h.getChangeDetailId().equals(item.getChangeDetailId())).findFirst().orElse(null);
+            //现有报价
+            PurchasePriceDetailEntity priceDetailEntity = purchasePriceDetailList.stream().filter(p -> p.getId().equals(item.getPurchasePriceDetailId())).findFirst().orElse(null);
+            if (historyEntity != null) {
+                excelDTO.setOldTaxPrice(historyEntity.getTaxPrice());
+                if (historyEntity.getTaxRate() != null) {
+                    excelDTO.setOldTaxRate(historyEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
+                    //升降比例
+                    BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), historyEntity.getTaxPrice()), historyEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
+                    excelDTO.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
+                }
+            } else {
+                if (priceDetailEntity != null) {
+                    excelDTO.setOldTaxPrice(priceDetailEntity.getTaxPrice());
+                    if (priceDetailEntity.getTaxRate() != null) {
+                        excelDTO.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
+                        //升降比例
+                        BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), priceDetailEntity.getTaxPrice()), priceDetailEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
+                        excelDTO.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
+                    }
+                }
+            }
+            ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
+            excelDTO.setApproveStatusName(approveStatusEnum.getName());
+            Integer minQty = item.getMinQty();
+            Integer maxQty = item.getMaxQty();
+            excelDTO.setQtySection(minQty + "-" + maxQty);
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                excelDTO.setApproveUserName(curApprove);
+            }
+            excelDTO.setApproveTime(item.getApproveTime());
+            resultList.add(excelDTO);
+        }
+        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 }

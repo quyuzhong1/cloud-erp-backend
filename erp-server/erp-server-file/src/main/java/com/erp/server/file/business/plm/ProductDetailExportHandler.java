@@ -26,7 +26,7 @@ public class ProductDetailExportHandler extends AbstractPageFileEventHandler<Pro
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return FileTaskEventEnum.PRODUCT_DETAIL_EXPORT;
+        return FileTaskEventEnum.EXPORT_PLM_PRODUCT_DETAIL;
     }
 
     @Override

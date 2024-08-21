@@ -50,6 +50,11 @@ public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
      */
     protected abstract List<T> getData(FileTask fileTask);
 
+    /**
+     * 获取excel路径
+     */
+    protected abstract String getExcelPath();
+
     public <P> P readValue(String params, TypeReference<P> type) {
         try {
             return objectMapper.readValue(params, type);

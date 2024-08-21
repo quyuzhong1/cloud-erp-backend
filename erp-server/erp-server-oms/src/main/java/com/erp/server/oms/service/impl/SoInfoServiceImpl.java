@@ -3111,7 +3111,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         dto.getParams().setFieldList(fieldList);
         Page<SoInfoDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            return new PagingVO<>(page);
         }
         //填充分页列表
         fillPagingDb(page.getRecords());

@@ -6798,16 +6798,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //查询店铺设置权限
         SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
         if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL, "B2C异常销售订单");
+            return new PagingVO<>();
         }
-        Page<SoB2cAbnormalDTO.ListDTO> page;
-        try {
-            page = this.baseMapper.abnormalExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), shopAuthResultDTO);
-        } catch (Exception e) {
-            throw new ServiceException("导出失败");
-        }
+        Page<SoB2cAbnormalDTO.ListDTO> page = this.baseMapper.abnormalExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), shopAuthResultDTO);
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL, "B2C异常销售订单");
+            return new PagingVO<>(page);
         }
         //数据赋值处理
         handleAbnormalList(page.getRecords());
@@ -6819,7 +6814,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //查询店铺设置权限
         SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
         if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL, "B2C销售订单");
+            return new PagingVO<>();
         }
         Page<SoB2cDTO.ExcelExportDTO> page;
         List<SoB2cDTO.ExcelExportDTO> records;
@@ -6864,7 +6859,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
             skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(skuIdList)) {
-                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+                return new PagingVO<>();
             }
         }
         //获取到产品销售统计导出的数据

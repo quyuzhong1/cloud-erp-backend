@@ -48,6 +48,7 @@ import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.enums.ProductRegistrationEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
@@ -74,6 +75,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_LOGISTICS_PRODUCT;
 
 /**
  * @Description TODO
@@ -125,6 +128,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     @Resource
     private ForecastFeign forecastFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @Override
@@ -335,27 +340,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
 
     @Override
-    public Boolean exportExcel(LogisticsProductDTO.ExportDTO dto, HttpServletResponse response) {
-        //列表Tab查询状态处理
-        Boolean isFlag = doOpHandleTableParam(dto);
-        if (!isFlag) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        List<LogisticsProductDTO.ExportInfoDTO> list = baseMapper.listExport(dto, approvalStatus);
-        fillExport(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/productLogistics.xlsx";
-        String name = "物流产品列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("物流产品导出出错 {}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(LogisticsProductDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("物流产品列表", EXPORT_PLM_LOGISTICS_PRODUCT.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -629,7 +615,18 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         return resultList;
     }
 
-
+    @Override
+    public PagingVO<LogisticsProductDTO.ExportInfoDTO> exportLogisticsProduct(PagingDTO<LogisticsProductDTO.ExportDTO> dto) {
+        //列表Tab查询状态处理
+        Boolean isFlag = doOpHandleTableParam(dto.getParams());
+        if (Boolean.FALSE.equals(isFlag)) {
+            return new PagingVO<>();
+        }
+        Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        Page<LogisticsProductDTO.ExportInfoDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), approvalStatus);
+        fillExport(page.getRecords());
+        return new PagingVO<>(page);
+    }
 
 
     /**

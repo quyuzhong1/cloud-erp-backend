@@ -17,8 +17,4 @@ public class NullFileEventHandler implements FileEventHandler {
         return FileTaskEventEnum.DEFAULT;
     }
 
-    @Override
-    public String getExcelPath() {
-        return null;
-    }
 }

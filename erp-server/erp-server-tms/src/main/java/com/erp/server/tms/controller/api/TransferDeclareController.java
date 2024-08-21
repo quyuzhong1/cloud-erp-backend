@@ -239,19 +239,12 @@ public class TransferDeclareController extends BaseController {
      * @Author Luo_WG
      * @Date 2024/1/24 18:43
      * @param dto
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
     @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery(handler = TmsTransferDeclareQueryHandler.class)
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:transferDeclare:paging",
-            tableAlias = "td"
-    )
-    public ApiResult exportExcel(@RequestBody @Validated TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = transferDeclareService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody @Validated TransferDeclareDTO.PagingParamDTO dto) {
+        Boolean flag = transferDeclareService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

@@ -716,7 +716,6 @@ public class ProductDetailController extends BaseController {
      * excel导出产品信息
      *
      * @param productSkuExcelDTO productSkuExcelDTO
-     * @param response           response
      * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 11:49
@@ -724,8 +723,8 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息")
     @PostMapping(value = "/exportProduct")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
-    public void exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
-        productDetailService.exportProduct(productSkuExcelDTO, response);
+    public void exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO) {
+        productDetailService.exportProduct(productSkuExcelDTO);
     }
 
 

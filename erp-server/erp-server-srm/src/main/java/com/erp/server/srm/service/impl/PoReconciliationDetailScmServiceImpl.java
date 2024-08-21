@@ -17,11 +17,9 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
@@ -42,6 +40,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmDictFeign;
@@ -62,10 +61,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM;
 
 /**
  * <p>
@@ -100,6 +100,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     private SysUserFeign sysUserFeign;
     @Resource
     private UserService userService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -226,24 +228,25 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     }
 
     @Override
-    public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<PoReconciliationDetailDTO.ListDTO> list = this.baseMapper.listExport(dto);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/poReconciliationDetail.xlsx";
-        String name = "对账明细导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("对账明细导出", EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM.getCode(), dto);
+//        List<PoReconciliationDetailDTO.ListDTO> list = this.baseMapper.listExport(dto);
+//        if(CollUtil.isEmpty(list)) {
+//            return;
+//        }
+//        // 数据处理
+//        fillList(list);
+//        // 导出数据
+//        StringBuffer sb = new StringBuffer();
+//        String excelPath = "excel/poReconciliationDetail.xlsx";
+//        String name = "对账明细导出";
+//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//        sb.append(date).append(name);
+//        try {
+//            new ExcelPrintUtils().patchExport(list, response, excelPath);
+//        } catch (Exception e) {
+//            throw new ServiceException(ApiError.ERROR_1015);
+//        }
     }
 
     @Override

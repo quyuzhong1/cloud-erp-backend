@@ -2,7 +2,6 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -15,7 +14,6 @@ import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -222,13 +220,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     /**
      * 导出excel的sku数据
+     *
+     * @param productSkuExcelDTO productSkuExcelDTO
+     * @return void
      * @Author Luo_WG
      * @Date 2022/10/9 11:49
-     * @param productSkuExcelDTO productSkuExcelDTO
-     * @param response response
-     * @return void
      **/
-    void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
+    void exportProduct(ProductSkuExcelDTO productSkuExcelDTO);
 
     /**
      * 根据sku id集合

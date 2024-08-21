@@ -21,6 +21,7 @@ import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import com.erp.server.srm.service.*;
@@ -30,12 +31,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_EXPORT;
 
 /**
  * <p>
@@ -62,6 +66,8 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
 
     @Autowired
     private PoReconciliationQueryHandler poReconciliationQueryHandler;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
     * 修改
@@ -118,8 +124,8 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     }
 
     @Override
-    public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        poReconciliationScmService.exportPoReconciliation(dto,response);
+    public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("对账单导出", EXPORT_SRM_PO_RECONCILIATION.getCode(), dto);
     }
 
     @Override
@@ -129,8 +135,8 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     }
 
     @Override
-    public void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        poReconciliationScmService.exportList(dto,response);
+    public void exportList(PoReconciliationDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("对账单Excel导出", EXPORT_SRM_PO_RECONCILIATION_EXPORT.getCode(), dto);
     }
 
     @Override

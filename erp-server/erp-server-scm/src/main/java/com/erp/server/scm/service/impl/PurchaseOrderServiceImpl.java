@@ -32,11 +32,11 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseEndReceiveImportExcelDTO;
-import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.*;
@@ -62,6 +62,7 @@ import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
@@ -103,6 +104,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER_CONTRACT;
 
 /**
  * <p>
@@ -198,7 +202,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Resource
     private SupplierUserService supplierUserService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpMqFeign dmpMqFeign;
 
@@ -802,20 +807,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean exportExcel(PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<PurchaseOrderDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        //数据处理
-        doOpHandlePurchaseOrder(list);
-        List<PurchaseOrderExportExcelDTO> resultList = BeanMapperUtils.copyList(PurchaseOrderExportExcelDTO.class, list);
-        String fileName = "采购订单数据";
-        try {
-            ExcelUtil.export(fileName, "采购订单数据", resultList, PurchaseOrderExportExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(PurchaseOrderDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("采购订单数据", EXPORT_SCM_PURCHASE_ORDER.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -1886,84 +1879,86 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     /**
      * 导出网采合同
+     *
+     * @param id
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/7/13 15:09
-     * @param id
-     * @param response
-     * @return java.lang.Boolean
      **/
     @Override
-    public Boolean exportPurchaseContract(String id, HttpServletResponse response) {
-        PurchaseOrderDTO.ExportPurchaseContractDTO contractDTO = new PurchaseOrderDTO.ExportPurchaseContractDTO();
-        PurchaseOrderEntity purchaseOrderEntity = this.getById(id);
-        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderEntity.getId());
-        contractDTO.setCreateTime(purchaseOrderEntity.getCreateTime());
-        contractDTO.setApproveUserName(purchaseOrderEntity.getApproveUserName());
-        contractDTO.setCode(purchaseOrderEntity.getCode());
-        contractDTO.setCreateUserName(purchaseOrderEntity.getCreateUserName());
-        List<DictBasicDTO> supplierPayMode = dictBasicService.getByKey("supplierPayMode");
-        DictBasicDTO dictBasicDTO = supplierPayMode.stream().filter(req -> req.getId().equals(supplierEntity.getPayMethodId())).findFirst().orElse(new DictBasicDTO());
-        contractDTO.setSettleMethod(dictBasicDTO.getName());
-        contractDTO.setSupplierName(supplierEntity.getSupplierName());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderEntity.getId());
-        contractDTO.setSumQty(purchaseOrderDetailEntityList.stream().mapToInt(PurchaseOrderDetailEntity::getPurchaseQty).sum());
-        BigDecimal sumTaxAmount = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        contractDTO.setSumTaxAmount(sumTaxAmount);
-        List<PurchaseOrderDTO.PurchaseContractDetailDTO> contractDetailList = new ArrayList<>();
-        List<String> skuIdList = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
-        Integer sort = MathUtil.ZERO;
-        for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailEntityList) {
-            sort++;
-            SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
-            PurchaseOrderDTO.PurchaseContractDetailDTO detailDTO = new PurchaseOrderDTO.PurchaseContractDetailDTO();
-            detailDTO.setSort(sort);
-            detailDTO.setImg("");
-            detailDTO.setSkuNo(detailEntity.getSkuNo());
-            detailDTO.setProductName(skuVO.getSkuName());
-            detailDTO.setRemark(detailEntity.getRemark());
-            Integer qty = detailEntity.getPurchaseQty();
-            detailDTO.setQty(qty);
-            //含税单价
-            BigDecimal taxPrice = detailEntity.getTaxPrice();
-            detailDTO.setTaxPrice(taxPrice);
-            //0.0900
-            BigDecimal taxRate = detailEntity.getTaxRate();
-            BigDecimal flagTaxRate = BigDecimal.ZERO;
-            if (Objects.nonNull(taxRate)){
-                flagTaxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100).setScale(2);
-            }
-            detailDTO.setTaxRate(flagTaxRate + "%");
-            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
-            //未税单价
-            BigDecimal price = BigDecimal.ZERO;
-            if (Objects.nonNull(taxPrice)){
-                price = MathUtil.divide(taxPrice, multiplyTax);
-            }
-            detailDTO.setPrice(price);
-            //未税金额
-            detailDTO.setAmount(MathUtil.multiply(price, qty));
-            //单位
-            detailDTO.setUnit(skuVO.getUnitName());
-            //含税金额
-            detailDTO.setTaxAmount(detailEntity.getPurchaseAmount());
-            contractDetailList.add(detailDTO);
-        }
-        BigDecimal sumAmount = contractDetailList.stream().map(PurchaseOrderDTO.PurchaseContractDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        contractDTO.setSumAmount(sumAmount);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/purchaseContractExport.xlsx";
-        String name = "采购单网采合同";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
+    public Boolean exportPurchaseContract(String id) {
+        downloadTaskFeign.saveDownloadTask("采购单网采合同", EXPORT_SCM_PURCHASE_ORDER_CONTRACT.getCode(), id);
 
-        try {
-            new ExcelPrintUtils().patchExport(contractDetailList, contractDTO, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("销售单发票导出出错 {}", e);
-            return Boolean.FALSE;
-        }
+//        PurchaseOrderDTO.ExportPurchaseContractDTO contractDTO = new PurchaseOrderDTO.ExportPurchaseContractDTO();
+//        PurchaseOrderEntity purchaseOrderEntity = this.getById(id);
+//        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderEntity.getId());
+//        contractDTO.setCreateTime(purchaseOrderEntity.getCreateTime());
+//        contractDTO.setApproveUserName(purchaseOrderEntity.getApproveUserName());
+//        contractDTO.setCode(purchaseOrderEntity.getCode());
+//        contractDTO.setCreateUserName(purchaseOrderEntity.getCreateUserName());
+//        List<DictBasicDTO> supplierPayMode = dictBasicService.getByKey("supplierPayMode");
+//        DictBasicDTO dictBasicDTO = supplierPayMode.stream().filter(req -> req.getId().equals(supplierEntity.getPayMethodId())).findFirst().orElse(new DictBasicDTO());
+//        contractDTO.setSettleMethod(dictBasicDTO.getName());
+//        contractDTO.setSupplierName(supplierEntity.getSupplierName());
+//        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderEntity.getId());
+//        contractDTO.setSumQty(purchaseOrderDetailEntityList.stream().mapToInt(PurchaseOrderDetailEntity::getPurchaseQty).sum());
+//        BigDecimal sumTaxAmount = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+//        contractDTO.setSumTaxAmount(sumTaxAmount);
+//        List<PurchaseOrderDTO.PurchaseContractDetailDTO> contractDetailList = new ArrayList<>();
+//        List<String> skuIdList = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+//        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+//        Integer sort = MathUtil.ZERO;
+//        for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailEntityList) {
+//            sort++;
+//            SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+//            PurchaseOrderDTO.PurchaseContractDetailDTO detailDTO = new PurchaseOrderDTO.PurchaseContractDetailDTO();
+//            detailDTO.setSort(sort);
+//            detailDTO.setImg("");
+//            detailDTO.setSkuNo(detailEntity.getSkuNo());
+//            detailDTO.setProductName(skuVO.getSkuName());
+//            detailDTO.setRemark(detailEntity.getRemark());
+//            Integer qty = detailEntity.getPurchaseQty();
+//            detailDTO.setQty(qty);
+//            //含税单价
+//            BigDecimal taxPrice = detailEntity.getTaxPrice();
+//            detailDTO.setTaxPrice(taxPrice);
+//            //0.0900
+//            BigDecimal taxRate = detailEntity.getTaxRate();
+//            BigDecimal flagTaxRate = BigDecimal.ZERO;
+//            if (Objects.nonNull(taxRate)){
+//                flagTaxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100).setScale(2);
+//            }
+//            detailDTO.setTaxRate(flagTaxRate + "%");
+//            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+//            //未税单价
+//            BigDecimal price = BigDecimal.ZERO;
+//            if (Objects.nonNull(taxPrice)){
+//                price = MathUtil.divide(taxPrice, multiplyTax);
+//            }
+//            detailDTO.setPrice(price);
+//            //未税金额
+//            detailDTO.setAmount(MathUtil.multiply(price, qty));
+//            //单位
+//            detailDTO.setUnit(skuVO.getUnitName());
+//            //含税金额
+//            detailDTO.setTaxAmount(detailEntity.getPurchaseAmount());
+//            contractDetailList.add(detailDTO);
+//        }
+//        BigDecimal sumAmount = contractDetailList.stream().map(PurchaseOrderDTO.PurchaseContractDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+//        contractDTO.setSumAmount(sumAmount);
+//        StringBuffer sb = new StringBuffer();
+//        String excelPath = "excel/purchaseContractExport.xlsx";
+//        String name = "采购单网采合同";
+//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//        sb.append(date);
+//        sb.append(name);
+//
+//        try {
+//            new ExcelPrintUtils().patchExport(contractDetailList, contractDTO, response, sb.toString(), excelPath);
+//        } catch (IOException e) {
+//            log.error("销售单发票导出出错 {}", e);
+//            return Boolean.FALSE;
+//        }
         return Boolean.TRUE;
     }
 
@@ -3002,6 +2997,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         buildPurchaseOrderCount(list);
         //汇总
         return countPurchaseOrder(dto, list);
+    }
+
+    @Override
+    public PagingVO<BomExportExcelVO> exportPurchaseOrderContract(PagingDTO<String> dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+        Page<PurchaseOrderDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            //数据处理
+            doOpHandlePurchaseOrder(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     @Override

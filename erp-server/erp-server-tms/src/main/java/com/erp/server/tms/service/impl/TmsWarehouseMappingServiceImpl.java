@@ -20,15 +20,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.dto.TmsWarehouseMappingDTO;
 import com.erp.model.tms.dto.excel.TmsWarehouseMappingExcelDTO;
 import com.erp.model.tms.entity.TmsWarehouseMappingEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.listener.TmsWarehouseMappingExcelListener;
 import com.erp.server.tms.mapper.TmsWarehouseMappingMapper;
-import com.erp.server.tms.service.CommonService;
-import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TmsWarehouseMappingService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -41,12 +41,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_WAREHOUSE_MAPPING;
 
 /**
  * <p>
@@ -62,7 +65,8 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
 
     @Autowired
     private WmsTaskFeign wmsTaskFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -194,24 +198,15 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
     }
 
     @Override
-    public Boolean exportExcel(TmsWarehouseMappingDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<TmsWarehouseMappingDTO.ListDTO> resultList = this.baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(resultList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        String name = "仓库匹配列表";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/tmsWarehouseMapping.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("自发货列表列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(TmsWarehouseMappingDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("仓库匹配列表", EXPORT_TMS_TMS_WAREHOUSE_MAPPING.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto) {
+        Page<TmsWarehouseMappingDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        return new PagingVO<>(page);
     }
 
     /**

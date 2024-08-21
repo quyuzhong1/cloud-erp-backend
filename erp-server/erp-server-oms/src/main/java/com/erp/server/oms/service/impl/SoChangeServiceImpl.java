@@ -758,7 +758,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public PagingVO<SoChangeDTO.PagingViewDTO> exportSoChange(PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
         Page<SoChangeDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            return new PagingVO<>(page);
         }
         List<String> skuIdList = page.getRecords().stream().map(SoChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);

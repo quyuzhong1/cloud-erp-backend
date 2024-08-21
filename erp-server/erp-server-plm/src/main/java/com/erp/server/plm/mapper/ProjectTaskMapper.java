@@ -135,6 +135,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return List<ProductTaskViewDTO>
      */
     List<ProductTaskViewDTO> getAllTaskPersonnelView(@Param("dto") ProductTaskViewSearchDTO dto);
+    Page<ProductTaskViewDTO> getAllTaskPersonnelView(@Param("page") Page<ProductTaskViewDTO> page, @Param("dto") ProductTaskViewSearchDTO dto);
 
     /**
      * @description: 任务视图根据产品查询所有任务
@@ -144,6 +145,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return List<ProductTaskViewDTO>
      */
     List<ProductTaskViewDTO> getAllTaskProductView(@Param("dto") ProductTaskViewSearchDTO dto);
+    Page<ProductTaskViewDTO> getAllTaskProductView(@Param("page") Page<ProductTaskViewDTO> page, @Param("dto") ProductTaskViewSearchDTO dto);
 
     /**
      * @description: 任务视图根据阶段查询所有任务
@@ -153,7 +155,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return List<ProductTaskViewDTO>
      */
     List<ProductTaskViewDTO> getAllTaskPhaseView(@Param("dto") ProductTaskViewSearchDTO dto);
-
+    Page<ProductTaskViewDTO> getAllTaskPhaseView(@Param("page") Page<ProductTaskViewDTO> page, @Param("dto") ProductTaskViewSearchDTO dto);
     /**
     /**
      * @description: 任务视图查询所有量产入库数据
@@ -163,7 +165,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return List<ProductTaskInWarehouseTimeChildDTO>
      */
     List<ProductTaskInWarehouseTimeChildDTO> getAllTaskInWarehouseTimeView(@Param("dto") ProductTaskViewSearchDTO dto);
-
+    Page<ProductTaskViewDTO> getAllTaskInWarehouseTimeViewByPage(@Param("page") Page<ProductTaskViewDTO> page, @Param("dto") ProductTaskViewSearchDTO dto);
 
 
 
@@ -192,6 +194,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return java.util.List<com.erp.model.plm.dto.TaskDTO.TaskExportDTO>
      */
     List<TaskDTO.TaskExportDTO> listScheduleTaskExport(@Param("dto") ProjectPlanTaskConditionDTO dto);
+    Page<TaskDTO.TaskExportDTO> listScheduleTaskExport(@Param("page") Page<TaskDTO.TaskExportDTO> page, @Param("dto") ProjectPlanTaskConditionDTO dto);
 
     /**
      * 更改任务排期状态

@@ -35,6 +35,7 @@ import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
@@ -53,6 +54,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,6 +62,8 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_BILL_COST;
 
 /**
  * <p>
@@ -101,7 +105,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Autowired
     private LogisticsLastMileCostQueryHandler logisticsLastMileCostQueryHandler;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -302,25 +307,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 
     @Override
-    public Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<LogisticsBillCostDTO.ListDTO> resultList = this.baseMapper.listByExportExcel(dto);
-        if (CollectionUtils.isEmpty(resultList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //数据赋值处理
-        handleDataPaging(resultList);
-        String name = "自发货列表列表";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/logisticsBillCost.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("自发货列表列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("自发货列表", EXPORT_TMS_LOGISTICS_BILL_COST.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -631,6 +619,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         return baseMapper.getActualLogisticCost(soId);
     }
+
+    @Override
+    public PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
+
+        Page<LogisticsBillCostDTO.ListDTO> page = this.baseMapper.listByExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            //数据赋值处理
+            handleDataPaging(page.getRecords());
+        }
+        return new PagingVO<>(page);
+    }
+
 
     /**
      * @description: 更新店铺负责人

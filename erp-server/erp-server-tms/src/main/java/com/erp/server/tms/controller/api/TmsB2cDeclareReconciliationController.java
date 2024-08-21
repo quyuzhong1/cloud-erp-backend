@@ -24,7 +24,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -329,19 +328,12 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
     * @author will
     * @date:  2024-03-19
     * @param dto
-    * @param response
     * @return
     */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsB2cDeclareReconciliation:export",
-            tableAlias = "tbdr"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "b2c报关对账单导出Excel数据")
-    @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationQueryHandler.class)
-    public void exportList(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.ExportDTO dto, HttpServletResponse response) {
-        tmsB2cDeclareReconciliationService.exportList(dto, response);
+    public void exportList(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.ExportDTO dto) {
+        tmsB2cDeclareReconciliationService.exportList(dto);
     }
 
 
@@ -350,12 +342,11 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
      * @author Will
      * @date: 2024/3/26 9:56
      * @param dto
-     * @param response
      */
     @PostMapping("/exportDetail")
     @LogAction(value = LogActionEnum.EXPORT, desc = "b2c报关对账单明细导出Excel数据")
-    public void exportDetailList(@RequestBody @Validated TmsB2cDeclareReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response) {
-        tmsB2cDeclareReconciliationDetailService.exportDetailList(dto, response);
+    public void exportDetailList(@RequestBody @Validated TmsB2cDeclareReconciliationDetailDTO.ExportDTO dto) {
+        tmsB2cDeclareReconciliationDetailService.exportDetailList(dto);
     }
 
 }

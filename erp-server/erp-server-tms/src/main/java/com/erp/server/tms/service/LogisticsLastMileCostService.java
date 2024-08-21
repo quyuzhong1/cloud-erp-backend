@@ -75,12 +75,13 @@ public interface LogisticsLastMileCostService {
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2024/5/9 18:32
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto);
+
+    PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsLastMileCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
 }

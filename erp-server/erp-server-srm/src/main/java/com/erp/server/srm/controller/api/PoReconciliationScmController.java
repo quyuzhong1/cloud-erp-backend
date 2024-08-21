@@ -16,16 +16,17 @@ import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.server.srm.query.PoReconciliationDetailScmQueryHandler;
-import com.erp.server.srm.query.PoReconciliationQueryHandler;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
 import com.erp.server.srm.service.PoReconciliationScmService;
 import com.erp.server.srm.service.PoReconciliationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -136,7 +137,6 @@ public class PoReconciliationScmController extends BaseController {
      * @author Will
      * @date: 2024/1/20 12:03
      * @param dto
-     * @param response
      */
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -146,8 +146,8 @@ public class PoReconciliationScmController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
     @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
-    public void exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        poReconciliationScmService.exportList(dto, response);
+    public void exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
+        poReconciliationScmService.exportList(dto);
     }
 
     /**
@@ -155,13 +155,12 @@ public class PoReconciliationScmController extends BaseController {
      * @author Will
      * @date: 2024/1/20 12:03
      * @param dto
-     * @param response
      */
     @PostMapping("/exportPoReconciliation")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出对账单数据")
     @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
-    public void exportPoReconciliation(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        poReconciliationScmService.exportPoReconciliation(dto, response);
+    public void exportPoReconciliation(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
+        poReconciliationScmService.exportPoReconciliation(dto);
     }
 
     /**

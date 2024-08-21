@@ -4,7 +4,6 @@ package com.erp.server.tms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -16,35 +15,26 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
-import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.tms.enums.TmsB2cDeclareReconciliationImportEnum;
-import com.erp.server.tms.query.TmsB2cDeclareReconciliationDetailQueryHandler;
 import com.erp.server.tms.query.TmsFirstMileReconciliationDetailQueryHandler;
 import com.erp.server.tms.query.TmsFirstMileReconciliationQueryHandler;
 import com.erp.server.tms.service.CfgReconciliationFieldService;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
 import com.erp.server.tms.service.TmsFirstMileReconciliationService;
-import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * 头程对账单明细
@@ -192,15 +182,9 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      * {@code @date:}2024-03-25
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsFirstMileReconciliationDetail:export",
-            tableAlias = "tfmrd"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "头程对账单导出Excel数据")
-    @WebAdvanceQuery(handler = TmsFirstMileReconciliationQueryHandler.class)
-    public void exportList(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response) {
-        tmsFirstMileReconciliationDetailService.exportList(dto, response);
+    public void exportList(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.ExportDTO dto) {
+        tmsFirstMileReconciliationDetailService.exportList(dto);
     }
 
 }

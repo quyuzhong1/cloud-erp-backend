@@ -20,7 +20,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -144,8 +143,7 @@ public class ProductRegistrationController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/export")
-    @WebAdvanceQuery(handler = ProductRegistrationQueryHandler.class)
-    public void export(@RequestBody @Validated ProductRegistrationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        productRegistrationService.export(dto,response);
+    public void export(@RequestBody @Validated ProductRegistrationDTO.PagingParamDTO dto) {
+        productRegistrationService.export(dto);
     }
 }

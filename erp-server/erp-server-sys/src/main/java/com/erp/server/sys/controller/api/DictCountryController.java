@@ -72,8 +72,8 @@ public class DictCountryController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
-    public void paging(@RequestBody @Validated DictCountryDTO.PagingParamDTO dto, HttpServletResponse response) {
-        dictCountryService.exportList(dto,response);
+    public void paging(@RequestBody @Validated DictCountryDTO.PagingParamDTO dto) {
+        dictCountryService.exportList(dto);
     }
 
     /**

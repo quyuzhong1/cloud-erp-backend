@@ -19,13 +19,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ExcelUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
-import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -46,7 +45,6 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,6 +53,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PUSH_TASK_HISTORY;
 
 /**
  * <p>
@@ -85,6 +85,8 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
 
     @Resource
     private OmsTaskFeign omsTaskFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Resource(name = "pullErpOpenApi")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
@@ -101,24 +103,25 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
     }
 
     @Override
-    public Boolean exportExcel(DmpPushTaskDTO.ParamDTO dto, HttpServletResponse response) {
-        List<DmpPushTaskDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        //数据处理
-        doOpHandleDmpPushTask(list);
-        List<DmpPushTaskExportExcelDTO> resultList = list.stream().map(entity -> {
-            DmpPushTaskExportExcelDTO excelDTO = new DmpPushTaskExportExcelDTO();
-            BeanUtils.copyProperties(entity, excelDTO);
-            return excelDTO;
-        }).collect(Collectors.toList());
-        String fileName = "中台推送任务表";
-        try {
-            ExcelUtil.export(fileName, "中台推送任务表", resultList, DmpPushTaskExportExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(DmpPushTaskDTO.ParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("中台推送任务历史表", EXPORT_PUSH_TASK_HISTORY.getCode(), dto);
+//        List<DmpPushTaskDTO.ListDTO> list = baseMapper.listExportExcel(dto);
+//        if (CollectionUtils.isEmpty(list)) {
+//            return Boolean.TRUE;
+//        }
+//        //数据处理
+//        doOpHandleDmpPushTask(list);
+//        List<DmpPushTaskExportExcelDTO> resultList = list.stream().map(entity -> {
+//            DmpPushTaskExportExcelDTO excelDTO = new DmpPushTaskExportExcelDTO();
+//            BeanUtils.copyProperties(entity, excelDTO);
+//            return excelDTO;
+//        }).collect(Collectors.toList());
+//        String fileName = "中台推送任务表";
+//        try {
+//            ExcelUtil.export(fileName, "中台推送任务表", resultList, DmpPushTaskExportExcelDTO.class, response);
+//        } catch (Exception e) {
+//            throw new ServiceException(ApiError.ERROR_1015);
+//        }
         return Boolean.TRUE;
     }
 
@@ -321,5 +324,15 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
             }
         });
         log.info("完成归档3个月前同步成功的数据");
+    }
+
+    @Override
+    public PagingVO<DmpPushTaskDTO.ListDTO> exportPushTaskHistory(PagingDTO<DmpPushTaskDTO.ParamDTO> dto) {
+        Page<DmpPushTaskDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            //数据处理
+            doOpHandleDmpPushTask(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 }

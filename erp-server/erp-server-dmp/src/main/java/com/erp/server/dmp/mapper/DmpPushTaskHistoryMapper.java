@@ -44,6 +44,7 @@ public interface DmpPushTaskHistoryMapper extends BaseMapper<DmpPushTaskHistoryE
      * @return List<ListDTO>
      */
     List<DmpPushTaskDTO.ListDTO> listExportExcel(@Param("params") DmpPushTaskDTO.ParamDTO dto);
+    Page<DmpPushTaskDTO.ListDTO> listExportExcel(@Param("page")Page<DmpPushTaskDTO.ListDTO> page, @Param("params") DmpPushTaskDTO.ParamDTO dto);
      /* 根据条件查询数据
      *
      * @param params

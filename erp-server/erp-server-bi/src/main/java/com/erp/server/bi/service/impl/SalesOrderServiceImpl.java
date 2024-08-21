@@ -64,8 +64,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SKU_SALES;
-
 /**
  * 销售维度 模块服务
  *

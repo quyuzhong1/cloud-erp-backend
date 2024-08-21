@@ -3,13 +3,16 @@ package com.erp.server.plm.service.impl;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -20,6 +23,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
@@ -47,6 +51,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SCHEDULE_TASK;
 
 /**
  * 项目计划任务表(ProjectPlanTask)表服务实现类
@@ -87,6 +93,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
     @Resource
     private ProductDetailService productDetailService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @Autowired
@@ -261,58 +269,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      * 数据
      */
     @Override
-    public Boolean exportExcel(ProjectPlanTaskConditionDTO dto, HttpServletResponse response) {
-        List<TaskDTO.TaskExportDTO> resultList = projectTaskMapper.listScheduleTaskExport(dto);
-        if (CollectionUtils.isEmpty(resultList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //获取到任务id 集合
-        List<String> taskIds = resultList.stream().map(TaskDTO.TaskExportDTO::getTaskId).collect(Collectors.toList());
-        List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(taskIds);
-        List<TaskDeliveryDocsEntity> deliveryDocsList = taskDeliveryService.getByProductId(dto.getProductId());
-        //前置任务
-        List<ProjectTaskEntity> preTaskEntityList = projectTaskService.getByTaskIds(preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList()));
-        for (TaskDTO.TaskExportDTO item : resultList) {
-            String taskId = item.getTaskId();
-            Integer type = item.getType();
-            String typeName = "一般任务";
-            if (type.equals(TaskConstant.REVIEW_TASK)) {
-                typeName = "评审任务";
-            }
-            item.setTypeName(typeName);
-            Integer priority = item.getPriority();
-            String priorityName = "低";
-            if (priority.equals(TaskConstant.INTERMEDIATE_TASK)) {
-                priorityName = "中";
-            }
-            if (priority.equals(TaskConstant.ADVANCED_TASK)) {
-                priorityName = "高";
-            }
-            item.setPriorityName(priorityName);
-            Integer isMilepost = item.getIsMilepost();
-            String isMilepostStr = "是";
-            if (0 == isMilepost) {
-                isMilepostStr = "否";
-            }
-            item.setIsMilepostStr(isMilepostStr);
-            List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getTaskId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
-            String preTaskName = preTaskEntityList.stream().filter(t -> preTaskIds.contains(t.getId())).map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
-            item.setPreTaskName(preTaskName);
-            String docsName = deliveryDocsList.stream().filter(f -> taskId.equals(f.getTaskId())).map(TaskDeliveryDocsEntity::getDocsName).distinct().collect(Collectors.joining(","));
-            item.setDocsName(docsName);
-        }
-        String name = "产品任务列表";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/productTaskInfo.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("排期任务列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(ProjectPlanTaskConditionDTO dto) {
+        downloadTaskFeign.saveDownloadTask("产品任务列表", EXPORT_PLM_SCHEDULE_TASK.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -868,6 +826,51 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     public List<PlanTaskNameDTO> listByPlanId(List<String> planIdList) {
         List<PlanTaskNameDTO> planTaskList = baseMapper.listByPlanIds(planIdList);
         return planTaskList;
+    }
+
+    @Override
+    public PagingVO<TaskDTO.TaskExportDTO> exportScheduleTask(PagingDTO<ProjectPlanTaskConditionDTO> dto) {
+
+        Page<TaskDTO.TaskExportDTO> page = projectTaskMapper.listScheduleTaskExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
+        }
+        //获取到任务id 集合
+        List<String> taskIds = page.getRecords().stream().map(TaskDTO.TaskExportDTO::getTaskId).collect(Collectors.toList());
+        List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(taskIds);
+        List<TaskDeliveryDocsEntity> deliveryDocsList = taskDeliveryService.getByProductId(dto.getParams().getProductId());
+        //前置任务
+        List<ProjectTaskEntity> preTaskEntityList = projectTaskService.getByTaskIds(preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList()));
+        for (TaskDTO.TaskExportDTO item : page.getRecords()) {
+            String taskId = item.getTaskId();
+            Integer type = item.getType();
+            String typeName = "一般任务";
+            if (type.equals(TaskConstant.REVIEW_TASK)) {
+                typeName = "评审任务";
+            }
+            item.setTypeName(typeName);
+            Integer priority = item.getPriority();
+            String priorityName = "低";
+            if (priority.equals(TaskConstant.INTERMEDIATE_TASK)) {
+                priorityName = "中";
+            }
+            if (priority.equals(TaskConstant.ADVANCED_TASK)) {
+                priorityName = "高";
+            }
+            item.setPriorityName(priorityName);
+            Integer isMilepost = item.getIsMilepost();
+            String isMilepostStr = "是";
+            if (0 == isMilepost) {
+                isMilepostStr = "否";
+            }
+            item.setIsMilepostStr(isMilepostStr);
+            List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getTaskId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
+            String preTaskName = preTaskEntityList.stream().filter(t -> preTaskIds.contains(t.getId())).map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+            item.setPreTaskName(preTaskName);
+            String docsName = deliveryDocsList.stream().filter(f -> taskId.equals(f.getTaskId())).map(TaskDeliveryDocsEntity::getDocsName).distinct().collect(Collectors.joining(","));
+            item.setDocsName(docsName);
+        }
+        return new PagingVO<>(page);
     }
 
 }
