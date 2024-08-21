@@ -253,6 +253,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         if(Objects.nonNull(dbOtherInstockEntity)){
             OtherInstockEntity dbReturnOtherInstockEntity = otherInstockService.getByThirdCode(dbOtherInstockEntity.getThirdCode(), InventoryDirectionEnum.RETURN_GOODS);
             if(Objects.isNull(dbReturnOtherInstockEntity)){
+                dbOtherInstockEntity.setBillDate(inStockEntity.getBillDate());
+                dbOtherInstockEntity.setApproveTime(inStockEntity.getApproveTime());
                 otherInstockService.generateOpposite(dbOtherInstockEntity,inStockEntity.getCode() );
             }
         }
