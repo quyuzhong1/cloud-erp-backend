@@ -19,6 +19,8 @@
        <result column="source_code" property="sourceCode" />
        <result column="sync_operate" property="syncOperate" />
        <result column="push_data" property="pushData" />
+       <result column="message_create_time" property="messageCreateTime" />
+       <result column="message_update_time" property="messageUpdateTime" />
        <result column="input_task_id" property="inputTaskId" />
        <result column="convert_id" property="convertId" />
        <result column="next_level_id" property="nextLevelId" />
@@ -37,7 +39,7 @@
         update_user_id,
         version,
         is_deleted,
-        message_id, target_platform, source_type, source_id, source_code, sync_operate, push_data, input_task_id, convert_id, next_level_id, unique_encrypt, data_encrypt
+        message_id, target_platform, source_type, source_id, source_code, sync_operate, push_data, message_create_time, message_update_time, input_task_id, convert_id, next_level_id, unique_encrypt, data_encrypt
     </sql>
 
 

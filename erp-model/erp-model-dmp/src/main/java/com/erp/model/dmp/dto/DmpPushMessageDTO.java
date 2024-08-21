@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -37,7 +38,7 @@ public class DmpPushMessageDTO implements Serializable {
         private String  id;
 
         /**
-        * 消息id
+        * 本地消息id
         */
         private String messageId;
 
@@ -70,6 +71,16 @@ public class DmpPushMessageDTO implements Serializable {
         * 推送数据
         */
         private String pushData;
+
+        /**
+        * 消息创建时间
+        */
+        private LocalDateTime messageCreateTime;
+
+        /**
+        * 消息更新时间
+        */
+        private LocalDateTime messageUpdateTime;
 
         /**
         * 输入任务id
@@ -129,10 +140,10 @@ public class DmpPushMessageDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 消息id
+        * 本地消息id
         */
-        @NotBlank(message = "消息id不能为空")
-        @Size(max = 19,message = "消息id最大长度不能超过19位")
+        @NotBlank(message = "本地消息id不能为空")
+        @Size(max = 19,message = "本地消息id最大长度不能超过19位")
         private String messageId;
 
         /**
@@ -174,6 +185,16 @@ public class DmpPushMessageDTO implements Serializable {
         * 推送数据
         */
         private String pushData;
+
+        /**
+        * 消息创建时间
+        */
+        private LocalDateTime messageCreateTime;
+
+        /**
+        * 消息更新时间
+        */
+        private LocalDateTime messageUpdateTime;
 
         /**
         * 输入任务id

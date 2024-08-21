@@ -2,6 +2,7 @@ package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import lombok.Data;
@@ -25,7 +26,7 @@ import com.common.business.enums.ApproveStatusEnum;
 public class DmpPushMessageEntity extends BaseEntity<DmpPushMessageEntity> {
 
     /**
-    * 消息id
+    * 本地消息id
     */
     @TableField("message_id")
     private String messageId;
@@ -59,6 +60,16 @@ public class DmpPushMessageEntity extends BaseEntity<DmpPushMessageEntity> {
     */
     @TableField("push_data")
     private String pushData;
+    /**
+    * 消息创建时间
+    */
+    @TableField("message_create_time")
+    private LocalDateTime messageCreateTime;
+    /**
+    * 消息更新时间
+    */
+    @TableField("message_update_time")
+    private LocalDateTime messageUpdateTime;
     /**
     * 输入任务id
     */
@@ -99,6 +110,10 @@ public class DmpPushMessageEntity extends BaseEntity<DmpPushMessageEntity> {
     public static final String SYNC_OPERATE = "sync_operate";
 
     public static final String PUSH_DATA = "push_data";
+
+    public static final String MESSAGE_CREATE_TIME = "message_create_time";
+
+    public static final String MESSAGE_UPDATE_TIME = "message_update_time";
 
     public static final String INPUT_TASK_ID = "input_task_id";
 

@@ -21,6 +21,10 @@ public class DmpInputErpPushMongoHandler extends DmpInputBaseMongoHandler{
 		protected List<String> convertKey(String originalKey) {
 			if("id".equals(originalKey)) {
 				return Collections.singletonList("messageId");
+			}else if("createTime".equals(originalKey)) {
+				return Collections.singletonList("messageCreateTime");
+			}else if("updateTime".equals(originalKey)) {
+				return Collections.singletonList("messageUpdateTime");
 			}
 			return super.convertKey(originalKey);
 		}
