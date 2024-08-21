@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.FirstMileEstimatedBillMapper">
+
+    <select id="paging" resultType="com.erp.model.tms.dto.FirstMileEstimatedBillDTO$View">
+        select eb.id,
+               lb.source_code businessCode,
+               lb.outstock_id outStockId,
+               lb.transport_no transportNo,
+               eb.status,
+               rd.status actualBillStatus,
+               lb.shop_id shopId,
+               lb.shop_name shopName,
+               lb.to_country toCountry,
+               lc.fee_rule feeRule,
+               lbc.id logisticsBillCostId,
+               lbc.currency,
+               lbd.track_status transportStatus,
+               lbd.sign_time signTime,
+               eb.confirm_time confirmTime,
+               eb.create_time createTime,
+               lb.channel_id logisticsChannelId
+        from first_mile_estimated_bill eb
+                 inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
+                 left join logistics_channel lc on lb.channel_id = lc.id
+                 left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+                 left join tms_first_mile_reconciliation_detail rd on lb.source_code = rd.source_code and rd.transport_no = lb.transport_no and rd.reconciliation_type = 'actual' and type = 'actual' and rd.is_deleted = false
+                 left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
+    </select>
+</mapper>

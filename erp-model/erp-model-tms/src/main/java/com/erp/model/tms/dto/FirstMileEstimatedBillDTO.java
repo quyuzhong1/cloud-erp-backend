@@ -28,6 +28,11 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String businessCode;
 
         /**
+         * 来源单据ID（发货单ID）
+         */
+        private String outStockId;
+
+        /**
          * 物流运单号
          */
         private String transportNo;
@@ -73,6 +78,11 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String toCountryName;
 
         /**
+         * 计费规则
+         */
+        private String feeRule;
+
+        /**
          * 计费规则（名称）
          */
         private String feeRuleName;
@@ -85,22 +95,22 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         /**
          * 预计物流运费（总）
          */
-        private BigDecimal logisticsCost;
+        private BigDecimal logisticsCost = BigDecimal.ZERO;
 
         /**
          * 预计报关费用（总）
          */
-        private BigDecimal customsClearanceCost;
+        private BigDecimal customsClearanceCost = BigDecimal.ZERO;
 
         /**
          * 预计其他税费（总）
          */
-        private BigDecimal otherTaxCost;
+        private BigDecimal otherTaxCost = BigDecimal.ZERO;
 
         /**
          * 预计其他费用（总）
          */
-        private BigDecimal otherCost;
+        private BigDecimal otherCost = BigDecimal.ZERO;
 
         /**
          * 预计计费重
@@ -121,6 +131,11 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 重量单位
          */
         private String weightUnit;
+
+        /**
+         * 物流费用ID
+         */
+        private String logisticsBillCostId;
 
         /**
          * 结算币种
@@ -151,6 +166,11 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 物流渠道ID
+         */
+        private String logisticsChannelId;
     }
 
     @Data
@@ -177,7 +197,7 @@ public class FirstMileEstimatedBillDTO implements Serializable {
     }
 
     @Data
-    public static class TabList{
+    public static class Tab{
         /**
          * 标签编码
          */
@@ -196,5 +216,11 @@ public class FirstMileEstimatedBillDTO implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     public static class ExportParam extends PagingParam{
         private List<String> ids;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    public static class ExportExcel extends View{
+
     }
 }
