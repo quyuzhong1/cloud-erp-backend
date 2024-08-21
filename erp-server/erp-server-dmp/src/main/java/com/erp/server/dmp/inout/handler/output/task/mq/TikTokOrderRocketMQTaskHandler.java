@@ -128,51 +128,6 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         return map;
     }
 
-    public static void main(String[] args) {
-
-        // 1. 转换前原始数据
-        DmpSoInfoEntity dmpSoInfoEntity = new DmpSoInfoEntity();
-        List<DmpSoDetailEntity> dmpSoDetailEntities = new ArrayList<>();
-        DmpSoDetailEntity dmpSoDetailEntity = new DmpSoDetailEntity();
-        dmpSoDetailEntity.setSkuId("123");
-        dmpSoDetailEntity.setSkuName("test");
-        dmpSoDetailEntities.add(dmpSoDetailEntity);
-
-        DmpSoDetailEntity dmpSoDetailEntity2 = new DmpSoDetailEntity();
-        dmpSoDetailEntity2.setSkuId("345666AA");
-        dmpSoDetailEntities.add(dmpSoDetailEntity2);
-
-
-        // 2. 转换后的数据
-        PlatformOrderDTO platformOrderDTO = new PlatformOrderDTO();
-
-        List<DmpCfgOutputConvertMappingEntity> list = new ArrayList<>();
-        DmpCfgOutputConvertMappingEntity entity1 = new DmpCfgOutputConvertMappingEntity();
-        entity1.setOriginalKey("skuId");
-        entity1.setConvertKey("details.skuId");
-        list.add(entity1);
-
-        DmpCfgOutputConvertMappingEntity entity2 = new DmpCfgOutputConvertMappingEntity();
-        entity2.setOriginalKey("skuName");
-        entity2.setConvertKey("details.skuName");
-        list.add(entity1);
-
-        Map<String, Object> map = DmpHandlerUtils.convertAndMapFields(dmpSoDetailEntities, platformOrderDTO, list);
-
-
-        Map<String, String> fieldsAndTypes = DmpHandlerUtils.getFieldsAndTypes(dmpSoDetailEntities);
-        for (Map.Entry<String, String> stringStringEntry : fieldsAndTypes.entrySet()) {
-            if (stringStringEntry.getKey().equals("java.util.list")) {
-
-            }
-        }
-
-        System.out.println(map);
-
-    }
-
-
-
     /**
      * 解析订单数据
      **/
