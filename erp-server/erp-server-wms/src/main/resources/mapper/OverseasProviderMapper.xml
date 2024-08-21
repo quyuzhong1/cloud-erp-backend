@@ -39,6 +39,8 @@
             id,
             code,
             name,
+            platform_account as platformAccount,
+            short_name as shortName,
             auth_status AS authStatus,
             auth_time AS authTime,
             update_time AS updateTime,

@@ -101,7 +101,7 @@ public class AntuServerTest {
     @Test
     public void createOutboundBillTest() {
         AntuCreateOutboundReq antuCreateOutboundReq = AntuCreateOutboundReq.builder()
-                .referenceNo("WJTEST20240820004")
+                .referenceNo("WJTEST20240821008")
                 .aliexpressOrderNo("16542313542145")
                 .shippingMethod("PAC")
                 .warehouseCode("BR01")
@@ -118,6 +118,7 @@ public class AntuServerTest {
                 .name("Bruno Mendes")
                 .doorplate("123")
                 .phone("41912345776")
+                .swOrderNumber("14465312644131564841")
                 .email("")
                 .verify(1)
                 .items(Arrays.asList(

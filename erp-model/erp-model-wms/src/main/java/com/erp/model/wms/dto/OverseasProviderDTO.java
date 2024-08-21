@@ -3,6 +3,9 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,6 +28,46 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 public class OverseasProviderDTO implements Serializable {
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AuthorizeViewDTO {
+        /**
+         * code
+         */
+        private String code;
+        /**
+         * 服务商名称
+         */
+        private String name;
+
+        /**
+         * 平台账号
+         */
+        private String platformAccount;
+
+        /**
+         * 仓库简称
+         */
+        private String shortName;
+
+        /**
+         * APPtoken
+         */
+        private String appToken;
+
+        /**
+         * AppKey
+         */
+        private String appKey;
+
+        /**
+         * 启用时间
+         */
+        private LocalDate enabledDate;
+    }
     /**
     * 详情
     */
@@ -73,54 +116,78 @@ public class OverseasProviderDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class AddDTO {
+
+        /**
+         * 服务商编号  wms/common/enumDropDown?type=OmsPlatform
+         */
+        @NotBlank(message = "服务商编号不能为空")
+        private String code;
+
+        /**
+         * 服务商名称
+         */
+        private String name;
+
+        /**
+         * 平台账号
+         */
+        @NotBlank(message = "平台账号不能为空")
+        private String platformAccount;
+
+        /**
+         * 仓库简称
+         */
+        @NotBlank(message = "仓库简称不能为空")
+        private String shortName;
 
 
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
-
+    public static class UpdateDTO {
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
 
         /**
-        * code
-        */
+         * code
+         */
         private String code;
 
         /**
          * 详情
          */
         private List<OverseasProviderWarehouseDTO.UpdateDTO> detailList;
-
     }
-
+    /**
+    * 修改
+    */
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class UpdateThirdWarehouseDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
 
         /**
-        * 服务商名称
-        */
-        private String name;
+         * 平台账号
+         */
+        @NotBlank(message = "平台账号不能为空")
+        private String platformAccount;
 
         /**
-        * 授权状态 already 已授权 not未授权 cancel 取消授权
-        */
-        private String authStatus;
+         * 仓库简称
+         */
+        @NotBlank(message = "仓库简称不能为空")
+        private String shortName;
 
-        /**
-        * 授权时间
-        */
-        private LocalDateTime authTime;
     }
 
     /**
@@ -169,6 +236,16 @@ public class OverseasProviderDTO implements Serializable {
          * 服务商名称
          */
         private String name;
+
+        /**
+         * 平台账号
+         */
+        private String platformAccount;
+
+        /**
+         * 仓库简称
+         */
+        private String shortName;
         /**
          * 授权状态 already 已授权 not未授权 cancel 取消授权
          */
@@ -212,6 +289,12 @@ public class OverseasProviderDTO implements Serializable {
          */
         @NotNull(message = "授权的信息不能为空")
         private Map<String, Object> authJson;
+        /**
+         * 启用时间
+         */
+        @NotNull(message = "启用时间不能为空")
+        private LocalDate enabledDate;
+
     }
 
     /**

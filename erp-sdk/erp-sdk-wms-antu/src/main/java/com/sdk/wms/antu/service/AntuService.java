@@ -14,7 +14,6 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

@@ -11,10 +11,9 @@ import lombok.Getter;
  **/
 @Getter
 public enum OmsPlatformEnum {
-
-    OMS_GOOD_CANG("goodcang","谷仓"),
-
-    OMS_IML("iml","艾姆勒")
+    OMS_GOOD_CANG("goodcang","谷仓海外仓"),
+    OMS_IML("iml","艾姆勒海外仓"),
+    OMS_ANTU("antu","安兔"),
     ;
 
     @EnumValue

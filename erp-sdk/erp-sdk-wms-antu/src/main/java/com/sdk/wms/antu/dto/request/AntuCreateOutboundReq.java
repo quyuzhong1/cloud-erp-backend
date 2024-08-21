@@ -24,6 +24,10 @@ public class AntuCreateOutboundReq {
     @JSONField(name = "platform")
     private String platform;
 
+    //公共平台订单号
+    @JSONField(name = "sw_order_number")
+    private String swOrderNumber;
+
     //自动分仓:0无,1自动分仓
     @JSONField(name = "allocated_auto")
     private String allocatedAuto;

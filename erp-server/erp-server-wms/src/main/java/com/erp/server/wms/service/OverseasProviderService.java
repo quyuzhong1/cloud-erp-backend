@@ -93,4 +93,11 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
 
     OverseasProviderDTO.FeignDTO getOverseasWarehouse(OverseasProviderDTO.FeignDTO feignDTO);
 
+    void add(OverseasProviderDTO.AddDTO dto);
+
+    OverseasProviderDTO.AuthorizeViewDTO authorizeView(BaseIdDTO dto);
+
+    void updateThirdWarehouse(OverseasProviderDTO.UpdateThirdWarehouseDTO dto);
+
+    void delete(String id);
 }
