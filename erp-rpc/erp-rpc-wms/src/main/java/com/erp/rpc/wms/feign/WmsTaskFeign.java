@@ -333,4 +333,14 @@ public interface WmsTaskFeign {
      */
     @PostMapping("/feign/warehouseReceive/getReceiveListByPurchaseOrderIdsAll")
     List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(@RequestBody List<String> purchaseOrderIds);
+
+    /**
+     * WMS同步旺店通数据
+     * @param syncParamDTO
+     * @return
+     * @date: 2024-08-15
+     * @author: tanmujin
+     */
+    @PostMapping("/feign/wmsSyncTask/findWdtDataSendSyncTask")
+    void findWdtDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

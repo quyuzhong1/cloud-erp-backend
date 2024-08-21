@@ -104,6 +104,7 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                 }
                 //状态
                 Object fulfillmentStatusObj = dmpDataMap.get("fulfillmentStatus");
+                dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                 if (fulfillmentStatusObj != null) {
                     String fulfillmentStatus = String.valueOf(fulfillmentStatusObj);
                     dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
@@ -134,7 +135,7 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                         .findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(transactionsMap)) {
                     dmpDataMap.put("payTime", transactionsMap.get("createdAt"));
-                    dmpDataMap.put("dictPayMethod", transactionsMap.get("gateway"));
+                    dmpDataMap.put("payMethod", transactionsMap.get("gateway"));
                 }
 
 
@@ -181,8 +182,11 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                         }
                     }
                     lableMap.put("refundedLineItemIds", refundedLineItemIds);
-
                 }
+
+                //卖家订单号
+                Object name = dmpDataMap.get("name");
+                lableMap.put("sellerOrderCode", name);
 
                 dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
             }

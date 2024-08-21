@@ -116,6 +116,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         WDT_NULL_LOCATION.add("盘亏暂存");
         WDT_NULL_LOCATION.add("发货暂存");
         WDT_NULL_LOCATION.add("采购未上架");
+        WDT_NULL_LOCATION.add("空仓位");
     }
 
     /**

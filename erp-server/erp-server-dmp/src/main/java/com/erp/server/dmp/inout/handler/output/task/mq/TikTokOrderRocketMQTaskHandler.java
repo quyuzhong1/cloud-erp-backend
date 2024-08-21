@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
@@ -13,19 +14,27 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.inout.utils.DmpMappingUtils;
+import com.erp.server.dmp.service.DmpCfgOutputConvertMappingService;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.DistrictInfoBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.LineItemsBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -36,6 +45,11 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+    @Resource
+    private DmpCfgOutputConvertMappingService dmpCfgOutputConvertMappingService;
+
+    @Resource
+    private DmpMappingUtils dmpMappingUtils;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -124,6 +138,14 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         }
         //设置对应关系
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
+/*
+        Map<String, Object> entityMap = BeanUtil.beanToMap(dmpSoInfoEntity);
+        entityMap.put("dmpSoDetailEntityList", dmpSoDetailEntityList);
+        entityMap.put("dmpSoReceiverEntity", dmpSoReceiverEntityList.get(0));
+        cn.hutool.json.JSONObject entries = dmpMappingUtils.dmpApiFieldJson(entityMap, cfgOutputId);
+
+        System.out.println(entries);*/
+
 
         //平台订单号
         orderDTO.setPlatformCode(dmpSoInfoEntity.getThirdCode());
@@ -135,8 +157,8 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setShopId(dmpSoInfoEntity.getNextLevelId());
 
         //订单金额
-        BigDecimal amount = NumberUtil.toBigDecimal(dmpSoInfoEntity.getPayAmount());
-        orderDTO.setAmount(amount);
+        orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
+
         //币别
         orderDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
 
@@ -173,7 +195,6 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
-        orderDTO.setInvalidStatus(Boolean.FALSE);
 
         //付款状态
         if (dmpSoInfoEntity.getPayTime() != null) {
@@ -202,7 +223,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setDetails(details);
 
         //B2C销售订单买家信息表
-        orderDTO.setReceiver(parseReceiver(dmpSoInfoEntity, dmpSoReceiverEntityList.get(0)));
+        orderDTO.setReceiver(parseReceiver(dmpSoReceiverEntityList.get(0)));
         //B2C销售订单物流信息表
         orderDTO.setLogisticsList(parseLogistics(dmpSoInfoEntity));
         //B2C销售订单财务信息表
@@ -292,7 +313,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
      * @param soReceiverEntity
      * @return java.util.List<com.common.business.dto.PlatformOrderReceiverDTO>
      **/
-    private static PlatformOrderReceiverDTO parseReceiver(DmpSoInfoEntity dmpSoInfoEntity, DmpSoReceiverEntity soReceiverEntity) {
+    private static PlatformOrderReceiverDTO parseReceiver(DmpSoReceiverEntity soReceiverEntity) {
         if (Objects.isNull(soReceiverEntity)) {
             return null;
         }

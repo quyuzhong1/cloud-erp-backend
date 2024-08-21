@@ -1,8 +1,11 @@
 package com.erp.server.wms.wdt.impl;
 
+import com.common.business.enums.SyncOperateEnum;
+import org.apache.commons.math3.util.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -10,12 +13,14 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.wms.entity.WdtWarehouseLocationMappingEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.server.wms.mapper.WdtWarehouseLocationMappingMapper;
 import com.erp.server.wms.service.impl.AbstractWdtService;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -35,8 +40,10 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private WdtWarehouseLocationMappingMapper wdtWarehouseLocationMappingMapper;
 
-    public DmpPushTaskFeignDTO generateTask(List<CreateOtherStockinRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode){
+    public DmpPushTaskFeignDTO generateTask(List<CreateOtherStockinRequest.GoodsList> goodsList, String operateCode, String sourceCode, String detailId, String outerCode, String thirdWarehouseCode, boolean checkOuterCode, String sysWarehouseId){
         CreateOtherStockinRequest request = new CreateOtherStockinRequest();
         request.setOuterNo(outerCode);
 
@@ -65,10 +72,13 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
             if(goods.getPositionNo().equals("TC-JHZC") || goods.getPositionNo().equals("B2B-JHZC")){
                 goods.setPositionNo(goods.getPositionNo() + "1");
             }
+            if(StringUtils.isBlank(goods.getPositionNo())){
+                goods.setPositionNo("空仓位");
+            }
         }
 
         request.setWarehouseNo(thirdWarehouseCode);
-        request.setisCheck(Boolean.TRUE);
+        request.setIsCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
         request.setSourceId(outerCode);
         request.setOperateCode(operateCode);
@@ -92,7 +102,7 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
         return dmpSyncTaskDTO;
     }
 
-    @Override
+//    @Override
     public List<CreateOtherStockinRequest.GoodsList> sumBySkuAndPositionNo(List<CreateOtherStockinRequest.GoodsList> goodsList) {
         Map<String, List<CreateOtherStockinRequest.GoodsList>> outCollect = goodsList.stream().collect(Collectors.groupingBy(item -> item.getSpecNo() + "#" + item.getPositionNo()));
         List<CreateOtherStockinRequest.GoodsList> outCollectList = new ArrayList<>();
@@ -110,5 +120,29 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
             outCollectList.add(goods);
         }
         return outCollectList;
+    }
+
+//    @Override
+    public Pair<List<CreateOtherStockinRequest.GoodsList>, List<CreateOtherStockinRequest.GoodsList>> splitGoodsList(String sysWarehouseId, List<CreateOtherStockinRequest.GoodsList> goodsList){
+        List<WdtWarehouseLocationMappingEntity> mappingList = wdtWarehouseLocationMappingMapper.selectList(new LambdaQueryWrapper<WdtWarehouseLocationMappingEntity>()
+                .eq(WdtWarehouseLocationMappingEntity::getSysWarehouseId, sysWarehouseId));
+        Map<String, String> wdtLocationMap = mappingList.stream().collect(Collectors.toMap(item -> item.getSysWarehouseId() + "#" + item.getSysWarehouseLocation(), item1 -> item1.getThirdWarehouseLocation()));
+        List<CreateOtherStockinRequest.GoodsList> needPushList = new ArrayList<>();
+        List<CreateOtherStockinRequest.GoodsList> noNeedPushList = new ArrayList<>();
+        for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
+            String key = sysWarehouseId + "#" + goods.getPositionNo();
+            if(wdtLocationMap.containsKey(key)){
+                goods.setPositionNo(wdtLocationMap.get(key));
+                needPushList.add(goods);
+            }else {
+                noNeedPushList.add(goods);
+            }
+        }
+        return new Pair<>(needPushList, noNeedPushList);
+    }
+
+    public void transferToInStock(SyncOperateEnum operateEnum, String sourceId, String sourceCode, List<CreateOtherStockinRequest.GoodsList> goodsList) {
+        List<CreateOtherStockinRequest.GoodsList> goodsLists = handleGoodsList(goodsList);
+        Map<String, List<CreateOtherStockinRequest.GoodsList>> groupByWarehouseId = goodsList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId()));
     }
 }

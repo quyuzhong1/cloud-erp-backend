@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -26,6 +27,7 @@ import com.common.core.enums.CountrySiteEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -190,6 +192,23 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 set(SoB2cLogisticsEntity::getCode, transportNo).
                 set(SoB2cLogisticsEntity::getTrackNo, trackNo).
                 update();
+    }
+
+    @Override
+    public Boolean updateTransferInfo(List<SoB2cLogisticsEntity> updateLogisticList) {
+        if(CollectionUtils.isEmpty(updateLogisticList)){
+            return true;
+        }
+        Map<String,List<SoB2cLogisticsEntity>> updateMap = updateLogisticList.stream().collect(Collectors.groupingBy(SoB2cLogisticsEntity::getTransferLogisticsChannelId));
+        updateMap.forEach((key,val)->{
+            String transferLogisticsSupplierId = val.get(0).getTransferLogisticsSupplierId();
+            List<String> ids = val.stream().map(v->v.getId()).collect(Collectors.toList());
+            lambdaUpdate().in(SoB2cLogisticsEntity::getId, ids).
+                    set(SoB2cLogisticsEntity::getTransferLogisticsSupplierId, transferLogisticsSupplierId).
+                    set(SoB2cLogisticsEntity::getTransferLogisticsChannelId, key).
+                    update();
+        });
+        return true;
     }
 
     @Override
@@ -417,6 +436,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
+    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "id",waiteTime = 60)
     public BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList) {
         SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
         if(Objects.isNull(soB2cEntity)){

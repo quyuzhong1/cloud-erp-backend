@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.feign;
 
 import com.erp.model.dmp.dto.DmpTaskMsgDTO;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
@@ -94,5 +96,22 @@ public class DmpTaskFeignController {
     @PostMapping("/getWarnTaskReport")
     public List<DmpTaskMsgDTO> getWarnTaskReport(@RequestBody List<String> statusList){
         return dmpPushTaskService.getWarnTaskReport(statusList);
+    }
+
+    /**
+     * 根据来源ID查询
+     * @param sourceIdList
+     * @return
+     * @date: 2024-08-15
+     * @author: tanmujin
+     */
+    @PostMapping("feign/dmp/listBySourceIds")
+    List<DmpPushTaskEntity> listBySourceIds(@RequestBody List<String> sourceIdList){
+        return dmpPushTaskService.lambdaQuery().in(DmpPushTaskEntity::getSourceId, sourceIdList).list();
+    }
+
+    @PostMapping("/push/deleteBySourceId")
+    boolean deletePushTaskBySourceId(@RequestBody String sourceId){
+        return dmpPushTaskService.lambdaUpdate().eq(DmpPushTaskEntity::getSourceId, sourceId).remove();
     }
 }

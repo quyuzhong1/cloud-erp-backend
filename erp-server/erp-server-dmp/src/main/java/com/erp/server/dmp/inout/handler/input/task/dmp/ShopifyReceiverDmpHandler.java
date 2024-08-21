@@ -38,11 +38,6 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
         List<ParamData> extensionsDataList = new ArrayList<>();
         extensionsDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskExtensionsEntity.getId()));
         List<Map<String, Object>> dmpInputExtensionsMongoChildList = mongoService.findMongoData(extensionsDataList, "shopify_extensions_data");
-        log.error("shopify2：dmpInputTaskEntity：" + id);
-        log.error("shopify2：taskId：" + dmpInputTaskExtensionsEntity.getId());
-        log.error("shopify2：list：" + list);
-        log.error("shopify2：dmpInputTaskExtensionsEntity：" + dmpInputTaskExtensionsEntity);
-        log.error("shopify2：dmpInputTransactionsMongoChildList：" + dmpInputExtensionsMongoChildList);
         List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
         if(CollUtil.isNotEmpty(detailList)) {
             for(Map<String, Object> detail : detailList) {
@@ -57,7 +52,7 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
                     detail.put("city", shippingAddressMap.get("city"));
                     detail.put("mainStreet", shippingAddressMap.get("address1"));
                     detail.put("secondStreet", shippingAddressMap.get("address2"));
-                    detail.put("mainPhone", shippingAddressMap.get("phone"));
+                    detail.put("receiverTelNumber", shippingAddressMap.get("phone"));
                     detail.put("secondPhone", shippingAddressMap.get("second_phone"));
                     detail.put("country", shippingAddressMap.get("countryCode"));
                     detail.put("postCode", shippingAddressMap.get("zip"));
@@ -67,9 +62,8 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
                 Object customerObj = detail.get("customer");
                 if (ObjectUtil.isNotEmpty(customerObj)) {
                     Map<String, Object> customerMap = (Map<String, Object>) customerObj;
-                    detail.put("secondPhone", customerMap.get("phone"));
+                    detail.put("mainPhone", customerMap.get("phone"));
                 }
-                log.error("shopify2：orderId：" + detail.get("orderId"));
                 Map<String, Object> extensionsMap = dmpInputExtensionsMongoChildList.stream().filter(req -> String.valueOf(req.get("orderId")).equals(detail.get("orderId")+"")).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(extensionsMap)) {
                     detail.put("receiverTaxNo", extensionsMap.get("taxNo"));

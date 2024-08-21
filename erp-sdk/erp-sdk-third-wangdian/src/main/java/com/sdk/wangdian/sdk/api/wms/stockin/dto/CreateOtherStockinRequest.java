@@ -3,8 +3,7 @@ package com.sdk.wangdian.sdk.api.wms.stockin.dto;
 import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,9 +17,9 @@ public class CreateOtherStockinRequest
 	private String logisticsNo;
 	private String logisticsCode;
 	private Boolean isCheck;
-	private List<GoodsList> goodsList;
-	private String remark;
-	private String reason;
+    private List<GoodsList> goodsList;
+    private String remark;
+    private String reason;
 	private String dmpSyncTaskId;
 
 	/**
@@ -51,123 +50,17 @@ public class CreateOtherStockinRequest
 	 */
 	private LocalDateTime createTime;
 
-	@ToString
-	public static class GoodsList extends CommonCreateBillGoodsReq {
+	/**
+	 * ERP仓库ID
+	 */
+	private String sysWarehouseId;
 
+	@EqualsAndHashCode(callSuper = true)
+	@ToString
+	@Data
+	public static class GoodsList extends CommonCreateBillGoodsReq {
 		private String batchNo;
 		private String productionDate;
 		private String expireDate;
-
-		public String getBatchNo()
-		{
-			return batchNo;
-		}
-
-		public void setBatchNo(String batchNo)
-		{
-			this.batchNo = batchNo;
-		}
-
-
-		public String getProductionDate()
-		{
-			return productionDate;
-		}
-
-		public void setProductionDate(String productionDate)
-		{
-			this.productionDate = productionDate;
-		}
-
-		public String getExpireDate()
-		{
-			return expireDate;
-		}
-
-		public void setExpireDate(String expireDate)
-		{
-			this.expireDate = expireDate;
-		}
-
-	}
-
-	public String getOuterNo()
-	{
-		return outerNo;
-	}
-
-	public void setOuterNo(String outerNo)
-	{
-		this.outerNo = outerNo;
-	}
-
-	public String getWarehouseNo()
-	{
-		return warehouseNo;
-	}
-
-	public void setWarehouseNo(String warehouseNo)
-	{
-		this.warehouseNo = warehouseNo;
-	}
-
-	public String getLogisticsNo()
-	{
-		return logisticsNo;
-	}
-
-	public void setLogisticsNo(String logisticsNo)
-	{
-		this.logisticsNo = logisticsNo;
-	}
-
-	public String getLogisticsCode()
-	{
-		return logisticsCode;
-	}
-
-	public void setLogisticsCode(String logisticsCode)
-	{
-		this.logisticsCode = logisticsCode;
-	}
-
-	public Boolean getisCheck()
-	{
-		return isCheck;
-	}
-
-	public void setisCheck(Boolean check)
-	{
-		isCheck = check;
-	}
-
-	public List<GoodsList> getGoodsList()
-	{
-		return goodsList;
-	}
-
-	public void setGoodsList(List<GoodsList> goodsList)
-	{
-		this.goodsList = goodsList;
-	}
-
-	public String getRemark()
-	{
-		return remark;
-	}
-
-	public void setRemark(String remark)
-	{
-		this.remark = remark;
-	}
-
-	public String getReason()
-	{
-		return reason;
-	}
-
-	public void setReason(String reason)
-	{
-		this.reason = reason;
 	}
 }
