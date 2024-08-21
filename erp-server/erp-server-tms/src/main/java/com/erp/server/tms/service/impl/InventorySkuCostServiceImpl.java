@@ -21,6 +21,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
@@ -383,17 +385,25 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         if (StrUtil.isBlank(inventorySkuCostEntity.getCurrency())){
             inventorySkuCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             inventorySkuCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-        }
-        if (Objects.isNull(inventorySkuCostEntity.getExchangeRate())){
+        }else {
             if (CurrencyEnum.CNY.getCurrencyCode().equals(inventorySkuCostEntity.getCurrency())){
-                inventorySkuCostEntity.setExchangeRate(BigDecimal.ONE);
+                inventorySkuCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             }else {
-                //获取dmp汇率
-                String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                BigDecimal rate = dmpTaskFeign.getRate(currentDate, inventorySkuCostEntity.getCurrency());
-                if (Objects.nonNull(rate)){
-                    inventorySkuCostEntity.setExchangeRate(rate);
+                List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+                DictCurrencyEntity dictCurrencyEntity = currencyList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(inventorySkuCostEntity.getCurrency())).findFirst().orElse(null);
+                if (Objects.nonNull(dictCurrencyEntity)){
+                    inventorySkuCostEntity.setCurrencySymbol(dictCurrencyEntity.getSymbol());
                 }
+            }
+        }
+        if (CurrencyEnum.CNY.getCurrencyCode().equals(inventorySkuCostEntity.getCurrency())){
+            inventorySkuCostEntity.setExchangeRate(BigDecimal.ONE);
+        }else {
+            //获取dmp汇率
+            String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            BigDecimal rate = dmpTaskFeign.getRate(currentDate, inventorySkuCostEntity.getCurrency());
+            if (Objects.nonNull(rate)){
+                inventorySkuCostEntity.setExchangeRate(rate);
             }
         }
         if (StrUtil.isNotBlank(inventorySkuCostEntity.getCompanyId())){

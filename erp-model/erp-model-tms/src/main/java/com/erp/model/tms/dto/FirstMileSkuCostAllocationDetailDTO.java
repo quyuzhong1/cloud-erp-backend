@@ -49,14 +49,24 @@ public class FirstMileSkuCostAllocationDetailDTO implements Serializable {
         private String costMainId;
 
         /**
-        * 费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用
-        */
+         * 费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用
+         * DictCostCategoryEnum
+         */
         private String feeType;
+        /**
+         * 费用类型名称
+         */
+        private String feeTypeName;
 
         /**
-        * 费用分摊方式：weightAllocation=按重量分摊，costAllocation=按成本分摊
-        */
+         * 费用分摊方式：weightAllocation=按重量分摊，costAllocation=按成本分摊
+         * CostAllocationEnum
+         */
         private String allocationType;
+        /**
+         * 费用分摊方式名称
+         */
+        private String allocationTypeName;
 
         /**
         * 头程总金额
@@ -151,6 +161,7 @@ public class FirstMileSkuCostAllocationDetailDTO implements Serializable {
 
         /**
         * 费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用
+         * DictCostCategoryEnum
         */
         @NotBlank(message = "费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用不能为空")
         @Size(max = 20,message = "费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用最大长度不能超过20位")
@@ -158,6 +169,7 @@ public class FirstMileSkuCostAllocationDetailDTO implements Serializable {
 
         /**
         * 费用分摊方式：weightAllocation=按重量分摊，costAllocation=按成本分摊
+         * CostAllocationEnum
         */
         @NotBlank(message = "费用分摊方式：weightAllocation=按重量分摊，costAllocation=按成本分摊不能为空")
         @Size(max = 20,message = "费用分摊方式：weightAllocation=按重量分摊，costAllocation=按成本分摊最大长度不能超过20位")

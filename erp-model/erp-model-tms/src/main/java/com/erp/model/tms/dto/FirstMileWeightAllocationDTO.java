@@ -159,6 +159,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
 
         /**
         * 重量分摊方式
+         * CostAllocationEnum
         */
         private String allocationType;
 
@@ -348,6 +349,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
 
         /**
         * 重量分摊方式
+         * CostAllocationEnum
         */
         private String allocationType;
 

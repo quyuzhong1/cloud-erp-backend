@@ -1,5 +1,6 @@
 package com.erp.model.tms.enums;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -41,7 +42,7 @@ public enum CostAllocationEnum implements EnumMessage {
 
     public static String getName(String code) {
         for (CostAllocationEnum settingEnum : CostAllocationEnum.values()) {
-            if (code.equals(settingEnum.getCode())) {
+            if (settingEnum.getCode().equals(code)) {
                 return settingEnum.getName();
             }
         }
@@ -50,7 +51,7 @@ public enum CostAllocationEnum implements EnumMessage {
 
     public static CostAllocationEnum getEnum(String code) {
         for (CostAllocationEnum settingEnum : CostAllocationEnum.values()) {
-            if (code.equals(settingEnum.getCode())) {
+            if (settingEnum.getCode().equals(code)) {
                 return settingEnum;
             }
         }

@@ -12,6 +12,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,6 +94,16 @@ public class FirstMileSkuCostAllocationDetailServiceImpl extends SuperServiceImp
             this.lambdaUpdate().eq(FirstMileSkuCostAllocationDetailEntity::getMainId, id).remove();
         }
     }
+
+    @Override
+    public List<FirstMileSkuCostAllocationDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(FirstMileSkuCostAllocationDetailEntity::getMainId,mainIds)
+                .orderByDesc(FirstMileSkuCostAllocationDetailEntity::getCreateTime).list();
+    }
+
     /**
     * 新增修改处理数据
     */
