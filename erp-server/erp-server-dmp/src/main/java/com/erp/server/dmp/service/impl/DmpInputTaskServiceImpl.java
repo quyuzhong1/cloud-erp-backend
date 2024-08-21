@@ -27,6 +27,7 @@ import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.mapper.DmpInputTaskMapper;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
@@ -135,13 +136,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
 	        mqProducerService.sendWarnMsg(warnMsgInfo);
 	        
-	        Map<String, Object> bodyMap = new HashMap<String, Object>();
-			bodyMap.put("msg_type", "text");
-			Map<String, String> contentMap = new HashMap<String, String>();
-			
-			contentMap.put("text", "新中台"+ namespace +"环境告警：" + "输入任务记录id=" + id + "处理失败：" + e.getMessage());
-			bodyMap.put("content", contentMap);
-			HttpUtil.post("https://open.feishu.cn/open-apis/bot/v2/hook/c76b72f8-0bf9-4967-a9ce-0728767c1ccc", JSON.toJSONString(bodyMap));
+	        DmpHandlerUtils.sendFeiShuMsg("输入任务记录id=" + id + "处理失败：" + e.getMessage());
 		}
     	
 		return update;

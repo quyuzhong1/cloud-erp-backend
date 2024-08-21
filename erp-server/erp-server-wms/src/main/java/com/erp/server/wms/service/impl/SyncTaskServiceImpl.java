@@ -2,16 +2,25 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.erp.model.dmp.dto.DmpPushWdtDTO;
+import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.wms.kingdee.*;
 import com.erp.server.wms.mabang.SyncMabangMachineService;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
 import com.erp.server.wms.service.*;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -24,6 +33,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -113,6 +123,15 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     @Resource
     private DmpMqFeign dmpMqFeign;
 
+    @Resource
+    private AbstractWdtService abstractWdtService;
+
+    @Resource
+    private DmpPushWdtFeign dmpPushWdtFeign;
+
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -183,6 +202,51 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 syncMaBangTransferInfo(sourceDetailList);
                 return;
         }
+    }
+
+    @Override
+    public void findWdtDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
+        List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
+        SourceTypeEnum sourceType = syncParamDTO.getSourceType();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<DmpPushWdtDTO.ViewDTO> viewDTOList = dmpPushWdtFeign.listByIds(sourceIdList);
+        List<String> warehouseIds = viewDTOList.stream().map(item -> item.getWarehouseId()).collect(Collectors.toList());
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(warehouseIds, "wdt");
+        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
+        for (DmpPushWdtDTO.ViewDTO viewDTO : viewDTOList) {
+            if(! thirdWarehouseMap.containsKey(viewDTO.getWarehouseId())){
+                log.error("没有找到第三方仓库映射: {}", viewDTO);
+                continue;
+            }
+            String thirdWarehouseCode = thirdWarehouseMap.get(viewDTO.getWarehouseId());
+            SyncOperateEnum operateEnum = SyncOperateEnum.getByCode(viewDTO.getOperateType());
+            BusinessNoTypeEnum businessNoTypeEnum = getBusinessNoType(sourceType);
+            List<CommonCreateBillGoodsReq> goodsList = getGoodsList(viewDTO.getDetailDTOList(), viewDTO.getWarehouseId());
+            abstractWdtService.structBill(operateEnum, viewDTO.getId(), businessNoTypeEnum, sourceType, goodsList, thirdWarehouseCode);
+        }
+    }
+
+    private List<CommonCreateBillGoodsReq> getGoodsList(List<DmpPushWdtDetailDTO> detailDTOList, String warehouseId) {
+        List<CommonCreateBillGoodsReq> list = new ArrayList<>(detailDTOList.size());
+        for (DmpPushWdtDetailDTO detailDTO : detailDTOList) {
+            CommonCreateBillGoodsReq request = new CommonCreateBillGoodsReq();
+            request.setSpecNo(detailDTO.getSpecNo());
+            request.setNum(detailDTO.getNum());
+            request.setPositionNo(detailDTO.getPositionNo());
+            request.setWarehouseId(warehouseId);
+            list.add(request);
+        }
+        return list;
+    }
+
+    private BusinessNoTypeEnum getBusinessNoType(SourceTypeEnum sourceType) {
+        if(sourceType.compareTo(SourceTypeEnum.OTHER_INSTOCK) == 0){
+            return BusinessNoTypeEnum.CODE_QTRK;
+        }
+        if(sourceType.compareTo(SourceTypeEnum.OTHER_OUTSTOCK) == 0){
+            return BusinessNoTypeEnum.CODE_QTCK;
+        }
+        return null;
     }
 
     /**
