@@ -66,8 +66,6 @@ public class InventoryFlowOverrideRecordEntity extends BaseEntity<InventoryFlowO
 
     public static final String INVENTORY_ORG_NAME = "inventory_org_name";
 
-    public static final String INVENTORY_ORG_DESC = "inventory_org_desc";
-
     public static final String TYPE = "type";
 
     @Override

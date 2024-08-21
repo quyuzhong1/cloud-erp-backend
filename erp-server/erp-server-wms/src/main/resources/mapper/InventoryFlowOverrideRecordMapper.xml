@@ -16,7 +16,6 @@
        <result column="end_time" property="endTime" />
        <result column="inventory_org_id" property="inventoryOrgId" />
        <result column="inventory_org_name" property="inventoryOrgName" />
-       <result column="inventory_org_desc" property="inventoryOrgDesc" />
        <result column="type" property="type" />
     </resultMap>
 
@@ -31,7 +30,7 @@
         update_time,
         version,
         is_deleted,
-        start_time, end_time, inventory_org_id, inventory_org_name, inventory_org_desc, type
+        start_time, end_time, inventory_org_id, inventory_org_name, type
     </sql>
     <select id="listMaxEndTimeGroupByOrgId" resultType="com.erp.model.wms.entity.InventoryFlowOverrideRecordEntity">
         SELECT
