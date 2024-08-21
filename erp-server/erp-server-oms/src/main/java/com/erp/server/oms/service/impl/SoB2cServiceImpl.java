@@ -4041,7 +4041,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //明细如果有非手工单则可以平台标发
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
-        return soB2cDetailEntityList.stream().anyMatch(v->StringUtils.isNotBlank(v.getSourceDetailId()));
+        // 明细存在来源明细ID 并来源属于平台(包括订单拆分和捆绑拆分)
+        return soB2cDetailEntityList
+                .stream()
+                .anyMatch(v-> StringUtils.isNotBlank(v.getSourceDetailId()) && SoB2cSourcePlatformEnum.ENUM_THIRD_PLATFORM.getCode().equalsIgnoreCase(v.getSourcePlatform()));
     }
 
     @Override
