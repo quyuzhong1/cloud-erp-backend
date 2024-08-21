@@ -189,10 +189,10 @@ public class OverseasProviderController extends BaseController {
 
 
     /**
-     * 三方仓修改
+     * 三方仓删除
      */
     @PostMapping("/delete")
-    @LogAction(value = LogActionEnum.DELETE, desc = "三方仓修改")
+    @LogAction(value = LogActionEnum.DELETE, desc = "三方仓删除")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasProvider:update",
