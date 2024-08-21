@@ -131,6 +131,9 @@ public class DmpInputAliExpressOrderDetailInitHandler extends DmpInputInitHandle
         JSONObject data = body.getJSONObject("target");
         if(data == null) {
         	JSONObject errorResponse = body.getJSONObject("error_response");
+        	if(errorResponse == null) {
+        		return null;
+        	}
         	String code = errorResponse.getString("code");
         	if(!"ApiCallLimit".equals(code) && !"15".equals(code) && !"UnknownRuntimeException".equals(code)) {
         		throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + errorResponse.getString("msg"));
