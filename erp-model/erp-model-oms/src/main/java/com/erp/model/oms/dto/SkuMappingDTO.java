@@ -628,8 +628,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String id;
 
-
-
+        /**
+         * 仓库简称
+         */
+        private String shortName;
 
         /**
          * listingId
