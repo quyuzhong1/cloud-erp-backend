@@ -227,10 +227,9 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 transactionDTO.setTransactionRuleId(rule.getId());
                 // 待检，在途设置为空仓位出入库
                 boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(rule.getInventoryStatus());
+                String  warehouseLocation = flow.getWarehouseLocation();
                 if (qcTransitNotLocation){
-                    flow.setWarehouseLocation("");
-                }else {
-                    flow.setWarehouseLocation(flow.getWarehouseLocation());
+                    warehouseLocation = "";
                 }
                 // 库存基础信息
                 InventoryStockBaseDTO stockBaseDTO = new InventoryStockBaseDTO();
@@ -238,7 +237,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 stockBaseDTO.setSkuNo(flow.getSkuNo());
                 stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getWarehouseId()));
                 stockBaseDTO.setWarehouseId(flow.getWarehouseId());
-                stockBaseDTO.setWarehouseLocation(ObjectUtil.isNull(flow.getWarehouseLocation()) ? "" : flow.getWarehouseLocation());
+                stockBaseDTO.setWarehouseLocation(ObjectUtil.isNull(warehouseLocation) ? "" : warehouseLocation);
                 stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
                 InventoryEntity inventoryEntity=inventoryService.getInventory(
                         stockBaseDTO.getSkuId(),
@@ -252,7 +251,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 transactionDTO.setSkuNo(stockBaseDTO.getSkuNo());
                 transactionDTO.setOrgId(stockBaseDTO.getOrgId());
                 transactionDTO.setWarehouseId(stockBaseDTO.getWarehouseId());
-                transactionDTO.setWarehouseLocation(stockBaseDTO.getWarehouseLocation());
+                transactionDTO.setWarehouseLocation(warehouseLocation);
                 transactionDTO.setInventoryStatus(stockBaseDTO.getInventoryStatus().getCode());
                 // 设置冗余信息部分
                 transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
@@ -394,10 +393,9 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             InventoryTransactionDTO transactionDTO = new InventoryTransactionDTO();
             // 待检，在途 设置空库位出入库
             boolean qcTransitNotLocation =  InventoryStatusEnum.NO_WAREHOUSE_LOCATION.contains(InventoryStatusEnum.getByCode(flow.getDictInventoryStatus()));
+            String  warehouseLocation = flow.getWarehouseLocation();
             if (qcTransitNotLocation){
-                flow.setWarehouseLocation("");
-            }else {
-                flow.setWarehouseLocation(flow.getWarehouseLocation());
+                warehouseLocation = "";
             }
             // 交易头部信息
             transactionDTO.setId(flow.getId());
@@ -410,7 +408,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             transactionDTO.setSkuNo(flow.getSkuNo());
             transactionDTO.setOrgId(flow.getOrgId());
             transactionDTO.setWarehouseId(flow.getWarehouseId());
-            transactionDTO.setWarehouseLocation(flow.getWarehouseLocation());
+            transactionDTO.setWarehouseLocation(warehouseLocation);
             transactionDTO.setInventoryStatus(flow.getDictInventoryStatus());
 
             transactionDTO.setOrgName(getOrgName(orgList,flow.getOrgId()));
