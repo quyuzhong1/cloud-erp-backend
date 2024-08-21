@@ -11,7 +11,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @ToString
 @AllArgsConstructor
-public class AntuInventoryLogisticsProductsResp extends CleanBaseDTO implements Serializable {
+public class AntuLogisticsProductsResp extends CleanBaseDTO implements Serializable {
 
     //运输方式代码
     @JSONField(name = "code")
