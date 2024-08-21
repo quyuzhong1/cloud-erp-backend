@@ -1,11 +1,14 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.track123;
 
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -28,10 +31,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +45,9 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
     private LogisticsBillFeign logisticsBillFeign;
     @Resource
     private TrackShipperService trackShipperService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -92,6 +95,51 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
     private void getTrackData(LogisticsBillDetailQueryDTO query, List<ResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
         if (list.size() > MathUtil.NUMBER_100){
+
+            List<String> noList = new ArrayList<>();
+
+            //过滤掉上次已经拉取过的任务
+            Object o = redisUtil.get(RedisCacheConstants.DMP_TRACK123_TRACK_NO);
+            if (ObjectUtil.isNotEmpty(o)) {
+                List<String> redisTrackList = (List<String>) o;
+                noList.addAll(redisTrackList);
+                Iterator<LogisticsTrackDTO.UpdateTrackDTO> iterator = list.iterator();
+                while (iterator.hasNext()) {
+                    LogisticsTrackDTO.UpdateTrackDTO dto = iterator.next();
+                    if (redisTrackList.contains(dto.getTrackNo())) {
+                        iterator.remove();
+                    }
+                }
+            }
+
+            //过滤后查询是否超过100条
+            if (list.size() > MathUtil.NUMBER_100){
+                //列表数据较多情况下，进行分割集合
+                List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+
+                //一次请求一百条并存储到redis下次过滤
+                List<String> collect = partition.get(0).stream().map(req -> req.getTrackNo()).distinct().collect(Collectors.toList());
+                noList.addAll(collect);
+                // 缓存到redis
+                redisUtil.set(RedisCacheConstants.DMP_TRACK123_TRACK_NO, noList);
+
+                //物流商数据处理
+                ResponseData responseData = this.processTrackData(partition.get(0), cfgAppClient);
+                if (Objects.nonNull(responseData)){
+                    responseDataList.add(responseData);
+                }
+            } else {
+
+                // 没有达到100条数据后清楚redis重新拉取过滤
+                redisUtil.del(RedisCacheConstants.DMP_TRACK123_TRACK_NO);
+
+                //物流商数据处理
+                ResponseData responseData = this.processTrackData(list, cfgAppClient);
+                if (Objects.nonNull(responseData)){
+                    responseDataList.add(responseData);
+                }
+            }
+
             //列表数据较多情况下，进行分割集合
             List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
             //物流商数据处理
