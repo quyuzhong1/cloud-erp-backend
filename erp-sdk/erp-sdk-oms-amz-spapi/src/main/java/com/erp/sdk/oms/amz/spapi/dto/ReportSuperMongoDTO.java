@@ -2,13 +2,18 @@ package com.erp.sdk.oms.amz.spapi.dto;
 
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.crypto.digest.DigestUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.MongoAbstractDTO;
 import com.common.business.dto.MongoSuperDTO;
+import com.common.business.dto.UniqueDto;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MapUtil;
 import com.common.core.utils.ReflectUtils;
 import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonListingStatusEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -74,7 +79,12 @@ public abstract class ReportSuperMongoDTO extends MongoAbstractDTO {
      * @param recordTypeEnum 报告类型
      * @return 组合报告信息后的列表
      */
-    public static List<? extends ReportSuperMongoDTO> fillReportData(List<? extends ReportSuperMongoDTO> sourceList, DmpAmzReportInfoEntity report, AmazonReportRecordTypeEnum recordTypeEnum, String platformShopCode) {
+    public static List<? extends ReportSuperMongoDTO> fillReportData(List<? extends ReportSuperMongoDTO> sourceList,
+                                                                     DmpAmzReportInfoEntity report,
+                                                                     AmazonReportRecordTypeEnum recordTypeEnum,
+                                                                     String platformShopCode,
+                                                                     String marketplaceId
+    ) {
         return IntStream.range(0, sourceList.size())
                 .mapToObj(i -> {
                     try {
@@ -87,7 +97,19 @@ public abstract class ReportSuperMongoDTO extends MongoAbstractDTO {
                                     && StringUtils.isBlank(sourceDTO.getAsin1())) {
                                 sourceDTO.setAsin1(sourceDTO.getProductId());
                             }
-                            ;
+                            // 已删除订单无明细
+                            if ("1".equalsIgnoreCase(sourceDTO.getProductIdType()) && AmazonListingStatusEnum.INACTIVE.getCode().equalsIgnoreCase(sourceDTO.getStatus())) {
+                                //ProductIdType=ASIN,停售无法更新明细
+                                sourceDTO.setSupportsDetailDownload(false);
+                            }
+                            // 日本异常数据
+                            if (AmazonMarketplaceEnum.JP.getMarketplaceId().equalsIgnoreCase(marketplaceId)) {
+                                if ("4".equals(sourceDTO.getProductIdType())) {
+                                    // 日本站点ProductIdType=4无法更新明细
+                                    sourceDTO.setSupportsDetailDownload(false);
+                                }
+                            }
+
                         }
                         ReportSuperMongoDTO mongoDTO = (ReportSuperMongoDTO) (recordTypeEnum.getAndCheckMongoDTOClass().newInstance());
                         BeanUtils.copyProperties(o, mongoDTO);

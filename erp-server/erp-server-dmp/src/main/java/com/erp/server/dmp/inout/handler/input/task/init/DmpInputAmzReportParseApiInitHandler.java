@@ -82,7 +82,12 @@ public class DmpInputAmzReportParseApiInitHandler extends DmpInputInitHandler {
         // 解析对应报告内容
         List<? extends ReportSuperMongoDTO> mongoDTOList = JSONUtil.toList(jsonArray, mongoDTOClass);
         // 填充报告信息和生成唯一键
-        List<? extends ReportSuperMongoDTO> allMongoDTOList = ReportSuperMongoDTO.fillReportData(mongoDTOList, reportInfo, recordType, reportInfo.getPlatformShopCode());
+        List<? extends ReportSuperMongoDTO> allMongoDTOList = ReportSuperMongoDTO.fillReportData(mongoDTOList,
+                reportInfo,
+                recordType,
+                reportInfo.getPlatformShopCode(),
+                reportInfo.getFirstMarketplaceId()
+        );
 
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJsonStr(allMongoDTOList)));
     }

@@ -7,8 +7,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 
 /**
@@ -204,5 +207,12 @@ public class DmpAmzReportInfoEntity extends BaseEntity<DmpAmzReportInfoEntity> {
     public static final String HANDLE_TIME = "handle_time";
 
     public static final String CREATED_METHOD = "created_method";
+
+    public String getFirstMarketplaceId() {
+        if (StringUtils.isNotBlank(this.marketplaceIds)){
+            return Arrays.stream(this.marketplaceIds.split(",")).findFirst().orElse("");
+        }
+        return "";
+    }
 
 }

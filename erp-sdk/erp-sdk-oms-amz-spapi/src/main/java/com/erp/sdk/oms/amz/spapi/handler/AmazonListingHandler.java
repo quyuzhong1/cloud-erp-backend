@@ -4,6 +4,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -191,12 +192,12 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
 //        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS;
 //        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
-        RateLimitConfiguration rateLimitConfig = null;
+//        RateLimitConfiguration rateLimitConfig = null;
 
         Map<AmazonIdentifiersTypeEnum, List<PlatformAmazonListingDTO>> listMap = currentListingDTOList.stream().collect(Collectors.groupingBy(e -> e.convertIdentifiersType(marketPlaceEnum)));
 
         //查询商品详情
-//        CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
+//      CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
         CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
         List<PlatformAmazonListingDTO> resultList = new LinkedList<>();
@@ -223,20 +224,16 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
             }
             amazonSpApiRateLimitUtils.checkAndSetRedis(limitKey, apiResponse);
             List<Item> items = apiResponse.getData().getItems();
-            if (CollectionUtils.isEmpty(items)){
+            if (CollectionUtils.isEmpty(items)) {
                 return Collections.emptyList();
             }
             // 根据identifiers.identifierType区分返回的来源的ProductId
             Map<String, Item> itemMap = items.stream().collect(Collectors.toMap(e -> e.getKeyByIdentifierType(entry.getKey(), marketPlaceEnum), Function.identity()));
-            entry.getValue().forEach(e-> {
+            entry.getValue().forEach(e -> {
                 Item item = itemMap.get(e.getProductId());
                 if (null != item) {
                     this.setAllDetail(e, item, marketPlaceEnum);
                 }
-//                } else {
-//                    String msg = StrUtil.format("数据异常：未找到对应ProductId,listing={}", JSONUtil.toJsonStr(e));
-//                    throw new ServiceException(msg);
-//                }
             });
             resultList.addAll(entry.getValue());
         }
@@ -261,5 +258,66 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         dto.setImageUrl(imageUrl);
         // ASIN
         dto.setAsin1(item.getAsin());
+    }
+
+
+    /**
+     * 新根据IdentifiersType分组查询
+     */
+    public List<JSONObject> newDownloadDetailListByIdentifiersType(List<ReportListingMongoDTO> currentListingDTOList, JSONObject extendObj, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, Integer size) {
+        // 默认请求速率配置
+        String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
+        Object limitObj = redisUtil.get(limitKey);
+        if (null != limitObj) {
+            String msg = StrUtil.format("【亚马逊明细拉取】 taskId={}, groupId={},存在429等待恢复:放弃当前请求任务", extendObj.getString("taskId"), limitKey);
+            ServiceException.runError(msg);
+        }
+        String rateLimitStr = AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS.getRateLimit();
+
+        Map<AmazonIdentifiersTypeEnum, List<ReportListingMongoDTO>> listMap = currentListingDTOList.stream().collect(Collectors.groupingBy(ReportListingMongoDTO::convertIdentifiersType));
+
+        //查询商品详情
+        CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+
+        List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
+
+        List<JSONObject> resultList = new LinkedList<>();
+        for (Map.Entry<AmazonIdentifiersTypeEnum, List<ReportListingMongoDTO>> entry : listMap.entrySet()) {
+            List<String> identifiers = entry.getValue()
+                    .stream()
+                    .map(ReportListingMongoDTO::checkAndGetIdentifier).filter(Objects::nonNull).distinct().collect(Collectors.toList());
+            String identifiersType = entry.getKey().getCode();
+            List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
+            String locale = null;
+            String sellerId = null;
+            List<String> keywords = null;
+            List<String> brandNames = null;
+            List<String> classificationIds = null;
+            int pageSize = size;
+            String pageToken = null;
+            String keywordsLocale = null;
+            ApiResponse<ItemSearchResults> apiResponse;
+            try {
+                apiResponse = catalogApi.searchCatalogItemsWithHttpInfo(marketplaceIds, identifiers, identifiersType, includedData, locale, sellerId, keywords, brandNames, classificationIds, pageSize, pageToken, keywordsLocale);
+            } catch (ApiException e) {
+                if (429 == e.getCode()) {
+                    // 设置动态速率，失效时间=1/limit
+                    BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                    redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                }
+                throw new ServiceException("[Amazon SP-APi] 下载listing失败:body=" + JSONUtil.toJsonStr(e));
+            }
+            List<Item> items = apiResponse.getData().getItems();
+            if (CollectionUtils.isEmpty(items)) {
+                continue;
+            }
+            for (Item item : items) {
+                JSONObject jsonObject = (JSONObject) JSON.toJSON(item);
+                String productId = item.getKeyByIdentifierType(entry.getKey(), marketPlaceEnum);
+                jsonObject.put("productId", productId);
+                resultList.add(jsonObject);
+            }
+        }
+        return resultList;
     }
 }

@@ -556,7 +556,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         // 解析对应报告内容
         List<? extends ReportSuperMongoDTO> mongoDTOList = JSONUtil.toList(jsonArray, mongoDTOClass);
         // 填充报告信息和生成唯一键
-        List<? extends ReportSuperMongoDTO> allMongoDTOList = ReportSuperMongoDTO.fillReportData(mongoDTOList, reportInfo, recordType, platformShopCode);
+        List<? extends ReportSuperMongoDTO> allMongoDTOList = ReportSuperMongoDTO.fillReportData(mongoDTOList, reportInfo, recordType, platformShopCode, entity.getFirstMarketplace());
         // 跳过已解析的数量
         List<? extends ReportSuperMongoDTO> handleDTOList = allMongoDTOList.stream().skip(newQueryEntity.getParseRowIndex()).collect(Collectors.toList());
         // 按配置数量分组
