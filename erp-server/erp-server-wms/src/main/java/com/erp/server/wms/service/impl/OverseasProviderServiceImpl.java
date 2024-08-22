@@ -12,7 +12,6 @@ import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -125,7 +124,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             entity.setAuthTime(LocalDateTime.now());
             entity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
             entity.setAuthJson(dto.getAuthJson());
-            entity.setEnabledDate(dto.getEnabledDate());
+            entity.setEnableDate(dto.getEnabledDate());
             this.updateById(entity);
         }
         return result;

@@ -14,7 +14,6 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -72,8 +71,8 @@ public class OverseasProviderEntity extends BaseEntity<OverseasProviderEntity> {
     /**
      * 启用时间
      */
-    @TableField("enabled_date")
-    private LocalDate enabledDate;
+    @TableField("enable_date")
+    private LocalDate enableDate;
 
     public static final String CODE = "code";
 
