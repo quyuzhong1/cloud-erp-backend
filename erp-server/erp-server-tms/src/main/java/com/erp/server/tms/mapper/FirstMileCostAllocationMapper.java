@@ -44,5 +44,5 @@ public interface FirstMileCostAllocationMapper extends BaseMapper<FirstMileCostA
      * @param params
      * @return
      */
-    List<FirstMileCostAllocationDTO.PagingVO> exportList(@Param("params") FirstMileCostAllocationDTO.PagingParamDTO params);
+    List<FirstMileCostAllocationDTO.ExportDTO> exportList(@Param("params") FirstMileCostAllocationDTO.PagingParamDTO params);
 }

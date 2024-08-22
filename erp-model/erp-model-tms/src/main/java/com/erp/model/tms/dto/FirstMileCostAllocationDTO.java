@@ -69,7 +69,14 @@ public class FirstMileCostAllocationDTO implements Serializable {
         * 物流单明细id
         */
         private String logisticsBillDetailId;
-
+        /**
+         * 期初费用分摊id
+         */
+        private String initFirstMileId;
+        /**
+         * 期初费用分摊明细id
+         */
+        private String initFirstMileDetailId;
         /**
         * 暂估账单id
         */
@@ -260,6 +267,18 @@ public class FirstMileCostAllocationDTO implements Serializable {
         @NotBlank(message = "暂估账单id不能为空")
         @Size(max = 19,message = "暂估账单id最大长度不能超过19位")
         private String estimatedBillId;
+        /**
+         * 期初费用分摊id
+         */
+        @NotBlank(message = "期初费用分摊id不能为空")
+        @Size(max = 19,message = "期初费用分摊id最大长度不能超过19位")
+        private String initFirstMileId;
+        /**
+         * 期初费用分摊明细id
+         */
+        @NotBlank(message = "期初费用分摊明细id不能为空")
+        @Size(max = 19,message = "期初费用分摊明细id最大长度不能超过19位")
+        private String initFirstMileDetailId;
 
         /**
         * SKU成本id
@@ -441,6 +460,7 @@ public class FirstMileCostAllocationDTO implements Serializable {
     public static class PagingVO {
         /**
          * 主键id
+         *
          */
         private String  id;
 
@@ -468,6 +488,18 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 物流单明细id
          */
         private String logisticsBillDetailId;
+        /**
+         * 签收时间
+         */
+        private LocalDateTime receiveTime;
+        /**
+         * 期初费用分摊id
+         */
+        private String initFirstMileId;
+        /**
+         * 期初费用分摊明细id
+         */
+        private String initFirstMileDetailId;
 
         /**
          * 暂估账单id
@@ -510,12 +542,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 发货单id
          */
-        @TableField("source_id")
         private String sourceId;
         /**
          * 发货单编码
          */
-        @TableField("source_code")
         private String sourceCode;
 
         /**
@@ -589,7 +619,6 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 发货时间
          */
         private LocalDate deliveryTime;
-
 
         /**
          * sku主键id
@@ -673,7 +702,7 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          *明细
          */
-        private List<FirstMileSkuCostAllocationDetailDTO.AddDTO> detailList;
+        private List<FirstMileSkuCostAllocationDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -692,5 +721,316 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
+        /**
+         * 主键id
+         *
+         */
+        private String  id;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 对账单id
+         */
+        private String reconciliationId;
+
+        /**
+         * 对账单单据编号
+         */
+        private String reconciliationCode;
+
+        /**
+         * 物流单id
+         */
+        private String logisticsBillId;
+
+        /**
+         * 物流单明细id
+         */
+        private String logisticsBillDetailId;
+        /**
+         * 签收时间
+         */
+        private LocalDateTime receiveTime;
+        /**
+         * 期初费用分摊id
+         */
+        private String initFirstMileId;
+        /**
+         * 期初费用分摊明细id
+         */
+        private String initFirstMileDetailId;
+
+        /**
+         * 暂估账单id
+         */
+        private String estimatedBillId;
+
+        /**
+         * SKU成本id
+         */
+        private String skuCostId;
+
+        /**
+         * SKU成本明细id
+         */
+        private String skuCostDetailId;
+
+        /**
+         * 重量分摊id
+         */
+        private String weightAllocationId;
+
+        /**
+         * 核算期间id
+         */
+        private String reportPeriodId;
+
+        /**
+         * 会计期间
+         */
+        private String accountPeriod;
+
+        /**
+         * 核算状态：waitConfirm=待确认，confirm=已确认
+         */
+        private String status;
+        /**
+         * 核算状态名称
+         */
+        private String statusName;
+        /**
+         * 发货单id
+         */
+        private String sourceId;
+        /**
+         * 发货单编码
+         */
+        private String sourceCode;
+
+        /**
+         * 物流商id
+         */
+        private String supplierId;
+
+        /**
+         * 物流商名称
+         */
+        private String supplierName;
+
+        /**
+         * {业务单号}取值发货单关联的业务单号
+         * FBA：取值FBA货件单号
+         * 第三方仓：海外仓入库单号
+         */
+        private String businessCode;
+
+        /**
+         * 业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=FBA
+         */
+        private String businessType;
+
+        /**
+         * 运单号
+         */
+        private String transportNo;
+
+        /**
+         * 对账月份
+         */
+        private LocalDate reconciliationMonth;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 发货仓库id
+         */
+        private String fromWarehouseId;
+
+        /**
+         * 发货仓库名称
+         */
+        private String fromWarehouseName;
+
+        /**
+         * 目的仓库id
+         */
+        private String toWarehouseId;
+
+        /**
+         * 目的仓库名称
+         */
+        private String toWarehouseName;
+
+        /**
+         * 目的国家
+         */
+        private String toCountry;
+
+        /**
+         * 发货时间
+         */
+        private LocalDate deliveryTime;
+
+        /**
+         * sku主键id
+         */
+        private String  costId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNO
+         */
+        private String skuNo;
+
+        /**
+         * 平台skuId
+         */
+        private String platformSkuId;
+
+        /**
+         * 平台skuNo
+         */
+        private String platformSkuNo;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 分摊重量
+         */
+        private BigDecimal allocatedWeight;
+
+        /**
+         * 单位成本
+         */
+        private BigDecimal productCost;
+
+        /**
+         * 产品总成本
+         */
+        private BigDecimal productTotalCost;
+
+        /**
+         * 期初签收数量
+         */
+        private Integer initReceiveQty;
+
+        /**
+         * 上月签收数量
+         */
+        private Integer lastMonthReceiveQty;
+
+        /**
+         * 本月签收数量
+         */
+        private Integer currentMonthReceiveQty;
+
+        /**
+         * 截止上月签收数量
+         */
+        private Integer asLastMonthReceiveQty;
+
+        /**
+         * 重量单位（默认kg）
+         */
+        private String weightUnit;
+
+        /**
+         * 币种（默认CNY）
+         */
+        private String currency;
+
+        /**
+         * 费用来源：estimatedBill=预估账单，actualBill=实际账单
+         */
+        private String billSourceType;
+
+        /**
+         * 费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用
+         * DictCostCategoryEnum
+         */
+        private String feeType;
+        /**
+         * 费用类型名称
+         */
+        private String feeTypeName;
+
+        /**
+         * 费用分摊方式：weightAllocation=按重量分摊，costAllocation=按成本分摊
+         * CostAllocationEnum
+         */
+        private String allocationType;
+        /**
+         * 费用分摊方式名称
+         */
+        private String allocationTypeName;
+
+        /**
+         * 头程总金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 头程分摊金额
+         */
+        private BigDecimal allocatedAmount;
+
+        /**
+         * 单个产品分摊金额
+         */
+        private BigDecimal productAllocatedAmount;
+
+        /**
+         * 期初在途费用
+         */
+        private BigDecimal initTransitCost;
+
+        /**
+         * 期初暂估费用
+         */
+        private BigDecimal initEstimatedCost;
+
+        /**
+         * 冲期初在途费用
+         */
+        private BigDecimal midPeriodTransitCost;
+
+        /**
+         * 本期分摊费用
+         */
+        private BigDecimal currentPeriodAllocatedCost;
+
+        /**
+         * 期末在途费用
+         */
+        private BigDecimal endPeriodTransitCost;
+
+        /**
+         * 期末暂估费用
+         */
+        private BigDecimal endPeriodEstimatedCost;
     }
 }

@@ -148,6 +148,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     private String supplierName;
     /**
     * 重量分摊方式
+     * CostAllocationEnum
     */
     @TableField("allocation_type")
     private String allocationType;

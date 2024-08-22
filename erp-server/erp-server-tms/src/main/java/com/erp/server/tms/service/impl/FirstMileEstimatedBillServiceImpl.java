@@ -5,6 +5,7 @@ import cn.hutool.core.math.MathUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -193,6 +194,13 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             new ExcelPrintUtils().patchExport(viewList, response, builder.toString(), "excel/firstMileEstimatedBillExport.xlsx");
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    @Override
+    public void removeByLogisticsBillId(String logisticsBillId) {
+        if (StrUtil.isNotBlank(logisticsBillId)){
+            this.lambdaUpdate().eq(FirstMileEstimatedBillEntity::getLogisticsBillId,logisticsBillId).remove();
         }
     }
 }

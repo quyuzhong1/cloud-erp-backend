@@ -83,7 +83,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     void exportFeeDetail(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
 
-    List<BatchResultDTO> delete(List<String> ids);
+    BatchResultDTO delete(LogisticsBillEntity entity);
 
     TmsFirstMileLogisticDTO.HistoryTrackDTO getHistoryTrack(String id);
 

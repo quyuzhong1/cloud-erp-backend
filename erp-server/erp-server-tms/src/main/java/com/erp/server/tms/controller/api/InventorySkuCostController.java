@@ -326,7 +326,7 @@ public class InventorySkuCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
     @PostMapping("/importFile")
-    public ApiResult<InventorySkuCostDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") InventorySkuCostDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+    public ApiResult<InventorySkuCostDTO.ImportDTO> importFile(@ModelAttribute @Validated InventorySkuCostDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
         InventorySkuCostDTO.ImportDTO dto = inventorySkuCostService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getDetailList(),response);
         return success(dto);
     }

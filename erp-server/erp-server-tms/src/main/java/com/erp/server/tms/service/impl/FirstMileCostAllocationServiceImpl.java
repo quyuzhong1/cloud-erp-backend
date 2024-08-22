@@ -13,14 +13,21 @@ import com.common.business.enums.ConfirmStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.tms.dto.FirstMileSkuCostAllocationDetailDTO;
 import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
+import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
 import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.enums.CostAllocationEnum;
+import com.erp.model.tms.enums.DictCostCategoryEnum;
+import com.erp.server.tms.convert.FirstMileCostAllocationConverter;
 import com.erp.server.tms.mapper.FirstMileCostAllocationMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +63,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private FirstMileSkuCostAllocationDetailService firstMileSkuCostAllocationDetailService;
     @Resource
     private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -132,9 +141,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(FirstMileCostAllocationEntity entity) {
-        //TODO 已确认不能删除
+        //已确认不能删除
         if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"发货单分摊数据已确认不能删除");
+            return BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"头程费用分摊数据已确认不能删除");
         }
         firstMileSkuCostAllocationService.removeByMainId(entity.getId());
         firstMileSkuCostAllocationDetailService.removeByMainId(entity.getId());
@@ -145,15 +154,15 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Override
     public void exportExcel(FirstMileCostAllocationDTO.PagingParamDTO params, HttpServletResponse response) {
         params.setPermissionSql(params.getPermissionSql());
-        List<FirstMileCostAllocationDTO.PagingVO> list = baseMapper.exportList(params);
+        List<FirstMileCostAllocationDTO.ExportDTO> list = baseMapper.exportList(params);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         // 填充字段值
-        fillPagingDb(list);
+        fillExportDb(list);
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/initFirstMileAllocationExport.xlsx";
-        String name = "期初头程分摊导出";
+        String excelPath = "excel/firstMileCostAllocationExport.xlsx";
+        String name = "头程费用分摊导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
@@ -163,12 +172,50 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
-    private void fillPagingDb(List<FirstMileCostAllocationDTO.PagingVO> list) {
+
+    private void fillExportDb(List<FirstMileCostAllocationDTO.ExportDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         list.forEach(e -> {
-            e.setStatusName(ApproveStatusEnum.getName(e.getStatus()));
+            e.setStatusName(ConfirmStatusEnum.getName(e.getStatus()));
+            e.setFeeTypeName(DictCostCategoryEnum.getName(e.getFeeType()));
+            e.setAllocationTypeName(CostAllocationEnum.getName(e.getAllocationType()));
+        });
+    }
+
+    @Override
+    public List<FirstMileCostAllocationEntity> getByInitFirstMileId(String firstMileId) {
+        if (StrUtil.isBlank(firstMileId)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(FirstMileCostAllocationEntity::getInitFirstMileId,firstMileId).list();
+    }
+
+    @Override
+    public List<FirstMileCostAllocationEntity> getBySkuCostId(String skuCostId) {
+        if (StrUtil.isBlank(skuCostId)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(FirstMileCostAllocationEntity::getSkuCostId,skuCostId).list();
+    }
+
+    private void fillPagingDb(List<FirstMileCostAllocationDTO.PagingVO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //添加分摊明细
+        List<String> ids = list.stream().map(FirstMileCostAllocationDTO.PagingVO::getId).distinct().collect(Collectors.toList());
+        List<FirstMileSkuCostAllocationDetailEntity> detailEntityList = firstMileSkuCostAllocationDetailService.listByMainIds(ids);
+        list.forEach(e -> {
+            e.setStatusName(ConfirmStatusEnum.getName(e.getStatus()));
+            List<FirstMileSkuCostAllocationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(f -> Objects.equals(f.getCostMainId(), e.getCostId())).collect(Collectors.toList());
+            List<FirstMileSkuCostAllocationDetailDTO.ViewDTO> viewDTOS = FirstMileCostAllocationConverter.INSTANCE.detailToViewDTO(detailEntityList1);
+            viewDTOS.forEach(viewDTO -> {
+                viewDTO.setFeeTypeName(DictCostCategoryEnum.getName(viewDTO.getFeeType()));
+                viewDTO.setAllocationTypeName(CostAllocationEnum.getName(viewDTO.getAllocationType()));
+            });
+            e.setDetailList(viewDTOS);
         });
     }
     /**

@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 头程重量分摊 服务类
@@ -32,5 +34,10 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
     */
     Boolean update(FirstMileWeightAllocationDTO.UpdateDTO dto);
 
-
+    /**
+     * 根据物流单id查询重量分摊记录
+     * @param logisticsBillId
+     * @return
+     */
+    List<FirstMileWeightAllocationEntity> getByLogisticsBillId(String logisticsBillId);
 }

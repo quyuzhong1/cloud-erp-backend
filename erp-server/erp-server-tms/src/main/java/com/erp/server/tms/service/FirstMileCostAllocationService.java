@@ -63,4 +63,18 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @param response
      */
     void exportExcel(FirstMileCostAllocationDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 根据期初id查询费用分摊记录
+     * @param firstMileId
+     * @return
+     */
+    List<FirstMileCostAllocationEntity> getByInitFirstMileId(String firstMileId);
+
+    /**
+     * 根据sku成本id查询费用分摊记录
+     * @param skuCostId
+     * @return
+     */
+    List<FirstMileCostAllocationEntity> getBySkuCostId(String skuCostId);
 }

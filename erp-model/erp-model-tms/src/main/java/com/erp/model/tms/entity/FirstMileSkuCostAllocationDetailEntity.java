@@ -37,11 +37,13 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
     private String costMainId;
     /**
     * 费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用
+     * DictCostCategoryEnum
     */
     @TableField("fee_type")
     private String feeType;
     /**
     * 费用分摊方式：weightAllocation=按重量分摊，costAllocation=按成本分摊
+     * CostAllocationEnum
     */
     @TableField("allocation_type")
     private String allocationType;

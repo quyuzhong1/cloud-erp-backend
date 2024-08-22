@@ -20,8 +20,9 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
@@ -31,6 +32,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.InventorySkuCostDetailExcelListener;
 import com.erp.server.tms.mapper.InventorySkuCostMapper;
+import com.erp.server.tms.service.FirstMileCostAllocationService;
 import com.erp.server.tms.service.InventorySkuCostDetailService;
 import com.erp.server.tms.service.InventorySkuCostService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -39,6 +41,7 @@ import com.erp.server.tms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -89,6 +92,9 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Lazy
+    @Resource
+    private FirstMileCostAllocationService firstMileCostAllocationService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -250,7 +256,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public BatchResultDTO delete(InventorySkuCostEntity entity) {
-        //TODO 校验记录是否已被使用 费用分摊是否已使用
+        //校验记录是否已被使用 费用分摊是否已使用
+        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.getBySkuCostId(entity.getId());
+        if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "SKU成本已使用不能删除");
+        }
         inventorySkuCostDetailService.removeByMainId(entity.getId());
         this.lambdaUpdate().eq(InventorySkuCostEntity::getId, entity.getId()).remove();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除记录操作成功");
@@ -375,17 +385,25 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         if (StrUtil.isBlank(inventorySkuCostEntity.getCurrency())){
             inventorySkuCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             inventorySkuCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-        }
-        if (Objects.isNull(inventorySkuCostEntity.getExchangeRate())){
+        }else {
             if (CurrencyEnum.CNY.getCurrencyCode().equals(inventorySkuCostEntity.getCurrency())){
-                inventorySkuCostEntity.setExchangeRate(BigDecimal.ONE);
+                inventorySkuCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             }else {
-                //获取dmp汇率
-                String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                BigDecimal rate = dmpTaskFeign.getRate(currentDate, inventorySkuCostEntity.getCurrency());
-                if (Objects.nonNull(rate)){
-                    inventorySkuCostEntity.setExchangeRate(rate);
+                List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+                DictCurrencyEntity dictCurrencyEntity = currencyList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(inventorySkuCostEntity.getCurrency())).findFirst().orElse(null);
+                if (Objects.nonNull(dictCurrencyEntity)){
+                    inventorySkuCostEntity.setCurrencySymbol(dictCurrencyEntity.getSymbol());
                 }
+            }
+        }
+        if (CurrencyEnum.CNY.getCurrencyCode().equals(inventorySkuCostEntity.getCurrency())){
+            inventorySkuCostEntity.setExchangeRate(BigDecimal.ONE);
+        }else {
+            //获取dmp汇率
+            String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            BigDecimal rate = dmpTaskFeign.getRate(currentDate, inventorySkuCostEntity.getCurrency());
+            if (Objects.nonNull(rate)){
+                inventorySkuCostEntity.setExchangeRate(rate);
             }
         }
         if (StrUtil.isNotBlank(inventorySkuCostEntity.getCompanyId())){

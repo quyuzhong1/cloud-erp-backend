@@ -86,6 +86,14 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<FirstMileWeightAllocationEntity> getByLogisticsBillId(String logisticsBillId) {
+        if (StrUtil.isBlank(logisticsBillId)){
+            return Collections.emptyList();
+        }
+        return null;
+    }
+
 
     /**
     * 新增修改处理数据
