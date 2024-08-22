@@ -22,7 +22,9 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
 import com.sdk.tms.track123.model.request.TrackRequest;
+import com.sdk.tms.track123.model.response.Rejected;
 import com.sdk.tms.track123.model.response.ResponseData;
+import com.sdk.tms.track123.model.response.TrackDetail;
 import com.sdk.tms.track123.model.response.TrackResponse;
 import com.sdk.tms.track123.service.TrackShipperService;
 import io.seata.common.util.CollectionUtils;
@@ -79,20 +81,31 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
                 .trackEnable(true)
                 .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
                 .build();
-        List<ResponseData> responseDataList = new ArrayList<>();
-        getTrackData(query, responseDataList, cfgAppClient);
-
+        ResponseData trackData = getTrackData(query, cfgAppClient);
+        if (ObjectUtil.isEmpty(trackData)) {
+            return Collections.emptyList();
+        }
 
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 
-        dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(responseDataList));
-        dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
+        List<TrackDetail> list = new ArrayList<>();
 
+        if (ObjectUtil.isNotEmpty(trackData.getAccepted())) {
+            list.addAll(trackData.getAccepted().getContent());
+        } else if (CollectionUtils.isNotEmpty(trackData.getRejected())) {
+            for (Rejected rejected : trackData.getRejected()) {
+                TrackDetail trackDetail = new TrackDetail();
+                trackDetail.setRejected(rejected);
+                list.add(trackDetail);
+            }
+        }
+        dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(list));
+        dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 
         return dmpInputTaskInitDTOList;
     }
 
-    private void getTrackData(LogisticsBillDetailQueryDTO query, List<ResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
+    private ResponseData getTrackData(LogisticsBillDetailQueryDTO query, CfgAppClientEntity cfgAppClient) {
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
         if (list.size() > MathUtil.NUMBER_100){
 
@@ -126,7 +139,7 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
                 //物流商数据处理
                 ResponseData responseData = this.processTrackData(partition.get(0), cfgAppClient);
                 if (Objects.nonNull(responseData)){
-                    responseDataList.add(responseData);
+                    return responseData;
                 }
             } else {
 
@@ -136,11 +149,11 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
                 //物流商数据处理
                 ResponseData responseData = this.processTrackData(list, cfgAppClient);
                 if (Objects.nonNull(responseData)){
-                    responseDataList.add(responseData);
+                    return responseData;
                 }
             }
 
-            //列表数据较多情况下，进行分割集合
+/*            //列表数据较多情况下，进行分割集合
             List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
             //物流商数据处理
             partition.forEach(e -> {
@@ -148,15 +161,16 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
                 if (Objects.nonNull(responseData)){
                     responseDataList.add(responseData);
                 }
-            });
+            });*/
         }else {
             //物流商数据处理
             ResponseData responseData = this.processTrackData(list, cfgAppClient);
             if (Objects.nonNull(responseData)){
-                responseDataList.add(responseData);
+                return responseData;
             }
         }
         log.info("========同步物流轨迹数据完成==========");
+        return null;
     }
 
     private ResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {
