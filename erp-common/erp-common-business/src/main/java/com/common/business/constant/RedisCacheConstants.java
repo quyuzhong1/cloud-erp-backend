@@ -230,6 +230,6 @@ public interface RedisCacheConstants {
     /**
      * 中台拉取track123标记
      */
-    String DMP_TRACK123_TRACK_NO = "dmp_track123_track_no:{}";
+    String DMP_TRACK123_TRACK_NO = "dmp_track123_track_no";
 
 }
