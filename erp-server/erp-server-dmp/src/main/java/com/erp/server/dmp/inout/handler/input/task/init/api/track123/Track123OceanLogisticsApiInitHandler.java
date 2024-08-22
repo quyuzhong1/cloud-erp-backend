@@ -112,7 +112,7 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
             List<String> noList = new ArrayList<>();
 
             //过滤掉上次已经拉取过的任务
-            Object o = redisUtil.get(RedisCacheConstants.DMP_TRACK123_TRACK_NO);
+            Object o = redisUtil.get(RedisCacheConstants.DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO);
             if (ObjectUtil.isNotEmpty(o)) {
                 List<String> redisTrackList = (List<String>) o;
                 noList.addAll(redisTrackList);
@@ -134,7 +134,7 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
                 List<String> collect = partition.get(0).stream().map(req -> req.getTrackNo()).distinct().collect(Collectors.toList());
                 noList.addAll(collect);
                 // 缓存到redis
-                redisUtil.set(RedisCacheConstants.DMP_TRACK123_TRACK_NO, noList);
+                redisUtil.set(RedisCacheConstants.DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO, noList);
 
                 //物流商数据处理
                 ResponseData responseData = this.processTrackData(partition.get(0), cfgAppClient);
@@ -144,7 +144,7 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
             } else {
 
                 // 没有达到100条数据后清楚redis重新拉取过滤
-                redisUtil.del(RedisCacheConstants.DMP_TRACK123_TRACK_NO);
+                redisUtil.del(RedisCacheConstants.DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO);
 
                 //物流商数据处理
                 ResponseData responseData = this.processTrackData(list, cfgAppClient);
