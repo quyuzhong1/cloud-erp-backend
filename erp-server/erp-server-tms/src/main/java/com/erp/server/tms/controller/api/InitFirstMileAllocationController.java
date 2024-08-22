@@ -264,7 +264,7 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:initFirstMileAllocation:submit",
+            menuCode = "tms:initFirstMileAllocation:delete",
             serviceClass = InitFirstMileAllocationService.class,
             keyIdName = "ids"
     )

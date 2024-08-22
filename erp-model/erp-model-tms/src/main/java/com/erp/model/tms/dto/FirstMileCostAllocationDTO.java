@@ -455,6 +455,24 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private Integer count;
     }
 
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
     @Data
     @NoArgsConstructor
     public static class PagingVO {
@@ -525,6 +543,14 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 核算期间id
          */
         private String reportPeriodId;
+        /**
+         * 核算月份
+         */
+        private String reportPeriod;
+        /**
+         * 核算月份【导出使用】
+         */
+        private String reportPeriodStr;
 
         /**
          * 会计期间
@@ -579,6 +605,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 对账月份
          */
         private LocalDate reconciliationMonth;
+        /**
+         * 对账月份【导出使用】
+         */
+        private LocalDate reconciliationMonthStr;
 
         /**
          * 店铺id
@@ -679,7 +709,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 本月签收数量
          */
         private Integer currentMonthReceiveQty;
-
+        /**
+         * 截止本月签收数量
+         */
+        private Integer asCurrentMonthReceiveQty;
         /**
          * 截止上月签收数量
          */
@@ -700,273 +733,9 @@ public class FirstMileCostAllocationDTO implements Serializable {
          */
         private String billSourceType;
         /**
-         *明细
+         * 费用来源名称
          */
-        private List<FirstMileSkuCostAllocationDetailDTO.ViewDTO> detailList;
-    }
-
-    /**
-     * 分页参数
-     */
-    @Data
-    @NoArgsConstructor
-    public static class PagingParamDTO extends SortDTO {
-
-        /**
-         * 页面高级查询
-         */
-        private List<AdvanceQueryDTO> advanceQueryDTOList;
-
-        /**
-         * sqlMap 默认key default
-         */
-        private Map<String,String> sqlMap;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO {
-        /**
-         * 主键id
-         *
-         */
-        private String  id;
-
-        /**
-         * 备注
-         */
-        private String remark;
-
-        /**
-         * 对账单id
-         */
-        private String reconciliationId;
-
-        /**
-         * 对账单单据编号
-         */
-        private String reconciliationCode;
-
-        /**
-         * 物流单id
-         */
-        private String logisticsBillId;
-
-        /**
-         * 物流单明细id
-         */
-        private String logisticsBillDetailId;
-        /**
-         * 签收时间
-         */
-        private LocalDateTime receiveTime;
-        /**
-         * 期初费用分摊id
-         */
-        private String initFirstMileId;
-        /**
-         * 期初费用分摊明细id
-         */
-        private String initFirstMileDetailId;
-
-        /**
-         * 暂估账单id
-         */
-        private String estimatedBillId;
-
-        /**
-         * SKU成本id
-         */
-        private String skuCostId;
-
-        /**
-         * SKU成本明细id
-         */
-        private String skuCostDetailId;
-
-        /**
-         * 重量分摊id
-         */
-        private String weightAllocationId;
-
-        /**
-         * 核算期间id
-         */
-        private String reportPeriodId;
-
-        /**
-         * 会计期间
-         */
-        private String accountPeriod;
-
-        /**
-         * 核算状态：waitConfirm=待确认，confirm=已确认
-         */
-        private String status;
-        /**
-         * 核算状态名称
-         */
-        private String statusName;
-        /**
-         * 发货单id
-         */
-        private String sourceId;
-        /**
-         * 发货单编码
-         */
-        private String sourceCode;
-
-        /**
-         * 物流商id
-         */
-        private String supplierId;
-
-        /**
-         * 物流商名称
-         */
-        private String supplierName;
-
-        /**
-         * {业务单号}取值发货单关联的业务单号
-         * FBA：取值FBA货件单号
-         * 第三方仓：海外仓入库单号
-         */
-        private String businessCode;
-
-        /**
-         * 业务类型：demandOverseasWarehouse=第三方仓，demandPlatformWarehouse=FBA
-         */
-        private String businessType;
-
-        /**
-         * 运单号
-         */
-        private String transportNo;
-
-        /**
-         * 对账月份
-         */
-        private LocalDate reconciliationMonth;
-
-        /**
-         * 店铺id
-         */
-        private String shopId;
-
-        /**
-         * 店铺名称
-         */
-        private String shopName;
-
-        /**
-         * 发货仓库id
-         */
-        private String fromWarehouseId;
-
-        /**
-         * 发货仓库名称
-         */
-        private String fromWarehouseName;
-
-        /**
-         * 目的仓库id
-         */
-        private String toWarehouseId;
-
-        /**
-         * 目的仓库名称
-         */
-        private String toWarehouseName;
-
-        /**
-         * 目的国家
-         */
-        private String toCountry;
-
-        /**
-         * 发货时间
-         */
-        private LocalDate deliveryTime;
-
-        /**
-         * sku主键id
-         */
-        private String  costId;
-
-        /**
-         * skuId
-         */
-        private String skuId;
-
-        /**
-         * skuNO
-         */
-        private String skuNo;
-
-        /**
-         * 平台skuId
-         */
-        private String platformSkuId;
-
-        /**
-         * 平台skuNo
-         */
-        private String platformSkuNo;
-
-        /**
-         * 发货数量
-         */
-        private Integer deliveryQty;
-
-        /**
-         * 分摊重量
-         */
-        private BigDecimal allocatedWeight;
-
-        /**
-         * 单位成本
-         */
-        private BigDecimal productCost;
-
-        /**
-         * 产品总成本
-         */
-        private BigDecimal productTotalCost;
-
-        /**
-         * 期初签收数量
-         */
-        private Integer initReceiveQty;
-
-        /**
-         * 上月签收数量
-         */
-        private Integer lastMonthReceiveQty;
-
-        /**
-         * 本月签收数量
-         */
-        private Integer currentMonthReceiveQty;
-
-        /**
-         * 截止上月签收数量
-         */
-        private Integer asLastMonthReceiveQty;
-
-        /**
-         * 重量单位（默认kg）
-         */
-        private String weightUnit;
-
-        /**
-         * 币种（默认CNY）
-         */
-        private String currency;
-
-        /**
-         * 费用来源：estimatedBill=预估账单，actualBill=实际账单
-         */
-        private String billSourceType;
+        private String billSourceTypeName;
 
         /**
          * 费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用
@@ -1032,5 +801,13 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 期末暂估费用
          */
         private BigDecimal endPeriodEstimatedCost;
+        /**
+         * 分摊组织id
+         */
+        private String orgId;
+        /**
+         * 分摊组织名称
+         */
+        private String orgName;
     }
 }

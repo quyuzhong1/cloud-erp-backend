@@ -77,4 +77,11 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @return
      */
     List<FirstMileCostAllocationEntity> getBySkuCostId(String skuCostId);
+
+    /**
+     * 计算分摊费用
+     * @param entity
+     * @return
+     */
+    BatchResultDTO calcAllocatedCost(FirstMileCostAllocationEntity entity);
 }
