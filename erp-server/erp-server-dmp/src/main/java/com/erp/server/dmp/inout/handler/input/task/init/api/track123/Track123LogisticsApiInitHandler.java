@@ -93,7 +93,8 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
 
         if (ObjectUtil.isNotEmpty(trackData.getAccepted())) {
             list.addAll(trackData.getAccepted().getContent());
-        } else if (CollectionUtils.isNotEmpty(trackData.getRejected())) {
+        }
+        if (CollectionUtils.isNotEmpty(trackData.getRejected())) {
             for (Rejected rejected : trackData.getRejected()) {
                 TrackDetail trackDetail = new TrackDetail();
                 trackDetail.setRejected(rejected);
