@@ -254,7 +254,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .orderByAsc("qty")
             );
 
-            if(pickLocationList.isEmpty()){
+            if(pickInventoryList.isEmpty()){
                 WarehouseLocationReplenishEntity replenishItem = new WarehouseLocationReplenishEntity();
                 BeanMapper.copy(entity, replenishItem);
                 replenishItem.setSuggestQty(dto.getQty());
