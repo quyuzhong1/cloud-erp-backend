@@ -169,7 +169,7 @@ public class SoB2cDeliveryController extends BaseController {
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (isManual && isSuccess) {
                     //生成销售出库单
-                    Boolean isOutStock = soB2cDeliveryService.pushTransferInfo(entity);
+                    Boolean isOutStock = soB2cDeliveryService.pushTransferInfoError(entity);
                     if (isOutStock) {
                         soB2cDeliveryService.generateB2cSoOutstock(entity);
                     }

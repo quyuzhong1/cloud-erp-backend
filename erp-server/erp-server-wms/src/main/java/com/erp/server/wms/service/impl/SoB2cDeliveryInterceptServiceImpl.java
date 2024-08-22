@@ -321,6 +321,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, String id) {
         SoB2cDeliveryInterceptEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -419,7 +420,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     // 移除波次
                     waveListDetailService.moveOut(soB2cDelivery.getId());
                 }
-                soB2cDeliveryService.updateStatus(Collections.singletonList(soB2cDelivery.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
             }
         } else {
             //拦截失败的订单正常自动出库流程
@@ -451,7 +451,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
                 //扣减冻结库存
                 soB2cDeliveryService.outFreezeVirtualInventory(soB2cDelivery);
-
                 //生成直接调拨单
                 Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
                 if (isPush) {

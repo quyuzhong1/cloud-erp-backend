@@ -157,7 +157,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -295,6 +294,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
                     .filter(req -> req.getParentSkuId().equals(handleListDTO.getSkuId())
                             && req.getBomVersion().equals(handleListDTO.getBomVersion())
+                            && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType())
                     ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 handleListDTO.setIsCombination(Boolean.TRUE);
@@ -1019,10 +1019,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getOne(new LambdaQueryWrapper<FirstMileDeliveryEntity>()
                     .eq(FirstMileDeliveryEntity::getSourceCode, requisitionApplicationEntity.getCode())
                     .eq(FirstMileDeliveryEntity::getSourceType, SourceTypeEnum.REQUISITION_APPLICATION.getCode()));
-            firstMileDeliveryDetailService.lambdaUpdate()
-                    .eq(FirstMileDeliveryDetailEntity::getMainId, firstMileDelivery.getId())
-                    .set(FirstMileDeliveryDetailEntity::getFbaShipmentCode, requisitionApplicationEntity.getFbaShipmentCode())
-                    .update();
+            if(firstMileDelivery != null){
+                firstMileDeliveryDetailService.lambdaUpdate()
+                        .eq(FirstMileDeliveryDetailEntity::getMainId, firstMileDelivery.getId())
+                        .set(FirstMileDeliveryDetailEntity::getFbaShipmentCode, requisitionApplicationEntity.getFbaShipmentCode())
+                        .update();
+            }
         }
         if(CollectionUtils.isNotEmpty(updateList)){
             service.updateBatchById(updateList);
@@ -1071,6 +1073,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         .map(PickingDetailEntity::getQty)
                         .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty);
+            }
+            if (detailEntity.getApproveQty() < detailEntity.getPickingQty()) {
+                throw new ServiceException(ApiError.ERROR_99133, detailEntity.getSkuNo());
             }
         }
         requisitionApplicationDetailService.updateBatchById(detailEntities);
@@ -1443,7 +1448,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
             ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(application.getChannelId());
             addDTO.setDeliveryWarehouseId(shopInfo.getWarehouseId());
+            addDTO.setCountryCode(shopInfo.getDictCountryCode());
         }else {
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(application.getChannelId());
+            if(Objects.nonNull(overseasProviderWarehouseEntity)){
+                addDTO.setCountryCode(overseasProviderWarehouseEntity.getCountry());
+            }
             addDTO.setDeliveryWarehouseId(application.getChannelId());
         }
         addDTO.setSourceId(application.getId());

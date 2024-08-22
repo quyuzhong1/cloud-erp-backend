@@ -8,6 +8,7 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import lombok.*;
 
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -182,6 +183,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
         private List<RequisitionApplicationDetailDTO.AddDTO> detailList;
     }
 
@@ -201,6 +203,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
         private List<RequisitionApplicationDetailDTO.UpdateDTO> detailList;
     }
 
@@ -1041,7 +1044,7 @@ public class RequisitionApplicationDTO implements Serializable {
         @NotBlank(message = "要货申请不能为空")
         private String id;
 
-        @Size(min = 1,max = 100,message = "至少存在一条明细,且明细条数不可大于100条,才可生成拣货单")
+        @Size(min = 1,message = "至少存在一条明细,才可生成拣货单")
         private List<String> detailIds;
     }
 

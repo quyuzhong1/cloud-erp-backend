@@ -30,7 +30,7 @@
             AND t.warehouse_id = #{params.warehouseId}
             AND t.org_id = #{params.orgId}
             AND t.sku_id = #{params.skuId}
-            <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
+            <if test="params.warehouseLocation != null">
                 AND t.warehouse_location = #{params.warehouseLocation}
             </if>
             <if test="params.sourceCode != null and params.sourceCode != ''">
@@ -51,7 +51,7 @@
             <if test="params.dateList != null and params.dateList.size > 0">
                 and t.bill_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > t.bill_date
             </if>
-            order by t.trade_time desc,t.id desc
+            order by t.bill_date desc,t.id desc
     </select>
     <select id="exportTransFlow" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$TransFlowPagingViewDTO">
         SELECT t.id,t.trade_time,
@@ -101,7 +101,10 @@
                 #{item}
             </foreach>
         </if>
-        order by t.trade_time desc,t.id desc
+        <if test="params.warehouseLocation != null">
+            and t.warehouse_location = #{params.warehouseLocation}
+        </if>
+        order by t.bill_date desc,t.id desc
     </select>
     <select id="paging" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockTransFlowPagingViewDTO">
         SELECT t.id,t.trade_time AS tradeTime,
@@ -681,7 +684,7 @@
                  and m.source_code ilike concat('%', #{params.sourceCode}::text ,'%')
              </if>
          </where>
-        group by source_type,source_code order by trade_time desc
+        group by source_type,source_code order by bill_date desc
       ) t where t.transport_qty > 0
     </select>
 
@@ -764,6 +767,19 @@
             </foreach>
         </if>
         group by tf.sku_id,tf.warehouse_id
+    </select>
+    <select id="listByOrgId" resultType="java.lang.String">
+        SELECT inventory_id from transaction_flow where is_deleted = false
+        <if test=" null != orgId and '' != orgId  ">
+            and org_id =#{orgId}
+        </if>
+        <if test=" null != inventoryId and '' != inventoryId  ">
+            and inventory_id =#{inventoryId}
+        </if>
+        <if test=" null != startDate">
+            and bill_date >= #{startDate}
+        </if>
+        GROUP BY inventory_id
     </select>
 
 </mapper>

@@ -137,6 +137,7 @@ public class WmsDeliveryPlanDetailDTO implements Serializable {
         /**
         * 产品id
         */
+        @NotBlank(message = "sku不能为空")
         private String skuId;
 
         /**

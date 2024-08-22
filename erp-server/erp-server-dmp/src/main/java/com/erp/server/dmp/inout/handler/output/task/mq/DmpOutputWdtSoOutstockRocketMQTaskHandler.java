@@ -41,7 +41,7 @@ import cn.hutool.core.collection.CollUtil;
 @Scope("prototype")
 public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler{
 
-	public static List<String> nullPositionNo = Arrays.asList("直发暂存" , "发货暂存待放回" , "下架暂存" , "销退质检" , "补货暂存" , "其它未上架" , "销退暂存" , "盘亏暂存" , "发货暂存" , "采购未上架");
+	public static List<String> nullPositionNo = Arrays.asList("直发暂存" , "发货暂存待放回" , "下架暂存" , "销退质检" , "补货暂存" , "其它未上架" , "销退暂存" , "盘亏暂存" , "发货暂存" , "采购未上架" , "空仓位");
 	
 	@Override
 	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -221,5 +221,10 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
             entityItemList.add(itemEntity);
         }
         return entityItemList;
+    }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("code");
     }
 }

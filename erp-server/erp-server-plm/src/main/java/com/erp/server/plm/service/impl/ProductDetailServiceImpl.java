@@ -82,6 +82,7 @@ import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailServic
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.sdk.wangdian.server.WangDianClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -90,6 +91,7 @@ import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -110,7 +112,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_SERVICE;
 
@@ -642,7 +643,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:plm:getNoInventorySku",keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = RedisKeyConstant.CACHE_SKU_NO_INVENTORY,keyGenerator = "myKeyGenerator")
     public List<SkuVO> getNoInventorySku() {
         return this.baseMapper.getNoInventorySku();
     }
@@ -2129,6 +2130,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = RedisKeyConstant.CACHE_SKU_NO_INVENTORY, allEntries = true)
     public Boolean approvalPass(ProductDetailOperateDTO dto, Boolean isCheck) {
         ProductDetailEntity entity = this.getById(dto.getId());
 
@@ -5016,19 +5018,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         //供应商信息
-        List<String> supplierIdList = skuList.stream().map(SkuInfoSimpleVO::getSupplierId).collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+//        List<String> supplierIdList = skuList.stream().map(SkuInfoSimpleVO::getSupplierId).collect(Collectors.toList());
+//        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+//
+//        Map<String, List<PurchasePriceDTO.SupplierSkuPrice>> suppelierMap = supplierSkuPriceList
+//                .stream()
+//                .collect(Collectors.groupingBy(PurchasePriceDTO.SupplierSkuPrice::getSupplierId));
+//
+//        for (SkuInfoSimpleVO skuVO : skuList) {
+//            List<PurchasePriceDTO.SupplierSkuPrice> supplierList = suppelierMap.get(skuVO.getSupplierId());
+//            if (CollectionUtils.isNotEmpty(supplierList)){
+//                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierList.get(0);
+//                //含税价
+//                skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+//            }
+//        }
 
-        Map<String, List<PurchasePriceDTO.SupplierSkuPrice>> suppelierMap = supplierSkuPriceList
-                .stream()
-                .collect(Collectors.groupingBy(PurchasePriceDTO.SupplierSkuPrice::getSupplierId));
-
+        List<String> skuNoList = skuList.stream().map(SkuInfoSimpleVO::getSkuNo).filter(StringUtils::isNotEmpty).distinct().collect(Collectors.toList());
+        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
         for (SkuInfoSimpleVO skuVO : skuList) {
-            List<PurchasePriceDTO.SupplierSkuPrice> supplierList = suppelierMap.get(skuVO.getSupplierId());
-            if (CollectionUtils.isNotEmpty(supplierList)){
-                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierList.get(0);
-                //含税价
-                skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+            if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
+                skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
             }
         }
         return skuList;

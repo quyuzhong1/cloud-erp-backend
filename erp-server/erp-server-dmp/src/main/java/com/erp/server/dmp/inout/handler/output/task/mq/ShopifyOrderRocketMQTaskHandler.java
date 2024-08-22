@@ -186,11 +186,17 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 
         // 平台订单原始取消状态(已退款,部分退款)
         DmpBasicSystemCodeEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpSoInfoEntity.getReturnStatus());
-        if (DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
-            orderDTO.setIsCancel(Boolean.FALSE);
-        } else {
+        if (dmpBasicSystemCodeEnum != null && !DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
             orderDTO.setIsCancel(Boolean.TRUE);
+        } else {
+            orderDTO.setIsCancel(Boolean.FALSE);
         }
+
+        JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
+        if (jsonObject.get("sellerOrderCode") != null) {
+            orderDTO.setSellerOrderCode(jsonObject.get("sellerOrderCode")+"");
+        }
+
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
@@ -265,7 +271,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         Map<String, Object> lableMap = new HashMap<>();
         JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
         if (jsonObject.get("refundedLineItemIds") != null) {
-            Set<String> refundedLineItemIds = (Set<String>) jsonObject.get("refundedLineItemIds");
+            List<String> refundedLineItemIds = (List<String>) jsonObject.get("refundedLineItemIds");
             if (!CollectionUtils.isEmpty(refundedLineItemIds) && refundedLineItemIds.contains(soDetailEntity.getThirdDetailId())) {
                 lableMap.put("isRefunded", true);
                 detailDTO.setIsDetailRefund(true);
@@ -299,7 +305,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         if (Objects.isNull(soReceiverEntity)) {
             return null;
         }
-
         return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(soReceiverEntity.getBuyerId()))
                 .customerId(soReceiverEntity.getBuyerId())
@@ -342,8 +347,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 .code(dmpSoInfoEntity.getLogisticsCode())
                 .name(name)
                 .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
-                .logisticsChannelId(dmpSoInfoEntity.getLogisticsChannelId())
-                .logisticsChannelName(dmpSoInfoEntity.getLogisticsChannelName())
                 .estimatedShippingCost(cost)
                 .actualShippingCost(BigDecimal.ZERO)
                 .accessoriesCostCurrency("")
@@ -367,5 +370,10 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 .currency(dmpSoInfoEntity.getCurrencyCode())
                 .shippingCost(dmpSoInfoEntity.getShippingAmount())
                 .build();
+    }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("platformCode");
     }
 }

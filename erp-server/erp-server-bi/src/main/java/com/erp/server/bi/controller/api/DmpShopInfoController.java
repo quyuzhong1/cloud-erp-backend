@@ -61,7 +61,7 @@ public class DmpShopInfoController extends BaseController {
     */
     @LogAction(value = LogActionEnum.INSERT, desc = "店铺数据新增")
     @PostMapping("/add")
-    public ApiResult addDmpShopInfo(@RequestBody DmpShopInfoDTO dto) {
+    public ApiResult addDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
         Boolean flag = this.biShopInfoService.addDmpShopInfo(dto);
         return flag == true ? success() : failure();
     }
@@ -75,7 +75,7 @@ public class DmpShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "店铺数据编辑")
     @PostMapping("/update")
-    public ApiResult updateDmpShopInfo(@RequestBody DmpShopInfoDTO dto) {
+    public ApiResult updateDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
         Boolean flag = this.biShopInfoService.updateDmpShopInfo(dto);
         return flag == true ? success() : failure();
     }
@@ -89,8 +89,8 @@ public class DmpShopInfoController extends BaseController {
      */
     @LogViewService
     @RequestMapping("/getDmpShopInfoById")
-    public ApiResult<DmpShopInfoDTO>  getDmpShopInfoById(@RequestParam("id") String id) {
-        DmpShopInfoDTO dto = biShopInfoService.getDmpShopInfoById(id);
+    public ApiResult<BiShopInfoDTO>  getDmpShopInfoById(@RequestParam("id") String id) {
+        BiShopInfoDTO dto = biShopInfoService.getDmpShopInfoById(id);
         return success(dto);
     }
     

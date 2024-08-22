@@ -9,10 +9,10 @@ import com.common.business.enums.DistributedLockEnum;
 import com.common.business.enums.InventoryClosedRecordEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.RedisUtil;
-import com.common.business.validator.AddGroup;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.message.constant.RedisKeyConstant;
@@ -21,7 +21,6 @@ import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.InOutStockCoreConverter;
@@ -32,16 +31,12 @@ import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
-import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -644,19 +639,30 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         if(inventory.getQty() < qty && !allowNegativeInventory(warehouseId)) {
             ServiceException.runError(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, skuNo, warehouseDetail.getName(), warehouseLocationEntity.getName(), inventoryStatusName,inventory.getQty(),qty));
         }
-        //后面会放开
-       /* //虚拟库存校验
-        if (InventoryStatusEnum.USABLE.equals(status)) {
+        /**
+         * 1. 调拨单：手动创建、调拨申请下推
+         * 2. 其他出库单：
+         * 3. 采购退货单：
+         * 4. 委外发料：正常领料、超出领料
+         * 5. 加工单：组装、拆卸
+         *
+         */
+        List<String> typeList = Arrays.asList(InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode(),InventorySourceTypeEnum.OTHER_INSTOCK.getCode(),InventorySourceTypeEnum.PURCHASE_RETURN_ORDER.getCode()
+                ,InventorySourceTypeEnum.RECEIVE_MATERIAL.getCode(),InventorySourceTypeEnum.RETURN_MATERIAL.getCode(),InventorySourceTypeEnum.MACHINE_INFO.getCode());
+        //虚拟库存校验
+        if (InventoryStatusEnum.USABLE.equals(status) && (typeList.contains(sourceTypeEnum.getCode()) || Arrays.asList(InventoryBusinessTypeEnum.DIRECT_ALLOCATE.getCode(),InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode()).contains(businessType.getCode()))){
             //虚拟库存
             Integer virtualQty = virtualInventoryService.getInventoryQtyByWarehouseId(warehouseId,skuId);
-            virtualQty = ObjectUtil.isEmpty(virtualQty) ? MathUtil.ZERO : virtualQty;
-            //仓库可用库存
-            Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(warehouseId, skuId);
-            log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",warehouseDetail.getName(),skuNo,virtualQty,usableInventoryTotal);
-            if (qty > usableInventoryTotal - virtualQty) {
-                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,virtualQty,usableInventoryTotal - virtualQty);
+            //有分配虚拟库存则校验
+            if (MathUtil.compareTo(virtualQty,MathUtil.ZERO) > MathUtil.ZERO) {
+                //仓库可用库存
+                Integer realInventoryTotal = inventoryService.getRealInventoryTotal(warehouseId, skuId);
+                log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",warehouseDetail.getName(),skuNo,virtualQty,realInventoryTotal);
+                if (Math.abs(qty) > realInventoryTotal - virtualQty) {
+                    ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,skuNo,warehouseDetail.getName(),virtualQty,realInventoryTotal - virtualQty);
+                }
             }
-        }*/
+        }
     }
 
     /**

@@ -38,7 +38,8 @@
         update_user_name,
         version,
         is_deleted,
-        target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times, sync_operate
+        target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times, sync_operate,
+        third_code
     </sql>
     <delete id="deleteByIds">
         delete from dmp_push_task where id in

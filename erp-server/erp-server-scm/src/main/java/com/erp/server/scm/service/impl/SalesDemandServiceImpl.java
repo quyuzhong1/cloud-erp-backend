@@ -28,6 +28,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.BiShopInfoDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -499,7 +500,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         }
         //店铺
         if (StringUtils.isNotBlank(shopId)) {
-            DmpShopInfoDTO dmpShopInfoDTO = dmpTaskFeign.getShopById(shopId);
+            BiShopInfoDTO dmpShopInfoDTO = dmpTaskFeign.getShopById(shopId);
             if (ObjectUtils.isEmpty(dmpShopInfoDTO)) {
                 throw new ServiceException(ApiError.ERROR_9029);
             }

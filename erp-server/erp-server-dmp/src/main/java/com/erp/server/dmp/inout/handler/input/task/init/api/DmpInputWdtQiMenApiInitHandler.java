@@ -70,6 +70,8 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 			if("wms.stockin.PreStockin.search".equals(apiType)) {
 				parseObject.put("mtFrom", dmpInputWdtApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 				parseObject.put("mtTo", dmpInputWdtApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+			}else if("setting.Shop.queryShop".equals(apiType) || "setting.Warehouse.queryWarehouse".equals(apiType)){
+				
 			}else {
 				parseObject.put("startTime", dmpInputWdtApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 				parseObject.put("endTime", dmpInputWdtApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));	
@@ -131,6 +133,9 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 					String message = jsonObject.getString("sub_message");
 					if(StringUtils.isBlank(message)) {
 						message = jsonObject.getString("msg");
+						if("http status error:502".equals(message) || "http响应内容解析异常，返回内容无法解析成json或xml结构".equals(message)) {
+							Thread.sleep(30000);
+						}
 					}
 					throw new ServiceException("调用旺店通奇门" + apiType + "接口报错，错误原因：" + message);
 				}
@@ -139,6 +144,9 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 				
 				Integer total = data.getInteger("total_count");
 				JSONArray order = data.getJSONArray("order");
+				if(order == null) {
+					order = data.getJSONArray("details");
+				}
 				
 				currTotal = currTotal + order.size();
 				DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();

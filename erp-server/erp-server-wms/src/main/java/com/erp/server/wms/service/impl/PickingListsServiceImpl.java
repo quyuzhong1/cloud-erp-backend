@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -139,6 +140,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         executionData.setCustomerId(dto.getCustomerId());
         executionData.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());
         executionData.setSourceCode(dto.getSourceCode());
+        executionData.setCountryCode(dto.getCountryCode());
         executionData.setDetails(details);
         // 执行拣货规则
         List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
@@ -289,6 +291,10 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             int count = soOutstockService.countNotVoided(entity.getSourceId());
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_99087);
+            }
+            SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getById(entity.getSourceId());
+            if (ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNotice.getApproveStatus())) {
+                throw new ServiceException(ApiError.ERROR_99161);
             }
         }
     }
@@ -616,12 +622,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     public List<String> generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results) {
         List<String> skuIdList = executionData.getDetails().stream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        Pair<List<LocationInventoryResultDTO>, List<String>> resultData = Pair.create(Collections.emptyList(), Collections.emptyList());
+        Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> resultData = Pair.create(Collections.emptyList(), Collections.emptyMap());
         if (CollectionUtils.isEmpty(results)) {
             resultData = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData);
             results = resultData.getFirst();
             if (!CollectionUtils.isEmpty(resultData.getSecond())) {
-                return resultData.getSecond();
+                return new ArrayList<>(resultData.getSecond().keySet());
             }
         }
         Map<String, List<LocationInventoryResultDTO>> resultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
@@ -677,7 +683,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             save(entity);
             pickingDetailService.saveBatch(entities);
         }
-        return resultData.getSecond();
+        return new ArrayList<>(resultData.getSecond().keySet());
     }
 
     @Override

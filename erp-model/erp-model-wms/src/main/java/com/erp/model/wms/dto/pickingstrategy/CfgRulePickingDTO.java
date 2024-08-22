@@ -112,6 +112,12 @@ public class CfgRulePickingDTO {
          * B2B客户
          */
         private String customerId;
+
+        /**
+         * B2B订单收货国家
+         */
+        private String countryCode;
+
         /**
          * 头程目的仓库
          */
