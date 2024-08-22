@@ -106,15 +106,17 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             //过滤掉上次已经拉取过的任务
             Object o = redisUtil.lGet(RedisCacheConstants.DMP_TRACK123_TRACK_NO, 0 , -1);
             if (ObjectUtil.isNotEmpty(o)) {
-                List<String> redisTrackList = (List<String>) o;
-                noList.addAll(redisTrackList);
-                Iterator<LogisticsTrackDTO.UpdateTrackDTO> iterator = list.iterator();
-                while (iterator.hasNext()) {
-                    LogisticsTrackDTO.UpdateTrackDTO dto = iterator.next();
-                    if (redisTrackList.contains(dto.getTrackNo())) {
-                        iterator.remove();
+                List<List<String>> redisTrackList = (List<List<String>>) o;
+                for (List<String> strings : redisTrackList) {
+                    Iterator<LogisticsTrackDTO.UpdateTrackDTO> iterator = list.iterator();
+                    while (iterator.hasNext()) {
+                        LogisticsTrackDTO.UpdateTrackDTO dto = iterator.next();
+                        if (strings.contains(dto.getTrackNo())) {
+                            iterator.remove();
+                        }
                     }
                 }
+
             }
 
             //过滤后查询是否超过100条
