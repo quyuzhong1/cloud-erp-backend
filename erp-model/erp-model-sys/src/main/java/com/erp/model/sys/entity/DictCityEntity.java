@@ -100,6 +100,21 @@ public class DictCityEntity extends BaseEntity<DictCityEntity> {
 
     @TableField("code")
     private String code;
+    /**
+     * 二字码
+     */
+    @TableField("code_two")
+    private String codeTwo;
+    /**
+     * 英文编码
+     */
+    @TableField("code_en")
+    private String codeEn;
+    /**
+     * 葡萄牙语编码
+     */
+    @TableField("code_pt")
+    private String codePt;
 
     @TableField(exist = false)
     private String countryName;

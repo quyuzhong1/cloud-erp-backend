@@ -11,6 +11,7 @@ import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
+import com.sdk.wms.antu.dto.request.AntuCreateOutboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
@@ -169,6 +170,7 @@ public interface OverseasWarehouseInboundConverter {
 
     @Mappings({
             @Mapping(target = "referenceNo",  source = "referenceNo"),
+            @Mapping(target = "orderDesc",  source = "platformCode"),
             @Mapping(target = "shippingMethod",  source = "shippingMethod"),
             @Mapping(target = "warehouseCode",  source = "warehouseCode"),
             @Mapping(target = "verify",  source = "verify",defaultValue = "0"),
@@ -215,4 +217,33 @@ public interface OverseasWarehouseInboundConverter {
     })
     ImlCreateOutboundReq.Item outboundDtoToIml(ThirdWarehouseCreateOutboundReq.Item createOutboundReq);
 
+    @Mappings({
+            @Mapping(target = "referenceNo",  source = "referenceNo"),
+            @Mapping(target = "swOrderNumber",  source = "platformCode"),
+            @Mapping(target = "shippingMethod",  source = "shippingMethod"),
+            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
+            @Mapping(target = "verify",  source = "verify",defaultValue = "1"),
+            @Mapping(target = "countryCode",  source = "receiverInfo.countryCode"),
+            @Mapping(target = "province",  source = "receiverInfo.province"),
+            @Mapping(target = "city",  source = "receiverInfo.city"),
+            @Mapping(target = "district",  source = "receiverInfo.district"),
+            @Mapping(target = "isInsurance",  constant = "1"),
+            @Mapping(target = "address1",  source = "receiverInfo.address1"),
+            @Mapping(target = "address2",  source = "receiverInfo.address2"),
+            @Mapping(target = "address3",  source = "receiverInfo.address3"),
+            @Mapping(target = "zipcode",  source = "receiverInfo.zipCode"),
+            @Mapping(target = "license",  source = "receiverInfo.taxNumber"),
+            @Mapping(target = "name",  source = "receiverInfo.name"),
+            @Mapping(target = "phone",  source = "receiverInfo.phone"),
+            @Mapping(target = "doorplate",  constant = "123"),
+            @Mapping(target = "email",  source = "receiverInfo.email"),
+            @Mapping(target = "items",  source = "items"),
+    })
+    AntuCreateOutboundReq outboundDtoToAntu(ThirdWarehouseCreateOutboundReq createOutboundReq);
+
+    @Mappings({
+            @Mapping(target = "productSku",  source = "productSku"),
+            @Mapping(target = "quantity",  source = "quantity"),
+    })
+    AntuCreateOutboundReq.Item outboundDtoToAntu(ThirdWarehouseCreateOutboundReq.Item createOutboundReq);
 }

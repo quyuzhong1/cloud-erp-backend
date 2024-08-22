@@ -101,8 +101,9 @@ public class AntuServerTest {
     public void createOutboundBillTest() {
         AntuCreateOutboundReq antuCreateOutboundReq = AntuCreateOutboundReq.builder()
                 .referenceNo("WJTEST20240821008")
-                .aliexpressOrderNo("16542313542145")
+                .swOrderNumber("14465312644131564841")
                 .shippingMethod("PAC")
+                .verify(1)
                 .warehouseCode("BR01")
                 .countryCode("BR")
                 .province("PR")
@@ -115,11 +116,9 @@ public class AntuServerTest {
                 .zipcode("80320260")
                 .license("07309700945")
                 .name("Bruno Mendes")
-                .doorplate("123")
                 .phone("41912345776")
-                .swOrderNumber("14465312644131564841")
+                .doorplate("123")
                 .email("")
-                .verify(1)
                 .items(Arrays.asList(
                         AntuCreateOutboundReq.Item.builder()
                                 .productSku("3PL-1C-TEST")
@@ -133,7 +132,7 @@ public class AntuServerTest {
 
     @Test
     public void cancelOutboundBillTest() {
-        AntuResponse<String> response = antuService.cancelOutboundBill("A001-240820-0015","平台拦截");
+        AntuResponse<String> response = antuService.cancelOutboundBill("A001-240621-0003","平台拦截");
         System.out.println(response);
     }
 }
