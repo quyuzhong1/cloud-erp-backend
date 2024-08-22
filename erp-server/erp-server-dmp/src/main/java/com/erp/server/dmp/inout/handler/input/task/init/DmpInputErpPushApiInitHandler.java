@@ -42,7 +42,7 @@ public class DmpInputErpPushApiInitHandler extends DmpInputInitHandler{
         if(StringUtils.isBlank(system)) {
         	throw new ServiceException("dmp_cfg_input的extend_json扩展字段中系统未配置");
         }
-        String className = "com.erp.model."+ system +".entity."+ StringUtils.capitalize(system) +"LocalPushMessageEntity";
+        String className = "com.erp.model."+ system +".entity."+ StringUtils.capitalize(system) +"PushMsgEntity";
         Class<BaseEntity> clazz = null;
 		try {
 			clazz = (Class<BaseEntity>) Class.forName(className);

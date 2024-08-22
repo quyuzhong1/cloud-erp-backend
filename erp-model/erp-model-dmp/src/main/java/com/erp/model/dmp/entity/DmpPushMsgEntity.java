@@ -81,6 +81,11 @@ public class DmpPushMsgEntity extends BaseEntity<DmpPushMsgEntity> {
     @TableField("remark")
     private String remark;
     /**
+     * 父id
+     */
+    @TableField("parent_id")
+    private String parentId;
+    /**
     * 输入任务id
     */
     @TableField("input_task_id")

@@ -1,4 +1,4 @@
-package com.erp.model.wms.entity;
+package com.erp.model.oms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -21,8 +21,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("wms_push_msg")
-public class WmsPushMsgEntity extends BaseEntity<WmsPushMsgEntity> {
+@TableName("oms_push_msg")
+public class OmsPushMsgEntity extends BaseEntity<OmsPushMsgEntity> {
 
     /**
     * 目标系统
@@ -33,7 +33,7 @@ public class WmsPushMsgEntity extends BaseEntity<WmsPushMsgEntity> {
     * 来源系统
     */
     @TableField("source_platform")
-    private String sourcePlatform = "wms";
+    private String sourcePlatform = "oms";
     /**
     * 来源类型
     */
@@ -64,10 +64,9 @@ public class WmsPushMsgEntity extends BaseEntity<WmsPushMsgEntity> {
     */
     @TableField("remark")
     private String remark;
-    
     /**
-     * 父id
-     */
+    * 父id
+    */
     @TableField("parent_id")
     private String parentId;
 
@@ -87,6 +86,8 @@ public class WmsPushMsgEntity extends BaseEntity<WmsPushMsgEntity> {
     public static final String PUSH_DATA = "push_data";
 
     public static final String REMARK = "remark";
+
+    public static final String PARENT_ID = "parent_id";
 
     @Override
     public Serializable pkVal() {

@@ -775,6 +775,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         wmsPushMsgEntity.setSourceCode(entity.getCode());
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        if (!OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
+        	wmsPushMsgEntity.setParentId(entity.getSoId());
+	    }
         
         wmsPushMsgService.save(wmsPushMsgEntity);
         
