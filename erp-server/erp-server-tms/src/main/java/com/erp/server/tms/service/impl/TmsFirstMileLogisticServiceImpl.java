@@ -290,6 +290,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 throw new ServiceException("发货单更新物流状态失败");
             }
         }
+
+        //新增暂估账单
+        firstMileEstimatedBillService.add(tmsFirstMileLogisticEntity.getId());
         return new BaseResultDTO.AddDTO(tmsFirstMileLogisticEntity.getId(), tmsFirstMileLogisticEntity.getOutstockCode());
     }
 
