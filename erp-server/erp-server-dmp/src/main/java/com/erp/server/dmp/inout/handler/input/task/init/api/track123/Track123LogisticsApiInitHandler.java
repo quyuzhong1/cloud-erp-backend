@@ -104,7 +104,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             List<String> noList = new ArrayList<>();
 
             //过滤掉上次已经拉取过的任务
-            Object o = redisUtil.get(RedisCacheConstants.DMP_TRACK123_TRACK_NO);
+            Object o = redisUtil.lGet(RedisCacheConstants.DMP_TRACK123_TRACK_NO, 0 , -1);
             if (ObjectUtil.isNotEmpty(o)) {
                 List<String> redisTrackList = (List<String>) o;
                 noList.addAll(redisTrackList);
@@ -126,7 +126,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
                 List<String> collect = partition.get(0).stream().map(req -> req.getTrackNo()).distinct().collect(Collectors.toList());
                 noList.addAll(collect);
                 // 缓存到redis
-                redisUtil.set(RedisCacheConstants.DMP_TRACK123_TRACK_NO, noList);
+                redisUtil.lSet(RedisCacheConstants.DMP_TRACK123_TRACK_NO, noList);
 
                 //物流商数据处理
                 ResponseData responseData = this.processTrackData(partition.get(0), cfgAppClient);
