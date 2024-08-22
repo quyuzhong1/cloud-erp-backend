@@ -217,7 +217,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         if(Objects.isNull(entity)){
             throw new ServiceException("海外仓为空");
         }
-        BeanUtil.copyProperties(entity,dto);
+        BeanUtil.copyProperties(dto,entity);
         boolean result = this.updateById(entity);
         if(result){
             String msg = StrUtil.format("用户【{}】编辑平台账号修改为【{}】,仓库简称修改为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), entity.getPlatformAccount(),entity.getShortName());
