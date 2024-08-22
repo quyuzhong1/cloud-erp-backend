@@ -94,13 +94,13 @@ public class FeignBuilder {
 
     
     public <T extends BaseEntity<T>> FeignBuilder apply(String data) {
-        queryParams.add(new QueryParam(QueryTypeEnum.APPLY, data));
+        queryParams.add(new QueryParam(QueryTypeEnum.APPLY, null,data));
         return this;
     }
 
     
     public <T extends BaseEntity<T>> FeignBuilder last(String data) {
-        queryParams.add(new QueryParam(QueryTypeEnum.LAST, data));
+        queryParams.add(new QueryParam(QueryTypeEnum.LAST, null,data));
         return this;
     }
     
