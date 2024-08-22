@@ -86,6 +86,11 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     @TableField("current_month_receive_qty")
     private Integer currentMonthReceiveQty;
     /**
+     * 截止本月签收数量
+     */
+    @TableField("as_current_month_receive_qty")
+    private Integer asCurrentMonthReceiveQty;
+    /**
     * 截止上月签收数量
     */
     @TableField("as_last_month_receive_qty")

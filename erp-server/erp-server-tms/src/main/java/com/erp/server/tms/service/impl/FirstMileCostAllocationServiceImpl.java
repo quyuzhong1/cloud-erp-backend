@@ -154,12 +154,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Override
     public void exportExcel(FirstMileCostAllocationDTO.PagingParamDTO params, HttpServletResponse response) {
         params.setPermissionSql(params.getPermissionSql());
-        List<FirstMileCostAllocationDTO.ExportDTO> list = baseMapper.exportList(params);
+        List<FirstMileCostAllocationDTO.PagingVO> list = baseMapper.exportList(params);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         // 填充字段值
-        fillExportDb(list);
+        fillPagingDb(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/firstMileCostAllocationExport.xlsx";
         String name = "头程费用分摊导出";
@@ -171,17 +171,6 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
-    }
-
-    private void fillExportDb(List<FirstMileCostAllocationDTO.ExportDTO> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        list.forEach(e -> {
-            e.setStatusName(ConfirmStatusEnum.getName(e.getStatus()));
-            e.setFeeTypeName(DictCostCategoryEnum.getName(e.getFeeType()));
-            e.setAllocationTypeName(CostAllocationEnum.getName(e.getAllocationType()));
-        });
     }
 
     @Override
@@ -200,22 +189,24 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         return lambdaQuery().eq(FirstMileCostAllocationEntity::getSkuCostId,skuCostId).list();
     }
 
+    @Override
+    public BatchResultDTO calcAllocatedCost(FirstMileCostAllocationEntity entity) {
+        if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())){
+            return BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"费用分摊已确认，无法重新分摊");
+        }
+
+        return null;
+    }
+
     private void fillPagingDb(List<FirstMileCostAllocationDTO.PagingVO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         //添加分摊明细
-        List<String> ids = list.stream().map(FirstMileCostAllocationDTO.PagingVO::getId).distinct().collect(Collectors.toList());
-        List<FirstMileSkuCostAllocationDetailEntity> detailEntityList = firstMileSkuCostAllocationDetailService.listByMainIds(ids);
         list.forEach(e -> {
             e.setStatusName(ConfirmStatusEnum.getName(e.getStatus()));
-            List<FirstMileSkuCostAllocationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(f -> Objects.equals(f.getCostMainId(), e.getCostId())).collect(Collectors.toList());
-            List<FirstMileSkuCostAllocationDetailDTO.ViewDTO> viewDTOS = FirstMileCostAllocationConverter.INSTANCE.detailToViewDTO(detailEntityList1);
-            viewDTOS.forEach(viewDTO -> {
-                viewDTO.setFeeTypeName(DictCostCategoryEnum.getName(viewDTO.getFeeType()));
-                viewDTO.setAllocationTypeName(CostAllocationEnum.getName(viewDTO.getAllocationType()));
-            });
-            e.setDetailList(viewDTOS);
+            e.setFeeTypeName(DictCostCategoryEnum.getName(e.getFeeType()));
+            e.setAllocationTypeName(CostAllocationEnum.getName(e.getAllocationType()));
         });
     }
     /**

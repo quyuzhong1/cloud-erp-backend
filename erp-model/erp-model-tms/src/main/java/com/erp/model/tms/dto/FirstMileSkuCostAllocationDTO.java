@@ -1,6 +1,8 @@
 package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -97,6 +99,10 @@ public class FirstMileSkuCostAllocationDTO implements Serializable {
         * 本月签收数量
         */
         private Integer currentMonthReceiveQty;
+        /**
+         * 截止本月签收数量
+         */
+        private Integer asCurrentMonthReceiveQty;
 
         /**
         * 截止上月签收数量
@@ -222,7 +228,11 @@ public class FirstMileSkuCostAllocationDTO implements Serializable {
         */
         @NotNull(message = "本月签收数量不能为空")
         private Integer currentMonthReceiveQty;
-
+        /**
+         * 截止本月签收数量
+         */
+        @NotNull(message = "截止本月签收数量不能为空")
+        private Integer asCurrentMonthReceiveQty;
         /**
         * 截止上月签收数量
         */

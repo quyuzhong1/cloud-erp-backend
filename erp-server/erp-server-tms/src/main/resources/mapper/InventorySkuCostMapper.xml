@@ -60,15 +60,14 @@
     </sql>
     <select id="tabList" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$TabListDTO">
         SELECT
-        COUNT(*) AS count,
+        COUNT(distinct c.id) AS count,
         c.status AS tabFlag
         FROM  inventory_sku_cost c
-        LEFT JOIN  inventory_sku_cost_detail cd ON cd.main_id=c.id and cd.is_deleted=false
         WHERE  c.is_deleted=false
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-        GROUP BY status
+        GROUP BY c.status
     </select>
     <select id="paging" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$PagingVO">
         <include refid="pagingSql"/>
