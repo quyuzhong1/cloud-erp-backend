@@ -128,8 +128,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public BatchResultDTO updateStatus(String id, String status) {
-        this.updateStatus(id, status);
-        return BatchResultDTO.success();
+        this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).eq(FirstMileEstimatedBillEntity::getId, id);
+        return BatchResultDTO.success(id, id);
     }
 
     @Override

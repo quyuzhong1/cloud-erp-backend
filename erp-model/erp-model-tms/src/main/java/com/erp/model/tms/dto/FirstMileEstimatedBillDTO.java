@@ -26,7 +26,7 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String id;
 
         /**
-         * 业务单号
+         * 业务单号【可排序】
          */
         private String businessCode;
 
@@ -36,12 +36,12 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String outStockId;
 
         /**
-         * 物流运单号
+         * 物流运单号【可排序】
          */
         private String transportNo;
 
         /**
-         * 暂估账单状态
+         * 暂估账单状态【可排序】
          */
         private String status;
 
@@ -51,7 +51,7 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String statusName;
 
         /**
-         * 实际账单状态
+         * 实际账单状态【可排序】
          */
         private String actualBillStatus;
 
@@ -66,12 +66,12 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String shopId;
 
         /**
-         * 店铺（名称）
+         * 店铺（名称）【可排序】
          */
         private String shopName;
 
         /**
-         * 目的国家
+         * 目的国家【可排序】
          */
         private String toCountry;
 
@@ -81,7 +81,7 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String toCountryName;
 
         /**
-         * 计费规则
+         * 计费规则【可排序】
          */
         private String feeRule;
 
@@ -141,7 +141,7 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String logisticsBillCostId;
 
         /**
-         * 结算币种
+         * 结算币种【可排序】
          */
         private String currency;
 
@@ -151,7 +151,7 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String currencySymbol;
 
         /**
-         * 运输状态
+         * 运输状态【可排序】
          */
         private String transportStatus;
 
@@ -161,17 +161,17 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String transportStatusName;
 
         /**
-         * 签收日期
+         * 签收日期【可排序】
          */
         private LocalDateTime signTime;
 
         /**
-         * 账单确认日期
+         * 账单确认日期【可排序】
          */
         private LocalDateTime confirmTime;
 
         /**
-         * 创建时间
+         * 创建时间【可排序】
          */
         private LocalDateTime createTime;
 
