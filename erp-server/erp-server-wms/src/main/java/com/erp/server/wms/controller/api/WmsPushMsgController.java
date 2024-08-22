@@ -14,44 +14,44 @@ import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.WmsLocalPushMessageService;
+import com.erp.server.wms.service.WmsPushMsgService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.WmsLocalPushMessageDTO;
+import com.erp.model.wms.dto.WmsPushMsgDTO;
 
 /**
  * 本地推送消息表
  *
  * @author shukai
- * @since 2024-08-21
+ * @since 2024-08-22
  */
 @Slf4j
 @RestController
 @LogSystemModule("本地推送消息表")
-@RequestMapping("/wmsLocalPushMessage")
-public class WmsLocalPushMessageController extends BaseController {
+@RequestMapping("/wmsPushMsg")
+public class WmsPushMsgController extends BaseController {
 
     @Resource
-    private WmsLocalPushMessageService wmsLocalPushMessageService;
+    private WmsPushMsgService wmsPushMsgService;
 
     /**
     * 新增
     * @author shukai
-    * @date:  2024-08-21
+    * @date:  2024-08-22
     * @param dto
     * @return ApiResult<String>
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "本地推送消息表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated WmsLocalPushMessageDTO.AddDTO dto) {
-        return success(wmsLocalPushMessageService.add(dto));
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated WmsPushMsgDTO.AddDTO dto) {
+        return success(wmsPushMsgService.add(dto));
     }
 
     /**
     * 修改
     * @author shukai
-    * @date:  2024-08-21
+    * @date:  2024-08-22
     * @param dto
     * @return ApiResult
     */
@@ -59,11 +59,11 @@ public class WmsLocalPushMessageController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "本地推送消息表修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "wms:wmsLocalPushMessage:update",
-        serviceClass = WmsLocalPushMessageService.class,
+        menuCode = "wms:wmsPushMsg:update",
+        serviceClass = WmsPushMsgService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated WmsLocalPushMessageDTO.UpdateDTO dto) {
-        wmsLocalPushMessageService.update(dto);
+    public ApiResult<?> update(@RequestBody @Validated WmsPushMsgDTO.UpdateDTO dto) {
+        wmsPushMsgService.update(dto);
         return success();
     }
 

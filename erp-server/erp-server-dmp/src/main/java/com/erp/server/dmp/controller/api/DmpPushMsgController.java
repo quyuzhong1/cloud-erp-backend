@@ -14,44 +14,44 @@ import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.dmp.service.DmpPushMessageService;
+import com.erp.server.dmp.service.DmpPushMsgService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.dmp.dto.DmpPushMessageDTO;
+import com.erp.model.dmp.dto.DmpPushMsgDTO;
 
 /**
  * 本地消息表
  *
  * @author shukai
- * @since 2024-08-21
+ * @since 2024-08-22
  */
 @Slf4j
 @RestController
 @LogSystemModule("本地消息表")
-@RequestMapping("/dmpPushMessage")
-public class DmpPushMessageController extends BaseController {
+@RequestMapping("/dmpPushMsg")
+public class DmpPushMsgController extends BaseController {
 
     @Resource
-    private DmpPushMessageService dmpPushMessageService;
+    private DmpPushMsgService dmpPushMsgService;
 
     /**
     * 新增
     * @author shukai
-    * @date:  2024-08-21
+    * @date:  2024-08-22
     * @param dto
     * @return ApiResult<String>
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "本地消息表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DmpPushMessageDTO.AddDTO dto) {
-        return success(dmpPushMessageService.add(dto));
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DmpPushMsgDTO.AddDTO dto) {
+        return success(dmpPushMsgService.add(dto));
     }
 
     /**
     * 修改
     * @author shukai
-    * @date:  2024-08-21
+    * @date:  2024-08-22
     * @param dto
     * @return ApiResult
     */
@@ -59,11 +59,11 @@ public class DmpPushMessageController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "本地消息表修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "dmp:dmpPushMessage:update",
-        serviceClass = DmpPushMessageService.class,
+        menuCode = "dmp:dmpPushMsg:update",
+        serviceClass = DmpPushMsgService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated DmpPushMessageDTO.UpdateDTO dto) {
-        dmpPushMessageService.update(dto);
+    public ApiResult<?> update(@RequestBody @Validated DmpPushMsgDTO.UpdateDTO dto) {
+        dmpPushMsgService.update(dto);
         return success();
     }
 

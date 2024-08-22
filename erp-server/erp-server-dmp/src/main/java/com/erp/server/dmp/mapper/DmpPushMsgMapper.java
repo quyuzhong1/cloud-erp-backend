@@ -1,5 +1,5 @@
 package com.erp.server.dmp.mapper;
-import com.erp.model.dmp.entity.DmpPushMessageEntity;
+import com.erp.model.dmp.entity.DmpPushMsgEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -11,9 +11,9 @@ import org.apache.ibatis.annotations.Mapper;
  * </p>
  *
  * @author shukai
- * @since 2024-08-21
+ * @since 2024-08-22
  */
 @Mapper
-public interface DmpPushMessageMapper extends BaseMapper<DmpPushMessageEntity> {
+public interface DmpPushMsgMapper extends BaseMapper<DmpPushMsgEntity> {
 
 }

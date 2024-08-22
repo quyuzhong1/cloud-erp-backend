@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.dmp.mapper.DmpPushMessageMapper">
+<mapper namespace="com.erp.server.wms.mapper.WmsPushMsgMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpPushMessageEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.WmsPushMsgEntity">
        <result column="id" property="id" />
        <result column="create_time" property="createTime" />
        <result column="update_time" property="updateTime" />
@@ -12,20 +12,14 @@
        <result column="update_user_id" property="updateUserId" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="message_id" property="messageId" />
        <result column="target_platform" property="targetPlatform" />
+       <result column="source_platform" property="sourcePlatform" />
        <result column="source_type" property="sourceType" />
        <result column="source_id" property="sourceId" />
        <result column="source_code" property="sourceCode" />
        <result column="sync_operate" property="syncOperate" />
        <result column="push_data" property="pushData" />
-       <result column="message_create_time" property="messageCreateTime" />
-       <result column="message_update_time" property="messageUpdateTime" />
-       <result column="input_task_id" property="inputTaskId" />
-       <result column="convert_id" property="convertId" />
-       <result column="next_level_id" property="nextLevelId" />
-       <result column="unique_encrypt" property="uniqueEncrypt" />
-       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="remark" property="remark" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -39,7 +33,7 @@
         update_user_id,
         version,
         is_deleted,
-        message_id, target_platform, source_type, source_id, source_code, sync_operate, push_data, message_create_time, message_update_time, input_task_id, convert_id, next_level_id, unique_encrypt, data_encrypt
+        target_platform, source_platform, source_type, source_id, source_code, sync_operate, push_data, remark
     </sql>
 
 

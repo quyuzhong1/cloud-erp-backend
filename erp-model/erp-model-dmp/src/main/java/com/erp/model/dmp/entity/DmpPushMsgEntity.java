@@ -17,13 +17,13 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author shukai
- * @since 2024-08-21
+ * @since 2024-08-22
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("dmp_push_message")
-public class DmpPushMessageEntity extends BaseEntity<DmpPushMessageEntity> {
+@TableName("dmp_push_msg")
+public class DmpPushMsgEntity extends BaseEntity<DmpPushMsgEntity> {
 
     /**
     * 本地消息id
@@ -35,6 +35,11 @@ public class DmpPushMessageEntity extends BaseEntity<DmpPushMessageEntity> {
     */
     @TableField("target_platform")
     private String targetPlatform;
+    /**
+    * 来源系统
+    */
+    @TableField("source_platform")
+    private String sourcePlatform;
     /**
     * 来源类型
     */
@@ -71,6 +76,11 @@ public class DmpPushMessageEntity extends BaseEntity<DmpPushMessageEntity> {
     @TableField("message_update_time")
     private LocalDateTime messageUpdateTime;
     /**
+    * 备注
+    */
+    @TableField("remark")
+    private String remark;
+    /**
     * 输入任务id
     */
     @TableField("input_task_id")
@@ -101,6 +111,8 @@ public class DmpPushMessageEntity extends BaseEntity<DmpPushMessageEntity> {
 
     public static final String TARGET_PLATFORM = "target_platform";
 
+    public static final String SOURCE_PLATFORM = "source_platform";
+
     public static final String SOURCE_TYPE = "source_type";
 
     public static final String SOURCE_ID = "source_id";
@@ -114,6 +126,8 @@ public class DmpPushMessageEntity extends BaseEntity<DmpPushMessageEntity> {
     public static final String MESSAGE_CREATE_TIME = "message_create_time";
 
     public static final String MESSAGE_UPDATE_TIME = "message_update_time";
+
+    public static final String REMARK = "remark";
 
     public static final String INPUT_TASK_ID = "input_task_id";
 

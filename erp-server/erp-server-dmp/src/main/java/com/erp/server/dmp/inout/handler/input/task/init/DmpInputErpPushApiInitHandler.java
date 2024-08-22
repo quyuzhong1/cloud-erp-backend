@@ -13,7 +13,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
-import com.erp.model.wms.entity.WmsLocalPushMessageEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -57,9 +56,9 @@ public class DmpInputErpPushApiInitHandler extends DmpInputInitHandler{
 		while(list == null) {
 			try {
 				list = FeignQuery.create(clazz)
-						.eq(WmsLocalPushMessageEntity::getSourceType, apiType)
-						.ge(WmsLocalPushMessageEntity::getUpdateTime, dmpInputTaskEntity.getStartTime())
-						.le(WmsLocalPushMessageEntity::getUpdateTime, dmpInputTaskEntity.getEndTime())
+						.eq("source_type", apiType)
+						.ge(BaseEntity::getUpdateTime, dmpInputTaskEntity.getStartTime())
+						.le(BaseEntity::getUpdateTime, dmpInputTaskEntity.getEndTime())
 						.list();
 			} catch (Exception e) {
 				Throwable cause = e.getCause();

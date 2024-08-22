@@ -1,9 +1,27 @@
 package com.erp.server.wms.kingdee.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONUtil;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.ObjectUtils;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -26,10 +44,19 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.sys.dto.*;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
+import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -37,7 +64,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WmsLocalPushMessageEntity;
+import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -53,24 +80,14 @@ import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.WarehouseService;
-import com.erp.server.wms.service.WmsLocalPushMessageService;
+import com.erp.server.wms.service.WmsPushMsgService;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.util.ObjectUtils;
-
-import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 同步金蝶销售出库单
@@ -125,7 +142,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     private PlmTaskFeign plmTaskFeign;
     
     @Resource
-    private WmsLocalPushMessageService wmsLocalPushMessageService;
+    private WmsPushMsgService wmsPushMsgService;
 
     /**
      * 发送消息同步金蝶
@@ -751,15 +768,15 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 //            dmpSyncTaskDTO.setParentId(entity.getSoId());
 //        }
         
-        WmsLocalPushMessageEntity wmsLocalPushMessageEntity = new WmsLocalPushMessageEntity();
-        wmsLocalPushMessageEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        wmsLocalPushMessageEntity.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
-        wmsLocalPushMessageEntity.setSourceId(entity.getId());
-        wmsLocalPushMessageEntity.setSourceCode(entity.getCode());
-        wmsLocalPushMessageEntity.setSyncOperate(operate);
-        wmsLocalPushMessageEntity.setPushData(JSON.toJSONString(resultMap));
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getCode());
+        wmsPushMsgEntity.setSyncOperate(operate);
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
         
-        wmsLocalPushMessageService.save(wmsLocalPushMessageEntity);
+        wmsPushMsgService.save(wmsPushMsgEntity);
         
         return null;
     }

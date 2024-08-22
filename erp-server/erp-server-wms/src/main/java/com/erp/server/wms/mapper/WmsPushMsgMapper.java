@@ -1,5 +1,5 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.WmsLocalPushMessageEntity;
+import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -11,9 +11,9 @@ import org.apache.ibatis.annotations.Mapper;
  * </p>
  *
  * @author shukai
- * @since 2024-08-21
+ * @since 2024-08-22
  */
 @Mapper
-public interface WmsLocalPushMessageMapper extends BaseMapper<WmsLocalPushMessageEntity> {
+public interface WmsPushMsgMapper extends BaseMapper<WmsPushMsgEntity> {
 
 }

@@ -16,19 +16,24 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author shukai
- * @since 2024-08-21
+ * @since 2024-08-22
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("wms_local_push_message")
-public class WmsLocalPushMessageEntity extends BaseEntity<WmsLocalPushMessageEntity> {
+@TableName("wms_push_msg")
+public class WmsPushMsgEntity extends BaseEntity<WmsPushMsgEntity> {
 
     /**
     * 目标系统
     */
     @TableField("target_platform")
     private String targetPlatform;
+    /**
+    * 来源系统
+    */
+    @TableField("source_platform")
+    private String sourcePlatform = "wms";
     /**
     * 来源类型
     */
@@ -54,9 +59,16 @@ public class WmsLocalPushMessageEntity extends BaseEntity<WmsLocalPushMessageEnt
     */
     @TableField("push_data")
     private String pushData;
+    /**
+    * 备注
+    */
+    @TableField("remark")
+    private String remark;
 
 
     public static final String TARGET_PLATFORM = "target_platform";
+
+    public static final String SOURCE_PLATFORM = "source_platform";
 
     public static final String SOURCE_TYPE = "source_type";
 
@@ -67,6 +79,8 @@ public class WmsLocalPushMessageEntity extends BaseEntity<WmsLocalPushMessageEnt
     public static final String SYNC_OPERATE = "sync_operate";
 
     public static final String PUSH_DATA = "push_data";
+
+    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

@@ -26,6 +26,11 @@ public class FeignBuilder {
     
     private Class<?> clazz;
     
+    public <T extends BaseEntity<T>> FeignBuilder eq(String name, Object value) {
+        queryParams.add(new QueryParam(QueryTypeEnum.EQ, name, value));
+        return this;
+    }
+    
     public <T extends BaseEntity<T>> FeignBuilder eq(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.EQ, getColumn(function), value));
         return this;
