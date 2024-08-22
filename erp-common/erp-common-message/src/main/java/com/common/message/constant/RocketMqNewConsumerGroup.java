@@ -107,4 +107,9 @@ public class RocketMqNewConsumerGroup {
      * 新中台金蝶店铺
      */
     public static final String DMP_KINGDEE_SHOP_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_shop_to_dmp_group";
+    
+    /**
+     * 新中台旺店通预入库
+     */
+    public static final String DMP_WDT_PRE_STOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_pre_stock_to_wms_group";
 }

@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -7,6 +8,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 
 public class SoReturnInstockDetailDTO {
     /**
@@ -236,5 +238,13 @@ public class SoReturnInstockDetailDTO {
          * 销售退货明细表id
          */
         private String soReturnDetailId;
+        /**
+         * 金额
+         */
+        private BigDecimal amount;
+        /**
+         * 币种
+         */
+        private String currency;
     }
 }

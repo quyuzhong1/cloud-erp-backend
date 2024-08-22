@@ -174,10 +174,10 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         shopAuth.setRefreshToken(tokenDTO.getRefreshToken());
         shopAuth.setAppClientId(cfgAppClient.getClientId());
         shopAuth.setExpiresIn(tokenDTO.getAccessTokenExpireIn());
-        // token 过期时间为7天 ，提前一小时过期
+        // token 过期时间为7天
         LocalDateTime localDateTime = LocalDateTime.now().plusDays(7L);
-        //提前半小时设置token失效，以免失效了以后才刷新容易出错
-        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+        //提前10分钟设置token失效，以免失效了以后才刷新容易出错
+        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(10);
         shopAuth.setTokenExpireTime(tokenExpireTime);
 
         shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
@@ -294,10 +294,13 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         //获取SDK返回的数据
         String accessToken = tokenDTO.getAccessToken();
         String refreshToken = tokenDTO.getRefreshToken();
-        // token 过期时间为7天 ，提前一小时过期
+        // token 过期时间为7天
         LocalDateTime localDateTime = LocalDateTime.now().plusDays(7L);
-        //提前半小时设置token失效，以免失效了以后才刷新容易出错
-        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
+        //提前10分钟设置token失效，以免失效了以后才刷新容易出错
+        LocalDateTime tokenExpireTime = localDateTime.minusMinutes(10);
+
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), dto.getShopId());
+        redisUtil.del(tokenKey);
 
         //更新店铺token
         shopAuthService.refreshToken(shopAuthEntity.getId(), accessToken, refreshToken, 7*3600*24, tokenExpireTime);

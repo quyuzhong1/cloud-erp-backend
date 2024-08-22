@@ -11,7 +11,6 @@ import com.erp.model.dmp.entity.DmpMongoHandleTaskEntity;
 import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
 import com.erp.server.dmp.handler.DmpMongoHandler;
-import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpMongoHandleTaskService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;

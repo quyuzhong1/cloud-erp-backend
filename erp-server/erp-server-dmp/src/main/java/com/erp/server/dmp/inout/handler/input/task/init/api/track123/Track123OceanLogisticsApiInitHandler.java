@@ -1,11 +1,14 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.track123;
 
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -19,7 +22,9 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
 import com.sdk.tms.track123.model.request.TrackRequest;
+import com.sdk.tms.track123.model.response.Rejected;
 import com.sdk.tms.track123.model.response.ResponseData;
+import com.sdk.tms.track123.model.response.TrackDetail;
 import com.sdk.tms.track123.model.response.TrackResponse;
 import com.sdk.tms.track123.service.TrackShipperService;
 import io.seata.common.util.CollectionUtils;
@@ -28,10 +33,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +47,9 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
     private LogisticsBillFeign logisticsBillFeign;
     @Resource
     private TrackShipperService trackShipperService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -76,23 +81,81 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
                 .trackEnable(true)
                 .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
                 .build();
-        List<ResponseData> responseDataList = new ArrayList<>();
-        getTrackData(query, responseDataList, cfgAppClient);
-
+        ResponseData trackData = getTrackData(query, cfgAppClient);
+        if (ObjectUtil.isEmpty(trackData)) {
+            return Collections.emptyList();
+        }
 
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 
-        dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(responseDataList));
-        dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
+        List<TrackDetail> list = new ArrayList<>();
 
+        if (ObjectUtil.isNotEmpty(trackData.getAccepted())) {
+            list.addAll(trackData.getAccepted().getContent());
+        }
+
+        if (CollectionUtils.isNotEmpty(trackData.getRejected())) {
+            for (Rejected rejected : trackData.getRejected()) {
+                TrackDetail trackDetail = new TrackDetail();
+                trackDetail.setRejected(rejected);
+                list.add(trackDetail);
+            }
+        }
+        dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(list));
+        dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 
         return dmpInputTaskInitDTOList;
     }
 
-    private void getTrackData(LogisticsBillDetailQueryDTO query, List<ResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
+    private ResponseData getTrackData(LogisticsBillDetailQueryDTO query, CfgAppClientEntity cfgAppClient) {
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
         if (list.size() > MathUtil.NUMBER_100){
-            //列表数据较多情况下，进行分割集合
+
+            List<String> noList = new ArrayList<>();
+
+            //过滤掉上次已经拉取过的任务
+            Object o = redisUtil.get(RedisCacheConstants.DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO);
+            if (ObjectUtil.isNotEmpty(o)) {
+                List<String> redisTrackList = (List<String>) o;
+                noList.addAll(redisTrackList);
+                Iterator<LogisticsTrackDTO.UpdateTrackDTO> iterator = list.iterator();
+                while (iterator.hasNext()) {
+                    LogisticsTrackDTO.UpdateTrackDTO dto = iterator.next();
+                    if (redisTrackList.contains(dto.getTrackNo())) {
+                        iterator.remove();
+                    }
+                }
+            }
+
+            //过滤后查询是否超过100条
+            if (list.size() > MathUtil.NUMBER_100){
+                //列表数据较多情况下，进行分割集合
+                List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+
+                //一次请求一百条并存储到redis下次过滤
+                List<String> collect = partition.get(0).stream().map(req -> req.getTrackNo()).distinct().collect(Collectors.toList());
+                noList.addAll(collect);
+                // 缓存到redis
+                redisUtil.set(RedisCacheConstants.DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO, noList);
+
+                //物流商数据处理
+                ResponseData responseData = this.processTrackData(partition.get(0), cfgAppClient);
+                if (Objects.nonNull(responseData)){
+                    return responseData;
+                }
+            } else {
+
+                // 没有达到100条数据后清楚redis重新拉取过滤
+                redisUtil.del(RedisCacheConstants.DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO);
+
+                //物流商数据处理
+                ResponseData responseData = this.processTrackData(list, cfgAppClient);
+                if (Objects.nonNull(responseData)){
+                    return responseData;
+                }
+            }
+
+/*            //列表数据较多情况下，进行分割集合
             List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
             //物流商数据处理
             partition.forEach(e -> {
@@ -100,15 +163,16 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
                 if (Objects.nonNull(responseData)){
                     responseDataList.add(responseData);
                 }
-            });
+            });*/
         }else {
             //物流商数据处理
             ResponseData responseData = this.processTrackData(list, cfgAppClient);
             if (Objects.nonNull(responseData)){
-                responseDataList.add(responseData);
+                return responseData;
             }
         }
         log.info("========同步物流轨迹数据完成==========");
+        return null;
     }
 
     private ResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {

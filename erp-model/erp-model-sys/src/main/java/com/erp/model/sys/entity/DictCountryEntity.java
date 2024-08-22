@@ -113,6 +113,12 @@ public class DictCountryEntity extends BaseEntity<DictCountryEntity> {
     @TableField("data_flag")
     private String dataFlag;
 
+    /**
+     * ISO 3166-1三位字母代码
+     */
+    @TableField("alpha3")
+    private String alpha3;
+
 
     public static final String NAME_CN = "name_cn";
 

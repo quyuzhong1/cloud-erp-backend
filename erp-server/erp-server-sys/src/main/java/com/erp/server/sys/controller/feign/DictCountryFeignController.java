@@ -81,4 +81,13 @@ public class DictCountryFeignController {
     public List<DictCountryOrgEntity> listCountryOrgByOrgCode(@RequestBody String orgCode) {
         return dictCountryOrgService.listCountryByOrgCode(orgCode);
     }
+
+
+    /**
+     * 根据国家id或三字码 集合 获取到国家列表
+     */
+    @PostMapping("/listCountryByIdsOrAlpha3")
+    public List<DictCountryEntity> listCountryByIdsOrAlpha3(@RequestBody List<String> codeList) {
+        return dictCountryService.listCountryByIdsOrAlpha3(codeList);
+    }
 }
