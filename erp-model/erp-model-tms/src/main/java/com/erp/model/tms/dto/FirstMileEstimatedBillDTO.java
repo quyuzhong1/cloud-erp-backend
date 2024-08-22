@@ -1,8 +1,11 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -115,17 +118,17 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         /**
          * 预计计费重
          */
-        private int chargedWeight;
+        private BigDecimal chargedWeight = BigDecimal.ZERO;
 
         /**
          * 预计实重
          */
-        private int actualWeight;
+        private BigDecimal actualWeight = BigDecimal.ZERO;
 
         /**
          * 预计体积重
          */
-        private int volumeWeight;
+        private BigDecimal volumeWeight = BigDecimal.ZERO;
 
         /**
          * 重量单位
@@ -141,6 +144,11 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 结算币种
          */
         private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
 
         /**
          * 运输状态
@@ -173,8 +181,9 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         private String logisticsChannelId;
     }
 
+    @EqualsAndHashCode(callSuper = true)
     @Data
-    public static class PagingParam{
+    public static class PagingParam extends SortDTO {
         /**
          * 页面高级查询
          */
@@ -197,6 +206,8 @@ public class FirstMileEstimatedBillDTO implements Serializable {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Tab{
         /**
          * 标签编码

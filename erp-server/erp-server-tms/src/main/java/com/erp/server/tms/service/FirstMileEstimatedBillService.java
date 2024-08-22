@@ -38,7 +38,7 @@ public interface FirstMileEstimatedBillService extends SuperService<FirstMileEst
 
     void importExcel(MultipartFile excelFile, HttpServletResponse response);
 
-    void exportExcel(FirstMileEstimatedBillDTO.ExportParam dto);
+    void exportExcel(FirstMileEstimatedBillDTO.ExportParam dto, HttpServletResponse response);
 
     /**
      * 根据物流单id删除记录

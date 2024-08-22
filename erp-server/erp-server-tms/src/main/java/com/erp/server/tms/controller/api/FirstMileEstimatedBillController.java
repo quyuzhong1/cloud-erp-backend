@@ -76,8 +76,9 @@ public class FirstMileEstimatedBillController extends BaseController {
      * 导出Excel
      */
     @PostMapping("/exportExcel")
-    public ApiResult<?> exportExcel(@RequestBody FirstMileEstimatedBillDTO.ExportParam dto){
-        firstMileEstimatedBillService.exportExcel(dto);
+    @WebAdvanceQuery(handler = FirstMileEstimatedQueryHandler.class)
+    public ApiResult<?> exportExcel(@RequestBody FirstMileEstimatedBillDTO.ExportParam dto, HttpServletResponse response){
+        firstMileEstimatedBillService.exportExcel(dto, response);
         return ApiResult.success();
     }
 
@@ -87,7 +88,7 @@ public class FirstMileEstimatedBillController extends BaseController {
     @GetMapping("/downloadTemplate")
     public ApiResult<?> downloadTemplate(HttpServletResponse response){
         String path = "classpath:excel/firstMileEstimatedBillTemplate.xlsx";
-        String excelName = "firstMileTemplate.xlsx";
+        String excelName = "firstMileEstimatedTemplate.xlsx";
         ExcelUtil.downloadTemplate(path, excelName, response);
         return ApiResult.success();
     }

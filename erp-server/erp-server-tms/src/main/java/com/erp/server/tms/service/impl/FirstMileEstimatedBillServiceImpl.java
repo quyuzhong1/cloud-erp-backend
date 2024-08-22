@@ -1,6 +1,10 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.math.MathUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,28 +13,37 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.utils.BeanMapper;
+import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.dto.excel.FirstMileEstimatedBillExcelDTO;
+import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.tms.entity.FirstMileEstimatedBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
+import com.erp.server.tms.listener.FirstMileEstimatedBillExcelListener;
 import com.erp.server.tms.mapper.FirstMileEstimatedBillMapper;
 import com.erp.server.tms.service.FirstMileEstimatedBillService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.TmsCostDetailService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -41,6 +54,7 @@ import java.util.stream.Collectors;
  * @date 2024-08-16
  * @author tanmujin
  */
+@Slf4j
 @Service
 public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMileEstimatedBillMapper, FirstMileEstimatedBillEntity> implements FirstMileEstimatedBillService {
 
@@ -69,8 +83,9 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         for (FirstMileEstimatedBillDTO.View item : records) {
             item.setStatusName(ConfirmStatusEnum.getNameByCode(item.getStatus()));
             item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
-            item.setToCountryName(countryMap.get(item.getToCountry()));
+            item.setToCountryName(countryMap.getOrDefault(item.getToCountry(), ""));
             item.setFeeRuleName(ShippingFeeRuleEnum.getName(item.getFeeRule()));
+            item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(item.getCurrency()));
 
             //预计费用
             List<TmsCostDetailDTO.CostCompareDTO> costCompareList = tmsCostDetailService.getCostCompareListById(item.getLogisticsBillCostId());
@@ -98,11 +113,13 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                             v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()), 4, RoundingMode.HALF_UP));
                         });
                     }
-                    /*List<TmsFirstMileLogisticDTO.PackingDTO> packingDTOList = deliveryDTO.getPackingDTOList();
-                    item.setActualWeight();
-                    item.setVolumeWeight();
-                    item.setChargedWeight();
-                    item.setWeightUnit();*/
+                    List<TmsFirstMileLogisticDTO.PackingDTO> packingDTOList = deliveryDTO.getPackingDTOList();
+                    BigDecimal actualWeight = packingDTOList.stream().map(v -> BigDecimal.valueOf(new Long(v.getPackageWeight()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal volumeWeight = packingDTOList.stream().map(v -> v.getVolumeWeight() == null ? BigDecimal.ZERO : v.getVolumeWeight()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    item.setActualWeight(actualWeight);
+                    item.setVolumeWeight(volumeWeight);
+                    item.setChargedWeight(actualWeight.max(volumeWeight));
+                    item.setWeightUnit("kg");
                 }
             }
             item.setTransportStatusName(FmLogisticTrackStatusEnum.getNameByCode(item.getTransportStatus()).getName());
@@ -126,23 +143,58 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public List<FirstMileEstimatedBillDTO.Tab> tabList() {
-        return Collections.emptyList();
+        List<FirstMileEstimatedBillDTO.Tab> list = new ArrayList<>();
+        list.add(getTabCount(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), "物流商待确认"));
+        list.add(getTabCount(ConfirmStatusEnum.CONFIRMED.getCode(), "物流商已确认"));
+        return list;
+    }
+
+    private FirstMileEstimatedBillDTO.Tab getTabCount(String code, String tabFlagName) {
+        int count = this.count(new LambdaQueryWrapper<FirstMileEstimatedBillEntity>().eq(FirstMileEstimatedBillEntity::getStatus, code));
+        return new FirstMileEstimatedBillDTO.Tab(code, tabFlagName, count);
     }
 
     @Override
     public void importExcel(MultipartFile excelFile, HttpServletResponse response) {
 
+
+        FirstMileEstimatedBillExcelListener listener = new FirstMileEstimatedBillExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), FirstMileEstimatedBillExcelDTO.class, listener).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        if (listener.getDataList().isEmpty()) {
+            throw new ServiceException(ApiError.ERROR_95123, "基础数据");
+        }
+        List<FirstMileEstimatedBillExcelDTO> successList = listener.getSuccessList();
+        List<FirstMileEstimatedBillExcelDTO> errorList = listener.getErrorList();
+        for (FirstMileEstimatedBillExcelDTO dto : successList) {
+
+        }
     }
 
     @Override
-    public void exportExcel(FirstMileEstimatedBillDTO.ExportParam dto) {
-        /*if(! dto.getIds().isEmpty()){
-            List<FirstMileEstimatedBillEntity> list = this.listByParamIds(dto.getIds());
-            List<FirstMileEstimatedBillDTO.View> viewList = BeanMapper.copyList(list, FirstMileEstimatedBillDTO.View.class);
-            fillData(viewList);
+    public void exportExcel(FirstMileEstimatedBillDTO.ExportParam dto, HttpServletResponse response) {
+        List<FirstMileEstimatedBillDTO.View> viewList;
+        if(! dto.getIds().isEmpty()){
+            viewList = baseMapper.listByParamIds(dto.getIds());
         }else {
-            baseMapper.listAll(dto);
-        }*/
+            viewList = baseMapper.listByParam(dto);
+        }
+        fillData(viewList);
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        StringBuilder builder = new StringBuilder();
+        builder.append("头程暂估账单导出").append(date);
+        try {
+            new ExcelPrintUtils().patchExport(viewList, response, builder.toString(), "excel/firstMileEstimatedBillExport.xlsx");
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     @Override
