@@ -122,6 +122,9 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         if(this.validateDataBlack(dmpSoInfoEntity, cfgOutputId)) {
             return null;
         }
+        if(CollUtil.isEmpty(dmpSoDetailEntityList)) {
+        	return null;
+        }
         //设置对应关系
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
 
