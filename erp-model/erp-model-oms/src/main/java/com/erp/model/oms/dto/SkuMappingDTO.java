@@ -317,6 +317,11 @@ public class SkuMappingDTO implements Serializable {
          * 是否匹配：true=是, false=否
          */
         private Boolean matchResult;
+
+        /**
+         * 仓库简称
+         */
+        private String shortName;
     }
 
 
