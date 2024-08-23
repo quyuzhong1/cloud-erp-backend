@@ -107,4 +107,10 @@ public class RocketMqNewTopic {
      * 新中台金蝶店铺
      */
     public static final String DMP_KINGDEE_SHOP_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_shop_to_dmp_topic";
+
+    /**
+     * 新中台领星店铺
+     */
+    public static final String DMP_LX_SHOP_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_shop_to_dmp_topic";
+
 }

@@ -106,4 +106,10 @@ public class RocketMqNewTag {
      * 新中台金蝶店铺
      */
     public static final String DMP_KINGDEE_SHOP_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_shop_to_dmp_tag";
+
+    /**
+     * 新中台旺店通仓库
+     */
+    public static final String DMP_LX_SHOP_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_shop_to_dmp_tag";
+
 }
