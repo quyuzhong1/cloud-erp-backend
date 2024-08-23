@@ -270,7 +270,7 @@ public class TikTokSdkClientService {
         for (ShopsBean shop : tikTokShopAuthDTO.getData().getShops()) {
 //            if (tokenDTO.getSellerBaseRegion().equalsIgnoreCase(shop.getRegion())) {
             tokenDTO.setShopCipher(shop.getCipher());
-            tokenDTO.setSellerType(shop.getSellerType());
+            tokenDTO.setShopsBean(shop);
 //            }
         }
         //返回token实体
@@ -415,12 +415,12 @@ public class TikTokSdkClientService {
             result.setId(shopId);
             Map<String, Object> extendData = shopInfoEntity.getExtendData();
             result.setShopCipher(extendData.get("shopCipher") + "");
-            result.setSite(shopInfoEntity.getDictCountryCode());
+            result.setSite(extendData.get("region") + "");
+            result.setSellerType(extendData.get("sellerType") + "");
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setAccessToken(shopAuthEntity.getAccessToken());
                 redisUtil.set(tokenKey, result, shopAuthEntity.getExpiresIn());
             }
-
             return result;
         }
         return null;

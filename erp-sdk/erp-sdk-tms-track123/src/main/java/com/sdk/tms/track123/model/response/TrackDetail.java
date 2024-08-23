@@ -39,4 +39,7 @@ public class TrackDetail implements Serializable {
     private String shipmentType;
     //最后一公里
     private LastMileInfo lastMileInfo;
+
+    //错误信息，中台手动赋值用
+    private Rejected rejected;
 }

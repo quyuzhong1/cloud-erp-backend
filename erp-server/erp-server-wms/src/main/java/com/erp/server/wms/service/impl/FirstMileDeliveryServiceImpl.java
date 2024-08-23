@@ -548,7 +548,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
                 }
             } else {
-                detailAddDto.setRemark(entity.getSourceCode());
+                detailAddDto.setRemark(detailEntity.getFbaShipmentCode());
             }
 
             detailAddDtoList.add(detailAddDto);
@@ -2033,7 +2033,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
                 }
             } else {
-                detailAddDto.setRemark(deliveryEntity.getSourceCode());
+                detailAddDto.setRemark(deliveryDetail.getFbaShipmentCode());
             }
 
             detailAddDtoList.add(detailAddDto);
@@ -2149,7 +2149,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
                 }
             } else {
-                detailAddDto.setRemark(entity.getSourceCode());
+                detailAddDto.setRemark((detailEntity.getFbaShipmentCode()));
             }
             detailAddDtoList.add(detailAddDto);
         }

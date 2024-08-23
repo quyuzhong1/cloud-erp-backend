@@ -266,6 +266,7 @@ public class SoUtils {
         headMap.put("sellerName", "销售员");
         headMap.put("salesDeptName", "销售部门");
         headMap.put("warehouseName", "仓库");
+        headMap.put("virtualWarehouseName", "虚拟仓");
         headMap.put("warehouseOrgName", "库存组织");
         headMap.put("bankServiceFee", "银行手续费");
         headMap.put("shippingFee", "运费金额");

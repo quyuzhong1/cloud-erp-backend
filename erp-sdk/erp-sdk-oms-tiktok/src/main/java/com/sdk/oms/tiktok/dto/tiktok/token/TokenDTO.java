@@ -1,6 +1,7 @@
 package com.sdk.oms.tiktok.dto.tiktok.token;
 
 import com.google.gson.annotations.SerializedName;
+import com.sdk.oms.tiktok.dto.tiktok.shop.ShopsBean;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -38,5 +39,7 @@ public class TokenDTO {
     private String shopCipher;
     @SerializedName("seller_type")
     private String sellerType;
+
+    private ShopsBean shopsBean;
 
 }

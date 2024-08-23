@@ -6,8 +6,10 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.QueryConditionEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -76,6 +78,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     @Autowired
     private ShopInfoService shopInfoService;
 
+    @Resource
+    private SkuMappingExtendService skuMappingExtendService;
 
     /**
      * 添加库存sku
@@ -280,6 +284,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .in(ListingInfoEntity::getId, listingIds)
                 .update();
         service.batchOperation(updateList,addList);
+        //更新发货设置信息
+        skuMappingExtendService.copyBySkuMapping(lastestSkuMapping,skuMappingEntityList);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -344,6 +350,18 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         IPage<ListingInfoDTO.PageDTO> iPage = baseMapper.paging(query,pagingParamDTO);
         this.fillData(iPage.getRecords());
+        //如果是平台sku查询并且是list 按照顺序返回，因为可能是快粘贴
+        List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
+        List<String> platformSkuList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v->"li.platform_sku_no".equals(v.getField())&& QueryConditionEnum.IN_LIST.getCompareCode().equals( v.getCompare())).findFirst().orElse(new AdvanceQueryDTO()).getValue());
+        if(CollectionUtils.isNotEmpty(platformSkuList)){
+            List<ListingInfoDTO.PageDTO> pageDTOList = new ArrayList<>();
+            List<ListingInfoDTO.PageDTO> dbList = iPage.getRecords();
+            for (String platformSku : platformSkuList) {
+                ListingInfoDTO.PageDTO pageDTO = dbList.stream().filter(v->v.getPlatformSku().equals(platformSku)).findFirst().orElse(new ListingInfoDTO.PageDTO());
+                pageDTOList.add(pageDTO);
+            }
+            iPage.setRecords(pageDTOList);
+        }
         return new PagingVO<>(iPage);
     }
 

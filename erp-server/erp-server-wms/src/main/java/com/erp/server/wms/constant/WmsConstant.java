@@ -1,5 +1,10 @@
 package com.erp.server.wms.constant;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author Lambda
  * @Classname ScmConstant1
@@ -70,4 +75,7 @@ public interface WmsConstant {
      * 虚拟仓分货单
      */
     String VIRTUAL_WAREHOUSE_ALLOCATION = "virtualWarehouseAllocation";
+
+    List<String> WDT_NULL_LOCATION = Arrays.asList("直发暂存","发货暂存待放回", "下架暂存", "销退质检", "补货暂存", "其它未上架", "销退暂存", "盘亏暂存", "发货暂存", "采购未上架");
+
 }

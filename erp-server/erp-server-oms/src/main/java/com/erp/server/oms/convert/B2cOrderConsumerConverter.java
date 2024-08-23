@@ -10,7 +10,6 @@ import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * <p>
@@ -53,10 +52,10 @@ public interface B2cOrderConsumerConverter {
 
     @Mappings({
             // 更新的内容
-            @Mapping(target = "platformSkuNo", source = "detailDTO.platformSkuNo"),
+            @Mapping(target = "platformSkuNo", expression = "java(keepHistory ?  oldEntity.getPlatformSkuNo() : detailDTO.getPlatformSkuNo())"),
 //            @Mapping(target = "platformSpuNo", source = "detailDTO.platformSpuNo"),
-            @Mapping(target = "warehouseSkuNo", source = "detailDTO.warehouseSkuNo"),
-            @Mapping(target = "qty", source = "detailDTO.qty"),
+            @Mapping(target = "warehouseSkuNo", expression = "java(keepHistory ? oldEntity.getWarehouseSkuNo() : detailDTO.getWarehouseSkuNo())"),
+            @Mapping(target = "qty", expression = "java(keepHistory ? oldEntity.getQty() : detailDTO.getQty())"),
             @Mapping(target = "price", source = "detailDTO.price"),
             @Mapping(target = "amount", source = "detailDTO.amount"),
             @Mapping(target = "currency", source = "detailDTO.currency"),
@@ -83,7 +82,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
 
     })
-    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo, String imageUrl, String platformSpuNo);
+    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo, String imageUrl, String platformSpuNo, boolean keepHistory);
 
 
     @Mappings({

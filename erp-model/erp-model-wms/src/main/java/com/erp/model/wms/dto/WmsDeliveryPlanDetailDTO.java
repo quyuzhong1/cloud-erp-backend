@@ -125,7 +125,6 @@ public class WmsDeliveryPlanDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -137,6 +136,7 @@ public class WmsDeliveryPlanDetailDTO implements Serializable {
         /**
         * 产品id
         */
+        @NotBlank(message = "sku不能为空")
         private String skuId;
 
         /**

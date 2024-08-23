@@ -37,4 +37,13 @@ public interface BiSettlementExchangeRateMapper extends BaseMapper<BiSettlementE
      * @return List<BiSettlementExchangeRateEntity>
      */
     List<BiSettlementExchangeRateEntity> findByCurrencyAndDate(@Param(value = "date") LocalDate date, @Param(value = "sourceCurrencyCode") String sourceCurrencyCode);
+    /**
+     * 根据目标币别和来源币别查询已审核启用汇率信息
+     * @author will
+     * @date 2024/8/7 16:35
+     * @param targetCurrencyCode
+     * @param sourceCurrencyCode
+     * @return List<BiSettlementExchangeRateEntity>
+     */
+    List<BiSettlementExchangeRateEntity> listByCurrencyCode(@Param("targetCurrencyCode") String targetCurrencyCode,@Param("sourceCurrencyCode") String sourceCurrencyCode);
 }

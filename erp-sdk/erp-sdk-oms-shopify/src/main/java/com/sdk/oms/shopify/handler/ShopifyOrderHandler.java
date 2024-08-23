@@ -14,7 +14,11 @@ import com.common.business.handler.AbstractOrderHandler;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClient;
+import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService;
+import com.sdk.oms.shopify.api.graphql.model.ShopifyOrderResponse;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
+import com.sdk.oms.shopify.api.rest.model.ShopifyAddress;
 import com.sdk.oms.shopify.api.rest.model.ShopifyOrder;
 import com.sdk.oms.shopify.api.rest.model.ShopifyProduct;
 import com.sdk.oms.shopify.api.rest.model.ShopifyTransaction;
@@ -28,8 +32,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.*;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,13 +47,31 @@ import java.util.stream.Collectors;
 @BusinessType(BusinessTypeEnum.ORDER)
 public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrderDTO, PlatformOrderDTO> {
 
+    /**
+     * 国家与个人税号 字段map
+     * key 国家code
+     * val 税号标签title
+     */
+    private static final Map<String, String> countryTaxMap;
+
+    static {
+        countryTaxMap = new HashMap<>();
+        countryTaxMap.put("BR", "CPF/CNPJ");
+    }
+
     @Resource
     private ShopifyRestClientService shopifyRestClientService;
+
+    @Resource
+    private ShopifyGraphQLClientService shopifyGraphQLClientService;
+
+    @Resource
+    private ShopSdkServer shopSdkServer;
 
     @Override
     public List<PlatformShopifyOrderDTO> download(JobTaskDTO data) {
         // Shopify订单下载
-        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(data.getShopId());
+        ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(data.getShopId());
         if (null == shopInfoDTO) {
             log.error("[Shopify订单下载]从缓存中获取shopify token 失败: shopId={}", data.getShopId());
             return Collections.emptyList();
@@ -105,7 +126,7 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
     public PlatformShopifyOrderDTO downloadDetail(PlatformShopifyOrderDTO dto, JSONObject extendObj) {
         // Shopify订单下载
         String shopId = dto.getShopId();
-        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(shopId);
+        ShopifyShopInfoDTO shopInfoDTO = shopSdkServer.getTokenAndDomainByShopId(shopId);
         if (null == shopInfoDTO) {
             log.error("[Shopify详情订单下载]从缓存中获取shopify token 失败: shopId={}",shopId);
             throw new ServiceException();
@@ -122,6 +143,25 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
         LocalDateTime paymentCreatedAt = shopifyTransaction.getCreatedAt();
         dto.setPayTime(paymentCreatedAt);
         dto.setDictPayMethod(shopifyTransaction.getGateway());
+        //特定国家需要查询税号
+        String country = Optional.of(dto)
+                .map(PlatformShopifyOrderDTO::getShopifyOrder)
+                .map(ShopifyOrder::getShippingAddress)
+                .map(ShopifyAddress::getCountryCode)
+                .orElse("");
+        if(countryTaxMap.containsKey(country)){
+            String taxTitle = countryTaxMap.get(country);
+            ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient(shopifyShopDomain, accessToken);
+            ShopifyOrderResponse order = shopifyGraphQLClient.getOrderLocalizationExtensions(dto.getShopifyOrder().getOrderId());
+            List<ShopifyOrderResponse.Data.Node.LocalizationExtensions.Nodes> nodes = Optional.of(order)
+                    .map(ShopifyOrderResponse::getData)
+                    .map(ShopifyOrderResponse.Data::getNode)
+                    .map(ShopifyOrderResponse.Data.Node::getLocalizationExtensions)
+                    .map(ShopifyOrderResponse.Data.Node.LocalizationExtensions::getNodes)
+                    .orElse(new ArrayList<>());
+            String taxNo = nodes.stream().filter(v->taxTitle.equals(v.getTitle())).map(v->v.getValue()).findFirst().orElse("");
+            dto.getShopifyOrder().getCustomer().setReceiverTaxNo(taxNo);
+        }
         return dto;
     }
 }

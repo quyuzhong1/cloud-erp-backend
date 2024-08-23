@@ -73,4 +73,14 @@ public class DmpPushTaskFeignDTO {
      * 来源单据上级单据id
      */
     private String parentId;
+
+    /**
+     * 第三方单号
+     */
+    private String thirdCode;
+
+    /**
+     * 同步状态：0无需同步 1待同步 2同步中，3同步成功，4同步失败
+     */
+    private String status;
 }

@@ -109,7 +109,7 @@ public class WmsFirstMileDeliveryController {
     /**
      * 亚马逊仓库中心配置
      */
-    @GetMapping("/feign/firstMileDelivery/getCfgAmzCenter")
+    @GetMapping("/firstMileDelivery/getCfgAmzCenter")
     List<CfgAmzFulfillmentCenterEntity> getCfgAmzCenter(){
         return cfgAmzFulfillmentCenterService.list();
     }

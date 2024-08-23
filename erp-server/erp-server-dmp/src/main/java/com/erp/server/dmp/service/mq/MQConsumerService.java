@@ -49,7 +49,7 @@ public class MQConsumerService {
     @Resource
     private BiReturnOrderInfoService biReturnOrderInfoService;
     @Resource
-    private BiShopInfoService biShopInfoService;
+    private BiDmpShopInfoService biDmpShopInfoService;
     @Resource
     private BiSkuInfoService biSkuInfoService;
 
@@ -227,9 +227,9 @@ public class MQConsumerService {
             log.info("监听店铺信息消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign()) || PlatformEnum.KINGDEE_ECC.getDesc().equals(ext.getPlatformSign())){
-                biShopInfoService.checkShopByKingDee(ext);
+                biDmpShopInfoService.checkShopByKingDee(ext);
             }else {
-                biShopInfoService.checkOrder(ext);
+                biDmpShopInfoService.checkOrder(ext);
             }
             MapUtil mapUtil = getMapParam();
             if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){

@@ -46,12 +46,14 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -77,7 +79,6 @@ import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -201,11 +202,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private WarehouseLocationMoveService warehouseLocationMoveService;
 
+    @Resource
+    @Lazy
+    private SoB2cDeliveryService soB2cDeliveryService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DataIdempotent(keyIdName = "addDTO.soCode")
     public Boolean add(SoB2cDeliveryDTO.AddDTO addDTO) {
         SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(addDTO.getSourceId());
         if(ObjectUtil.isNotEmpty(existEntity)){
@@ -325,7 +328,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         //如果是手动标发不用再次调用第三方SDK标记发货，因为手动标发已经调用过了
-        if (ShipmentMarkTypeEnum.MANUAL.getCode().equals(entity.getShipmentMark())) {
+//        if (ShipmentMarkTypeEnum.MANUAL.getCode().equals(entity.getShipmentMark())) {
 //            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
 //                //调用第三方平台SDK发货
 //                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
@@ -350,7 +353,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             } else {
                 log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }
-        }
+//        }
 
         //获取一个当前时间当作发货时间
         LocalDateTime deliveryTime = LocalDateTime.now();
@@ -524,7 +527,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(req -> req.getId().equals(pickingLists.getSourceId())).findFirst().orElse(new SoB2cDeliveryEntity());
             viewDTO.setRemark(entity.getRemark());
             viewDTO.setDeliveryId(entity.getId());
-            viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
+            if (ObjectUtil.isEmpty(viewDTO.getWarehouseLocation())) {
+                viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
+            }
             //波次信息
             WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> StrUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
             viewDTO.setWaveCode(waveDeliveryDTO.getWaveCode());
@@ -978,21 +983,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .deliveryOrderId(entity.getId())
                 .build();
         //返回分检口
-        String sortingPort = cfgRuleOutService.getSortingPort(sortingPortRuleDTO);
-        CfgRuleOutDTO.CommonDTO commonDTO = cfgRuleOutService.view();
-        Boolean isDeviation = cfgRuleOutService.handleB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations(),sortingPortRuleDTO);
-
-        //记录发货单异常
-        if (!isDeviation) {
-            entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
-            entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
-        }
+        CfgRuleOutDTO.SortingPortResultDTO portResultDTO = cfgRuleOutService.getSortingPort(sortingPortRuleDTO,entity, soB2cEntity);
+        String sortingPort = portResultDTO.getPort();
         //更新发货单
         this.updateById(entity);
 
-        //自动出库
-        if (isDeviation && entity.getIsAutoOut()) {
-            asyncService.soB2cDeliveryAutoOut(soB2cEntity,entity);
+        //没有异常才能自动出库
+        if (!portResultDTO.getUpdateError() && entity.getIsAutoOut()) {
+            asyncService.syncSoB2cDeliveryAutoOut(soB2cEntity,entity);
         }
         //更新图片
         Class<SoB2cDeliveryEntity> aClass = SoB2cDeliveryEntity.class;
@@ -1003,7 +1001,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //发货单操作日志
         //操作日志
-        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "", "");
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "", "流水线称重");
 
         if(sortingPort.equals(errorPortCode)){
             return ApiResult.success("出库配置返回异常口",errorPortCode);
@@ -1088,6 +1086,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             return Collections.emptyList();
         }
         return lambdaQuery().in(SoB2cDeliveryEntity::getSourceId, sourceIds).list();
+    }
+
+    @Override
+    public List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds, String notStatus) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SoB2cDeliveryEntity::getSourceId, sourceIds)
+                .ne(SoB2cDeliveryEntity::getStatus,notStatus)
+                .list();
     }
 
 
@@ -1211,29 +1219,39 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //手工发货
         String manual = DeliverTypeEnum.MANUAL.getCode();
         if (manual.equals(deliveryType)) {
-            return this.manualDelivery(id);
+            return soB2cDeliveryService.manualDelivery(id);
         } else {
-            return this.falseDelivery(id);
+            return soB2cDeliveryService.falseDelivery(id);
         }
     }
 
     @Override
-    public void generateB2cSoOutstock(SoB2cDeliveryEntity entity) {
+    public Boolean generateB2cSoOutstock(SoB2cDeliveryEntity entity) {
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(entity.getSourceId());
         generateB2cDTO.setSourceId(entity.getId());
         generateB2cDTO.setSourceCode(entity.getCode());
         generateB2cDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         generateB2cDTO.setBatchNo(entity.getBatchNo());
         List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(entity.getId()));
         List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
-        for (SoOutstockDetailDTO.AddDTO item : detailList) {
-            String soDetailId = item.getSoDetailId();
-            String sourceDetailId = deliveryDetailList.stream().filter(d -> d.getSourceDetailId().equals(soDetailId)).
-                    map(SoB2cDeliveryDetailEntity::getId).findFirst().orElse("");
-            item.setSourceDetailId(sourceDetailId);
+        LinkedList<SoOutstockDetailDTO.AddDTO> newDetailList = new LinkedList<>();
+        for (PickingListsDTO.SourceView view : views) {
+            SoB2cDeliveryDetailEntity detailEntity = deliveryDetailList.stream().filter(v -> v.getId().equals(view.getSourceDetailId()))
+                    .findFirst().orElse(new SoB2cDeliveryDetailEntity());
+            SoOutstockDetailDTO.AddDTO dto = detailList.stream().filter(d -> d.getSoDetailId().equals(detailEntity.getSourceDetailId()))
+                    .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
+            SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
+            addDTO.setWarehouseLocation(Objects.isNull(entity.getBatchNo()) ? view.getWarehouseLocation() : "");
+            addDTO.setSkuNo(view.getSkuNo());
+            addDTO.setSkuId(view.getSkuId());
+            addDTO.setActualQty(view.getQty());
+            addDTO.setPlanQty(view.getQty());
+            addDTO.setSourceDetailId(detailEntity.getId());
+            newDetailList.add(addDTO);
         }
-        soOutstockService.generateB2cSoOutstock(generateB2cDTO);
-
+        generateB2cDTO.setDetailList(newDetailList);
+        return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
     }
 
     @Override
@@ -1820,8 +1838,32 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @return SoB2cDeliveryEntity
      */
     private SoB2cDeliveryEntity getBySoCode (String soCode) {
-       return lambdaQuery().eq(SoB2cDeliveryEntity::getSoCode,soCode).last("limit 1").one();
+       return lambdaQuery().eq(SoB2cDeliveryEntity::getSoCode,soCode).ne(SoB2cDeliveryEntity::getStatus,SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()).last("limit 1").one();
     }
+
+
+
+    @Override
+    public Boolean pushTransferInfoError(SoB2cDeliveryEntity entity) {
+        try {
+           soB2cDeliveryService.pushTransferInfo(entity);
+        } catch (Exception e) {
+            String soB2cId = entity.getSourceId();
+            String type = SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode();
+            String paramJson = JSONUtil.toJsonStr(entity);
+            String message = e.getMessage();
+            log.error("创建直接调拨单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(type);
+            addError.setMainId(soB2cId);
+            addError.setMessage(message);
+            addError.setParamJson(paramJson);
+            soB2cFeign.addSoB2cError(addError);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
 
     @Override
     @Transactional(rollbackFor =  Exception.class)
@@ -1835,7 +1877,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //发货单明细
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
-            throw new ServiceException("发货单明细不能为空");
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"发货明细");
         }
 
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, entity.getSourceId()).list();
@@ -1851,7 +1893,27 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //生成直接调拨单
             generateTransferInfo(entity,resultDTO.getTransitWarehouseId());
         }
+        //清除异常
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setMainId(entity.getSourceId());
+        deleteDTO.setType(SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode());
+        soB2cFeign.deleteError(deleteDTO);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean afreshPushTransferInfo(String soId) {
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySourceIds(Arrays.asList(soId),SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
+        if (CollectionUtil.isEmpty(soB2cDeliveryList)) {
+            return Boolean.FALSE;
+        }
+        //生成直接调拨单
+         Boolean  isPush =  soB2cDeliveryService.pushTransferInfoError(soB2cDeliveryList.get(0));
+        //推送成功则继续自动下推销售出库
+        if (isPush) {
+            soB2cDeliveryService.generateB2cSoOutstock(soB2cDeliveryList.get(0));
+        }
+        return isPush;
     }
 
     @Override
@@ -1869,6 +1931,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isNotEmpty(soOutstockList)) {
             throw new ServiceException(StrUtil.format("发货单【{}】已下推出库单不支持重新出库",entity.getCode()));
         }
+        //销售订单
+        SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class, entity.getSourceId());
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException("未找到销售订单不支持重新出库");
+        }
+        if (StrUtil.equals(soB2cEntity.getSignOrderError(), SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode())) {
+            throw new ServiceException("扣减虚拟冻结库存异常不支持重新出库");
+        }
+
         //生成直接调拨单
         this.pushTransferInfo(entity);
 
@@ -2287,6 +2358,42 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         virtualInventoryTransCoreService.approve(dto);
     }
 
+    @Override
+    public Boolean generateOutFreezeError (SoB2cDeliveryEntity entity) {
+        try {
+            soB2cDeliveryService.cleanErrorSignFreeze(entity);
+        } catch (Exception e) {
+            String soB2cId = entity.getSourceId();
+            String type = SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode();
+            String paramJson = JSONUtil.toJsonStr(entity);
+            String message = e.getMessage();
+            log.error("创建直接调拨单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(type);
+            addError.setMainId(soB2cId);
+            addError.setMessage(message);
+            addError.setParamJson(paramJson);
+            soB2cFeign.addSoB2cError(addError);
+            return Boolean.FALSE;
+        }
+
+        return  Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void cleanErrorSignFreeze (SoB2cDeliveryEntity entity) {
+        Boolean isClean = outFreezeVirtualInventory(entity);
+        if (!isClean) {
+            return;
+        }
+        //清除异常
+        SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+        deleteDTO.setMainId(entity.getSourceId());
+        deleteDTO.setType(SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode());
+        soB2cFeign.deleteError(deleteDTO);
+    }
 
     /**
      * 虚拟仓从冻结出库
@@ -2295,10 +2402,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @param entity
      */
     @Override
-    public void outFreezeVirtualInventory (SoB2cDeliveryEntity entity) {
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean outFreezeVirtualInventory (SoB2cDeliveryEntity entity) {
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
-            throw new ServiceException("为找到发货单明细");
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"发货明细");
         }
         List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
@@ -2320,7 +2429,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         //无虚拟仓库不扣虚拟库存
         if (CollectionUtils.isEmpty(paramList)) {
-            return;
+            return Boolean.TRUE;
         }
         //减少冻结
         VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
@@ -2328,6 +2437,24 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
         //更新库存
         virtualInventoryTransCoreService.approve(dto);
+        return  Boolean.TRUE;
     }
+
+    @Override
+    public Boolean afreshOutFreezeVirtualInventory(String soId) {
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = this.listBySourceIds(Arrays.asList(soId),SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
+        if (CollectionUtil.isEmpty(soB2cDeliveryList)) {
+            return Boolean.TRUE;
+        }
+        Boolean isOutVirtual = soB2cDeliveryService.generateOutFreezeError(soB2cDeliveryList.get(0));
+        if (isOutVirtual) {
+            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDeliveryList.get(0));
+            if (isPush) {
+                soB2cDeliveryService.generateB2cSoOutstock(soB2cDeliveryList.get(0));
+            }
+        }
+        return Boolean.TRUE;
+    }
+
 
 }

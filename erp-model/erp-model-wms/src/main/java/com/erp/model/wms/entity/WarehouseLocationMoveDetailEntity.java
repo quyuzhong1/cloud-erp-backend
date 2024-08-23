@@ -9,6 +9,8 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
 
+import javax.validation.constraints.NotBlank;
+
 
 /**
  * <p>
@@ -45,10 +47,20 @@ public class WarehouseLocationMoveDetailEntity extends BaseEntity<WarehouseLocat
     @TableField("out_warehouse_location")
     private String outWarehouseLocation;
     /**
+     * 取货仓位
+     */
+    @TableField("out_inventory_status")
+    private String outInventoryStatus;
+    /**
     * 上架仓位
     */
     @TableField("in_warehouse_location")
     private String inWarehouseLocation;
+    /**
+     * 上架仓位库存状态
+     */
+    @TableField("in_inventory_status")
+    private String inInventoryStatus;
     /**
     * 移动数量
     */
