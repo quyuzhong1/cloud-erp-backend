@@ -1,0 +1,157 @@
+package com.erp.model.mrp.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+/**
+ * <p>
+ * 公共配置（规则设置）请求响应实体
+ * </p>
+ *
+ * @author will
+ * @since 2024-08-23
+*/
+@Data
+@NoArgsConstructor
+public class CfgRuleCommonDTO implements Serializable {
+
+
+
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 排序字段
+        */
+        private Integer index;
+
+        /**
+        * 上级id
+        */
+        private String parentId;
+
+        /**
+        * 名称
+        */
+        private String name;
+
+        /**
+        * 值
+        */
+        private String value;
+
+        /**
+        * 值描述
+        */
+        private String description;
+
+        /**
+        * 是否禁用
+        */
+        private Boolean disable;
+
+        /**
+        * 类型，（inventory库存配置，suggest建议配置）
+        */
+        private String type;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 排序字段
+        */
+        @NotNull(message = "排序字段不能为空")
+        private Integer index;
+
+        /**
+        * 上级id
+        */
+        @NotBlank(message = "上级id不能为空")
+        @Size(max = 19,message = "上级id最大长度不能超过19位")
+        private String parentId;
+
+        /**
+        * 名称
+        */
+        @NotBlank(message = "名称不能为空")
+        @Size(max = 64,message = "名称最大长度不能超过64位")
+        private String name;
+
+        /**
+        * 值
+        */
+        @NotBlank(message = "值不能为空")
+        @Size(max = 64,message = "值最大长度不能超过64位")
+        private String value;
+
+        /**
+        * 值描述
+        */
+        @NotBlank(message = "值描述不能为空")
+        @Size(max = 64,message = "值描述最大长度不能超过64位")
+        private String description;
+
+        /**
+        * 是否禁用
+        */
+        @NotNull(message = "是否禁用不能为空")
+        private Boolean disable;
+
+        /**
+        * 类型，（inventory库存配置，suggest建议配置）
+        */
+        @NotBlank(message = "类型，（inventory库存配置，suggest建议配置）不能为空")
+        @Size(max = 32,message = "类型，（inventory库存配置，suggest建议配置）最大长度不能超过32位")
+        private String type;
+
+
+    }
+
+
+}

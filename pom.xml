@@ -25,6 +25,8 @@
         <module>erp-sdk</module>
         <module>erp-server</module>
         <module>erp-chrome</module>
+        <module>erp-server-mrp</module>
+        <module>erp-model-mrp</module>
     </modules>
 
     <properties>
