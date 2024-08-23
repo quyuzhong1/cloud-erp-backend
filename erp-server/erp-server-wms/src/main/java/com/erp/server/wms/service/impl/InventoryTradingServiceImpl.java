@@ -342,7 +342,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
         dto.setWarehouseIdList(warehouseIdList);
         dto.setSkuIdList(skuIdList);
-        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode()));
+        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
 
         for (InventoryTransactionDTO transactionDTO : checkTransactionList) {
@@ -353,11 +353,11 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                 continue;
             }
             //仓库可用库存
-            Integer usableInventoryTotal = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),transactionDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(),transactionDTO.getSkuId()))
+            Integer realInventoryTotal = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),transactionDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(),transactionDTO.getSkuId()))
                     .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
-            log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",transactionDTO.getWarehouseName(),transactionDTO.getSkuNo(),virtualQty,usableInventoryTotal);
-            if (Math.abs(transactionDTO.getQty()) > usableInventoryTotal - virtualQty) {
-                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),virtualQty,usableInventoryTotal - virtualQty);
+            log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",transactionDTO.getWarehouseName(),transactionDTO.getSkuNo(),virtualQty,realInventoryTotal);
+            if (Math.abs(transactionDTO.getQty()) > realInventoryTotal - virtualQty) {
+                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),virtualQty,realInventoryTotal - virtualQty);
             }
         }
     }
