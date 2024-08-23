@@ -1,24 +1,22 @@
 package com.erp.server.mrp.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.mrp.service.CfgRuleStockUpService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
+import com.erp.server.mrp.service.CfgRuleStockUpService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 
 /**
  * 备货（规则设置）
@@ -67,6 +65,16 @@ public class CfgRuleStockUpController extends BaseController {
         return success();
     }
 
-
-
+    /**
+     * 查看详情
+     * @author will
+     * @date 2024/8/23 17:06
+     * @param id
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<CfgRuleStockUpDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(cfgRuleStockUpService.view(id));
+    }
 }

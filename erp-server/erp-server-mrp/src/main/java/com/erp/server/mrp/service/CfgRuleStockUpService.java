@@ -31,6 +31,12 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
     * @return
     */
     Boolean update(CfgRuleStockUpDTO.UpdateDTO dto);
-
-
+    /**
+     * 查看详情
+     * @author will
+     * @date 2024/8/23 17:07
+     * @param id
+     * @return ViewDTO
+     */
+    CfgRuleStockUpDTO.ViewDTO view(String id);
 }

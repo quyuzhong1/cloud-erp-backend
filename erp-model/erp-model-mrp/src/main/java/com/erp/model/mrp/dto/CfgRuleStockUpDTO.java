@@ -1,15 +1,13 @@
 package com.erp.model.mrp.dto;
 
-import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * <p>
@@ -98,7 +96,20 @@ public class CfgRuleStockUpDTO implements Serializable {
         */
         private String refType;
 
+        /**
+         * 物流信息
+         */
+        private List<CfgRuleLogisticsDTO.ViewDTO> cfgLogisticsList;
 
+        /**
+         * 常规品备货系数信息
+         */
+        private List<CfgRuleStockingRatioDTO.ViewDTO> stockingRatioList;
+
+        /**
+         * 新品备货系数信息
+         */
+        private List<CfgRuleStockingRatioDTO.ViewDTO> newStockingRatioList;
     }
 
     /**
@@ -108,6 +119,24 @@ public class CfgRuleStockUpDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        /**
+         * 物流信息
+         */
+        @NotEmpty(message = "物流信息配置不能为空")
+        @Valid
+        private List<CfgRuleLogisticsDTO.AddDTO> cfgLogisticsList;
+
+        /**
+         * 常规品备货系数信息
+         */
+        @Valid
+        private List<CfgRuleStockingRatioDTO.AddDTO> stockingRatioList;
+
+        /**
+         * 新品备货系数信息
+         */
+        @Valid
+        private List<CfgRuleStockingRatioDTO.AddDTO> newStockingRatioList;
 
     }
 
@@ -123,6 +152,25 @@ public class CfgRuleStockUpDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 物流信息
+         */
+        @NotEmpty(message = "物流信息配置不能为空")
+        @Valid
+        private List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList;
+
+        /**
+         * 常规品备货系数信息
+         */
+        @Valid
+        private List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList;
+
+        /**
+         * 新品备货系数信息
+         */
+        @Valid
+        private List<CfgRuleStockingRatioDTO.UpdateDTO> newStockingRatioList;
 
     }
 
@@ -206,7 +254,6 @@ public class CfgRuleStockUpDTO implements Serializable {
         @NotBlank(message = "关联类型不能为空")
         @Size(max = 32,message = "关联类型最大长度不能超过32位")
         private String refType;
-
 
     }
 

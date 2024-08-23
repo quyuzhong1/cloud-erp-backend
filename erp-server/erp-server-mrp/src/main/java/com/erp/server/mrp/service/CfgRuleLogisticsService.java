@@ -1,8 +1,10 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
+import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -18,19 +20,27 @@ public interface CfgRuleLogisticsService extends SuperService<CfgRuleLogisticsEn
     * 新增
     * @author will
     * @date: 2024-08-23
-    * @param dto
+    * @param logisticsList
     * @return
     */
-    BaseResultDTO.AddDTO add(CfgRuleLogisticsDTO.AddDTO dto);
+    Boolean add(List<CfgRuleLogisticsDTO.AddDTO> logisticsList,String stockUpId);
 
     /**
     * 修改
     * @author will
     * @date: 2024-08-23
-    * @param dto
+    * @param logisticsList
     * @return
     */
-    Boolean update(CfgRuleLogisticsDTO.UpdateDTO dto);
+    Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList,String stockUpId);
 
+    /**
+     * 根据备货主表id查询
+     * @author will
+     * @date 2024/8/23 16:36
+     * @param stockUpIdList
+     * @return List<CfgRuleLogisticsEntity>
+     */
+    List<CfgRuleLogisticsEntity> listByStockUpIdList (List<String> stockUpIdList);
 
 }
