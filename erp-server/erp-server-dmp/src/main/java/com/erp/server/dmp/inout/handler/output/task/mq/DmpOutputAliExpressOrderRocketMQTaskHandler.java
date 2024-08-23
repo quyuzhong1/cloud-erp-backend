@@ -195,6 +195,9 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
     	if(this.validateDataBlack(dmpSoInfoEntity, cfgOutputId)) {
     		return null;
     	}
+    	if(CollUtil.isEmpty(dmpSoDetailEntityList)) {
+    		return null;
+    	}
     	PlatformOrderDTO orderDTO = new PlatformOrderDTO();
     	orderDTO.setPlatform(dmpSoInfoEntity.getSourcePlatform());
     	LocalDateTime platformCreateTime = dmpSoInfoEntity.getPlatformCreateTime();
