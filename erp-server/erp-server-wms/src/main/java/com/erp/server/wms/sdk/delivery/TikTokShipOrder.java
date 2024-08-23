@@ -60,6 +60,8 @@ public class TikTokShipOrder extends AbstractShipOrder {
         // 当前单据物流信息
         SoB2cLogisticsEntity logisticsEntity = tuple.get(2);
 
+        List<String> resultDetailIds = new ArrayList<>();
+
         for (SoB2cEntity entity : sourceOrderList) {
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityListMap.get(entity.getId());
@@ -76,6 +78,7 @@ public class TikTokShipOrder extends AbstractShipOrder {
                 continue;
             }
             List<String> sourceDetailIds = detailEntityList.stream().map(SoB2cDetailEntity::getSourceDetailId).collect(Collectors.toList());
+            List<String> detailIdList = detailEntityList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
 
             TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
 
@@ -101,9 +104,14 @@ public class TikTokShipOrder extends AbstractShipOrder {
                 paramDTO.setOrderLineItemIds(sourceDetailIds);
                 paramDTO.setShippingProviderId(tmsScaleChannelShipDTO.getCode());
                 ShipOrderUS shipOrderUS = tikTokSdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, entity.getPlatformCode(), paramDTO);
+                resultDetailIds.addAll(detailIdList);
                 if (shipOrderUS.getCode() != 0) {
-                    throw new ServiceException(shipOrderUS.getMessage());
+                    if (!"Package has been shipped. Please not ship the package again.".equalsIgnoreCase(shipOrderUS.getMessage())
+                            && !"fulfillment not allow forward".equalsIgnoreCase(shipOrderUS.getMessage())) {
+                        throw new ServiceException(shipOrderUS.getMessage());
+                    }
                 }
+
             } else {
                 for (SoB2cDetailEntity detailEntity : detailEntityList) {
                     ShipOrderOtherParam paramDTO = new ShipOrderOtherParam();
@@ -113,9 +121,10 @@ public class TikTokShipOrder extends AbstractShipOrder {
                     paramDTO.setSelfShipment(selfShipmentBean);
                     tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO, detailEntity.getPlatformPackageId(), paramDTO);
                 }
+                resultDetailIds.addAll(detailIdList);
             }
         }
-        return new ArrayList<>();
+        return resultDetailIds;
     }
 
     @Override
