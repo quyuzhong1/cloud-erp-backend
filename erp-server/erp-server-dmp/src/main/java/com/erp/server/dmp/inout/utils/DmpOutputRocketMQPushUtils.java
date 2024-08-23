@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.utils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +23,6 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpCfgMqEntity;
@@ -41,8 +40,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.extra.spring.SpringUtil;
-import cn.hutool.http.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -65,79 +62,87 @@ public class DmpOutputRocketMQPushUtils{
 	@Qualifier("dmpOutputExecutorPool")
 	private ExecutorService dmpOutputExecutorPool;
 	
-	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
-	
 	public void dealDmpOutputTaskRecordEntityList(List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList) {
     	if(CollUtil.isEmpty(dmpOutputTaskRecordEntityList)) {
     		return;
     	}
 		
-    	Map<String, List<DmpOutputTaskRecordEntity>> mainIdRecordEntityListMaps = dmpOutputTaskRecordEntityList.stream().collect(Collectors.groupingBy(DmpOutputTaskRecordEntity::getMainId));
-    	Map<String, List<DmpOutputTaskEntity>> cfgOutputIdTaskEntityListMaps = dmpOutputTaskService.lambdaQuery().in(DmpOutputTaskEntity::getId, mainIdRecordEntityListMaps.keySet()).list().stream().collect(Collectors.groupingBy(DmpOutputTaskEntity::getCfgOutputId));
-    	dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdTaskEntityListMaps.keySet()).list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, d -> d));
-    	
     	Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
     			.in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
     			.select(DmpOutputTaskEntity::getId , DmpOutputTaskEntity::getCfgOutputId)
     			.list().stream().collect(Collectors.toMap(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId));
-    	Map<String, String> outputTypeIdMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
-    		.select(DmpCfgOutputEntity::getId , DmpCfgOutputEntity::getTypeId).list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, DmpCfgOutputEntity::getTypeId));
     	
-    	int i = 0;
-		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
-			dmpOutputExecutorPool.execute(() -> {
-				String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
-				if(StringUtils.isBlank(cfgOutputId)) {
-					return;
-				}
-				String typeId = outputTypeIdMaps.get(cfgOutputId);
-				if(StringUtils.isBlank(typeId)) {
-					return;
-				}
-				String id = dmpOutputTaskRecordEntity.getId();
-				String dataId = dmpOutputTaskRecordEntity.getDataId();
-				String redisKey = "dmp:output:task:" + dataId;
-				if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 3600, TimeUnit.SECONDS)) {
-					try {
-						String requestData = dmpOutputTaskRecordEntity.getRequestData();
-						DmpCfgMqEntity dmpCfgMqEntity = dmpHandlerCache.getRocketMQDmpCfgMqCache(typeId);
-						if(dmpCfgMqEntity == null) {
-							return;
-						}
-						RocketMQTemplate rocketMQTemplate = dmpHandlerCache.getRocketMQTemplate(typeId);
-						if(rocketMQTemplate == null) {
-							return;
-						}
-						
-						String status = DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode();
-						String responseData = "";
-						
-						Message<String> rocketMQMessage = MessageBuilder.withPayload(requestData)
-				                .setHeader("KEYS", id)
-				                .build();
-						
-						SendResult syncSend = rocketMQTemplate.syncSend(StrUtil.format("{}:{}" , dmpCfgMqEntity.getTopic(), dmpCfgMqEntity.getTag()), rocketMQMessage);
-						if (!SendStatus.SEND_OK.equals(syncSend.getSendStatus())){
-							status = DmpOutputTaskRecordStatusEnum.MQERROR.getCode();
-							responseData = StrUtil.format("发送RocketMQ数据异常，id=：{}，mq信息：{}", id , JSON.toJSONString(dmpCfgMqEntity));
-						}
-						this.updateStatus(id, status, responseData , "发送RocketMQ数据异常");
-					} catch (Exception e) {
-						this.updateStatus(id, DmpOutputTaskRecordStatusEnum.MQERROR.getCode(), "发送RocketMQ前失败" + ExceptionUtil.stacktraceToOneLineString(e) , "发送RocketMQ前失败");
-					}finally {
-						redisTemplate.delete(redisKey);
-					}
-				}else {
-					log.error(redisKey + "任务正在执行中");
-				}
-			});
-			
-			i = i + 1;
-			if(i % 3 == 0) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {}
-			}
+    	Map<String, DmpCfgOutputEntity> outputIdEntityMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
+    			.list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, d -> d));
+    	
+    	Map<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMaps = new HashMap<>();
+    	for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+    		String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
+    		List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMaps.get(cfgOutputId);
+    		if(CollUtil.isEmpty(list)) {
+    			list = new ArrayList<>();
+    		}
+    		list.add(dmpOutputTaskRecordEntity);
+    		cfgOutputRecordEntityListMaps.put(cfgOutputId, list);
+    	}
+    	
+    	for(Map.Entry<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMap : cfgOutputRecordEntityListMaps.entrySet()) {
+    		dmpOutputExecutorPool.execute(() -> {
+    			DmpCfgOutputEntity dmpCfgOutputEntity = outputIdEntityMaps.get(cfgOutputRecordEntityListMap.getKey());
+    			String typeId = dmpCfgOutputEntity.getTypeId();
+    			List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMap.getValue();
+    			int i = 0;
+    			for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : list) {
+    				String id = dmpOutputTaskRecordEntity.getId();
+    				String dataId = dmpOutputTaskRecordEntity.getDataId();
+    				String redisKey = "dmp:output:task:" + dataId;
+    				if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 3600, TimeUnit.SECONDS)) {
+    					try {
+    						String requestData = dmpOutputTaskRecordEntity.getRequestData();
+    						DmpCfgMqEntity dmpCfgMqEntity = dmpHandlerCache.getRocketMQDmpCfgMqCache(typeId);
+    						if(dmpCfgMqEntity == null) {
+    							return;
+    						}
+    						RocketMQTemplate rocketMQTemplate = dmpHandlerCache.getRocketMQTemplate(typeId);
+    						if(rocketMQTemplate == null) {
+    							return;
+    						}
+    						
+    						String status = DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode();
+    						String responseData = "";
+    						
+    						Message<String> rocketMQMessage = MessageBuilder.withPayload(requestData)
+    				                .setHeader("KEYS", id)
+    				                .build();
+    						
+    						SendResult syncSend = rocketMQTemplate.syncSend(StrUtil.format("{}:{}" , dmpCfgMqEntity.getTopic(), dmpCfgMqEntity.getTag()), rocketMQMessage);
+    						if (!SendStatus.SEND_OK.equals(syncSend.getSendStatus())){
+    							status = DmpOutputTaskRecordStatusEnum.MQERROR.getCode();
+    							responseData = StrUtil.format("发送RocketMQ数据异常，id=：{}，mq信息：{}", id , JSON.toJSONString(dmpCfgMqEntity));
+    						}
+    						this.updateStatus(id, status, responseData , "发送RocketMQ数据异常");
+    					} catch (Exception e) {
+    						this.updateStatus(id, DmpOutputTaskRecordStatusEnum.MQERROR.getCode(), "发送RocketMQ前失败" + ExceptionUtil.stacktraceToOneLineString(e) , "发送RocketMQ前失败");
+    					}finally {
+    						redisTemplate.delete(redisKey);
+    					}
+    				}else {
+    					log.error(redisKey + "任务正在执行中");
+    				}
+    			}
+    			Integer pushRate = dmpCfgOutputEntity.getPushRate();
+    			if(pushRate == null) {
+    				pushRate = 3;
+    			}
+    			if(pushRate > 0) {
+    				i = i + 1;
+        			if(i % pushRate == 0) {
+        				try {
+        					Thread.sleep(1000);
+        				} catch (InterruptedException e) {}
+        			}
+    			}
+    		});
     	}
 	}
 	
@@ -149,10 +154,10 @@ public class DmpOutputRocketMQPushUtils{
 			errorCount = dmpOutputTaskRecordEntity.getErrorCount();
 			if(!responseData.contains("数据已被他人锁住，为避免数据错误，请稍后再试")) {
 				errorCount = errorCount + 1;
-			}
-			if(errorCount >= 3 && errorCount%3 == 0) {
-				status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
-				code = dmpOutputTaskRecordEntity.getSourceCode();
+				if(errorCount >= 3 && errorCount%3 == 0) {
+					status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
+					code = dmpOutputTaskRecordEntity.getSourceCode();
+				}
 			}
 		}
 		boolean update = dmpOutputTaskRecordService.lambdaUpdate()
