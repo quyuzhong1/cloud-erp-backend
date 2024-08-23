@@ -7,12 +7,15 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.handler.PlatformSaveHandler;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -264,6 +267,41 @@ public class AsyncServiceImpl implements AsyncService {
                 soB2cDeliveryService.generateB2cSoOutstock(entity);
             }
         }
+    }
+
+    /**
+     * 取消三方仓出库单
+     * - 如果取消成功
+     *   - ERP订单状态自动变更为审核通过-配货中
+     *   - 记录日志类型：三方仓出库异常；操作内容：三方仓出库异常，三方仓出库单已自动取消
+     * - 如果取消失败
+     *   - ERP订单状态不做变更
+     *   - 记录日志类型：三方仓出库异常；操作内容：三方仓出库异常，三方仓出库单自动取消失败
+     */
+    @Override
+    @Async("wmsErpExecutor")
+    public void asyncCancelThirdWarehouseOrder(SoB2cEntity mainEntity) {
+        //调用发货拦截接口
+        OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
+        operateLogDTO.setOperation("三方仓出库异常");
+        operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
+        operateLogDTO.setBusinessId(mainEntity.getId());
+        try {
+            BatchResultDTO batchResultDTO = soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(mainEntity.getId(), "三方仓出库异常，自动取消"));
+            if(batchResultDTO.getSuccess()){
+                //拦截成功，接口会更新订单为待提交-待配货，需要自动变更为审核通过-配货中
+                mainEntity.setVersion(null);
+                mainEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+                mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+                soB2cFeign.updateById(mainEntity);
+                operateLogDTO.setContent("三方仓出库异常，三方仓出库单已自动取消");
+            }else{
+                operateLogDTO.setContent("三方仓出库异常，三方仓出库单自动取消失败");
+            }
+        }catch (Exception e){
+            log.error("三方仓出库异常，自动取消异常",e);
+        }
+        soB2cFeign.addModuleOperateLog(operateLogDTO);
     }
 
 }

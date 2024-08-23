@@ -77,4 +77,6 @@ public interface AsyncService {
      * @param entity 
      */
     void syncAutoOut(SoB2cDeliveryEntity entity);
+
+    void asyncCancelThirdWarehouseOrder(SoB2cEntity mainEntity);
 }

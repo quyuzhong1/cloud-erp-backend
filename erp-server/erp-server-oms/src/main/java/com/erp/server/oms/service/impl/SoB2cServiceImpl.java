@@ -2227,7 +2227,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //2、如果是API对接的海外仓拦截调用海外仓拦截，否则触发物流拦截
         LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-        if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+        if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
             //API海外物流拦截
             BatchResultDTO resultDTO = this.overseasProviderIntercept(add.getId(), entity, platformEnum);
             return resultDTO;
@@ -2260,6 +2260,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto = new SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO();
             dto.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             dto.setResultRemark("第三方海外仓拦截成功，自动生成拦截单");
+            dto.setThirdWarehouse(true);
             soB2cDeliveryInterceptFeign.interceptResultConfirm(dto, id);
             return BatchResultDTO.success(id, soB2cEntity.getCode(), "发货拦截成功");
         } else {
@@ -2267,8 +2268,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto = new SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO();
             dto.setHandleResult(HandleResultEnum.FAILURE.getCode());
             dto.setResultRemark("第三方海外仓拦截失败，自动生成拦截单");
+            dto.setThirdWarehouse(true);
             soB2cDeliveryInterceptFeign.interceptResultConfirm(dto, id);
-            return BatchResultDTO.success(id, soB2cEntity.getCode(), "发货拦截失败");
+            return BatchResultDTO.fail(id, soB2cEntity.getCode(), "发货拦截失败");
         }
     }
 
