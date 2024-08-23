@@ -328,7 +328,10 @@
         fdd.id as sourceDetailId,
         fd.code as sourceCode,
         'delivery' as sourceType,
-        fd.source_code AS businessCode,
+        concat(fdd.fba_shipment_code,owi.code) AS businessCode,
+        fdd.fba_shipment_code as fbaShipmentCode,
+        owi.code as overseasWarehouseCode,
+        owi.code as overseasWarehouseCode,
         fd.demand_type AS businessType,
         fd.shop_id AS shopId,
         fd.shop_name AS shopName,
@@ -341,9 +344,10 @@
         fdd.delivery_qty AS deliveryQty
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON fd.source_id = owi.id AND owi.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
-        and fd.is_deleted = FALSE and fd.approve_status = 'approve'
+        and fd.is_deleted = FALSE and fd.approve_status = 'approve' and fd."demand_type" IN ('demandOverseasWarehouse', 'demandPlatformWarehouse')
         <!--数据权限-->
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

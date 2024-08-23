@@ -400,6 +400,14 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 业务单号【可排序】
          */
         private String businessCode;
+        /**
+         * FBA
+         */
+        private String fbaShipmentCode;
+        /**
+         * 海外仓入库编号
+         */
+        private String overseasWarehouseCode;
 
         /**
          * 业务单号类型
