@@ -366,12 +366,20 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         String trackingNumber = "";
         String name = "";
         BigDecimal cost = BigDecimal.ZERO;
-
-        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO().getTrackingNumber())) {
+        LocalDateTime deliveryTime = null;
+        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
             trackingNumber = orderBean.getShipmentViewDTO().getTrackingNumber();
             name = orderBean.getShipmentViewDTO().getLeadTime().getShippingMethod().getName();
             cost = orderBean.getShipmentViewDTO().getLeadTime().getCost();
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+            OffsetDateTime offsetDateTime = OffsetDateTime.parse(orderBean.getShipmentViewDTO().getDateCreated(), formatter);
+            //发货时间
+            deliveryTime = offsetDateTime.toLocalDateTime();
         }
+
+
+
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         //自发货不用更新物流单
         if (!logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
@@ -382,7 +390,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
                 .code(trackingNumber)
                 .name(name)
-                .deliveryTime(null)
+                .deliveryTime(deliveryTime)
                 .logisticsChannelId("")
                 .logisticsChannelName("")
                 .estimatedShippingCost(cost)
