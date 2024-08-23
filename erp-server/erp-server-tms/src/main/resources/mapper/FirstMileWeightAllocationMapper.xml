@@ -78,6 +78,18 @@
             </foreach>
         </if>
     </select>
+    <select id="tabCount" resultType="java.lang.Integer">
+
+    </select>
+    <select id="paging" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
+
+    </select>
+    <select id="listByParamIds" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
+
+    </select>
+    <select id="listByParam" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
+
+    </select>
 
 
 </mapper>

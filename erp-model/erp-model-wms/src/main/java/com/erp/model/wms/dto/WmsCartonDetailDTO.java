@@ -248,6 +248,11 @@ public class WmsCartonDetailDTO implements Serializable {
         private BigDecimal width;
 
         private BigDecimal height;
+
+        /**
+         * 箱子尺寸单位
+         */
+        private String sizeUnit;
         /**
          * 箱规来源
          * MeasureSourceEnum

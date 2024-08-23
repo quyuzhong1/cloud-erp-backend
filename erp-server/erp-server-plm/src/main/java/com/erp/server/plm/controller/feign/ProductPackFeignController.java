@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.feign;
 
 import com.erp.model.plm.dto.ProductPackDTO;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.server.plm.service.ProductPackService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,5 +33,10 @@ public class ProductPackFeignController {
     @PostMapping("/backFillPackaging")
     public void backFillPackaging(@RequestBody List<ProductPackDTO> productPackList) {
         productPackService.backFillPackaging(productPackList);
+    }
+
+    @PostMapping("/listBySkuIds")
+    List<ProductPackEntity> listBySkuIds(@RequestBody List<String> skuIds){
+        return productPackService.listBySkuIdList(skuIds);
     }
 }

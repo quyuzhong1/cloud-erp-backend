@@ -8,7 +8,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -56,7 +55,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     @TableField("product_name")
     private String productName;
     /**
-    * 费用状态
+    * 费用分摊状态
     */
     @TableField("allocation_status")
     private String allocationStatus;
@@ -95,24 +94,26 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     * 箱长
     */
     @TableField("box_length")
-    private Integer boxLength;
+    private BigDecimal boxLength;
     /**
     * 箱宽
     */
-    @TableField("box_wide")
-    private Integer boxWide;
+    @TableField("box_width")
+    private BigDecimal boxWidth;
     /**
     * 箱高
     */
-    @TableField("box_high")
-    private Integer boxHigh;
+    @TableField("box_height")
+    private BigDecimal boxHeight;
     /**
     * 箱子尺寸单位
     */
     @TableField("box_size_unit")
     private String boxSizeUnit;
     /**
-    * 出库计费重
+    * 出库计费重：
+    * 取值体积重量，出库重量最大值
+    * 体积重量=出库尺寸/材积参数[取值渠道设置的材积设置]
     */
     @TableField("charged_weight")
     private BigDecimal chargedWeight;
@@ -148,15 +149,14 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     private String supplierName;
     /**
     * 重量分摊方式
-     * CostAllocationEnum
     */
     @TableField("allocation_type")
     private String allocationType;
     /**
     * 计费规则
     */
-    @TableField("billing_rule")
-    private String billingRule;
+    @TableField("fee_rule")
+    private String feeRule;
     /**
     * 店铺ID
     */
@@ -187,6 +187,16 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     */
     @TableField("calculate_month")
     private String calculateMonth;
+    /**
+     * 头程物流单ID
+     */
+    @TableField("logistics_bill_id")
+    private String logisticsBillId;
+    /**
+     * 出库重量
+     */
+    @TableField("out_stock_weight")
+    private BigDecimal outStockWeight;
 
 
     public static final String SOURCE_ID = "source_id";
@@ -241,7 +251,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
 
     public static final String ALLOCATION_TYPE = "allocation_type";
 
-    public static final String BILLING_RULE = "billing_rule";
+    public static final String FEE_RULE = "fee_rule";
 
     public static final String SHOP_ID = "shop_id";
 

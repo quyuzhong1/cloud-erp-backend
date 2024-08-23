@@ -126,4 +126,6 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      * @return BaseDTO
      */
     LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(@Param("logisticsCode") String logisticsCode);
+
+    List<TmsFirstMileLogisticDTO.WeightAllocationDTO> assembleFirstMileEstimatedList();
 }

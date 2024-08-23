@@ -1,9 +1,19 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
+import com.erp.server.tms.query.FirstMileCostAllocationQueryHandler;
+import com.erp.server.tms.query.FirstMileEstimatedQueryHandler;
+import com.erp.server.tms.query.FirstMileWeightAllocationQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -19,6 +29,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 头程重量分摊
@@ -36,37 +49,74 @@ public class FirstMileWeightAllocationController extends BaseController {
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
 
     /**
-    * 新增
-    * @author tmj
-    * @date:  2024-08-20
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "头程重量分摊新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated FirstMileWeightAllocationDTO.AddDTO dto) {
-        return success(firstMileWeightAllocationService.add(dto));
+     * 分页
+     * @param dto
+     * @author tmj
+     * @date 2024-8-22
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:firstMileWeightAllocation:paging",
+            tableAlias = "a"
+    )
+    @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
+    public ApiResult<PagingVO<FirstMileWeightAllocationDTO.ViewDTO>> paging(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
+        PagingVO<FirstMileWeightAllocationDTO.ViewDTO> pagingVO = firstMileWeightAllocationService.paging(dto);
+        return success(pagingVO);
     }
 
     /**
-    * 修改
-    * @author tmj
-    * @date:  2024-08-20
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "头程重量分摊修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:firstMileWeightAllocation:update",
-        serviceClass = FirstMileWeightAllocationService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated FirstMileWeightAllocationDTO.UpdateDTO dto) {
-        firstMileWeightAllocationService.update(dto);
-        return success();
+     * 导出Excel
+     */
+    @PostMapping("/exportExcel")
+    @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
+    public ApiResult<?> exportExcel(@RequestBody FirstMileWeightAllocationDTO.ExportParamDTO dto, HttpServletResponse response){
+        firstMileWeightAllocationService.exportExcel(dto, response);
+        return ApiResult.success();
     }
 
+    /**
+     * 统计tab数量
+     */
+    @GetMapping("/tabList")
+    public ApiResult<List<FirstMileWeightAllocationDTO.TabDTO>> tabList(){
+        List<FirstMileWeightAllocationDTO.TabDTO> list = firstMileWeightAllocationService.tabList();
+        return ApiResult.success(list);
+    }
 
+    /**
+     * 下推费用分摊
+     */
+    @PostMapping("/pushCostAllocation")
+    public ApiResult<BaseResultDTO.AddDTO> pushCostAllocation(@RequestBody FirstMileWeightAllocationDTO.PushCostAllocationDTO dto){
+        BaseResultDTO.AddDTO addDTO = firstMileWeightAllocationService.pushCostAllocation(dto);
+        return ApiResult.success(addDTO);
+    }
 
+    /**
+     * 重量重算
+     */
+    @PostMapping("/weightReCompute")
+    public ApiResult<List<BatchResultDTO>> weightReCompute(@RequestBody FirstMileWeightAllocationDTO.WeightReComputeDTO dto){
+        List<BatchResultDTO> list = new ArrayList<>(dto.getLogisticsBillIds().size());
+        for (String logisticsBillId : dto.getLogisticsBillIds()) {
+            BatchResultDTO resultDTO = firstMileWeightAllocationService.weightReCompute(logisticsBillId);
+            list.add(resultDTO);
+        }
+        return list.stream().allMatch(BatchResultDTO::getSuccess) ? success(list) : failure(list);
+    }
+
+    /**
+     * 批量删除
+     */
+    @PostMapping("/deleteBatch")
+    public ApiResult<List<BatchResultDTO>> deleteBatch(@RequestBody BaseIdsDTO.IdsDTO dto){
+        List<BatchResultDTO> list = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO = firstMileWeightAllocationService.deleteById(id);
+            list.add(resultDTO);
+        }
+        return list.stream().allMatch(BatchResultDTO::getSuccess) ? success(list) : failure(list);
+    }
 }

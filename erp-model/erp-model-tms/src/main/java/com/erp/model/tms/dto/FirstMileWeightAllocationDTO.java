@@ -1,15 +1,19 @@
 package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
+
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -22,9 +26,6 @@ import javax.validation.constraints.Digits;
 @Data
 @NoArgsConstructor
 public class FirstMileWeightAllocationDTO implements Serializable {
-
-
-
 
     /**
     * 详情
@@ -72,6 +73,16 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         * 费用状态
         */
         private String allocationStatus;
+
+        /**
+         * 费用状态(名称)
+         */
+        private String allocationStatusName;
+
+        /**
+        * 最新费用分摊月份
+        */
+        private String latestCostAllocationMonth;
 
         private String skuId;
 
@@ -123,13 +134,18 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String boxSizeUnit;
 
         /**
+         * 出库重量
+         */
+        private BigDecimal boxWeight;
+
+        /**
         * 出库计费重
         */
         private BigDecimal chargedWeight;
 
         /**
-        * 体积重
-        */
+         * 体积重
+         */
         private BigDecimal volumeWeight;
 
         /**
@@ -166,7 +182,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
         * 计费规则
         */
-        private String billingRule;
+        private String feeRule;
 
         /**
         * 店铺ID
@@ -179,9 +195,14 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String shopName;
 
         /**
-        * 目的国家编码
+        * 目的国家
         */
         private String toCountry;
+
+        /**
+         * 目的国家（名称）
+         */
+        private String toCountryName;
 
         /**
         * 发货仓库ID
@@ -189,7 +210,12 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String fromWarehouseId;
 
         /**
-        * 核算期间id
+         * 发货仓库（名称）
+         */
+        private String fromWarehouseName;
+
+        /**
+        * 最新核算期间id
         */
         private String calculatePeriodId;
 
@@ -198,7 +224,10 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         */
         private String calculateMonth;
 
-
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -206,14 +235,133 @@ public class FirstMileWeightAllocationDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class AddDTO {
+        /**
+         * 头程物流单ID
+         */
+        private String logisticsBillId;
 
+        /**
+         * 来源ID
+         */
+        private String sourceId;
 
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 发货单明细ID
+         */
+        private String deliveryDetailId;
+
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+
+        /**
+         * 物流运单号
+         */
+        private String transportNo;
+
+        /**
+         * 装箱信息列表
+         */
+        private List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDTOList;
+
+        /**
+         * 物流商ID
+         */
+        private String supplierId;
+
+        /**
+         * 物流商名称
+         */
+        private String supplierName;
+
+        /**
+         * 计费规则
+         */
+        private String feeRule;
+
+        /**
+         * 店铺ID
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 目的国家编码
+         */
+        private String toCountry;
+
+        /**
+         * 发货仓库ID
+         */
+        private String fromWarehouseId;
+
+        /**
+         * 材积设置
+         */
+        private int volumeSetting;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BoxDTO{
+        /**
+         * 箱子ID
+         */
+        private String boxId;
+        /**
+         * 箱号
+         */
+        private String boxNo;
+
+        private String skuId;
+
+        private String skuNo;
+
+        private String productName;
+
+        /**
+         * 平台sku id
+         */
+        private String platformSkuId;
+
+        /**
+         * 平台sku no
+         */
+        private String platformSkuNo;
+
+        /**
+         * 箱子长
+         */
+        private String boxLength;
+        /**
+         * 箱子宽
+         */
+        private String boxWide;
+        /**
+         * 箱子高
+         */
+        private String boxHigh;
+        /**
+         * 箱子尺寸单位
+         */
+        private String boxSizeUnit;
     }
 
     /**
     * 修改
     */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
@@ -391,5 +539,93 @@ public class FirstMileWeightAllocationDTO implements Serializable {
 
     }
 
+    /**
+     * 分页查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
+    public static class PagingParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    /**
+     * 导出参数
+     */
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
+    public static class ExportParamDTO extends PagingParamDTO{
+        private List<String> ids;
+    }
+
+    /**
+     * Tab统计
+     */
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class TabDTO{
+        /**
+         * 标签编码
+         */
+        private String tabFlag;
+        /**
+         * 标签名称
+         */
+        private String tabFlagName;
+        /**
+         * 统计数量
+         */
+        private int count;
+    }
+
+    /**
+     * 下推费用分摊
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushCostAllocationDTO{
+        /**
+         * 来源ids
+         */
+        private List<String> sourceIds;
+
+        /**
+         * 期间
+         */
+        private String period;
+    }
+
+    /**
+     * 重量重算
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WeightReComputeDTO{
+        /**
+         * 头程物流单ID
+         */
+        private List<String> logisticsBillIds;
+    }
+
+    /**
+     * 批量删除
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeleteDTO{
+        /**
+         * 头程物流单ID
+         */
+        private List<String> logisticsBillIds;
+    }
 }

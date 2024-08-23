@@ -17,6 +17,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.CostAllocationEnum;
@@ -293,7 +294,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //对账单明细 [已审核记录]
         List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listByBusinessCodes(Collections.singletonList(firstMileDeliveryEntity.getCode()), ApproveStatusEnum.APPROVE.getStatus());
         //暂估账单 [已确认]
-        List<FirstMileEstimatedBillEntity> estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList()));
+        List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList()));
         //sku分摊记录
         List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList = firstMileSkuCostAllocationService.listByMainIds(Collections.singletonList(entity.getId()));
         //sku分摊明细记录

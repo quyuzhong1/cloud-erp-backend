@@ -1716,4 +1716,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         this.add(addDTO);
         return BatchResultDTO.success(addDTO.getOutstockId(),"", "头程物流单创建成功");
     }
+
+    @Override
+    public List<TmsFirstMileLogisticDTO.WeightAllocationDTO> assembleFirstMileEstimatedList() {
+        return baseMapper.assembleFirstMileEstimatedList();
+    }
 }

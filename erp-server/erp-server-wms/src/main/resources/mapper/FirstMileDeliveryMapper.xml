@@ -187,6 +187,7 @@
         wcs.box_length as length,
         wcs.box_width as width,
         wcs.box_height as height,
+        wcs.size_unit as sizeUnit,
         (select string_agg(wcd.sku_no, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku
         FROM first_mile_delivery fmd
         INNER JOIN packing_task pt on pt.source_id = fmd.id and pt.is_deleted = false
@@ -241,6 +242,7 @@
             fmd.shop_id as shopId,
             fmd.shop_name as shopName,
             fmd.approve_time as approveTime,
+            fmd.delivery_warehouse_id as fromWarehouseId,
             fmd.delivery_warehouse_name as fromWarehouseName,
             fw.address as fromAddress,
             fmd.dest_warehouse_name as toWarehouseName,

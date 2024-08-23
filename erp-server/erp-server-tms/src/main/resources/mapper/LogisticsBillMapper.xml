@@ -623,4 +623,21 @@
         WHERE lbd.is_deleted = false  and lb.source_type = 'soB2c' AND (lbd.track_no = #{logisticsCode} or lb.transport_no = #{logisticsCode})
         LIMIT 1
     </select>
+    <select id="assembleFirstMileEstimatedList"
+            resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$WeightAllocationDTO">
+        select lb.id logisticsBillId,
+               lb.outstock_id sourceId,
+               lb.outstock_code sourceCode,
+               lb.source_id businessId,
+               lb.source_code businessCode,
+               lb.transport_no transportNo,
+               lb.logistics_supplier_id supplierId,
+               lb.shop_id shopId,
+               lb.shop_name shopName,
+               lb.to_country toCountry,
+               lb.channel_id channelId
+        from logistics_bill lb
+                 left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+        where lb.is_deleted = false and lbd.track_status = 'ordered';
+    </select>
 </mapper>

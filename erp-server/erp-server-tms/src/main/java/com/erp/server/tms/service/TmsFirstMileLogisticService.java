@@ -148,4 +148,9 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * @return
      */
     BatchResultDTO generateFirstMileLogistic(TmsFirstMileLogisticDTO.AddDTO addDTO);
+
+    /**
+     * 查询生成重量分摊单据所需参数
+     */
+    List<TmsFirstMileLogisticDTO.WeightAllocationDTO> assembleFirstMileEstimatedList();
 }

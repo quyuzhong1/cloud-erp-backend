@@ -1128,6 +1128,10 @@ public class FirstMileDeliveryDTO implements Serializable {
         private LocalDateTime approveTime;
 
         /**
+         * 发货仓库ID
+         */
+        private String fromWarehouseId;
+        /**
          * 发货仓库名称
          */
         private String fromWarehouseName;

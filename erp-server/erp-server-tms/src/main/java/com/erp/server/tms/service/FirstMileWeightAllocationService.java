@@ -1,9 +1,11 @@
 package com.erp.server.tms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -23,21 +25,67 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(FirstMileWeightAllocationDTO.AddDTO dto);
+    BatchResultDTO add(FirstMileWeightAllocationDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author tmj
-    * @date: 2024-08-20
-    * @param dto
-    * @return
-    */
-    Boolean update(FirstMileWeightAllocationDTO.UpdateDTO dto);
-
-    /**
-     * 根据物流单id查询重量分摊记录
-     * @param logisticsBillIds
+     * 分页查询
+     * @param dto
      * @return
+     * @date: 2024-08-22
+     * @author: tanmujin
+     */
+    PagingVO<FirstMileWeightAllocationDTO.ViewDTO> paging(PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出Excel
+     * @param dto
+     * @param response
+     * @return
+     * @date: 2024-08-22
+     * @author: tanmujin
+     */
+    void exportExcel(FirstMileWeightAllocationDTO.ExportParamDTO dto, HttpServletResponse response);
+
+    /**
+     * tab页统计
+     * @param
+     * @return
+     * @date: 2024-08-22
+     * @author: tanmujin
+     */
+    List<FirstMileWeightAllocationDTO.TabDTO> tabList();
+
+    /**
+     * 下推费用分摊
+     * @param dto
+     * @return 费用分摊id, code
+     * @date: 2024-08-22
+     * @author: tanmujin
+     */
+    BaseResultDTO.AddDTO pushCostAllocation(FirstMileWeightAllocationDTO.PushCostAllocationDTO dto);
+
+    /**
+     * 重量重算
+     * @param logisticsBillId 头程物流单ID
+     * @date: 2024-08-22
+     * @author: tanmujin
+     */
+    BatchResultDTO weightReCompute(String logisticsBillId);
+
+    /**
+     * 删除
+     * @param id
+     * @date: 2024-08-22
+     * @author: tanmujin
+     */
+    BatchResultDTO deleteById(String id);
+
+    /**
+     * 根据物流单号查询重量分摊
+     * @param logisticsBillIds 物流单号集合
+     * @return
+     * @date: 2024-08-23
+     * @author: tanmujin
      */
     List<FirstMileWeightAllocationEntity> listByLogisticsBillIds(List<String> logisticsBillIds);
 

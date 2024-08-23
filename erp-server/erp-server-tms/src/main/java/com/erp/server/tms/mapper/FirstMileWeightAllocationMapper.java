@@ -1,5 +1,8 @@
 package com.erp.server.tms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -19,6 +22,14 @@ import java.util.List;
  */
 @Mapper
 public interface FirstMileWeightAllocationMapper extends BaseMapper<FirstMileWeightAllocationEntity> {
+
+    int tabCount(@Param("status") String costAllocationStatus);
+
+    IPage<FirstMileWeightAllocationDTO.ViewDTO> paging(Page<?> query, @Param("params") FirstMileWeightAllocationDTO.PagingParamDTO params);
+
+    List<FirstMileWeightAllocationDTO.ViewDTO> listByParamIds(@Param("ids") List<String> ids);
+
+    List<FirstMileWeightAllocationDTO.ViewDTO> listByParam(@Param("params") FirstMileWeightAllocationDTO.ExportParamDTO dto);
     /**
      * 根据来源id查询重量分摊列表
      * @param sourceIds
