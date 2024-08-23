@@ -128,7 +128,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public BatchResultDTO updateStatus(String id, String status) {
-        this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).eq(FirstMileEstimatedBillEntity::getId, id);
+        this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).eq(FirstMileEstimatedBillEntity::getId, id).update();
         return BatchResultDTO.success(id, id);
     }
 
@@ -202,5 +202,15 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         if (StrUtil.isNotBlank(logisticsBillId)){
             this.lambdaUpdate().eq(FirstMileEstimatedBillEntity::getLogisticsBillId,logisticsBillId).remove();
         }
+    }
+
+    @Override
+    public List<FirstMileEstimatedBillDTO.View> listByLogisticsBillIds(List<String> ids) {
+        if(ids.isEmpty()){
+            return Collections.emptyList();
+        }
+        List<FirstMileEstimatedBillDTO.View> list = baseMapper.listByLogisticsBillIds(ids);
+        fillData(list);
+        return list;
     }
 }
