@@ -72,6 +72,10 @@ public class DmpOutputRocketMQPushUtils{
     		return;
     	}
 		
+    	Map<String, List<DmpOutputTaskRecordEntity>> mainIdRecordEntityListMaps = dmpOutputTaskRecordEntityList.stream().collect(Collectors.groupingBy(DmpOutputTaskRecordEntity::getMainId));
+    	Map<String, List<DmpOutputTaskEntity>> cfgOutputIdTaskEntityListMaps = dmpOutputTaskService.lambdaQuery().in(DmpOutputTaskEntity::getId, mainIdRecordEntityListMaps.keySet()).list().stream().collect(Collectors.groupingBy(DmpOutputTaskEntity::getCfgOutputId));
+    	dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdTaskEntityListMaps.keySet()).list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, d -> d));
+    	
     	Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
     			.in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
     			.select(DmpOutputTaskEntity::getId , DmpOutputTaskEntity::getCfgOutputId)
