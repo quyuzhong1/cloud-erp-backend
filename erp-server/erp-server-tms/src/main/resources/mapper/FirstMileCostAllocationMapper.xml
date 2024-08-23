@@ -104,7 +104,7 @@
     <select id="exportList" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
         <include refid="pageSql"/>
     </select>
-    <select id="listSkuBySourceCodes" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO.PagingVO">
+    <select id="listSkuBySourceCodes" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
         SELECT
         a.id,a.reconciliation_id, a.reconciliation_code, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
         a.sku_cost_id, ca.sku_cost_detail_id, ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
