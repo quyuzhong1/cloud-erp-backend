@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
@@ -26,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * dmp输入init任务基础处理器下的旺店通api获取数据方式
+ * dmp输入init任务基础处理器下的安兔api获取数据方式
  * @author Administrator
  *
  */
@@ -50,9 +51,9 @@ public class AntuOutboundInitHandler extends DmpInputInitHandler {
         Integer page = 1;
         int currTotal = 0;
         List<Object> allResult = new ArrayList<>();
-        List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.GOODCANG.getCode()));
+        List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(OmsPlatformEnum.OMS_ANTU.getCode()));
         if(CollUtil.isEmpty(overseasProviderEntityList)) {
-        	throw new ServiceException("谷仓授权信息不存在");
+        	throw new ServiceException("安兔授权信息不存在");
         }
         ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
         while(true) {

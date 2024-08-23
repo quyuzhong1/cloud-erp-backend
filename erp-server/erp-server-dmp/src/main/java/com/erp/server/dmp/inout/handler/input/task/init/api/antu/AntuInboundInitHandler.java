@@ -26,7 +26,7 @@ import javax.annotation.Resource;
 import java.util.*;
 
 /**
- * dmp输入init任务基础处理器下的旺店通api获取数据方式
+ * dmp输入init任务基础处理器下的安兔api获取数据方式
  * @author Administrator
  *
  */
@@ -45,7 +45,7 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
         //查询待签收、部分签收状态的入库单
         List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
                 ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_GOOD_CANG.getCode());
+                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_ANTU.getCode());
         List<GoodCangReceiptBatchResp> allResult = new ArrayList<>();
         
         if(CollUtil.isNotEmpty(receiveCodeList)) {
@@ -55,7 +55,7 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
             
             List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.GOODCANG.getCode()));
             if(CollUtil.isEmpty(overseasProviderEntityList)) {
-            	throw new ServiceException("谷仓授权信息不存在");
+            	throw new ServiceException("安兔授权信息不存在");
             }
             ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
             
