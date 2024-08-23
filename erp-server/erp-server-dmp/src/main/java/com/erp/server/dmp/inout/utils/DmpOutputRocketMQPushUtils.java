@@ -92,6 +92,10 @@ public class DmpOutputRocketMQPushUtils{
     			String typeId = dmpCfgOutputEntity.getTypeId();
     			List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMap.getValue();
     			int i = 0;
+    			Integer pushRate = dmpCfgOutputEntity.getPushRate();
+    			if(pushRate == null) {
+    				pushRate = 3;
+    			}
     			for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : list) {
     				String id = dmpOutputTaskRecordEntity.getId();
     				String dataId = dmpOutputTaskRecordEntity.getDataId();
@@ -129,17 +133,14 @@ public class DmpOutputRocketMQPushUtils{
     				}else {
     					log.error(redisKey + "任务正在执行中");
     				}
-    			}
-    			Integer pushRate = dmpCfgOutputEntity.getPushRate();
-    			if(pushRate == null) {
-    				pushRate = 3;
-    			}
-    			if(pushRate > 0) {
-    				i = i + 1;
-        			if(i % pushRate == 0) {
-        				try {
-        					Thread.sleep(1000);
-        				} catch (InterruptedException e) {}
+    				
+        			if(pushRate > 0) {
+        				i = i + 1;
+            			if(i % pushRate == 0) {
+            				try {
+            					Thread.sleep(1000);
+            				} catch (InterruptedException e) {}
+            			}
         			}
     			}
     		});
