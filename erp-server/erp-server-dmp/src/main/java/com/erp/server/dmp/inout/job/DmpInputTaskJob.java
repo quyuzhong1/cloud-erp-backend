@@ -3,7 +3,9 @@ package com.erp.server.dmp.inout.job;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +46,12 @@ public class DmpInputTaskJob {
 	@XxlJob("doInputHistoryTask")
     public ReturnT doInputHistoryTask(){
 		this.doInputTask(XxlJobHelper.getJobParam(), DmpInputTaskTaskTypeEnum.HISTORY);
+        return ReturnT.SUCCESS;
+    }
+	
+	@XxlJob("doInputCompensateTask")
+    public ReturnT doInputCompensateTask(){
+		this.doInputTask(XxlJobHelper.getJobParam(), DmpInputTaskTaskTypeEnum.COMPENSATE);
         return ReturnT.SUCCESS;
     }
 	
@@ -102,10 +110,18 @@ public class DmpInputTaskJob {
 				.in(CollUtil.isNotEmpty(ids) ,DmpInputTaskEntity::getId, ids)
 				.in(CollUtil.isNotEmpty(cfgInputIds) ,DmpInputTaskEntity::getCfgInputId, cfgInputIds)
 				.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
-				.select(DmpInputTaskEntity::getId , DmpInputTaskEntity::getExecTimeout)
-				.orderByDesc(DmpInputTaskEntity::getUpdateTime)
-				.last(" limit " + size)
+				.select(DmpInputTaskEntity::getId , DmpInputTaskEntity::getCfgInputId , DmpInputTaskEntity::getNextLevelId , DmpInputTaskEntity::getExecTimeout)
+				.orderByAsc(DmpInputTaskEntity::getUpdateTime)
+				.last(dmpInputTaskTaskTypeEnum != DmpInputTaskTaskTypeEnum.COMPENSATE , " limit " + size)
 				.list();
+		if(dmpInputTaskTaskTypeEnum == DmpInputTaskTaskTypeEnum.COMPENSATE) {
+			Map<String, List<DmpInputTaskEntity>> cfgInputNextLevelMaps = list.stream().collect(Collectors.groupingBy(l -> l.getCfgInputId() + "_" + l.getNextLevelId()));
+			list = new ArrayList<>();
+			for(Map.Entry<String, List<DmpInputTaskEntity>> cfgInputNextLevelMap : cfgInputNextLevelMaps.entrySet()) {
+				list.add(cfgInputNextLevelMap.getValue().get(0));
+			}
+		}
+		
 		for(DmpInputTaskEntity l : list) {
 			dmpInputExecutorPool.execute(() -> {
 				DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();

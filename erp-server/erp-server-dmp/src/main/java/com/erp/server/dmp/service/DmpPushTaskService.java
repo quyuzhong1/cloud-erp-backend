@@ -38,7 +38,7 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @date: 2024/5/14 9:35
      * @param list
      */
-    void sendTask(List<DmpPushTaskEntity> list);
+    void sendTask(List<DmpPushTaskEntity> list, Integer delayLevel);
 
     /**
      * 更新同步

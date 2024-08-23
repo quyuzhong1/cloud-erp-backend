@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -69,13 +70,20 @@ public class DmpInputWdtApiInitHandler implements DmpInputApiInitHandler{
         	JSONObject jsonObject = JSON.parseObject(execute);
         	Integer status = jsonObject.getInteger("status");
         	if(status != 0) {
-        		throw new ServiceException("调用旺店通" + apiType + "接口报错，错误原因：" + jsonObject.getString("message"));
+        		String message = jsonObject.getString("message");
+        		if("sid 'wjkj03' is not found".equals(message)) {
+					try {Thread.sleep(30000);} catch (InterruptedException e) {}
+				}
+				throw new ServiceException("调用旺店通" + apiType + "接口报错，错误原因：" + message);
         	}
         	
         	JSONObject data = jsonObject.getJSONObject("data");
         	
         	Integer total = data.getInteger("total_count");
         	JSONArray order = data.getJSONArray("order");
+        	if(order == null) {
+				order = data.getJSONArray("detail_list");
+			}
         	
         	currTotal = currTotal + order.size();
         	DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();

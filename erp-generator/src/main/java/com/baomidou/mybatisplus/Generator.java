@@ -119,18 +119,18 @@ public class Generator {
         if(tableNames.length == 1) {
         	tableNames = tableName.split("，");
         }
-        
+
         BASE_PACKAGE_NAME = StrUtil.format("com.erp.server.{}", MODEL);
         BASE_PACKAGE_MODEL_NAME = StrUtil.format("com.erp.model.{}", MODEL);
         MODULE_NAME = StrUtil.format("erp-model-{}", MODEL);
         SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
         DB_URL = "jdbc:postgresql://172.16.100.12:5432/" + StrUtil.format( "erp-{}", MODEL) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
-        
+
         generateByTables(tableNames);
         
-        System.err.println("==========================准备处理枚举...================================");
+        System.out.println("==========================准备处理枚举...================================");
         dealEnum(tableNames);
-        System.err.println("==========================枚举生成完成！！！==========================");
+        System.out.println("\u001B[32m" + "==========================枚举生成完成！！！==========================" + "\u001B[0m");
     }
 
     /**
@@ -461,9 +461,6 @@ public class Generator {
     		String[] split2 = split[1].split("，");
     		if(split2.length == 1) {
     			split2 = split[1].split(",");
-    		}
-    		if(split2.length == 1) {
-    			return null;
     		}
     		Map<String, String> enumNameMap = new LinkedHashMap<>();
     		for(String s : split2) {

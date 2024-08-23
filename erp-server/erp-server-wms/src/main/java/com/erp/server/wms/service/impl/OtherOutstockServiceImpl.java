@@ -3,7 +3,11 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.erp.model.dmp.dto.DmpPushWdtDTO;
+import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.alibaba.excel.EasyExcel;
@@ -169,6 +173,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     private SysDictFeign sysDictFeign;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private DmpPushWdtFeign dmpPushWdtFeign;
+    @Resource
+    private AbstractWdtService abstractWdtService;
 
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
@@ -481,9 +489,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //同步旺店通
             if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
-                syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
             }else {
-                syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
             }
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他出库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
@@ -527,9 +535,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
         //发送旺店通
         if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
-            syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);
         }else {
-            syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);
         }
 
         //操作日志
@@ -868,7 +876,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //处理类型
         List<DictKingdeeDTO.ListDTO> typeList = sysDictFeign.listByTypeName(DictKindgeeConstant.OTHER_TYPE_NAME);
         List<DictKingdeeDTO.ListDTO> outTypeList = sysDictFeign.listByTypeName(DictKindgeeConstant.OTHER_OUT_TYPE_NAME);
-        DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(DictKindgeeConstant.OTHER_OUT_INVENTORY_ADJUSTMENTS)).findFirst().orElse(new DictKingdeeDTO.ListDTO());
+        DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(DictKindgeeConstant.OTHER_OUT_MATERIAL_PICKING)).findFirst().orElse(new DictKingdeeDTO.ListDTO());
         // 业务类型
         addDTO.setType(typeDTO.getCode());
         addDTO.setTypeName(typeDTO.getName());
@@ -1263,83 +1271,58 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         });
     }
 
-    private void syncApproveInfoToWdt(OtherOutstockEntity entity, String operateCode) {
+    /**
+     * 同步审核操作到旺店通
+     *
+     * @param entity          其他出库单
+     * @param syncOperateEnum 操作代码：approve/disApprove
+     * @return
+     * @author: tanmujin
+     */
+    private void syncApproveInfoToWdt(OtherOutstockEntity entity, SyncOperateEnum syncOperateEnum) {
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getWarehouseId()), "wdt");
         if(mappingList.isEmpty()){
             return;
         }
-        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
-
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
-        HashMap<String, BigDecimal> skuMap = new HashMap<>();
-        detailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
-                .forEach((key, list) -> {
-                    int collect = list.stream().mapToInt(OtherOutstockDetailEntity::getActualQty).sum();
-                    skuMap.put(key, BigDecimal.valueOf(collect));
-                });
-
-        //填充SKU明细
         List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>();
-        skuMap.forEach((key, value) -> {
+        for (OtherOutstockDetailEntity detailEntity : detailList) {
             CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
-            String[] split = key.split("@");
-            goods.setSpecNo(split[0]);
-            goods.setNum(value);
-            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            goods.setSpecNo(detailEntity.getSkuNo());
+            goods.setNum(BigDecimal.valueOf(detailEntity.getActualQty()));
+            goods.setPositionNo(detailEntity.getWarehouseLocation());
+            goods.setWarehouseId(entity.getWarehouseId());
             goodsList.add(goods);
-        });
-
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherOutStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, true);
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-            }
-        });
+        }
+        abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), goodsList, SourceTypeEnum.OTHER_OUTSTOCK);
     }
 
     /**
      * 将其他出库单的反审核操作转换为其他入库单推送到旺店通
-     * @param entity 其他出库单
+     *
+     * @param entity          其他出库单
+     * @param syncOperateEnum
      * @return void
      * @date: 2024-05-20
      * @author: tanmujin
      */
-    private void syncDisApproveInfoToWdt(OtherOutstockEntity entity, String operateCode) {
+    private void syncDisApproveInfoToWdt(OtherOutstockEntity entity, SyncOperateEnum syncOperateEnum) {
         List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getWarehouseId()), "wdt");
         if(mappingList.isEmpty()){
             return;
         }
-        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
-
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
-        HashMap<String, BigDecimal> skuMap = new HashMap<>();
-        detailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
-                .forEach((key, list) -> {
-                    int collect = list.stream().mapToInt(OtherOutstockDetailEntity::getActualQty).sum();
-                    skuMap.put(key, BigDecimal.valueOf(collect));
-                });
-
         List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        skuMap.forEach((key, value) -> {
+        for (OtherOutstockDetailEntity detailEntity : detailList) {
             CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            String[] split = key.split("@");
-            goods.setSpecNo(split[0]);
-            goods.setNum(value);
-            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            goods.setSpecNo(detailEntity.getSkuNo());
+            goods.setNum(BigDecimal.valueOf(detailEntity.getActualQty()));
+            goods.setPositionNo(detailEntity.getWarehouseLocation());
+            goods.setWarehouseId(entity.getWarehouseId());
             goodsList.add(goods);
-        });
+        }
 
-        String inCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        DmpPushTaskEntity dmpPushTaskEntity = syncWdtOtherInStockService.saveTask(goodsList, operateCode, entity.getCode(), entity.getId(), inCode, thirdWarehouseCode, false);
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Collections.singletonList(dmpPushTaskEntity));
-            }
-        });
+        abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), goodsList, SourceTypeEnum.OTHER_INSTOCK);
     }
     @Override
     @Transactional(rollbackFor = Exception.class)

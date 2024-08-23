@@ -6,7 +6,6 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
@@ -19,13 +18,17 @@ import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
 import com.erp.server.wms.service.CfgRuleOutService;
 import com.erp.server.wms.service.CfgSettingService;
@@ -234,18 +237,20 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     }
 
     @Override
-    public String getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto) {
+    public CfgRuleOutDTO.SortingPortResultDTO getSortingPort(CfgRuleOutDTO.SortingPortRuleDTO dto, SoB2cDeliveryEntity entity, SoB2cEntity soB2cEntity) {
         ValidatorUtil.validateEntity(dto);
         CfgRuleOutDTO.CommonDTO commonDTO = this.view();
         CfgRuleOutDTO.SortingPortResultDTO resultDTO = this.getSortingPort(commonDTO,dto);
         String sortingPort = resultDTO.getPort();
         if(sortingPort.equals(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode())){
             if(resultDTO.getUpdateError()){
-                //更新异常
-                soB2cDeliveryService.updateAbnormal(Arrays.asList(dto.getDeliveryOrderId()), AbnormalCauseEnum.EQUIPMENT_SORTING);
+                if(!soB2cEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()) && !entity.getStatus().equals(SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())){
+                    entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
+                    entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
+                }
             }
         }
-        return sortingPort;
+        return resultDTO;
     }
     @Override
     public CfgRuleOutDTO.CheckDTO handleOverweight(CfgRuleOutDTO.OverweightDTO dto) {
@@ -377,7 +382,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             }
             if(equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.NOT_IN_LIST.getCode()) || equipmentSortingPortConditionDTO.getCompare().equals(CfgRuleOutEnum.EquipmentSortingPortCompareEnum.NQ.getCode())){
                 if(!equipmentSortingPortConditionDTO.getValueList().contains(dto.getLogisticsSupplierId()) && !equipmentSortingPortConditionDTO.getValueList().contains(dto.getChannelId())){
-                    return new CfgRuleOutDTO.SortingPortResultDTO(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode(),false);
+                    return new CfgRuleOutDTO.SortingPortResultDTO(equipmentSortingPortConditionDTO.getPort(),false);
                 }
             }
         }

@@ -7,7 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -354,6 +356,7 @@ public class WmsDeliveryPlanDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
         private List<WmsDeliveryPlanDetailDTO.AddDTO> detailList;
     }
 
@@ -373,6 +376,7 @@ public class WmsDeliveryPlanDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
         private List<WmsDeliveryPlanDetailDTO.UpdateDTO> detailList;
 
     }

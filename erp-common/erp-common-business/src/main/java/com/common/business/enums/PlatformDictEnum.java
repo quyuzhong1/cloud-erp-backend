@@ -60,6 +60,7 @@ public enum PlatformDictEnum implements EnumMessage {
     IML("iml", "艾姆勒", "艾姆勒", "50"),
     WDT("wdt", "旺店通", "旺店通", "51"),
     QI_MEN("qimen", "奇门", "奇门", "52"),
+    TE_MU("TeMu", "TEMU", "拼多多海外版", "034"),
         ;
 
 

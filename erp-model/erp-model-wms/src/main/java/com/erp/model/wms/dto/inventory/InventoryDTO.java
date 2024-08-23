@@ -493,6 +493,11 @@ public class InventoryDTO implements Serializable {
          */
         @JsonIgnore
         private List<String> skuIdList;
+
+        /**
+         * 仓位编码
+         */
+        private String warehouseLocation;
     }
 
     /**

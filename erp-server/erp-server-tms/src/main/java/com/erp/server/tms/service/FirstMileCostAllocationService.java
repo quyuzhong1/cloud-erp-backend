@@ -4,6 +4,8 @@ import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -80,8 +82,11 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     /**
      * 计算分摊费用
+     *
      * @param entity
+     * @param firstMileDeliveryEntity
+     * @param firstMileDeliveryDetailEntityList
      * @return
      */
-    BatchResultDTO calcAllocatedCost(FirstMileCostAllocationEntity entity);
+    BatchResultDTO calcAllocatedCost(FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity,List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList);
 }

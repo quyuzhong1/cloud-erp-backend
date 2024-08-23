@@ -46,40 +46,18 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     @TableField("logistics_bill_id")
     private String logisticsBillId;
     /**
-    * 物流单明细id
-    */
-    @TableField("logistics_bill_detail_id")
-    private String logisticsBillDetailId;
-    /**
      * 期初费用分摊id
      */
     @TableField("init_first_mile_id")
     private String initFirstMileId;
-    /**
-     * 期初费用分摊明细id
-     */
-    @TableField("logistics_bill_detail_id")
-    private String initFirstMileDetailId;
-    /**
-    * 暂估账单id
-    */
-    @TableField("estimated_bill_id")
-    private String estimatedBillId;
+
     /**
     * SKU成本id
     */
     @TableField("sku_cost_id")
     private String skuCostId;
-    /**
-    * SKU成本明细id
-    */
-    @TableField("sku_cost_detail_id")
-    private String skuCostDetailId;
-    /**
-    * 重量分摊id
-    */
-    @TableField("weight_allocation_id")
-    private String weightAllocationId;
+
+
     /**
     * 核算期间id
     */
@@ -117,8 +95,8 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     private String supplierName;
     /**
     * {业务单号}取值发货单关联的业务单号
-FBA：取值FBA货件单号
-第三方仓：海外仓入库单号
+        FBA：取值FBA货件单号
+        第三方仓：海外仓入库单号
     */
     @TableField("business_code")
     private String businessCode;
@@ -167,16 +145,6 @@ FBA：取值FBA货件单号
     */
     @TableField("to_warehouse_name")
     private String toWarehouseName;
-    /**
-    * 目的国家
-    */
-    @TableField("to_country")
-    private String toCountry;
-    /**
-    * 发货时间
-    */
-    @TableField("delivery_time")
-    private LocalDate deliveryTime;
 
 
     public static final String REMARK = "remark";
@@ -186,10 +154,6 @@ FBA：取值FBA货件单号
     public static final String RECONCILIATION_CODE = "reconciliation_code";
 
     public static final String LOGISTICS_BILL_ID = "logistics_bill_id";
-
-    public static final String LOGISTICS_BILL_DETAIL_ID = "logistics_bill_detail_id";
-
-    public static final String ESTIMATED_BILL_ID = "estimated_bill_id";
 
     public static final String SKU_COST_ID = "sku_cost_id";
 

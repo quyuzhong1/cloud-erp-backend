@@ -72,6 +72,21 @@ public enum VirtualInventoryBusinessTypeEnum {
      * 直接调拨单审核，减冻结
      */
     TRANSFER_INFO_APPROVE("transfer_info_approve", "13","直接调波单审核"),
+
+    /**
+     * 发货通知单，减冻结，加可用
+     */
+    SO_DELIVERY_NOTICE_APPROVE("so_delivery_notice_approve", "14","发货通知单审核"),
+
+    /**
+     * 销售订单减冻结
+     */
+    SO_INFO_SUBTRACT_FREEZE("so_info_subtract_freeze", "15","销售订单减冻结"),
+
+    /**
+     * 发货通知单新增，加冻结
+     */
+    SO_DELIVERY_NOTICE_ADD("so_delivery_notice_add", "16","发货通知单新增加冻结"),
     ;
 
     private String code;

@@ -98,10 +98,30 @@
         vmad.sys_type,
         vmad.sys_type_name,
         vma.remark,
-        vmad.detail_remark detailRemark
+        vmad.detail_remark detailRemark,
+        COALESCE(iv.realQty,0) - COALESCE(vi.distributionQty,0) as unDistributionQty,
+        case when  vmad.to_virtual_warehouse_id = '' then null else COALESCE(vit.toVirtualUsableQty,0) end as toVirtualWarehouseUsableQty,
+        case when  vmad.from_virtual_warehouse_id = '' then null else COALESCE(vif.fromVirtualUsableQty,0) end as fromVirtualWarehouseUsableQty,
+        case when vma.status = 'waitSubmit'and vma.type ='allocation'  then vmad.qty > COALESCE(iv.realQty,0) - COALESCE(vi.distributionQty,0)
+             when vma.status = 'waitSubmit'and vma.type ='transfer'  then vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)
+             when vma.status = 'waitSubmit'and vma.type ='cancel'  then vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)
+            else false
+        end isVirtualScarce
         FROM virtual_warehouse_allocation_detail vmad
         inner JOIN virtual_warehouse_allocation vma
         on vma.id = vmad.main_id and vma.is_deleted = false
+        left join (
+            select sum(qty) as realQty,sku_id,warehouse_id from inventory where is_deleted = false and dict_inventory_status in('usable','frozen')  group by sku_id,warehouse_id
+        ) iv on vmad.sku_id = iv.sku_id  and vmad.warehouse_id = iv.warehouse_id
+        left join (
+            select sum(qty) as distributionQty,sku_id,warehouse_id from virtual_inventory where is_deleted = false  group by sku_id,warehouse_id
+        ) vi on vmad.sku_id = vi.sku_id  and vmad.warehouse_id = vi.warehouse_id
+        left join (
+            select sum(qty) as toVirtualUsableQty,sku_id,warehouse_id,virtual_warehouse_id from virtual_inventory where is_deleted = false and dict_inventory_status = 'usable' group by sku_id,warehouse_id,virtual_warehouse_id
+        ) vit on vmad.sku_id = vit.sku_id and vmad.warehouse_id = vit.warehouse_id and vmad.to_virtual_warehouse_id = vit.virtual_warehouse_id
+        left join (
+            select sum(qty) as fromVirtualUsableQty,sku_id,warehouse_id,virtual_warehouse_id from virtual_inventory where is_deleted = false and dict_inventory_status = 'usable' group by sku_id,warehouse_id,virtual_warehouse_id
+        ) vif on vmad.sku_id = vif.sku_id and vmad.warehouse_id = vif.warehouse_id and vmad.from_virtual_warehouse_id = vif.virtual_warehouse_id
         where ${params.sqlMap.default}
         and vmad.is_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">

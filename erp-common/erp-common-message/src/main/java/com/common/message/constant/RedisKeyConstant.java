@@ -9,6 +9,11 @@ public class RedisKeyConstant {
     public static final String MABANG_FINANCIAL_SKU_LIST_KEY = "SKU:MABANG_FINANCIAL_SKU_KEY";
     public static final String LIST_SKU_INFO = "SKU:LIST_SKU_INFO";
 
+    /**
+     * 不需要扣减库存的sku ，服务类，费用类
+     */
+    public static final String CACHE_SKU_NO_INVENTORY = "cache:plm:getNoInventorySku";
+
     //催办
     public static String PRESS="_PRESS";
 
@@ -52,4 +57,12 @@ public class RedisKeyConstant {
      * 计划单号
      */
     public static String SKU_OCCUPY_CODE="SKU_OCCUPY_CODE:{}_{}";
+
+    /**
+     * 结算汇率缓存,目标币别+原币别
+     */
+    public static String SETTLEMENT_EXCHANGE_RATE = "SETTLEMENT_EXCHANGE_RATE:{}_{}";
+
+    public static final String SO_B2C_ORDER_KEY = "SO_B2C_ORDER_KEY";
+    public static final String SO_B2C_DELIVERY_KEY = "SO_B2C_DELIVERY_KEY";
 }

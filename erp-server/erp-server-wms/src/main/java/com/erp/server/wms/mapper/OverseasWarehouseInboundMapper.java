@@ -2,6 +2,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PermissionsDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
@@ -57,4 +58,11 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
     List<Map<String, String>> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params);
     
     Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params);
+
+    /**
+     * 签收数量
+     * @param dto
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(@Param("params") FirstMileDeliveryDTO.RequestReceiveDTO dto);
 }

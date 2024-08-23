@@ -7,10 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
-import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
+import com.erp.model.wms.entity.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
@@ -122,6 +119,14 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @param isSyncKingDee
      */
     BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess,Boolean isSyncKingDee);
+    /**
+     * 虚拟仓库存扣减处理
+     * @author will
+     * @date 2024/8/13 18:04
+     * @param list
+     * @param detailList
+     */
+    void updateVirtualInventoryTransCore (List<TransferInfoEntity> list,List<TransferInfoDetailEntity> detailList);
     /**
      * @description: 反审核
      * @author Will

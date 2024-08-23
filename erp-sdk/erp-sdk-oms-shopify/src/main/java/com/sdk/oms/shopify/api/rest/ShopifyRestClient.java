@@ -1,14 +1,10 @@
 package com.sdk.oms.shopify.api.rest;
 
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.github.rholder.retry.*;
 import com.sdk.oms.shopify.api.rest.exceptions.ShopifyClientException;
 import com.sdk.oms.shopify.api.rest.exceptions.ShopifyErrorResponseException;
-import com.sdk.oms.shopify.api.rest.exceptions.ShopifyIncompatibleApiException;
-import com.sdk.oms.shopify.api.rest.exceptions.ShopifyEmptyLineItemsException;
 import com.sdk.oms.shopify.api.rest.mappers.ResponseEntityToStringMapper;
 import com.sdk.oms.shopify.api.rest.mappers.ShopifySdkObjectMapper;
 import com.sdk.oms.shopify.api.rest.model.*;
@@ -27,12 +23,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.net.URI;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 @Slf4j
 public class ShopifyRestClient {
 
@@ -739,11 +737,17 @@ public class ShopifyRestClient {
                                                                    final String pageInfo,
                                                                    final int pageSize) {
         WebTarget webTarget = buildOrdersEndpoint()
-                .queryParam(STATUS_QUERY_PARAMETER, ANY_STATUSES)
                 .queryParam(PAGE_INFO_QUERY_PARAMETER, pageInfo)
-                .queryParam(LIMIT_QUERY_PARAMETER, pageSize)
-                .queryParam(UPDATED_AT_MIN_QUERY_PARAMETER, minimumUpdatedAtDate.toString())
-                .queryParam(UPDATED_AT_MAX_QUERY_PARAMETER, maximumUpdatedAtDate.toString());
+                .queryParam(LIMIT_QUERY_PARAMETER, pageSize);
+        if (StringUtils.isBlank(pageInfo)){
+            webTarget.queryParam(STATUS_QUERY_PARAMETER, ANY_STATUSES);
+        }
+        if (null != minimumUpdatedAtDate) {
+            webTarget.queryParam(UPDATED_AT_MIN_QUERY_PARAMETER, minimumUpdatedAtDate.toString());
+        }
+        if (null != maximumUpdatedAtDate) {
+            webTarget.queryParam(UPDATED_AT_MAX_QUERY_PARAMETER, maximumUpdatedAtDate.toString());
+        }
         if (null != maximumCreatedAtDate){
             webTarget.queryParam(CREATED_AT_MAX_QUERY_PARAMETER, maximumCreatedAtDate.toString());
         }
@@ -758,7 +762,7 @@ public class ShopifyRestClient {
         log.info("Retrieved {} orders from first page", shopifyOrderPage.size());
         List<ShopifyOrder> resultOrderList = new LinkedList<>(shopifyOrderPage);
         while (shopifyOrderPage.getNextPageInfo() != null) {
-            shopifyOrderPage = getUpdatedOrdersCreatedBefore(minimumUpdatedAtDate, maximumUpdatedAtDate, maximumCreatedAtDate, shopifyOrderPage.getNextPageInfo(), MAX_REQUEST_LIMIT);
+            shopifyOrderPage = getUpdatedOrdersCreatedBefore(null, null, null, shopifyOrderPage.getNextPageInfo(), MAX_REQUEST_LIMIT);
             log.info("Retrieved {} orders from page {}", shopifyOrderPage.size(), shopifyOrderPage.getNextPageInfo());
             resultOrderList.addAll(shopifyOrderPage);
         }

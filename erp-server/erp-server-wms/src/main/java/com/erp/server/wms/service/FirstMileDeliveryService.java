@@ -315,4 +315,11 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(List<String> codes,List<String> sourceCodes);
+
+    /**
+     * 根据业务单号统计签收数量
+     * @param dto
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto);
 }

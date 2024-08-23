@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -156,7 +157,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -177,6 +177,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         // 新增明细
         requisitionApplicationDetailService.add(addDTO, requisitionApplicationEntity.getId());
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "要货申请" , requisitionApplicationEntity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "新增操作");
+
         return new BaseResultDTO.AddDTO(requisitionApplicationEntity.getId(), code);
     }
 
@@ -290,6 +294,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
                     .filter(req -> req.getParentSkuId().equals(handleListDTO.getSkuId())
                             && req.getBomVersion().equals(handleListDTO.getBomVersion())
+                            && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType())
                     ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 handleListDTO.setIsCombination(Boolean.TRUE);
@@ -1009,6 +1014,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             String msg = StrUtil.format("用户【{}】绑定单号为【{}】货件号为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), requisitionApplicationEntity.getCode(), fbaShipmentEntity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "绑定货件");
+
+            //更新头程发货单中的FBA货件号
+            FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getOne(new LambdaQueryWrapper<FirstMileDeliveryEntity>()
+                    .eq(FirstMileDeliveryEntity::getSourceCode, requisitionApplicationEntity.getCode())
+                    .eq(FirstMileDeliveryEntity::getSourceType, SourceTypeEnum.REQUISITION_APPLICATION.getCode()));
+            if(firstMileDelivery != null){
+                firstMileDeliveryDetailService.lambdaUpdate()
+                        .eq(FirstMileDeliveryDetailEntity::getMainId, firstMileDelivery.getId())
+                        .set(FirstMileDeliveryDetailEntity::getFbaShipmentCode, requisitionApplicationEntity.getFbaShipmentCode())
+                        .update();
+            }
         }
         if(CollectionUtils.isNotEmpty(updateList)){
             service.updateBatchById(updateList);
@@ -1057,6 +1073,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         .map(PickingDetailEntity::getQty)
                         .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty);
+            }
+            if (detailEntity.getApproveQty() < detailEntity.getPickingQty()) {
+                throw new ServiceException(ApiError.ERROR_99133, detailEntity.getSkuNo());
             }
         }
         requisitionApplicationDetailService.updateBatchById(detailEntities);
@@ -1379,6 +1398,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 } else {
                     detailAddDto.setWarehouseLocation("");
                 }
+                detailAddDto.setFbaShipmentCode(viewDTO.getFbaShipmentCode());
                 detailAddList.add(detailAddDto);
             }
 
@@ -1428,7 +1448,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
             ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(application.getChannelId());
             addDTO.setDeliveryWarehouseId(shopInfo.getWarehouseId());
+            addDTO.setCountryCode(shopInfo.getDictCountryCode());
         }else {
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(application.getChannelId());
+            if(Objects.nonNull(overseasProviderWarehouseEntity)){
+                addDTO.setCountryCode(overseasProviderWarehouseEntity.getCountry());
+            }
             addDTO.setDeliveryWarehouseId(application.getChannelId());
         }
         addDTO.setSourceId(application.getId());

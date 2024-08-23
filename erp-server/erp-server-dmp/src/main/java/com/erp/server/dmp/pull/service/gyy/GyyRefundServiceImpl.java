@@ -32,7 +32,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.gyy.GyyRefundEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
-import com.erp.server.dmp.service.BiShopInfoService;
+import com.erp.server.dmp.service.BiDmpShopInfoService;
 import com.erp.server.dmp.utils.DataCompareUtil;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
@@ -41,7 +41,6 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -66,7 +65,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
     @Autowired
     private MQProducerService<BiRefundInfoEntity> mqProducerService;
     @Resource
-    private BiShopInfoService biShopInfoService;
+    private BiDmpShopInfoService biDmpShopInfoService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -265,7 +264,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
 
         //店铺编号
         biRefundInfoEntity.setShopNo(gyyRefundEntity.getShopCode());
-        BiShopInfoEntity shopInfo = biShopInfoService.getShopByShopNo(gyyRefundEntity.getShopCode());
+        BiShopInfoEntity shopInfo = biDmpShopInfoService.getShopByShopNo(gyyRefundEntity.getShopCode());
         //店铺名称
         biRefundInfoEntity.setShopName(null != shopInfo ? shopInfo.getName() : "");
         //平台名称
@@ -338,7 +337,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
     }
 
     private boolean assertOrgIsVijim(String shopCode) {
-        BiShopInfoEntity shopInfo = biShopInfoService.getShopByShopNo(shopCode);
+        BiShopInfoEntity shopInfo = biDmpShopInfoService.getShopByShopNo(shopCode);
 //        return null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
         return null != shopInfo && StrUtil.isNotBlank(shopInfo.getName()) && (shopInfo.getName().contains("小隼") || shopInfo.getName().contains("优至胜"));
     }

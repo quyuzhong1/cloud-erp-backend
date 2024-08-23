@@ -130,6 +130,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             return "";
         }
         List<CfgSettingValueDTO.CfgPrintDetail> cfgPrintDetails = dto.getCfgPrintDetails();
+        if(CollectionUtils.isEmpty(cfgPrintDetails)){
+            return "";
+        }
         return cfgPrintDetails.stream().filter(v->v.getPaperSize().equals(paperSize)).findFirst().map(CfgSettingValueDTO.CfgPrintDetail::getPrinterName).orElse("");
     }
 

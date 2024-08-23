@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -114,6 +115,7 @@ public class DmpOutputWdtOrderReturnRocketMQTaskHandler extends DmpOutputRocketM
         resultEntity.setShopId(entity.getShopId());
         resultEntity.setShopName(entity.getShopName());
         resultEntity.setCreated(entity.getPlatformCreateTime());
+        resultEntity.setModified(entity.getPlatformUpdateTime());
         //仓库id
         resultEntity.setWarehouseId(itemList.stream().map(DmpSoReturnDetailEntity::getWarehouseId).filter(StringUtils::isNotBlank).findAny().orElse(""));
         resultEntity.setWarehouseName(itemList.stream().map(DmpSoReturnDetailEntity::getWarehouseName).filter(StringUtils::isNotBlank).findAny().orElse(""));
@@ -143,9 +145,15 @@ public class DmpOutputWdtOrderReturnRocketMQTaskHandler extends DmpOutputRocketM
             itemEntity.setWarehouseId(item.getWarehouseId());
             itemEntity.setSoReturnDetailId(item.getPlatformDetailId());
             itemEntity.setSourceDetailId(item.getThirdDetailId());
+            itemEntity.setAmount(item.getAmount());
         	
             orderItemList.add(itemEntity);
         }
         return orderItemList;
+    }
+    
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("thirdCode");
     }
 }

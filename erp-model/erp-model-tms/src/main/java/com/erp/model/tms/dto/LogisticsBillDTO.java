@@ -672,6 +672,10 @@ public class LogisticsBillDTO implements Serializable {
         private String orderCode;
 
         /**
+         * 平台订单号
+         */
+        private String platformCode;
+        /**
          * 销售平台
          */
         private String salesPlatform;
@@ -747,6 +751,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         @NotBlank(message = "客户参考号不能为空")
         private String referenceNumber;
+
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
 
         /**
          * 运单号（运单号和跟踪单号不能都为空）

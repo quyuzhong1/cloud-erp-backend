@@ -36,8 +36,16 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
 
     /**
      * 根据物流单id查询重量分摊记录
-     * @param logisticsBillId
+     * @param logisticsBillIds
      * @return
      */
-    List<FirstMileWeightAllocationEntity> getByLogisticsBillId(String logisticsBillId);
+    List<FirstMileWeightAllocationEntity> listByLogisticsBillIds(List<String> logisticsBillIds);
+
+    /**
+     * 根据发货单id获取重量分摊记录
+     * @param sourceIds
+     * @param statusList
+     * @return
+     */
+    List<FirstMileWeightAllocationEntity> listBySourceIds(List<String> sourceIds, List<String> statusList);
 }

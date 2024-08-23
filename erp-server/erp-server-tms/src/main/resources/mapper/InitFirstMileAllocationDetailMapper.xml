@@ -55,6 +55,22 @@
         init_estimated_cost,init_estimated_tariff,
         weight_allocation, product_cost, exchange_rate, weight_unit, currency, currency_symbol
     </sql>
+    <select id="listBySourceIds" resultType="com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity">
+        select
+            ad.*
+        from init_first_mile_allocation_detail ad
+        left join init_first_mile_allocation a on ad.main_id = a.id and a.is_deleted = false
+        where ad.is_deleted = false
+        <if test="status != null and status != ''">
+            a.status = #{status}
+        </if>
+        <if test="sourceIds != null and sourceIds.size > 0">
+            and ad.source_id in
+            <foreach collection="sourceIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

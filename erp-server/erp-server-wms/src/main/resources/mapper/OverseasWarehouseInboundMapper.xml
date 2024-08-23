@@ -189,7 +189,28 @@
 			left join overseas_warehouse_inbound_received h on g.id = h.detail_id 
 			<include refid="OverDataCompareByCondition"/>
     </select>
-    
+    <!--签收数量汇总-->
+    <select id="countReceiveQtyByParams" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ReceiveDTO">
+        SELECT
+            owi.source_code as businessCode,
+            owid.sku_id,
+            SUM(CASE WHEN owid.receive_time >= DATE_TRUNC('month', ${params.month} - INTERVAL '1 month') AND DATE_TRUNC('month', ${params.month}) > owid.receive_time THEN owid.receive_qty ELSE 0 END) AS  lastMonthReceiveQty,
+            SUM(CASE WHEN EXTRACT(YEAR FROM owid.receive_time) = EXTRACT(YEAR FROM ${params.month}) AND EXTRACT(MONTH FROM owid.receive_time) = EXTRACT(MONTH FROM ${params.month}) THEN owid.receive_qty ELSE 0 END) AS  currentMonthReceiveQty,
+            SUM(CASE WHEN DATE_TRUNC('month', ${params.month}) >= DATE_TRUNC('month', owid.receive_time)  AND owid.receive_time >= '2024-01-01' THEN owid.receive_qty ELSE 0 END) AS  asCurrentMonthReceiveQty,
+            SUM(CASE WHEN DATE_TRUNC('month', ${params.month} - INTERVAL '1 month') >= DATE_TRUNC('month', owid.receive_time) AND owid.receive_time >= '2024-01-01' THEN owid.receive_qty ELSE 0 END) AS  asLastMonthReceiveQty
+        FROM
+            overseas_warehouse_inbound owi
+        LEFT JOIN overseas_warehouse_inbound_detail owid ON owi.ID = owid.main_id AND owid.is_deleted = FALSE
+        WHERE owi.is_deleted = FALSE AND source_type = 'firstMileDelivery'
+        <if test="params.businessCodes != null and params.businessCodes.size > 0">
+            and owi.source_code in
+            <foreach collection="params.businessCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY businessCode,owid.sku_id
+    </select>
+
     <sql id="OverDataCompareByCondition">
     	where T.is_deleted = 'f' 
 			AND G.is_deleted = 'f' and h.is_deleted = 'f'

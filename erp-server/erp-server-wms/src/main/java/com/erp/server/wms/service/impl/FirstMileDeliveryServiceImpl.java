@@ -85,6 +85,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -547,7 +548,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
                 }
             } else {
-                detailAddDto.setRemark(entity.getSourceCode());
+                detailAddDto.setRemark(detailEntity.getFbaShipmentCode());
             }
 
             detailAddDtoList.add(detailAddDto);
@@ -1754,6 +1755,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    public List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto) {
+        //汇总 亚马逊签收报告/第三方仓签收报告签收数量
+        List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList1 = overseasWarehouseInboundService.countReceiveQtyByParams(dto);
+        List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList2 =fbaShipmentReceiveService.countReceiveQtyByParams(dto);
+        return Stream.concat(receiveDTOList1.stream(),receiveDTOList2.stream()).collect(Collectors.toList());
+    }
+
+    @Override
     public Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
         if (CollectionUtils.isEmpty(dto.getIds()) || CollectionUtils.isEmpty(dto.getBillTypes())) {
             return false;
@@ -2024,7 +2033,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
                 }
             } else {
-                detailAddDto.setRemark(deliveryEntity.getSourceCode());
+                detailAddDto.setRemark(deliveryDetail.getFbaShipmentCode());
             }
 
             detailAddDtoList.add(detailAddDto);
@@ -2140,7 +2149,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     detailAddDto.setRemark(overseasWarehouseInboundEntity.getCode());
                 }
             } else {
-                detailAddDto.setRemark(entity.getSourceCode());
+                detailAddDto.setRemark((detailEntity.getFbaShipmentCode()));
             }
             detailAddDtoList.add(detailAddDto);
         }

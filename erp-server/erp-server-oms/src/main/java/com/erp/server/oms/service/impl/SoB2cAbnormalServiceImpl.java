@@ -9,9 +9,8 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.rpc.tms.feign.TransferDeclareFeign;
+import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.service.SoB2cAbnormalService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
@@ -38,13 +37,11 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     private SoOutstockFeign soOutstockFeign;
 
     @Resource
-    private WmsTaskFeign wmsTaskFeign;
-
-    @Resource
-    private TransferDeclareFeign transferDeclareFeign;
-
-    @Resource
     private SoB2cErrorService soB2cErrorService;
+
+    @Resource
+    private SoB2cDeliveryFeign soB2cDeliveryFeign;
+
 
     @Override
     public PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> pagingParamDTO) {
@@ -88,6 +85,16 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 break;
             case INSTOCK_FORECAST:
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "入库预报无需重试"));
+                break;
+            case GENERATE_TRANSFER_INFO:
+                Boolean isPush = soB2cDeliveryFeign.afreshPushTransferInfo(soB2cEntity.getId());
+                BatchResultDTO resultDTO = isPush ? BatchResultDTO.success(id, soB2cEntity.getCode(), "生成直接调拨单") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "生成直接调拨单");
+                resultDTOList.add(resultDTO);
+                break;
+            case VIRTUAL_FREEZE_QTY:
+                Boolean outFreeze = soB2cDeliveryFeign.afreshOutFreezeVirtualInventory(soB2cEntity.getId());
+                BatchResultDTO batchResultDTO = outFreeze ? BatchResultDTO.success(id, soB2cEntity.getCode(), "虚拟仓库存扣减") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "虚拟仓库存扣减");
+                resultDTOList.add(batchResultDTO);
                 break;
             default:
                 break;

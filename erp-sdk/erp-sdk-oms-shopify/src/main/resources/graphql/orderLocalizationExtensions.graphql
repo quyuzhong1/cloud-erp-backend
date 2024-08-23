@@ -1,0 +1,17 @@
+query ($id: ID!) {
+  node(id: $id) {
+    ... on Order {
+      id
+      name
+      localizationExtensions(first: 1) {
+        nodes {
+          countryCode
+          key
+          purpose
+          title
+          value
+        }
+      }
+    }
+  }
+}

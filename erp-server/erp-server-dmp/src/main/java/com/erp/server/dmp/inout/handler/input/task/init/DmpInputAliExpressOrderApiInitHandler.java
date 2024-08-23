@@ -80,15 +80,22 @@ public class DmpInputAliExpressOrderApiInitHandler extends DmpInputInitHandler{
                 .toOffsetDateTime()
                 .atZoneSameInstant(ZoneId.of(AliExpressOrderService.ALIEXPRESS_TIME_ZONE))
                 .toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        
+        String extendJson = dmpInputTaskEntity.getExtendJson();
+    	boolean finishFlag = false;
+    	if(StringUtils.isNotBlank(extendJson)) {
+    		JSONObject parseObject = JSON.parseObject(extendJson);
+    		if(parseObject != null) {
+    			finishFlag = parseObject.getBooleanValue("finish");
+    		}
+    	}
         if(DmpInputTaskTaskTypeEnum.HISTORY.getCode().equals(taskType)){
-        	String extendJson = dmpInputTaskEntity.getExtendJson();
-        	boolean finishFlag = false;
-        	if(StringUtils.isNotBlank(extendJson)) {
-        		JSONObject parseObject = JSON.parseObject(extendJson);
-        		if(parseObject != null) {
-        			finishFlag = parseObject.getBooleanValue("finish");
-        		}
+        	paramMap.put("create_date_start", startTime);
+    		paramMap.put("create_date_end", endTime);
+        	if(finishFlag) {
+        		paramMap.put("order_status", "FINISH");
         	}
+        }else {
         	if(finishFlag) {
         		paramMap.put("modified_date_start", startTime);
         		paramMap.put("modified_date_end", endTime);
@@ -102,20 +109,17 @@ public class DmpInputAliExpressOrderApiInitHandler extends DmpInputInitHandler{
                         .toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         		paramMap.put("order_status", "FINISH");
         	}else {
-        		paramMap.put("create_date_start", startTime);
-        		paramMap.put("create_date_end", endTime);
+        		paramMap.put("modified_date_start", startTime);
+        		paramMap.put("modified_date_end", endTime);
+        		paramMap.put("create_date_start", LocalDateTimeUtil.offset(LocalDateTime.now(), -179, ChronoUnit.DAYS).atZone(ZoneId.systemDefault())
+                        .toOffsetDateTime()
+                        .atZoneSameInstant(ZoneId.of(AliExpressOrderService.ALIEXPRESS_TIME_ZONE))
+                        .toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        		paramMap.put("create_date_end", LocalDateTime.now().atZone(ZoneId.systemDefault())
+                        .toOffsetDateTime()
+                        .atZoneSameInstant(ZoneId.of(AliExpressOrderService.ALIEXPRESS_TIME_ZONE))
+                        .toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         	}
-        }else {
-        	paramMap.put("modified_date_start", startTime);
-    		paramMap.put("modified_date_end", endTime);
-    		paramMap.put("create_date_start", LocalDateTimeUtil.offset(LocalDateTime.now(), -179, ChronoUnit.DAYS).atZone(ZoneId.systemDefault())
-                    .toOffsetDateTime()
-                    .atZoneSameInstant(ZoneId.of(AliExpressOrderService.ALIEXPRESS_TIME_ZONE))
-                    .toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-    		paramMap.put("create_date_end", LocalDateTime.now().atZone(ZoneId.systemDefault())
-                    .toOffsetDateTime()
-                    .atZoneSameInstant(ZoneId.of(AliExpressOrderService.ALIEXPRESS_TIME_ZONE))
-                    .toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         }
         
         JSONArray order = new JSONArray();
@@ -126,13 +130,18 @@ public class DmpInputAliExpressOrderApiInitHandler extends DmpInputInitHandler{
 			
 			JSONObject data = null;
 	    	long sleepTime = 1000;
+	    	int count = 0;
 	    	while(data == null) {
 	    		data = this.execute(client, request, token, apiType);
 	    		if(data == null) {
+	    			if(count == 10) {
+        				throw new ServiceException("调用速卖通" + apiType + "接口重试" + count + "失败");
+        			}
 	    			try {
 						Thread.sleep(sleepTime);
 					} catch (InterruptedException e) {}
 	    			sleepTime = sleepTime + 1000;
+	    			count = count + 1;
 	    		}
 	    	}
 			if(firstFlag) {
@@ -175,6 +184,9 @@ public class DmpInputAliExpressOrderApiInitHandler extends DmpInputInitHandler{
         JSONObject data = body.getJSONObject("result");
         if(data == null) {
         	JSONObject errorResponse = body.getJSONObject("error_response");
+        	if(errorResponse == null) {
+        		return null;
+        	}
         	String code = errorResponse.getString("code");
         	if(!"ApiCallLimit".equals(code) && !"15".equals(code) && !"UnknownRuntimeException".equals(code)) {
         		throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + errorResponse.getString("msg"));

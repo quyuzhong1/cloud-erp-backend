@@ -1,27 +1,19 @@
 package com.erp.server.wms.service;
 
-import cn.hutool.core.lang.Tuple;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.DmpSoPrestockInfoDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
-import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.model.wms.enums.InventoryDirectionEnum;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -57,6 +49,9 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @return String
      */
     String add(OtherInstockDTO.AddDTO dto);
+
+    String addAndApprove(OtherInstockEntity dto);
+    String disApproveAndGenerate(String dbId,DmpSoPrestockInfoDTO.PrestockDTO dto);
     /**
      * @description: 新增并提交
      * @author Will
@@ -217,4 +212,10 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * {@code @date:} 2024/03/21
      */
     void importBatchSave(List<OtherInstockEntity> saveList);
+
+    void syncWdtPreInstock(DmpSoPrestockInfoDTO.PrestockDTO dto);
+
+    OtherInstockEntity getByThirdCode(String thirdCode, InventoryDirectionEnum inventoryDirectionEnum);
+
+    void generateOpposite(OtherInstockEntity dbOtherInstockEntity, String code);
 }

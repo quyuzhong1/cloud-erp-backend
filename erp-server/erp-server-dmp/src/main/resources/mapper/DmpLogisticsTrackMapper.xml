@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpLogisticsTrackMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpLogisticsTrackEntity">
+       <result column="id" property="id" />
+       <result column="courier_code" property="courierCode" />
+       <result column="courier_name" property="courierName" />
+       <result column="track_no" property="trackNo" />
+       <result column="track_time" property="trackTime" />
+       <result column="status" property="status" />
+       <result column="content" property="content" />
+       <result column="unique_encrypt" property="uniqueEncrypt" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="input_task_id" property="inputTaskId" />
+       <result column="convert_id" property="convertId" />
+       <result column="next_level_id" property="nextLevelId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        courier_code, courier_name, track_no, track_time, status, content, unique_encrypt, data_encrypt, input_task_id, convert_id, next_level_id
+    </sql>
+
+
+</mapper>

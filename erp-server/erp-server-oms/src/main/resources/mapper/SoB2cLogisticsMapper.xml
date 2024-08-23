@@ -52,7 +52,10 @@
             <set>
                 track_no = #{item.trackNo}
             </set>
-            where code = #{item.transportNo} and id = #{item.id}
+            where code = #{item.transportNo}
+                <if test="item.id != null and item.id != ''">
+                    and id = #{item.id}
+                </if>
         </foreach>
     </update>
 

@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -32,5 +33,11 @@ public interface ReportPeriodMonthService extends SuperService<ReportPeriodMonth
     */
     Boolean update(ReportPeriodMonthDTO.UpdateDTO dto);
 
-
+    /**
+     * 检查并创建核算记录
+     * @param company
+     * @param reportPeriodId
+     * @return
+     */
+    String createOrUpdatePeriod(SysAccountingCompanyEntity company, String reportPeriodId);
 }

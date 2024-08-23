@@ -8,7 +8,6 @@ import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -92,5 +91,16 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @param sourceCurrencyCode
      * @return BigDecimal
      */
-    BigDecimal findByCurrencyAndDate(LocalDate date, String sourceCurrencyCode);
+    BigDecimal findByCurrencyAndDate(String date, String sourceCurrencyCode);
+
+    /**
+     * 根据日期、目标币别、来源币别查询汇率信息
+     * @author will
+     * @date 2024/8/7 17:27
+     * @param date
+     * @param targetCurrencyCode
+     * @param sourceCurrencyCode
+     * @return BigDecimal
+     */
+    BigDecimal listRedisByCurrencyCode (String date, String targetCurrencyCode, String sourceCurrencyCode);
 }

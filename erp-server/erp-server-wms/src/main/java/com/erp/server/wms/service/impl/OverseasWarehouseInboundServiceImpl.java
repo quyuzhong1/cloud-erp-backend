@@ -1160,6 +1160,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         return ApiResult.success();
     }
 
+    @Override
+    public List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto) {
+        if (Objects.isNull(dto) || (CollectionUtils.isEmpty(dto.getBusinessCodes()) && Objects.isNull(dto.getMonth()))){
+            return Collections.emptyList();
+        }
+        return baseMapper.countReceiveQtyByParams(dto);
+    }
+
     /**
      * 分页查询、导出 数据处理
      */

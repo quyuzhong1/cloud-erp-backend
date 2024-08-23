@@ -675,7 +675,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 dto.setTotalEstimatedFee(totalEstimatedFee);
             }else{
                 //查询汇率
-                BigDecimal rate = dmpTaskFeign.getRate(logisticsBillCostEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
+                BigDecimal rate = StrUtil.isBlank(dto.getCurrency()) ? null : dmpTaskFeign.getRate(logisticsBillCostEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
                 if(Objects.nonNull(rate)){
                     dto.setTotalEstimatedFee(totalEstimatedFee.multiply(rate));
                 }
@@ -1404,7 +1404,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(LogisticsBillEntity logisticsBillEntity) {
         //是否下推头程重量分摊，下推则不允许删除
-        List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntityList = firstMileWeightAllocationService.getByLogisticsBillId(logisticsBillEntity.getId());
+        List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntityList = firstMileWeightAllocationService.listByLogisticsBillIds(Collections.singletonList(logisticsBillEntity.getId()));
         if (CollectionUtils.isNotEmpty(firstMileWeightAllocationEntityList)){
             return BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getCounterNo(),"存在头程重量分摊，不能删除物流单");
         }

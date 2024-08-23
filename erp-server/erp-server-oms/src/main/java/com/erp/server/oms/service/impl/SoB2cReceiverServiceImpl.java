@@ -113,10 +113,17 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     public SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList) {
         PlatformOrderReceiverDTO receiverDTO = dto.getReceiver();
         // 当前国家
+        // 匹配来源三字码
         DictCountryEntity dictCountryEntity = countryList.stream()
-                .filter(e-> Objects.nonNull(receiverDTO) && e.getId().equalsIgnoreCase(receiverDTO.getCountry()))
+                .filter(e-> (Objects.nonNull(receiverDTO) && e.getId().equalsIgnoreCase(receiverDTO.getCountry()))
+                        || (Objects.nonNull(receiverDTO)
+                            && StringUtils.isNotBlank(receiverDTO.getCountry())
+                            && StringUtils.isNotBlank(e.getAlpha3())
+                            && e.getAlpha3().equalsIgnoreCase(receiverDTO.getCountry())
+                        ))
                 .findFirst()
                 .orElse(null);
+
         if (null == receiverDTO){
             //获取主表下物流记录
             SoB2cReceiverEntity oldEntity = getByMainId(mainEntity.getId());
@@ -124,6 +131,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 SoB2cReceiverEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(null, mainEntity.getId());
                 if (null != dictCountryEntity){
                     entity.setCountryName(dictCountryEntity.getNameCn());
+                    entity.setCountry(dictCountryEntity.getId());
                 }
                 //处理买家信息
 //                handleSoB2cReceiver(entity, mainEntity.getId());
@@ -148,6 +156,8 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
 //                handleSoB2cReceiver(entity, mainEntity.getId());
                 if (null != dictCountryEntity){
                     entity.setCountryName(dictCountryEntity.getNameCn());
+                    // 检查修正国家3字码为2字码
+                    entity.checkAndSetCountry(dto.getReceiver().getCountry(), dictCountryEntity.getId());
                 }
                 if (StringUtils.isBlank(receiverDTO.getName())){
                     receiverDTO.setEmail(StringUtils.isBlank(receiverDTO.getEmail()) ? "" : receiverDTO.getEmail());
@@ -157,11 +167,14 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 SoB2cReceiverEntity newReceiverEntity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(receiverDTO, mainEntity.getId());
                 if (null != dictCountryEntity && StringUtils.isBlank(entity.getCountryName())){
                     entity.setCountryName(dictCountryEntity.getNameCn());
+                    // 检查修正国家3字码为2字码
+                    entity.checkAndSetCountry(dto.getReceiver().getCountry(), dictCountryEntity.getId());
                 }
+                newReceiverEntity.setId(entity.getId());
                 // 指定有值不更新
-                ReflectUtils.updateSpecifiedFieldsIfNotValue(entity, newReceiverEntity, SoB2cReceiverEntity.fieldsExistNotUpdate());
+                ReflectUtils.updateSpecifiedFieldsIfNotValue(newReceiverEntity, entity, SoB2cReceiverEntity.fieldsExistNotUpdate());
 
-                this.updateById(entity);
+                this.updateById(newReceiverEntity);
 //                if (!this.updateById(entity2)){
 //                    throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
 //                }

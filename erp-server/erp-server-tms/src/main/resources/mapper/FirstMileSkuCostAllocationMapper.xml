@@ -29,6 +29,11 @@
        <result column="weight_unit" property="weightUnit" />
        <result column="currency" property="currency" />
        <result column="bill_source_type" property="billSourceType" />
+        <result column="logistics_bill_detail_id" property="logisticsBillDetailId" />
+        <result column="estimated_bill_id" property="estimatedBillId" />
+        <result column="sku_cost_detail_id" property="skuCostDetailId" />
+        <result column="weight_allocation_id" property="weightAllocationId" />
+        <result column="init_first_mile_detail_id" property="initFirstMileDetailId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->

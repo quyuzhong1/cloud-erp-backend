@@ -292,4 +292,64 @@
               </foreach>
           </if>
     </select>
+    <select id="listByBusinessCodes"
+            resultType="com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity">
+        select
+            tfmrd.id,
+            tfmrd.create_user_id,
+            tfmrd.create_user_name,
+            tfmrd.create_time,
+            tfmrd.update_user_id,
+            tfmrd.update_user_name,
+            tfmrd.update_time,
+            tfmrd.version,
+            tfmrd.is_deleted,
+            tfmrd.main_id,
+            tfmrd.source_id,
+            tfmrd.source_type,
+            tfmrd.source_code,
+            tfmrd.relation_code,
+            tfmrd.shop_id,
+            tfmrd.shop_name,
+            tfmrd.from_country,
+            tfmrd.to_country,
+            tfmrd.receive_date,
+            tfmrd.fee_rule,
+            tfmrd.fee_rule_name,
+            tfmrd."type",
+            tfmrd.total_logistics_cost,
+            tfmrd.actual_weight,
+            tfmrd.actual_weight_unit,
+            tfmrd.volume_weight,
+            tfmrd.volume_weight_unit,
+            tfmrd.billing_weight,
+            tfmrd.billing_weight_unit,
+            tfmrd.shipping_cost,
+            tfmrd.declare_cost,
+            tfmrd.other_cost,
+            tfmrd.remark,
+            tfmrd.status,
+            tfmrd.confirm_date,
+            tfmrd.confirm_user_id,
+            tfmrd.confirm_user_name,
+            tfmrd.business_code,
+            tfmrd.transport_status,
+            tfmrd.logistics_channel_id,
+            tfmrd.transport_no,
+            tfmrd.reconciliation_count,
+            tfmrd.reconciliation_type,
+            tfmr.reconciliation_month
+        from tms_first_mile_reconciliation_detail tfmrd
+        left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id and tfmr.is_deleted = false
+        where tfmrd.is_deleted = false
+        <if test="businessCodes != null and businessCodes.size > 0">
+            and tfmrd.business_code in
+            <foreach collection="businessCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="status != null and status != ''">
+            and tfmr.approve_status = #{status}
+        </if>
+    </select>
 </mapper>

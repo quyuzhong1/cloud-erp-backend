@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
 import com.erp.server.tms.mapper.ReportPeriodMonthMapper;
 import com.erp.server.tms.service.ReportPeriodMonthService;
@@ -17,9 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.ReportPeriodMonthDTO;
+
+import java.time.LocalDate;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.util.CollectionUtils;
+
 /**
  * <p>
  * 核算期间月份表 服务实现类
@@ -84,6 +89,31 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, reportPeriodMonthEntity, null, reportPeriodMonthEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public String createOrUpdatePeriod(SysAccountingCompanyEntity company, String reportPeriodId) {
+        ReportPeriodMonthEntity reportPeriodMonth = null;
+        if (StrUtil.isNotBlank(reportPeriodId)){
+            reportPeriodMonth = this.getById(reportPeriodId);
+        }
+        if (Objects.isNull(reportPeriodMonth)){
+            //检查是否存在组织对应的核算记录
+            List<ReportPeriodMonthEntity> list = this.lambdaQuery().eq(ReportPeriodMonthEntity::getOrgId, company.getId()).eq(ReportPeriodMonthEntity::getMonth, LocalDate.now().withDayOfMonth(1)).list();
+            if (CollectionUtils.isEmpty(list)){
+                reportPeriodMonth = new ReportPeriodMonthEntity();
+                reportPeriodMonth.setMonth(LocalDate.now().withDayOfMonth(1));
+                reportPeriodMonth.setOrgId(company.getId());
+                reportPeriodMonth.setOrgName(company.getCompanyName());
+                this.save(reportPeriodMonth);
+                return reportPeriodMonth.getId();
+            }else {
+                return list.get(0).getId();
+            }
+
+        }else {
+            return reportPeriodId;
+        }
     }
 
 

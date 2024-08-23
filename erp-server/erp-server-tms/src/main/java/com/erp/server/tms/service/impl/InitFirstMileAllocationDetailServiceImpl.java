@@ -109,7 +109,7 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
         }
         //检查数据是否已存在
         List<String> sourceIds = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<InitFirstMileAllocationDetailEntity> existDetailEntityList = this.listBySourceIds(sourceIds);
+        List<InitFirstMileAllocationDetailEntity> existDetailEntityList = this.listBySourceIds(sourceIds, null);
         detailEntityList.forEach(detailEntity -> {
             if (!CollectionUtils.isEmpty(existDetailEntityList)){
                 InitFirstMileAllocationDetailEntity entity = existDetailEntityList.stream().filter(e -> Objects.nonNull(e)
@@ -149,11 +149,11 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
         this.saveOrUpdateBatch(detailEntityList);
     }
     @Override
-    public List<InitFirstMileAllocationDetailEntity> listBySourceIds(List<String> sourceIds) {
-        if (CollectionUtils.isEmpty(sourceIds)){
+    public List<InitFirstMileAllocationDetailEntity> listBySourceIds(List<String> sourceIds, String status) {
+        if (CollectionUtils.isEmpty(sourceIds) && StrUtil.isBlank(status)){
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(InitFirstMileAllocationDetailEntity::getSourceId,sourceIds).list();
+        return baseMapper.listBySourceIds(sourceIds,status);
     }
 
     /**

@@ -36,4 +36,6 @@ public interface SkuMappingExtendService extends SuperService<SkuMappingExtendEn
      * 检查和保存配置
      */
     void checkAndSave(SkuMappingEntity entity, List<SkuMappingDTO.SkuMappingExtendListDTO> extendList);
+
+    void copyBySkuMapping(SkuMappingEntity lastestSkuMapping, List<SkuMappingEntity> skuMappingEntityList);
 }

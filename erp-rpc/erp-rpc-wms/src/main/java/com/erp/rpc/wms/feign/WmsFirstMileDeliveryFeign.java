@@ -4,6 +4,7 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,6 +49,11 @@ public interface WmsFirstMileDeliveryFeign {
     @PostMapping("/feign/firstMileDelivery/listByIds")
     List<FirstMileDeliveryEntity> listByIds(@RequestBody List<String> ids);
     /**
+     * 根据主表id获取明细记录
+     */
+    @PostMapping("/feign/firstMileDelivery/listDetailByMainIds")
+    List<FirstMileDeliveryDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds);
+    /**
      * 根据编码查询发货单明细
      */
     @PostMapping("/feign/firstMileDelivery/listDetailByCodes")
@@ -69,4 +75,11 @@ public interface WmsFirstMileDeliveryFeign {
     @GetMapping("/feign/firstMileDelivery/getCfgAmzCenter")
     List<CfgAmzFulfillmentCenterEntity> getCfgAmzCenter();
 
+    /**
+     * 根据业务单号统计签收数量
+     * @param dto 业务单号  亚马逊签收报告/第三方仓签收
+     * @return
+     */
+    @PostMapping("/feign/firstMileDelivery/countReceiveQtyByParams")
+    List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(@RequestBody FirstMileDeliveryDTO.RequestReceiveDTO dto);
 }
