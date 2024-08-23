@@ -39,95 +39,107 @@ import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器，被init任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
- * @author Administrator
  *
+ * @author Administrator
  */
 @Slf4j
 @Service
 @Scope("prototype")
 public class TikTokProductDetailInitHandler extends DmpInputInitHandler {
-	@Resource
+    @Resource
     private TikTokSdkClientService tikTokSdkClientService;
-	
-	@Override
-	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 
-		List<Map<String, Object>> findMongoData = null;
-		String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-		if (StringUtils.isNotBlank(parentStorageName)) {
-			List<ParamData> paramDataList = new ArrayList<>();
-			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-			findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
-		}
-		if (findMongoData == null) {
-			return new ArrayList<>();
-		}
+    @Override
+    public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+        List<Map<String, Object>> findMongoData = null;
+        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
+        if (StringUtils.isNotBlank(parentStorageName)) {
+            List<ParamData> paramDataList = new ArrayList<>();
+            paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
+            findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
+        }
+        if (findMongoData == null) {
+            return new ArrayList<>();
+        }
 
-		List<String> productIds = findMongoData.stream().map(req -> req.get("fid").toString()).distinct().collect(Collectors.toList());
+        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-		TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
-		if (ObjectUtil.isEmpty(shopInfoDTO)) {
-			throw new ServiceException("TikTok店铺id：" + nextLevelId + "未找到对应的店铺信息");
-		}
+        List<String> productIds = findMongoData.stream().map(req -> req.get("fid").toString()).distinct().collect(Collectors.toList());
+
+        TikTokShopInfoDTO shopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
+        if (ObjectUtil.isEmpty(shopInfoDTO)) {
+            throw new ServiceException("TikTok店铺id：" + nextLevelId + "未找到对应的店铺信息");
+        }
 
 
-		//平台接口地址
-		String url = TikTokConstant.URL;
-		String typeId = dmpCfgInputEntity.getTypeId();
-		DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
+        //平台接口地址
+        String url = TikTokConstant.URL;
+        String typeId = dmpCfgInputEntity.getTypeId();
+        DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
 
-		for (String productId : productIds) {
-			//组装授权url
-			String path = dmpCfgApiEntity.getApiType().replace("{version}", TikTokConstant.VERSION).replace("{productId}", productId);
+        for (String productId : productIds) {
+            //组装授权url
+            String path = dmpCfgApiEntity.getApiType().replace("{version}", TikTokConstant.VERSION).replace("{productId}", productId);
 
-			// 定义查询参数
-			Map<String, Object> params = new HashMap<>();
-			params.put("access_token", shopInfoDTO.getAccessToken());
-			params.put("app_key", shopInfoDTO.getClientId());
-			params.put("shop_cipher", shopInfoDTO.getShopCipher());
-			params.put("shop_id", "");
-			String timestamp = System.currentTimeMillis() / 1000 + "";
-			params.put("timestamp", timestamp);
-			params.put("version", TikTokConstant.VERSION);
+            // 定义查询参数
+            Map<String, Object> params = new HashMap<>();
+            params.put("access_token", shopInfoDTO.getAccessToken());
+            params.put("app_key", shopInfoDTO.getClientId());
+            params.put("shop_cipher", shopInfoDTO.getShopCipher());
+            params.put("shop_id", "");
+            String timestamp = System.currentTimeMillis() / 1000 + "";
+            params.put("timestamp", timestamp);
+            params.put("version", TikTokConstant.VERSION);
 
-			//设置请求头
-			Map<String, String> headerMap = new HashMap<>();
-			headerMap.put("content-type", "multipart/form-data");
-			headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
+            //设置请求头
+            Map<String, String> headerMap = new HashMap<>();
+            headerMap.put("content-type", "multipart/form-data");
+            headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
 
-			String input = EncryptionUtils.urlParamsSort(params, path, headerMap, shopInfoDTO.getClientSecret(), "");
-			// 追加请求路径获取签名
-			String sign = EncryptionUtils.generateSHA256(input, shopInfoDTO.getClientSecret());
-			//加入sign签名入参
-			params.put("sign", sign);
+            String input = EncryptionUtils.urlParamsSort(params, path, headerMap, shopInfoDTO.getClientSecret(), "");
+            // 追加请求路径获取签名
+            String sign = EncryptionUtils.generateSHA256(input, shopInfoDTO.getClientSecret());
+            //加入sign签名入参
+            params.put("sign", sign);
+            Integer code = 0;
+            int count = 0;
+			long sleepTime = 1000;
+			ApiResult apiResult = new ApiResult();
+			while (code != 200) {
+                //拉取数据
+                apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+                code = apiResult.getCode();
+                if (!Objects.equals(code, 200)) {
+                    if (count == 5) {
+                        throw new ServiceException(StrUtil.format("调用TikTok={},接口重试{}次失败, 返回值 responseMap={}", dmpCfgApiEntity.getApiType(), count, JSONUtil.toJsonStr(apiResult)));
+                    }
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                    }
+                    sleepTime = sleepTime + 1000;
+                    count = count + 1;
+                }
+            }
 
-			//拉取数据
-			ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
-			if (!Objects.equals(apiResult.getCode(), 200)) {
-				log.error("调用url={},入参params={}, TikTok查询sku数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询sku数据失败，返回值 responseMap={}",
-						url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
-			}
+            //解析数据
+            ObjectMapper objectMapper = new ObjectMapper();
+            ListingViewDTO listingViewDTO = null;
+            try {
+                listingViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingViewDTO.class);
+            } catch (JsonProcessingException e) {
+                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+            }
 
-			//解析数据
-			ObjectMapper objectMapper = new ObjectMapper();
-			ListingViewDTO listingViewDTO = null;
-			try {
-				listingViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingViewDTO.class);
-			} catch (JsonProcessingException e) {
-				log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-						url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
-			}
+            DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+            dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(listingViewDTO.getData()));
+            dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 
-			DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-			dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(listingViewDTO.getData()));
-			dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
+        }
+        return dmpInputTaskInitDTOList;
 
-		}
-		return dmpInputTaskInitDTOList;
-
-	}
+    }
 }
