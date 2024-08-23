@@ -219,7 +219,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String addAndApprove(OtherInstockEntity entity) {
+    public String addAndApprove(OtherInstockEntity entity, Boolean isPushWdt) {
         //生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         entity.setCode(code);
@@ -242,7 +242,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             baseApproveParamDTO.setIds(Arrays.asList(id));
             baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
             baseApproveParamDTO.setComment("");
-            this.approve(id, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment());
+            this.approve(id, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(), isPushWdt);
             return id;
         }
         return entity.getId();
@@ -252,10 +252,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public String disApproveAndGenerate(String dbId, DmpSoPrestockInfoDTO.PrestockDTO dto) {
-        service.disApprove(dbId);
+        service.disApprove(dbId, false);
         service.delete(Arrays.asList(dbId));
         OtherInstockEntity otherInstockEntity = this.buildWdtPreStock(dto);
-        return service.addAndApprove(otherInstockEntity);
+        return service.addAndApprove(otherInstockEntity, false);
     }
 
     @Override
@@ -446,7 +446,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(String id, String type, String comment){
+    public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt){
         //根据ids查询
         OtherInstockEntity entity = this.getById(id);
         //审核中允许审核
@@ -468,11 +468,13 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
             //审核发送金蝶
             sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
-            //推送旺店通
-            if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
-                syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
-            }else {
-                syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
+            if(isPushWdt){
+                //推送旺店通
+                if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
+                    syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
+                }else {
+                    syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
+                }
             }
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他入库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
@@ -490,7 +492,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO disApprove(String id) {
+    public BatchResultDTO disApprove(String id, Boolean isPushWdt) {
         //根据ids查询
         OtherInstockEntity entity = this.getById(id);
         //已审核允许反审核
@@ -511,11 +513,13 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //反审核发送金蝶
         sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
-        //发送旺店通
-        if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
-            syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);
-        }else {
-            syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);
+        if(isPushWdt){
+            //发送旺店通
+            if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
+                syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);
+            }else {
+                syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);
+            }
         }
         //操作日志
         operateLogService.addModuleOperateLog(StrUtil.format("反审核了一个其他入库单【{}】", entity.getCode()), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "反审核操作");
@@ -836,7 +840,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         baseApproveParamDTO.setIds(Arrays.asList(id));
         baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
         baseApproveParamDTO.setComment("");
-        this.approve(id, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment());
+        this.approve(id, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(), true);
         return id;
     }
 
@@ -1217,7 +1221,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 return;
             }
             OtherInstockEntity otherInstockEntity = this.buildWdtPreStock(dto);
-            service.addAndApprove(otherInstockEntity);
+            service.addAndApprove(otherInstockEntity, false);
         }
     }
 
@@ -1239,7 +1243,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         List<OtherInstockDetailEntity> detailList = OtherInStockConverter.INSTANCE.copyDetailList(dbDetailList);
         otherInstockEntity.setDetailEntityList(detailList);
         otherInstockEntity.setRemark(code);
-        service.addAndApprove(otherInstockEntity);
+        service.addAndApprove(otherInstockEntity, false);
     }
 
     private OtherInstockEntity buildWdtPreStock(DmpSoPrestockInfoDTO.PrestockDTO dto) {

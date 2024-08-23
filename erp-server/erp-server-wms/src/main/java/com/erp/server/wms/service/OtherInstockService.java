@@ -50,7 +50,7 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      */
     String add(OtherInstockDTO.AddDTO dto);
 
-    String addAndApprove(OtherInstockEntity dto);
+    String addAndApprove(OtherInstockEntity dto, Boolean isPushWdt);
     String disApproveAndGenerate(String dbId,DmpSoPrestockInfoDTO.PrestockDTO dto);
     /**
      * @description: 新增并提交
@@ -110,22 +110,24 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      */
     Boolean invalid(List<String> ids, String remark);
     /**
-     * @description: 审核
-     * @author Will
-     * @date: 2023/12/5 11:58
      * @param id
      * @param type
      * @param comment
+     * @param isPushWdt
+     * @description: 审核
+     * @author Will
+     * @date: 2023/12/5 11:58
      */
-    BatchResultDTO approve(String id, String type, String comment);
+    BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt);
     /**
+     * @param id
+     * @param isPushWdt
+     * @return Boolean
      * @description: 反审核
      * @author Will
      * @date: 2023/5/17 15:16
-     * @param id
-     * @return Boolean
      */
-    BatchResultDTO disApprove(String id);
+    BatchResultDTO disApprove(String id, Boolean isPushWdt);
     /**
      * @description: 取消流程
      * @author Will
