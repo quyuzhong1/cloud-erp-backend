@@ -45,4 +45,11 @@ public interface FirstMileEstimatedBillService extends SuperService<FirstMileEst
      * @param logisticsBillId
      */
     void removeByLogisticsBillId(String logisticsBillId);
+
+    /**
+     * 根据物流单查询暂估账单记录
+     * @param logisticsBillIds
+     * @return
+     */
+    List<FirstMileEstimatedBillEntity> listByLogisticsBillIds(List<String> logisticsBillIds);
 }

@@ -7,14 +7,17 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.server.wms.service.CfgAmzFulfillmentCenterService;
+import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,6 +30,8 @@ public class WmsFirstMileDeliveryController {
 
     @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
+    @Resource
+    private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
     @Resource
     private CfgAmzFulfillmentCenterService cfgAmzFulfillmentCenterService;
 
@@ -90,7 +95,16 @@ public class WmsFirstMileDeliveryController {
         }
         return firstMileDeliveryService.listByIds(ids);
     }
-
+    /**
+     * 根据主表id获取明细记录
+     */
+    @PostMapping("/listDetailByMainIds")
+    List<FirstMileDeliveryDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds){
+        if (CollectionUtils.isEmpty(mainIds)){
+            return Collections.emptyList();
+        }
+        return firstMileDeliveryDetailService.listByMainIds(mainIds);
+    }
 
     /**
      * 亚马逊仓库中心配置
@@ -113,5 +127,15 @@ public class WmsFirstMileDeliveryController {
     @PostMapping("/listDetailBySourceCodes")
     public List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailBySourceCodes(@RequestBody List<String> sourceCodes){
         return firstMileDeliveryService.listDetailByCodes(null, sourceCodes);
+    }
+
+    /**
+     * 根据业务单号统计签收数量
+     * @param dto 业务单号  亚马逊签收报告/第三方仓签收
+     * @return
+     */
+    @PostMapping("/countReceiveQtyByParams")
+    public List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(@RequestBody FirstMileDeliveryDTO.RequestReceiveDTO dto){
+        return firstMileDeliveryService.countReceiveQtyByParams(dto);
     }
 }

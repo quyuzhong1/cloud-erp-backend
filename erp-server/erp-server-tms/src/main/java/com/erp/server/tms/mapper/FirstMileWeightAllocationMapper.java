@@ -1,8 +1,12 @@
 package com.erp.server.tms.mapper;
+
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +19,11 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface FirstMileWeightAllocationMapper extends BaseMapper<FirstMileWeightAllocationEntity> {
-
+    /**
+     * 根据来源id查询重量分摊列表
+     * @param sourceIds
+     * @param statusList
+     * @return
+     */
+    List<FirstMileWeightAllocationEntity> listBySourceIds(@Param("sourceIds") List<String> sourceIds, @Param("statusList") List<String> statusList);
 }

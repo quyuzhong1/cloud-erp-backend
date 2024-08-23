@@ -11,6 +11,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,11 +88,19 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     }
 
     @Override
-    public List<FirstMileWeightAllocationEntity> getByLogisticsBillId(String logisticsBillId) {
-        if (StrUtil.isBlank(logisticsBillId)){
+    public List<FirstMileWeightAllocationEntity> listByLogisticsBillIds(List<String> logisticsBillIds) {
+        if (CollectionUtils.isEmpty(logisticsBillIds)){
             return Collections.emptyList();
         }
         return null;
+    }
+
+    @Override
+    public List<FirstMileWeightAllocationEntity> listBySourceIds(List<String> sourceIds, List<String> statusList) {
+        if (CollectionUtils.isEmpty(sourceIds) && CollectionUtils.isEmpty(statusList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listBySourceIds(sourceIds,statusList);
     }
 
 

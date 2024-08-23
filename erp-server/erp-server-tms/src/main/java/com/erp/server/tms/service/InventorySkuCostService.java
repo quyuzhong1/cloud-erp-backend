@@ -125,4 +125,13 @@ public interface InventorySkuCostService extends SuperService<InventorySkuCostEn
      * @return
      */
     InventorySkuCostDTO.ViewDTO view(String id);
+
+    /**
+     * 根据组织和sku获取成本列表
+     * @param orgId
+     * @param skuIds
+     * @param status
+     * @return
+     */
+    List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status);
 }

@@ -40,11 +40,11 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     */
     @TableField("sku_no")
     private String skuNo;
-    /**
-    * 平台skuId
-    */
-    @TableField("platform_sku_id")
-    private String platformSkuId;
+//    /**
+//    * 平台skuId
+//    */
+//    @TableField("platform_sku_id")
+//    private String platformSkuId;
     /**
     * 平台skuNo
     */
@@ -56,7 +56,7 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     @TableField("delivery_qty")
     private Integer deliveryQty;
     /**
-    * 分摊重量
+    * 分摊重量 kg
     */
     @TableField("allocated_weight")
     private BigDecimal allocatedWeight;
@@ -110,6 +110,41 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     */
     @TableField("bill_source_type")
     private String billSourceType;
+    /**
+     * 物流单明细id
+     */
+    @TableField("logistics_bill_detail_id")
+    private String logisticsBillDetailId;
+    /**
+     * 暂估账单id
+     */
+    @TableField("estimated_bill_id")
+    private String estimatedBillId;
+    /**
+     * 重量分摊id
+     */
+    @TableField("weight_allocation_id")
+    private String weightAllocationId;
+    /**
+     * SKU成本明细id
+     */
+    @TableField("sku_cost_detail_id")
+    private String skuCostDetailId;
+    /**
+     * 发货单明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+    /**
+     * 期初费用分摊明细id
+     */
+    @TableField("init_first_mile_detail_id")
+    private String initFirstMileDetailId;
+    /**
+     * 对账单明细id
+     */
+    @TableField("reconciliation_detail_id")
+    private String reconciliationDetailId;
 
 
     public static final String MAIN_ID = "main_id";
@@ -143,6 +178,10 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     public static final String CURRENCY = "currency";
 
     public static final String BILL_SOURCE_TYPE = "bill_source_type";
+
+    public static final String LOGISTICS_BILL_DETAIL_ID = "logistics_bill_detail_id";
+
+    public static final String ESTIMATED_BILL_ID = "estimated_bill_id";
 
     @Override
     public Serializable pkVal() {

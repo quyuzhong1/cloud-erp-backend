@@ -186,16 +186,6 @@ public class FirstMileCostAllocationDTO implements Serializable {
         */
         private String toWarehouseName;
 
-        /**
-        * 目的国家
-        */
-        private String toCountry;
-
-        /**
-        * 发货时间
-        */
-        private LocalDate deliveryTime;
-
 
     }
 
@@ -417,20 +407,6 @@ public class FirstMileCostAllocationDTO implements Serializable {
         @NotBlank(message = "目的仓库名称不能为空")
         @Size(max = 200,message = "目的仓库名称最大长度不能超过200位")
         private String toWarehouseName;
-
-        /**
-        * 目的国家
-        */
-        @NotBlank(message = "目的国家不能为空")
-        @Size(max = 20,message = "目的国家最大长度不能超过20位")
-        private String toCountry;
-
-        /**
-        * 发货时间
-        */
-        private LocalDate deliveryTime;
-
-
     }
 
 
@@ -491,6 +467,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 对账单id
          */
         private String reconciliationId;
+        /**
+         * 对账单明细id
+         */
+        private String reconciliationDetailId;
 
         /**
          * 对账单单据编号
@@ -570,6 +550,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          */
         private String sourceId;
         /**
+         * 发货单明细id
+         */
+        private String sourceDetailId;
+        /**
          * 发货单编码
          */
         private String sourceCode;
@@ -639,16 +623,6 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 目的仓库名称
          */
         private String toWarehouseName;
-
-        /**
-         * 目的国家
-         */
-        private String toCountry;
-
-        /**
-         * 发货时间
-         */
-        private LocalDate deliveryTime;
 
         /**
          * sku主键id

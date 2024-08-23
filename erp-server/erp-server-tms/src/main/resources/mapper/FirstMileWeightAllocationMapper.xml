@@ -60,6 +60,24 @@
         is_deleted,
         source_id, source_code, delivery_detail_id, business_code, transport_no, product_name, allocation_status, sku_id, sku_no, platform_sku_id, platform_sku_no, box_id, box_no, delivery_qty, box_length, box_wide, box_high, box_size_unit, charged_weight, volume_weight, product_weight, allocation_weight, weight_unit, supplier_id, supplier_name, allocation_type, billing_rule, shop_id, shop_name, to_country, from_warehouse_id, calculate_period_id, calculate_month
     </sql>
+    <select id="listBySourceIds" resultType="com.erp.model.tms.entity.FirstMileWeightAllocationEntity">
+        select
+            <include refid="Base_Column_List"/>
+        from first_mile_weight_allocation
+        where is_deleted = false
+        <if test="sourceIds != null and sourceIds.size > 0">
+            and source_id in
+            <foreach collection="sourceIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="statusList != null and statusList.size > 0">
+            and allocation_status in
+            <foreach collection="statusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

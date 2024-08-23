@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileSkuCostAllocationDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 头程费用SKU分摊 服务类
@@ -37,4 +39,11 @@ public interface FirstMileSkuCostAllocationService extends SuperService<FirstMil
      * @param id
      */
     void removeByMainId(String id);
+
+    /**
+     * 根据主表id获取sku记录
+     * @param mainIds
+     * @return
+     */
+    List<FirstMileSkuCostAllocationEntity> listByMainIds(List<String> mainIds);
 }

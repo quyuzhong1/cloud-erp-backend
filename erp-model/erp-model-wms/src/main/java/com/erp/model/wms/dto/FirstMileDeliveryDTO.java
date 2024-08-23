@@ -1,18 +1,17 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -1236,5 +1235,45 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 收货地址
          */
         private String receiveToAddress;
+    }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class RequestReceiveDTO {
+        /**
+         * 业务单号
+         */
+        private List<String> businessCodes;
+        /**
+         * 日期
+         */
+        private LocalDate month;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ReceiveDTO {
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+        private String skuId;
+        private String skuNo;
+        /**
+         * 上月签收数量
+         */
+        private Integer lastMonthReceiveQty;
+        /**
+         * 本月签收数量
+         */
+        private Integer currentMonthReceiveQty;
+        /**
+         * 截止本月签收数量
+         */
+        private Integer asCurrentMonthReceiveQty;
+        /**
+         * 截止上月签收数量
+         */
+        private Integer asLastMonthReceiveQty;
     }
 }

@@ -1693,4 +1693,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         return baseMapper.listBySourceIds(sourceIds);
     }
+
+    @Override
+    public List<TmsFirstMileReconciliationDetailEntity> listByBusinessCodes(List<String> businessCodes, String status) {
+        if (CollectionUtils.isEmpty(businessCodes) && StrUtil.isBlank(status)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByBusinessCodes(businessCodes,status);
+    }
 }

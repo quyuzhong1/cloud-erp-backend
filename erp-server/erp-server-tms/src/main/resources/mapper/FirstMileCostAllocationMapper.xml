@@ -16,11 +16,7 @@
        <result column="reconciliation_id" property="reconciliationId" />
        <result column="reconciliation_code" property="reconciliationCode" />
        <result column="logistics_bill_id" property="logisticsBillId" />
-       <result column="logistics_bill_detail_id" property="logisticsBillDetailId" />
-       <result column="estimated_bill_id" property="estimatedBillId" />
        <result column="sku_cost_id" property="skuCostId" />
-       <result column="sku_cost_detail_id" property="skuCostDetailId" />
-       <result column="weight_allocation_id" property="weightAllocationId" />
        <result column="report_period_id" property="reportPeriodId" />
        <result column="account_period" property="accountPeriod" />
        <result column="status" property="status" />
@@ -36,12 +32,9 @@
        <result column="from_warehouse_name" property="fromWarehouseName" />
        <result column="to_warehouse_id" property="toWarehouseId" />
        <result column="to_warehouse_name" property="toWarehouseName" />
-       <result column="to_country" property="toCountry" />
-       <result column="delivery_time" property="deliveryTime" />
        <result column="source_id" property="sourceId" />
        <result column="source_code" property="sourceCode" />
        <result column="init_first_mile_id" property="initFirstMileId" />
-       <result column="init_first_mile_detail_id" property="initFirstMileDetailId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -58,16 +51,16 @@
         remark, reconciliation_id, reconciliation_code, logistics_bill_id, logistics_bill_detail_id, estimated_bill_id,
         sku_cost_id, sku_cost_detail_id, weight_allocation_id, report_period_id, account_period, status, supplier_id, supplier_name,
         business_code, business_type, transport_no, reconciliation_month, shop_id, shop_name, from_warehouse_id,
-        from_warehouse_name, to_warehouse_id, to_warehouse_name, to_country, delivery_time,source_id,source_code,init_first_mile_id,init_first_mile_detail_id
+        from_warehouse_name, to_warehouse_id, to_warehouse_name,source_id,source_code,init_first_mile_id,init_first_mile_detail_id
     </sql>
     <sql id="pageSql">
         SELECT
-        a.id,a.reconciliation_id, a.reconciliation_code, a.logistics_bill_id, a.logistics_bill_detail_id, a.estimated_bill_id,
-        a.sku_cost_id, a.sku_cost_detail_id, a.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
+        a.id,a.reconciliation_id, a.reconciliation_code, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
+        a.sku_cost_id, ca.sku_cost_detail_id, ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
-        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name, a.to_country, a.delivery_time,
-        a.source_id,a.source_code,a.init_first_mile_id,a.init_first_mile_detail_id,
+        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,
+        a.source_id,a.source_code,a.init_first_mile_id,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
         ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_id, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
         ca.product_cost, ca.product_total_cost,ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,
         ca.as_last_month_receive_qty,ca.as_current_month_receive_qty, ca.weight_unit, ca.currency, ca.bill_source_type,lbd.sign_time as receiveTime,
@@ -77,7 +70,7 @@
         FROM first_mile_cost_allocation a
         LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
         LEFT JOIN first_mile_sku_cost_allocation_detail cad ON cad.cost_main_id = ca.id AND cad.is_deleted = FALSE
-        LEFT JOIN logistics_bill_detail lbd ON lbd.id = a.logistics_bill_detail_id AND lbd.is_deleted = FALSE
+        LEFT JOIN logistics_bill_detail lbd ON lbd.id = ca.logistics_bill_detail_id AND lbd.is_deleted = FALSE
         LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
         <where>
             ${params.sqlMap.default}
@@ -110,6 +103,30 @@
     </select>
     <select id="exportList" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
         <include refid="pageSql"/>
+    </select>
+    <select id="listSkuBySourceCodes" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO.PagingVO">
+        SELECT
+        a.id,a.reconciliation_id, a.reconciliation_code, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
+        a.sku_cost_id, ca.sku_cost_detail_id, ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
+        a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
+        to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
+        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,
+        a.source_id,a.source_code,a.init_first_mile_id,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
+        ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_id, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
+        ca.product_cost, ca.product_total_cost,ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,
+        ca.as_last_month_receive_qty,ca.as_current_month_receive_qty, ca.weight_unit, ca.currency, ca.bill_source_type,lbd.sign_time as receiveTime,
+        rpm.month as reportPeriod,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr,rpm.org_id,rpm.org_name
+        FROM first_mile_cost_allocation a
+        LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
+        LEFT JOIN logistics_bill_detail lbd ON lbd.id = ca.logistics_bill_detail_id AND lbd.is_deleted = FALSE
+        LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
+        where a.is_deleted=false
+        <if test="sourceCodes != null and sourceCodes.size > 0">
+            and a.source_code in
+            <foreach collection="sourceCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
 

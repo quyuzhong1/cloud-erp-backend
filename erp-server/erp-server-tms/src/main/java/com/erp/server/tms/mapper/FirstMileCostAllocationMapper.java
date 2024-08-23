@@ -45,4 +45,11 @@ public interface FirstMileCostAllocationMapper extends BaseMapper<FirstMileCostA
      * @return
      */
     List<FirstMileCostAllocationDTO.PagingVO> exportList(@Param("params") FirstMileCostAllocationDTO.PagingParamDTO params);
+
+    /**
+     * 根据发货单查询所有账期记录
+     * @param sourceCodes
+     * @return
+     */
+    List<FirstMileCostAllocationDTO.PagingVO> listSkuBySourceCodes(@Param("sourceCodes") List<String> sourceCodes);
 }

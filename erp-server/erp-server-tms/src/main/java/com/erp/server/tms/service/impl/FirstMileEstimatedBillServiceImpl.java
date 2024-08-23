@@ -203,4 +203,12 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             this.lambdaUpdate().eq(FirstMileEstimatedBillEntity::getLogisticsBillId,logisticsBillId).remove();
         }
     }
+
+    @Override
+    public List<FirstMileEstimatedBillEntity> listByLogisticsBillIds(List<String> logisticsBillIds) {
+        if (CollectionUtils.isEmpty(logisticsBillIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(FirstMileEstimatedBillEntity::getLogisticsBillId,logisticsBillIds).list();
+    }
 }

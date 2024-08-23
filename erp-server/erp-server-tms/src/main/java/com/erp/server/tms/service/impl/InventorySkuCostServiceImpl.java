@@ -369,6 +369,14 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         return viewDTO;
     }
 
+    @Override
+    public List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status) {
+        if (StrUtil.isBlank(orgId) && StrUtil.isBlank(status) && CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listDetailByOrgIdAndSkuIds(orgId,skuIds,status);
+    }
+
 
     /**
      * 新增修改处理数据
