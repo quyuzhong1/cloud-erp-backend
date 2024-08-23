@@ -6,6 +6,7 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
@@ -20,6 +21,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.SysRefererConfigEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -250,7 +252,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }else {
             countryIds = Stream.of(shopInfo.getDictCountryCode()).collect(Collectors.toList());
         }
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIds);
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIdsOrAlpha3(countryIds);
 
         List<String> skuIds = listingInfoWithSkuMappingDTOMap.values().stream()
                 .flatMap(List::stream)

@@ -136,6 +136,18 @@ public class OtherInstockDTO implements Serializable {
          */
         private LocalDateTime createTime;
 
+        /**
+         * 第三方单号
+         */
+        private String thirdCode;
+
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+
     }
 
     @Data
@@ -269,6 +281,18 @@ public class OtherInstockDTO implements Serializable {
          */
         private String typeName;
 
+
+        /**
+         * 第三方单号
+         */
+        private String thirdCode;
+
+
+        /**
+         * 备注
+         */
+        private String remark;
+
     }
 
     @Data
@@ -382,6 +406,17 @@ public class OtherInstockDTO implements Serializable {
          * 创建时间
          */
         private String createTime;
+
+        /**
+         * 第三方单号
+         */
+        private String thirdCode;
+
+
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
          * 明细

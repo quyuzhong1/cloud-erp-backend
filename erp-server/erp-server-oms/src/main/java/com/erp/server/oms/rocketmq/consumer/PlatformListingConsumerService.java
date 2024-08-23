@@ -21,8 +21,10 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
@@ -67,6 +69,9 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private WmsFbaInventoryFeign wmsFbaInventoryFeign;
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
@@ -119,7 +124,13 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     oldEntity = listingInfoService.getById(listDto.get(0).getListingId());
                 }
             }
-
+            // 亚马逊保存FNSKU
+            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) && StringUtils.isNotBlank(dto.getPlatformSkuNo())){
+                // 查询关联的FNSKU
+                List<FbaInventoryEntity> fbaInventoryEntityList = wmsFbaInventoryFeign.findList(Collections.singletonList(dto.getPlatformSkuNo()));
+                FbaInventoryEntity fbaInventoryEntity = fbaInventoryEntityList.stream().findFirst().orElse(null);
+                dto.setPlatformFnSku(null == fbaInventoryEntity ? "" : fbaInventoryEntity.getFnSku());
+            }
 
             // 转换
             ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);

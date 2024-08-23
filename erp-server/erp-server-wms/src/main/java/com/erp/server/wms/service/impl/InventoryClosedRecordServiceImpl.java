@@ -130,5 +130,14 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
         }
     }
 
+    @Override
+    public Map<String, InventoryClosedRecordEntity> mapByCategory(String category) {
+        return lambdaQuery()
+                .eq(InventoryClosedRecordEntity::getCategory,category)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(InventoryClosedRecordEntity::getInventoryOrgId, e -> e));
+    }
+
 
 }

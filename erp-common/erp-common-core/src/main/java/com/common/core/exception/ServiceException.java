@@ -55,6 +55,14 @@ public class ServiceException extends RuntimeException {
         log.error(msg);
     }
 
+    public ServiceException(String formatErrMsg,Object... args) {
+        // 加上super，否则会显示null
+        super(StrUtil.format(formatErrMsg,args) );
+        this.code = ApiError.Default.code;
+        this.msg = StrUtil.format(formatErrMsg,args) ;
+        log.error(msg);
+    }
+
     /**
      * 从枚举中获取参数
      *
@@ -96,10 +104,17 @@ public class ServiceException extends RuntimeException {
 
     /**
      * 抛出 ServiceException 异常
-     * @param msg   错误消息
+     * @param msg    错误消息,支持格式化
      */
     public static void runError(String msg) {
         throw new ServiceException(msg);
+    }
+    /**
+     * 抛出 ServiceException 异常
+     * @param formatedErrMsg    错误消息,支持格式化，如：XXX[{}]成功
+     */
+    public static void runError(String formatedErrMsg,Object... params) {
+        throw new ServiceException(formatedErrMsg,params);
     }
 
     /**
@@ -118,6 +133,27 @@ public class ServiceException extends RuntimeException {
      */
     public static void runError(ApiError apiError,Object... params) {
         throw new ServiceException(apiError, params);
+    }
+
+    /**
+     * 抛出 ServiceException 异常
+     * @param code              错误代号
+     * @param formatedErrMsg    错误消息,支持格式化，如：XXX[{}]成功
+     * @param params            错误信息 参数
+     */
+    public static void runError(Integer code, String formatedErrMsg,Object... params) {
+        throw new ServiceException(code,StrUtil.format(formatedErrMsg,params));
+    }
+
+    /**
+     * 抛出 ServiceException 异常，警告类型
+     * @param formatedErrMsg    错误消息,支持格式化，如：XXX[{}]成功
+     * @param params            错误信息 参数
+     */
+    public static void runWarn(String formatedErrMsg,Object... params) {
+        String msg = StrUtil.format(formatedErrMsg,params);
+        Integer code = ApiError.WARNING.code;
+        throw new ServiceException(code,msg);
     }
 
 }

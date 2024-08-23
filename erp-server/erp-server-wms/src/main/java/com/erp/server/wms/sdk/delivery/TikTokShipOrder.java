@@ -104,11 +104,10 @@ public class TikTokShipOrder extends AbstractShipOrder {
                 paramDTO.setOrderLineItemIds(sourceDetailIds);
                 paramDTO.setShippingProviderId(tmsScaleChannelShipDTO.getCode());
                 ShipOrderUS shipOrderUS = tikTokSdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, entity.getPlatformCode(), paramDTO);
+                resultDetailIds.addAll(detailIdList);
                 if (shipOrderUS.getCode() != 0) {
-                    if ("Package has been shipped. Please not ship the package again.".equalsIgnoreCase(shipOrderUS.getMessage())
-                            || "fulfillment not allow forward".equalsIgnoreCase(shipOrderUS.getMessage())) {
-                        resultDetailIds.addAll(detailIdList);
-                    } else {
+                    if (!"Package has been shipped. Please not ship the package again.".equalsIgnoreCase(shipOrderUS.getMessage())
+                            && !"fulfillment not allow forward".equalsIgnoreCase(shipOrderUS.getMessage())) {
                         throw new ServiceException(shipOrderUS.getMessage());
                     }
                 }

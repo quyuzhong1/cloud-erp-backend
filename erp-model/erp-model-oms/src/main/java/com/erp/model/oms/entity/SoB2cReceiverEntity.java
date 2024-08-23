@@ -174,5 +174,12 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     }
 
 
-
+    /**
+     * 检查来源
+     */
+    public void checkAndSetCountry(String sourceCountry, String countryId) {
+        if (sourceCountry.matches("[A-Z]{3}") ){
+            this.setCountry(countryId);
+        }
+    }
 }

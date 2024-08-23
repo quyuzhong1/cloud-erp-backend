@@ -14,6 +14,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cSourcePlatformEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +90,10 @@ public abstract class AbstractShipOrder implements IPlatformService {
                 }
             }
         });
-        allDetailList = allDetailList.stream().filter(v -> !filterDetailList.contains(v.getId())).collect(Collectors.toList());
+        allDetailList = allDetailList.stream()
+                .filter(v -> !filterDetailList.contains(v.getId()))
+                .filter(v -> SoB2cSourcePlatformEnum.ENUM_THIRD_PLATFORM.getCode().equalsIgnoreCase(v.getSourcePlatform()))
+                .collect(Collectors.toList());
         //将allDetailList 相同的来源明细id去重
         allDetailList = allDetailList.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(SoB2cDetailEntity::getSourceDetailId))), ArrayList::new));
         return allDetailList;
