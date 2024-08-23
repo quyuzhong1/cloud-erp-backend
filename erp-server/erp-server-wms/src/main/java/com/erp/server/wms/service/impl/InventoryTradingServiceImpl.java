@@ -93,7 +93,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             // 检查库存是否充足
             this.checkInventoryList(transactionList);
             // 4-检查每日库存是否充足
-            this.checkInventoryHisList(transactionList);
+//            this.checkInventoryHisList(transactionList);
             // 5-处理库存更新逻辑
             for (InventoryTransactionDTO transactionDTO : transactionList) {
                 this.doTransaction(transactionDTO,approveType.equals(InventoryTradingService.APPROVE));
