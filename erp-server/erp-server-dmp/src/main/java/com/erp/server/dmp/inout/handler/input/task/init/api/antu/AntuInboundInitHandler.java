@@ -16,9 +16,14 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
+import com.sdk.wms.antu.utils.AntuUtils;
 import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.utils.GoodCangUtils;
+import com.sdk.wms.iml.dto.request.ImlGetReceiptReq;
+import com.sdk.wms.iml.dto.response.ImlReceiptResp;
+import com.sdk.wms.iml.dto.response.ImlResponse;
+import com.sdk.wms.iml.utils.ImlUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -27,56 +32,55 @@ import java.util.*;
 
 /**
  * dmp输入init任务基础处理器下的安兔api获取数据方式
- * @author Administrator
  *
+ * @author Administrator
  */
 @Service
 @Scope("prototype")
 public class AntuInboundInitHandler extends DmpInputInitHandler {
 
-	@Resource
+
+    @Resource
     private DmpHandlerCache dmpHandlerCache;
-	
-	@Resource
+
+    @Resource
     private WmsOverseasWarehouseFeign overseasWarehouseFeign;
-	
-	@Override
-	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+
+    @Override
+    public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         //查询待签收、部分签收状态的入库单
         List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
-                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_ANTU.getCode());
-        List<GoodCangReceiptBatchResp> allResult = new ArrayList<>();
-        
-        if(CollUtil.isNotEmpty(receiveCodeList)) {
-        	String typeId = dmpCfgInputEntity.getTypeId();
+                , OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
+                , OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_IML.getCode());
+        List<ImlReceiptResp> allResult = new ArrayList<>();
+
+        if (CollUtil.isNotEmpty(receiveCodeList)) {
+            String typeId = dmpCfgInputEntity.getTypeId();
             DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
             String apiType = dmpCfgApiEntity.getApiType();
-            
-            List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.GOODCANG.getCode()));
-            if(CollUtil.isEmpty(overseasProviderEntityList)) {
-            	throw new ServiceException("安兔授权信息不存在");
+
+            List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(OmsPlatformEnum.OMS_ANTU.getCode()));
+            if (CollUtil.isEmpty(overseasProviderEntityList)) {
+                throw new ServiceException("艾姆勒授权信息不存在");
             }
             ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
-            
-            for(String receiveCode : receiveCodeList) {
-            	Map<String,Object> paramsMap = new HashMap<>();
-                paramsMap.put("receiving_code",receiveCode);
-            	String response = GoodCangUtils.sendPost(apiType,paramsMap);
-            	GoodCangResponse<GoodCangReceiptBatchResp> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangReceiptBatchResp>>() {}.getType());
-            	String ask = respDto.getAsk();
-            	if(ask.equals("Failure") && respDto.getMessage().contains("入库单号不存在")) {
-            		continue;
-            	}
-            	allResult.add(respDto.getData());
-            }
-        }
-		
-		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));
-		return Collections.singletonList(dmpInputTaskInitDTO);
-	}
 
-	
-	
+            //查询数据
+            ImlGetReceiptReq imlGetReceiptReq = ImlGetReceiptReq.builder()
+                    .page(1)
+                    .pageSize(receiveCodeList.size())
+                    .receivingCodeArr(receiveCodeList)
+                    .build();
+            String response = ImlUtils.callService(apiType, imlGetReceiptReq);
+            ImlResponse<List<ImlReceiptResp>> result = JSONObject.parseObject(response, new TypeReference<ImlResponse<List<ImlReceiptResp>>>() {
+            }.getType());
+            allResult = result.getData();
+        }
+
+        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+        dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));
+        return Collections.singletonList(dmpInputTaskInitDTO);
+    }
+
+
 }
