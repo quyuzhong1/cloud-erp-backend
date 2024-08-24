@@ -361,6 +361,6 @@ public class WmsCartonDTO {
         /**
          * sku*qty
          */
-        private String sku;
+        private List<String> skuList;
     }
 }

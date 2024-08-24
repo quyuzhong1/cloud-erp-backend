@@ -2064,7 +2064,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //sku明细
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonEntity.getId()));
         List<String> skuList = detailEntityList.stream().map(e -> e.getSkuNo() + "*" + e.getPackQty()).collect(Collectors.toList());
-        printDTO.setSku(String.join(",", skuList));
+        printDTO.setSkuList(skuList);
         //新增店铺 店铺,国家,SKU,运营负责人
         if (PickingSourceTypeEnum.B2B.getCode().equals(packingTaskEntity.getSourceType())){
             SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(packingTaskEntity.getSourceId());
