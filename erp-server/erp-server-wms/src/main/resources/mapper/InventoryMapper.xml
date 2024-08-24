@@ -647,7 +647,7 @@
         </if>
         GROUP BY it.warehouse_id, it.sku_id
         ) t
-        <if test="!params.zeroInventory">
+        <if test="params.zeroInventory">
             WHERE t.realQty > 0
         </if>
     </sql>
@@ -705,7 +705,7 @@
         </if>
         GROUP BY it.sku_id
         ) t
-        <if test="!params.zeroInventory">
+        <if test="params.zeroInventory">
             WHERE t.realQty > 0
         </if>
     </select>
@@ -820,7 +820,9 @@
             </if>
             GROUP BY it.warehouse_id, it.org_id, it.sku_id, it.warehouse_location
         ) t
-        WHERE t.realQty > 0
+        <if test="params.zeroInventory">
+            WHERE t.realQty > 0
+        </if>
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.InventoryEntity">
         SELECT
