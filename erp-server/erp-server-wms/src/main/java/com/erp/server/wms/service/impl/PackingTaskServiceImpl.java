@@ -40,9 +40,13 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.FileTemplateDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
@@ -51,9 +55,14 @@ import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
+import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.server.wms.convert.CartonConverter;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.convert.PackingConverter;
@@ -141,6 +150,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
+    @Resource
+    private SoInfoFeign soInfoFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private WmsDeliveryPlanService wmsDeliveryPlanService;
 
     @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
@@ -1183,13 +1200,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (Objects.isNull(wmsCartonEntity)){
             throw new ServiceException(ApiError.ERROR_92146);
         }
-        return WmsCartonDTO.PrintDTO.builder()
-                .boxNo(wmsCartonEntity.getBoxNo())
-                .cartonId(wmsCartonEntity.getId())
-                .sourceCode(packingTaskEntity.getSourceCode())
-                .sourceId(packingTaskEntity.getSourceId())
-                .taskId(packingTaskEntity.getId())
-                .build();
+        return getPrintBarCode(wmsCartonEntity.getId());
     }
 
     @Override
@@ -2033,13 +2044,84 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
             throw new ServiceException(ApiError.ERROR_98001);
         }
-        return WmsCartonDTO.PrintDTO.builder()
+        return buildPrintInfo(cartonEntity,packingTaskEntity);
+    }
+
+    /**
+     * 构建打印面单信息
+     * @param cartonEntity
+     * @param packingTaskEntity
+     * @return
+     */
+    private WmsCartonDTO.PrintDTO buildPrintInfo(WmsCartonEntity cartonEntity, PackingTaskEntity packingTaskEntity) {
+        WmsCartonDTO.PrintDTO printDTO = WmsCartonDTO.PrintDTO.builder()
                 .boxNo(cartonEntity.getBoxNo())
-                .cartonId(cartonId)
+                .cartonId(cartonEntity.getId())
                 .sourceCode(packingTaskEntity.getSourceCode())
                 .sourceId(packingTaskEntity.getSourceId())
                 .taskId(packingTaskEntity.getId())
                 .build();
+        //sku明细
+        List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonEntity.getId()));
+        List<String> skuList = detailEntityList.stream().map(e -> e.getSkuNo() + "*" + e.getPackQty()).collect(Collectors.toList());
+        printDTO.setSku(String.join(",", skuList));
+        //新增店铺 店铺,国家,SKU,运营负责人
+        if (PickingSourceTypeEnum.B2B.getCode().equals(packingTaskEntity.getSourceType())){
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(packingTaskEntity.getSourceId());
+            String sourceId = soDeliveryNoticeEntity.getSourceId();
+            if (StrUtil.isBlank(sourceId)){
+                return printDTO;
+            }
+            List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(sourceId));
+            if (CollectionUtils.isNotEmpty(customerDTOS)){
+                printDTO.setCountryId(customerDTOS.get(0).getCountryId());
+                if (StrUtil.isNotBlank(printDTO.getCountryId())){
+                    DictCountryEntity country = sysUserFeign.getCountryById(printDTO.getCountryId());
+                    if (Objects.nonNull(country)){
+                        printDTO.setCountryName(country.getNameCn());
+                    }
+                }
+                printDTO.setChargeId(customerDTOS.get(0).getSellerId());
+                printDTO.setChargeName(customerDTOS.get(0).getSellerName());
+            }
+        }else {
+            //发货单
+            FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getById(packingTaskEntity.getSourceId());
+            //要货申请
+            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(packingTaskEntity.getSourceId());
+            if (Objects.nonNull(firstMileDelivery)){
+                printDTO.setCountryId(firstMileDelivery.getCountryId());
+                printDTO.setCountryName(firstMileDelivery.getCountryName());
+                printDTO.setShopId(firstMileDelivery.getShopId());
+                printDTO.setShopName(firstMileDelivery.getShopName());
+                if (StrUtil.isNotBlank(firstMileDelivery.getShopId())){
+                    ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(firstMileDelivery.getShopId());
+                    if (Objects.nonNull(shopInfo)){
+                        printDTO.setShopName(shopInfo.getName());
+                        printDTO.setChargeId(shopInfo.getChargeId());
+                        printDTO.setChargeName(shopInfo.getChargeName());
+                    }
+                }
+            }else if (Objects.nonNull(requisitionApplication) && StrUtil.isNotBlank(requisitionApplication.getSourceId())){
+                //要货计划
+                    WmsDeliveryPlanEntity deliveryPlan = wmsDeliveryPlanService.getById(requisitionApplication.getSourceId());
+                    if (Objects.nonNull(deliveryPlan)){
+                        printDTO.setCountryId(deliveryPlan.getCountry());
+                        printDTO.setCountryName(deliveryPlan.getCountryName());
+                        printDTO.setShopId(deliveryPlan.getShopId());
+                        printDTO.setShopName(deliveryPlan.getShopName());
+                        if (StrUtil.isNotBlank(deliveryPlan.getShopId())){
+                            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(deliveryPlan.getShopId());
+                            if (Objects.nonNull(shopInfo)){
+                                printDTO.setShopName(shopInfo.getName());
+                                printDTO.setChargeId(shopInfo.getChargeId());
+                                printDTO.setChargeName(shopInfo.getChargeName());
+                            }
+                        }
+                    }
+                }
+            }
+        return printDTO;
     }
 
     @Override

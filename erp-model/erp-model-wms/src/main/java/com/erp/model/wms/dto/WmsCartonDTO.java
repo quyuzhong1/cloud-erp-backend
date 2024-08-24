@@ -334,5 +334,33 @@ public class WmsCartonDTO {
          * 箱号
          */
         private Integer boxNo;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 国家
+         */
+        private String countryId;
+        /**
+         * 国家名称
+         */
+        private String countryName;
+        /**
+         * 负责人id
+         */
+        private String chargeId;
+        /**
+         * 负责人名称
+         */
+        private String chargeName;
+        /**
+         * sku*qty
+         */
+        private String sku;
     }
 }
