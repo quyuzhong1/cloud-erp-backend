@@ -118,7 +118,6 @@
         </foreach>
         order by tbdrd.id desc
         </where>
-        limit 50000
     </select>
 
     <!-- 查询币别 -->

@@ -210,7 +210,6 @@
             </foreach>
         </if>
             purchase_org_name, supplier_name, createTime DESC
-        limit 50000
     </select>
 
     <select id="test" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">

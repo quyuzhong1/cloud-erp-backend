@@ -104,6 +104,5 @@
             </foreach>
         </if>
         crf.create_time DESC
-        limit 50000
     </select>
 </mapper>

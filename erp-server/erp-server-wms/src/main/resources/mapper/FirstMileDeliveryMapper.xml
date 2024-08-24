@@ -117,7 +117,6 @@
             </foreach>
         </if>
         fd.create_time DESC, fd.code, fdd.id
-        limit 50000
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$TabListDTO">
         SELECT
@@ -228,7 +227,6 @@
         and fd.is_deleted = FALSE
         ORDER BY fd.code,
         CAST(wc.box_no AS INTEGER)
-        limit 50000
     </select>
     <select id="getGenerateLogisticDTO"
             resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GenerateLogisticDTO">

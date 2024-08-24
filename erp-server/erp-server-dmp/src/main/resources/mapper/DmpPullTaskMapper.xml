@@ -80,7 +80,6 @@
             ${params.permissionSql}
         </if>
         order by id desc
-        limit 50000
     </select>
     <select id="countMonth" resultType="java.lang.Integer">
         select count(id) from dmp_pull_task where status in ('0', '3') and create_time &lt;= #{date}
