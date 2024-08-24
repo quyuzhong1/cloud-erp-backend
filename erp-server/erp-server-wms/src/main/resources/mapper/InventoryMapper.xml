@@ -647,7 +647,6 @@
         </if>
         GROUP BY it.warehouse_id, it.sku_id
         ) t
-        WHERE t.realQty > 0
     </sql>
     <select id="pageInventoryWarehouseByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseDTO">
         <include refid="inventoryWarehouseByParam"/>
@@ -703,7 +702,6 @@
         </if>
         GROUP BY it.sku_id
         ) t
-        WHERE t.realQty > 0
     </select>
     <select id="listInventoryWarehouseBySkuId"
             resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseLocationDTO">
