@@ -765,6 +765,14 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         //客户id
         List<String> customerIdList = page.getRecords().stream().map(SoChangeDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
+        List<String> ids = page.getRecords().stream().map(SoChangeDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        ids.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_CHANGE.getCode(), obj)));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        Integer code = listApiResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(new ApiResult<>(ApiError.Default.code,listApiResult.getMsg()));
+        }
         for (SoChangeDTO.PagingViewDTO item : page.getRecords()) {
             BillTypeEnum orderType = item.getOrderType();
             item.setOrderTypeName(orderType.getName());
@@ -782,6 +790,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             if (sku != null) {
                 item.setProductName(sku.getSkuName());
                 item.setUnit(sku.getUnitName());
+            }
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
             }
             BigDecimal amount = item.getAmount();
             String currencySymbol = item.getCurrencySymbol();

@@ -17,6 +17,7 @@ import com.erp.server.file.exception.BusinessException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -72,7 +73,9 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
         while (hasNext) {
             dto.setParams(searchParamDTO);
             PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> data = getListDiffExportData(dto);
-            list.addAll((Collection<? extends VirtualInventoryDiffDTO.ListDiffExportDataDTO>) data.getList());
+            if (!CollectionUtils.isEmpty(data.getList())) {
+                list.addAll((Collection<? extends VirtualInventoryDiffDTO.ListDiffExportDataDTO>) data.getList());
+            }
             int totalCount = data.getTotalCount();
             if (totalCount <= dto.getCurrPage() * getPageSize()) {
                 hasNext = false;
@@ -87,14 +90,15 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
         while (detailHasNext) {
             detailDto.setParams(searchParamDTO);
             PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> data = getWarehouseStatisticsData(dto);
-            warehouseStatisticsList.addAll((Collection<? extends VirtualInventoryDTO.WarehouseStatisticsExcelDTO>) data.getList());
+            if (!CollectionUtils.isEmpty(data.getList())) {
+                warehouseStatisticsList.addAll((Collection<? extends VirtualInventoryDTO.WarehouseStatisticsExcelDTO>) data.getList());
+            }
             int totalCount = data.getTotalCount();
             if (totalCount <= detailDto.getCurrPage() * getPageSize()) {
                 hasNext = false;
             }
             detailDto.setCurrPage(detailDto.getCurrPage() + 1);
         }
-
         List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
         //主表数据
         pairList.add(new Pair<>(MathUtil.ZERO, list));

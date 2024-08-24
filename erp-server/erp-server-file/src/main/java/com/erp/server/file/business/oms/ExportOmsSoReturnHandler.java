@@ -3,7 +3,6 @@ package com.erp.server.file.business.oms;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_CHANGE;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_RETURN;
 
 @Component

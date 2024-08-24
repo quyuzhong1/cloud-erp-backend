@@ -3,6 +3,7 @@ package com.erp.server.file.core;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +28,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         while (hasNext) {
             dto.setParams(p);
             PagingVO<T> data = getPageData(dto);
-            dataList.addAll((Collection<? extends T>) data.getList());
+            if (!CollectionUtils.isEmpty(data.getList())) {
+                dataList.addAll((Collection<? extends T>) data.getList());
+            }
             int totalCount = data.getTotalCount();
             if (totalCount <= dto.getCurrPage() * getPageSize()) {
                 hasNext = false;
