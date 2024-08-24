@@ -599,7 +599,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/virtualInventory")
     @WebAdvanceQuery
-    PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
+    public PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
         return virtualInventoryService.getVirtualInventory(dto);
     }
 }

@@ -9,6 +9,7 @@ import com.erp.server.sys.service.DictCityService;
 import com.erp.server.sys.service.DictCountryService;
 import com.erp.server.sys.service.DictGlobalAreaService;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,22 +26,22 @@ public class ExportSysFeignController {
     private DictCityService dictCityService;
 
     @PostMapping("/city")
-    PagingVO<DictCityDTO.PagingViewDTO> exportCity(PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
+    public PagingVO<DictCityDTO.PagingViewDTO> exportCity(@RequestBody PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
         return dictCityService.exportCity(dto);
     }
 
     @PostMapping("/cityProvince")
-    PagingVO<DictCityDTO.PagingViewDTO> exportCityProvince(PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
+    public PagingVO<DictCityDTO.PagingViewDTO> exportCityProvince(@RequestBody PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
         return dictCityService.exportCityProvince(dto);
     }
 
     @PostMapping("/country")
-    PagingVO<DictCountryDTO.PagingViewDTO> exportCountry(PagingDTO<DictCountryDTO.PagingParamDTO> dto) {
+    public PagingVO<DictCountryDTO.PagingViewDTO> exportCountry(@RequestBody PagingDTO<DictCountryDTO.PagingParamDTO> dto) {
         return dictCountryService.exportCountry(dto);
     }
 
     @PostMapping("/globalArea")
-    PagingVO<DictGlobalAreaDTO.PagingViewDTO> exportGlobalArea(PagingDTO<DictGlobalAreaDTO.PagingParamDTO> dto) {
+    public PagingVO<DictGlobalAreaDTO.PagingViewDTO> exportGlobalArea(@RequestBody PagingDTO<DictGlobalAreaDTO.PagingParamDTO> dto) {
         return dictGlobalAreaService.exportGlobalArea(dto);
     }
 }

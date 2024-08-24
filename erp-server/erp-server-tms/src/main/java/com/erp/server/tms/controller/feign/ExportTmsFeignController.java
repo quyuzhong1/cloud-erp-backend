@@ -11,6 +11,7 @@ import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import com.erp.server.tms.query.*;
 import com.erp.server.tms.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -57,25 +58,25 @@ public class ExportTmsFeignController {
 
     @PostMapping("/b2BDeclareBillDeclare")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.ExportDTO> exportB2BDeclareBillDeclare(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
+    PagingVO<TmsDeclareBillDTO.ExportDTO> exportB2BDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
         dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         return tmsDeclareBillService.exportDeclareBillDeclare(dto);
     }
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBill(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
+    PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
         dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         return tmsDeclareBillService.exportDeclareBill(dto);
     }
     @PostMapping("/fmDeclareBillDeclare")
     @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.ExportDTO> exportFmDeclareBillDeclare(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
+    PagingVO<TmsDeclareBillDTO.ExportDTO> exportFmDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
         dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         return tmsDeclareBillService.exportDeclareBillDeclare(dto);
     }
     @PostMapping("/fmDeclareBill")
     @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
+    PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
         dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         return tmsDeclareBillService.exportDeclareBill(dto);
     }
@@ -87,18 +88,18 @@ public class ExportTmsFeignController {
             tableAlias = "tbdr"
     )
     @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationQueryHandler.class)
-    public PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto) {
+    public PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(@RequestBody PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto) {
         return tmsB2cDeclareReconciliationDetailService.exportB2cDeclareReconciliationDetail(dto);
     }
 
     @PostMapping("/b2cDeclareReconciliation")
-    public PagingVO<TmsB2cDeclareReconciliationDTO.ListDTO> exportB2cDeclareReconciliation(PagingDTO<TmsB2cDeclareReconciliationDTO.ExportDTO> dto) {
+    public PagingVO<TmsB2cDeclareReconciliationDTO.ListDTO> exportB2cDeclareReconciliation(@RequestBody PagingDTO<TmsB2cDeclareReconciliationDTO.ExportDTO> dto) {
         return tmsB2cDeclareReconciliationService.exportB2cDeclareReconciliation(dto);
     }
 
     @PostMapping("/cfgReconciliationField")
     @WebAdvanceQuery(handler = CfgReconciliationFieldQueryHandler.class)
-    public PagingVO<CfgReconciliationFieldExportExcelDTO> exportCfgReconciliationField(PagingDTO<CfgReconciliationFieldDTO.PagingParamDTO> dto) {
+    public PagingVO<CfgReconciliationFieldExportExcelDTO> exportCfgReconciliationField(@RequestBody PagingDTO<CfgReconciliationFieldDTO.PagingParamDTO> dto) {
         return cfgReconciliationFieldService.exportCfgReconciliationField(dto);
     }
 
@@ -109,7 +110,7 @@ public class ExportTmsFeignController {
             tableAlias = "tfmrd"
     )
     @WebAdvanceQuery(handler = TmsFirstMileReconciliationQueryHandler.class)
-    public PagingVO<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> exportFirstMileReconciliationDetail(PagingDTO<TmsFirstMileReconciliationDetailDTO.ExportDTO> dto) {
+    public PagingVO<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> exportFirstMileReconciliationDetail(@RequestBody PagingDTO<TmsFirstMileReconciliationDetailDTO.ExportDTO> dto) {
         return tmsFirstMileReconciliationDetailService.exportFirstMileReconciliationDetail(dto);
     }
 
@@ -120,7 +121,7 @@ public class ExportTmsFeignController {
             tableAlias = "tfmr"
     )
     @WebAdvanceQuery(handler = TmsFirstMileReconciliationQueryHandler.class)
-    public PagingVO<TmsFirstMileReconciliationDTO.ListDTO> exportFirstMileReconciliation(PagingDTO<TmsFirstMileReconciliationDTO.ExportDTO> dto) {
+    public PagingVO<TmsFirstMileReconciliationDTO.ListDTO> exportFirstMileReconciliation(@RequestBody PagingDTO<TmsFirstMileReconciliationDTO.ExportDTO> dto) {
         return tmsFirstMileReconciliationService.exportFirstMileReconciliation(dto);
     }
 
@@ -130,7 +131,7 @@ public class ExportTmsFeignController {
             menuCode = "tms:logisticsAddress:paging",
             tableAlias = "la"
     )
-    public PagingVO<LogisticsAddressDTO.PagingViewDTO> exportLogisticsAddress(PagingDTO<LogisticsAddressDTO.ExportDTO> dto) {
+    public PagingVO<LogisticsAddressDTO.PagingViewDTO> exportLogisticsAddress(@RequestBody PagingDTO<LogisticsAddressDTO.ExportDTO> dto) {
         return logisticsAddressService.exportLogisticsAddress(dto);
     }
 
@@ -141,7 +142,7 @@ public class ExportTmsFeignController {
             tableAlias = "lbc"
     )
     @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
-    public PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
+    public PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(@RequestBody PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
         return logisticsBillCostService.exportLogisticsBillCost(dto);
     }
 
@@ -152,7 +153,7 @@ public class ExportTmsFeignController {
             tableAlias = "lb"
     )
     @WebAdvanceQuery(handler = LogisticsBillQueryHandler.class)
-    public PagingVO<LogisticsBillDTO.PagingVO> exportLogisticsBill(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
+    public PagingVO<LogisticsBillDTO.PagingVO> exportLogisticsBill(@RequestBody PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
         return logisticsBillService.exportLogisticsBill(dto);
     }
 
@@ -163,23 +164,23 @@ public class ExportTmsFeignController {
             tableAlias = "lbc"
     )
     @WebAdvanceQuery(handler = LogisticsLastMileCostQueryHandler.class)
-    public PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsLastMileCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
+    public PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsLastMileCost(@RequestBody PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
         return logisticsLastMileCostService.exportLogisticsLastMileCost(dto);
     }
 
     @PostMapping("/logisticsSupplier")
-    public PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto) {
+    public PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(@RequestBody PagingDTO<LogisticsSupplierDTO.ExportDTO> dto) {
         return logisticsSupplierService.exportLogisticsSupplier(dto);
     }
 
     @PostMapping("/productRegistration")
     @WebAdvanceQuery(handler = ProductRegistrationQueryHandler.class)
-    public PagingVO<ProductRegistrationDTO.PagingVO> exportProductRegistration(PagingDTO<ProductRegistrationDTO.PagingParamDTO> dto) {
+    public PagingVO<ProductRegistrationDTO.PagingVO> exportProductRegistration(@RequestBody PagingDTO<ProductRegistrationDTO.PagingParamDTO> dto) {
         return productRegistrationService.exportProductRegistration(dto);
     }
 
     @PostMapping("/shippingCalculation")
-    public PagingVO<ShippingCalculationDTO.ListDTO> exportShippingCalculation(PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto) {
+    public PagingVO<ShippingCalculationDTO.ListDTO> exportShippingCalculation(@RequestBody PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto) {
         return shippingCalculationService.exportShippingCalculation(dto);
     }
 
@@ -189,7 +190,7 @@ public class ExportTmsFeignController {
             menuCode = "tms:shippingTemplate:paging",
             tableAlias = "st"
     )
-    public PagingVO<ShippingTemplateDTO.ListDTO> exportShippingTemplate(PagingDTO<ShippingTemplateDTO.ExportExcelParamDTO> dto) {
+    public PagingVO<ShippingTemplateDTO.ListDTO> exportShippingTemplate(@RequestBody PagingDTO<ShippingTemplateDTO.ExportExcelParamDTO> dto) {
         return shippingTemplateService.exportShippingTemplate(dto);
     }
 
@@ -200,12 +201,12 @@ public class ExportTmsFeignController {
             menuCode = "tms:transferDeclare:paging",
             tableAlias = "td"
     )
-    public PagingVO<TransferDeclareDTO.ExportListDTO> exportTransferDeclare(PagingDTO<TransferDeclareDTO.PagingParamDTO> dto) {
+    public PagingVO<TransferDeclareDTO.ExportListDTO> exportTransferDeclare(@RequestBody PagingDTO<TransferDeclareDTO.PagingParamDTO> dto) {
         return transferDeclareService.exportTransferDeclare(dto);
     }
 
     @PostMapping("/transferLogisticsSupplier")
-    public PagingVO<TransferLogisticsSupplierDTO.PagingViewDTO> exportTransferLogisticsSupplier(PagingDTO<TransferLogisticsSupplierDTO.ExportDTO> dto) {
+    public PagingVO<TransferLogisticsSupplierDTO.PagingViewDTO> exportTransferLogisticsSupplier(@RequestBody PagingDTO<TransferLogisticsSupplierDTO.ExportDTO> dto) {
         return transferLogisticsSupplierService.exportTransferLogisticsSupplier(dto);
     }
 
@@ -216,7 +217,7 @@ public class ExportTmsFeignController {
             tableAlias = "twm"
     )
     @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
-    public PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto) {
+    public PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(@RequestBody PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto) {
         return tmsWarehouseMappingService.exportWarehouseMapping(dto);
     }
 }

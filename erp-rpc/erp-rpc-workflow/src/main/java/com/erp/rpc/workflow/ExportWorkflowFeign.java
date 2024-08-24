@@ -6,12 +6,13 @@ import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = "erp-workflow", contextId = "exportWorkflowFeign")
 public interface ExportWorkflowFeign {
 
     @PostMapping("/feign/export/processDefinition")
-    PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto);
+    PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(@RequestBody PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto);
     @PostMapping("/feign/export/processManagement")
-    PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(PagingDTO<ProcessManagementDTO.ExportDTO> dto);
+    PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(@RequestBody PagingDTO<ProcessManagementDTO.ExportDTO> dto);
 }

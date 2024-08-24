@@ -9,31 +9,32 @@ import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = "erp-scm", contextId = "exportScmFeign")
 public interface ExportScmFeign {
 
     @PostMapping("/feign/export/purchaseApplication")
-    PagingVO<PurchaseApplicationDTO.ListDTO> exportPurchaseApplication(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto);
+    PagingVO<PurchaseApplicationDTO.ListDTO> exportPurchaseApplication(@RequestBody PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto);
     @PostMapping("/feign/export/purchaseChange")
-    PagingVO<PurchaseChangeExportExcelDTO> exportPurchaseChange(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto);
+    PagingVO<PurchaseChangeExportExcelDTO> exportPurchaseChange(@RequestBody PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto);
     @PostMapping("/feign/export/purchaseOrderContract")
-    PagingVO<BomExportExcelVO> exportPurchaseOrderContract(PagingDTO<String> dto);
+    PagingVO<BomExportExcelVO> exportPurchaseOrderContract(@RequestBody PagingDTO<String> dto);
     @PostMapping("/feign/export/purchaseOrder")
-    PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
+    PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(@RequestBody PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
     @PostMapping("/feign/export/purchasePriceChange")
-    PagingVO<PurchasePriceChangeExportExcelDTO> exportPurchasePriceChange(PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto);
+    PagingVO<PurchasePriceChangeExportExcelDTO> exportPurchasePriceChange(@RequestBody PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/purchasePrice")
-    PagingVO<PurchasePriceExportExcelDTO> exportPurchasePrice(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto);
+    PagingVO<PurchasePriceExportExcelDTO> exportPurchasePrice(@RequestBody PagingDTO<PurchasePriceDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/salesDemand")
-    PagingVO<SalesDemandExportExcelDTO> exportSalesDemand(PagingDTO<SalesDemandDTO.SearchParamDTO> dto);
+    PagingVO<SalesDemandExportExcelDTO> exportSalesDemand(@RequestBody PagingDTO<SalesDemandDTO.SearchParamDTO> dto);
     @PostMapping("/feign/export/supplier")
-    PagingVO<SupplierExportExcelDTO> exportSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
+    PagingVO<SupplierExportExcelDTO> exportSupplier(@RequestBody PagingDTO<SupplierDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/supplierReport")
-    PagingVO<SupplierReportDTO.PagingViewDTO> exportSupplierReport(PagingDTO<SupplierReportDTO.ExportSearchParamDTO> dto);
+    PagingVO<SupplierReportDTO.PagingViewDTO> exportSupplierReport(@RequestBody PagingDTO<SupplierReportDTO.ExportSearchParamDTO> dto);
     @PostMapping("/feign/export/supplierUser")
-    PagingVO<SupplierUserVO> exportSupplierUser(PagingDTO<UserPagingSearchDTO> dto);
+    PagingVO<SupplierUserVO> exportSupplierUser(@RequestBody PagingDTO<UserPagingSearchDTO> dto);
     @PostMapping("/feign/export/subcontractChangeOrder")
-    PagingVO<SubcontractChangeDTO.ListDTO> exportSubcontractChangeOrder(PagingDTO<SubcontractChangeDTO.PagingParamDTO> dto);
+    PagingVO<SubcontractChangeDTO.ListDTO> exportSubcontractChangeOrder(@RequestBody PagingDTO<SubcontractChangeDTO.PagingParamDTO> dto);
 
 }

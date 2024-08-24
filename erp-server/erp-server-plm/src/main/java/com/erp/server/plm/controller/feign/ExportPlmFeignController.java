@@ -53,33 +53,33 @@ public class ExportPlmFeignController {
     }
 
     @PostMapping("/scheduleTask")
-    public PagingVO<TaskDTO.TaskExportDTO> exportScheduleTask(PagingDTO<ProjectPlanTaskConditionDTO> dto){
+    public PagingVO<TaskDTO.TaskExportDTO> exportScheduleTask(@RequestBody PagingDTO<ProjectPlanTaskConditionDTO> dto){
         return projectPlanTaskService.exportScheduleTask(dto);
     }
     @PostMapping("/taskTimeRecord")
-    public PagingVO<ProjectTaskTimeRecordPageVO> exportTaskTimeRecord(PagingDTO<ProjectTaskTimeRecordDTO.PageRecordDto> dto){
+    public PagingVO<ProjectTaskTimeRecordPageVO> exportTaskTimeRecord(@RequestBody PagingDTO<ProjectTaskTimeRecordDTO.PageRecordDto> dto){
         return projectTaskTimeRecordService.exportTaskTimeRecord(dto);
     }
     @PostMapping("/logisticsProduct")
-    public PagingVO<LogisticsProductDTO.ExportInfoDTO> exportLogisticsProduct(PagingDTO<LogisticsProductDTO.ExportDTO> dto){
+    public PagingVO<LogisticsProductDTO.ExportInfoDTO> exportLogisticsProduct(@RequestBody PagingDTO<LogisticsProductDTO.ExportDTO> dto){
         return logisticsProductService.exportLogisticsProduct(dto);
     }
     @PostMapping("/productPlan")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:plan:paging", tableAlias = "pp")
-    public PagingVO<ProductPlanExcelDTO> exportProductPlan(PagingDTO<ProductPlanSearchDTO> dto){
+    public PagingVO<ProductPlanExcelDTO> exportProductPlan(@RequestBody PagingDTO<ProductPlanSearchDTO> dto){
         return productPlanService.productPlan(dto);
     }
     @PostMapping("/productPurchaseBusiness")
-    public PagingVO<ProjectReportFormsDTO.PagingView> exportProductPurchaseBusiness(PagingDTO<ProjectReportFormsDTO.PagingParam> dto){
+    public PagingVO<ProjectReportFormsDTO.PagingView> exportProductPurchaseBusiness(@RequestBody PagingDTO<ProjectReportFormsDTO.PagingParam> dto){
         return projectReportFormsService.exportProductPurchaseBusiness(dto);
     }
     @PostMapping("/productTaskDetail")
-    public PagingVO<ProjectReportFormsDTO.TaskDetail> exportProductTaskDetail(PagingDTO<ProjectReportFormsDTO.TaskDetailParam> dto){
+    public PagingVO<ProjectReportFormsDTO.TaskDetail> exportProductTaskDetail(@RequestBody PagingDTO<ProjectReportFormsDTO.TaskDetailParam> dto){
         return projectReportFormsService.exportProductTaskDetail(dto);
     }
     @PostMapping("/productTaskView")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:exportExcel", tableAlias = "t")
-    public PagingVO<ProductTaskViewDTO> exportProductTaskView(PagingDTO<ProductTaskViewSearchDTO> dto){
+    public PagingVO<ProductTaskViewDTO> exportProductTaskView(@RequestBody PagingDTO<ProductTaskViewSearchDTO> dto){
         return projectTaskViewService.exportProductTaskView(dto);
     }
 }

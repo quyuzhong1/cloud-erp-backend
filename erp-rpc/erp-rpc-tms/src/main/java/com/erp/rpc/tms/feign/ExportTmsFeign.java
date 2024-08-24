@@ -6,48 +6,49 @@ import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = "erp-tms", contextId = "exportTmsFeign")
 public interface ExportTmsFeign {
 
     @PostMapping("/feign/export/b2BDeclareBillDeclare")
-    PagingVO<TmsDeclareBillDTO.ExportDTO> exportB2BDeclareBillDeclare(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
+    PagingVO<TmsDeclareBillDTO.ExportDTO> exportB2BDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/b2BDeclareBill")
-    PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBill(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
+    PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/fmDeclareBillDeclare")
-    PagingVO<TmsDeclareBillDTO.ExportDTO> exportFmDeclareBillDeclare(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
+    PagingVO<TmsDeclareBillDTO.ExportDTO> exportFmDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/fmDeclareBill")
-    PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
+    PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/b2cDeclareReconciliationDetail")
-    PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto);
+    PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(@RequestBody PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto);
     @PostMapping("/feign/export/b2cDeclareReconciliation")
-    PagingVO<TmsB2cDeclareReconciliationDTO.ListDTO> exportB2cDeclareReconciliation(PagingDTO<TmsB2cDeclareReconciliationDTO.ExportDTO> dto);
+    PagingVO<TmsB2cDeclareReconciliationDTO.ListDTO> exportB2cDeclareReconciliation(@RequestBody PagingDTO<TmsB2cDeclareReconciliationDTO.ExportDTO> dto);
     @PostMapping("/feign/export/cfgReconciliationField")
-    PagingVO<CfgReconciliationFieldExportExcelDTO> exportCfgReconciliationField(PagingDTO<CfgReconciliationFieldDTO.PagingParamDTO> dto);
+    PagingVO<CfgReconciliationFieldExportExcelDTO> exportCfgReconciliationField(@RequestBody PagingDTO<CfgReconciliationFieldDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/firstMileReconciliationDetail")
-    PagingVO<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> exportFirstMileReconciliationDetail(PagingDTO<TmsFirstMileReconciliationDetailDTO.ExportDTO> dto);
+    PagingVO<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> exportFirstMileReconciliationDetail(@RequestBody PagingDTO<TmsFirstMileReconciliationDetailDTO.ExportDTO> dto);
     @PostMapping("/feign/export/firstMileReconciliation")
-    PagingVO<TmsFirstMileReconciliationDTO.ListDTO> exportFirstMileReconciliation(PagingDTO<TmsFirstMileReconciliationDTO.ExportDTO> dto);
+    PagingVO<TmsFirstMileReconciliationDTO.ListDTO> exportFirstMileReconciliation(@RequestBody PagingDTO<TmsFirstMileReconciliationDTO.ExportDTO> dto);
     @PostMapping("/feign/export/logisticsAddress")
-    PagingVO<LogisticsAddressDTO.PagingViewDTO> exportLogisticsAddress(PagingDTO<LogisticsAddressDTO.ExportDTO> dto);
+    PagingVO<LogisticsAddressDTO.PagingViewDTO> exportLogisticsAddress(@RequestBody PagingDTO<LogisticsAddressDTO.ExportDTO> dto);
     @PostMapping("/feign/export/logisticsBillCost")
-    PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
+    PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(@RequestBody PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/logisticsBill")
-    PagingVO<LogisticsBillDTO.PagingVO> exportLogisticsBill(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto);
+    PagingVO<LogisticsBillDTO.PagingVO> exportLogisticsBill(@RequestBody PagingDTO<LogisticsBillDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/logisticsLastMileCost")
-    PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsLastMileCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
+    PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsLastMileCost(@RequestBody PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/logisticsSupplier")
-    PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
+    PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(@RequestBody PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
     @PostMapping("/feign/export/productRegistration")
-    PagingVO<ProductRegistrationDTO.PagingVO> exportProductRegistration(PagingDTO<ProductRegistrationDTO.PagingParamDTO> dto);
+    PagingVO<ProductRegistrationDTO.PagingVO> exportProductRegistration(@RequestBody PagingDTO<ProductRegistrationDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/shippingCalculation")
-    PagingVO<ShippingCalculationDTO.ListDTO> exportShippingCalculation(PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto);
+    PagingVO<ShippingCalculationDTO.ListDTO> exportShippingCalculation(@RequestBody PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/shippingTemplate")
-    PagingVO<ShippingTemplateDTO.ListDTO> exportShippingTemplate(PagingDTO<ShippingTemplateDTO.ExportExcelParamDTO> dto);
+    PagingVO<ShippingTemplateDTO.ListDTO> exportShippingTemplate(@RequestBody PagingDTO<ShippingTemplateDTO.ExportExcelParamDTO> dto);
     @PostMapping("/feign/export/transferDeclare")
-    PagingVO<TransferDeclareDTO.ExportListDTO> exportTransferDeclare(PagingDTO<TransferDeclareDTO.PagingParamDTO> dto);
+    PagingVO<TransferDeclareDTO.ExportListDTO> exportTransferDeclare(@RequestBody PagingDTO<TransferDeclareDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/transferLogisticsSupplier")
-    PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportTransferLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
+    PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportTransferLogisticsSupplier(@RequestBody PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
     @PostMapping("/feign/export/warehouseMapping")
-    PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto);
+    PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(@RequestBody PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto);
 }
