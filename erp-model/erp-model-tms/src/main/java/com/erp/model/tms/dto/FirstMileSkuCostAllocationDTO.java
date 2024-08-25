@@ -120,7 +120,8 @@ public class FirstMileSkuCostAllocationDTO implements Serializable {
         private String currency;
 
         /**
-        * 费用来源：estimatedBill=预估账单，actualBill=实际账单
+         * 费用来源：estimated=预估账单，actual=实际账单
+         * ReconciliationBillTypeEnum
         */
         private String billSourceType;
 
@@ -254,7 +255,8 @@ public class FirstMileSkuCostAllocationDTO implements Serializable {
         private String currency;
 
         /**
-        * 费用来源：estimatedBill=预估账单，actualBill=实际账单
+         * 费用来源：estimated=预估账单，actual=实际账单
+         * ReconciliationBillTypeEnum
         */
         @NotBlank(message = "费用来源：estimatedBill=预估账单，actualBill=实际账单不能为空")
         @Size(max = 20,message = "费用来源：estimatedBill=预估账单，actualBill=实际账单最大长度不能超过20位")

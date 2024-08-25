@@ -66,19 +66,12 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      */
     void exportExcel(FirstMileCostAllocationDTO.PagingParamDTO dto, HttpServletResponse response);
 
-    /**
-     * 根据期初id查询费用分摊记录
-     * @param firstMileId
-     * @return
-     */
-    List<FirstMileCostAllocationEntity> getByInitFirstMileId(String firstMileId);
-
-    /**
-     * 根据sku成本id查询费用分摊记录
-     * @param skuCostId
-     * @return
-     */
-    List<FirstMileCostAllocationEntity> getBySkuCostId(String skuCostId);
+//    /**
+//     * 根据sku成本id查询费用分摊记录
+//     * @param skuCostId
+//     * @return
+//     */
+//    List<FirstMileCostAllocationEntity> getBySkuCostId(String skuCostId);
 
     /**
      * 计算分摊费用
@@ -89,4 +82,11 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @return
      */
     BatchResultDTO calcAllocatedCost(FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity,List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList);
+
+    /**
+     * 根据发货单获取全部费用分摊记录
+     * @param sourceIds
+     * @return
+     */
+    List<FirstMileCostAllocationDTO.PagingVO> listBySourceIds(List<String> sourceIds);
 }

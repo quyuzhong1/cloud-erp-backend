@@ -1,8 +1,12 @@
 package com.erp.server.tms.mapper;
+
 import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +19,10 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface FirstMileSkuCostAllocationDetailMapper extends BaseMapper<FirstMileSkuCostAllocationDetailEntity> {
-
+    /**
+     * 根据分摊记录主表获取所有分摊记录明细
+     * @param mainIds
+     * @return
+     */
+    List<FirstMileSkuCostAllocationDetailEntity> listByMainIds(@Param("mainIds") List<String> mainIds);
 }

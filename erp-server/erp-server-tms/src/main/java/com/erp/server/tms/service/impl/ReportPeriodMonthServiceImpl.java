@@ -110,7 +110,6 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
             }else {
                 return list.get(0).getId();
             }
-
         }else {
             return reportPeriodId;
         }

@@ -100,8 +100,7 @@ public class FirstMileSkuCostAllocationDetailServiceImpl extends SuperServiceImp
         if (CollectionUtils.isEmpty(mainIds)){
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(FirstMileSkuCostAllocationDetailEntity::getMainId,mainIds)
-                .orderByDesc(FirstMileSkuCostAllocationDetailEntity::getCreateTime).list();
+        return baseMapper.listByMainIds(mainIds);
     }
 
     /**

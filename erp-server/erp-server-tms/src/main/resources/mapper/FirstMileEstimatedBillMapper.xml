@@ -128,10 +128,17 @@
             left join tms_first_mile_reconciliation_detail rd on lb.source_code = rd.source_code and rd.transport_no = lb.transport_no and rd.reconciliation_type = 'actual' and type = 'actual' and rd.is_deleted = false
             left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
         <where>
-            eb.logistics_bill_id in
-            <foreach collection="ids" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
+            eb.is_deleted = false
+            <if test="ids != null and ids.size > 0">
+                and eb.logistics_bill_id in
+                <foreach collection="ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+
+            <if test="status != null and status != ''">
+                and eb.status = #{status}
+            </if>
         </where>
     </select>
 </mapper>

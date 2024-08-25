@@ -164,6 +164,11 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("other_cost")
     private BigDecimal otherCost;
     /**
+     * 其他税费
+     */
+    @TableField("other_tax_cost")
+    private BigDecimal otherTaxCost;
+    /**
      * 备注
      */
     @TableField("remark")
@@ -215,7 +220,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
 
 
     public void setTotalLogisticsCost(){
-        this.setTotalLogisticsCost(this.shippingCost.add(this.declareCost).add(this.otherCost));
+        this.setTotalLogisticsCost(this.shippingCost.add(this.declareCost).add(this.otherCost).add(this.otherTaxCost));
     }
 
 

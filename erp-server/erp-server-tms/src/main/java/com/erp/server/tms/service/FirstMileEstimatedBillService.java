@@ -49,6 +49,7 @@ public interface FirstMileEstimatedBillService extends SuperService<FirstMileEst
     /**
      * 根据物流单ID批量查询
      * @param ids 物流单ID集合
+     * @param status 暂估账单状态
      */
-    List<FirstMileEstimatedBillDTO.View> listByLogisticsBillIds(List<String> ids);
+    List<FirstMileEstimatedBillDTO.View> listByLogisticsBillIds(List<String> ids, String status);
 }

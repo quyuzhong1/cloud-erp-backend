@@ -29,6 +29,7 @@ public interface TmsFirstMileReconciliationConverter {
             @Mapping(target = "shippingCost", source = "shippingCost"),
             @Mapping(target = "declareCost", source = "declareCost"),
             @Mapping(target = "otherCost", source = "otherCost"),
+            @Mapping(target = "otherTaxCost", source = "otherTaxCost"),
     })
     TmsFirstMileReconciliationDetailDTO.UpdateDTO convertDetailDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceDTO);
 }

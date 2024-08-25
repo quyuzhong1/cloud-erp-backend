@@ -35,6 +35,7 @@
        <result column="billing_weight_unit" property="billingWeightUnit" />
        <result column="shipping_cost" property="shippingCost" />
        <result column="declare_cost" property="declareCost" />
+       <result column="other_tax_cost" property="otherTaxCost" />
        <result column="other_cost" property="otherCost" />
        <result column="remark" property="remark" />
        <result column="status" property="status" />
@@ -80,6 +81,7 @@
             billing_weight_unit,
             shipping_cost,
             declare_cost,
+            other_tax_cost,
             other_cost,
             remark,
             status,
@@ -164,6 +166,7 @@
         tfmrd.billing_weight_unit,
         tfmrd.shipping_cost,
         tfmrd.declare_cost,
+        tfmrd.other_tax_cost,
         tfmrd.other_cost,
         tfmrd.remark,
         tfmrd.status,
@@ -351,5 +354,6 @@
         <if test="status != null and status != ''">
             and tfmr.approve_status = #{status}
         </if>
+        order by tfmr.reconciliation_month
     </select>
 </mapper>

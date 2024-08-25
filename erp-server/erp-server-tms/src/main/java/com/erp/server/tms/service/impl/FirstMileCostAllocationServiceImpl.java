@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -14,14 +15,13 @@ import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.CostAllocationEnum;
-import com.erp.model.tms.enums.DictCostCategoryEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
@@ -46,6 +46,8 @@ import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -116,6 +118,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private ReportPeriodMonthService reportPeriodMonthService;
     @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
+    @Resource
+    private CfgSettingService cfgSettingService;
+    @Resource
+    FirstMileSkuCostRefService firstMileSkuCostRefService;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -225,22 +233,6 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public List<FirstMileCostAllocationEntity> getByInitFirstMileId(String firstMileId) {
-        if (StrUtil.isBlank(firstMileId)){
-            return Collections.emptyList();
-        }
-        return lambdaQuery().eq(FirstMileCostAllocationEntity::getInitFirstMileId,firstMileId).list();
-    }
-
-    @Override
-    public List<FirstMileCostAllocationEntity> getBySkuCostId(String skuCostId) {
-        if (StrUtil.isBlank(skuCostId)){
-            return Collections.emptyList();
-        }
-        return lambdaQuery().eq(FirstMileCostAllocationEntity::getSkuCostId,skuCostId).list();
-    }
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO calcAllocatedCost(FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity,List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
         if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())){
@@ -249,18 +241,21 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (StrUtil.isBlank(entity.getSourceId())){
             return BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"发货单不能为空");
         }
+        if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
+            return BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"发货单明细不能为空");
+        }
         //处理分摊数据
-        return processAllocationData(entity,entity.getReportPeriodId(), firstMileDeliveryEntity,firstMileDeliveryDetailEntityList);
+        return processAllocationData(entity, firstMileDeliveryEntity,firstMileDeliveryDetailEntityList);
     }
 
     /**
      * 处理分摊数据
      * @param firstMileDeliveryDetailEntityList 发货单明细
      * @param firstMileDeliveryEntity 发货单
-     * @param reportPeriodId 核算期间
      * @param entity 费用分摊
      */
-    private BatchResultDTO processAllocationData(FirstMileCostAllocationEntity entity, String reportPeriodId, FirstMileDeliveryEntity firstMileDeliveryEntity,List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO processAllocationData(FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity,List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
         //取值发货单对应的目的仓关联组织
         if (StrUtil.isBlank(firstMileDeliveryEntity.getDestWarehouseId())){
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"发货单目的仓不能为空");
@@ -278,7 +273,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),StrUtil.format("发货单目的仓关联组织【{}】不存在", orgId));
         }
         //核算期间id
-        reportPeriodId = reportPeriodMonthService.createOrUpdatePeriod(company,reportPeriodId);
+        String reportPeriodId = reportPeriodMonthService.createOrUpdatePeriod(company,entity.getReportPeriodId());
         //重量分摊记录--费用状态为{未分摊，部分分摊}
         List<FirstMileWeightAllocationEntity> weightAllocationEntityList = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(firstMileDeliveryEntity.getId()), null);
         //物流单
@@ -294,15 +289,15 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //对账单明细 [已审核记录]
         List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listByBusinessCodes(Collections.singletonList(firstMileDeliveryEntity.getCode()), ApproveStatusEnum.APPROVE.getStatus());
         //暂估账单 [已确认]
-        List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList()));
+        List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList()), ConfirmStatusEnum.CONFIRM.getCode());
         //sku分摊记录
-        List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList = firstMileSkuCostAllocationService.listByMainIds(Collections.singletonList(entity.getId()));
-        //sku分摊明细记录
-        List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList = firstMileSkuCostAllocationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList = null;
+        if (StrUtil.isNotBlank(entity.getId())){
+            skuCostAllocationEntityList = firstMileSkuCostAllocationService.listByMainIds(Collections.singletonList(entity.getId()));
+        }
         //期初分摊[已审核记录]
         List<InitFirstMileAllocationDetailEntity> initFirstMileAllocationDetailEntityList = initFirstMileAllocationDetailService.listBySourceIds(Collections.singletonList(firstMileDeliveryEntity.getId()), ApproveStatusEnum.APPROVE.getStatus());
-        //SKU成本[已审核记录]
-//        List<InventorySkuCostEntity> inventorySkuCostEntityList = inventorySkuCostService.listBy
+
         //创建-重算费用分摊主表 发货单与物流单=1：1
         entity.setReportPeriodId(reportPeriodId);
         entity.setBusinessCode(firstMileDeliveryEntity.getSourceCode());
@@ -310,6 +305,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         entity.setSourceId(firstMileDeliveryEntity.getId());
         entity.setSourceCode(firstMileDeliveryEntity.getCode());
         if (Objects.nonNull(logisticsBillEntity)){
+            entity.setLogisticsBillId(logisticsBillEntity.getId());
             entity.setSupplierId(logisticsBillEntity.getLogisticsSupplierId());
             entity.setTransportNo(logisticsBillEntity.getTransportNo());
             entity.setShopId(logisticsBillEntity.getShopId());
@@ -321,30 +317,108 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         entity.setFromWarehouseId(firstMileDeliveryEntity.getDeliveryWarehouseId());
         entity.setFromWarehouseName(firstMileDeliveryEntity.getDeliveryWarehouseName());
         entity.setReportPeriodId(reportPeriodId);
-        entity.setReportPeriodId(reportPeriodId);
-        this.saveOrUpdate(entity);
         //构建sku分摊记录
-        buildSkuAllocation(firstMileDeliveryDetailEntityList,entity, skuCostAllocationEntityList,skuCostAllocationDetailEntityList,initFirstMileAllocationDetailEntityList);
-        return BatchResultDTO.success(entity.getId(),entity.getSourceCode(),"重新分摊完成");
+        return buildSkuAllocation(firstMileDeliveryDetailEntityList,entity, skuCostAllocationEntityList,initFirstMileAllocationDetailEntityList,weightAllocationEntityList, reconciliationDetailEntityList,estimatedBillEntityList);
     }
 
     /**
+     * 构建sku分摊记录
+     *
      * @param firstMileDeliveryDetailEntityList       发货单明细
-     * @param entity
+     * @param entity                                  费用分摊主记录
      * @param skuCostAllocationEntityList             sku分摊记录
-     * @param skuCostAllocationDetailEntityList       sku分摊明细
-     * @param initFirstMileAllocationDetailEntityList  期初
+     * @param initFirstMileAllocationDetailEntityList 期初
+     * @param weightAllocationEntityList              重量分摊
+     * @param reconciliationDetailEntityList          对账单
+     * @param estimatedBillEntityList                 暂估账单
      */
-    private void buildSkuAllocation(List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList,
-                                    FirstMileCostAllocationEntity entity, List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList,
-                                    List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList,
-                                    List<InitFirstMileAllocationDetailEntity> initFirstMileAllocationDetailEntityList) {
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO buildSkuAllocation(List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList,
+                                             FirstMileCostAllocationEntity entity, List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList,
+                                             List<InitFirstMileAllocationDetailEntity> initFirstMileAllocationDetailEntityList,
+                                             List<FirstMileWeightAllocationEntity> weightAllocationEntityList,
+                                             List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList,
+                                             List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList) {
         if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
-            return;
+            return BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),StrUtil.format("发货单无发货单明细，无法进行费用分摊"));
         }
+        //优先取实际账单 实际账单不存在时取暂估账单
+        if (CollectionUtils.isEmpty(reconciliationDetailEntityList) && CollectionUtils.isEmpty(estimatedBillEntityList)){
+            return BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),StrUtil.format("对账单和暂估账单不能同时为空"));
+        }
+        //费用分摊配置查询
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
+        if (Objects.isNull(cfgSetting) || Objects.isNull(cfgSetting.getDataJson())){
+            return BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"系统费用分摊配置不存在");
+        }
+        CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = JSONUtil.toBean(cfgSetting.getDataJson(),CfgSettingValueDTO.AllocationSettingDTO.class);
+        //费用分摊重算
+        String id = entity.getId();
+        if (StrUtil.isNotBlank(id)){
+            //删除之前的sku分摊记录和明细记录 防止存在1对多个对账月份情况
+            firstMileSkuCostAllocationService.removeByMainId(id);
+            //删除sku分摊记录-sku成本关联记录
+            firstMileSkuCostRefService.removeBySkuCostAllocation(skuCostAllocationEntityList);
+            //删除sku分摊明细记录
+            firstMileSkuCostAllocationDetailService.removeByMainId(id);
+        }
+
+        if (!CollectionUtils.isEmpty(reconciliationDetailEntityList)){
+            // TODO 后面再进行考虑定时分摊计算，现在只考虑分摊重算
+            TmsFirstMileReconciliationDetailEntity oldReconciliationDetailEntity = reconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(entity.getReconciliationMonth()) && Objects.equals(e.getReconciliationMonth(), entity.getReconciliationMonth())).findFirst().orElse(null);
+            if (Objects.nonNull(oldReconciliationDetailEntity)){
+                //根据对账单分别记录费用分摊主表记录
+                return buildSkuAllocationByBill(null, oldReconciliationDetailEntity,entity,firstMileDeliveryDetailEntityList,skuCostAllocationEntityList,initFirstMileAllocationDetailEntityList,weightAllocationEntityList,allocationSettingDTO);
+            }else {
+                for (TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity : reconciliationDetailEntityList){
+                    //根据对账单分别记录费用分摊主表记录
+                    buildSkuAllocationByBill(null,reconciliationDetailEntity,entity,firstMileDeliveryDetailEntityList,skuCostAllocationEntityList,initFirstMileAllocationDetailEntityList,weightAllocationEntityList, allocationSettingDTO);
+                }
+            }
+        }else {
+            //一个发货单只会存在一条暂估账单
+            FirstMileEstimatedBillDTO.View firstMileEstimatedBillEntity = estimatedBillEntityList.get(0);
+            return buildSkuAllocationByBill(firstMileEstimatedBillEntity,null, entity,firstMileDeliveryDetailEntityList,skuCostAllocationEntityList,initFirstMileAllocationDetailEntityList,weightAllocationEntityList, allocationSettingDTO);
+        }
+        return BatchResultDTO.success(entity.getId(),entity.getSourceCode(),"重新分摊完成");
+    }
+
+
+    /**
+     * 根据实际账单计算对账月份下 sku分摊记录
+     *
+     * @param firstMileEstimatedBillEntity
+     * @param reconciliationDetailEntity
+     * @param entity
+     * @param firstMileDeliveryDetailEntityList
+     * @param skuCostAllocationEntityList
+     * @param initFirstMileAllocationDetailEntityList
+     * @param weightAllocationEntityList
+     * @param allocationSettingDTO
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO buildSkuAllocationByBill(FirstMileEstimatedBillDTO.View firstMileEstimatedBillEntity, TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity,
+                                         FirstMileCostAllocationEntity entity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList,
+                                         List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList,
+                                         List<InitFirstMileAllocationDetailEntity> initFirstMileAllocationDetailEntityList,
+                                         List<FirstMileWeightAllocationEntity> weightAllocationEntityList, CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO) {
+
+
         List<String> skuIds = firstMileDeliveryDetailEntityList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //核算月份
         ReportPeriodMonthEntity reportPeriodMonth = reportPeriodMonthService.getById(entity.getReportPeriodId());
+        if (Objects.nonNull(reconciliationDetailEntity)){
+            entity.setReportPeriodMonth(reportPeriodMonth.getMonth());
+            entity.setReconciliationMonth(reconciliationDetailEntity.getReconciliationMonth());
+        }
+        //查询发货单费用分摊记录（不包含本记录分摊）
+        List<FirstMileCostAllocationDTO.PagingVO> voList = baseMapper.listSkuBySourceCodes(Collections.singletonList(entity.getSourceCode()));
+        //上期账单是实际账单 并且所有费用分类的期末在途费用为0则不进行费用分摊
+        BatchResultDTO batchResultDTO = checkCostAllocation(voList,entity.getReportPeriodMonth(),entity.getReconciliationMonth());
+        if (!batchResultDTO.getSuccess()){
+            //为创建主表记录之前都可以返回异常消息，否则就要抛出异常回退
+            return batchResultDTO;
+        }
         //根据sku获取签收数量汇总
         List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOS = wmsFirstMileDeliveryFeign.countReceiveQtyByParams(
                 FirstMileDeliveryDTO.RequestReceiveDTO.builder()
@@ -360,8 +434,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         //sku成本
         List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(reportPeriodMonth.getOrgId(), skuIds, ApproveStatusEnum.APPROVE.getStatus());
-        //查询发货单费用分摊记录
-        List<FirstMileCostAllocationDTO.PagingVO> voList = baseMapper.listSkuBySourceCodes(Collections.singletonList(entity.getSourceCode()));
+        //保存分摊主表记录
+        this.saveOrUpdate(entity);
+        List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList = new ArrayList<>(firstMileDeliveryDetailEntityList.size());
         //遍历计算sku分摊
         for (FirstMileDeliveryDetailEntity deliveryDetailEntity : firstMileDeliveryDetailEntityList){
             //查询是否存在发货单其他费用分摊账期
@@ -372,29 +447,41 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             if (Objects.isNull(firstMileSkuCostAllocationEntity)){
                 firstMileSkuCostAllocationEntity = new FirstMileSkuCostAllocationEntity();
             }
+            firstMileSkuCostAllocationEntity.setMainId(entity.getId());
+            firstMileSkuCostAllocationEntity.setSourceDetailId(deliveryDetailEntity.getId());
             InitFirstMileAllocationDetailEntity initFirstMileAllocationDetailEntity = initFirstMileAllocationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(deliveryDetailEntity.getSkuId()))
                     .findFirst().orElse(null);
             firstMileSkuCostAllocationEntity
                     .setSkuId(deliveryDetailEntity.getSkuId())
                     .setSkuNo(deliveryDetailEntity.getSkuNo())
                     .setPlatformSkuNo(deliveryDetailEntity.getPlatformSkuNo())
-                    .setDeliveryQty(deliveryDetailEntity.getDeliveryQty());
+                    .setDeliveryQty(Objects.nonNull(deliveryDetailEntity.getDeliveryQty())? deliveryDetailEntity.getDeliveryQty() : MathUtil.ZERO);
             //分摊重量 若有期初值则取值期初，无期初值则
             //{分摊重量}取值【头程重量分摊】单据的分摊重量(KG)【按照业务单号+SKU累计统计】
             if (Objects.nonNull(initFirstMileAllocationDetailEntity)){
+                firstMileSkuCostAllocationEntity.setInitFirstMileDetailId(initFirstMileAllocationDetailEntity.getId());
                 firstMileSkuCostAllocationEntity.setAllocatedWeight(initFirstMileAllocationDetailEntity.getWeightAllocation());
-
+            }else {
+                FirstMileWeightAllocationEntity firstMileWeightAllocationEntity = weightAllocationEntityList.stream().filter(e -> e.getSkuId().equals(deliveryDetailEntity.getSkuId())).findFirst().orElse(null);
+                if (Objects.isNull(firstMileWeightAllocationEntity)){
+                    throw new ServiceException(StrUtil.format("发货单【{}】SKU【{}】期初和重量分摊记录不存在",entity.getSourceCode(),deliveryDetailEntity.getSkuNo()));
+                }
+                firstMileSkuCostAllocationEntity.setAllocatedWeight(firstMileWeightAllocationEntity.getAllocationWeight());
+                firstMileSkuCostAllocationEntity.setWeightAllocationId(firstMileWeightAllocationEntity.getId());
             }
+            List<String> skuCostDetailIds = new ArrayList<>();
             //单位成本 第一次取值期初值则取值期初
             //后续生成则取值分摊组织下的产品成本【已审核】
-            if (Objects.isNull(oldAllocation) && Objects.nonNull(initFirstMileAllocationDetailEntity)){
-                firstMileSkuCostAllocationEntity.setProductCost(initFirstMileAllocationDetailEntity.getProductCost());
-                firstMileSkuCostAllocationEntity.setInitReceiveQty(initFirstMileAllocationDetailEntity.getInitReceiveQty());
+            if (Objects.isNull(oldAllocation)){
+                firstMileSkuCostAllocationEntity.setProductCost(Objects.nonNull(initFirstMileAllocationDetailEntity) ? initFirstMileAllocationDetailEntity.getProductCost() : BigDecimal.ZERO);
+                firstMileSkuCostAllocationEntity.setInitReceiveQty(Objects.nonNull(initFirstMileAllocationDetailEntity) ? initFirstMileAllocationDetailEntity.getInitReceiveQty() : MathUtil.ZERO);
             }else {
+                firstMileSkuCostAllocationEntity.setInitReceiveQty(MathUtil.ZERO);
                 //先判断sku是否是组合品，是组合品则要汇总子sku产品成本
                 List<BomChildrenSkuDTO> skuDTOList = bomChildrenSkuDTOS.stream().filter(e -> StrUtil.isNotEmpty(e.getParentSkuId())
-                                && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(deliveryDetailEntity.getSkuId())).collect(Collectors.toList());
+                        && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(deliveryDetailEntity.getSkuId())).collect(Collectors.toList());
                 if (!CollectionUtils.isEmpty(skuDTOList) && BomTypeEnum.COMBINATION.getType().equals(skuDTOList.get(0).getType())){
+                    //汇总sku成本
                     BigDecimal productCost = skuDTOList.stream().map(e ->{
                         InventorySkuCostDTO.PagingVO pagingVO = skuCostList.stream().filter(f -> f.getSkuId().equals(e.getSkuId())).findFirst().orElse(null);
                         if (Objects.isNull(pagingVO)){
@@ -403,10 +490,15 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                             return pagingVO.getProductCost().multiply(BigDecimal.valueOf(e.getQuantity()));
                         }
                     }).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    //汇总关联的sku成本记录
+                    List<String> skuIds1 = skuDTOList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+                    List<String> costDetailIds = skuCostList.stream().filter(e -> skuIds1.contains(e.getSkuId())).map(InventorySkuCostDTO.PagingVO::getDetailId).collect(Collectors.toList());
+                    skuCostDetailIds.addAll(costDetailIds);
                     firstMileSkuCostAllocationEntity.setProductCost(productCost);
                 }else {
                     InventorySkuCostDTO.PagingVO pagingVO = skuCostList.stream().filter(f -> f.getSkuId().equals(deliveryDetailEntity.getSkuId())).findFirst().orElse(null);
                     if (Objects.nonNull(pagingVO)){
+                        skuCostDetailIds.add(pagingVO.getDetailId());
                         firstMileSkuCostAllocationEntity.setProductCost(pagingVO.getProductCost());
                     }else {
                         firstMileSkuCostAllocationEntity.setProductCost(BigDecimal.ZERO);
@@ -420,8 +512,525 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             firstMileSkuCostAllocationEntity.setLastMonthReceiveQty(receiveDTOS.stream().filter(e -> e.getSkuId().equals(deliveryDetailEntity.getSkuId())).map(FirstMileDeliveryDTO.ReceiveDTO::getLastMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
             firstMileSkuCostAllocationEntity.setAsLastMonthReceiveQty(receiveDTOS.stream().filter(e -> e.getSkuId().equals(deliveryDetailEntity.getSkuId())).map(FirstMileDeliveryDTO.ReceiveDTO::getAsLastMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
             firstMileSkuCostAllocationEntity.setAsCurrentMonthReceiveQty(receiveDTOS.stream().filter(e -> e.getSkuId().equals(deliveryDetailEntity.getSkuId())).map(FirstMileDeliveryDTO.ReceiveDTO::getAsCurrentMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
-
+            //费用来源
+            if (Objects.nonNull(firstMileEstimatedBillEntity)){
+                firstMileSkuCostAllocationEntity.setBillSourceType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
+                firstMileSkuCostAllocationEntity.setEstimatedBillId(firstMileEstimatedBillEntity.getId());
+            }
+            //对账单明细
+            if (Objects.nonNull(reconciliationDetailEntity)){
+                firstMileSkuCostAllocationEntity.setBillSourceType(ReconciliationBillTypeEnum.ACTUAL.getCode());
+                firstMileSkuCostAllocationEntity.setReconciliationDetailId(reconciliationDetailEntity.getId());
+            }
+            //保存分摊sku记录
+            firstMileSkuCostAllocationService.saveOrUpdate(firstMileSkuCostAllocationEntity);
+            //保存sku成本使用记录
+            if (!CollectionUtils.isEmpty(skuCostDetailIds)){
+                firstMileSkuCostRefService.saveOrUpdateRef(skuCostDetailIds, firstMileSkuCostAllocationEntity.getId());
+            }
+            firstMileSkuCostAllocationEntityList.add(firstMileSkuCostAllocationEntity);
         }
+       //新增费用分摊主表  新增费用sku记录
+        buildSkuAllocationDetail(entity,firstMileSkuCostAllocationEntityList,firstMileEstimatedBillEntity,reconciliationDetailEntity,allocationSettingDTO,weightAllocationEntityList, voList, initFirstMileAllocationDetailEntityList,receiveDTOS);
+        return BatchResultDTO.success(entity.getId(),entity.getSourceCode(),StrUtil.format("核算月份【{}】对账月份【{}】费用分摊成功",reportPeriodMonth.getMonth(),entity.getReconciliationMonth()));
+    }
+
+    /**
+     * 检查 上期账单是实际账单 并且所有费用分类的期末在途费用为0则不进行费用分摊
+     * @param voList 分摊记录
+     * @param reportPeriodMonth 核算月份
+     * @param reconciliationMonth 对账月份
+     */
+    private BatchResultDTO checkCostAllocation(List<FirstMileCostAllocationDTO.PagingVO> voList, LocalDate reportPeriodMonth, LocalDate reconciliationMonth) {
+        if (CollectionUtils.isEmpty(voList) || Objects.isNull(reportPeriodMonth) || Objects.isNull(reconciliationMonth)){
+            return BatchResultDTO.success();
+        }
+        //获取发货单所有分摊记录(本核算之前的记录)
+        List<FirstMileCostAllocationDTO.PagingVO> beforeList = voList.stream().filter(e -> Objects.nonNull(e) && e.getReconciliationMonth().isBefore(reportPeriodMonth)).collect(Collectors.toList());
+        //存在对账单月份则获取对账前一个对账月份的分摊记录，不存在对账月份，则获取核算月份之前的记录(实际账单)
+        FirstMileCostAllocationDTO.PagingVO beforeVO = beforeList.stream().filter(e -> Objects.equals(e.getReconciliationMonth(), reconciliationMonth)).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);
+        if (Objects.nonNull(beforeVO) && ReconciliationBillTypeEnum.ACTUAL.getCode().equals(beforeVO.getBillSourceType())){
+            //查询对应核算月份期末在途数据是否为0
+            List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList = firstMileSkuCostAllocationDetailService.listByMainIds(Collections.singletonList(beforeVO.getId()));
+            BigDecimal endPeriodTransitCost = skuCostAllocationDetailEntityList.stream().map(FirstMileSkuCostAllocationDetailEntity::getEndPeriodTransitCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (BigDecimal.ZERO.equals(endPeriodTransitCost)){
+                return BatchResultDTO.fail(beforeVO.getId(), beforeVO.getSourceCode(),"上期为实际账单，且期末在途费用为0，不进行下期费用分摊");
+            }
+        }
+        return BatchResultDTO.success();
+    }
+
+    /**
+     * 根据sku进行费用分摊明细计算
+     *
+     * @param entity                                  头程分摊记录
+     * @param firstMileSkuCostAllocationEntityList    头程sku分摊记录
+     * @param firstMileEstimatedBillEntity            头程暂估账单
+     * @param reconciliationDetailEntity              对账单
+     * @param allocationSettingDTO                    系统配置
+     * @param weightAllocationEntityList              重量分摊记录
+     * @param voList                                  分摊记录
+     * @param initFirstMileAllocationDetailEntityList 期初
+     * @param receiveDTOS                             签收记录
+     */
+    private void buildSkuAllocationDetail(FirstMileCostAllocationEntity entity, List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList,
+                                          FirstMileEstimatedBillDTO.View firstMileEstimatedBillEntity, TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity,
+                                          CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO, List<FirstMileWeightAllocationEntity> weightAllocationEntityList,
+                                          List<FirstMileCostAllocationDTO.PagingVO> voList, List<InitFirstMileAllocationDetailEntity> initFirstMileAllocationDetailEntityList,
+                                          List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOS) {
+        if (CollectionUtils.isEmpty(firstMileSkuCostAllocationEntityList)){
+            return;
+        }
+        //新增sku分摊记录
+        firstMileSkuCostAllocationService.saveBatch(firstMileSkuCostAllocationEntityList);
+        //计算费用分摊明细
+        List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList = calcAllocatedSkuCostDetail(firstMileSkuCostAllocationEntityList,allocationSettingDTO,firstMileEstimatedBillEntity,reconciliationDetailEntity,weightAllocationEntityList);
+        //同一个发货单-核算月份-对账月份内 计算期初冲期初
+        LocalDate reconciliationMonth = entity.getReconciliationMonth();
+        LocalDate reportPeriodMonth = entity.getReportPeriodMonth();
+        //获取发货单所有分摊记录(本核算之前的记录)
+        List<FirstMileCostAllocationDTO.PagingVO> beforeList = voList.stream().filter(e -> Objects.nonNull(e) && e.getReconciliationMonth().isBefore(reportPeriodMonth)).collect(Collectors.toList());
+        //存在对账单月份则获取对账前一个对账月份的分摊记录，不存在对账月份，则获取核算月份之前的记录(实际账单)
+        FirstMileCostAllocationDTO.PagingVO beforeVO = null;
+        if (Objects.isNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)){
+            beforeVO = Collections.max(beforeList, Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
+        }else if (Objects.nonNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)){
+            beforeVO = beforeList.stream().filter(e -> Objects.equals(e.getReconciliationMonth(), reconciliationMonth)).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);
+        }
+        List<FirstMileSkuCostAllocationDetailEntity> beforeSkuDetailList = null;
+        //判断是否存在账单
+        FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO = judgeMonthReconciliationHasReconciliation(reportPeriodMonth,reconciliationMonth,voList,firstMileSkuCostAllocationEntityList);
+        //如果上个费用分摊记录存在
+        if (Objects.nonNull(beforeVO)){
+            beforeSkuDetailList = firstMileSkuCostAllocationDetailService.listByMainIds(Collections.singletonList(beforeVO.getId()));
+        }
+        //期初在途费用
+        for (FirstMileSkuCostAllocationDetailEntity detailEntity : skuCostAllocationDetailEntityList){
+            //期初头程分摊记录
+            InitFirstMileAllocationDetailEntity initEntity = initFirstMileAllocationDetailEntityList.stream().filter(e -> e.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            //sku分摊记录
+            FirstMileSkuCostAllocationEntity skuCostAllocationEntity = firstMileSkuCostAllocationEntityList.stream()
+                    .filter(e -> e.getId().equals(detailEntity.getCostMainId())).findFirst().orElse(null);
+            //sku签收统计
+            FirstMileDeliveryDTO.ReceiveDTO receiveDTO = receiveDTOS.stream().filter(e -> Objects.nonNull(e)&& Objects.nonNull(skuCostAllocationEntity)
+                    && e.getSkuId().equals(skuCostAllocationEntity.getSkuId())).findFirst().orElse(null);
+            //本月签收数量
+            Integer currentMonthReceiveQty = Objects.nonNull(receiveDTO) ? receiveDTO.getCurrentMonthReceiveQty() : MathUtil.ZERO;
+            //截止本月签收数量
+            Integer asCurrentMonthReceiveQty = Objects.nonNull(receiveDTO) ? receiveDTO.getAsCurrentMonthReceiveQty() : MathUtil.ZERO;
+            //截止上月签收数量
+            Integer asLastMonthReceiveQty = Objects.nonNull(receiveDTO) ? receiveDTO.getAsLastMonthReceiveQty() : MathUtil.ZERO;
+            //累计签收数量
+            Integer receiveQty = asCurrentMonthReceiveQty + skuCostAllocationEntity.getInitReceiveQty();
+            //单产品分摊
+            BigDecimal productAllocatedAmount = Objects.nonNull(detailEntity.getProductAllocatedAmount()) ? detailEntity.getProductAllocatedAmount() : BigDecimal.ZERO;
+            //sku发货量
+            Integer deliveryQty = skuCostAllocationEntity.getDeliveryQty();
+            //期初在途费用
+            BigDecimal initTransitCost = Objects.nonNull(initEntity) ? initEntity.getInitTransitCost() : BigDecimal.ZERO;
+            //头程分摊金额
+            BigDecimal allocatedAmount = Objects.nonNull(detailEntity.getAllocatedAmount()) ? detailEntity.getAllocatedAmount() : BigDecimal.ZERO;
+            if (Objects.nonNull(beforeVO) && !CollectionUtils.isEmpty(beforeSkuDetailList)){
+                //上期记录
+                FirstMileSkuCostAllocationDetailEntity beforeDetailEntity = beforeSkuDetailList.stream().filter(e -> Objects.equals(e.getSkuId(), detailEntity.getSkuId())
+                        && Objects.equals(detailEntity.getFeeType(), e.getFeeType())).findFirst().orElse(null);
+                if (Objects.nonNull(beforeDetailEntity)){
+                    //期初在途
+                    detailEntity.setInitTransitCost(beforeDetailEntity.getEndPeriodTransitCost());
+                    detailEntity.setInitEstimatedCost(beforeDetailEntity.getEndPeriodEstimatedCost());
+                }else {
+                    //期初在途
+                    detailEntity.setInitTransitCost(BigDecimal.ZERO);
+                    detailEntity.setInitEstimatedCost(BigDecimal.ZERO);
+                }
+            }else {
+                if (Objects.nonNull(initEntity) && (detailEntity.getFeeType().equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode()) || detailEntity.getFeeType().equals(AllocationFeeTypeEnum.DECLARE_COST.getCode()))){
+                    //期初在途
+                    detailEntity.setInitTransitCost(initEntity.getInitTransitCost());
+                    detailEntity.setInitEstimatedCost(initEntity.getInitEstimatedCost());
+                }else {
+                    //期初在途
+                    detailEntity.setInitTransitCost(BigDecimal.ZERO);
+                    detailEntity.setInitEstimatedCost(BigDecimal.ZERO);
+                }
+            }
+            //冲期初在途费用 上月开始有账单
+            if (judgeReconciliationDTO.isLastMonthReconciliation()){
+                //若累计签收数量<发货数量：本月签收数量*单产品分摊
+                if (receiveQty <= deliveryQty){
+                    detailEntity.setMidPeriodTransitCost(MathUtil.multiply(productAllocatedAmount,currentMonthReceiveQty));
+                }else {
+                    //若累计签收数量>发货数量：(发货数量-截止上月累计签收数量)*单产品分摊
+                    //[累计签收数量>发货数量小于0不计算]
+                    int qty = deliveryQty - asLastMonthReceiveQty;
+                    if (qty <= 0){
+                        detailEntity.setMidPeriodTransitCost(BigDecimal.ZERO);
+                    }else {
+                        detailEntity.setMidPeriodTransitCost(MathUtil.multiply(productAllocatedAmount,qty));
+                    }
+                }
+            }else {
+                detailEntity.setMidPeriodTransitCost(BigDecimal.ZERO);
+            }
+            //本期分摊费用 本月开始有账单
+            if (judgeReconciliationDTO.isCurrencyMonthReconciliation()){
+                if (receiveQty <= deliveryQty){
+                    //实际账单
+                    if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(skuCostAllocationEntity.getBillSourceType())){
+                        //若累计签收数量<发货数量：本月签收数量*单产品分摊
+                        detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount,currentMonthReceiveQty));
+                    }else {
+                        //若累计签收数量<发货数量：累计签收数量*单产品分摊
+                        detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount,receiveQty));
+                    }
+                }else {
+                    //实际账单
+                    if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(skuCostAllocationEntity.getBillSourceType())){
+                        //若累计签收数量>发货数量：(发货数量-截止上月累计签收数量)*单产品分摊
+                        //[累计签收数量>发货数量小于0不计算]
+                        int qty = deliveryQty - asLastMonthReceiveQty;
+                        if (qty <= 0){
+                            detailEntity.setCurrentPeriodAllocatedCost(BigDecimal.ZERO);
+                        }else {
+                            detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount,qty));
+                        }
+                    }else {
+                        //若累计签收数量>发货数量：发货数量*单产品分摊
+                        detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount,deliveryQty));
+                    }
+                }
+            }else {
+                detailEntity.setCurrentPeriodAllocatedCost(BigDecimal.ZERO);
+            }
+            //期末在途费用 计算
+            //冲期初在途费用
+            BigDecimal midPeriodTransitCost = Objects.nonNull(detailEntity.getMidPeriodTransitCost())?detailEntity.getMidPeriodTransitCost() : BigDecimal.ZERO;
+            //本期分摊费用
+            BigDecimal currentPeriodAllocatedCost = Objects.nonNull(detailEntity.getCurrentPeriodAllocatedCost())?detailEntity.getCurrentPeriodAllocatedCost() : BigDecimal.ZERO;
+            BigDecimal mid = MathUtil.add(midPeriodTransitCost, currentPeriodAllocatedCost);
+            if (BigDecimal.ZERO.equals(initTransitCost)){
+            //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
+                detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount,mid));
+            }else {
+                //期初不等于0时，期初在途费用-冲期初-本期分摊费用
+                detailEntity.setEndPeriodTransitCost(MathUtil.subtract(initTransitCost,mid));
+            }
+            //期末暂估费用 计算
+            /**
+             * 1.预估账单有签收：本月累计签收数量*单产品分摊
+             * 2.无账单无签收：取值为0
+             * 3.有实际账单：取值为0
+             */
+            if (ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(skuCostAllocationEntity.getBillSourceType())){
+                detailEntity.setEndPeriodEstimatedCost(MathUtil.multiply(productAllocatedAmount,asCurrentMonthReceiveQty));
+            }else {
+                detailEntity.setEndPeriodEstimatedCost(BigDecimal.ZERO);
+            }
+        }
+        //保存sku分摊明细记录
+        firstMileSkuCostAllocationDetailService.saveBatch(skuCostAllocationDetailEntityList);
+    }
+
+    /**
+     * 判断是否存在对账单
+     * @param reportPeriodMonth
+     * @param reconciliationMonth
+     * @param voList
+     * @param firstMileSkuCostAllocationEntityList 本期
+     */
+    private FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeMonthReconciliationHasReconciliation(LocalDate reportPeriodMonth, LocalDate reconciliationMonth,
+                                                           List<FirstMileCostAllocationDTO.PagingVO> voList,
+                                                           List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList) {
+        FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO = new FirstMileCostAllocationDTO.JudgeReconciliationDTO();
+        if (Objects.isNull(reconciliationMonth)){
+            return judgeReconciliationDTO;
+        }
+        //本月有实际账单
+        boolean currencyReconciliation = false;
+        //上月有实际账单
+        boolean lastReconciliation = false;
+        //上上月有实际账单
+        boolean beforeLastReconciliation = false;
+        FirstMileSkuCostAllocationEntity entity = firstMileSkuCostAllocationEntityList.stream().filter(e -> Objects.nonNull(e)
+                && Objects.equals(ReconciliationBillTypeEnum.ACTUAL.getCode(), e.getBillSourceType())).findFirst().orElse(null);
+        if (Objects.nonNull(entity)){
+            currencyReconciliation = Boolean.TRUE;
+        }
+        //本月为实际账单 上月为预估账单 则本月开始有账单
+        //上月时间
+        LocalDate lastMonth = reportPeriodMonth.with(TemporalAdjusters.lastDayOfMonth()).withDayOfMonth(1);
+        FirstMileCostAllocationDTO.PagingVO pagingVO = voList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(lastMonth, e.getReportPeriodMonth())
+                && Objects.equals(ReconciliationBillTypeEnum.ACTUAL.getCode(), e.getBillSourceType())).findFirst().orElse(null);
+        if (Objects.nonNull(pagingVO)){
+            lastReconciliation = true;
+        }
+        //本月为实际账单 上月为实际账单 上上个月为预估账单 则上月开始有账单
+        //上上月时间
+        LocalDate beforeLastMonth = reportPeriodMonth.minusMonths(2).withDayOfMonth(1);
+        FirstMileCostAllocationDTO.PagingVO pagingVO1 = voList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(beforeLastMonth, e.getReportPeriodMonth())
+                && Objects.equals(ReconciliationBillTypeEnum.ACTUAL.getCode(), e.getBillSourceType())).findFirst().orElse(null);
+        if (Objects.nonNull(pagingVO1)){
+            beforeLastReconciliation = true;
+        }
+        if (!lastReconciliation && currencyReconciliation){
+            judgeReconciliationDTO.setCurrencyMonthReconciliation(Boolean.TRUE);
+        }
+        if (!beforeLastReconciliation && lastReconciliation && currencyReconciliation){
+            judgeReconciliationDTO.setLastMonthReconciliation(Boolean.TRUE);
+        }
+        return judgeReconciliationDTO;
+    }
+
+    @Override
+    public List<FirstMileCostAllocationDTO.PagingVO> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listBySourceIds(sourceIds);
+    }
+
+    /**
+     * 计算sku费用分类中各个分摊金额
+     *
+     * @param firstMileSkuCostAllocationEntityList
+     * @param allocationSettingDTO
+     * @param firstMileEstimatedBillEntity
+     * @param reconciliationDetailEntity
+     * @param weightAllocationEntityList
+     * @return
+     */
+    private List<FirstMileSkuCostAllocationDetailEntity> calcAllocatedSkuCostDetail(List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList,
+                                                                                    CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO,
+                                                                                    FirstMileEstimatedBillDTO.View firstMileEstimatedBillEntity,
+                                                                                    TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity,
+                                                                                    List<FirstMileWeightAllocationEntity> weightAllocationEntityList) {
+        List<FirstMileSkuCostAllocationDetailEntity> firstMileSkuCostAllocationDetailEntityList = new ArrayList<>();
+        //sku成本总金额
+        BigDecimal skuTotalCost = firstMileSkuCostAllocationEntityList.stream().map(e -> e.getProductCost().multiply(new BigDecimal(e.getDeliveryQty()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //sku总重量
+        BigDecimal weightTotal = weightAllocationEntityList.stream().map(FirstMileWeightAllocationEntity::getAllocationWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //头程总金额
+        for (FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity : firstMileSkuCostAllocationEntityList){
+            FirstMileWeightAllocationEntity weightAllocationEntity = weightAllocationEntityList.stream().filter(e -> firstMileSkuCostAllocationEntity.getSkuId().equals(e.getSkuId())).findFirst().orElse(null);
+            //分摊重量
+            BigDecimal allocationWeight = BigDecimal.ZERO;
+            if (Objects.nonNull(weightAllocationEntity)){
+                allocationWeight = weightAllocationEntity.getAllocationWeight();
+            }
+            //分摊成本 单位成本* 数量
+            BigDecimal productCost = Objects.nonNull(firstMileSkuCostAllocationEntity.getProductCost()) ? firstMileSkuCostAllocationEntity.getProductCost() : BigDecimal.ZERO;
+            Integer deliveryQty = Objects.nonNull(firstMileSkuCostAllocationEntity.getDeliveryQty()) ? firstMileSkuCostAllocationEntity.getDeliveryQty(): MathUtil.ZERO;
+            BigDecimal productTotalCost = MathUtil.multiply(productCost, deliveryQty);
+            //构建费用分摊明细
+            firstMileSkuCostAllocationDetailEntityList.add(buildSkuCostDetailByShippingCost(allocationSettingDTO,firstMileSkuCostAllocationEntity,firstMileEstimatedBillEntity,reconciliationDetailEntity,skuTotalCost,weightTotal,allocationWeight,productTotalCost));
+            firstMileSkuCostAllocationDetailEntityList.add(buildSkuCostDetailByDeclareCost(allocationSettingDTO,firstMileSkuCostAllocationEntity,firstMileEstimatedBillEntity,reconciliationDetailEntity,skuTotalCost,weightTotal,allocationWeight,productTotalCost));
+            firstMileSkuCostAllocationDetailEntityList.add(buildSkuCostDetailByOtherTaxFee(allocationSettingDTO,firstMileSkuCostAllocationEntity,firstMileEstimatedBillEntity,reconciliationDetailEntity,skuTotalCost,weightTotal,allocationWeight,productTotalCost));
+            firstMileSkuCostAllocationDetailEntityList.add(buildSkuCostDetailByOtherCost(allocationSettingDTO,firstMileSkuCostAllocationEntity,firstMileEstimatedBillEntity,reconciliationDetailEntity,skuTotalCost,weightTotal,allocationWeight,productTotalCost));
+        }
+        //按照比例分摊后，除不尽的分摊金额放数量最大一个
+        resetAllocationAmount(firstMileSkuCostAllocationDetailEntityList,firstMileSkuCostAllocationEntityList);
+        return firstMileSkuCostAllocationDetailEntityList;
+    }
+
+    /**
+     * 根据费用类型进行分类 然后 按照比例分摊后，除不尽的分摊金额放数量最大一个
+     *
+     * @param firstMileSkuCostAllocationDetailEntityList sku分摊明细
+     * @param firstMileSkuCostAllocationEntityList sku分摊列表
+     */
+    private void resetAllocationAmount(List<FirstMileSkuCostAllocationDetailEntity> firstMileSkuCostAllocationDetailEntityList, List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList) {
+        //同一个发货单内不同sku使用同一个费用分类的头程金额
+        FirstMileSkuCostAllocationDetailEntity maxShippingCost = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(e.getAllocationType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount)).get();
+        FirstMileSkuCostAllocationDetailEntity maxDeclareCost = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(e.getAllocationType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount)).get();
+        FirstMileSkuCostAllocationDetailEntity maxOtherTaxFee = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(e.getAllocationType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount)).get();
+        FirstMileSkuCostAllocationDetailEntity maxOtherFee = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.OTHER_COST.getCode().equals(e.getAllocationType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount)).get();
+        //累加各个类型头程分摊金额
+        BigDecimal shippingCost = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(e.getAllocationType())).map(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal declareCost = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(e.getAllocationType())).map(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal otherTaxFee = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(e.getAllocationType())).map(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal otherFee = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.OTHER_COST.getCode().equals(e.getAllocationType())).map(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //根据id汇总发货数量
+        Map<String, Integer> qtyMap = firstMileSkuCostAllocationEntityList.stream().collect(Collectors.toMap(FirstMileSkuCostAllocationEntity::getId, FirstMileSkuCostAllocationEntity::getDeliveryQty));
+        //比较后重置
+        firstMileSkuCostAllocationDetailEntityList.forEach(e -> {
+            //运费
+            if (!maxShippingCost.getAmount().equals(shippingCost) && maxShippingCost.getAllocationType().equals(e.getAllocationType())
+                    && e.getAllocatedAmount().equals(maxShippingCost.getAllocatedAmount()) && e.getCostMainId().equals(maxShippingCost.getCostMainId())){
+                //（总金额-累加金额） + 最高分摊金额 = 重置后的分摊金额（若累加高于总金额，则未负数，低于则填补分摊金额）
+                e.setAllocatedAmount(MathUtil.add(MathUtil.subtract(maxShippingCost.getAmount(), shippingCost), maxShippingCost.getAllocatedAmount()));
+            }
+            //报关
+            if (!maxDeclareCost.getAmount().equals(declareCost) && maxDeclareCost.getAllocationType().equals(e.getAllocationType())
+                    && e.getAllocatedAmount().equals(maxDeclareCost.getAllocatedAmount()) && e.getCostMainId().equals(maxDeclareCost.getCostMainId())){
+                //（总金额-累加金额） + 最高分摊金额 = 重置后的分摊金额（若累加高于总金额，则未负数，低于则填补分摊金额）
+                e.setAllocatedAmount(MathUtil.add(MathUtil.subtract(maxDeclareCost.getAmount(), declareCost), maxDeclareCost.getAllocatedAmount()));
+            }
+            //其他税费
+            if (!maxOtherTaxFee.getAmount().equals(otherTaxFee) && maxOtherTaxFee.getAllocationType().equals(e.getAllocationType())
+                    && e.getAllocatedAmount().equals(maxOtherTaxFee.getAllocatedAmount()) && e.getCostMainId().equals(maxOtherTaxFee.getCostMainId())){
+                //（总金额-累加金额） + 最高分摊金额 = 重置后的分摊金额（若累加高于总金额，则未负数，低于则填补分摊金额）
+                e.setAllocatedAmount(MathUtil.add(MathUtil.subtract(maxOtherTaxFee.getAmount(), otherTaxFee), maxOtherTaxFee.getAllocatedAmount()));
+            }
+            //其他费用
+            if (!maxOtherFee.getAmount().equals(otherFee) && maxOtherFee.getAllocationType().equals(e.getAllocationType())
+                    && e.getAllocatedAmount().equals(maxOtherFee.getAllocatedAmount()) && e.getCostMainId().equals(maxOtherFee.getCostMainId())){
+                //（总金额-累加金额） + 最高分摊金额 = 重置后的分摊金额（若累加高于总金额，则未负数，低于则填补分摊金额）
+                e.setAllocatedAmount(MathUtil.add(MathUtil.subtract(maxOtherFee.getAmount(), otherFee), maxOtherFee.getAllocatedAmount()));
+            }
+            //单个产品费用分摊
+            Integer qty = qtyMap.get(e.getCostMainId());
+            e.setProductAllocatedAmount(MathUtil.divide(e.getAllocatedAmount(),new BigDecimal(qty), 6));
+        });
+    }
+
+    /**
+     * 其他费用
+     *
+     * @param allocationSettingDTO
+     * @param firstMileSkuCostAllocationEntity
+     * @param firstMileEstimatedBillEntity
+     * @param reconciliationDetailEntity
+     * @param skuTotalCost
+     * @param weightTotal
+     * @param allocationWeight
+     * @param productTotalCost
+     * @return
+     */
+    private FirstMileSkuCostAllocationDetailEntity buildSkuCostDetailByOtherCost(CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, FirstMileEstimatedBillDTO.View firstMileEstimatedBillEntity, TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity, BigDecimal skuTotalCost, BigDecimal weightTotal, BigDecimal allocationWeight, BigDecimal productTotalCost) {
+        FirstMileSkuCostAllocationDetailEntity entity = new FirstMileSkuCostAllocationDetailEntity()
+                .setMainId(firstMileSkuCostAllocationEntity.getMainId())
+                .setCostMainId(firstMileSkuCostAllocationEntity.getId())
+                .setFeeType(AllocationFeeTypeEnum.OTHER_COST.getCode())
+                .setAllocationType(allocationSettingDTO.getFirstOtherFee());
+        if (Objects.nonNull(reconciliationDetailEntity)){
+            entity.setAmount(reconciliationDetailEntity.getOtherCost());
+        }else if (Objects.nonNull(firstMileEstimatedBillEntity)){
+            //暂估
+            entity.setAmount(firstMileEstimatedBillEntity.getOtherCost());
+        }else {
+            entity.setAmount(BigDecimal.ZERO);
+        }
+        //头程分摊金额
+        if (CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())){
+            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(allocationWeight, weightTotal), entity.getAmount(), 4));
+        }else if (CostAllocationEnum.COST_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())){
+            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(productTotalCost, skuTotalCost), entity.getAmount(), 4));
+        }
+        return entity;
+    }
+
+    /**
+     * 其他税费
+     *
+     * @param allocationSettingDTO
+     * @param firstMileSkuCostAllocationEntity
+     * @param firstMileEstimatedBillEntity
+     * @param reconciliationDetailEntity
+     * @param skuTotalCost
+     * @param weightTotal
+     * @param allocationWeight
+     * @param productTotalCost
+     * @return
+     */
+    private FirstMileSkuCostAllocationDetailEntity buildSkuCostDetailByOtherTaxFee(CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, FirstMileEstimatedBillDTO.View firstMileEstimatedBillEntity, TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity, BigDecimal skuTotalCost, BigDecimal weightTotal, BigDecimal allocationWeight, BigDecimal productTotalCost) {
+        FirstMileSkuCostAllocationDetailEntity entity = new FirstMileSkuCostAllocationDetailEntity()
+                .setMainId(firstMileSkuCostAllocationEntity.getMainId())
+                .setCostMainId(firstMileSkuCostAllocationEntity.getId())
+                .setFeeType(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode())
+                .setAllocationType(allocationSettingDTO.getFirstOtherTaxFee());
+        if (Objects.nonNull(reconciliationDetailEntity)){
+            entity.setAmount(reconciliationDetailEntity.getOtherTaxCost());
+        }else if (Objects.nonNull(firstMileEstimatedBillEntity)){
+            //暂估
+            entity.setAmount(firstMileEstimatedBillEntity.getOtherTaxCost());
+        }else {
+            entity.setAmount(BigDecimal.ZERO);
+        }
+        //头程分摊金额
+        if (CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())){
+            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(allocationWeight, weightTotal), entity.getAmount(), 4));
+        }else if (CostAllocationEnum.COST_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())){
+            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(productTotalCost, skuTotalCost), entity.getAmount(), 4));
+        }
+        return entity;
+    }
+
+    /**
+     * 关税
+     *
+     * @param allocationSettingDTO
+     * @param firstMileSkuCostAllocationEntity
+     * @param firstMileEstimatedBillEntity
+     * @param reconciliationDetailEntity
+     * @param skuTotalCost
+     * @param weightTotal
+     * @param allocationWeight
+     * @param productTotalCost
+     * @return
+     */
+    private FirstMileSkuCostAllocationDetailEntity buildSkuCostDetailByDeclareCost(CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, FirstMileEstimatedBillDTO.View firstMileEstimatedBillEntity, TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity, BigDecimal skuTotalCost, BigDecimal weightTotal, BigDecimal allocationWeight, BigDecimal productTotalCost) {
+        FirstMileSkuCostAllocationDetailEntity entity = new FirstMileSkuCostAllocationDetailEntity()
+                .setMainId(firstMileSkuCostAllocationEntity.getMainId())
+                .setCostMainId(firstMileSkuCostAllocationEntity.getId())
+                .setFeeType(AllocationFeeTypeEnum.DECLARE_COST.getCode())
+                .setAllocationType(allocationSettingDTO.getFirstTariffFee());
+        if (Objects.nonNull(reconciliationDetailEntity)){
+            entity.setAmount(reconciliationDetailEntity.getDeclareCost());
+        }else if (Objects.nonNull(firstMileEstimatedBillEntity)){
+            //暂估
+            entity.setAmount(firstMileEstimatedBillEntity.getCustomsClearanceCost());
+        }else {
+            entity.setAmount(BigDecimal.ZERO);
+        }
+        //头程分摊金额
+        if (CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())){
+            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(allocationWeight, weightTotal), entity.getAmount(), 4));
+        }else if (CostAllocationEnum.COST_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())){
+            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(productTotalCost, skuTotalCost), entity.getAmount(), 4));
+        }
+        return entity;
+    }
+
+    /**
+     * 构建运费分摊金额
+     *
+     * @param allocationSettingDTO
+     * @param firstMileSkuCostAllocationEntity
+     * @param firstMileEstimatedBillEntity
+     * @param reconciliationDetailEntity
+     * @param skuTotalCost                     总成本
+     * @param weightTotal                      总重量
+     * @param allocationWeight
+     * @param productTotalCost
+     * @return
+     */
+    private FirstMileSkuCostAllocationDetailEntity buildSkuCostDetailByShippingCost(CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO,
+                                                                                    FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity,
+                                                                                    FirstMileEstimatedBillDTO.View firstMileEstimatedBillEntity,
+                                                                                    TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity,
+                                                                                    BigDecimal skuTotalCost, BigDecimal weightTotal,
+                                                                                    BigDecimal allocationWeight, BigDecimal productTotalCost) {
+        FirstMileSkuCostAllocationDetailEntity entity = new FirstMileSkuCostAllocationDetailEntity()
+                .setMainId(firstMileSkuCostAllocationEntity.getMainId())
+                .setCostMainId(firstMileSkuCostAllocationEntity.getId())
+                .setFeeType(AllocationFeeTypeEnum.SHIPPING_COST.getCode())
+                .setAllocationType(allocationSettingDTO.getFirstShippingCost());
+        if (Objects.nonNull(reconciliationDetailEntity)){
+            BigDecimal shippingCost = Objects.nonNull(reconciliationDetailEntity.getShippingCost())? reconciliationDetailEntity.getShippingCost(): BigDecimal.ZERO;
+            entity.setAmount(shippingCost);
+        }else if (Objects.nonNull(firstMileEstimatedBillEntity)){
+            //暂估
+            entity.setAmount(firstMileEstimatedBillEntity.getLogisticsCost());
+        }else {
+            entity.setAmount(BigDecimal.ZERO);
+        }
+        //头程分摊金额
+        if (CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())){
+            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(allocationWeight, weightTotal), entity.getAmount(), 4));
+        }else if (CostAllocationEnum.COST_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())){
+            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(productTotalCost, skuTotalCost), entity.getAmount(), 4));
+        }
+        return entity;
     }
 
     private void fillPagingDb(List<FirstMileCostAllocationDTO.PagingVO> list) {
@@ -431,7 +1040,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //添加分摊明细
         list.forEach(e -> {
             e.setStatusName(ConfirmStatusEnum.getName(e.getStatus()));
-            e.setFeeTypeName(DictCostCategoryEnum.getName(e.getFeeType()));
+            e.setFeeTypeName(AllocationFeeTypeEnum.getName(e.getFeeType()));
             e.setAllocationTypeName(CostAllocationEnum.getName(e.getAllocationType()));
         });
     }

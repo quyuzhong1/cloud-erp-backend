@@ -50,7 +50,7 @@ public class FirstMileSkuCostAllocationDetailDTO implements Serializable {
 
         /**
          * 费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用
-         * DictCostCategoryEnum
+         * AllocationFeeTypeEnum
          */
         private String feeType;
         /**
@@ -161,7 +161,7 @@ public class FirstMileSkuCostAllocationDetailDTO implements Serializable {
 
         /**
         * 费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用
-         * DictCostCategoryEnum
+         * AllocationFeeTypeEnum
         */
         @NotBlank(message = "费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用不能为空")
         @Size(max = 20,message = "费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用最大长度不能超过20位")

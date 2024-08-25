@@ -564,6 +564,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         actualListDTO.setShippingCost(BigDecimal.ZERO);
         actualListDTO.setDeclareCost(BigDecimal.ZERO);
         actualListDTO.setOtherCost(BigDecimal.ZERO);
+        actualListDTO.setOtherTaxCost(BigDecimal.ZERO);
         // 总物流费用
         actualListDTO.setTotalLogisticsCost(BigDecimal.ZERO);
         // 实际重量【箱包装重量】（取物流单输入的重量）
@@ -602,6 +603,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         sourceListDTO.setShippingCost(BigDecimal.ZERO);
         sourceListDTO.setDeclareCost(BigDecimal.ZERO);
         sourceListDTO.setOtherCost(BigDecimal.ZERO);
+        sourceListDTO.setOtherTaxCost(BigDecimal.ZERO);
         sourceListDTO.setVolumeWeightLogistics(BigDecimal.ZERO);
         sourceListDTO.setWeightLogistics(BigDecimal.ZERO);
     }
@@ -631,6 +633,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         return 0 == estimatedListDTO.getTotalLogisticsCost().compareTo(actualListDTO.getTotalLogisticsCost())
                 && 0 == estimatedListDTO.getShippingCost().compareTo(actualListDTO.getShippingCost())
                 && 0 == estimatedListDTO.getDeclareCost().compareTo(actualListDTO.getDeclareCost())
+                && 0 == estimatedListDTO.getOtherTaxCost().compareTo(actualListDTO.getOtherTaxCost())
                 && 0 == estimatedListDTO.getOtherCost().compareTo(actualListDTO.getOtherCost());
     }
 
@@ -643,7 +646,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             TmsFirstMileReconciliationDetailDTO.ListDTO diffListDTO
     ) {
         // 重新计算实际总数
-        actualListDTO.setTotalLogisticsCost(actualListDTO.getShippingCost().add(actualListDTO.getDeclareCost()).add(actualListDTO.getOtherCost()));
+        actualListDTO.setTotalLogisticsCost(actualListDTO.getShippingCost().add(actualListDTO.getDeclareCost()).add(actualListDTO.getOtherCost()).add(actualListDTO.getOtherTaxCost()));
         // 重新计算差异值
         // 总物流费用
         diffListDTO.setTotalLogisticsCost(actualListDTO.getTotalLogisticsCost().subtract(estimatedListDTO.getTotalLogisticsCost()));
@@ -659,6 +662,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         diffListDTO.setDeclareCost(actualListDTO.getDeclareCost().subtract(estimatedListDTO.getDeclareCost()));
         // 其他费用【预计其他费用】
         diffListDTO.setOtherCost(actualListDTO.getOtherCost().subtract(estimatedListDTO.getOtherCost()));
+        //其他税费
+        diffListDTO.setOtherTaxCost(actualListDTO.getOtherTaxCost().subtract(estimatedListDTO.getOtherTaxCost()));
     }
 
 
@@ -877,6 +882,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
         record.setOtherCost(otherCost);
+
+        //其他税费
+        List<TmsCfgCostEntity> otherTaxCostList = tmsCfgCostGroupMap.getOrDefault(DictCostCategoryEnum.OTHER_TAX_FEE.getCode(), Collections.emptyList());
+        BigDecimal otherTaxCost = otherTaxCostList.stream()
+                .map(e -> costIdSumMap.getOrDefault(e.getId(), BigDecimal.ZERO))
+                .reduce(BigDecimal::add)
+                .orElse(BigDecimal.ZERO);
+        record.setOtherTaxCost(otherTaxCost);
 
         // 合计费用
         BigDecimal totalCost = costIdSumMap.values().stream().reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
@@ -1577,6 +1590,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 break;
             case DECLARE_COST:
                 actualListDTO.setDeclareCost(curCategoryValue);
+                break;
+            case OTHER_TAX_FEE:
+                actualListDTO.setOtherTaxCost(curCategoryValue);
                 break;
             case OTHER_COST:
                 actualListDTO.setOtherCost(curCategoryValue);

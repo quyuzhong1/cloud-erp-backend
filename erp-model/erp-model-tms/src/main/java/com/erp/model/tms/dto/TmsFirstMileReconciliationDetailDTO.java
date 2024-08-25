@@ -391,6 +391,10 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 其他费用【预计其他费用】
          */
         private BigDecimal otherCost;
+        /**
+         * 其他税费【预计其他税费】
+         */
+        private BigDecimal otherTaxCost;
 
         /**
          * 备注
@@ -945,6 +949,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          */
         @Digits(integer = 12, fraction = 4, message = "实际其他费用整数位不能超过12位，小数位不能超过4位")
         private BigDecimal otherCost;
+        /**
+         * 其他税费
+         */
+        @Digits(integer = 12, fraction = 4, message = "实际其他税费整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal otherTaxCost;
 
         /**
          * 备注

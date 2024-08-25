@@ -40,6 +40,20 @@
         is_deleted,
         main_id, cost_main_id, fee_type, allocation_type, amount, allocated_amount, product_allocated_amount, init_transit_cost, init_estimated_cost, mid_period_transit_cost, current_period_allocated_cost, end_period_transit_cost, end_period_estimated_cost
     </sql>
+    <select id="listByMainIds" resultType="com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity">
+        select
+            cad.*,
+            ca.sku_id
+        from first_mile_sku_cost_allocation_detail cad
+        left join first_mile_sku_cost_allocation ca on ca.id = cad.cost_main_id and ca.is_deleted = false
+        where cad.is_deleted=false
+        <if test="mainIds != null and mainIds.size > 0">
+            and cad.main_id in
+            <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

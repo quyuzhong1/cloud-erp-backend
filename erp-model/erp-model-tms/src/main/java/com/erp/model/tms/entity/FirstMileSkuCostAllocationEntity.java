@@ -106,7 +106,8 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     @TableField("currency")
     private String currency;
     /**
-    * 费用来源：estimatedBill=预估账单，actualBill=实际账单
+     * 费用来源：estimated=预估账单，actual=实际账单
+     * ReconciliationBillTypeEnum
     */
     @TableField("bill_source_type")
     private String billSourceType;
@@ -125,11 +126,7 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
      */
     @TableField("weight_allocation_id")
     private String weightAllocationId;
-    /**
-     * SKU成本明细id
-     */
-    @TableField("sku_cost_detail_id")
-    private String skuCostDetailId;
+
     /**
      * 发货单明细id
      */

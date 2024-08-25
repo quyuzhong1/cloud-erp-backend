@@ -84,7 +84,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
     @Lazy
     @Resource
-    private FirstMileCostAllocationService firstMileCostAllocationService;
+    private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -252,10 +252,11 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(InitFirstMileAllocationEntity entity) {
+        List<InitFirstMileAllocationDetailEntity> detailEntityList = initFirstMileAllocationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         //校验记录是否已被使用 费用分摊是否已使用
-        //校验记录是否已被使用 费用分摊是否已使用
-        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.getByInitFirstMileId(entity.getId());
-        if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
+        List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList = firstMileSkuCostAllocationService.listByInitFirstMileDetailIds
+                (detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getId).distinct().collect(Collectors.toList()));
+        if (!CollectionUtils.isEmpty(firstMileSkuCostAllocationEntityList)){
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "期初费用分摊已使用不能删除");
         }
         initFirstMileAllocationDetailService.removeByMainId(entity.getId());

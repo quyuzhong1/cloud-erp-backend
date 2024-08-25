@@ -205,11 +205,11 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     }
 
     @Override
-    public List<FirstMileEstimatedBillDTO.View> listByLogisticsBillIds(List<String> ids) {
-        if(ids.isEmpty()){
+    public List<FirstMileEstimatedBillDTO.View> listByLogisticsBillIds(List<String> ids, String status) {
+        if(ids.isEmpty() && StrUtil.isBlank(status)){
             return Collections.emptyList();
         }
-        List<FirstMileEstimatedBillDTO.View> list = baseMapper.listByLogisticsBillIds(ids);
+        List<FirstMileEstimatedBillDTO.View> list = baseMapper.listByLogisticsBillIds(ids, status);
         fillData(list);
         return list;
     }

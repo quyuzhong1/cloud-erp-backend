@@ -32,12 +32,9 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.InventorySkuCostDetailExcelListener;
 import com.erp.server.tms.mapper.InventorySkuCostMapper;
-import com.erp.server.tms.service.FirstMileCostAllocationService;
-import com.erp.server.tms.service.InventorySkuCostDetailService;
-import com.erp.server.tms.service.InventorySkuCostService;
+import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.tms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -95,6 +92,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     @Lazy
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
+    @Lazy
+    @Resource
+    private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
+    @Resource
+    private FirstMileSkuCostRefService firstMileSkuCostRefService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -256,9 +258,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public BatchResultDTO delete(InventorySkuCostEntity entity) {
+        List<InventorySkuCostDetailEntity> detailEntityList = inventorySkuCostDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        List<String> detailIds = detailEntityList.stream().map(InventorySkuCostDetailEntity::getId).distinct().collect(Collectors.toList());
         //校验记录是否已被使用 费用分摊是否已使用
-        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.getBySkuCostId(entity.getId());
-        if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
+        List<FirstMileSkuCostRefEntity> firstMileSkuCostRefEntityList = firstMileSkuCostRefService.listBySkuCostDetailIds(detailIds);
+        if (!CollectionUtils.isEmpty(firstMileSkuCostRefEntityList)){
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "SKU成本已使用不能删除");
         }
         inventorySkuCostDetailService.removeByMainId(entity.getId());

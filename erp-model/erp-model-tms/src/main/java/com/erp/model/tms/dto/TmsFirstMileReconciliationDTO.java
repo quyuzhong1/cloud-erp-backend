@@ -210,6 +210,11 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
         private BigDecimal actualOtherCost;
 
         /**
+         * 实际其他税费【可排序】
+         */
+        private BigDecimal actualOtherTaxCost;
+
+        /**
          * 实际计费重【可排序】
          */
         private BigDecimal actualBillingWeight;

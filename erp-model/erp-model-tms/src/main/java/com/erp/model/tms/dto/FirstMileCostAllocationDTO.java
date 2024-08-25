@@ -526,7 +526,7 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 核算月份
          */
-        private String reportPeriod;
+        private LocalDate reportPeriodMonth;
         /**
          * 核算月份【导出使用】
          */
@@ -703,7 +703,8 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private String currency;
 
         /**
-         * 费用来源：estimatedBill=预估账单，actualBill=实际账单
+         * 费用来源：estimated=预估账单，actual=实际账单
+         * ReconciliationBillTypeEnum
          */
         private String billSourceType;
         /**
@@ -713,7 +714,7 @@ public class FirstMileCostAllocationDTO implements Serializable {
 
         /**
          * 费用类型：shippingCost=运费，tariffFee=关税，otherTaxFee=其他税费，otherFee=其他费用
-         * DictCostCategoryEnum
+         * AllocationFeeTypeEnum
          */
         private String feeType;
         /**
@@ -783,5 +784,13 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 分摊组织名称
          */
         private String orgName;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class JudgeReconciliationDTO {
+        //本月开始有实际账单
+        private boolean currencyMonthReconciliation = false;
+        //上月开始有账单
+        private boolean lastMonthReconciliation = false;
     }
 }

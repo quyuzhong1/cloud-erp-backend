@@ -63,6 +63,7 @@
         COALESCE(tfmrd.actualShippingCost, 0) AS actualShippingCost,
         COALESCE(tfmrd.actualDeclareCost, 0) AS actualDeclareCost,
         COALESCE(tfmrd.actualOtherCost, 0) AS actualOtherCost,
+        COALESCE(tfmrd.actualOtherTaxCost, 0) AS actualOtherTaxCost,
         COALESCE(tfmrd.totalCost, 0) AS totalCostDetail
     </sql>
 
@@ -79,6 +80,7 @@
             SUM(shipping_cost) AS actualShippingCost,
             SUM(declare_cost) AS actualDeclareCost,
             SUM(other_cost) AS actualOtherCost,
+            SUM(other_tax_cost) AS actualOtherTaxCost,
             SUM(total_logistics_cost) AS totalCost,
         main_id
         FROM
@@ -123,6 +125,7 @@
         SUM(shipping_cost) AS actualShippingCost,
         SUM(declare_cost) AS actualDeclareCost,
         SUM(other_cost) AS actualOtherCost,
+        SUM(other_tax_cost) AS actualOtherTaxCost,
         SUM(total_logistics_cost) AS totalCost,
         main_id
         FROM
