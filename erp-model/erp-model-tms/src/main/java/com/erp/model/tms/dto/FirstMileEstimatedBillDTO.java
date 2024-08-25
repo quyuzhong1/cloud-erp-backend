@@ -19,9 +19,11 @@ import java.util.Map;
  * @author tanmujin
  */
 @Data
+@NoArgsConstructor
 public class FirstMileEstimatedBillDTO implements Serializable {
 
     @Data
+    @NoArgsConstructor
     public static class View{
         private String id;
 

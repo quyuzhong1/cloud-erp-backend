@@ -8,6 +8,8 @@ import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -85,8 +87,17 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     /**
      * 根据发货单获取全部费用分摊记录
+     *
      * @param sourceIds
+     * @param reportPeriodId
      * @return
      */
-    List<FirstMileCostAllocationDTO.PagingVO> listBySourceIds(List<String> sourceIds);
+    List<FirstMileCostAllocationEntity> listBySourceIds(List<String> sourceIds, String reportPeriodId);
+
+    /**
+     * 自动生成费用分摊
+     * @param startDate
+     * @param endDate
+     */
+    void autoGenerateFirstMileCostAllocation(LocalDate startDate, LocalDate endDate);
 }

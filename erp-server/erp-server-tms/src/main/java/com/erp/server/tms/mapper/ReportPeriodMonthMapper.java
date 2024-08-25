@@ -1,8 +1,13 @@
 package com.erp.server.tms.mapper;
+
+import com.erp.model.tms.dto.ReportPeriodMonthDTO;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +20,10 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface ReportPeriodMonthMapper extends BaseMapper<ReportPeriodMonthEntity> {
-
+    /**
+     * 根据组织获取未确认核算期间列表
+     * @param orgIds
+     * @return
+     */
+    List<ReportPeriodMonthDTO.SelectDTO> queryList(@Param("orgIds") List<String> orgIds);
 }

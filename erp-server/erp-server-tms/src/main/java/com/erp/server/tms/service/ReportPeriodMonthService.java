@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.ReportPeriodMonthDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 核算期间月份表 服务类
@@ -40,4 +42,11 @@ public interface ReportPeriodMonthService extends SuperService<ReportPeriodMonth
      * @return
      */
     String createOrUpdatePeriod(SysAccountingCompanyEntity company, String reportPeriodId);
+
+    /**
+     * 获取所有核算期间下拉框
+     * @param dto
+     * @return
+     */
+    List<ReportPeriodMonthDTO.SelectDTO> queryList(ReportPeriodMonthDTO.QueryDTO dto);
 }

@@ -30,6 +30,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.tms.convert.InventorySkuCostConverter;
 import com.erp.server.tms.listener.InventorySkuCostDetailExcelListener;
 import com.erp.server.tms.mapper.InventorySkuCostMapper;
 import com.erp.server.tms.service.*;
@@ -189,6 +190,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             if (Objects.nonNull(skuVO)){
                 e.setProductName(skuVO.getSkuName());
             }
+            e.setProductCost(new BigDecimal(e.getProductCost()).stripTrailingZeros().toPlainString());
         });
     }
 
@@ -220,6 +222,13 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         //已审核允许反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.msg);
+        }
+        List<InventorySkuCostDetailEntity> detailEntityList = inventorySkuCostDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        List<String> detailIds = detailEntityList.stream().map(InventorySkuCostDetailEntity::getId).distinct().collect(Collectors.toList());
+        //校验记录是否已被使用 费用分摊是否已使用
+        List<FirstMileSkuCostRefEntity> firstMileSkuCostRefEntityList = firstMileSkuCostRefService.listBySkuCostDetailIds(detailIds);
+        if (!CollectionUtils.isEmpty(firstMileSkuCostRefEntityList)){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "SKU成本已使用不能删除");
         }
         log.info("SKU成本记录反审核，code=【{}】", entity.getCode());
         //更新单据为待提交
@@ -367,7 +376,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         }
         List<InventorySkuCostDetailEntity> detailEntityList = inventorySkuCostDetailService.listByMainIds(Collections.singletonList(id));
         if (!CollectionUtils.isEmpty(detailEntityList)) {
-            List<InventorySkuCostDetailDTO.ViewDTO> viewDTOList = BeanMapperUtils.copyList(InventorySkuCostDetailDTO.ViewDTO.class, detailEntityList);
+            List<InventorySkuCostDetailDTO.ViewDTO> viewDTOList = InventorySkuCostConverter.INSTANCE.detailToViewDTO(detailEntityList);
             viewDTO.setDetailList(viewDTOList);
         }
         return viewDTO;

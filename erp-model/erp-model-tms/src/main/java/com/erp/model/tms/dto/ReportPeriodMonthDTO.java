@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -107,4 +109,37 @@ public class ReportPeriodMonthDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        private String id;
+        /**
+         * 核算月份
+         */
+        private LocalDate reportPeriodMonth;
+
+        /**
+         * 分摊组织id
+         */
+        private String orgId;
+
+        /**
+         * 分摊组织名称
+         */
+        private String orgName;
+        /**
+         * 核算月份【导出使用】
+         */
+        private String reportPeriodStr;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QueryDTO {
+        /**
+         * 重量分摊id
+         */
+        @NotEmpty(message = "重量分摊ids不能为空")
+        private List<String> ids;
+    }
 }

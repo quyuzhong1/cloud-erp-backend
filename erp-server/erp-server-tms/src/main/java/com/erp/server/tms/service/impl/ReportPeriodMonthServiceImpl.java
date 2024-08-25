@@ -4,8 +4,15 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.rpc.wms.feign.WarehouseLocationFeign;
+import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.mapper.ReportPeriodMonthMapper;
+import com.erp.server.tms.service.FirstMileWeightAllocationService;
 import com.erp.server.tms.service.ReportPeriodMonthService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -21,9 +28,13 @@ import com.erp.model.tms.dto.ReportPeriodMonthDTO;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -38,6 +49,12 @@ import org.springframework.util.CollectionUtils;
 public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodMonthMapper, ReportPeriodMonthEntity> implements ReportPeriodMonthService {
     @Autowired
     private OperateLogService operateLogService;
+    @Resource
+    private FirstMileWeightAllocationService firstMileWeightAllocationService;
+    @Resource
+    private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -113,6 +130,33 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
         }else {
             return reportPeriodId;
         }
+    }
+
+    @Override
+    public List<ReportPeriodMonthDTO.SelectDTO> queryList(ReportPeriodMonthDTO.QueryDTO dto) {
+        List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
+        if (CollectionUtils.isEmpty(firstMileWeightAllocationEntities)){
+            throw new ServiceException("重量分摊记录为空");
+        }
+        List<String> deliveryIds = firstMileWeightAllocationEntities.stream().map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(deliveryIds)){
+            throw new ServiceException("发货单ids为空");
+        }
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntities = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
+        if (CollectionUtils.isEmpty(firstMileDeliveryEntities)){
+            throw new ServiceException("发货单记录为空");
+        }
+        //目的仓ids
+        List<String> toWarehouseIds = firstMileDeliveryEntities.stream().map(FirstMileDeliveryEntity::getDestWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> updateDTOS = wmsTaskFeign.listWarehouseByIds(toWarehouseIds);
+        List<String> orgIds = updateDTOS.stream().map(WarehouseDTO.UpdateDTO::getOrgId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(orgIds)){
+            throw new ServiceException("核算组织不能为空");
+        }
+        if (orgIds.size() > 1){
+            throw new ServiceException("不同的核算组织不能同时下推费用分摊");
+        }
+        return baseMapper.queryList(orgIds);
     }
 
 

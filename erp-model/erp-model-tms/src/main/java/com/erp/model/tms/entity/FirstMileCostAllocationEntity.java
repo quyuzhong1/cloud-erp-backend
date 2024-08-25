@@ -138,6 +138,16 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     */
     @TableField("to_warehouse_name")
     private String toWarehouseName;
+    /**
+     * 分摊组织id
+     */
+    @TableField("org_id")
+    private String orgId;
+    /**
+     * 分摊组织名称
+     */
+    @TableField("org_name")
+    private String orgName;
 
 
     public static final String REMARK = "remark";
