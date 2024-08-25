@@ -96,8 +96,7 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     /**
      * 自动生成费用分摊
-     * @param startDate
-     * @param endDate
+     * @param reportPeriodMonth
      */
-    void autoGenerateFirstMileCostAllocation(LocalDate startDate, LocalDate endDate);
+    void autoGenerateFirstMileCostAllocation(LocalDate reportPeriodMonth);
 }

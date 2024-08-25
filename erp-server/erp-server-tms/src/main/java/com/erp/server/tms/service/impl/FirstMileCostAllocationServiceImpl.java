@@ -276,7 +276,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             entity.setOrgName(company.getCompanyName());
         }
         //核算期间id
-        String reportPeriodId = reportPeriodMonthService.createOrUpdatePeriod(company,entity.getReportPeriodId());
+        String reportPeriodId = reportPeriodMonthService.createOrUpdatePeriod(company,entity);
         //重量分摊记录--费用状态为{未分摊，部分分摊}
         List<String> statusList = new ArrayList<>(2);
         statusList.add(CostAllocationStatusEnum.NOT.getCode());
@@ -798,9 +798,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public void autoGenerateFirstMileCostAllocation(LocalDate startDate, LocalDate endDate) {
-        if (null == startDate || null == endDate) {
-            throw new ServiceException("开始时间或结束时间为空");
+    public void autoGenerateFirstMileCostAllocation(LocalDate reportPeriodMonth) {
+        if (null == reportPeriodMonth) {
+            throw new ServiceException("核算期间时间为空");
         }
         List<String> statusList = new ArrayList<>(2);
         statusList.add(CostAllocationStatusEnum.NOT.getCode());
@@ -828,7 +828,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             }
             //构造数据
             FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
-                    .setSourceId(deliveryEntity.getId()).setSourceCode(deliveryEntity.getCode());
+                    .setSourceId(deliveryEntity.getId()).setSourceCode(deliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth);
             service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
         }
     }

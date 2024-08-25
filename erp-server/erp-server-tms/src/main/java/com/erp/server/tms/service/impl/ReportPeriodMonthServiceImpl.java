@@ -4,11 +4,11 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.mapper.ReportPeriodMonthMapper;
@@ -17,7 +17,6 @@ import com.erp.server.tms.service.ReportPeriodMonthService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,26 +108,31 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
     }
 
     @Override
-    public String createOrUpdatePeriod(SysAccountingCompanyEntity company, String reportPeriodId) {
-        ReportPeriodMonthEntity reportPeriodMonth = null;
-        if (StrUtil.isNotBlank(reportPeriodId)){
-            reportPeriodMonth = this.getById(reportPeriodId);
+    public String createOrUpdatePeriod(SysAccountingCompanyEntity company, FirstMileCostAllocationEntity entity) {
+        ReportPeriodMonthEntity reportPeriodMonthEntity = null;
+        if (Objects.nonNull(entity) && StrUtil.isNotBlank(entity.getReportPeriodId())){
+            reportPeriodMonthEntity = this.getById(entity.getReportPeriodId());
         }
-        if (Objects.isNull(reportPeriodMonth)){
+        if (Objects.isNull(reportPeriodMonthEntity)){
+            LocalDate reportPeriodMonth = LocalDate.now().withDayOfMonth(1);
+            if (Objects.nonNull(entity) && Objects.nonNull(entity.getReportPeriodMonth())){
+                reportPeriodMonth = entity.getReportPeriodMonth();
+            }
             //检查是否存在组织对应的核算记录
-            List<ReportPeriodMonthEntity> list = this.lambdaQuery().eq(ReportPeriodMonthEntity::getOrgId, company.getId()).eq(ReportPeriodMonthEntity::getMonth, LocalDate.now().withDayOfMonth(1)).list();
+            List<ReportPeriodMonthEntity> list = this.lambdaQuery().eq(ReportPeriodMonthEntity::getOrgId, company.getId())
+                    .eq(ReportPeriodMonthEntity::getMonth, reportPeriodMonth).list();
             if (CollectionUtils.isEmpty(list)){
-                reportPeriodMonth = new ReportPeriodMonthEntity();
-                reportPeriodMonth.setMonth(LocalDate.now().withDayOfMonth(1));
-                reportPeriodMonth.setOrgId(company.getId());
-                reportPeriodMonth.setOrgName(company.getCompanyName());
-                this.save(reportPeriodMonth);
-                return reportPeriodMonth.getId();
+                reportPeriodMonthEntity = new ReportPeriodMonthEntity();
+                reportPeriodMonthEntity.setMonth(reportPeriodMonth);
+                reportPeriodMonthEntity.setOrgId(company.getId());
+                reportPeriodMonthEntity.setOrgName(company.getCompanyName());
+                this.save(reportPeriodMonthEntity);
+                return reportPeriodMonthEntity.getId();
             }else {
                 return list.get(0).getId();
             }
         }else {
-            return reportPeriodId;
+            return reportPeriodMonthEntity.getId();
         }
     }
 
