@@ -168,9 +168,10 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     /**
      * 根据明细id进行查询对账单明细
      * @param sourceIds
+     * @param type
      * @return
      */
-    List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(List<String> sourceIds);
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(List<String> sourceIds, String type);
 
     /**
      * 根据业务单号获取对账明细

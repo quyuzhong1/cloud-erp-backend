@@ -31,6 +31,7 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -134,7 +135,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             //校验明细物流单在这个月份是否已存在
             List<String> sourceIds = updateDTO.getDetailList().stream().map(TmsFirstMileReconciliationDetailDTO.UpdateDTO::getSourceId).distinct().collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(sourceIds)){
-                List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(sourceIds);
+                List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(sourceIds, DetailReconciliationTypeEnum.ACTUAL.getCode());
                 List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> Objects.nonNull(e) && updateDTO.getReconciliationMonth().equals(e.getReconciliationMonth())).collect(Collectors.toList());
                 if (!CollectionUtils.isEmpty(detailEntityList1)){
                     List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());

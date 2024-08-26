@@ -136,11 +136,12 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
             if (!CollectionUtils.isEmpty(existDetailEntityList)){
                 InventorySkuCostDTO.PagingVO pagingVO = existDetailEntityList.stream().filter(e -> Objects.nonNull(e)
                         && !Objects.equals(entity.getId(), e.getId())
+                        && Objects.equals(e.getCompanyId(), entity.getCompanyId())
                         && Objects.equals(e.getAllocatedMonth(), entity.getAllocatedMonth())
                         && Objects.equals(e.getSkuId(), detailEntity.getSkuId())
                         && Objects.equals(e.getSkuNo(), detailEntity.getSkuNo())).findFirst().orElse(null);
                 if (Objects.nonNull(pagingVO)){
-                    throw new ServiceException(StrUtil.format("SKU成本中【{}】SKU【{}】分摊月份【{}】已存在", pagingVO.getCode(),pagingVO.getSkuNo(),pagingVO.getAllocatedMonthStr()));
+                    throw new ServiceException(StrUtil.format("SKU成本中【{}】成本组织【{}】SKU【{}】分摊月份【{}】已存在", pagingVO.getCode(), entity.getCompanyName(),pagingVO.getSkuNo(),pagingVO.getAllocatedMonthStr()));
                 }
             }
         });

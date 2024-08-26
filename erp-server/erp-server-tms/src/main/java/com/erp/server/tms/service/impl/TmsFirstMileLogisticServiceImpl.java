@@ -1154,7 +1154,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             throw new ServiceException("数据异常, 明细为空");
         }
         //头程对账单明细查询
-        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(Collections.singletonList(id));
+        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(Collections.singletonList(id), DetailReconciliationTypeEnum.ACTUAL.getCode());
         // 是否当前新增账单
         boolean currenAddMainEntity = false;
         String mainKey = "";
@@ -1190,7 +1190,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             mainKey = StrUtil.format("{}_{}_{}_{}", logisticsSupplierId, curListDTO.getCurrency(), startDate, endDate);
             //一个头程物流单可生成多次对账单-限制同一个单同一个月份仅可生成一次
             LocalDate dayOfMonth = endDate.withDayOfMonth(1);
-            List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && dayOfMonth.equals(e.getReconciliationMonth())).collect(Collectors.toList());
+            List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getMainId()) && dayOfMonth.equals(e.getReconciliationMonth())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(detailEntityList1)){
                 List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
                 throw new ServiceException(ApiError.ERROR_92260,String.join(",",sourceCodes), dayOfMonth);

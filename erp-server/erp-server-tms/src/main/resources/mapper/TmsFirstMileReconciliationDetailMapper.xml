@@ -286,7 +286,7 @@
         tfmrd.reconciliation_type,
         tfmr.reconciliation_month
         from tms_first_mile_reconciliation_detail tfmrd
-        left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id
+        left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id and tfmr.is_deleted = false
         where tfmrd.is_deleted = false
           <if test="sourceIds != null and sourceIds.size > 0">
               and tfmrd.source_id in
@@ -294,6 +294,9 @@
                   #{item}
               </foreach>
           </if>
+        <if test="type != null and type != ''">
+            and tfmrd."type" = #{type}
+        </if>
     </select>
     <select id="listByBusinessCodes"
             resultType="com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity">

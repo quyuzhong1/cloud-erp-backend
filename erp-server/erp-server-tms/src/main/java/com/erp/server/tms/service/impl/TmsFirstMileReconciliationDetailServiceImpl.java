@@ -434,7 +434,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     @Transactional(rollbackFor = Exception.class)
     public void updateReconciliationDetailCount(String id, String sourceId, Integer reconciliationCount) {
         //头程对账单明细查询
-        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(Collections.singletonList(sourceId));
+        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(Collections.singletonList(sourceId), null);
         if (CollectionUtils.isEmpty(tmsFirstMileReconciliationDetailEntityList)){
             return;
         }
@@ -560,7 +560,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         // 数据处理
         fillWaitReconciliationList(sourceFilterList);
         //查询生成对账明细记录
-        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(sourceIds);
+        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(sourceIds, DetailReconciliationTypeEnum.ACTUAL.getCode());
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> resultList = new LinkedList<>();
         // 生成差异和对比数据
         for (TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO : sourceFilterList) {
@@ -618,6 +618,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         // 计算差异值
         generateDiff(sourceListDTO, actualListDTO, diffListDTO);
         sourceListDTO.setReconciliationCount(reconciliationCount);
+        actualListDTO.setReconciliationCount(reconciliationCount);
+        diffListDTO.setReconciliationCount(reconciliationCount);
         return Arrays.asList(sourceListDTO, actualListDTO, diffListDTO);
     }
 
@@ -1041,7 +1043,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 continue;
             }
             List<String> sourceIds = sourceDetailDTO.stream().filter(Objects::nonNull).map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
-            List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(sourceIds);
+            List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(sourceIds, DetailReconciliationTypeEnum.ACTUAL.getCode());
             // 先从结果集获取
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(excelDTO.getTransportNo());
             if (null == currentTrackNoList) {
@@ -1477,7 +1479,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             }
             //获取来源id列表
             List<String> sourceIds = sourceLogisticList.stream().filter(Objects::nonNull).map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
-            List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(sourceIds);
+            List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(sourceIds,DetailReconciliationTypeEnum.ACTUAL.getCode());
             // 先从结果集获取
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(transportNo);
             if (null == currentTrackNoList) {
@@ -1643,7 +1645,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .filter(e -> StringUtils.isNotBlank(e.getCurrency()))
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getAutoStringPair));
         List<String> billIds = list.stream().filter(Objects::nonNull).map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
-        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(billIds);
+        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(billIds, DetailReconciliationTypeEnum.ACTUAL.getCode());
         for (Map.Entry<StringPair, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> entry : map.entrySet()) {
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = entry.getValue();
             this.fillWaitReconciliationList(sourceDetailList);
@@ -1727,11 +1729,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(List<String> sourceIds) {
-        if (CollectionUtils.isEmpty(sourceIds)){
+    public List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(List<String> sourceIds, String type) {
+        if (CollectionUtils.isEmpty(sourceIds) && StrUtil.isBlank(type)){
             return Collections.emptyList();
         }
-        return baseMapper.listBySourceIds(sourceIds);
+        return baseMapper.listBySourceIds(sourceIds, type);
     }
 
     @Override
