@@ -93,7 +93,7 @@
                wa.business_code businessCode,
                wa.transport_no transportNo,
                wa.product_name productName,
-               wa.allocation_status allocationStatus,
+               wa.cost_allocation_status costAllocationStatus,
                wa.sku_id,
                wa.sku_no skuNo,
                wa.platform_sku_no platformSkuNo,
