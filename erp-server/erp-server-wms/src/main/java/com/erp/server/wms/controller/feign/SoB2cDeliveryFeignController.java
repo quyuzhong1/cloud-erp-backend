@@ -2,11 +2,14 @@ package com.erp.server.wms.controller.feign;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -58,7 +61,8 @@ public class SoB2cDeliveryFeignController extends BaseController {
       * @create 2023-12-18 15:47
       */
     @PostMapping("/add")
-    public Boolean listBySoDetailIds(@RequestBody SoB2cDeliveryDTO.AddDTO dto) {
+    @DataIdempotent(keyIdName = "dto.soCode",businessType = RedisKeyConstant.SO_B2C_DELIVERY_KEY)
+    public Boolean add(@RequestBody SoB2cDeliveryDTO.AddDTO dto) {
         Boolean addResult = soB2cDeliveryService.add(dto);
         return addResult;
     }

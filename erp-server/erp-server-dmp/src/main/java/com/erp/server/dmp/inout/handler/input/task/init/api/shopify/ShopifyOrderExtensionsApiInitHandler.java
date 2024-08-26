@@ -91,6 +91,8 @@ public class ShopifyOrderExtensionsApiInitHandler extends DmpInputInitHandler {
                 log.error("ShopifyOrderTransactionsApiInitHandler国家：" + country + "  是否计算" + countryTaxMap.containsKey(country));
                 if (countryTaxMap.containsKey(country)) {
                     String taxTitle = countryTaxMap.get(country);
+//                    System.setProperty("socksProxyHost", "127.0.0.1");
+//                    System.setProperty("socksProxyPort", "7890");
                     ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken());
                     ShopifyOrderResponse order = shopifyGraphQLClient.getOrderLocalizationExtensions(findMongoDatum.get("orderId").toString());
 

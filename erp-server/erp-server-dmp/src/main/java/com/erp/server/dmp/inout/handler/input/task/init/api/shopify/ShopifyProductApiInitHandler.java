@@ -1,8 +1,11 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.shopify;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.exception.ServiceException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
@@ -48,100 +51,43 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
         String shopifyShopDomain = tokenDTO.getShopDomain();
         String accessToken = tokenDTO.getAccessToken();
 
+//        System.setProperty("socksProxyHost", "127.0.0.1");
+//        System.setProperty("socksProxyPort", "7890");
         // Shopify产品下载所有(SDK已分页查询所有)
-        ShopifyProducts products = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getProducts();
+
+        int count = 0;
+        long sleepTime = 1000;
+        ShopifyProducts products = getShopifyRestClient(shopifyShopDomain, accessToken, count, sleepTime);
         if (CollectionUtils.isEmpty(products.values())) {
             return Collections.emptyList();
         }
-/*
-        String json = "[{'image' : {" +
-                "'metafields' : []," +
-                "'productId' : '7646915592384'," +
-                "'variantIds' : []," +
-                "'id' : '36865064468672'," +
-                "'position' : 1," +
-                "'source' : 'https://cdn.shopify.com/s/files/1/0628/1229/1264/products/Main_b9e0da7f-db89-4d41-83f0-7f417b02831d.jpg?v=1701168210'" +
-                "}," +
-                "'images' : [" +
-                "{" +
-                "'metafields' : []," +
-                "'productId' : '7646915592384'," +
-                "'variantIds' : []," +
-                "'id' : '36865064468672'," +
-                "'position' : 1," +
-                "'source' : 'https://cdn.shopify.com/s/files/1/0628/1229/1264/products/Main_b9e0da7f-db89-4d41-83f0-7f417b02831d.jpg?v=1701168210'" +
-                "}" +
-                "]," +
-                "'publishedAt' : '2023-11-28T05:43:30-05:00'," +
-                "'handle' : 'the-3p-fulfilled-snowboard'," +
-                "'variants' : [" +
-                "{" +
-                "'inventoryManagement' : 'shopify'," +
-                "'productId' : '7646915592384'," +
-                "'taxable' : true," +
-                "'inventoryQuantity' : 20," +
-                "'inventoryPolicy' : 'DENY'," +
-                "'available' : 0," +
-                "'weight' : '0.0'," +
-                "'adminGraphqlApiId' : 'gid://shopify/ProductVariant/44229886345408'," +
-                "'title' : 'Default Title'," +
-                "'oldInventoryQuantity' : 20," +
-                "'inventoryItemId' : 46179919429824," +
-                "'createdAt' : '2023-11-28T18:43:30'," +
-                "'requiresShipping' : true," +
-                "'price' : '2629.95'," +
-                "'fulfillmentService' : 'manual'," +
-                "'option1' : 'Default Title'," +
-                "'id' : '44229886345408'," +
-                "'position' : 1," +
-                "'grams' : 0," +
-                "'sku' : 'sku-hosted-1'," +
-                "'updatedAt' : '2023-11-28T18:43:35'," +
-                "'weightUnit' : 'kg'" +
-                "}" +
-                "]," +
-                "'adminGraphqlApiId' : 'gid://shopify/Product/7646915592384'," +
-                "'title' : 'The 3p Fulfilled Snowboard'," +
-                "'tags' : [" +
-                "'Sport'," +
-                "'Accessory'," +
-                "'Winter'" +
-                "]," +
-                "'createdAt' : '2023-11-28T18:43:30'," +
-                "'vendor' : 'luna-shop-test'," +
-                "'options' : [" +
-                "{" +
-                "'productId' : '7646915592384'," +
-                "'values' : [" +
-                "'Default Title'" +
-                "]," +
-                "'name' : 'Title'," +
-                "'id' : '9846242345152'," +
-                "'position' : 1" +
-                "}" +
-                "]," +
-                "'sortedOptionNames' : [" +
-                "'Title'" +
-                "]," +
-                "'id' : '7646915592384'," +
-                "'productType' : ''," +
-                "'publishedScope' : 'web'," +
-                "'status' : 'active'," +
-                "'updatedAt' : '2023-11-29T09:54:42'" +
-                "}]";
-
-        // 解析JSON对象
-        JSONArray jsonObject = JSON.parseArray(json);
-
-        // 获取images数组并转换为List<ShopifyProduct>
-        List<ShopifyProduct> shopifyProductsList = jsonObject.toJavaList(ShopifyProduct.class);
-
-        // 构造ShopifyProducts对象
-        ShopifyProducts products = new ShopifyProducts(shopifyProductsList);*/
 
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
         dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(products.values()));
         dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         return dmpInputTaskInitDTOList;
+    }
+
+    private ShopifyProducts getShopifyRestClient(String shopifyShopDomain, String accessToken, Integer count, long sleepTime) {
+
+        ShopifyProducts products = null;
+
+        try {
+            products = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getProducts();
+        } catch (Exception e) {
+            if (count == 5) {
+                throw new ServiceException(StrUtil.format("调用Shopify={},接口重试{}次失败", "getShopifyRestClient", count));
+            }
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException exception) {
+            }
+            sleepTime = sleepTime + 1000;
+            count = count + 1;
+
+            getShopifyRestClient(shopifyShopDomain, accessToken, count, sleepTime);
+        }
+
+        return products;
     }
 }

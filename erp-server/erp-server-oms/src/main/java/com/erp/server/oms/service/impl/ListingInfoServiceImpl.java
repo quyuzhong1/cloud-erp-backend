@@ -78,6 +78,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     @Autowired
     private ShopInfoService shopInfoService;
 
+    @Resource
+    private SkuMappingExtendService skuMappingExtendService;
 
     /**
      * 添加库存sku
@@ -282,6 +284,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .in(ListingInfoEntity::getId, listingIds)
                 .update();
         service.batchOperation(updateList,addList);
+        //更新发货设置信息
+        skuMappingExtendService.copyBySkuMapping(lastestSkuMapping,skuMappingEntityList);
     }
 
     @Transactional(rollbackFor = Exception.class)

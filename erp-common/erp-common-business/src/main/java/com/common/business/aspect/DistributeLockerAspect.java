@@ -192,7 +192,8 @@ public class DistributeLockerAspect {
         for (Object obj : objects) {
             if(keyFields.equals("#") || keyFields.equals("")){
                 result.add(obj.toString());
-            } else if(obj instanceof String){
+            } else if(isStandardJavaType(obj)){
+                // 如果是标准Java类型
                 result.add(obj.toString());
             }else {
                 result.addAll(getValuesFromObject(obj, keyFields.split(",")));
@@ -200,6 +201,28 @@ public class DistributeLockerAspect {
         }
 
         return result;
+    }
+
+    /**
+     * 判断是否为标准Java类型
+     * @param obj   对象
+     * @return      是否为标准Java类型
+     */
+    private boolean isStandardJavaType(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        Class<?> clazz = obj.getClass();
+        return clazz.isPrimitive() ||
+                clazz == String.class ||
+                clazz == Integer.class ||
+                clazz == Long.class ||
+                clazz == Double.class ||
+                clazz == Float.class ||
+                clazz == Boolean.class ||
+                clazz == Character.class ||
+                clazz == Byte.class ||
+                clazz == Short.class;
     }
 
     /**

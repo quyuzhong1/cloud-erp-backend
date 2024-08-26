@@ -82,6 +82,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "sender.district", source = "senderInfo.districtName"),
             @Mapping(target = "sender.street", source = "senderInfo.addressFirst"),
             @Mapping(target = "sender.post_code", source = "senderInfo.zipCode"),
+            @Mapping(target = "sender.company", source = "senderInfo.companyName"),
 //            @Mapping(target = "sender.house_number", source = "senderInfo.streetAddress"),
             @Mapping(target = "returnInfo.isReturnOnDomestic", constant = "U"),
 //            @Mapping(target = "returnInfo.domesticReturnAddr.first_name", source = "senderInfo.name"),
@@ -117,6 +118,7 @@ public interface LogisticsOrderConverter {
      * @return
      */
     @Mappings({
+            @Mapping(target = "material", source = "englishMaterial"),
             @Mapping(target = "declare_product_code", source = "skuNo"),
             @Mapping(target = "hscode_import", source = "customsCode"),
             @Mapping(target = "declare_product_name_cn", source = "declareChineseName"),

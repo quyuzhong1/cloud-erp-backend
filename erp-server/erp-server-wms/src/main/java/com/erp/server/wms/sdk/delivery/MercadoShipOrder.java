@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -44,6 +45,9 @@ public class MercadoShipOrder extends AbstractShipOrder {
         // 当前单据物流信息
         SoB2cLogisticsEntity logisticsEntity = tuple.get(2);
 
+        List<String> ids = sourceOrderList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByIds(ids);
+
         for (SoB2cEntity entity : sourceOrderList) {
             //组装数据
             MercadoShipOrderDTO shipOrderDTO = new MercadoShipOrderDTO();
@@ -56,8 +60,8 @@ public class MercadoShipOrder extends AbstractShipOrder {
             //标记发货
             mercadoSdkClientService.shipOrder(shipOrderDTO);
         }
-
-        return new ArrayList<>();
+        List<String> detailIdList = soB2cDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        return detailIdList;
     }
 
 

@@ -342,17 +342,6 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             XxlJobHelper.log("[拉取亚马逊商品详情任务] 无需要执行的详情,shopId={}", JSONUtil.toJsonStr(shopIds));
             return;
         }
-        // 查询关联的FNSKU
-        List<String> sellerSkuList = listingEntityList.stream()
-                .map(PlatformAmazonListingDTO::getSellerSku)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        List<FbaInventoryEntity> fbaInventoryEntityList = wmsFbaInventoryFeign.findList(sellerSkuList);
-        // msku绑定的fnSku是否唯一?
-        Map<String, List<FbaInventoryEntity>> fnSkuRelationMap = fbaInventoryEntityList
-                .stream()
-                .collect(Collectors.groupingBy(FbaInventoryEntity::getMsku));
         // 根据shopId分组
         Map<String, List<PlatformAmazonListingDTO>> dtoGroupList = listingEntityList.stream().collect(Collectors.groupingBy(PlatformAmazonListingDTO::getShopId));
 
@@ -377,13 +366,6 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             List<PlatformAmazonListingDTO> newDtoList = amazonListingHandler.downloadDetailListByIdentifiersType(currentListingDTOList, extentJsonObj, shopInfoDTO, marketPlaceEnum, size);
             for (PlatformAmazonListingDTO newDto : newDtoList) {
                 try {
-                    // 关联FNSKU信息
-                    FbaInventoryEntity fbaInventoryEntity = fnSkuRelationMap.getOrDefault(newDto.getSellerSku(), Collections.emptyList())
-                            .stream()
-                            .findFirst()
-                            .orElse(null);
-
-                    newDto.setPlatformFnSku(null == fbaInventoryEntity ? "" : fbaInventoryEntity.getFnSku());
                     newDto.setDownloadStatus(1);
                     newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                     newDto.setRedissonKey(null);

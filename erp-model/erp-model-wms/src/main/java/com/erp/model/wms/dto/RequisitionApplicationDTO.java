@@ -8,6 +8,7 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import lombok.*;
 
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -182,6 +183,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
         private List<RequisitionApplicationDetailDTO.AddDTO> detailList;
     }
 
@@ -201,6 +203,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
         private List<RequisitionApplicationDetailDTO.UpdateDTO> detailList;
     }
 
