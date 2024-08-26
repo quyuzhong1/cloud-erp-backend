@@ -160,8 +160,6 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
 
     public static final String SKU_COST_ID = "sku_cost_id";
 
-    public static final String SKU_COST_DETAIL_ID = "sku_cost_detail_id";
-
     public static final String WEIGHT_ALLOCATION_ID = "weight_allocation_id";
 
     public static final String REPORT_PERIOD_ID = "report_period_id";

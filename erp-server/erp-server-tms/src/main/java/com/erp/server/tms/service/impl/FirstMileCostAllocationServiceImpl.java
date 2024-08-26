@@ -43,7 +43,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -122,7 +124,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     FirstMileSkuCostRefService firstMileSkuCostRefService;
     @Resource
     private FirstMileCostAllocationService service;
-
+    private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -296,7 +298,13 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //对账单明细 [已审核记录]
         List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listByBusinessCodes(Collections.singletonList(firstMileDeliveryEntity.getCode()), ApproveStatusEnum.APPROVE.getStatus());
         //暂估账单 [已确认]
-        List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList()), ConfirmStatusEnum.CONFIRM.getCode());
+        List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList = null;
+        try {
+            estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList()), ConfirmStatusEnum.CONFIRM.getCode());
+        }catch (Exception e){
+            log.error("processAllocationData: 暂估账单获取异常:{}", e.getMessage());
+            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(), firstMileDeliveryEntity.getCode(), "暂估账单获取异常" + e.getMessage());
+        }
         //sku分摊记录
         List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList = null;
         if (StrUtil.isNotBlank(entity.getId())) {
@@ -427,11 +435,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //为创建主表记录之前都可以返回异常消息，否则就要抛出异常回退
             return batchResultDTO;
         }
+
         //根据sku获取签收数量汇总
         List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOS = wmsFirstMileDeliveryFeign.countReceiveQtyByParams(
                 FirstMileDeliveryDTO.RequestReceiveDTO.builder()
                         .businessCodes(Collections.singletonList(entity.getBusinessCode()))
-                        .month(reportPeriodMonth.getMonth())
+                        .month(dateFormat.format(reportPeriodMonth.getMonth()))
                         .build());
         //子sku列表
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
@@ -821,7 +830,13 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             return;
         }
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
+        if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)){
+            return;
+        }
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(deliveryIds);
+        if (CollectionUtils.isEmpty(deliveryDetailEntityList)){
+            return;
+        }
         //按照发货单进行费用分摊
         for (String id : deliveryIds) {
             FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(id)).findFirst().orElse(null);

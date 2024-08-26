@@ -97,7 +97,11 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             item.setOtherTaxCost(otherTaxDTO.getEstimatedFee());
             TmsCostDetailDTO.CostCompareDTO otherDTO = costCompareList.stream().filter(v -> v.getCostCode().equals(DictCostCategoryEnum.OTHER_COST.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostCompareDTO());
             item.setOtherCost(otherDTO.getEstimatedFee());
-            item.setCostTotal(item.getLogisticsCost().add(item.getCustomsClearanceCost()).add(item.getOtherTaxCost()).add(item.getOtherCost()));
+            BigDecimal logisticsCost = Objects.nonNull(item.getLogisticsCost()) ? item.getLogisticsCost() : BigDecimal.ZERO;
+            BigDecimal customsClearanceCost = Objects.nonNull(item.getCustomsClearanceCost()) ? item.getCustomsClearanceCost() : BigDecimal.ZERO;
+            BigDecimal otherTaxCost = Objects.nonNull(item.getOtherTaxCost()) ? item.getOtherTaxCost() : BigDecimal.ZERO;
+            BigDecimal otherCost = Objects.nonNull(item.getOtherCost()) ? item.getOtherCost() : BigDecimal.ZERO;
+            item.setCostTotal(logisticsCost.add(customsClearanceCost).add(otherTaxCost).add(otherCost));
 
             //预计重量
             FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();

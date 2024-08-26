@@ -59,7 +59,7 @@
     <sql id="pageSql">
         SELECT
         a.id,a.reconciliation_id, a.reconciliation_code, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
-        a.sku_cost_id, ca.sku_cost_detail_id, ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
+        ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
         a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,a.to_country,a.delivery_time,
@@ -110,7 +110,7 @@
     <select id="listSkuBySourceCodes" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
         SELECT
         a.id,a.reconciliation_id, a.reconciliation_code, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
-        a.sku_cost_id, ca.sku_cost_detail_id, ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
+        ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
         a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,a.to_country,a.delivery_time,
@@ -134,7 +134,7 @@
     <select id="listBySourceIds" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
         SELECT
         a.id,a.reconciliation_id, a.reconciliation_code, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
-        a.sku_cost_id, ca.sku_cost_detail_id, ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
+        ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
         a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,a.to_country,a.delivery_time,

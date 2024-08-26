@@ -98,14 +98,8 @@ public class InitFirstMileAllocationDetailExcelDTO implements Serializable {
     @FieldValid(fieldName = "产品成本",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT6)
     private String productCost;
     /**
-     * 币种（默认CNY）
-     */
-    @ExcelProperty(value = "币种（默认CNY）", index = 13)
-    @FieldValid(fieldName = "币种",enumClass = CurrencyEnum.class)
-    private String currency;
-    /**
      * 错误信息
      */
-    @ExcelProperty(value = "错误数据", index = 14)
+    @ExcelProperty(value = "错误数据", index = 13)
     private String errorMsg;
 }

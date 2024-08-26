@@ -19,10 +19,10 @@
         SELECT
             fsr.fba_shipment_id as businessCode,
             fsr.sku_id,
-            SUM(CASE WHEN fsr.receive_date >= DATE_TRUNC('month', ${params.month} - INTERVAL '1 month') AND DATE_TRUNC('month', ${params.month}) > fsr.receive_date THEN fsr.receive_qty ELSE 0 END) AS  lastMonthReceiveQty,
-            SUM(CASE WHEN EXTRACT(YEAR FROM fsr.receive_date) = EXTRACT(YEAR FROM ${params.month}) AND EXTRACT(MONTH FROM fsr.receive_date) = EXTRACT(MONTH FROM ${params.month}) THEN fsr.receive_qty ELSE 0 END) AS  currentMonthReceiveQty,
-            SUM(CASE WHEN DATE_TRUNC('month', ${params.month}) >= DATE_TRUNC('month', fsr.receive_date) AND fsr.receive_date >= '2024-01-01' THEN fsr.receive_qty ELSE 0 END) AS  asCurrentMonthReceiveQty,
-            SUM(CASE WHEN DATE_TRUNC('month', ${params.month} - INTERVAL '1 month') >= DATE_TRUNC('month', fsr.receive_date) AND fsr.receive_date >= '2024-01-01' THEN fsr.receive_qty  ELSE 0 END) AS  asLastMonthReceiveQty
+            SUM(CASE WHEN fsr.receive_date >= DATE_TRUNC('month', TO_DATE(${params.month}, 'YYYY-MM-dd') - INTERVAL '1 month') AND DATE_TRUNC('month', TO_DATE(${params.month}, 'YYYY-MM-dd')) > fsr.receive_date THEN fsr.receive_qty ELSE 0 END) AS  lastMonthReceiveQty,
+            SUM(CASE WHEN EXTRACT(YEAR FROM fsr.receive_date) = EXTRACT(YEAR FROM TO_DATE(${params.month}, 'YYYY-MM-dd')) AND EXTRACT(MONTH FROM fsr.receive_date) = EXTRACT(MONTH FROM TO_DATE(${params.month}, 'YYYY-MM-dd')) THEN fsr.receive_qty ELSE 0 END) AS  currentMonthReceiveQty,
+            SUM(CASE WHEN DATE_TRUNC('month', TO_DATE(${params.month}, 'YYYY-MM-dd')) >= DATE_TRUNC('month', fsr.receive_date) AND fsr.receive_date >= '2024-01-01' THEN fsr.receive_qty ELSE 0 END) AS  asCurrentMonthReceiveQty,
+            SUM(CASE WHEN DATE_TRUNC('month', TO_DATE(${params.month}, 'YYYY-MM-dd') - INTERVAL '1 month') >= DATE_TRUNC('month', fsr.receive_date) AND fsr.receive_date >= '2024-01-01' THEN fsr.receive_qty  ELSE 0 END) AS  asLastMonthReceiveQty
         FROM fba_shipment_receive fsr
         WHERE fsr.is_deleted = FALSE
         <if test="params.businessCodes != null and params.businessCodes.size > 0">

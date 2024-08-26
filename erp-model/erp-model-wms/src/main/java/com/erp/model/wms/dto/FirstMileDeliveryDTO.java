@@ -1260,7 +1260,7 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 日期
          */
-        private LocalDate month;
+        private String month;
     }
     @Data
     @NoArgsConstructor

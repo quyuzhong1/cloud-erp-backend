@@ -62,7 +62,7 @@
         left join init_first_mile_allocation a on ad.main_id = a.id and a.is_deleted = false
         where ad.is_deleted = false
         <if test="status != null and status != ''">
-            a.status = #{status}
+            and a.status = #{status}
         </if>
         <if test="sourceIds != null and sourceIds.size > 0">
             and ad.source_id in
