@@ -125,4 +125,50 @@ public class AntuService {
         String response = AntuUtils.callService(AntuConstants.METHOD_CANCEL_ORDER,paramsMap);
         return JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
     }
+
+    /**
+     * 创建入库单
+     */
+    public AntuResponse<String> createInboundBill(@Valid AntuCreateInboundReq antuGetReceiptReq){
+        String response = AntuUtils.callService(AntuConstants.METHOD_CREATE_INBOUND,antuGetReceiptReq);
+        AntuResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
+        //处理返回值
+        if (StringUtil.isNotBlank(respDto.getData())) {
+            respDto.setData(JSONObject.parseObject(respDto.getData()).getString("receiving_code"));
+        }
+        if(StringUtil.isNotBlank(respDto.getReceivingCode()) && StringUtil.isBlank(respDto.getData())){
+            respDto.setData(respDto.getReceivingCode());
+        }
+        return respDto;
+    }
+
+    /**
+     * 编辑入库单
+     */
+    public AntuResponse<String> editInboundBill(@Valid AntuCreateInboundReq antuGetReceiptReq){
+        String response = AntuUtils.callService(AntuConstants.METHOD_EDIT_INBOUND,antuGetReceiptReq);
+        AntuResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
+        //处理返回值
+        if (StringUtil.isNotBlank(respDto.getData())) {
+            respDto.setData(JSONObject.parseObject(respDto.getData()).getString("receiving_code"));
+        }
+        if(StringUtil.isNotBlank(respDto.getReceivingCode()) && StringUtil.isBlank(respDto.getData())){
+            respDto.setData(respDto.getReceivingCode());
+        }
+        if(StringUtils.isNotBlank(respDto.getMessage()) && respDto.getMessage().contains("不可编辑")){
+            respDto.setAsk("Success");
+            respDto.setData(antuGetReceiptReq.getReceivingCode());
+        }
+        return respDto;
+    }
+    /**
+     * 取消入库单
+     */
+    public AntuResponse<String> cancelInboundBill(@Valid @NotEmpty(message = "入库单号不能为空") String receivingCode){
+        Map<String,Object> paramsMap = new HashMap<>();
+        paramsMap.put("receiving_code",receivingCode);
+        String response = AntuUtils.callService(AntuConstants.METHOD_CANCEL_INBOUND,paramsMap);
+        return JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
+    }
+
 }

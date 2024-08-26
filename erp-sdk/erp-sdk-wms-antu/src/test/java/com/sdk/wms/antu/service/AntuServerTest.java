@@ -1,5 +1,6 @@
 package com.sdk.wms.antu.service;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.antu.dto.request.*;
 import com.sdk.wms.antu.dto.response.*;
@@ -35,27 +36,27 @@ public class AntuServerTest {
 
     @Test
     public void getWarehouseTest() {
-        AntuGetProductReq imlProductReq = AntuGetProductReq.builder()
+        AntuGetProductReq antuProductReq = AntuGetProductReq.builder()
                 .build();
-        AntuResponse<List<AntuWarehouseResp>> response = antuService.getTransferWarehouse(imlProductReq);
+        AntuResponse<List<AntuWarehouseResp>> response = antuService.getWarehouse(antuProductReq);
         System.out.println(response);
     }
 
     @Test
     public void getSkuListTest() {
-        AntuGetProductReq imlProductReq = AntuGetProductReq.builder()
+        AntuGetProductReq antuProductReq = AntuGetProductReq.builder()
                 .page(1)
                 .pageSize(100)
                 .updateStartTime("2024-06-25 15:47:18")
                 .updateEndTime("2024-06-25 15:47:18")
                 .build();
-        AntuResponse<List<AntuProductResp>> response = antuService.getSkuList(imlProductReq);
-        System.out.println(response);
+        AntuResponse<List<AntuProductResp>> response = antuService.getSkuList(antuProductReq);
+        System.out.println(JSONUtil.toJsonStr(response));
     }
     @Test
     public void getReceivingRegionTest() {
         AntuResponse<List<AntuRegionResp>> response = antuService.getReceivingRegion();
-        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response));
     }
 
     @Test
@@ -133,6 +134,53 @@ public class AntuServerTest {
     @Test
     public void cancelOutboundBillTest() {
         AntuResponse<String> response = antuService.cancelOutboundBill("A001-240621-0003","平台拦截");
+        System.out.println(response);
+    }
+
+    @Test
+    public void createInboundBillTest() {
+        AntuCreateInboundReq antuGetReceiptReq = AntuCreateInboundReq.builder()
+                .referenceNo("wjtest20231205")
+                .incomeType(1)
+                .receivingType("T")
+                .smCode("PAC")
+                .contacter("张三")
+                .contactPhone("123456789")
+                .warehouseCode("BR01")
+                .customerType("Y")
+                .regionIdLevel0(6)
+                .regionIdLevel1(79)
+                .regionIdLevel2(733)
+                .street("广东省东莞市塘厦镇环市南路24号塘联工业~汇胜科创园2栋楼3号")
+                .verify(0)
+                .items(Arrays.asList(AntuCreateInboundReq.Item.builder()
+                        .productSku("3PL-1C-TEST")
+                        .boxNo(1)
+                        .quantity(1)
+                        .build()))
+                .build();
+        System.out.println(JSONUtil.toJsonStr(antuGetReceiptReq));
+        AntuResponse<String> response = antuService.createInboundBill(antuGetReceiptReq);
+        System.out.println(response);
+    }
+
+    @Test
+    public void editInboundBillTest() {
+        AntuCreateInboundReq antuGetReceiptReq = AntuCreateInboundReq.builder()
+                .receivingCode("RVA001-240826-0003")
+                .verify(1)
+                .items(Arrays.asList(AntuCreateInboundReq.Item.builder()
+                        .productSku("3PL-1C-TEST")
+                        .boxNo(1)
+                        .quantity(14)
+                        .build()))
+                .build();
+        AntuResponse<String> response = antuService.editInboundBill(antuGetReceiptReq);
+        System.out.println(response);
+    }
+    @Test
+    public void cancelInboundBillTest() {
+        AntuResponse<String> response = antuService.cancelInboundBill("RVA001-240826-0003");
         System.out.println(response);
     }
 }
