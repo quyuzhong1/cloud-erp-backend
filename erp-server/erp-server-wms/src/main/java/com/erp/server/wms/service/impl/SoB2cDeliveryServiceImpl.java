@@ -765,7 +765,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         detailList.forEach(v -> v.setIndex(orderBasketNoMap.containsKey(v.getSoB2cId()) ? Integer.parseInt(orderBasketNoMap.get(v.getSoB2cId())) : Integer.MAX_VALUE));
 
         //明细取值为拣货单
-        this.allocateCargoDetail(allPrintWayBillPdfResultList);
+        if(!SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(dto.getPrintType())){
+            this.allocateCargoDetail(allPrintWayBillPdfResultList);
+        }
         //循环打印的渠道
         for (String logisticsChannel : logisticsChannelIdList) {
 
