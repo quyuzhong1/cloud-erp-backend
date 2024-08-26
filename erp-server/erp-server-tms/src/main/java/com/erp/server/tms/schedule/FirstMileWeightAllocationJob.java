@@ -1,6 +1,7 @@
 package com.erp.server.tms.schedule;
 
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
@@ -81,13 +82,18 @@ public class FirstMileWeightAllocationJob {
             }
             if(channelMap.containsKey(allocationDTO.getChannelId())){
                 LogisticsChannelEntity logisticsChannel = channelMap.get(allocationDTO.getChannelId());
+                dto.setChannelId(allocationDTO.getChannelId());
                 dto.setVolumeSetting(logisticsChannel.getVolumeSetting());
                 dto.setFeeRule(logisticsChannel.getFeeRule());
             }
             if(supplierMap.containsKey(allocationDTO.getSupplierId())){
                 dto.setSupplierName(supplierMap.get(allocationDTO.getSupplierId()).getSupplierName());
             }
-            BatchResultDTO resultDTO = firstMileWeightAllocationService.add(dto);
+            try {
+                BatchResultDTO resultDTO = firstMileWeightAllocationService.add(dto);
+            }catch (ServiceException e){
+                XxlJobHelper.log("生成重量分摊失败：{} {}",allocationDTO.getSourceCode(), e.getMessage());
+            }
         }
         return ReturnT.SUCCESS;
     }

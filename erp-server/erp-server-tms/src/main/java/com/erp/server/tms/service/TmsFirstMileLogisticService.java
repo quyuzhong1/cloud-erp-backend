@@ -153,4 +153,10 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * 查询生成重量分摊单据所需参数
      */
     List<TmsFirstMileLogisticDTO.WeightAllocationDTO> assembleFirstMileEstimatedList();
+
+    /**
+     * 下推重量分摊
+     * @param id 物流单ID
+     */
+    BatchResultDTO pushWeightAllocation(String id);
 }
