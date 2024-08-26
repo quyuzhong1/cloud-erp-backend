@@ -179,6 +179,7 @@
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
         fmd.id,
+        wc.id as boxId,
         wc.box_no,
         concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
         box_length*box_width*box_height as multiplySize,

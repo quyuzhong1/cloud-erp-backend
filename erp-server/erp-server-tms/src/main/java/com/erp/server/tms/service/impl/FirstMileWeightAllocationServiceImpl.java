@@ -1,7 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,9 +17,9 @@ import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
-import com.erp.model.tms.enums.CostAllocationStatusEnum;
-import com.erp.model.tms.enums.ShippingFeeRuleEnum;
-import com.erp.model.tms.enums.WeightAllocationEnum;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.entity.TmsCostDetailEntity;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
@@ -29,21 +28,25 @@ import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.wms.feign.PackingTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.tms.mapper.FirstMileWeightAllocationMapper;
-import com.erp.server.tms.service.CfgSettingService;
-import com.erp.server.tms.service.FirstMileCostAllocationService;
-import com.erp.server.tms.service.FirstMileWeightAllocationService;
+import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import com.common.core.enums.ApiError;
@@ -74,7 +77,14 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     @Resource
     private FirstMileCostAllocationService costAllocationService;
     @Resource
+    private TmsFirstMileReconciliationDetailService reconciliationDetailService;
+    @Resource
     private WmsWarehouseFeign warehouseFeign;
+    private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
+    @Resource
+    private LogisticsBillCostService logisticsBillCostService;
+    @Resource
+    private TmsCostDetailService tmsCostDetailService;
 
     @Override
     public BatchResultDTO add(FirstMileWeightAllocationDTO.AddDTO addDTO) {
@@ -126,22 +136,19 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             entity.setFromWarehouseId(dto.getFromWarehouseId());
             if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightFirstAllocation)){
                 if(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(dto.getFeeRule())){
-                    entity.setAllocationType("按照{出库计费重}分摊");
+                    entity.setAllocationType(WeightAllocationTypeEnum.CHARGED.getCode());
                 }
                 if(ShippingFeeRuleEnum.NET_WEIGHT.getCode().equals(dto.getFeeRule())){
-                    entity.setAllocationType("按照{出库实重}分摊");
+                    entity.setAllocationType(WeightAllocationTypeEnum.BOX_ACTUAL.getCode());
                 }
                 if(ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(dto.getFeeRule())){
-                    entity.setAllocationType("按照{出库体积重}分摊");
+                    entity.setAllocationType(WeightAllocationTypeEnum.VOLUME.getCode());
                 }
             }
             if(WeightAllocationEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(weightFirstAllocation)){
-                entity.setAllocationType("按单产品重量分摊");
+                entity.setAllocationType(WeightAllocationTypeEnum.PRODUCT.getCode());
             }
             entity.setFeeRule(dto.getFeeRule());
-//            entity.setCalculatePeriodId();  //联表查询
-//            entity.setCalculateMonth(); //联表查询
-//            entity.setAllocationStatus();   //联表查询
             entity.setBoxId(packingDTO.getId());
             entity.setBoxNo(packingDTO.getBoxNo());
             entity.setBoxLength(packingDTO.getLength());
@@ -178,19 +185,46 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             }
             entity.setVolumeWeight(packingDTO.getLength().multiply(packingDTO.getWidth()).multiply(packingDTO.getHeight()).divide(BigDecimal.valueOf(dto.getVolumeSetting()), RoundingMode.HALF_UP));
             entity.setChargedWeight(entity.getOutStockWeight().max(entity.getVolumeWeight()));
-            BigDecimal allocationWeight = computeAllocationWeight();
-            entity.setAllocationWeight(allocationWeight);
             entity.setWeightUnit(packingDTO.getWeightUnit());
             list.add(entity);
+        }
+        //计算分摊重量
+        Map<String, List<FirstMileWeightAllocationEntity>> boxGroup = list.stream().collect(Collectors.groupingBy(item -> item.getBoxId()));
+        for (Map.Entry<String, List<FirstMileWeightAllocationEntity>> entry : boxGroup.entrySet()) {
+            List<FirstMileWeightAllocationEntity> skuList = entry.getValue();
+            final BigDecimal[] boxWeightSum = {BigDecimal.ZERO};
+            skuList.forEach(sku -> {
+                BigDecimal skuWeight = getSkuWeight(sku);
+                boxWeightSum[0] = boxWeightSum[0].add(skuWeight);
+            });
+            FirstMileWeightAllocationEntity last = skuList.get(skuList.size() - 1);
+            List<BigDecimal> allocationWeightList = new ArrayList<>(skuList.size());
+            skuList.forEach(sku -> {
+//                if(! last.getSkuId().equals(sku.getSkuId())){
+                    BigDecimal skuWeight = getSkuWeight(sku);
+                    BigDecimal divide = skuWeight.multiply(BigDecimal.valueOf(dto.getVolumeSetting())).divide(boxWeightSum[0], RoundingMode.HALF_UP);
+                    sku.setAllocationWeight(divide);
+                    allocationWeightList.add(divide);
+//                }else {
+//
+//                }
+
+            });
         }
         return list;
     }
 
-    /**
-     * 计算分摊重量
-     */
-    private BigDecimal computeAllocationWeight() {
-        return null;
+    private static BigDecimal getSkuWeight(FirstMileWeightAllocationEntity sku) {
+        if(sku.getAllocationType().equals(WeightAllocationTypeEnum.CHARGED.getCode())){
+            return sku.getChargedWeight().multiply(BigDecimal.valueOf(sku.getDeliveryQty()));
+        }
+        if(sku.getAllocationType().equals(WeightAllocationTypeEnum.VOLUME.getCode())){
+            return sku.getVolumeWeight().multiply(BigDecimal.valueOf(sku.getDeliveryQty()));
+        }
+        if(sku.getAllocationType().equals(WeightAllocationTypeEnum.PRODUCT.getCode())){
+            return sku.getProductWeight().multiply(BigDecimal.valueOf(sku.getDeliveryQty()));
+        }
+        return BigDecimal.ZERO;
     }
 
     @Override
@@ -202,15 +236,52 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     }
 
     private void fillData(List<FirstMileWeightAllocationDTO.ViewDTO> records) {
+        //仓库
         List<String> warehouseIds = records.stream().map(item -> item.getFromWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = warehouseFeign.listByIds(warehouseIds);
         Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
+        //费用分摊
+        List<String> sourceIds = records.stream().map(item -> item.getSourceId()).distinct().collect(Collectors.toList());
+//        List<FirstMileCostAllocationDTO.PagingVO> costAllocationList = costAllocationService.listBySourceIds(sourceIds);
         for (FirstMileWeightAllocationDTO.ViewDTO item : records) {
-            item.setAllocationStatusName(CostAllocationStatusEnum.getName(item.getAllocationStatus()));
+            item.setCostAllocationStatusName(CostAllocationStatusEnum.getName(item.getCostAllocationStatus()));
+            item.setAllocationTypeName(WeightAllocationTypeEnum.getName(item.getAllocationType()));
             if(warehouseMap.containsKey(item.getFromWarehouseId())){
                 item.setFromWarehouseName(warehouseMap.get(item.getFromWarehouseId()).getName());
             }
+//            List<FirstMileCostAllocationDTO.PagingVO> costAllocFilterList = costAllocationList.stream().filter(v -> v.getSourceId().equals(item.getSourceId()) && v.getSkuId().equals(item.getSkuId())).collect(Collectors.toList());
+//            costAllocFilterList.sort(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
+            /*if(! costAllocFilterList.isEmpty()){
+                FirstMileCostAllocationDTO.PagingVO costAllocationDTO = costAllocFilterList.get(0);
+                item.setCalculatePeriodId(costAllocationDTO.getReportPeriodId());
+                item.setCalculateMonth(monthFormatter.format(costAllocationDTO.getReportPeriodMonth()));
+                if(costAllocationDTO.getStatus().equals("confirm") && costAllocationDTO.getBillSourceType().equals(ReconciliationBillTypeEnum.ACTUAL.getCode()) && costAllocationDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) == 0){
+                    item.setCostAllocationStatus(CostAllocationStatusEnum.ALREADY.getCode());
+                }else if(costAllocationDTO.getStatus().equals("confirm") && costAllocationDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) > 0){
+                    item.setCostAllocationStatus(CostAllocationStatusEnum.PART.getCode());
+                }else{
+                    item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
+                }
+            }else {
+                item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
+            }*/
         }
+    }
+
+    /**
+     * 获取物流单ID与其费用明细的映射关系
+     * @param records 重量分摊
+     * @return
+     * @date: 2024-08-25
+     * @author: tanmujin
+     */
+    private Map<String, List<TmsCostDetailEntity>> getLogisticsBillCostDetailMap(List<FirstMileWeightAllocationDTO.ViewDTO> records) {
+        List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
+        List<LogisticsBillCostEntity> logisticsBillCostList = logisticsBillCostService.listByLogisticsBillIdList(logisticsBillIds);
+        Map<String, String> logisticsIdMap = logisticsBillCostList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getLogisticsBillId()));
+        List<String> logisticsBillCostIds = logisticsBillCostList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+        List<TmsCostDetailEntity> tmsCostDetailList = tmsCostDetailService.lambdaQuery().in(TmsCostDetailEntity::getMainId, logisticsBillCostIds).list();
+        return tmsCostDetailList.stream().collect(Collectors.groupingBy(item -> logisticsIdMap.get(item.getMainId())));
     }
 
     @Override
@@ -255,8 +326,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     public BatchResultDTO weightReCompute(String logisticsBillId) {
-
-        return null;
+        return BatchResultDTO.success(logisticsBillId, logisticsBillId, OperationTypeEnum.UPDATE);
     }
 
     @Override

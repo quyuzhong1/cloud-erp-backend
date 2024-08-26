@@ -45,7 +45,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String sourceId;
 
         /**
-        * 来源单号
+        * 来源单号【可排序】
         */
         private String sourceCode;
 
@@ -55,29 +55,29 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String deliveryDetailId;
 
         /**
-        * 业务单号
+        * 业务单号【可排序】
         */
         private String businessCode;
 
         /**
-        * 物流运单号
+        * 物流运单号【可排序】
         */
         private String transportNo;
 
         /**
-        * 产品名称
+        * 产品名称【可排序】
         */
         private String productName;
 
         /**
-        * 费用状态
+        * 费用分摊状态【可排序】
         */
-        private String allocationStatus;
+        private String costAllocationStatus;
 
         /**
-         * 费用状态(名称)
+         * 费用分摊状态(名称)
          */
-        private String allocationStatusName;
+        private String costAllocationStatusName;
 
         /**
         * 最新费用分摊月份
@@ -86,6 +86,9 @@ public class FirstMileWeightAllocationDTO implements Serializable {
 
         private String skuId;
 
+        /**
+         * skuNo【可排序】
+         */
         private String skuNo;
 
         /**
@@ -94,7 +97,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String platformSkuId;
 
         /**
-        * 平台skuNo
+        * 平台skuNo【可排序】
         */
         private String platformSkuNo;
 
@@ -104,12 +107,12 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String boxId;
 
         /**
-        * 箱号
+        * 箱号【可排序】
         */
         private String boxNo;
 
         /**
-        * 发货量
+        * 发货量【可排序】
         */
         private Integer deliveryQty;
 
@@ -139,7 +142,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private BigDecimal boxWeight;
 
         /**
-        * 出库计费重
+        * 出库计费重【可排序】
         */
         private BigDecimal chargedWeight;
 
@@ -149,12 +152,12 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private BigDecimal volumeWeight;
 
         /**
-        * 单产品重量
+        * 单产品重量【可排序】
         */
         private BigDecimal productWeight;
 
         /**
-        * 分摊重量
+        * 分摊重量【可排序】
         */
         private BigDecimal allocationWeight;
 
@@ -169,18 +172,23 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String supplierId;
 
         /**
-        * 物流商名称
+        * 物流商名称【可排序】
         */
         private String supplierName;
 
         /**
-        * 重量分摊方式
-         * CostAllocationEnum
+        * 重量分摊方式【可排序】
         */
         private String allocationType;
 
         /**
-        * 计费规则
+         * 重量分摊方式名称
+         * WeightAllocationTypeEnum
+         */
+        private String allocationTypeName;
+
+        /**
+        * 计费规则【可排序】
         */
         private String feeRule;
 
@@ -190,12 +198,12 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String shopId;
 
         /**
-        * 店铺名称
+        * 店铺名称【可排序】
         */
         private String shopName;
 
         /**
-        * 目的国家
+        * 目的国家【可排序】
         */
         private String toCountry;
 
@@ -205,7 +213,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String toCountryName;
 
         /**
-        * 发货仓库ID
+        * 发货仓库ID【可排序】
         */
         private String fromWarehouseId;
 
@@ -228,6 +236,11 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 物流单ID
+         */
+        private String logisticsBillId;
     }
 
     /**

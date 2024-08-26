@@ -57,6 +57,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     /**
     * 费用分摊状态
     */
+    @Deprecated
     @TableField("allocation_status")
     private String allocationStatus;
 
