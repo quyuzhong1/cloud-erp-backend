@@ -33,20 +33,15 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import com.common.core.enums.ApiError;
@@ -154,9 +149,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             entity.setFeeRule(dto.getFeeRule());
             entity.setBoxId(packingDTO.getId());
             entity.setBoxNo(packingDTO.getBoxNo());
-            entity.setBoxLength(packingDTO.getLength());
-            entity.setBoxWidth(packingDTO.getWidth());
-            entity.setBoxHeight(packingDTO.getHeight());
+            entity.setLength(packingDTO.getLength());
+            entity.setWidth(packingDTO.getWidth());
+            entity.setHeight(packingDTO.getHeight());
             entity.setBoxSizeUnit(packingDTO.getSizeUnit());
             if(! cartonSepcViewMap.containsKey(packingDTO.getTaskId())){
                 throw new ServiceException("没有找到装箱信息");

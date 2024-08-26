@@ -57,9 +57,8 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     /**
     * 费用分摊状态
     */
-    @Deprecated
     @TableField("cost_allocation_status")
-    private String allocationStatus;
+    private String costAllocationStatus;
 
     @TableField("sku_id")
     private String skuId;
@@ -94,18 +93,18 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     /**
     * 箱长
     */
-    @TableField("box_length")
-    private BigDecimal boxLength = BigDecimal.ZERO;
+    @TableField("length")
+    private BigDecimal length = BigDecimal.ZERO;
     /**
     * 箱宽
     */
-    @TableField("box_width")
-    private BigDecimal boxWidth = BigDecimal.ZERO;
+    @TableField("width")
+    private BigDecimal width = BigDecimal.ZERO;
     /**
     * 箱高
     */
-    @TableField("box_height")
-    private BigDecimal boxHeight = BigDecimal.ZERO;
+    @TableField("height")
+    private BigDecimal height = BigDecimal.ZERO;
     /**
     * 箱子尺寸单位
     */

@@ -71,6 +71,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
 
         /**
         * 费用分摊状态【可排序】
+        * CostAllocationStatusEnum
         */
         private String costAllocationStatus;
 
@@ -119,17 +120,17 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
         * 箱长
         */
-        private Integer boxLength;
+        private Integer length;
 
         /**
         * 箱宽
         */
-        private Integer boxWide;
+        private Integer width;
 
         /**
         * 箱高
         */
-        private Integer boxHigh;
+        private Integer height;
 
         /**
         * 箱子尺寸单位
