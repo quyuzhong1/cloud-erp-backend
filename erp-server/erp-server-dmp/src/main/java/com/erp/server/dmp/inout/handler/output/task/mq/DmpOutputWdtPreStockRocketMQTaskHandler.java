@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,6 +25,8 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 
 @Service
 @Scope("prototype")
@@ -85,6 +88,11 @@ public class DmpOutputWdtPreStockRocketMQTaskHandler extends DmpOutputRocketMQTa
 			}
 			List<DmpSoPrestockDetailEntity> itemList = dmpSoPrestockDetailEntityMap.get(changId);
 			PrestockDTO prestockDto = BeanUtil.copyProperties(dmpSoPrestockInfoEntity, PrestockDTO.class);
+			LocalDateTime checkTime = prestockDto.getCheckTime();
+			if(checkTime.isBefore(LocalDateTimeUtil.parse("2024-08-01 00:00:00", DatePattern.NORM_DATETIME_PATTERN))) {
+				checkTime = LocalDateTimeUtil.parse("2024-08-02 00:00:00", DatePattern.NORM_DATETIME_PATTERN);
+			}
+			prestockDto.setCheckTime(checkTime);
 			List<PrestockDetailDTO> detailList = BeanUtil.copyToList(itemList, PrestockDetailDTO.class);
 			detailList.forEach(d -> {
 				String warehouseLocation = d.getWarehouseLocation();

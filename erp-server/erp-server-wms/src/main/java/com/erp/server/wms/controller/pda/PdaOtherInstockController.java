@@ -253,7 +253,7 @@ public class PdaOtherInstockController extends BaseController {
                     resultDTO = BatchResultDTO.fail(id,flagCode, "其他入库单不存在");
                 } else {
                     flagCode = entity.getCode();
-                    resultDTO = otherInstockService.approve(id,dto.getType(),dto.getComment());
+                    resultDTO = otherInstockService.approve(id,dto.getType(),dto.getComment(), true);
                 }
             } catch (Exception e) {
                 log.error("其他入库单审核失败>>>>{}", e);
@@ -290,7 +290,7 @@ public class PdaOtherInstockController extends BaseController {
                     resultDTO = BatchResultDTO.fail(id,flagCode, "其他入库单不存在");
                 } else {
                     flagCode = entity.getCode();
-                    resultDTO = otherInstockService.disApprove(id);
+                    resultDTO = otherInstockService.disApprove(id, true);
                 }
             } catch (Exception e) {
                 log.error("其他入库单反审核失败>>>>{}", e);
