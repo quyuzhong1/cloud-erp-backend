@@ -17,9 +17,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
-import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
-import com.erp.model.tms.dto.InventorySkuCostDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -42,7 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -58,6 +55,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 
 /**
  * <p>
@@ -122,7 +120,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private CfgSettingService cfgSettingService;
     @Resource
     FirstMileSkuCostRefService firstMileSkuCostRefService;
-
+    @Resource
+    private FirstMileCostAllocationService service;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -267,15 +266,22 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         String orgId = updateDTOS.stream().map(WarehouseDTO.UpdateDTO::getOrgId).filter(StrUtil::isNotBlank).findFirst().orElse(null);
         if (StrUtil.isBlank(orgId)){
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),StrUtil.format("发货单目的仓【{}】未关联组织", firstMileDeliveryEntity.getDestWarehouseName()));
+        }else {
+            entity.setOrgId(orgId);
         }
         SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(orgId);
         if (Objects.isNull(company)){
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),StrUtil.format("发货单目的仓关联组织【{}】不存在", orgId));
+        }else {
+            entity.setOrgName(company.getCompanyName());
         }
         //核算期间id
-        String reportPeriodId = reportPeriodMonthService.createOrUpdatePeriod(company,entity.getReportPeriodId());
+        String reportPeriodId = reportPeriodMonthService.createOrUpdatePeriod(company,entity);
         //重量分摊记录--费用状态为{未分摊，部分分摊}
-        List<FirstMileWeightAllocationEntity> weightAllocationEntityList = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(firstMileDeliveryEntity.getId()), null);
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(CostAllocationStatusEnum.NOT.getCode());
+        statusList.add(CostAllocationStatusEnum.PART.getCode());
+        List<FirstMileWeightAllocationEntity> weightAllocationEntityList = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(firstMileDeliveryEntity.getId()), statusList);
         //物流单
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByOutstockIdList(Collections.singletonList(firstMileDeliveryEntity.getId()));
         if (CollectionUtils.isEmpty(logisticsBillEntityList)){
@@ -408,6 +414,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //核算月份
         ReportPeriodMonthEntity reportPeriodMonth = reportPeriodMonthService.getById(entity.getReportPeriodId());
         if (Objects.nonNull(reconciliationDetailEntity)){
+            entity.setReconciliationId(reconciliationDetailEntity.getMainId());
             entity.setReportPeriodMonth(reportPeriodMonth.getMonth());
             entity.setReconciliationMonth(reconciliationDetailEntity.getReconciliationMonth());
         }
@@ -487,7 +494,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                         if (Objects.isNull(pagingVO)){
                             return BigDecimal.ZERO;
                         }else {
-                            return pagingVO.getProductCost().multiply(BigDecimal.valueOf(e.getQuantity()));
+                            return new BigDecimal(pagingVO.getProductCost()).multiply(BigDecimal.valueOf(e.getQuantity()));
                         }
                     }).reduce(BigDecimal.ZERO, BigDecimal::add);
                     //汇总关联的sku成本记录
@@ -499,7 +506,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     InventorySkuCostDTO.PagingVO pagingVO = skuCostList.stream().filter(f -> f.getSkuId().equals(deliveryDetailEntity.getSkuId())).findFirst().orElse(null);
                     if (Objects.nonNull(pagingVO)){
                         skuCostDetailIds.add(pagingVO.getDetailId());
-                        firstMileSkuCostAllocationEntity.setProductCost(pagingVO.getProductCost());
+                        firstMileSkuCostAllocationEntity.setProductCost(new BigDecimal(pagingVO.getProductCost()));
                     }else {
                         firstMileSkuCostAllocationEntity.setProductCost(BigDecimal.ZERO);
                     }
@@ -782,11 +789,48 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public List<FirstMileCostAllocationDTO.PagingVO> listBySourceIds(List<String> sourceIds) {
-        if (CollectionUtils.isEmpty(sourceIds)){
+    public List<FirstMileCostAllocationEntity> listBySourceIds(List<String> sourceIds, @NotBlank String reportPeriodId) {
+        if (CollectionUtils.isEmpty(sourceIds) && StrUtil.isBlank(reportPeriodId)){
             return Collections.emptyList();
         }
-        return baseMapper.listBySourceIds(sourceIds);
+        return lambdaQuery().in(!CollectionUtils.isEmpty(sourceIds), FirstMileCostAllocationEntity::getSourceId, sourceIds)
+                .eq(StrUtil.isNotBlank(reportPeriodId), FirstMileCostAllocationEntity::getReportPeriodId, reportPeriodId).list();
+    }
+
+    @Override
+    public void autoGenerateFirstMileCostAllocation(LocalDate reportPeriodMonth) {
+        if (null == reportPeriodMonth) {
+            throw new ServiceException("核算期间时间为空");
+        }
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(CostAllocationStatusEnum.NOT.getCode());
+        statusList.add(CostAllocationStatusEnum.PART.getCode());
+        // 头程重量分摊-费用状态为{未分摊，部分分摊}+本期账单数据 判断是否进入头程费用分摊表
+        List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(null,statusList);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> deliveryIds = list.stream().map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(deliveryIds)) {
+            return;
+        }
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
+        List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(deliveryIds);
+        //按照发货单进行费用分摊
+        for (String id : deliveryIds){
+            FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(deliveryEntity)){
+                continue;
+            }
+            List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList1 = deliveryDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(id)).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(deliveryDetailEntityList1)){
+                continue;
+            }
+            //构造数据
+            FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
+                    .setSourceId(deliveryEntity.getId()).setSourceCode(deliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth);
+            service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
+        }
     }
 
     /**

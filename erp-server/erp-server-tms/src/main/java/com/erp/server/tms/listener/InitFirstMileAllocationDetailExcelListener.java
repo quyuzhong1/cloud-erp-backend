@@ -13,6 +13,7 @@ import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
+import com.erp.server.tms.convert.InitFirstMileAllocationConverter;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,8 +78,12 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
                 errorMsgList.add(StrUtil.format("发货单【{}】业务单号【{}】SKU【{}】已存在", addDTO1.getSourceCode(),addDTO1.getBusinessCode(),addDTO1.getSkuNo()));
             }
         }
+        //发货单和业务单好不能同时为空
+        if (StrUtil.isBlank(excelDTO.getBusinessCode()) && StrUtil.isBlank(excelDTO.getSourceCode())){
+            errorMsgList.add("发货单和业务单好不能同时为空");
+        }
         if (CollectionUtils.isEmpty(errorMsgList)){
-            BeanMapperUtils.copy(excelDTO, addDTO);
+            addDTO = InitFirstMileAllocationConverter.INSTANCE.excelToAddDTO(excelDTO);
             //补充明细数据
             if (StrUtil.isNotBlank(excelDTO.getSourceCode())){
                 List<FirstMileDeliveryDTO.ListFirstMileDTO> firstMileDTOS = wmsFirstMileDeliveryFeign.listDetailByCodes(Collections.singletonList(excelDTO.getSourceCode()));

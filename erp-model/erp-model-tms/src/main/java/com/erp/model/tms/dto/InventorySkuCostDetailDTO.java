@@ -71,7 +71,7 @@ public class InventorySkuCostDetailDTO implements Serializable {
         /**
         * 产品成本（6位小数）
         */
-        private BigDecimal productCost;
+        private String productCost;
 
 
     }

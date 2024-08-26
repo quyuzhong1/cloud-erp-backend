@@ -9,10 +9,10 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.tms.convert.InventorySkuCostConverter;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,7 +72,7 @@ public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<I
         }
         if (CollectionUtils.isEmpty(errorMsgList)){
             //数据copy
-            BeanMapperUtils.copy(excelDTO, addDTO);
+            addDTO = InventorySkuCostConverter.INSTANCE.excelToAddDTO(excelDTO);
             if (StrUtil.isNotBlank(addDTO.getSkuNo())){
                 List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.listBySkuNos(Collections.singletonList(addDTO.getSkuNo()));
                 if (CollectionUtils.isEmpty(productDetailEntityList)){

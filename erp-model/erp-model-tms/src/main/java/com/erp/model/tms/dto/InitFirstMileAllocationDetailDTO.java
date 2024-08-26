@@ -139,7 +139,7 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
         /**
         * 产品成本
         */
-        private BigDecimal productCost;
+        private String productCost;
 
         /**
         * 汇率

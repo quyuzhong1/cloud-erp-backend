@@ -30,6 +30,24 @@
         is_deleted,
         month, org_id, org_name
     </sql>
+    <select id="queryList" resultType="com.erp.model.tms.dto.ReportPeriodMonthDTO$SelectDTO">
+        select
+            rpm.id,
+            rpm.org_id,
+            rpm.org_name,
+            rpm.month as reportPeriodMonth,
+            to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr
+        FROM report_period_month rpm
+        LEFT JOIN first_mile_cost_allocation a on a.report_period_id = rpm.id and a.is_deleted = FALSE
+        where rpm.is_deleted = FALSE
+          and (a.status is null or a.status != 'confirm')
+        <if test="">
+            rpm.org_id in
+            <foreach collection="orgIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

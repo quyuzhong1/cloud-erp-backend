@@ -103,7 +103,7 @@
         </if>
         eb.create_time DESC
     </select>
-    <select id="listByLogisticsBillIds" resultType="com.erp.model.tms.dto.FirstMileEstimatedBillDTO.View">
+    <select id="listByLogisticsBillIds" resultType="com.erp.model.tms.dto.FirstMileEstimatedBillDTO$View">
         select eb.id,
                 lb.source_code businessCode,
                 lb.outstock_id outStockId,

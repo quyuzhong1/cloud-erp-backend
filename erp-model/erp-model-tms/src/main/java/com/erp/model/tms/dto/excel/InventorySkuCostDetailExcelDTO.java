@@ -40,8 +40,8 @@ public class InventorySkuCostDetailExcelDTO implements Serializable {
      * *产品成本
      */
     @ExcelProperty(value = "*产品成本", index = 3)
-    @FieldValid(fieldName = "产品成本",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
-    private BigDecimal productCost;
+    @FieldValid(fieldName = "产品成本",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT6)
+    private String productCost;
     /**
      * 币种(默认CNY)
      */

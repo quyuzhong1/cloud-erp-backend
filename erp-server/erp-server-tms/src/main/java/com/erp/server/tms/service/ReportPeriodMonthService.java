@@ -1,9 +1,12 @@
 package com.erp.server.tms.service;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.ReportPeriodMonthDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -36,8 +39,15 @@ public interface ReportPeriodMonthService extends SuperService<ReportPeriodMonth
     /**
      * 检查并创建核算记录
      * @param company
-     * @param reportPeriodId
+     * @param entity
      * @return
      */
-    String createOrUpdatePeriod(SysAccountingCompanyEntity company, String reportPeriodId);
+    String createOrUpdatePeriod(SysAccountingCompanyEntity company, FirstMileCostAllocationEntity entity);
+
+    /**
+     * 获取所有核算期间下拉框
+     * @param dto
+     * @return
+     */
+    List<ReportPeriodMonthDTO.SelectDTO> queryList(ReportPeriodMonthDTO.QueryDTO dto);
 }

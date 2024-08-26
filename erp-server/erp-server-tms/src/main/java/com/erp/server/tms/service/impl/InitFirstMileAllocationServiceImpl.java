@@ -26,6 +26,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.ReconciliationTypeEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
+import com.erp.server.tms.convert.InitFirstMileAllocationConverter;
 import com.erp.server.tms.listener.InitFirstMileAllocationDetailExcelListener;
 import com.erp.server.tms.mapper.InitFirstMileAllocationMapper;
 import com.erp.server.tms.service.*;
@@ -48,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -275,7 +277,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         viewDTO.setStatusName(ApproveStatusEnum.getName(viewDTO.getStatus()));
         List<InitFirstMileAllocationDetailEntity> detailEntityList = initFirstMileAllocationDetailService.listByMainIds(Collections.singletonList(id));
         if (!CollectionUtils.isEmpty(detailEntityList)) {
-            List<InitFirstMileAllocationDetailDTO.ViewDTO> viewDTOList = BeanMapperUtils.copyList(InitFirstMileAllocationDetailDTO.ViewDTO.class, detailEntityList);
+            List<InitFirstMileAllocationDetailDTO.ViewDTO> viewDTOList = InitFirstMileAllocationConverter.INSTANCE.detailToViewDTO(detailEntityList);
             viewDTO.setDetailList(viewDTOList);
         }
         return viewDTO;
@@ -456,6 +458,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             if (!logisticsBillMap.isEmpty()) {
                 e.setLogisticsBillId(logisticsBillMap.get(e.getSourceId()));
             }
+            e.setProductCost(new BigDecimal(e.getProductCost()).stripTrailingZeros().toPlainString());
         });
     }
 

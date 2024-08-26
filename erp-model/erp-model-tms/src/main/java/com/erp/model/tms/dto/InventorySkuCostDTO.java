@@ -290,7 +290,7 @@ public class InventorySkuCostDTO implements Serializable {
         /**
          * 单位成本【可排序】
          */
-        private BigDecimal productCost;
+        private String productCost;
         /**
          * 创建人【可排序】
          */

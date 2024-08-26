@@ -92,7 +92,7 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
     /**
      * 根据发货单id获取重量分摊记录
      * @param sourceIds
-     * @param statusList
+     * @param statusList  CostAllocationStatusEnum
      * @return
      */
     List<FirstMileWeightAllocationEntity> listBySourceIds(List<String> sourceIds, List<String> statusList);

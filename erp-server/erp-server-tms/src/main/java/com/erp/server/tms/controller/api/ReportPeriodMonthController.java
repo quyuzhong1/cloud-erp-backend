@@ -20,6 +20,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.ReportPeriodMonthDTO;
 
+import java.util.List;
+
 /**
  * 核算期间月份表
  *
@@ -67,6 +69,13 @@ public class ReportPeriodMonthController extends BaseController {
         return success();
     }
 
-
-
+    /**
+     * 获取所有核算期间下拉框
+     * @param dto
+     * @return
+     */
+    @PostMapping("/queryList")
+    public ApiResult<List<ReportPeriodMonthDTO.SelectDTO>> queryList(@RequestBody @Validated ReportPeriodMonthDTO.QueryDTO dto) {
+        return success(reportPeriodMonthService.queryList(dto));
+    }
 }
