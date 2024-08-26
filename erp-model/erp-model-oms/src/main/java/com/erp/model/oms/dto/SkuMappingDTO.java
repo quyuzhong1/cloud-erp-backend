@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
@@ -19,7 +18,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Lambda
@@ -229,16 +227,6 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class WarehousePagingParamDTO extends SortDTO {
-
-        /**
-         * 页面高级查询
-         */
-        private List<AdvanceQueryDTO> advanceQueryDTOList;
-
-        /**
-         * sqlMap 默认key default
-         */
-        private Map<String,String> sqlMap;
 
         private String type;
 
