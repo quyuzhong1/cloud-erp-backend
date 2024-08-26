@@ -268,6 +268,10 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private String companyName;
         /**
+         * 汇率（对人民币）
+         */
+        private BigDecimal exchangeRate;
+        /**
          * 明细id
          */
         private String detailId;

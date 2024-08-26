@@ -495,7 +495,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                         if (Objects.isNull(pagingVO)) {
                             return BigDecimal.ZERO;
                         } else {
-                            return new BigDecimal(pagingVO.getProductCost()).multiply(BigDecimal.valueOf(e.getQuantity()));
+                            return MathUtil.multiply(MathUtil.multiply(new BigDecimal(pagingVO.getProductCost()),e.getQuantity()),pagingVO.getExchangeRate());
                         }
                     }).reduce(BigDecimal.ZERO, BigDecimal::add);
                     //汇总关联的sku成本记录
@@ -507,7 +507,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     InventorySkuCostDTO.PagingVO pagingVO = skuCostList.stream().filter(f -> f.getSkuId().equals(deliveryDetailEntity.getSkuId())).findFirst().orElse(null);
                     if (Objects.nonNull(pagingVO)) {
                         skuCostDetailIds.add(pagingVO.getDetailId());
-                        firstMileSkuCostAllocationEntity.setProductCost(new BigDecimal(pagingVO.getProductCost()));
+                        firstMileSkuCostAllocationEntity.setProductCost(MathUtil.multiply(new BigDecimal(pagingVO.getProductCost()),pagingVO.getExchangeRate()));
                     } else {
                         firstMileSkuCostAllocationEntity.setProductCost(BigDecimal.ZERO);
                     }
