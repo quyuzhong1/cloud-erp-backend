@@ -253,6 +253,15 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("dict_inventory_status", "usable")
                     .orderByAsc("qty")
             );
+
+            if(pickInventoryList.isEmpty()){
+                WarehouseLocationReplenishEntity replenishItem = new WarehouseLocationReplenishEntity();
+                BeanMapper.copy(entity, replenishItem);
+                replenishItem.setSuggestQty(dto.getQty());
+                this.save(replenishItem);
+                return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);
+            }
+
             //所有的仓位都补货
             List<WarehouseLocationReplenishEntity> replenishList = new ArrayList<>();
             for (InventoryEntity inventoryEntity : pickInventoryList) {

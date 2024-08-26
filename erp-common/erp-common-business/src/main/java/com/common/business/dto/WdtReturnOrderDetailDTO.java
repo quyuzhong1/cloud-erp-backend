@@ -1,5 +1,7 @@
 package com.common.business.dto;
 
+import java.math.BigDecimal;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -76,4 +78,9 @@ public class WdtReturnOrderDetailDTO {
      * 审核状态
      */
     private String approveStatus;
+    
+    /**
+     * 退款金额
+     */
+    private BigDecimal amount;
 }

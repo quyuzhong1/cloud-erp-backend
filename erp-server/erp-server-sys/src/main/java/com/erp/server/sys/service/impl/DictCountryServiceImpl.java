@@ -554,4 +554,13 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         });
         return false;
     }
+
+    @Override
+    public List<DictCountryEntity> listCountryByIdsOrAlpha3(List<String> codeList) {
+        return lambdaQuery()
+                .in(DictCountryEntity::getId, codeList)
+                .or()
+                .in(DictCountryEntity::getAlpha3, codeList)
+                .list();
+    }
 }

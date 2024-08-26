@@ -148,13 +148,28 @@ public class OtherInstockEntity extends BaseEntity<OtherInstockEntity> {
      */
     @TableField("approve_user_id")
     private String approveUserId;
-    
+
     /**
      * 同步金蝶id
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
+    /**
+     * 第三方单号
+     */
+    @TableField("third_code")
+    private String thirdCode;
+    /**
+     * 第三方平台
+     */
+    @TableField("third_platform")
+    private String thirdPlatform;
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
 
     @TableField(exist = false)
     private List<OtherInstockDetailEntity> detailEntityList;
