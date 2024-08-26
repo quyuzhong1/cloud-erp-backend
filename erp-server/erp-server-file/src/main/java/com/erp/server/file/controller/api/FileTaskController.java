@@ -74,7 +74,8 @@ public class FileTaskController extends BaseController {
      */
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "file:task:paging"
+            menuCode = "file:task:paging",
+            tableAlias = "ft"
     )
     @PostMapping("/paging")
     @WebAdvanceQuery

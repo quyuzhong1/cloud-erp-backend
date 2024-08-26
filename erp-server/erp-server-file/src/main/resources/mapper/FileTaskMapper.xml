@@ -20,7 +20,7 @@
         start_time,
         finish_time,
         type
-        from file_task
+        from file_task ft
         where ${params.sqlMap.default} and is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
