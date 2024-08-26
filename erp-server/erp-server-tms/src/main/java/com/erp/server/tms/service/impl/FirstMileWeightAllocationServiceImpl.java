@@ -106,6 +106,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
      * 处理新增数据
      */
     private List<FirstMileWeightAllocationEntity> handleData(FirstMileWeightAllocationDTO.AddDTO dto) {
+        if(dto.getPackingDTOList() == null){
+            throw new ServiceException("没有找到装箱信息");
+        }
         List<FirstMileWeightAllocationEntity> list = new ArrayList<>(dto.getPackingDTOList().size());
         //装箱信息
         List<String> taskIds = dto.getPackingDTOList().stream().map(item -> item.getTaskId()).distinct().collect(Collectors.toList());
@@ -155,15 +158,18 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             entity.setBoxWidth(packingDTO.getWidth());
             entity.setBoxHeight(packingDTO.getHeight());
             entity.setBoxSizeUnit(packingDTO.getSizeUnit());
-            if(cartonSepcViewMap.containsKey(packingDTO.getTaskId())){
-                WmsCartonSpecDTO.WmsCartonSpecView cartonSpecView = cartonSepcViewMap.get(packingDTO.getTaskId());
-                WmsCartonSpecDTO.ViewDTO specView = cartonSpecView.getWmsCartonList().stream().filter(item -> StringUtils.compare(String.valueOf(item.getBoxNo()), packingDTO.getBoxNo()) == 0).findFirst().orElseGet(null);
-                if(specView != null){
-                    entity.setOutStockWeight(specView.getPackageWeight());
-                    entity.setWeightUnit(specView.getWeightUnit());
-                    WmsCartonDetailDTO.ViewDTO cartonDetailView = specView.getDetailList().stream().filter(item -> item.getSkuId().equals(packingDTO.getSkuId())).findFirst().orElseGet(null);
-                    entity.setDeliveryQty(cartonDetailView != null ? cartonDetailView.getDeliveryQty() : 0);
-                }
+            if(! cartonSepcViewMap.containsKey(packingDTO.getTaskId())){
+                throw new ServiceException("没有找到装箱信息");
+            }
+            WmsCartonSpecDTO.WmsCartonSpecView cartonSpecView = cartonSepcViewMap.get(packingDTO.getTaskId());
+            WmsCartonSpecDTO.ViewDTO specView = cartonSpecView.getWmsCartonList().stream().filter(item -> StringUtils.compare(String.valueOf(item.getBoxNo()), packingDTO.getBoxNo()) == 0).findFirst().orElseGet(null);
+            if(specView != null){
+                entity.setOutStockWeight(specView.getPackageWeight());
+                entity.setWeightUnit(specView.getWeightUnit());
+                WmsCartonDetailDTO.ViewDTO cartonDetailView = specView.getDetailList().stream().filter(item -> item.getSkuId().equals(packingDTO.getSkuId())).findFirst().orElseGet(null);
+                entity.setDeliveryQty(cartonDetailView != null ? cartonDetailView.getDeliveryQty() : 0);
+            }else {
+                entity.setOutStockWeight(BigDecimal.ZERO);
             }
             entity.setSkuId(packingDTO.getSkuId());
             entity.setSkuNo(packingDTO.getSkuNo());
@@ -173,17 +179,22 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 ProductDetailEntity productDetail = productDetailMap.get(packingDTO.getSkuId());
                 entity.setProductName(productDetail.getName());
             }
-            if(productPackMap.containsKey(packingDTO.getSkuId())){
-                ProductPackEntity productPack = productPackMap.get(packingDTO.getSkuId());
-                BigDecimal productWeight = BigDecimal.ZERO;
-                if(productPack.getGrossWeight() != null){
-                    productWeight = productPack.getGrossWeight();
-                } else if (productPack.getNetWeight() != null) {
-                    productWeight = productPack.getNetWeight();
-                }
-                entity.setProductWeight(productWeight.divide(BigDecimal.valueOf(1000), RoundingMode.HALF_UP));  //单位换算为KG
+            if(! productPackMap.containsKey(packingDTO.getSkuId())){
+                throw new ServiceException("没有找到产品包装信息");
             }
-            entity.setVolumeWeight(packingDTO.getLength().multiply(packingDTO.getWidth()).multiply(packingDTO.getHeight()).divide(BigDecimal.valueOf(dto.getVolumeSetting()), RoundingMode.HALF_UP));
+            ProductPackEntity productPack = productPackMap.get(packingDTO.getSkuId());
+            BigDecimal productWeight = BigDecimal.ZERO;
+            if(productPack.getGrossWeight() != null){
+                productWeight = productPack.getGrossWeight();
+            } else if (productPack.getNetWeight() != null) {
+                productWeight = productPack.getNetWeight();
+            }
+            entity.setProductWeight(productWeight.divide(BigDecimal.valueOf(1000), RoundingMode.HALF_UP));  //单位换算为KG
+            if(dto.getVolumeSetting() != 0){
+                entity.setVolumeWeight(packingDTO.getLength().multiply(packingDTO.getWidth()).multiply(packingDTO.getHeight()).divide(BigDecimal.valueOf(dto.getVolumeSetting()), RoundingMode.HALF_UP));
+            }else {
+                entity.setVolumeWeight(BigDecimal.ZERO);
+            }
             entity.setChargedWeight(entity.getOutStockWeight().max(entity.getVolumeWeight()));
             entity.setWeightUnit(packingDTO.getWeightUnit());
             list.add(entity);
@@ -199,17 +210,13 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             });
             FirstMileWeightAllocationEntity last = skuList.get(skuList.size() - 1);
             List<BigDecimal> allocationWeightList = new ArrayList<>(skuList.size());
-            skuList.forEach(sku -> {
-//                if(! last.getSkuId().equals(sku.getSkuId())){
-                    BigDecimal skuWeight = getSkuWeight(sku);
-                    BigDecimal divide = skuWeight.multiply(BigDecimal.valueOf(dto.getVolumeSetting())).divide(boxWeightSum[0], RoundingMode.HALF_UP);
-                    sku.setAllocationWeight(divide);
-                    allocationWeightList.add(divide);
-//                }else {
-//
-//                }
-
-            });
+            for (FirstMileWeightAllocationEntity sku : skuList) {
+                BigDecimal skuWeight = getSkuWeight(sku);
+                BigDecimal divide = skuWeight.multiply(BigDecimal.valueOf(dto.getVolumeSetting())).divide(boxWeightSum[0], RoundingMode.HALF_UP);
+                sku.setAllocationWeight(divide);
+                allocationWeightList.add(divide);
+                //最后一个sku补足重量
+            }
         }
         return list;
     }

@@ -320,6 +320,10 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String fromWarehouseId;
 
         /**
+         * 物流渠道ID
+         */
+        private String channelId;
+        /**
          * 材积设置
          */
         private int volumeSetting;

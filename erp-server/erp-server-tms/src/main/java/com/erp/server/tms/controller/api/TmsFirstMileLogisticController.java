@@ -375,4 +375,17 @@ public class TmsFirstMileLogisticController extends BaseController {
     public ApiResult<List<Map<String,Object>>> getTrackStatusList() {
         return success(tmsFirstMileLogisticService.getTrackStatusList());
     }
+
+    /**
+     * 下推重量分摊
+     */
+    @PostMapping("/pushWeightAllocation")
+    public ApiResult<List<BatchResultDTO>> pushWeightAllocation(@RequestBody @Valid BaseIdsDTO.IdsDTO dto){
+        List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO = tmsFirstMileLogisticService.pushWeightAllocation(id);
+            resultList.add(resultDTO);
+        }
+        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
+    }
 }

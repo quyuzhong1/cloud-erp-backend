@@ -90,22 +90,22 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     * 发货量
     */
     @TableField("delivery_qty")
-    private Integer deliveryQty;
+    private Integer deliveryQty = 0;
     /**
     * 箱长
     */
     @TableField("box_length")
-    private BigDecimal boxLength;
+    private BigDecimal boxLength = BigDecimal.ZERO;
     /**
     * 箱宽
     */
     @TableField("box_width")
-    private BigDecimal boxWidth;
+    private BigDecimal boxWidth = BigDecimal.ZERO;
     /**
     * 箱高
     */
     @TableField("box_height")
-    private BigDecimal boxHeight;
+    private BigDecimal boxHeight = BigDecimal.ZERO;
     /**
     * 箱子尺寸单位
     */
@@ -117,22 +117,22 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     * 体积重量=出库尺寸/材积参数[取值渠道设置的材积设置]
     */
     @TableField("charged_weight")
-    private BigDecimal chargedWeight;
+    private BigDecimal chargedWeight = BigDecimal.ZERO;
     /**
     * 体积重
     */
     @TableField("volume_weight")
-    private BigDecimal volumeWeight;
+    private BigDecimal volumeWeight = BigDecimal.ZERO;
     /**
     * 单产品重量
     */
     @TableField("product_weight")
-    private BigDecimal productWeight;
+    private BigDecimal productWeight = BigDecimal.ZERO;
     /**
     * 分摊重量
     */
     @TableField("allocation_weight")
-    private BigDecimal allocationWeight;
+    private BigDecimal allocationWeight = BigDecimal.ZERO;
     /**
     * 重量单位
     */
@@ -197,7 +197,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
      * 出库重量
      */
     @TableField("out_stock_weight")
-    private BigDecimal outStockWeight;
+    private BigDecimal outStockWeight = BigDecimal.ZERO;
 
 
     public static final String SOURCE_ID = "source_id";

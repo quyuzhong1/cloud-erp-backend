@@ -28,6 +28,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
@@ -1719,6 +1720,44 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public List<TmsFirstMileLogisticDTO.WeightAllocationDTO> assembleFirstMileEstimatedList() {
-        return baseMapper.assembleFirstMileEstimatedList();
+        return baseMapper.assembleFirstMileEstimatedList(null);
+    }
+
+    @Override
+    public BatchResultDTO pushWeightAllocation(String id) {
+        //重量分摊基础数据
+        List<TmsFirstMileLogisticDTO.WeightAllocationDTO> list = baseMapper.assembleFirstMileEstimatedList(Collections.singletonList(id));
+        if(list.isEmpty()){
+            return BatchResultDTO.fail(id, id, "只有下单后的物流单才能推送重量分摊");
+        }
+        TmsFirstMileLogisticDTO.WeightAllocationDTO allocationDTO = list.get(0);
+        //头程发货单
+        FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
+        reqDto.setIds(Collections.singletonList(allocationDTO.getSourceId()));
+        List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOList = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
+        Map<String, FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOMap = generateLogisticDTOList.stream().collect(Collectors.toMap(item -> item.getOutstockId(), item2 -> item2));
+        //物流渠道
+        List<LogisticsChannelEntity> channelList = logisticsChannelService.listByIds(Collections.singletonList(allocationDTO.getChannelId()));
+        Map<String, LogisticsChannelEntity> channelMap = channelList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
+        //物流商
+        List<LogisticsSupplierEntity> supplierList = logisticsSupplierService.listByIds(Collections.singletonList(allocationDTO.getSupplierId()));
+        Map<String, LogisticsSupplierEntity> supplierMap = supplierList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
+        FirstMileWeightAllocationDTO.AddDTO dto = new FirstMileWeightAllocationDTO.AddDTO();
+        BeanMapper.copy(allocationDTO, dto);
+        if(generateLogisticDTOMap.containsKey(allocationDTO.getSourceId())){
+            FirstMileDeliveryDTO.GenerateLogisticDTO deliveryDto = generateLogisticDTOMap.get(allocationDTO.getSourceId());
+            dto.setFromWarehouseId(deliveryDto.getFromWarehouseId());
+            dto.setPackingDTOList(deliveryDto.getPackingDTOList());
+        }
+        if(channelMap.containsKey(allocationDTO.getChannelId())){
+            LogisticsChannelEntity logisticsChannel = channelMap.get(allocationDTO.getChannelId());
+            dto.setChannelId(allocationDTO.getChannelId());
+            dto.setVolumeSetting(logisticsChannel.getVolumeSetting());
+            dto.setFeeRule(logisticsChannel.getFeeRule());
+        }
+        if(supplierMap.containsKey(allocationDTO.getSupplierId())){
+            dto.setSupplierName(supplierMap.get(allocationDTO.getSupplierId()).getSupplierName());
+        }
+        return firstMileWeightAllocationService.add(dto);
     }
 }
