@@ -56,7 +56,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        c.create_time DESC
+        c.create_time DESC,c.id
     </sql>
     <select id="tabList" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$TabListDTO">
         SELECT

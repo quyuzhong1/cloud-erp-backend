@@ -155,7 +155,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Resource
     private FsService fsService;
-
+    @Lazy
     @Resource
     private TmsFirstMileReconciliationService tmsFirstMileReconciliationService;
 

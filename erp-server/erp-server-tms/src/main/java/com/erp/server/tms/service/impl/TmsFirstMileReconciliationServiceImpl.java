@@ -40,6 +40,7 @@ import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -75,6 +76,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
+    @Lazy
     @Resource
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
 

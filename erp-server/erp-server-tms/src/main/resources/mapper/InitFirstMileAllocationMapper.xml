@@ -31,10 +31,10 @@
     </sql>
     <sql id="pagingSql">
         SELECT
-        a.id,a.code, a.status,a.remark,
+        a.id,a.code as code, a.status as status,a.remark,
         ad.id as detailId,ad.source_id, ad.source_detail_id, ad.source_code as sourceCode, ad.source_type, ad.business_code as businessCode, ad.business_type,
-        ad.shop_id, ad.shop_name, ad.warehouse_id, ad.warehouse_name, ad.sku_no as skuNo, ad.sku_id, ad.product_name, ad.init_receive_qty as initReceiveQty,
-        ad.init_transit_cost as initTransitCost,ad.init_transit_tariff as initTransitTariff,ad.init_estimated_cost as initEstimatedCost,
+        ad.shop_id as shopId, ad.shop_name as shopName, ad.warehouse_id as warehouseId, ad.warehouse_name, ad.sku_no as skuNo, ad.sku_id, ad.product_name,
+        ad.init_receive_qty as initReceiveQty,ad.init_transit_cost as initTransitCost,ad.init_transit_tariff as initTransitTariff,ad.init_estimated_cost as initEstimatedCost,
         ad.init_estimated_tariff as initEstimatedTariff,ad.weight_allocation as weightAllocation, ad.product_cost as productCost, ad.exchange_rate as exchangeRate,
         ad.weight_unit,ad.currency, ad.currency_symbol,a.create_user_name as createUserName,a.create_time as createTime
         FROM  init_first_mile_allocation a
@@ -52,7 +52,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        a.create_time DESC
+        a.create_time DESC,a.id
     </sql>
     <!--tab汇总-->
     <select id="tabList" resultType="com.erp.model.tms.dto.InitFirstMileAllocationDTO$TabListDTO">
