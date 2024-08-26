@@ -242,16 +242,16 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
         //费用分摊
         List<String> sourceIds = records.stream().map(item -> item.getSourceId()).distinct().collect(Collectors.toList());
-        List<FirstMileCostAllocationDTO.PagingVO> costAllocationList = costAllocationService.listBySourceIds(sourceIds);
+//        List<FirstMileCostAllocationDTO.PagingVO> costAllocationList = costAllocationService.listBySourceIds(sourceIds);
         for (FirstMileWeightAllocationDTO.ViewDTO item : records) {
             item.setCostAllocationStatusName(CostAllocationStatusEnum.getName(item.getCostAllocationStatus()));
             item.setAllocationTypeName(WeightAllocationTypeEnum.getName(item.getAllocationType()));
             if(warehouseMap.containsKey(item.getFromWarehouseId())){
                 item.setFromWarehouseName(warehouseMap.get(item.getFromWarehouseId()).getName());
             }
-            List<FirstMileCostAllocationDTO.PagingVO> costAllocFilterList = costAllocationList.stream().filter(v -> v.getSourceId().equals(item.getSourceId()) && v.getSkuId().equals(item.getSkuId())).collect(Collectors.toList());
-            costAllocFilterList.sort(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
-            if(! costAllocFilterList.isEmpty()){
+//            List<FirstMileCostAllocationDTO.PagingVO> costAllocFilterList = costAllocationList.stream().filter(v -> v.getSourceId().equals(item.getSourceId()) && v.getSkuId().equals(item.getSkuId())).collect(Collectors.toList());
+//            costAllocFilterList.sort(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
+            /*if(! costAllocFilterList.isEmpty()){
                 FirstMileCostAllocationDTO.PagingVO costAllocationDTO = costAllocFilterList.get(0);
                 item.setCalculatePeriodId(costAllocationDTO.getReportPeriodId());
                 item.setCalculateMonth(monthFormatter.format(costAllocationDTO.getReportPeriodMonth()));
@@ -264,7 +264,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 }
             }else {
                 item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
-            }
+            }*/
         }
     }
 
