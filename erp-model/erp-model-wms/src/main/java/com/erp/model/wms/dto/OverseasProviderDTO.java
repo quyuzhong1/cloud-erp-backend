@@ -67,7 +67,7 @@ public class OverseasProviderDTO implements Serializable {
         /**
          * 启用时间
          */
-        private LocalDate enabledDate;
+        private LocalDate enableDate;
     }
     /**
     * 详情
