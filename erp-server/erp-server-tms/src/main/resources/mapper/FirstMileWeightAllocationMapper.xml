@@ -79,16 +79,158 @@
         </if>
     </select>
     <select id="tabCount" resultType="java.lang.Integer">
-
+        select count(1)
+        from first_mile_weight_allocation wa
+        <where>
+            wa.allocation_status = #{status}
+        </where>
     </select>
     <select id="paging" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
-
+        select wa.id,
+               wa.source_id,
+               wa.source_code sourceCode,
+               wa.delivery_detail_id,
+               wa.business_code businessCode,
+               wa.transport_no transportNo,
+               wa.product_name productName,
+               wa.allocation_status allocationStatus,
+               wa.sku_id,
+               wa.sku_no skuNo,
+               wa.platform_sku_no platformSkuNo,
+               wa.box_id,
+               wa.box_no boxNo,
+               wa.delivery_qty deliveryQty,
+               wa.box_length,
+               wa.box_width,
+               wa.box_height,
+               wa.box_size_unit,
+               wa.out_stock_weight outStockWeight,
+               wa.charged_weight chargedWeight,
+               wa.volume_weight,
+               wa.product_weight productWeight,
+               wa.allocation_weight allocationWeight,
+               wa.weight_unit,
+               wa.supplier_id,
+               wa.supplier_name supplierName,
+               wa.allocation_type allocationType,
+               wa.fee_rule feeRule,
+               wa.shop_id,
+               wa.shop_name shopName,
+               wa.to_country toCountry,
+               wa.from_warehouse_id fromWarehouseId,
+               wa.calculate_period_id,
+               wa.calculate_month,
+               wa.logistics_bill_id
+        from first_mile_weight_allocation wa
+        <where>
+            ${params.sqlMap.default}
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        wa.create_time DESC
     </select>
     <select id="listByParamIds" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
-
+        select wa.id,
+                wa.source_id,
+                wa.source_code sourceCode,
+                wa.delivery_detail_id,
+                wa.business_code businessCode,
+                wa.transport_no transportNo,
+                wa.product_name productName,
+                wa.allocation_status allocationStatus,
+                wa.sku_id,
+                wa.sku_no skuNo,
+                wa.platform_sku_no platformSkuNo,
+                wa.box_id,
+                wa.box_no boxNo,
+                wa.delivery_qty deliveryQty,
+                wa.box_length,
+                wa.box_width,
+                wa.box_height,
+                wa.box_size_unit,
+                wa.out_stock_weight outStockWeight,
+                wa.charged_weight chargedWeight,
+                wa.volume_weight,
+                wa.product_weight productWeight,
+                wa.allocation_weight allocationWeight,
+                wa.weight_unit,
+                wa.supplier_id,
+                wa.supplier_name supplierName,
+                wa.allocation_type allocationType,
+                wa.fee_rule feeRule,
+                wa.shop_id,
+                wa.shop_name shopName,
+                wa.to_country toCountry,
+                wa.from_warehouse_id fromWarehouseId,
+                wa.calculate_period_id,
+                wa.calculate_month,
+                wa.logistics_bill_id
+        from first_mile_weight_allocation wa
+        <where>
+            wa.id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        wa.create_time DESC
     </select>
     <select id="listByParam" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
-
+        select wa.id,
+                wa.source_id,
+                wa.source_code sourceCode,
+                wa.delivery_detail_id,
+                wa.business_code businessCode,
+                wa.transport_no transportNo,
+                wa.product_name productName,
+                wa.allocation_status allocationStatus,
+                wa.sku_id,
+                wa.sku_no skuNo,
+                wa.platform_sku_no platformSkuNo,
+                wa.box_id,
+                wa.box_no boxNo,
+                wa.delivery_qty deliveryQty,
+                wa.box_length,
+                wa.box_width,
+                wa.box_height,
+                wa.box_size_unit,
+                wa.out_stock_weight outStockWeight,
+                wa.charged_weight chargedWeight,
+                wa.volume_weight,
+                wa.product_weight productWeight,
+                wa.allocation_weight allocationWeight,
+                wa.weight_unit,
+                wa.supplier_id,
+                wa.supplier_name supplierName,
+                wa.allocation_type allocationType,
+                wa.fee_rule feeRule,
+                wa.shop_id,
+                wa.shop_name shopName,
+                wa.to_country toCountry,
+                wa.from_warehouse_id fromWarehouseId,
+                wa.calculate_period_id,
+                wa.calculate_month,
+                wa.logistics_bill_id
+        from first_mile_weight_allocation wa
+        <where>
+            ${params.sqlMap.default}
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        wa.create_time DESC
     </select>
 
 

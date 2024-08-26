@@ -93,8 +93,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             item.setLogisticsCost(logisticsDTO.getEstimatedFee());
             TmsCostDetailDTO.CostCompareDTO declareDTO = costCompareList.stream().filter(v -> v.getCostCode().equals(DictCostCategoryEnum.DECLARE_COST.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostCompareDTO());
             item.setCustomsClearanceCost(declareDTO.getEstimatedFee());
-//            TmsCostDetailDTO.CostCompareDTO otherTaxDTO = costCompareList.stream().filter(v -> v.getCostCode().equals(DictCostCategoryEnum.DECLARE_COST.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostCompareDTO());
-//            item.setOtherTaxCost(otherTaxDTO.getEstimatedFee());
+            TmsCostDetailDTO.CostCompareDTO otherTaxDTO = costCompareList.stream().filter(v -> v.getCostCode().equals(DictCostCategoryEnum.OTHER_TAX_FEE.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostCompareDTO());
+            item.setOtherTaxCost(otherTaxDTO.getEstimatedFee());
             TmsCostDetailDTO.CostCompareDTO otherDTO = costCompareList.stream().filter(v -> v.getCostCode().equals(DictCostCategoryEnum.OTHER_COST.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostCompareDTO());
             item.setOtherCost(otherDTO.getEstimatedFee());
             item.setCostTotal(item.getLogisticsCost().add(item.getCustomsClearanceCost()).add(item.getOtherTaxCost()).add(item.getOtherCost()));
