@@ -116,7 +116,6 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     @Transactional(rollbackFor = Exception.class)
     public Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(getPlatFormCodeById(dto.getId()));
-        //TODO 拉取任务新增启用时间
         boolean result = thirdWarehouseService.authorize(dto);
         if(result){
             OverseasProviderEntity entity = this.getById(dto.getId());
