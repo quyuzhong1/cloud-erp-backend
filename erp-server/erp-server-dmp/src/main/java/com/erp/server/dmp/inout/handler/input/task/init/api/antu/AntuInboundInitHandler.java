@@ -1,14 +1,16 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.antu;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.OverseasInstockStatusEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
@@ -16,14 +18,10 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
+import com.sdk.wms.antu.dto.request.AntuGetReceiptReq;
+import com.sdk.wms.antu.dto.response.AntuReceiptResp;
+import com.sdk.wms.antu.dto.response.AntuResponse;
 import com.sdk.wms.antu.utils.AntuUtils;
-import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
-import com.sdk.wms.goodcang.utils.GoodCangUtils;
-import com.sdk.wms.iml.dto.request.ImlGetReceiptReq;
-import com.sdk.wms.iml.dto.response.ImlReceiptResp;
-import com.sdk.wms.iml.dto.response.ImlResponse;
-import com.sdk.wms.iml.utils.ImlUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -51,8 +49,8 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
         //查询待签收、部分签收状态的入库单
         List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
                 , OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
-                , OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_IML.getCode());
-        List<ImlReceiptResp> allResult = new ArrayList<>();
+                , OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_ANTU.getCode());
+        List<AntuReceiptResp> allResult = new ArrayList<>();
 
         if (CollUtil.isNotEmpty(receiveCodeList)) {
             String typeId = dmpCfgInputEntity.getTypeId();
@@ -61,20 +59,24 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
 
             List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(OmsPlatformEnum.OMS_ANTU.getCode()));
             if (CollUtil.isEmpty(overseasProviderEntityList)) {
-                throw new ServiceException("艾姆勒授权信息不存在");
+                throw new ServiceException("安兔授权信息不存在");
             }
             ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
+            //列表数据较多情况下，进行分割集合
+            List<List<String>> partition = ListUtil.partition(receiveCodeList, MathUtil.NUMBER_100);
 
-            //查询数据
-            ImlGetReceiptReq imlGetReceiptReq = ImlGetReceiptReq.builder()
-                    .page(1)
-                    .pageSize(receiveCodeList.size())
-                    .receivingCodeArr(receiveCodeList)
-                    .build();
-            String response = ImlUtils.callService(apiType, imlGetReceiptReq);
-            ImlResponse<List<ImlReceiptResp>> result = JSONObject.parseObject(response, new TypeReference<ImlResponse<List<ImlReceiptResp>>>() {
-            }.getType());
-            allResult = result.getData();
+            for (int i = 1; i <= partition.size(); i++) {
+                //查询数据
+                AntuGetReceiptReq antuGetReceiptReq = AntuGetReceiptReq.builder()
+                        .page(i)
+                        .pageSize(MathUtil.NUMBER_100)
+                        .receivingCodeArr(partition.get(i))
+                        .build();
+                String response = AntuUtils.callService(apiType, antuGetReceiptReq);
+                AntuResponse<List<AntuReceiptResp>> result = JSONObject.parseObject(response, new TypeReference<AntuResponse<List<AntuReceiptResp>>>() {
+                }.getType());
+                allResult.addAll(result.getData());
+            }
         }
 
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
