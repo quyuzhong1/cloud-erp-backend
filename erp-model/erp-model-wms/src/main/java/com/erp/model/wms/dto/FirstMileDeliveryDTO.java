@@ -13,6 +13,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -1260,7 +1261,7 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 日期
          */
-        private String month;
+        private LocalDate month;
     }
     @Data
     @NoArgsConstructor

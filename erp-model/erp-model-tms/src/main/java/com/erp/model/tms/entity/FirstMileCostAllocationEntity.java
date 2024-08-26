@@ -5,6 +5,8 @@ import com.common.core.entity.BaseEntity;
 import java.time.LocalDate;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -31,10 +33,15 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     @TableField("remark")
     private String remark;
     /**
-    * 对账单id
+    * 实际对账单id
     */
     @TableField("reconciliation_id")
     private String reconciliationId;
+    /**
+     * 暂估对账单id
+     */
+    @TableField("estimated_bill_id")
+    private String estimatedBillId;
     /**
     * 对账单单据编号
     */
