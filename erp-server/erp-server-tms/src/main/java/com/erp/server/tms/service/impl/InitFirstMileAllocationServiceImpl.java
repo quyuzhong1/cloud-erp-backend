@@ -234,6 +234,10 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
 
     @Override
     public BatchResultDTO cancel(InitFirstMileAllocationEntity entity) {
+        //审核中允许撤销
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98007.msg);
+        }
         return approve(entity, ApproveTypeEnum.CANCEL.getStatus(), "", Boolean.FALSE);
     }
 
@@ -241,7 +245,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     public BatchResultDTO submit(InitFirstMileAllocationEntity entity) {
         //只有待提交状态才能发起提交
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_1029.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98032.msg);
         }
         log.info("期初头程分摊记录提交审核，code=【{}】", entity.getCode());
         //更新单据为审核中

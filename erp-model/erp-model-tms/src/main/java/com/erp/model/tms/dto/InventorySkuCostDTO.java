@@ -296,6 +296,10 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private String productCost;
         /**
+         * 单位成本【导出使用】
+         */
+        private String productCostStr;
+        /**
          * 创建人【可排序】
          */
         private String createUserName;

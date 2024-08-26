@@ -191,6 +191,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 e.setProductName(skuVO.getSkuName());
             }
             e.setProductCost(new BigDecimal(e.getProductCost()).stripTrailingZeros().toPlainString());
+            e.setProductCostStr(e.getCurrencySymbol()+e.getProductCost());
         });
     }
 
@@ -240,6 +241,10 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public BatchResultDTO cancel(InventorySkuCostEntity entity) {
+        //审核中允许撤销
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getStatus())) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98007.msg);
+        }
         return approve(entity, ApproveTypeEnum.CANCEL.getStatus(), "", Boolean.FALSE);
     }
 
@@ -247,7 +252,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     public BatchResultDTO submit(InventorySkuCostEntity entity) {
         //只有待提交状态才能发起提交
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_1029.msg);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98032.msg);
         }
         log.info("SKU成本记录提交审核，code=【{}】", entity.getCode());
         //更新单据为审核中

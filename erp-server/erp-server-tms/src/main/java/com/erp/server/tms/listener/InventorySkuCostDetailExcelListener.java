@@ -81,18 +81,21 @@ public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<I
                     addDTO.setSkuId(productDetailEntityList.get(0).getId());
                 }
             }
-            if (StrUtil.isBlank(addDTO.getUnit())){
-                addDTO.setUnit("Pcs");
-            }
-            if (StrUtil.isBlank(addDTO.getProductName())){
-                if (StrUtil.isNotBlank(addDTO.getSkuId())){
-                    List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(addDTO.getSkuId()));
-                    if (CollectionUtils.isEmpty(skuVOList)){
-                        errorMsgList.add(StrUtil.format("SKU【{}】产品名称不存在",addDTO.getSkuNo()));
-                    }else {
+            if (StrUtil.isNotBlank(addDTO.getSkuId())){
+                List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(addDTO.getSkuId()));
+                if (CollectionUtils.isEmpty(skuVOList)){
+                    errorMsgList.add(StrUtil.format("SKU【{}】产品名称不存在",addDTO.getSkuNo()));
+                }else {
+                    if (StrUtil.isBlank(addDTO.getProductName()) || !Objects.equals(addDTO.getProductName(), skuVOList.get(0).getSkuName())){
                         addDTO.setProductName(skuVOList.get(0).getSkuName());
                     }
+                    if (StrUtil.isBlank(addDTO.getUnit()) || !Objects.equals(addDTO.getUnit(), skuVOList.get(0).getUnitName())){
+                        addDTO.setUnit(skuVOList.get(0).getUnitName());
+                    }
                 }
+            }
+            if (StrUtil.isBlank(addDTO.getUnit())){
+                addDTO.setUnit("Pcs");
             }
         }
         //添加数据用于判断是否为空
