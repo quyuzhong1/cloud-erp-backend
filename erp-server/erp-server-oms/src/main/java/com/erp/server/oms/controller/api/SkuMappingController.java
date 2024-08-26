@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -17,6 +18,7 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.server.oms.query.SkuMappingQueryHandler;
 import com.erp.server.oms.service.SkuMappingRuleService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -97,6 +99,7 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/warehousePaging")
+    @WebAdvanceQuery(handler = SkuMappingQueryHandler.class)
     public ApiResult<PagingVO<SkuMappingDTO.WarehousePagingViewDTO>> queryWarehouseByPage(@RequestBody @Validated PagingDTO<SkuMappingDTO.WarehousePagingParamDTO> dto) {
         PagingVO<SkuMappingDTO.WarehousePagingViewDTO> pagingVO = skuMappingService.warehousePaging(dto);
         return success(pagingVO);
