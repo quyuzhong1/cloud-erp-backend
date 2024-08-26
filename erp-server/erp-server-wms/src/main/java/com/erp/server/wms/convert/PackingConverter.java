@@ -1,8 +1,12 @@
 package com.erp.server.wms.convert;
 
+import com.common.business.utils.MD5Util;
+import com.common.business.utils.StringUtil;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
+import com.sdk.wms.iml.dto.response.ImlProductResp;
+import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -97,10 +101,11 @@ public interface PackingConverter {
             @Mapping(target = "skuNo", source = "detailEntity.skuNo"),
             @Mapping(target = "deliveryQty", source = "detailEntity.deliveryQty"),
             @Mapping(target = "sourceDetailId", source = "detailEntity.id"),
-            @Mapping(target = "fnSku", source = "detailEntity.fnSku")
+            @Mapping(target = "fnSku", expression = "java(PackingConverter.getFnSkuByDeliveryDetail(detailEntity))"),
     })
     PackingTaskDetailEntity firstMileDeliveryDetailToPackingTaskDetail(FirstMileDeliveryDetailEntity detailEntity);
     List<PackingTaskDetailEntity> firstMileDeliveryDetailToPackingTaskDetail(List<FirstMileDeliveryDetailEntity> detailEntityList);
+
     @Mappings({
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
@@ -173,8 +178,16 @@ public interface PackingConverter {
             @Mapping(target = "skuNo", source = "detailEntity.skuNo"),
             @Mapping(target = "deliveryQty", source = "detailEntity.pickingQty"),
             @Mapping(target = "sourceDetailId", source = "detailEntity.id"),
-            @Mapping(target = "fnSku", source = "detailEntity.platformFnSku")
+            @Mapping(target = "fnSku", expression = "java(PackingConverter.getFnSkuByReqDetail(detailEntity))")
     })
     PackingTaskDetailEntity requisitionDetailToPackingTaskDetail(RequisitionApplicationDetailEntity detailEntity);
     List<PackingTaskDetailEntity> requisitionDetailToPackingTaskDetail(List<RequisitionApplicationDetailEntity> detailEntityList);
+
+    static String getFnSkuByReqDetail(RequisitionApplicationDetailEntity detailEntity){
+        return StringUtils.isBlank(detailEntity.getPlatformFnSku())?detailEntity.getPlatformSku():detailEntity.getPlatformFnSku();
+    }
+    static String getFnSkuByDeliveryDetail(FirstMileDeliveryDetailEntity detailEntity){
+        return StringUtils.isBlank(detailEntity.getFnSku())?detailEntity.getPlatformSkuNo():detailEntity.getFnSku();
+    }
+
 }
