@@ -100,7 +100,8 @@ public class ProjectTaskViewController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "任务视图-导出")
     @PostMapping(value = "/exportExcel")
-    public void exportProduct(@RequestBody ProductTaskViewSearchDTO dto) {
+    public ApiResult<Boolean> exportProduct(@RequestBody ProductTaskViewSearchDTO dto) {
         projectTaskViewService.exportExcel(dto);
+        return success(true);
     }
 }

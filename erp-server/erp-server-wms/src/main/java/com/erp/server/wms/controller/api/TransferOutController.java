@@ -264,8 +264,9 @@ public class TransferOutController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分布式调出单")
     @PostMapping("/export")
-    public void exportList(@RequestBody @Valid TransferOutDTO.ExportDTO dto) {
+    public ApiResult<Boolean> exportList(@RequestBody @Valid TransferOutDTO.ExportDTO dto) {
         transferOutService.exportList(dto);
+        return success(true);
     }
 
 

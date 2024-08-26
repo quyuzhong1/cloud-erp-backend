@@ -1,12 +1,26 @@
 package com.erp.server.wms.controller.pda;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
 import com.erp.server.wms.service.TransferInfoService;
 import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
+import com.erp.server.wms.service.WarehouseLocationMoveService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,29 +28,14 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.controller.BaseController;
-import com.common.core.enums.LogActionEnum;
-import com.erp.server.wms.service.WarehouseLocationMoveService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
-import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
-import org.springframework.web.multipart.MultipartFile;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 仓位移动主表
@@ -624,8 +623,9 @@ public class PdaWarehouseLocationMoveController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓位移动")
     @PostMapping("/export")
-    public void listExport(@RequestBody WarehouseLocationMoveDTO.ExportDTO dto) {
+    public ApiResult<Boolean> listExport(@RequestBody WarehouseLocationMoveDTO.ExportDTO dto) {
         warehouseLocationMoveService.listExport(dto);
+        return success(true);
     }
     /**
      * 导出明细

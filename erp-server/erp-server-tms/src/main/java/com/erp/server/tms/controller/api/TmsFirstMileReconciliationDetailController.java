@@ -19,7 +19,6 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
 import com.erp.server.tms.query.TmsFirstMileReconciliationDetailQueryHandler;
-import com.erp.server.tms.query.TmsFirstMileReconciliationQueryHandler;
 import com.erp.server.tms.service.CfgReconciliationFieldService;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
@@ -183,8 +182,9 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "头程对账单导出Excel数据")
-    public void exportList(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.ExportDTO dto) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.ExportDTO dto) {
         tmsFirstMileReconciliationDetailService.exportList(dto);
+        return success(true);
     }
 
 }

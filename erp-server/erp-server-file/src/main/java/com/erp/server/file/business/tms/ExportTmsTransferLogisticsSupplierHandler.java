@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_SUPPLIER;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TRANSFER_LOGISTICS_SUPPLIER;
 
 @Component
 @Slf4j
@@ -29,7 +29,7 @@ public class ExportTmsTransferLogisticsSupplierHandler extends AbstractPageFileE
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_TMS_LOGISTICS_SUPPLIER;
+        return EXPORT_TMS_TRANSFER_LOGISTICS_SUPPLIER;
     }
 
     @Override

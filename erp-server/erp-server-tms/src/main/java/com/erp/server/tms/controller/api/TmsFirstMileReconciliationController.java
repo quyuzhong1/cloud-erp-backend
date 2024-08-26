@@ -1,34 +1,29 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.erp.server.tms.query.TmsFirstMileReconciliationQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Resource;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.TmsFirstMileReconciliationService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
-
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.server.tms.query.TmsFirstMileReconciliationQueryHandler;
+import com.erp.server.tms.service.TmsFirstMileReconciliationService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 头程对账单
@@ -326,8 +321,9 @@ public class TmsFirstMileReconciliationController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "头程对账单导出Excel数据")
-    public void exportList(@RequestBody @Validated TmsFirstMileReconciliationDTO.ExportDTO dto) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated TmsFirstMileReconciliationDTO.ExportDTO dto) {
         tmsFirstMileReconciliationService.exportList(dto);
+        return success(true);
     }
 
 

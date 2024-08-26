@@ -98,7 +98,8 @@ public class PickingListsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出拣货单")
     @PostMapping("/export")
-    public void export(@RequestBody @Validated PickingListsDTO.ExportDTO dto) {
+    public ApiResult<Boolean> export(@RequestBody @Validated PickingListsDTO.ExportDTO dto) {
         pickingListsService.export(dto);
+        return success(true);
     }
 }

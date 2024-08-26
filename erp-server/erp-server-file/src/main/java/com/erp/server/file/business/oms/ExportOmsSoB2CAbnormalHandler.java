@@ -16,7 +16,6 @@ import javax.annotation.Resource;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_ABNORMAL;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_RETURN;
 
 @Component
 @Slf4j

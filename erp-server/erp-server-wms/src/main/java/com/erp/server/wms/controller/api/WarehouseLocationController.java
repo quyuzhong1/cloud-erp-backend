@@ -1021,8 +1021,9 @@ public class WarehouseLocationController extends BaseController {
      * 导出仓位Excel
      */
     @PostMapping("/exportExcel")
-    public void exportExcel(@RequestBody @Validated WarehouseLocationDTO.exportParamDto dto){
+    public ApiResult<Boolean> exportExcel(@RequestBody @Validated WarehouseLocationDTO.exportParamDto dto){
         warehouseLocationService.exportExcel(dto);
+        return success(true);
     }
 
     /**

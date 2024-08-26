@@ -332,8 +332,9 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
     */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "b2c报关对账单导出Excel数据")
-    public void exportList(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.ExportDTO dto) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.ExportDTO dto) {
         tmsB2cDeclareReconciliationService.exportList(dto);
+        return success(true);
     }
 
 
@@ -345,8 +346,9 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
      */
     @PostMapping("/exportDetail")
     @LogAction(value = LogActionEnum.EXPORT, desc = "b2c报关对账单明细导出Excel数据")
-    public void exportDetailList(@RequestBody @Validated TmsB2cDeclareReconciliationDetailDTO.ExportDTO dto) {
+    public ApiResult<Boolean> exportDetailList(@RequestBody @Validated TmsB2cDeclareReconciliationDetailDTO.ExportDTO dto) {
         tmsB2cDeclareReconciliationDetailService.exportDetailList(dto);
+        return success(true);
     }
 
 }

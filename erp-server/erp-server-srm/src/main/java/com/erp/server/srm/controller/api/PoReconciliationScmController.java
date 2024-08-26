@@ -146,8 +146,9 @@ public class PoReconciliationScmController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
     @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
-    public void exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
         poReconciliationScmService.exportList(dto);
+        return success(true);
     }
 
     /**
@@ -159,8 +160,9 @@ public class PoReconciliationScmController extends BaseController {
     @PostMapping("/exportPoReconciliation")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出对账单数据")
     @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
-    public void exportPoReconciliation(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
+    public ApiResult<Boolean> exportPoReconciliation(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
         poReconciliationScmService.exportPoReconciliation(dto);
+        return success(true);
     }
 
     /**

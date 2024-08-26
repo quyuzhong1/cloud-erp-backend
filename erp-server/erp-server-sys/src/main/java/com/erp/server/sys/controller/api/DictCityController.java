@@ -82,8 +82,9 @@ public class DictCityController extends BaseController {
      */
     @PostMapping("/provinceExport")
     @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
-    public void provinceExport(@RequestBody @Validated DictCityDTO.ProvincePagingParamDTO dto) {
+    public ApiResult<Boolean> provinceExport(@RequestBody @Validated DictCityDTO.ProvincePagingParamDTO dto) {
          dictCityService.provinceExport(dto);
+         return success(true);
     }
 
     /**
@@ -139,8 +140,9 @@ public class DictCityController extends BaseController {
      */
     @PostMapping("/cityExport")
     @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
-    public void cityExport(@RequestBody @Validated DictCityDTO.ProvincePagingParamDTO dto) {
+    public ApiResult<Boolean> cityExport(@RequestBody @Validated DictCityDTO.ProvincePagingParamDTO dto) {
         dictCityService.cityExport(dto);
+        return success(true);
     }
     /**
      * 添加城市

@@ -285,9 +285,9 @@ public class InitStockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出初期库存")
     @PostMapping(value = "/exportExcel")
-    public ApiResult<Void> exportExcel(@RequestBody InitStockDTO.ExportSearchParamDTO dto) {
+    public ApiResult<Boolean> exportExcel(@RequestBody InitStockDTO.ExportSearchParamDTO dto) {
         initStockService.exportExcel(dto);
-        return null;
+        return success(true);
     }
 
     /**

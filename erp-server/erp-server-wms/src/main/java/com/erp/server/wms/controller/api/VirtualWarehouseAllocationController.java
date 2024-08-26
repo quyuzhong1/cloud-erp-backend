@@ -222,8 +222,9 @@ public class VirtualWarehouseAllocationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货单")
     @PostMapping("/export")
-    public void export(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
+    public ApiResult<Boolean> export(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
         virtualWarehouseAllocationService.export(dto);
+        return success(true);
     }
 
     /**

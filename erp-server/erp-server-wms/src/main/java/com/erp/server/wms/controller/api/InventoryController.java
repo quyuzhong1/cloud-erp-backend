@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -56,9 +55,9 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "即时库存导出")
     @PostMapping(value = "/exportInventoryExcel")
-    public ApiResult<Void> exportInventoryExcel(@RequestBody InventoryDTO.ExportSearchParamDTO dto) {
+    public ApiResult<Boolean> exportInventoryExcel(@RequestBody InventoryDTO.ExportSearchParamDTO dto) {
         inventoryService.exportExcel(dto);
-        return null;
+        return success(true);
     }
 
     /**
@@ -77,8 +76,9 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/exportTransFlow")
-    public void exportTransFlow(@RequestBody InventoryDTO.ExportInvFlowSearchParamDTO dto) {
+    public ApiResult<Boolean> exportTransFlow(@RequestBody InventoryDTO.ExportInvFlowSearchParamDTO dto) {
         transactionFlowService.exportTransFlow(dto);
+        return success(true);
     }
 
 
@@ -99,9 +99,9 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "出入库流水导出")
     @PostMapping(value = "/exportExcelInOutStock")
-    public ApiResult<Void> exportExcelInOutStock(@RequestBody InventoryDTO.ExportInOutStockTransFlowSearchParamDTO dto) {
+    public ApiResult<Boolean> exportExcelInOutStock(@RequestBody InventoryDTO.ExportInOutStockTransFlowSearchParamDTO dto) {
         transactionFlowService.exportExcel(dto);
-        return null;
+        return success(true);
     }
 
     /**
@@ -121,8 +121,9 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "出入库列表导出")
     @PostMapping(value = "/exportExcelInOutStockSummary")
-    public void exportExcelInOutStockSummary(@RequestBody InventoryDTO.ExcelInOutStockSummarySearchParamDTO dto) {
+    public ApiResult<Boolean> exportExcelInOutStockSummary(@RequestBody InventoryDTO.ExcelInOutStockSummarySearchParamDTO dto) {
         transactionFlowService.exportSummaryExcel(dto);
+        return success(true);
     }
 
     /**
@@ -169,8 +170,9 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "在途库存导出")
     @PostMapping(value = "/exportTransport")
-    public void exportTransport(@RequestBody InventoryReportDTO.ExportTransportSearchParamDTO dto) {
+    public ApiResult<Boolean> exportTransport(@RequestBody InventoryReportDTO.ExportTransportSearchParamDTO dto) {
         transactionFlowService.exportTransportExcel(dto);
+        return success(true);
     }
 
     /**
@@ -200,8 +202,9 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "库龄计算表导出")
     @PostMapping(value = "/exportInventoryAge")
-    public void exportInventoryAge(@RequestBody InventoryReportDTO.ExportInventoryAgeSearchParamDTO dto) {
+    public ApiResult<Boolean> exportInventoryAge(@RequestBody InventoryReportDTO.ExportInventoryAgeSearchParamDTO dto) {
         inventoryService.exportInventoryAge(dto);
+        return success(true);
     }
 
     /**
@@ -235,8 +238,9 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "每日库存导出")
     @PostMapping(value = "/exportDailyInventory")
-    public void exportDailyInventory(@RequestBody InventoryReportDTO.DailyInventoryParamDTO dto) {
+    public ApiResult<Boolean> exportDailyInventory(@RequestBody InventoryReportDTO.DailyInventoryParamDTO dto) {
         transactionFlowService.exportDailyInventory(dto);
+        return success(true);
     }
 
     /**

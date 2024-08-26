@@ -143,7 +143,8 @@ public class ProductRegistrationController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/export")
-    public void export(@RequestBody @Validated ProductRegistrationDTO.PagingParamDTO dto) {
+    public ApiResult<Boolean> export(@RequestBody @Validated ProductRegistrationDTO.PagingParamDTO dto) {
         productRegistrationService.export(dto);
+        return success(true);
     }
 }

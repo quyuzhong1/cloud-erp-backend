@@ -723,8 +723,9 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息")
     @PostMapping(value = "/exportProduct")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
-    public void exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO) {
+    public ApiResult<Boolean> exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO) {
         productDetailService.exportProduct(productSkuExcelDTO);
+        return success(true);
     }
 
 

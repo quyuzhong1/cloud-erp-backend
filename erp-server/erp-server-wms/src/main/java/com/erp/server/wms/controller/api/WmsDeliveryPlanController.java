@@ -391,8 +391,9 @@ public class WmsDeliveryPlanController extends BaseController {
     */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "发货计划导出Excel数据")
-    public void exportList(@RequestBody @Validated WmsDeliveryPlanDTO.PagingParamDTO dto) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated WmsDeliveryPlanDTO.PagingParamDTO dto) {
         wmsDeliveryPlanService.exportList(dto);
+        return success(true);
     }
 
     /**

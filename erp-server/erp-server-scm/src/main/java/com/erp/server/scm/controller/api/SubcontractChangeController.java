@@ -243,8 +243,9 @@ public class SubcontractChangeController extends BaseController {
     */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出委外变更订单")
     @PostMapping("/export")
-    public void exportList(@RequestBody @Validated SubcontractChangeDTO.PagingParamDTO dto) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SubcontractChangeDTO.PagingParamDTO dto) {
         subcontractChangeService.exportList(dto);
+        return success(true);
     }
 
 }

@@ -463,8 +463,9 @@ public class ShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出店铺")
     @PostMapping("/export")
-    public void listExport(@RequestBody ShopDTO.ExportDTO dto) {
+    public ApiResult<Boolean> listExport(@RequestBody ShopDTO.ExportDTO dto) {
         shopInfoService.listExport(dto);
+        return success(true);
     }
 
     /**

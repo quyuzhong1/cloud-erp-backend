@@ -389,8 +389,9 @@ public class FirstMileDeliveryController extends BaseController {
     */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "头程发货单导出Excel数据")
-    public void exportList(@RequestBody @Validated FirstMileDeliveryDTO.PagingParamDTO dto) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated FirstMileDeliveryDTO.PagingParamDTO dto) {
         firstMileDeliveryService.exportList(dto);
+        return success(true);
     }
 
     /**

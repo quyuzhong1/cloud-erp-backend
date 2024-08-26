@@ -105,23 +105,6 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
     @Override
     public Boolean exportExcel(DmpPushTaskDTO.ParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("中台推送任务历史表", EXPORT_PUSH_TASK_HISTORY.getCode(), dto);
-//        List<DmpPushTaskDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-//        if (CollectionUtils.isEmpty(list)) {
-//            return Boolean.TRUE;
-//        }
-//        //数据处理
-//        doOpHandleDmpPushTask(list);
-//        List<DmpPushTaskExportExcelDTO> resultList = list.stream().map(entity -> {
-//            DmpPushTaskExportExcelDTO excelDTO = new DmpPushTaskExportExcelDTO();
-//            BeanUtils.copyProperties(entity, excelDTO);
-//            return excelDTO;
-//        }).collect(Collectors.toList());
-//        String fileName = "中台推送任务表";
-//        try {
-//            ExcelUtil.export(fileName, "中台推送任务表", resultList, DmpPushTaskExportExcelDTO.class, response);
-//        } catch (Exception e) {
-//            throw new ServiceException(ApiError.ERROR_1015);
-//        }
         return Boolean.TRUE;
     }
 

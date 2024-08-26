@@ -75,8 +75,9 @@ public class DictGlobalAreaController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery(handler = DictGlobalAreaQueryHandler.class)
-    public void paging(@RequestBody @Validated DictGlobalAreaDTO.PagingParamDTO dto) {
+    public ApiResult<Boolean> paging(@RequestBody @Validated DictGlobalAreaDTO.PagingParamDTO dto) {
         dictGlobalAreaService.exportList(dto);
+        return success(true);
     }
 
     /**

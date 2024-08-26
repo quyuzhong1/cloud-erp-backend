@@ -46,8 +46,9 @@ public class SupplierReportController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "供应商报表导出")
     @PostMapping(value = "/exportExcel")
-    public void exportExcel(@RequestBody SupplierReportDTO.ExportSearchParamDTO dto) {
+    public ApiResult<Boolean> exportExcel(@RequestBody SupplierReportDTO.ExportSearchParamDTO dto) {
         supplierReportService.exportList(dto);
+        return success(true);
     }
 
 }

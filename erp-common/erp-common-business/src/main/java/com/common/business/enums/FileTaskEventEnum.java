@@ -65,9 +65,6 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_OMS_SHOP("EXPORT_OMS_SHOP","店铺导出"),
     EXPORT_OMS_CUSTOMER("EXPORT_OMS_CUSTOMER","客户列表"),
 
-//    /oms/so/exportSoPI
-///oms/so/exportSoDomesticPI
-
     //scm
     EXPORT_SCM_SUPPLIER_USER("EXPORT_SCM_SUPPLIER_USER","供应商协同用户列表"),
     EXPORT_SCM_PURCHASE_PRICE_CHANGE("EXPORT_SCM_PURCHASE_PRICE_CHANGE","采购调价数据"),
