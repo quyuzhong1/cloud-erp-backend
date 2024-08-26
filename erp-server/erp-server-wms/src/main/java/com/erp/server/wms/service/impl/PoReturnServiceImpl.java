@@ -787,7 +787,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
 
             //发送旺店通
-            syncApprovePoReturnToWdt(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            poReturnEntityList.forEach(obj -> syncApprovePoReturnToWdt(obj, SyncOperateEnum.OPERATE_APPROVE));
         } else {
             //审核不通过
             lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -804,12 +804,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * 将审核通过的采购退货单转换为其他出库单推送到旺店通
      *
      * @param entity 采购退货单
-     * @param operateCode
      * @return void
      * @date: 2024-05-20
      * @author: tanmujin
      */
-    private void syncApprovePoReturnToWdt(PoReturnEntity entity, String operateCode) {
+    private void syncApprovePoReturnToWdt(PoReturnEntity entity, SyncOperateEnum syncOperateEnum) {
         if(! "other".equals(entity.getSourceType())){
             log.info("非库存退货单无需推送旺店通：{}", entity);
             return;
@@ -823,54 +822,16 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if(mappingList.isEmpty()){
             return;
         }
-        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
-
-        HashMap<String, BigDecimal> skuMap = new HashMap<>();
-        detailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
-                .forEach((key, list) -> {
-                    int collect = list.stream().mapToInt(PoReturnDetailEntity::getReturnQty).sum();
-                    skuMap.put(key, BigDecimal.valueOf(collect));
-                });
-
-        //组装SKU
         List<CreateOtherStockoutRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        skuMap.forEach((key, value) -> {
+        for (PoReturnDetailEntity detailEntity : detailList) {
             CreateOtherStockoutRequest.GoodsList goods = new CreateOtherStockoutRequest.GoodsList();
-            String[] split = key.split("@");
-            goods.setSpecNo(split[0]);
-            goods.setNum(value);
-            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            goods.setSpecNo(detailEntity.getSkuNo());
+            goods.setNum(BigDecimal.valueOf(detailEntity.getReturnQty()));
+            goods.setPositionNo(detailEntity.getWarehouseLocation());
+            goods.setWarehouseId(entity.getReturnWarehouseId());
             goodsList.add(goods);
-        });
-
-        //发送异步任务
-        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTCK);
-        List<CreateOtherStockoutRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(goodsList);
-        List<CreateOtherStockoutRequest.GoodsList> skuGroupGoodsList = syncWdtOtherOutStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
-        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherOutStockService.generateTask(skuGroupGoodsList, operateCode, entity.getCode(), entity.getId(), outerCode, thirdWarehouseCode, false);
-        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
-                    dmpMqFeign.sendTask(dmpPushTaskList);
-                }
-            }
-        });
-
-        //保存中间表数据
-        DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
-        addDTO.setSourceId(entity.getId());
-        addDTO.setSourceCode(entity.getCode());
-        addDTO.setThirdCode(outerCode);
-        addDTO.setThirdType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
-        addDTO.setWarehouseId(entity.getReturnWarehouseId());
-        addDTO.setThirdWarehouseCode(thirdWarehouseCode);
-        addDTO.setOperateType(operateCode);
-        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(skuGroupGoodsList, DmpPushWdtDetailDTO.class);
-        addDTO.setDetailDTOList(detailDTOList);
-        dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
+        }
+        abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), goodsList, SourceTypeEnum.OTHER_OUTSTOCK);
     }
 
     /**
@@ -1000,7 +961,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         operateLogService.addModuleOperateLog(String.format("反审核了一个采购退货单【%s】", entity.getCode()), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "反审核操作");
 
         //发送旺店通
-        poReturnEntityList.forEach(obj -> syncDisApprovePoReturnToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        poReturnEntityList.forEach(obj -> syncDisApprovePoReturnToWdt(obj, SyncOperateEnum.OPERATE_DISAPPROVE));
         //发送金蝶
         sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
@@ -1010,12 +971,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * 将反审核通过的采购退货单转换为其他入库单推送到旺店通
      *
      * @param entity 采购退货单
-     * @param operateCode
      * @return void
      * @date: 2024-05-20
      * @author: tanmujin
      */
-    private void syncDisApprovePoReturnToWdt(PoReturnEntity entity, String operateCode) {
+    private void syncDisApprovePoReturnToWdt(PoReturnEntity entity, SyncOperateEnum syncOperateEnum) {
         if(! "other".equals(entity.getSourceType())){
             log.info("非库存退货单无需推送旺店通：{}", entity);
             return;
@@ -1024,56 +984,20 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if(mappingList.isEmpty()){
             return;
         }
-        String thirdWarehouseCode = mappingList.get(0).getThirdWarehouseCode();
-
         List<PoReturnDetailEntity> detailList = poReturnDetailService.getDetailByMainId(entity.getId());
         if(detailList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_95107);
         }
-        HashMap<String, BigDecimal> skuMap = new HashMap<>();
-        detailList.stream()
-                .collect(Collectors.groupingBy(item -> item.getSkuNo() + "@" + item.getWarehouseLocation()))
-                .forEach((key, list) -> {
-                    int collect = list.stream().mapToInt(PoReturnDetailEntity::getReturnQty).sum();
-                    skuMap.put(key, BigDecimal.valueOf(collect));
-                });
-
         List<CreateOtherStockinRequest.GoodsList> goodsList = new ArrayList<>(detailList.size());
-        skuMap.forEach((key, value) -> {
+        for (PoReturnDetailEntity detailEntity : detailList) {
             CreateOtherStockinRequest.GoodsList goods = new CreateOtherStockinRequest.GoodsList();
-            String[] split = key.split("@");
-            goods.setSpecNo(split[0]);
-            goods.setNum(value);
-            goods.setPositionNo(split.length > 1 ? split[1] : "");
+            goods.setSpecNo(detailEntity.getSkuNo());
+            goods.setNum(BigDecimal.valueOf(detailEntity.getReturnQty()));
+            goods.setPositionNo(detailEntity.getWarehouseLocation());
+            goods.setWarehouseId(entity.getReturnWarehouseId());
             goodsList.add(goods);
-        });
-
-        //发送异步任务
-        String outerCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
-        List<CreateOtherStockinRequest.GoodsList> bomSplitGoodsList = abstractWdtService.handleGoodsList(goodsList);
-        List<CreateOtherStockinRequest.GoodsList> skuGroupGoodsList = syncWdtOtherInStockService.sumBySkuAndPositionNo(bomSplitGoodsList);
-        DmpPushTaskFeignDTO dmpPushTaskEntity = syncWdtOtherInStockService.generateTask(skuGroupGoodsList, operateCode, entity.getCode(), entity.getId(), entity.getCode(), thirdWarehouseCode, false);
-        List<DmpPushTaskEntity> dmpPushTaskList = dmpMqFeign.saveTaskList(Collections.singletonList(dmpPushTaskEntity));
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                if(CollectionUtils.isNotEmpty(dmpPushTaskList)){
-                    dmpMqFeign.sendTask(dmpPushTaskList);
-                }
-            }
-        });
-        //保存中间表
-        DmpPushWdtDTO.AddDTO addDTO = new DmpPushWdtDTO.AddDTO();
-        addDTO.setSourceId(entity.getId());
-        addDTO.setSourceCode(entity.getCode());
-        addDTO.setThirdCode(outerCode);
-        addDTO.setThirdType(SourceTypeEnum.OTHER_INSTOCK.getCode());
-        addDTO.setWarehouseId(entity.getReturnWarehouseId());
-        addDTO.setThirdWarehouseCode(thirdWarehouseCode);
-        addDTO.setOperateType(operateCode);
-        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(skuGroupGoodsList, DmpPushWdtDetailDTO.class);
-        addDTO.setDetailDTOList(detailDTOList);
-        dmpPushWdtFeign.addBatch(Collections.singletonList(addDTO));
+        }
+        abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), goodsList, SourceTypeEnum.OTHER_INSTOCK);
     }
 
     /**

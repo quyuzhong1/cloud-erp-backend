@@ -29,6 +29,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
@@ -294,11 +295,12 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         }
         long count = list.stream().filter(obj -> !PlatformEnum.ERP.getDesc().equals(obj.getSourcePlatformName())
                 || (!PlatformEnum.KINGDEE.getDesc().equals(obj.getTargetPlatformName())
-                && !PlatformEnum.MABANG.getDesc().equals(obj.getTargetPlatformName()))).count();
+                && !PlatformEnum.MABANG.getDesc().equals(obj.getTargetPlatformName())
+                && !PlatformEnum.WANGDIAN.getDesc().equals(obj.getTargetPlatformName()))).count();
         if (count > 0) {
             throw new ServiceException(new ApiResult(10000,"只允许推送自研ERP>>>>(金蝶、马帮)的数据"));
         }
-        Map<String, List<DmpPushTaskEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getTargetPlatformName().concat(obj.getTargetPlatformName())));
+        Map<String, List<DmpPushTaskEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getTargetPlatformName().concat(obj.getTargetPlatformName()).concat(obj.getSourceType())));
         for (Map.Entry<String, List<DmpPushTaskEntity>> entry : map.entrySet()) {
             List<DmpPushTaskEntity> value = entry.getValue();
             //来源类型
@@ -317,6 +319,14 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 if (PlatformEnum.MABANG.getDesc().equals(targetPlatformName)) {
                     // 发送MQ消息
                     findMaBangDataAndSendMq(paramDetailList,sourceType);
+                }
+                //旺店通
+                if(PlatformEnum.WANGDIAN.getDesc().equals(targetPlatformName)){
+                    paramDetailList = value.stream()
+                            .filter(obj -> obj.getStatus().equals(SyncStatusEnum.NO_NEED_SYNC.getCode()) || obj.getStatus().equals(SyncStatusEnum.FAILED_SYNC.getCode()))
+                            .map(obj -> new DmpSyncMqDTO.SyncParamDetailDTO(obj.getSourceId(), obj.getSyncOperate()))
+                            .collect(Collectors.toList());
+                    findWdtDataAndSendMq(paramDetailList,sourceType);
                 }
             }catch (Exception e){
                 String sourceTypeName = SourceTypeEnum.getName(sourceType);
@@ -605,7 +615,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         }
         return entity.getId();
     }
-    
+
     @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
     public DmpPushTaskEntity queryByParam(DmpSyncTaskDTO.OneDTO oneDTO) {
@@ -619,7 +629,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 .last("LIMIT 1")
                 .one();
     }
-    
+
     /**
      * 新增
      */
@@ -628,7 +638,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     public void saveDmpSyncTask(DmpPushTaskEntity entity) {
     	this.save(entity);
     }
-    
+
     /**
      * 修改
      */
@@ -671,9 +681,10 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
         List<DmpPushTaskEntity> insertEntityList = new ArrayList<>();
         List<DmpPushTaskEntity> updateEntityList = new ArrayList<>();
-        
+
         for (DmpPushTaskFeignDTO dto : dtoList) {
-            DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
+            DmpPushTaskEntity entity = new DmpPushTaskEntity();
+            BeanMapper.copy(dto, entity);
             DmpSyncTaskDTO.OneDTO oneDTO = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
             DmpPushTaskEntity found = sourceIdEntityMap.get(oneDTO.getSourceId() + "#" + oneDTO.getSourceType());
             //存在则修改
@@ -692,29 +703,25 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if(CollUtil.isNotEmpty(updateEntityList)) {
         	bean.updateBatchList(updateEntityList);
         }
-        
+
         insertEntityList.addAll(updateEntityList);
 		return insertEntityList;
-
-
-
-
-
-        /*List<DmpPushTaskEntity> saveEntityList = new ArrayList<>(dtoList.size());
-        for (DmpPushTaskFeignDTO dto : dtoList) {
-            DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
-            DmpSyncTaskDTO.OneDTO oneDTO = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
-            DmpPushTaskEntity found = getByParam(oneDTO);
-            //存在则修改
-            if (ObjectUtil.isNotEmpty(found)) {
-                entity.setId(found.getId());
-                entity.setCreateTime(LocalDateTime.now());
-                entity.setUpdateTime(LocalDateTime.now());
-            }
-            saveEntityList.add(entity);
         }
-        this.saveOrUpdateBatch(saveEntityList);
-        return saveEntityList;*/
+
+
+
+
+    private void findWdtDataAndSendMq(List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList, String sourceType) {
+        SourceTypeEnum sourceTypeEnum = SourceTypeEnum.getEnum(sourceType);
+        DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO(paramDetailList,sourceTypeEnum);
+        switch (SourceTypeEnum.getEnum(sourceType)) {
+            case OTHER_OUTSTOCK:
+            case OTHER_INSTOCK:
+                wmsTaskFeign.findWdtDataSendSyncTask(syncParamDTO);
+                return;
+            default:
+                return;
+        }
     }
 
     @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
@@ -729,13 +736,13 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 //              .eq(DmpPushTaskEntity::getMqTag, RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName())
               .list();
     }
-    
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public void insertBatchList(List<DmpPushTaskEntity> insertEntityList) {
     	this.saveBatch(insertEntityList);
     }
-    
+
     @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
     public void updateBatchList(List<DmpPushTaskEntity> updateEntityList) {

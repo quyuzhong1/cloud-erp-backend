@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -124,4 +125,13 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      * @return
      */
     List<InventoryReportDTO.ListDailyInventoryDTO> listDailyInventoryQty(@Param("params") InventoryReportDTO.DailyInventoryParamDTO params);
+
+    /**
+     * 查询存在流水的库存id
+     * @param startDate 执行开始时间
+     * @param orgId   组织id
+     * @param inventoryId 库存id
+     * @return List<String>
+     */
+    List<String> listByOrgId(@Param("startDate") LocalDate startDate, @Param("orgId") String orgId, @Param("inventoryId") String inventoryId);
 }

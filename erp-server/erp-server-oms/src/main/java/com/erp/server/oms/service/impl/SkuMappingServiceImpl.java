@@ -373,6 +373,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (skuMaping.getProductSkuId().equalsIgnoreCase(productSkuId) && dto.getEffectiveTime().equals(skuMaping.getEffectiveTime())) {
             // 检查仓库发货配置
             skuMappingExtendService.checkAndSave(skuMaping, dto.getExtendList());
+            if(PlatformDictEnum.ALI_EXPRESS.getCode().equals(skuMaping.getDictPlatform())){
+                //更新发货设置信息
+                List<ListingInfoEntity> listingInfoEntities = listingInfoService.lambdaQuery()
+                        .eq(ListingInfoEntity::getPlatformSkuNo,listing.getPlatformSkuNo())
+                        .eq(ListingInfoEntity :: getPlatformSpuNo,listing.getPlatformSpuNo())
+                        .eq(ListingInfoEntity::getPlatform,listing.getPlatform())
+                        .ne(ListingInfoEntity::getId,listing.getId())
+                        .list();
+                if(CollectionUtils.isNotEmpty(listingInfoEntities)){
+                    List<String> listingIds = listingInfoEntities.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
+                    List<SkuMappingEntity> skuMappingEntityList = this.listByListingIds(listingIds);
+                    skuMappingEntityList = skuMappingEntityList.stream().filter(v->skuMaping.getShopId().equals(v.getShopId())).collect(Collectors.toList());
+                    skuMappingExtendService.copyBySkuMapping(skuMaping,skuMappingEntityList);
+                }
+            }
             return skuMaping.getId();
         }
         // 历史SkuId为设置过期

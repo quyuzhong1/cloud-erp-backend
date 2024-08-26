@@ -142,5 +142,7 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * @return
      */
     List<SysDepartmentTreeDTO> getDeptByParentId(String deptId);
+
+    List<SysDepartmentEntity> getDeptByNames(List<String> deptNameList);
 }
 

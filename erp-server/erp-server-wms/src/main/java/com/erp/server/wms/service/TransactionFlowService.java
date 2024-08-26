@@ -6,13 +6,15 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
-import com.erp.model.wms.entity.InventoryDetailEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
+import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname: TransactionFlowService
@@ -116,19 +118,12 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
 
     /**
      * 库存流水重算方法
-     * @param startTime
-     * @param endTime
-     * @param status
-     * @param inventoryId
+     *
+     * @param startDate      用户输入开始重算时间
+     * @param inventoryId    库存id
+     * @param  orgName         组织名称
      */
-    void overrideInventoryFlow(LocalDateTime startTime, LocalDateTime endTime, String status, String inventoryId);
-
-    /**
-     * 增加反审核流水
-     * @param detail 库存明细
-     * @param txnFlow 原交易流水
-     */
-    void addUnApproveFlow(InventoryDetailEntity detail, TransactionFlowEntity txnFlow, Integer afterQty);
+    void overrideInventoryFlow(LocalDate startDate, String inventoryId, String orgName);
 
     /**
      * @description: 每日库存
@@ -164,4 +159,14 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
     PagingVO<InventoryDTO.TransFlowPagingViewDTO> exportInventoryTransFlow(PagingDTO<InventoryDTO.ExportInvFlowSearchParamDTO> dto);
 
     PagingVO<InventoryReportDTO.TransportPagingDTO> exportInventoryTransport(PagingDTO<InventoryReportDTO.ExportTransportSearchParamDTO> dto);
+    void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 通过组织id查询存在流水的库存id
+     * @param startDate 开始时间
+     * @param orgId 组织id
+     * @param inventoryId 库存id
+     * @return  List<String>
+     */
+    List<String> listByOrgId(LocalDate startDate, String orgId, String inventoryId);
 }

@@ -342,9 +342,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(InventoryEntity::getWarehouseId, warehouseIdList);
         queryWrapper.in(InventoryEntity::getDictInventoryStatus, inventoryStatusList);
-        if (isExist) {
-            queryWrapper.in(InventoryEntity::getWarehouseLocation, warehouseLocationIdList);
-        }
+        queryWrapper.in(isExist, InventoryEntity::getWarehouseLocation, warehouseLocationIdList);
         queryWrapper.in(InventoryEntity::getSkuId, skuIds);
 
         List<InventoryEntity> inventoryEntities = this.list(queryWrapper);
@@ -383,7 +381,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             throw new ServiceException(ApiError.ERROR_1027);
         }
 
-        return flag;
+        return true;
     }
 
     @Override
@@ -847,9 +845,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         InventoryDTO.PdaHomeInventoryBalanceDTO pdaHomeInventoryBalanceDTO = new InventoryDTO.PdaHomeInventoryBalanceDTO();
         List<InventoryDTO.PdaHomeInventoryBalanceDTO> inventory = baseMapper.getInventoryByWarehouseId(warehouseId, InventoryStatusEnum.USABLE.getCode());
         if (StringUtils.isBlank(warehouseId)) {
-            Long usableQty = 0L;
-            Long todayDeliveryQty = 0L;
-            Long todayStockInQty = 0L;
+            long usableQty = 0L;
+            long todayDeliveryQty = 0L;
+            long todayStockInQty = 0L;
 
             for (InventoryDTO.PdaHomeInventoryBalanceDTO homeInventoryBalanceDTO : inventory) {
                 if (homeInventoryBalanceDTO.getUsableQty() != null) {
@@ -1010,10 +1008,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     /**
      * 根据参数获取对应数据
      *
-     * @param dto
-     * @return com.erp.model.wms.dto.inventory.InventoryDTO.InventoryQtyDTO
-     * @author yl
-     * @date 2023-10-24 16:59
+     * @param dto   参数
+     * @return     库存数据
      */
     @Override
     public InventoryDTO.InventoryQtyDTO getInventoryQty(InventoryDTO.InventoryBySkuNoDTO dto) {
@@ -1372,5 +1368,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public Integer getQtyByLocation(String warehouseId, String warehouseLocation) {
         return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation == null ? "" : warehouseLocation);
+    }
+    @Override
+    public InventoryEntity getInventory(String skuId, String warehouseId, String warehouseLocation, String inventoryStatus) {
+        LambdaQueryWrapper<InventoryEntity> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(InventoryEntity::getSkuId, skuId)
+                .eq(InventoryEntity::getWarehouseId, warehouseId)
+                .eq(InventoryEntity::getWarehouseLocation, warehouseLocation)
+                .eq(InventoryEntity::getDictInventoryStatus, inventoryStatus)
+                .last("limit 1");
+        return this.getOne(wrapper);
     }
 }

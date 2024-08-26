@@ -77,7 +77,6 @@ import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -213,7 +212,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DataIdempotent(keyIdName = "addDTO.soCode")
     public Boolean add(SoB2cDeliveryDTO.AddDTO addDTO) {
         SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(addDTO.getSourceId());
         if(ObjectUtil.isNotEmpty(existEntity)){
@@ -988,20 +986,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .deliveryOrderId(entity.getId())
                 .build();
         //返回分检口
-        String sortingPort = cfgRuleOutService.getSortingPort(sortingPortRuleDTO);
-        CfgRuleOutDTO.CommonDTO commonDTO = cfgRuleOutService.view();
-        Boolean isDeviation = cfgRuleOutService.handleB2cAllowableDeviations(commonDTO.getB2cAllowableDeviations(),sortingPortRuleDTO);
-
-        //记录发货单异常
-        if (!isDeviation) {
-            entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
-            entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
-        }
+        CfgRuleOutDTO.SortingPortResultDTO portResultDTO = cfgRuleOutService.getSortingPort(sortingPortRuleDTO,entity, soB2cEntity);
+        String sortingPort = portResultDTO.getPort();
         //更新发货单
         this.updateById(entity);
 
-        //自动出库
-        if (isDeviation && entity.getIsAutoOut()) {
+        //没有异常才能自动出库
+        if (!portResultDTO.getUpdateError() && entity.getIsAutoOut()) {
             asyncService.syncSoB2cDeliveryAutoOut(soB2cEntity,entity);
         }
         //更新图片
@@ -1013,7 +1004,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //发货单操作日志
         //操作日志
-        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "", "");
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "", "流水线称重");
 
         if(sortingPort.equals(errorPortCode)){
             return ApiResult.success("出库配置返回异常口",errorPortCode);
@@ -1833,7 +1824,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @return SoB2cDeliveryEntity
      */
     private SoB2cDeliveryEntity getBySoCode (String soCode) {
-       return lambdaQuery().eq(SoB2cDeliveryEntity::getSoCode,soCode).last("limit 1").one();
+       return lambdaQuery().eq(SoB2cDeliveryEntity::getSoCode,soCode).ne(SoB2cDeliveryEntity::getStatus,SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()).last("limit 1").one();
     }
 
 

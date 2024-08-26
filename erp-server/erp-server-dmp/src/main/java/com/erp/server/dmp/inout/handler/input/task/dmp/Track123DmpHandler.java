@@ -28,59 +28,49 @@ public class Track123DmpHandler extends DmpInputDbConvertDmpHandler {
         for (Map<String, Object> dmpInputMongoBaseEntity : dmpInputMongoEntityList) {
             ArrayList<TreeMap<String, Object>> valueList = new ArrayList<>();
 
-            if (ObjectUtil.isNotEmpty(dmpInputMongoBaseEntity.get("accepted"))) {
-                Map<String, Object> acceptedMap = (Map<String, Object>) dmpInputMongoBaseEntity.get("accepted");
-                if (ObjectUtil.isNotEmpty(acceptedMap.get("content"))) {
 
-                    List<Map<String, Object>> contentList = (List<Map<String, Object>>) acceptedMap.get("content");
-                    for (Map<String, Object> contentMap : contentList) {
+            if (ObjectUtil.isNotEmpty(dmpInputMongoBaseEntity.get("rejected"))) {
 
-                        Object localLogisticsInfo = contentMap.get("localLogisticsInfo");
-                        if (ObjectUtil.isNotEmpty(localLogisticsInfo)) {
-                            Map<String, Object> localLogisticsInfoMap = (Map<String, Object>) localLogisticsInfo;
-                            if (ObjectUtil.isNotEmpty(localLogisticsInfoMap.get("trackingDetails"))) {
-                                List<Map<String, Object>> trackingDetails = (List<Map<String, Object>>) localLogisticsInfoMap.get("trackingDetails");
+                Map<String, Object> rejectedMap = (Map<String, Object>) dmpInputMongoBaseEntity.get("rejected");
+                TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
+                this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
+                dmpInputDmpBaseEntity.put("trackNo", rejectedMap.get("trackNo"));
+                dmpInputDmpBaseEntity.put("status", LogisticTrackStatusEnum.NOT_FIND.getCode());
+                if (ObjectUtil.isNotEmpty(rejectedMap.get("error"))) {
+                    Map<String, Object> errorMap = (Map<String, Object>) rejectedMap.get("error");
+                    dmpInputDmpBaseEntity.put("content", errorMap.get("code") + ":" + errorMap.get("msg"));
+                    dmpInputDmpBaseEntity.put("trackTime", LocalDateTime.now());
+                }
+                valueList.add(dmpInputDmpBaseEntity);
 
-                                for (Map<String, Object> trackingDetail : trackingDetails) {
-                                    TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
-                                    this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
-                                    dmpInputDmpBaseEntity.put("courierCode", localLogisticsInfoMap.get("courierCode"));
-                                    dmpInputDmpBaseEntity.put("courierName", localLogisticsInfoMap.get("courierNameCN"));
-                                    dmpInputDmpBaseEntity.put("trackNo", contentMap.get("trackNo"));
-                                    dmpInputDmpBaseEntity.put("trackTime", trackingDetail.get("eventTime"));
-                                    dmpInputDmpBaseEntity.put("status", convertTrackStatus(trackingDetail.get("transitSubStatus").toString()));
-                                    dmpInputDmpBaseEntity.put("content", trackingDetail.get("eventDetail").toString());
-                                    valueList.add(dmpInputDmpBaseEntity);
-                                }
-                            } else {
-                                TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
-                                this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
-                                dmpInputDmpBaseEntity.put("courierCode", localLogisticsInfoMap.get("courierCode"));
-                                dmpInputDmpBaseEntity.put("courierName", localLogisticsInfoMap.get("courierNameCN"));
-                                dmpInputDmpBaseEntity.put("trackNo", contentMap.get("trackNo"));
-                                valueList.add(dmpInputDmpBaseEntity);
-                            }
+            } else {
+                Object localLogisticsInfo = dmpInputMongoBaseEntity.get("localLogisticsInfo");
+                if (ObjectUtil.isNotEmpty(localLogisticsInfo)) {
+                    Map<String, Object> localLogisticsInfoMap = (Map<String, Object>) localLogisticsInfo;
+                    if (ObjectUtil.isNotEmpty(localLogisticsInfoMap.get("trackingDetails"))) {
+                        List<Map<String, Object>> trackingDetails = (List<Map<String, Object>>) localLogisticsInfoMap.get("trackingDetails");
 
+                        for (Map<String, Object> trackingDetail : trackingDetails) {
+                            TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
+                            this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
+                            dmpInputDmpBaseEntity.put("courierCode", localLogisticsInfoMap.get("courierCode"));
+                            dmpInputDmpBaseEntity.put("courierName", localLogisticsInfoMap.get("courierNameCN"));
+                            dmpInputDmpBaseEntity.put("trackNo", dmpInputMongoBaseEntity.get("trackNo"));
+                            dmpInputDmpBaseEntity.put("trackTime", trackingDetail.get("eventTime"));
+                            dmpInputDmpBaseEntity.put("status", convertTrackStatus(trackingDetail.get("transitSubStatus").toString()));
+                            dmpInputDmpBaseEntity.put("content", trackingDetail.get("eventDetail").toString());
+                            valueList.add(dmpInputDmpBaseEntity);
                         }
+                    } else {
+                        TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
+                        this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
+                        dmpInputDmpBaseEntity.put("courierCode", localLogisticsInfoMap.get("courierCode"));
+                        dmpInputDmpBaseEntity.put("courierName", localLogisticsInfoMap.get("courierNameCN"));
+                        dmpInputDmpBaseEntity.put("trackNo", dmpInputMongoBaseEntity.get("trackNo"));
+                        valueList.add(dmpInputDmpBaseEntity);
                     }
                 }
             }
-            List<Map<String, Object>> rejectedList = (List<Map<String, Object>>) dmpInputMongoBaseEntity.get("rejected");
-            if (CollectionUtils.isNotEmpty(rejectedList)) {
-                for (Map<String, Object> map : rejectedList) {
-                    TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
-                    this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
-                    dmpInputDmpBaseEntity.put("trackNo", map.get("trackNo"));
-                    dmpInputDmpBaseEntity.put("status", LogisticTrackStatusEnum.NOT_FIND.getCode());
-                    if (ObjectUtil.isNotEmpty(map.get("error"))) {
-                        Map<String, Object> errorMap = (Map<String, Object>) map.get("error");
-                        dmpInputDmpBaseEntity.put("content", errorMap.get("code") + ":" + errorMap.get("msg"));
-                        dmpInputDmpBaseEntity.put("trackTime", LocalDateTime.now());
-                    }
-                    valueList.add(dmpInputDmpBaseEntity);
-                }
-            }
-
             ArrayList<Map<String, Object>> keyList = new ArrayList<>();
             keyList.add(dmpInputMongoBaseEntity);
             dmpInputDataDmpRelationMaps.put(keyList, valueList);
