@@ -30,4 +30,10 @@ public interface InventorySkuCostConverter {
     @Mapping(target = "productCost", source = "productCost", qualifiedByName = "decimalToString")
     InventorySkuCostDetailDTO.ViewDTO detailToViewDTO(InventorySkuCostDetailEntity detailEntity);
     List<InventorySkuCostDetailDTO.ViewDTO> detailToViewDTO(List<InventorySkuCostDetailEntity> detailEntityList);
+
+    InventorySkuCostDetailEntity addToDetail(InventorySkuCostDetailDTO.AddDTO detail);
+    List<InventorySkuCostDetailEntity> addToDetail(List<InventorySkuCostDetailDTO.AddDTO> detailList);
+
+    InventorySkuCostDetailEntity updateToDetail(InventorySkuCostDetailDTO.UpdateDTO detail);
+    List<InventorySkuCostDetailEntity> updateToDetail(List<InventorySkuCostDetailDTO.UpdateDTO> detailList);
 }

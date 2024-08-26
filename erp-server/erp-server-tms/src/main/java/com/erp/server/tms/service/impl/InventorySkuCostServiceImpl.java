@@ -117,7 +117,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_SKU_COST.getCode(), inventorySkuCostEntity.getId(), "新增操作");
         // 新增明细
         if (!CollectionUtils.isEmpty(addDTO.getDetailList())) {
-            List<InventorySkuCostDetailEntity> detailEntityList = BeanMapperUtils.copyList(InventorySkuCostDetailEntity.class, addDTO.getDetailList());
+            List<InventorySkuCostDetailEntity> detailEntityList = InventorySkuCostConverter.INSTANCE.addToDetail(addDTO.getDetailList());
             inventorySkuCostDetailService.buildDetail(detailEntityList, inventorySkuCostEntity);
         }
         return new BaseResultDTO.AddDTO(inventorySkuCostEntity.getId(), inventorySkuCostEntity.getCode());
@@ -142,7 +142,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         }
         // 修改明细
         if (!CollectionUtils.isEmpty(updateDTO.getDetailList())) {
-            List<InventorySkuCostDetailEntity> detailEntityList = BeanMapperUtils.copyList(InventorySkuCostDetailEntity.class, updateDTO.getDetailList());
+            List<InventorySkuCostDetailEntity> detailEntityList = InventorySkuCostConverter.INSTANCE.updateToDetail(updateDTO.getDetailList());
             inventorySkuCostDetailService.buildDetail(detailEntityList, inventorySkuCostEntity);
         }else {
             //明细为空则清空

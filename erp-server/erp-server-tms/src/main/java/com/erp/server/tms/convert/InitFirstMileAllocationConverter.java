@@ -35,4 +35,10 @@ public interface InitFirstMileAllocationConverter {
     @Mapping(target = "productCost", source = "productCost", qualifiedByName = "decimalToString")
     InitFirstMileAllocationDetailDTO.ViewDTO detailToViewDTO(InitFirstMileAllocationDetailEntity detailEntity);
     List<InitFirstMileAllocationDetailDTO.ViewDTO> detailToViewDTO(List<InitFirstMileAllocationDetailEntity> detailEntityList);
+
+    InitFirstMileAllocationDetailEntity addToDetail(InitFirstMileAllocationDetailDTO.AddDTO detail);
+    List<InitFirstMileAllocationDetailEntity> addToDetail(List<InitFirstMileAllocationDetailDTO.AddDTO> detailList);
+
+    InitFirstMileAllocationDetailEntity updateToDetail(InitFirstMileAllocationDetailDTO.UpdateDTO detail);
+    List<InitFirstMileAllocationDetailEntity> updateToDetail(List<InitFirstMileAllocationDetailDTO.UpdateDTO> detailList);
 }

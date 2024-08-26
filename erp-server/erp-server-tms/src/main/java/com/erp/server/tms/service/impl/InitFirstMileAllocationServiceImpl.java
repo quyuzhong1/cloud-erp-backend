@@ -106,7 +106,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(), initFirstMileAllocationEntity.getId(), "新增操作");
         // 新增明细
         if (!CollectionUtils.isEmpty(addDTO.getDetailList())) {
-            List<InitFirstMileAllocationDetailEntity> detailEntityList = BeanMapperUtils.copyList(InitFirstMileAllocationDetailEntity.class, addDTO.getDetailList());
+            List<InitFirstMileAllocationDetailEntity> detailEntityList = InitFirstMileAllocationConverter.INSTANCE.addToDetail(addDTO.getDetailList());
             initFirstMileAllocationDetailService.buildDetail(detailEntityList, initFirstMileAllocationEntity.getId());
         }
         return new BaseResultDTO.AddDTO(initFirstMileAllocationEntity.getId(), initFirstMileAllocationEntity.getCode());
@@ -131,7 +131,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         }
         // 修改明细
         if (!CollectionUtils.isEmpty(updateDTO.getDetailList())) {
-            List<InitFirstMileAllocationDetailEntity> detailEntityList = BeanMapperUtils.copyList(InitFirstMileAllocationDetailEntity.class, updateDTO.getDetailList());
+            List<InitFirstMileAllocationDetailEntity> detailEntityList = InitFirstMileAllocationConverter.INSTANCE.updateToDetail(updateDTO.getDetailList());
             initFirstMileAllocationDetailService.buildDetail(detailEntityList, initFirstMileAllocationEntity.getId());
         }else {
             //明细为空则清空

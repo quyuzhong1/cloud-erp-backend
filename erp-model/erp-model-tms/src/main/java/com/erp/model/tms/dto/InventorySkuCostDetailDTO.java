@@ -152,7 +152,7 @@ public class InventorySkuCostDetailDTO implements Serializable {
         */
         @NotNull(message = "产品成本（6位小数）不能为空")
         @Digits(integer = 12, fraction = 6, message = "产品成本（6位小数）整数位不能超过12位，小数位不能超过6位")
-        private BigDecimal productCost;
+        private String productCost;
 
 
     }

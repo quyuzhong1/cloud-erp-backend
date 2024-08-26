@@ -333,7 +333,7 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
         */
         @NotNull(message = "产品成本不能为空")
         @Digits(integer = 12, fraction = 4, message = "产品成本整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal productCost;
+        private String productCost;
 
         /**
         * 汇率
