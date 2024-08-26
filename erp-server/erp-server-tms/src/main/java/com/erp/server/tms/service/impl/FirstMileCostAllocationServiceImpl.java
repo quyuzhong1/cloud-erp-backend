@@ -795,7 +795,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public List<FirstMileCostAllocationEntity> listBySourceIds(List<String> sourceIds, @NotBlank String reportPeriodId) {
+    public List<FirstMileCostAllocationEntity> listBySourceIds(List<String> sourceIds, String reportPeriodId) {
         if (CollectionUtils.isEmpty(sourceIds) && StrUtil.isBlank(reportPeriodId)) {
             return Collections.emptyList();
         }
@@ -1090,6 +1090,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //添加分摊明细
         list.forEach(e -> {
             e.setStatusName(ConfirmStatusEnum.getName(e.getStatus()));
+            e.setBillSourceTypeName(ReconciliationBillTypeEnum.getNameByCode(e.getBillSourceType()));
             e.setFeeTypeName(AllocationFeeTypeEnum.getName(e.getFeeType()));
             e.setAllocationTypeName(CostAllocationEnum.getName(e.getAllocationType()));
         });

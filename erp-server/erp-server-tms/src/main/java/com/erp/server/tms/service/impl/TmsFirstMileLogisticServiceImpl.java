@@ -1236,7 +1236,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         // 保存明细
         //当前明细对账单次数
         int reconciliationCount = 1;
-        TmsFirstMileReconciliationDetailEntity maxDetailEntity = tmsFirstMileReconciliationDetailEntityList.stream().filter(Objects::nonNull).max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
+        TmsFirstMileReconciliationDetailEntity maxDetailEntity = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getMainId())).max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
         if (Objects.nonNull(maxDetailEntity)){
             reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
         }

@@ -31,9 +31,9 @@ public class InventorySkuCostDetailExcelDTO implements Serializable {
     @FieldValid(fieldName = "产品名称",maxLength = 200)
     private String  productName;
     /**
-     * 单位(pcs)
+     * 单位(Pcs)
      */
-    @ExcelProperty(value = "单位(pcs)", index = 2)
+    @ExcelProperty(value = "单位(Pcs)", index = 2)
     @FieldValid(fieldName = "单位",maxLength = 10)
     private String  unit;
     /**

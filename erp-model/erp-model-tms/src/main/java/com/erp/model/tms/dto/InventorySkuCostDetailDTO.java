@@ -64,7 +64,7 @@ public class InventorySkuCostDetailDTO implements Serializable {
         private String productName;
 
         /**
-        * 单位（pcs,ml）
+        * 单位（Pcs,ml）
         */
         private String unit;
 
@@ -141,10 +141,10 @@ public class InventorySkuCostDetailDTO implements Serializable {
         private String productName;
 
         /**
-        * 单位（pcs,ml）
+        * 单位（Pcs,ml）
         */
-//        @NotBlank(message = "单位（pcs,ml）不能为空")
-        @Size(max = 20,message = "单位（pcs,ml）最大长度不能超过20位")
+//        @NotBlank(message = "单位（Pcs,ml）不能为空")
+        @Size(max = 20,message = "单位（Pcs,ml）最大长度不能超过20位")
         private String unit;
 
         /**

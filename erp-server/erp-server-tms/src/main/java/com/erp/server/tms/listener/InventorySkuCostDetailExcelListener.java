@@ -82,7 +82,7 @@ public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<I
                 }
             }
             if (StrUtil.isBlank(addDTO.getUnit())){
-                addDTO.setUnit("pcs");
+                addDTO.setUnit("Pcs");
             }
             if (StrUtil.isBlank(addDTO.getProductName())){
                 if (StrUtil.isNotBlank(addDTO.getSkuId())){

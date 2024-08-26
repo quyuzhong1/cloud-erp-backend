@@ -155,7 +155,7 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
         detailEntityList.forEach(inventorySkuCostDetailEntity -> {
             inventorySkuCostDetailEntity.setMainId(entity.getId());
             if (StrUtil.isBlank(inventorySkuCostDetailEntity.getUnit())){
-                inventorySkuCostDetailEntity.setUnit("pcs");
+                inventorySkuCostDetailEntity.setUnit("Pcs");
             }
             SkuVO skuVO = skuVOList.stream().filter(e -> e.getSkuId().equals(inventorySkuCostDetailEntity.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(skuVO)){

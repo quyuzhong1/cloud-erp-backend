@@ -81,6 +81,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             if(StringUtils.isNotBlank(authEntity.getId())){
                 l.setLogisticsAuthId(authEntity.getId());
             }
+            //重新排序对账次数
+
         });
         //批量新增
         this.saveBatch(list);

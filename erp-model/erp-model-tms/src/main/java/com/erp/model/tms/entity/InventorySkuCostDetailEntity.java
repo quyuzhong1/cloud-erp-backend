@@ -51,7 +51,7 @@ public class InventorySkuCostDetailEntity extends BaseEntity<InventorySkuCostDet
     @TableField("product_name")
     private String productName;
     /**
-    * 单位（pcs,ml）
+    * 单位（Pcs,ml）
     */
     @TableField("unit")
     private String unit;

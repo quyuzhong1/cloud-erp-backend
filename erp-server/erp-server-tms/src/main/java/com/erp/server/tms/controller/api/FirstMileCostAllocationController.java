@@ -31,6 +31,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -152,27 +153,32 @@ public class FirstMileCostAllocationController extends BaseController {
         List<String> sourceIds = entityList.stream().map(FirstMileCostAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
-        for (String id : ids) {
-            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"费用分摊记录不存在"));
-                continue;
-            }
-            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(entity.getSourceId())).findFirst().orElse(null);
+        //根据发货单获取费用分摊记录
+        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null);
+        for (String sourceId : sourceIds) {
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
             if(Objects.isNull(firstMileDeliveryEntity)){
-                resultDTOS.add(BatchResultDTO.fail(id,entity.getSourceCode(),"费用分摊发货单记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单记录不存在"));
                 continue;
             }
-            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(entity.getSourceId())).collect(Collectors.toList());
+            List<FirstMileCostAllocationEntity> entityList1 = firstMileCostAllocationEntityList.stream().filter(v->v.getSourceId().equals(sourceId))
+                    .sorted(Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth)).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(entityList1)){
+                resultDTOS.add(BatchResultDTO.fail(sourceId,firstMileDeliveryEntity.getCode(),"费用分摊记录不存在"));
+                continue;
+            }
+            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
-                resultDTOS.add(BatchResultDTO.fail(id,entity.getSourceCode(),"费用分摊发货单明细记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(sourceId,firstMileDeliveryEntity.getCode(),"费用分摊发货单明细记录不存在"));
                 continue;
             }
-            try {
-                resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
-            }catch (Exception e){
-                log.error("费用分摊记录删除失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getReconciliationCode(), e.getMessage()));
+            for (FirstMileCostAllocationEntity entity : entityList1){
+                try {
+                    resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
+                }catch (Exception e){
+                    log.error("费用分摊记录删除失败",e);
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getReconciliationCode(), e.getMessage()));
+                }
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

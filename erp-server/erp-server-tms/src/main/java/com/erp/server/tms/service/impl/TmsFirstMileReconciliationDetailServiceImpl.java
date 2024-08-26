@@ -53,7 +53,6 @@ import com.erp.server.tms.mapper.TmsFirstMileReconciliationDetailMapper;
 import com.erp.server.tms.service.*;
 import com.sun.corba.se.spi.orb.StringPair;
 import io.seata.spring.annotation.GlobalTransactional;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -335,7 +334,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             operateLogService.batchAddModuleOperateLog("删除了一个头程对账明细【%s】", ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), pairList, "编辑操作");
             //更新主表id
             if (!CollectionUtils.isEmpty(deleteList)) {
-                deleteList.forEach(obj -> obj.setMainId(""));
+                deleteList.forEach(obj -> {
+                    obj.setMainId("");
+                    //更新其他对账单对账次数
+                    updateReconciliationDetailCount(obj.getId(),obj.getSourceId(),obj.getReconciliationCount());
+                    obj.setReconciliationCount(0);
+                });
                 list.addAll(deleteList);
             }
             // 需要移除的物流单
@@ -425,6 +429,28 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         this.addOrUpdateCost(list);
 
         return Boolean.TRUE;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateReconciliationDetailCount(String id, String sourceId, Integer reconciliationCount) {
+        //头程对账单明细查询
+        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(Collections.singletonList(sourceId));
+        if (CollectionUtils.isEmpty(tmsFirstMileReconciliationDetailEntityList)){
+            return;
+        }
+        Integer finalReconciliationCount = reconciliationCount;
+        List<TmsFirstMileReconciliationDetailEntity> collect = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e)
+                && StringUtils.isNotBlank(e.getMainId()) && !Objects.equals(e.getId(), id) && e.getReconciliationCount() > finalReconciliationCount)
+                .sorted(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(collect)){
+            return;
+        }
+
+        collect.forEach(e -> {
+            e.setReconciliationCount(e.getReconciliationCount() -1);
+        });
+        this.updateBatchById(collect);
     }
 
     @Override
@@ -796,8 +822,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, List<TmsCfgCostEntity>> tmsCfgCostGroupMap = tmsCfgCostList
                 .stream()
                 .collect(Collectors.groupingBy(TmsCfgCostEntity::getDictCostCategory));
-
-
         for (TmsFirstMileReconciliationDetailDTO.ListDTO record : records) {
             record.setSourceType(SourceTypeEnum.LOGISTICS_BILL.getCode());
             // 出库单号=发货单号
