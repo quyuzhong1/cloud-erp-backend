@@ -26,9 +26,9 @@
        <result column="box_id" property="boxId" />
        <result column="box_no" property="boxNo" />
        <result column="delivery_qty" property="deliveryQty" />
-       <result column="length" property="length" />
-       <result column="width" property="width" />
-       <result column="height" property="height" />
+       <result column="box_length" property="boxLength" />
+       <result column="box_width" property="boxWidth" />
+       <result column="box_height" property="boxHeight" />
        <result column="box_size_unit" property="boxSizeUnit" />
        <result column="charged_weight" property="chargedWeight" />
        <result column="volume_weight" property="volumeWeight" />
@@ -103,9 +103,9 @@
                wa.box_id,
                wa.box_no boxNo,
                wa.delivery_qty deliveryQty,
-               wa.length,
-               wa.width,
-               wa.height,
+               wa.box_length,
+               wa.box_width,
+               wa.box_height,
                wa.box_size_unit,
                wa.out_stock_weight outStockWeight,
                wa.charged_weight chargedWeight,
@@ -153,9 +153,9 @@
                 wa.box_id,
                 wa.box_no boxNo,
                 wa.delivery_qty deliveryQty,
-                wa.length,
-                wa.width,
-                wa.height,
+                wa.box_length,
+                wa.box_width,
+                wa.box_height,
                 wa.box_size_unit,
                 wa.out_stock_weight outStockWeight,
                 wa.charged_weight chargedWeight,
@@ -204,9 +204,9 @@
                 wa.box_id,
                 wa.box_no boxNo,
                 wa.delivery_qty deliveryQty,
-                wa.length,
-                wa.width,
-                wa.height,
+                wa.box_length,
+                wa.box_width,
+                wa.box_height,
                 wa.box_size_unit,
                 wa.out_stock_weight outStockWeight,
                 wa.charged_weight chargedWeight,

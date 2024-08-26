@@ -1154,4 +1154,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private void handleData(FirstMileCostAllocationEntity firstMileCostAllocationEntity) {
         // TODO 验证数据 & 数据赋值
     }
+
+    @Override
+    public List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> listLastedAllocationMonth(List<String> logisticsBillIds) {
+        return baseMapper.listLastedAllocationMonth(logisticsBillIds);
+    }
 }
