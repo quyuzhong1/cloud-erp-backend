@@ -2,15 +2,16 @@ package com.erp.server.dmp.inout.handler.output.task.api;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
+import com.alibaba.fastjson.JSON;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
@@ -25,13 +26,10 @@ import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
-import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
-import com.erp.server.dmp.service.DmpBasicSystemService;
-import com.erp.server.dmp.service.DmpCfgApiService;
-import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -39,17 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 @Scope("prototype")
 public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 
-	@Autowired
-	private DmpHandlerCache dmpHandlerCache;
-	@Autowired
-	private DmpBasicSystemService dmpBasicSystemService;
-	@Autowired
-	private DmpCfgApiService dmpCfgApiService;
-	@Autowired
-	private IdentifierGenerator identifierGenerator;
-	@Autowired
-	private DmpOutputTaskRecordService dmpOutputTaskRecordService;
-	
 	@Override
 	public List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
 		DmpCfgOutputEntity dmpCfgOutputEntity = dmpResponse.getDmpCfgOutputEntity();
@@ -62,10 +49,10 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		String mainId = dmpResponse.getDmpCfgInputConvertEntity().getMainId();
 		DmpCfgInputEntity dmpCfgInputEntity = dmpHandlerCache.getDmpCfgInputEntityList(d -> d.getId().equals(mainId)).get(0);
 		String typeId = dmpCfgInputEntity.getTypeId();
-		String apiType = dmpCfgApiService.getById(typeId).getApiType();
+		String apiType = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(typeId)).get(0).getApiType();
 		
 		String systemId = dmpCfgInputEntity.getSystemId();
-		String code = dmpBasicSystemService.getById(systemId).getCode();
+		String code = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(systemId)).get(0).getCode();
 		
 		List<DmpPushMsgEntity> dmpPushMsgEntityList = new ArrayList<>();
 		Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
@@ -88,37 +75,13 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			}
 		}
 		
-		String outputTypeId = dmpCfgOutputEntity.getTypeId();
-		DmpCfgApiEntity outputDmpCfgApiEntity = dmpCfgApiService.getById(outputTypeId);
-		String outputClass = outputDmpCfgApiEntity.getApiClass();
-		Object bean = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClass));
-		String outputMethod = outputDmpCfgApiEntity.getApiType();
-		Method method = null;
-		try {
-			method = bean.getClass().getMethod(outputMethod, Object.class);
-		} catch (Exception e) {
-			String msg = "输出任务获取" + outputClass + "类的 "+ outputMethod +"方法失败";
-			log.error(msg , e);
-			throw new ServiceException(msg);
-		}
 		if(CollUtil.isNotEmpty(dmpPushMsgEntityList)) {
 			dmpPushMsgEntityList.sort((d1 , d2) -> d1.getMessageUpdateTime().compareTo(d2.getMessageUpdateTime()));
+			LocalDateTime now = LocalDateTime.now();
 			int i = 0;
-			Integer pushRate = dmpCfgOutputEntity.getPushRate();
-			if(pushRate == null) {
-				pushRate = 3;
-			}
 			for(DmpPushMsgEntity dmpPushMsgEntity : dmpPushMsgEntityList) {
 				String dataId = dmpPushMsgEntity.getId();
-				
 				String pushData = dmpPushMsgEntity.getPushData();
-				try {
-					method.invoke(bean, pushData);
-				} catch (Exception e) {
-					String msg = "执行输出任务获取" + outputClass + "类的 "+ outputMethod +"方法失败";
-					log.error(msg , e);
-					throw new ServiceException(msg);
-				}
 				DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
 				String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
 				dmpOutputTaskRecordEntity.setId(id);
@@ -126,24 +89,50 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				dmpOutputTaskRecordEntity.setDataId(dataId);
 				dmpOutputTaskRecordEntity.setSourceCode(dmpPushMsgEntity.getSourceCode());
 				dmpOutputTaskRecordEntity.setRequestData(pushData);
-				dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.FINISH.getCode());
+				dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
+				LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
+				dmpOutputTaskRecordEntity.setCreateTime(insertTime);
+				dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
 				dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
-				
-				if(pushRate > 0) {
-    				i = i + 1;
-        			if(i % pushRate == 0) {
-        				try {
-        					Thread.sleep(1000);
-        				} catch (InterruptedException e) {}
-        			}
-    			}
+				i = i + 1;
 			}
 			dmpOutputTaskRecordService.saveBatch(dmpOutputTaskRecordEntityList);
 		}
 		
 		return dmpOutputTaskRecordEntityList;
 	}
-	
-	
+
+	@Override
+	protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity,
+			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+		String id = dmpOutputTaskRecordEntity.getId();
+		String outputTypeId = dmpCfgOutputEntity.getTypeId();
+		DmpCfgApiEntity outputDmpCfgApiEntity = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(outputTypeId)).get(0);
+		String apiClass = outputDmpCfgApiEntity.getApiClass();
+		Object bean = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass));
+		String outputMethod = outputDmpCfgApiEntity.getApiType();
+		Method method = null;
+		
+		String status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
+		String responseData = "";
+		String message = "";
+		try {
+			method = bean.getClass().getMethod(outputMethod, Object.class);
+		} catch (NoSuchMethodException | SecurityException e) {
+			status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
+			responseData = "获取" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(e);
+			message = "获取" + apiClass + "的" + outputMethod + "方法报错";
+		}
+		try {
+			Object invoke = method.invoke(bean, dmpOutputTaskRecordEntity.getRequestData());
+			try {responseData = JSON.toJSONString(invoke);} catch (Exception e) {}
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
+			responseData = "调用" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(e);
+			message = "调用" + apiClass + "的" + outputMethod + "方法报错";
+		}
+		dmpOutputUtils.updateStatus(id, status, responseData , message);
+	}
+
 	
 }

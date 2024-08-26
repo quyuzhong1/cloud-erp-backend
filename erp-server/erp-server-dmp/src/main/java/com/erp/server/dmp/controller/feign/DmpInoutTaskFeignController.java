@@ -9,20 +9,20 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
-import com.erp.server.dmp.inout.utils.DmpOutputRocketMQPushUtils;
+import com.erp.server.dmp.inout.utils.DmpOutputUtils;
 
 @RestController
 @RequestMapping("/feign/inout")
 public class DmpInoutTaskFeignController{
 	
 	@Resource
-    private DmpOutputRocketMQPushUtils dmpOutputRocketMQPushUtils;
+    private DmpOutputUtils dmpOutputUtils;
 	
 	/**
 	 * @param updateDTO
 	 */
 	@PostMapping("/updateOutputTaskRecord")
     public ApiResult<Boolean> updateOutputTaskRecord(@RequestBody DmpOutputTaskRecordDTO.UpdateDTO updateDTO) {
-		return ApiResult.success(dmpOutputRocketMQPushUtils.updateStatus(updateDTO.getId(), updateDTO.getStatus(), updateDTO.getResponseData() , updateDTO.getMessage()));
+		return ApiResult.success(dmpOutputUtils.updateStatus(updateDTO.getId(), updateDTO.getStatus(), updateDTO.getResponseData() , updateDTO.getMessage()));
 	}
 }
