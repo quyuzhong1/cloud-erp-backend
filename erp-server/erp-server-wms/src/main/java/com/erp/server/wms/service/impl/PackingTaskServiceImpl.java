@@ -1913,7 +1913,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String msg = StrUtil.format("自动生成【{}】单据单号为【{}】", "装箱任务单" , packingTaskEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "新增操作");
         List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.firstMileDeliveryDetailToPackingTaskDetail(detailEntityList);
-        taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
+        taskDetailList.forEach(packingTaskDetailEntity -> {
+            packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
+            FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
+            if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())){
+                packingTaskDetailEntity.setFnSku(firstMileDeliveryDetailEntity.getFnSku());
+            }else{
+                packingTaskDetailEntity.setFnSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
+            }
+        });
         //新增任务明细
         packingTaskDetailService.saveBatch(taskDetailList);
     }
@@ -2066,7 +2074,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             String msg = StrUtil.format("自动生成【{}】单据单号为【{}】", "装箱任务单" , packingTaskEntity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "新增操作");
             List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.requisitionDetailToPackingTaskDetail(detailEntityList);
-            taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
+            taskDetailList.forEach(packingTaskDetailEntity -> {
+                packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
+                RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new RequisitionApplicationDetailEntity());
+                if(entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
+                    packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformFnSku());
+                }else{
+                    packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformSku());
+                }
+            });
             //新增任务明细
             packingTaskDetailService.saveBatch(taskDetailList);
         }

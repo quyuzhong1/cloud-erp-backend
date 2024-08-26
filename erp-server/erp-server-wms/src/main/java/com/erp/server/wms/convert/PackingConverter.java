@@ -101,7 +101,7 @@ public interface PackingConverter {
             @Mapping(target = "skuNo", source = "detailEntity.skuNo"),
             @Mapping(target = "deliveryQty", source = "detailEntity.deliveryQty"),
             @Mapping(target = "sourceDetailId", source = "detailEntity.id"),
-            @Mapping(target = "fnSku", expression = "java(PackingConverter.getFnSkuByDeliveryDetail(detailEntity))"),
+//            @Mapping(target = "fnSku", expression = "java(PackingConverter.getFnSkuByDeliveryDetail(detailEntity))"),
     })
     PackingTaskDetailEntity firstMileDeliveryDetailToPackingTaskDetail(FirstMileDeliveryDetailEntity detailEntity);
     List<PackingTaskDetailEntity> firstMileDeliveryDetailToPackingTaskDetail(List<FirstMileDeliveryDetailEntity> detailEntityList);
@@ -178,7 +178,7 @@ public interface PackingConverter {
             @Mapping(target = "skuNo", source = "detailEntity.skuNo"),
             @Mapping(target = "deliveryQty", source = "detailEntity.pickingQty"),
             @Mapping(target = "sourceDetailId", source = "detailEntity.id"),
-            @Mapping(target = "fnSku", expression = "java(PackingConverter.getFnSkuByReqDetail(detailEntity))")
+//            @Mapping(target = "fnSku", expression = "java(PackingConverter.getFnSkuByReqDetail(detailEntity))")
     })
     PackingTaskDetailEntity requisitionDetailToPackingTaskDetail(RequisitionApplicationDetailEntity detailEntity);
     List<PackingTaskDetailEntity> requisitionDetailToPackingTaskDetail(List<RequisitionApplicationDetailEntity> detailEntityList);
