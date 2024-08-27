@@ -1343,7 +1343,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyList();
         }
-        return baseMapper.listDeliveryRecordBySourceIds(ids);
+        return baseMapper.listDeliveryRecord(ids,null);
     }
 
     @Override
@@ -1698,6 +1698,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return null;
         }
         return this.lambdaQuery().eq(FirstMileDeliveryEntity::getSourceCode, code).last("limit 1").one();
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordByFbaCode(String fbaShipmentCode) {
+        if (StringUtils.isBlank(fbaShipmentCode)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listDeliveryRecord(null,fbaShipmentCode);
     }
 
     @Override
