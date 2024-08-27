@@ -95,7 +95,6 @@ public class CfgRuleWarehouseDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
         /**

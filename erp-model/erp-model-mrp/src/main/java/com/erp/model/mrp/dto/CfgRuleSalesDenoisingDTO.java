@@ -1,16 +1,15 @@
 package com.erp.model.mrp.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -97,7 +96,6 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -142,14 +140,6 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
         @NotNull(message = "有效值（去噪后的）不能为空")
         @Digits(integer = 32, fraction = 0, message = "有效值（去噪后的）最大长度不能超过32位")
         private BigDecimal effectiveValue;
-
-        /**
-        * 销量表id（cfg_rule_sales_qty）
-        */
-        @NotBlank(message = "销量表id（cfg_rule_sales_qty）不能为空")
-        @Size(max = 19,message = "销量表id（cfg_rule_sales_qty）最大长度不能超过19位")
-        private String salesQtyId;
-
 
     }
 

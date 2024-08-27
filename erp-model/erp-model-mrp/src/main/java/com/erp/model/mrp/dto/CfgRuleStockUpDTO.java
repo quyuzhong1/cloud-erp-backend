@@ -122,7 +122,6 @@ public class CfgRuleStockUpDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
         /**
@@ -216,14 +215,12 @@ public class CfgRuleStockUpDTO implements Serializable {
         /**
         * 关联id
         */
-        @NotBlank(message = "关联id不能为空")
         @Size(max = 19,message = "关联id最大长度不能超过19位")
         private String refId;
 
         /**
         * 关联类型
         */
-        @NotBlank(message = "关联类型不能为空")
         @Size(max = 32,message = "关联类型最大长度不能超过32位")
         private String refType;
 

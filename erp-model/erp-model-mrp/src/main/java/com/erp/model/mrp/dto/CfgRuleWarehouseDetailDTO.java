@@ -124,7 +124,6 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -172,14 +171,6 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         @NotBlank(message = "库存分配类型不能为空")
         @Size(max = 32,message = "库存分配类型最大长度不能超过32位")
         private String inventoryAllocateType;
-
-        /**
-        * 主表id
-        */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
-        private String mainId;
-
 
     }
 

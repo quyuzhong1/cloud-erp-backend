@@ -15,14 +15,6 @@ import java.util.List;
  */
 public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> {
 
-    /**
-    * 新增
-    * @author will
-    * @date: 2024-08-23
-    * @param commonList
-    * @return
-    */
-    Boolean add(List<CfgRuleCommonDTO.AddDTO> commonList);
 
     /**
     * 修改

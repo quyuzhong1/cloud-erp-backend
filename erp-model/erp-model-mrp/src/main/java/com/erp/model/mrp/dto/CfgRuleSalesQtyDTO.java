@@ -144,14 +144,12 @@ public class CfgRuleSalesQtyDTO implements Serializable {
          * 常规品
          */
         @Valid
-        @NotNull(message = "常规品不能为空")
         private UpdateDetailDTO conventionalDetail;
 
         /**
          * 新品
          */
         @Valid
-        @NotNull(message = "新品不能为空")
         private UpdateDetailDTO newDetail;
     }
 

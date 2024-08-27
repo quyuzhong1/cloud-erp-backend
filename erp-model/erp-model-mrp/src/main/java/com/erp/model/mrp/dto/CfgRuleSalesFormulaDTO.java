@@ -3,10 +3,7 @@ package com.erp.model.mrp.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -110,7 +107,6 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -152,16 +148,10 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         private String name;
 
         /**
-         * 时间
+         * 时间段
          */
+        @NotEmpty(message = "时间段不能为空")
         private List<LocalDate> dateList;
-
-        /**
-        * 销量id(cfg_rule_sales_qty)
-        */
-        @NotBlank(message = "销量id(cfg_rule_sales_qty)不能为空")
-        @Size(max = 255,message = "销量id(cfg_rule_sales_qty)最大长度不能超过255位")
-        private String salesQtyId;
 
         /**
         * 固定值

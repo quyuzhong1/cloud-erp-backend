@@ -43,25 +43,6 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     @Autowired
     private CfgRuleWarehouseService cgRuleWarehouseService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean add(List<CfgRuleCommonDTO.AddDTO> commonList) {
-        if (CollectionUtils.isEmpty(commonList)) {
-            return Boolean.TRUE;
-        }
-        List<CfgRuleCommonEntity> list = BeanMapperUtils.copyList(CfgRuleCommonEntity.class, commonList);
-        // 数据处理
-        handleData(list);
-
-        log.info("开始新增公共配置（规则设置）");
-        boolean save = super.saveBatch(list);
-        if(!save) {
-            throw new ServiceException("公共配置（规则设置）保存失败");
-        }
-        return Boolean.TRUE;
-    }
-
     /**
     * 修改
     */
