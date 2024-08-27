@@ -147,7 +147,7 @@
             </foreach>
         </if>
         <if test="fbaShipmentCode != null and fbaShipmentCode != ''">
-            fdd.fba_shipment_code = #{fbaShipmentCode}
+            AND fdd.fba_shipment_code = #{fbaShipmentCode}
         </if>
         GROUP BY fd.code,
         deliveryStatus,
