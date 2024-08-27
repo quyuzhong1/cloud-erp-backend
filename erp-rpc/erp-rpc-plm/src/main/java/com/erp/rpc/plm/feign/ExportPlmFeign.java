@@ -1,5 +1,6 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -10,7 +11,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "erp-plm",contextId = "exportPlmFeign")
+@FeignClient(name = "erp-plm",contextId = "exportPlmFeign", configuration = ExportFeignConfig.class)
 public interface ExportPlmFeign {
 
     @PostMapping("/feign/export/exportBom")

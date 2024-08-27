@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -20,7 +21,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "erp-wms", contextId = "exportWmsFeign")
+@FeignClient(name = "erp-wms", contextId = "exportWmsFeign", configuration = ExportFeignConfig.class)
 public interface ExportWmsFeign {
 
     @PostMapping("/feign/export/b2cDelivery")

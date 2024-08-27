@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.*;
@@ -8,7 +9,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "erp-tms", contextId = "exportTmsFeign")
+@FeignClient(name = "erp-tms", contextId = "exportTmsFeign", configuration = ExportFeignConfig.class)
 public interface ExportTmsFeign {
 
     @PostMapping("/feign/export/b2BDeclareBillDeclare")

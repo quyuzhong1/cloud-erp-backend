@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.vo.BomExportExcelVO;
@@ -11,7 +12,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "erp-scm", contextId = "exportScmFeign")
+@FeignClient(name = "erp-scm", contextId = "exportScmFeign", configuration = ExportFeignConfig.class)
 public interface ExportScmFeign {
 
     @PostMapping("/feign/export/purchaseApplication")

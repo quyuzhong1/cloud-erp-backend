@@ -1,6 +1,6 @@
 package com.erp.rpc.oms.feign;
 
-import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
@@ -9,7 +9,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "erp-oms", contextId = "exportOmsFeign")
+@FeignClient(name = "erp-oms", contextId = "exportOmsFeign", configuration = ExportFeignConfig.class)
 public interface ExportOmsFeign {
 
     @PostMapping("/feign/export/customerB2BSellerChange")
