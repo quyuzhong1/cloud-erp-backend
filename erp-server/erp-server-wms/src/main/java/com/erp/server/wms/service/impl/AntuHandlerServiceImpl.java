@@ -138,7 +138,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         .last(StrUtil.format("and (code_en = '{}'  or code_pt = '{}')",antuCreateOutboundReq.getProvince(),antuCreateOutboundReq.getProvince()))
                         .list();
                 if(CollectionUtil.isEmpty(dictCityEntityList)){
-                    throw new ServiceException("省份转换二字码失败");
+                    throw new ServiceException("安兔不支持该省份下单");
                 }
                 antuCreateOutboundReq.setProvince(dictCityEntityList.get(0).getCodeTwo());
             }
