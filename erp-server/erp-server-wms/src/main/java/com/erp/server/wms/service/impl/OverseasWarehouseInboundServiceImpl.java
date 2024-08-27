@@ -531,18 +531,19 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 // 区
                 commonDTO.setDictDistrictName(dictCityEntityMap.get(commonDTO.getDictDistrictId()).getName());
                 // iml
-                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)) {
+                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)
+                || OmsPlatformEnum.OMS_ANTU.getCode().equalsIgnoreCase(dictPlatform)) {
                     // 查询关联
-                    Map<String, DictThirdCity> imlCityEntityMap = sysDictService.mapAndCheckImlCityIds(
+                    Map<String, DictThirdCity> thirdCityEntityMap = sysDictService.mapAndCheckThirdCityIds(
                             commonDTO.getDictProvinceId(),
                             commonDTO.getDictCityId(),
-                            commonDTO.getDictDistrictId());
+                            commonDTO.getDictDistrictId(),dictPlatform );
                     // 省
-                    commonDTO.setPlatformProvinceId(imlCityEntityMap.get(commonDTO.getDictProvinceId()).getRegionId());
+                    commonDTO.setPlatformProvinceId(thirdCityEntityMap.get(commonDTO.getDictProvinceId()).getRegionId());
                     // 市
-                    commonDTO.setPlatformCityId(imlCityEntityMap.get(commonDTO.getDictCityId()).getRegionId());
+                    commonDTO.setPlatformCityId(thirdCityEntityMap.get(commonDTO.getDictCityId()).getRegionId());
                     // 区
-                    commonDTO.setPlatformDistrictId(imlCityEntityMap.get(commonDTO.getDictDistrictId()).getRegionId());
+                    commonDTO.setPlatformDistrictId(thirdCityEntityMap.get(commonDTO.getDictDistrictId()).getRegionId());
 
                 }
 

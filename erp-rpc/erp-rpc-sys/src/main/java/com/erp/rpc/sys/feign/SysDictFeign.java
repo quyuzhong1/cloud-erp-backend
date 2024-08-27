@@ -75,8 +75,8 @@ public interface SysDictFeign {
      * @param dictIds
      * @return
      */
-    @PostMapping("/feign/city/listImlCityByDictIdList")
-    List<DictThirdCity> listImlCityByDictIdList(List<String> dictIds);
+    @GetMapping("/feign/city/listThirdCityByDictIdList")
+    List<DictThirdCity> listThirdCityByDictIdList(@RequestParam(value = "dictIds") List<String> dictIds, @RequestParam(value = "platform")String platform);
 
 
     @GetMapping("/feign/dict/kingdee/getByCode")

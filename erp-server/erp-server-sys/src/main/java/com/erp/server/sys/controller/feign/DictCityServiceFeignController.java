@@ -71,9 +71,9 @@ public class DictCityServiceFeignController {
      * @param dictIds
      * @return
      */
-    @PostMapping("/listImlCityByDictIdList")
-    public List<DictThirdCity> listImlCityByDictIdList(@RequestBody List<String> dictIds) {
-        return dictThirdCityService.listByDictIdList(dictIds);
+    @GetMapping("/listThirdCityByDictIdList")
+    public List<DictThirdCity> listThirdCityByDictIdList(@RequestParam(value = "dictIds") List<String> dictIds, @RequestParam(value = "platform")String platform) {
+        return dictThirdCityService.listByDictIdList(dictIds,platform);
     }
 
 

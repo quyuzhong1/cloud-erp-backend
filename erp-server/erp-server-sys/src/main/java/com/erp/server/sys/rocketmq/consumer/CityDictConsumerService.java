@@ -98,13 +98,11 @@ public class CityDictConsumerService<T extends DmpSyncTaskIdDTO> extends Abstrac
     public ApiResult<?> handle(Object ext) {
         PlatformCityDictDTO dto = JSONUtil.toBean(ext.toString(), PlatformCityDictDTO.class);
         DictThirdCity entity = CityDictConvert.INSTANCE.imlConversion(dto);
-        if(dto.getProvider().equals(OmsPlatformEnum.OMS_IML.getCode())){
-            if(entity.getRegionName().equals("从化区")){
-                entity.setRegionName("从化市");
-            }
-            if(entity.getRegionName().equals("增城区")){
-                entity.setRegionName("增城市");
-            }
+        if(entity.getRegionName().equals("从化区")){
+            entity.setRegionName("从化市");
+        }
+        if(entity.getRegionName().equals("增城区")){
+            entity.setRegionName("增城市");
         }
         //通过区域名称关联城市字典表
         DictCityEntity dictCityEntity = dictCityService.getReginByName(entity.getRegionName(),entity.getRegionLevel());

@@ -24,10 +24,12 @@ public interface SysDictService {
 
     /**
      * iml 艾姆勒 查询并校验DictCityId
+     *
      * @param dictProvinceId
      * @param dictCityId
      * @param dictDistrictId
+     * @param dictPlatform
      * @return
      */
-    Map<String, DictThirdCity> mapAndCheckImlCityIds(String dictProvinceId, String dictCityId, String dictDistrictId);
+    Map<String, DictThirdCity> mapAndCheckThirdCityIds(String dictProvinceId, String dictCityId, String dictDistrictId, String dictPlatform);
 }

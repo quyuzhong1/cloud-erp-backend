@@ -9,6 +9,7 @@ import com.erp.server.sys.service.DictThirdCityService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,12 +34,13 @@ public class DictThirdCityServiceImpl extends SuperServiceImpl<DictThirdCityMapp
     }
 
     @Override
-    public List<DictThirdCity> listByDictIdList(List<String> dictIds) {
-        if (CollectionUtils.isEmpty(dictIds)){
+    public List<DictThirdCity> listByDictIdList(List<String> dictIds, String platform) {
+        if (CollectionUtils.isEmpty(dictIds) || StringUtils.isEmpty(platform)){
             return Collections.emptyList();
         }
         return lambdaQuery()
                 .in(DictThirdCity::getDictCityId, dictIds)
+                .eq(DictThirdCity::getPlatform,platform)
                 .list();
     }
 }

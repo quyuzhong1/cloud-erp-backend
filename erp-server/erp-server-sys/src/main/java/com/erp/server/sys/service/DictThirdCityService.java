@@ -16,5 +16,5 @@ public interface DictThirdCityService extends SuperService<DictThirdCity> {
 
     boolean saveOrUpdateByRegionId(DictThirdCity entity);
 
-    List<DictThirdCity> listByDictIdList(List<String> dictIds);
+    List<DictThirdCity> listByDictIdList(List<String> dictIds, String platform);
 }
