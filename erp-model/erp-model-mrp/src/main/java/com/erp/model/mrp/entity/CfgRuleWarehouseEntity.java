@@ -27,12 +27,12 @@ public class CfgRuleWarehouseEntity extends BaseEntity<CfgRuleWarehouseEntity> {
     /**
     * 是否启禁用虚拟仓，true启用，false禁用
     */
-    @TableField("is_disable_virtual")
+    @TableField("is_enable_virtual")
     private Boolean isEnableVirtual;
     /**
     * 是否启禁用海外仓，true启用，false禁用
     */
-    @TableField("is_disable_overseas")
+    @TableField("is_enable_overseas")
     private Boolean isEnableOverseas;
     /**
     * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)

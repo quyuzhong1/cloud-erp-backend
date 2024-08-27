@@ -66,6 +66,12 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
     private String type;
 
     /**
+     * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+     */
+    @TableField("platform_type")
+    private String platformType;
+
+    /**
      * 是否默认
      */
     @TableField("is_default")

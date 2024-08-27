@@ -40,5 +40,5 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
      * @param platformType
      * @return List<CfgRuleCommonDTO.ViewDTO>
      */
-    List<CfgRuleCommonDTO.ViewDTO> view(String platformType);
+    List<CfgRuleCommonDTO.ViewDTO> view(String platformType,String type);
 }

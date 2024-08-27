@@ -19,6 +19,8 @@
        <result column="remark" property="remark" />
        <result column="disable" property="disable" />
        <result column="type" property="type" />
+       <result column="platform_type" property="platformType" />
+       <result column="is_default" property="isDefault" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -32,7 +34,7 @@
         update_time,
         version,
         is_deleted,
-        index, parent_id, name, value, remark, disable, type
+        index, parent_id, name, value, remark, disable, type,platform_type,is_default
     </sql>
 
     <!-- 查询数据 -->
@@ -41,9 +43,12 @@
             <include refid="Base_Column_List"></include>
         from cfg_rule_common crc
         <where>
-            crc.is_deleted = false
+            crc.is_deleted = false and is_default = false
             <if test="platformType != null and platformType != ''">
-              and  crc.type = #{platformType}
+                and crc.platform_type = #{platformType}
+            </if>
+            <if test="type != null and type != ''">
+                and crc.type = #{type}
             </if>
             <if test="isEnableOverseas != null and isEnableOverseas == true">
                 and  crc.remark = 'isEnableOverseas'
@@ -59,7 +64,10 @@
         <where>
             crc.is_deleted = false and is_default = true
             <if test="platformType != null and platformType != ''">
-                and  crc.type = #{platformType}
+                and  crc.platform_type = #{platformType}
+            </if>
+            <if test="type != null and type != ''">
+                and crc.type = #{type}
             </if>
             <if test="isEnableOverseas != null and isEnableOverseas == true">
                 and  crc.remark = 'isEnableOverseas'

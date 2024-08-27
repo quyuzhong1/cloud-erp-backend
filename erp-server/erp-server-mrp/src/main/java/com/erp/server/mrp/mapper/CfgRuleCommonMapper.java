@@ -27,7 +27,7 @@ public interface CfgRuleCommonMapper extends BaseMapper<CfgRuleCommonEntity> {
      * @param isEnableOverseas
      * @return List<ViewDTO>
      */
-    List<CfgRuleCommonDTO.ViewDTO> listRuleCommon(@Param("platformType") String platformType,@Param("isEnableOverseas") Boolean isEnableOverseas);
+    List<CfgRuleCommonDTO.ViewDTO> listRuleCommon(@Param("platformType") String platformType,@Param("type") String type,@Param("isEnableOverseas") Boolean isEnableOverseas);
     /**
      * 
      * @author will
@@ -36,5 +36,5 @@ public interface CfgRuleCommonMapper extends BaseMapper<CfgRuleCommonEntity> {
      * @param isEnableOverseas
      * @return List<ViewDTO>
      */
-    List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommon(@Param("platformType")String platformType,@Param("isEnableOverseas") Boolean isEnableOverseas);
+    List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommon(@Param("platformType")String platformType,@Param("type") String type,@Param("isEnableOverseas") Boolean isEnableOverseas);
 }

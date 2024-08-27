@@ -52,8 +52,8 @@ public class CfgRuleCommonController extends BaseController {
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<List<CfgRuleCommonDTO.ViewDTO>> view(@RequestParam("platformType") String platformType) {
-        return success(cfgRuleCommonService.view(platformType));
+    public ApiResult<List<CfgRuleCommonDTO.ViewDTO>> view(@RequestParam("platformType") String platformType,@RequestParam("type") String type) {
+        return success(cfgRuleCommonService.view(platformType,type));
     }
 
 }

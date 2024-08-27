@@ -84,7 +84,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     }
 
     @Override
-    public List<CfgRuleCommonDTO.ViewDTO> view(String platformType) {
+    public List<CfgRuleCommonDTO.ViewDTO> view(String platformType,String type) {
         //是否存在海外仓
         CfgRuleWarehouseEntity cfgRuleWarehouseEntity = cgRuleWarehouseService.getByPlatformType(platformType);
         Boolean isEnableOverseas = Boolean.FALSE;
@@ -93,10 +93,10 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         }
 
         //查询已存在数据
-        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listRuleCommon(platformType, isEnableOverseas);
+        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listRuleCommon(platformType,type, isEnableOverseas);
         if (CollectionUtils.isEmpty(viewList)) {
             //返回初始化数据
-           return this.listDefaultRuleCommonTree(platformType,isEnableOverseas);
+           return this.listDefaultRuleCommonTree(platformType,type,isEnableOverseas);
         }
         //返回新增数据
         List<CfgRuleCommonDTO.ViewDTO> treeList = viewList.stream().filter(obj -> StrUtil.isBlank(obj.getParentId())).map(item -> {
@@ -115,8 +115,8 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
      * @param isEnableOverseas
      * @return List<ViewDTO>
      */
-    private List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommonTree (String platformType,Boolean isEnableOverseas) {
-        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listDefaultRuleCommon(platformType, isEnableOverseas);
+    private List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommonTree (String platformType,String type,Boolean isEnableOverseas) {
+        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listDefaultRuleCommon(platformType,type, isEnableOverseas);
         if (CollectionUtils.isEmpty(viewList)) {
             return Collections.EMPTY_LIST;
         }
