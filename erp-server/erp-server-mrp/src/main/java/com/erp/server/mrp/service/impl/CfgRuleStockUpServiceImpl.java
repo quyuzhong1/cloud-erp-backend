@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
@@ -92,7 +91,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         CfgRuleStockUpDTO.ViewDTO viewDTO = new CfgRuleStockUpDTO.ViewDTO();
         CfgRuleStockUpEntity oldEntity = this.getByPlatformType(platformType);
         if (ObjectUtil.isEmpty(oldEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"备货设置");
+            return viewDTO;
         }
         BeanMapperUtils.copy(oldEntity,viewDTO);
 
