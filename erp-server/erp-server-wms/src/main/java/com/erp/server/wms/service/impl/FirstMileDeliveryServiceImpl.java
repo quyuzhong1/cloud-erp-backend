@@ -772,13 +772,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
                 //用目的仓查询是否绑定第三方仓
                 List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Arrays.asList(entity.getDestWarehouseId()));
+                // 查询发货目的仓平台
+                OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
 
                 //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
-                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities)) {
-
-                    // 查询发货目的仓平台
-                    OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
-
+                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities) && Objects.nonNull(providerEntity)) {
                     // 推送第三方发货单审核通过
                     ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                     if (200 != resultInfo.getCode()) {

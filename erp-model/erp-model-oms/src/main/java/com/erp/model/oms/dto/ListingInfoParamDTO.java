@@ -1,9 +1,14 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.enums.PlatformDictEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -78,4 +83,15 @@ public class ListingInfoParamDTO {
      * 平台spu no 列表
      */
     private List<String> platformSpuNoList;
+
+    public static ListingInfoParamDTO initAmazon(Collection<String> shopIds, Collection<String> sellerSkuList) {
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        paramDTO.setShopIdList(new ArrayList<>(shopIds));
+        paramDTO.setPlatformSkuNoList(new ArrayList<>(sellerSkuList));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setMatchResult(true);
+        paramDTO.setIsExpire(false);
+        return paramDTO;
+    }
 }
