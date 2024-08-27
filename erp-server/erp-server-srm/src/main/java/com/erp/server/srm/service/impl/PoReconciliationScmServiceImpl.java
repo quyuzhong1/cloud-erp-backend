@@ -10,24 +10,24 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.StatementDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierAccountEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -57,13 +57,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_SCM;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT;
 
 /**
@@ -170,6 +170,21 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
+    public PagingVO<PoReconciliationDTO.ListDTO> exportPoReconciliationScmExport(PagingDTO<PoReconciliationDTO.PagingParamDTO> dto) {
+        Page<PoReconciliationDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if(!CollUtil.isEmpty(page.getRecords())) {
+            // 数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public StatementDTO<PoReconciliationDTO.ExportDTO, PoReconciliationDetailDTO.ListDTO> exportPoReconciliationScm(PoReconciliationDTO.PagingParamDTO dto) {
+       return null;
+    }
+
+    @Override
     public PagingVO<PoReconciliationDTO.ListDTO> paging(PagingDTO<PoReconciliationDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
@@ -205,8 +220,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
-    public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("对账单导出", EXPORT_SRM_PO_RECONCILIATION_SCM.getCode(), dto);
+    public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
         List<PoReconciliationDTO.ListDTO> list = this.baseMapper.listExport(dto);
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -221,17 +235,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
 
         for (PoReconciliationDTO.ListDTO listDTO : list) {
             PoReconciliationDTO.ExportDTO exportDTO = new PoReconciliationDTO.ExportDTO();
-            exportDTO.setSupplierName(listDTO.getSupplierName());
             //供应商
             SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
             SupplierEntity supplierEntity = supplierDefaultDTO.getSupplierEntity();
             if (ObjectUtils.isNotEmpty(supplierEntity)) {
-                exportDTO.setTitil(StrUtil.format("{}{}年{}月对账单",supplierEntity.getName(),listDTO.getEndDate().getYear(),listDTO.getEndDate().getMonthValue()));
-                //结算方式名称
-                List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(Arrays.asList(supplierEntity.getPayMethodId()));
-                if (CollectionUtils.isNotEmpty(dictBasicList)) {
-                    exportDTO.setSettleDictName(dictBasicList.get(0).getName());
-                }
+                exportDTO.setSupplierName(supplierEntity.getName());
             }
             //联系人
             SupplierContactEntity supplierContactEntity = supplierDefaultDTO.getSupplierContactEntity();
@@ -248,23 +256,12 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 exportDTO.setBankAccount(accountEntity.getBankAccount());
             }
             //明细
-            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId())).sorted(Comparator.comparing(PoReconciliationDetailEntity::getSourceCode).reversed()).collect(Collectors.toList());
+            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailList)) {
                 continue;
             }
             List<PoReconciliationDetailDTO.ListDTO> detailDTOList = BeanMapperUtils.copyList(PoReconciliationDetailDTO.ListDTO.class, detailList);
             poReconciliationDetailScmService.fillList(detailDTOList);
-
-            //出货小计
-            BigDecimal totalDeliveryAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.DELIVERY_ORDER.getCode().equals(obj.getSourceType()))
-                    .map(PoReconciliationDetailDTO.ListDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-            exportDTO.setTotalDeliveryAmount(totalDeliveryAmount);
-            //退料小计
-            BigDecimal totalReceiveAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType()))
-                    .map(PoReconciliationDetailDTO.ListDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-            exportDTO.setTotalReceiveAmount(totalReceiveAmount);
-            //合计
-            exportDTO.setTotalAmount(MathUtil.add(totalDeliveryAmount,totalReceiveAmount));
 
             // 导出数据
             StringBuffer sb = new StringBuffer();
@@ -272,11 +269,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             String name = "对账单导出";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date).append(name);
-//            try {
-//                new ExcelPrintUtils().patchExport(detailDTOList,exportDTO, response, sb.toString(), excelPath);
-//            } catch (Exception e) {
-//                throw new ServiceException(ApiError.ERROR_1015);
-//            }
+            try {
+                new ExcelPrintUtils().patchExport(list,exportDTO, response, sb.toString(), excelPath);
+            } catch (Exception e) {
+                throw new ServiceException(ApiError.ERROR_1015);
+            }
         }
     }
 
@@ -288,24 +285,6 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     @Override
     public void exportList(PoReconciliationDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("对账单Excel导出", EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT.getCode(), dto);
-
-        List<PoReconciliationDTO.ListDTO> list = this.baseMapper.listExport(dto);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/poReconciliation.xlsx";
-        String name = "对账单Excel导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-//        try {
-//            new ExcelPrintUtils().patchExport(list, response, excelPath);
-//        } catch (Exception e) {
-//            throw new ServiceException(ApiError.ERROR_1015);
-//        }
     }
 
     @Override

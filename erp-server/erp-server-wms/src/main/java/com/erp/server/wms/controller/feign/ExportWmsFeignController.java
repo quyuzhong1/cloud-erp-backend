@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -255,11 +256,6 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery
     public PagingVO<InitStockDTO.ListDTO> exportInitStock(@RequestBody PagingDTO<InitStockDTO.ExportSearchParamDTO> dto) {
         return initStockService.exportInitStock(dto);
-    }
-
-    @PostMapping("/inventoryAge")
-    public PagingVO<InventoryDTO.PagingViewDTO> exportInventoryAge(@RequestBody PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto) {
-        return inventoryService.exportInventoryAge(dto);
     }
 
     @PostMapping("/inventoryDaily")
@@ -601,5 +597,10 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery
     public PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
         return virtualInventoryService.getVirtualInventory(dto);
+    }
+
+    @PostMapping("/inventoryAge")
+    public PagingVO<DynamicExcelDTO> exportWmsInventoryAge(@RequestBody PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto){
+        return inventoryService.exportWmsInventoryAge(dto);
     }
 }

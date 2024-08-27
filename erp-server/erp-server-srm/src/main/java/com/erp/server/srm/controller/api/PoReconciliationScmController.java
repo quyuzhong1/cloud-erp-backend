@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -139,13 +140,7 @@ public class PoReconciliationScmController extends BaseController {
      * @param dto
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:scm:paging",
-            tableAlias = "pr"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
-    @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
         poReconciliationScmService.exportList(dto);
         return success(true);
@@ -160,9 +155,8 @@ public class PoReconciliationScmController extends BaseController {
     @PostMapping("/exportPoReconciliation")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出对账单数据")
     @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
-    public ApiResult<Boolean> exportPoReconciliation(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
-        poReconciliationScmService.exportPoReconciliation(dto);
-        return success(true);
+    public void exportPoReconciliation(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        poReconciliationScmService.exportPoReconciliation(dto, response);
     }
 
     /**

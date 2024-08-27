@@ -1,5 +1,6 @@
 package com.erp.server.srm.service;
 
+import com.common.business.dto.StatementDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -10,6 +11,7 @@ import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -118,7 +120,7 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @author Will
      * @date: 2024/1/25 10:45
      */
-    void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto);
+    void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
     /**
      * @description: 查询待供方确认
      * @author Will
@@ -131,4 +133,8 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * 更新对账单金额
      */
     void updateAmount (String id);
+
+    PagingVO<PoReconciliationDTO.ListDTO> exportPoReconciliationScmExport(PagingDTO<PoReconciliationDTO.PagingParamDTO> dto);
+
+    StatementDTO<PoReconciliationDTO.ExportDTO, PoReconciliationDetailDTO.ListDTO> exportPoReconciliationScm(PoReconciliationDTO.PagingParamDTO dto);
 }

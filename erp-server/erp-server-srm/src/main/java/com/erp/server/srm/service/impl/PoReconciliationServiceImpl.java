@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -124,8 +125,8 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     }
 
     @Override
-    public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("对账单导出", EXPORT_SRM_PO_RECONCILIATION.getCode(), dto);
+    public void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        poReconciliationScmService.exportPoReconciliation(dto,response);
     }
 
     @Override

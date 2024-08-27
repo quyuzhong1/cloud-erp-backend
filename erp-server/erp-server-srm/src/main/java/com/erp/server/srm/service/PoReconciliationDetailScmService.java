@@ -139,4 +139,6 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @return
      */
     Integer countSupplierUnConfirmOrderDetail(String supplierId);
+
+    PagingVO<PoReconciliationDetailDTO.ListDTO> exportPoReconciliationDetailScm(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> dto);
 }

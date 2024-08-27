@@ -9,6 +9,7 @@ import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -91,7 +92,7 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
      * @author Will
      * @date: 2024/1/25 10:44
      */
-    void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto);
+    void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
 
     Integer countByStatus(String supplierId, String status);
 }

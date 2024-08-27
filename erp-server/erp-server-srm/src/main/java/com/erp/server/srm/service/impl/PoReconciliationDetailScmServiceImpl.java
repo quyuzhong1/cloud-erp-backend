@@ -230,23 +230,6 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     @Override
     public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("对账明细导出", EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM.getCode(), dto);
-//        List<PoReconciliationDetailDTO.ListDTO> list = this.baseMapper.listExport(dto);
-//        if(CollUtil.isEmpty(list)) {
-//            return;
-//        }
-//        // 数据处理
-//        fillList(list);
-//        // 导出数据
-//        StringBuffer sb = new StringBuffer();
-//        String excelPath = "excel/poReconciliationDetail.xlsx";
-//        String name = "对账明细导出";
-//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-//        sb.append(date).append(name);
-//        try {
-//            new ExcelPrintUtils().patchExport(list, response, excelPath);
-//        } catch (Exception e) {
-//            throw new ServiceException(ApiError.ERROR_1015);
-//        }
     }
 
     @Override
@@ -401,6 +384,16 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         return lambdaQuery().eq(PoReconciliationDetailEntity::getSupplierId,supplierId)
                 .eq(PoReconciliationDetailEntity::getBusinessStatus,ConfirmStatusEnum.WAIT_CONFIRM.getCode())
                 .count();
+    }
+
+    @Override
+    public PagingVO<PoReconciliationDetailDTO.ListDTO> exportPoReconciliationDetailScm(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> dto) {
+                Page<PoReconciliationDetailDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if(!CollUtil.isEmpty(page.getRecords())) {
+            // 数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -1329,33 +1330,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public PagingVO<InventoryDTO.PagingViewDTO> exportInventoryAge(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto) {
-
-        // 勾选导出处理
-        if (CollUtil.isNotEmpty(dto.getParams().getItems())) {
-            List<InventoryReportDTO.ExportInventoryAgeItem> checkData = dto.getParams().getItems();
-            List<String> warehouseIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseId).distinct().collect(Collectors.toList());
-            List<String> skuIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getSkuId).distinct().collect(Collectors.toList());
-            List<String> warehouseLocation = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseLocation).distinct().collect(Collectors.toList());
-            dto.getParams().setWarehouseIdList(warehouseIds);
-            dto.getParams().setSkuIdList(skuIds);
-            dto.getParams().setWarehouseLocationList(warehouseLocation);
-        }
-
-        // 获取用户区间配置
-        List<CfgUserRangeDTO.UserRangeDataDTO> userRanges = sysUserFeign.getUserRangeByType(UserRangeTypeEnum.INVENTORY_AGE.getCode(), Boolean.TRUE);
-        List<InventoryReportDTO.InventoryAgeRangeDTO> userRangeList = BeanMapperUtils.copyList(InventoryReportDTO.InventoryAgeRangeDTO.class, userRanges);
-        dto.getParams().setUserRangeList(userRangeList);
-
-        Page<LinkedHashMap> page = inventoryMapper.exportInventoryPage(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
-
-        // 标题及值赋值
-        List<LinkedHashMap> resultList = fillInventoryAgePageData(page.getRecords(), userRangeList);
-
-        return null;
-    }
-
-    @Override
     public List<InventoryEntity> listInventoryBySkuIds(InventoryQtyDTO.InventoryBySkuDTO dto) {
         if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuIdList())){
             return Collections.emptyList();
@@ -1378,5 +1352,35 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 .eq(InventoryEntity::getDictInventoryStatus, inventoryStatus)
                 .last("limit 1");
         return this.getOne(wrapper);
+    }
+
+    @Override
+    public PagingVO<DynamicExcelDTO> exportWmsInventoryAge(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto) {
+        // 勾选导出处理
+        if (CollUtil.isNotEmpty(dto.getParams().getItems())) {
+            List<InventoryReportDTO.ExportInventoryAgeItem> checkData = dto.getParams().getItems();
+            List<String> warehouseIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseId).distinct().collect(Collectors.toList());
+            List<String> skuIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getSkuId).distinct().collect(Collectors.toList());
+            List<String> warehouseLocation = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseLocation).distinct().collect(Collectors.toList());
+            dto.getParams().setWarehouseIdList(warehouseIds);
+            dto.getParams().setSkuIdList(skuIds);
+            dto.getParams().setWarehouseLocationList(warehouseLocation);
+        }
+
+        // 获取用户区间配置
+        List<CfgUserRangeDTO.UserRangeDataDTO> userRanges = sysUserFeign.getUserRangeByType(UserRangeTypeEnum.INVENTORY_AGE.getCode(), Boolean.TRUE);
+        List<InventoryReportDTO.InventoryAgeRangeDTO> userRangeList = BeanMapperUtils.copyList(InventoryReportDTO.InventoryAgeRangeDTO.class, userRanges);
+        dto.getParams().setUserRangeList(userRangeList);
+
+        Page<LinkedHashMap> page = inventoryMapper.exportInventoryPage(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+
+        // 标题及值赋值
+        List<LinkedHashMap> resultList = fillInventoryAgePageData(page.getRecords(), userRangeList);
+        LinkedHashMap headMap = (LinkedHashMap) resultList.get(0).get("head");
+        List<LinkedHashMap<String ,Object>> convertDataList = (List<LinkedHashMap<String ,Object>>) resultList.get(0).get("data");
+        DynamicExcelDTO excelDTO = new DynamicExcelDTO();
+        excelDTO.setHeaders(headMap);
+        excelDTO.setData(convertDataList);
+        return new PagingVO<>(Collections.singletonList(excelDTO), (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 }

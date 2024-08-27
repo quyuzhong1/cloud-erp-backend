@@ -45,6 +45,7 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
+        sb.append(excelPath.substring(excelPath.lastIndexOf(".")));
         try {
             byte[] bytes = new ExcelPrintUtils().sheetPatchExport(list, sb.toString(),excelPath);
             String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);

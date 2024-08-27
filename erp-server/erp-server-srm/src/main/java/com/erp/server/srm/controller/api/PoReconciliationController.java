@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,7 +118,6 @@ public class PoReconciliationController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
-    @WebAdvanceQuery(handler = PoReconciliationQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
         poReconciliationService.exportList(dto);
         return success(true);
@@ -133,9 +133,8 @@ public class PoReconciliationController extends BaseController {
     @PostMapping("/exportPoReconciliation")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出对账单数据")
     @WebAdvanceQuery(handler = PoReconciliationQueryHandler.class)
-    public ApiResult<Boolean> exportPoReconciliation(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
-        poReconciliationService.exportPoReconciliation(dto);
-        return success(true);
+    public void exportPoReconciliation(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        poReconciliationService.exportPoReconciliation(dto, response);
     }
 
 

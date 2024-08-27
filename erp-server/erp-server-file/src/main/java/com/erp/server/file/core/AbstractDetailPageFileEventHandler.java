@@ -4,7 +4,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.server.file.dto.StatementDTO;
+import com.common.business.dto.StatementDTO;
 import com.erp.server.file.entity.FileTask;
 import com.erp.server.file.exception.BusinessException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,7 +18,7 @@ import java.util.Date;
 import java.util.List;
 
 @Slf4j
-public abstract class AbstractDetailPageFileEventHandler<T, R> implements FileEventHandler {
+public abstract class AbstractDetailPageFileEventHandler<R, T> implements FileEventHandler {
 
     @Resource
     private ObjectMapper objectMapper;

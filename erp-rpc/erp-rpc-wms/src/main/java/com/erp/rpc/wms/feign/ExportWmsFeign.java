@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.ExportFeignConfig;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -68,9 +69,6 @@ public interface ExportWmsFeign {
 
     @PostMapping("/feign/export/initStock")
     PagingVO<InitStockDTO.ListDTO> exportInitStock(@RequestBody PagingDTO<InitStockDTO.ExportSearchParamDTO> dto);
-
-    @PostMapping("/feign/export/inventoryAge")
-    PagingVO<InventoryDTO.PagingViewDTO> exportInventoryAge(@RequestBody PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto);
 
     @PostMapping("/feign/export/inventoryDaily")
     PagingVO<InventoryReportDTO.ListDailyInventoryDTO> exportInventoryDaily(@RequestBody PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto);
@@ -190,4 +188,7 @@ public interface ExportWmsFeign {
     PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(@RequestBody PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/virtualInventory")
     PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto);
+
+    @PostMapping("/feign/export/inventoryAge")
+    PagingVO<DynamicExcelDTO> exportWmsInventoryAge(@RequestBody PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto);
 }

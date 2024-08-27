@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -345,11 +346,6 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     PagingVO<InventoryDTO.PagingViewDTO> getInventoryPageData(PagingDTO<InventoryDTO.ExportSearchParamDTO> dto);
 
     /**
-     * 导出
-     */
-    PagingVO<InventoryDTO.PagingViewDTO> exportInventoryAge(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto);
-
-    /**
      * 根据sku获取库存列表
      * @param dto
      * @return
@@ -364,4 +360,6 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return                      库存信息
      */
     InventoryEntity getInventory(String skuId, String warehouseId, String warehouseLocation, String inventoryStatus);
+
+    PagingVO<DynamicExcelDTO> exportWmsInventoryAge(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto);
 }

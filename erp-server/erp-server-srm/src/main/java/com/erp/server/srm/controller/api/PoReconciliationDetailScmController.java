@@ -65,13 +65,7 @@ public class PoReconciliationDetailScmController extends BaseController {
      * @param dto
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "srm:poReconciliationDetail:scm:paging",
-            tableAlias = "prd"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
-    @WebAdvanceQuery(handler = PoReconciliationDetailScmQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto) {
         poReconciliationDetailScmService.exportList(dto);
         return success(true);
