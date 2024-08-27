@@ -107,7 +107,7 @@ public class AntuProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 		product.setUniqueId(MD5Util.toMD5(sourcePlatform + skuNo));
     	product.setMatchResult(false);
     	product.setPlatform(sourcePlatform);
-    	product.setAuthId(dmpProductInfoEntity.getNextLevelId());
+    	product.setAuthId(dmpProductInfoEntity.getAuthId());
 
         return product;
     }
