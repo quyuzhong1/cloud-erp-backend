@@ -15,12 +15,12 @@ import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.ImlDictCityEntity;
+import com.erp.model.sys.entity.DictThirdCity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.sys.convert.CityDictConvert;
 import com.erp.server.sys.service.DictCityService;
-import com.erp.server.sys.service.ImlDictCityService;
+import com.erp.server.sys.service.DictThirdCityService;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -46,7 +46,7 @@ public class CityDictConsumerService<T extends DmpSyncTaskIdDTO> extends Abstrac
     private DmpTaskFeign dmpTaskFeign;
 
     @Resource
-    private ImlDictCityService imlDictCityService;
+    private DictThirdCityService dictThirdCityService;
 
     @Resource
     private DictCityService dictCityService;
@@ -97,21 +97,21 @@ public class CityDictConsumerService<T extends DmpSyncTaskIdDTO> extends Abstrac
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformCityDictDTO dto = JSONUtil.toBean(ext.toString(), PlatformCityDictDTO.class);
+        DictThirdCity entity = CityDictConvert.INSTANCE.imlConversion(dto);
         if(dto.getProvider().equals(OmsPlatformEnum.OMS_IML.getCode())){
-            ImlDictCityEntity entity = CityDictConvert.INSTANCE.imlConversion(dto);
             if(entity.getRegionName().equals("从化区")){
                 entity.setRegionName("从化市");
             }
             if(entity.getRegionName().equals("增城区")){
                 entity.setRegionName("增城市");
             }
-            //通过区域名称关联城市字典表
-            DictCityEntity dictCityEntity = dictCityService.getReginByName(entity.getRegionName(),entity.getRegionLevel());
-            if(Objects.nonNull(dictCityEntity)){
-                entity.setDictCityId(dictCityEntity.getId());
-            }
-            imlDictCityService.saveOrUpdateByRegionId(entity);
         }
+        //通过区域名称关联城市字典表
+        DictCityEntity dictCityEntity = dictCityService.getReginByName(entity.getRegionName(),entity.getRegionLevel());
+        if(Objects.nonNull(dictCityEntity)){
+            entity.setDictCityId(dictCityEntity.getId());
+        }
+        dictThirdCityService.saveOrUpdateByRegionId(entity);
         return ApiResult.success();
     }
 

@@ -1,7 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.ImlDictCityEntity;
+import com.erp.model.sys.entity.DictThirdCity;
 
 import java.util.Map;
 
@@ -29,5 +29,5 @@ public interface SysDictService {
      * @param dictDistrictId
      * @return
      */
-    Map<String, ImlDictCityEntity> mapAndCheckImlCityIds(String dictProvinceId, String dictCityId, String dictDistrictId);
+    Map<String, DictThirdCity> mapAndCheckImlCityIds(String dictProvinceId, String dictCityId, String dictDistrictId);
 }

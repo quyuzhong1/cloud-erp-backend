@@ -1,13 +1,11 @@
 package com.erp.rpc.sys.feign;
 
-import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -73,12 +71,12 @@ public interface SysDictFeign {
     List<DictCityEntity> listCityByIdList(List<String> idList);
 
     /**
-     * 获取艾姆勒城市
+     * 获取第三方城市
      * @param dictIds
      * @return
      */
     @PostMapping("/feign/city/listImlCityByDictIdList")
-    List<ImlDictCityEntity> listImlCityByDictIdList(List<String> dictIds);
+    List<DictThirdCity> listImlCityByDictIdList(List<String> dictIds);
 
 
     @GetMapping("/feign/dict/kingdee/getByCode")

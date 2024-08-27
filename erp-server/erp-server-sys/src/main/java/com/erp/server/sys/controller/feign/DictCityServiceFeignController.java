@@ -3,15 +3,14 @@ package com.erp.server.sys.controller.feign;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.ImlDictCityEntity;
+import com.erp.model.sys.entity.DictThirdCity;
 import com.erp.server.sys.service.DictCityService;
-import com.erp.server.sys.service.ImlDictCityService;
+import com.erp.server.sys.service.DictThirdCityService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 省/市
@@ -26,7 +25,7 @@ public class DictCityServiceFeignController {
     @Resource
     private DictCityService dictCityService;
     @Resource
-    private ImlDictCityService imlDictCityService;
+    private DictThirdCityService dictThirdCityService;
 
     /**
      * 根据id查询省/市
@@ -68,13 +67,13 @@ public class DictCityServiceFeignController {
     }
 
     /**
-     * 获取艾姆勒城市
+     * 获取第三方城市
      * @param dictIds
      * @return
      */
     @PostMapping("/listImlCityByDictIdList")
-    public List<ImlDictCityEntity> listImlCityByDictIdList(@RequestBody List<String> dictIds) {
-        return imlDictCityService.listByDictIdList(dictIds);
+    public List<DictThirdCity> listImlCityByDictIdList(@RequestBody List<String> dictIds) {
+        return dictThirdCityService.listByDictIdList(dictIds);
     }
 
 

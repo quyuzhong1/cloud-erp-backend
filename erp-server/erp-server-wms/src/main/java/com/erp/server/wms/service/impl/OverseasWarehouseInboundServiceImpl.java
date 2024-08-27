@@ -31,7 +31,7 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.ImlDictCityEntity;
+import com.erp.model.sys.entity.DictThirdCity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
@@ -533,7 +533,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 // iml
                 if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)) {
                     // 查询关联
-                    Map<String, ImlDictCityEntity> imlCityEntityMap = sysDictService.mapAndCheckImlCityIds(
+                    Map<String, DictThirdCity> imlCityEntityMap = sysDictService.mapAndCheckImlCityIds(
                             commonDTO.getDictProvinceId(),
                             commonDTO.getDictCityId(),
                             commonDTO.getDictDistrictId());

@@ -2,7 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.ImlDictCityEntity;
+import com.erp.model.sys.entity.DictThirdCity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.wms.service.SysDictService;
 import org.springframework.stereotype.Service;
@@ -57,21 +57,21 @@ public class SysDictServiceImpl implements SysDictService {
     }
 
     @Override
-    public Map<String, ImlDictCityEntity> mapAndCheckImlCityIds(String dictProvinceId, String dictCityId, String dictDistrictId) {
+    public Map<String, DictThirdCity> mapAndCheckImlCityIds(String dictProvinceId, String dictCityId, String dictDistrictId) {
         List<String> ids = Arrays.asList(dictProvinceId, dictCityId, dictDistrictId);
-        List<ImlDictCityEntity> dictCityEntities = sysDictFeign.listImlCityByDictIdList(ids);
+        List<DictThirdCity> dictCityEntities = sysDictFeign.listImlCityByDictIdList(ids);
         if (CollectionUtils.isEmpty(dictCityEntities)) {
             throw new ServiceException("未找到对应艾姆勒地址");
         }
-        Map<String, ImlDictCityEntity> dictCountryEntityMap = dictCityEntities.stream().collect(Collectors.toMap(ImlDictCityEntity::getDictCityId, Function.identity()));
-        ImlDictCityEntity provinceEntity = dictCountryEntityMap.get(dictProvinceId);
-        ImlDictCityEntity cityEntity = dictCountryEntityMap.get(dictCityId);
-        ImlDictCityEntity districtEntity = dictCountryEntityMap.get(dictDistrictId);
+        Map<String, DictThirdCity> dictCountryEntityMap = dictCityEntities.stream().collect(Collectors.toMap(DictThirdCity::getDictCityId, Function.identity()));
+        DictThirdCity provinceEntity = dictCountryEntityMap.get(dictProvinceId);
+        DictThirdCity cityEntity = dictCountryEntityMap.get(dictCityId);
+        DictThirdCity districtEntity = dictCountryEntityMap.get(dictDistrictId);
         if (null == provinceEntity) {
             throw new ServiceException("艾姆勒省ID信息不存在");
         }
         if (null == cityEntity) {
-            throw new ServiceException("艾姆勒城市ID信息不存在");
+            throw new ServiceException("第三方城市ID信息不存在");
         }
         if (null == districtEntity) {
             throw new ServiceException("艾姆勒地区ID信息不存在");
@@ -80,7 +80,7 @@ public class SysDictServiceImpl implements SysDictService {
             throw new ServiceException("艾姆勒地区对应城市不匹配");
         }
         if (!cityEntity.getParentRegionId().equalsIgnoreCase(provinceEntity.getRegionId())) {
-            throw new ServiceException("艾姆勒城市对应省不匹配");
+            throw new ServiceException("第三方城市对应省不匹配");
         }
         return dictCountryEntityMap;
     }
