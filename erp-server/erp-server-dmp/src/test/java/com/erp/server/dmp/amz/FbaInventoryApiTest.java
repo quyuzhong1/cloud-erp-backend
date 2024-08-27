@@ -35,6 +35,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -83,20 +84,20 @@ public class FbaInventoryApiTest {
      */
     @Test
     public void getInventorySummariesTest() throws ApiException {
-        String shopId = "1735512797405515777";
+        String shopId = "1736957812266766338";
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 
         String granularityType = "Marketplace";
-        String granularityId = "A1F83G8C2ARO7P";
-        OffsetDateTime startDateTime = null;
+        String granularityId = "A39IBJ37TRP1C6";
+//        OffsetDateTime startDateTime = null;
+        OffsetDateTime startDateTime = OffsetDateTime.of(2024,1,1,0,0,0,0, ZoneOffset.UTC);
 //        String granularityType = null;
 //        String granularityId = null;
 //        AmazonMarketplaceEnum.
 //        List<String> marketplaceIds = new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet());
         List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
         Boolean details = false;
-//        OffsetDateTime startDateTime = OffsetDateTime.of(2024,8,25,0,0,0,0, ZoneOffset.UTC);
         List<String> sellerSkus = null;
         FbaInventoryApi api = AmazonSpApiInitUtils.create(FbaInventoryApi.class, shopInfoDTO, false);
         List<InventorySummary> allList = api.getAllInventorySummaries(granularityType, granularityId, marketplaceIds, details, startDateTime, sellerSkus);

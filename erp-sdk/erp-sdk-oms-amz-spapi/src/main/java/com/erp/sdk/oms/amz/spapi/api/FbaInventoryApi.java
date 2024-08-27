@@ -237,6 +237,9 @@ public class FbaInventoryApi {
 
         // 所有结果
         List<InventorySummary> allList = new LinkedList<>(data.getPayload().getInventorySummaries());
+        if (null == data.getPagination()){
+            return allList;
+        }
         currentNextToken = data.getPagination().getNextToken();
         while (StringUtils.isNotBlank(currentNextToken) ) {
             withHttpInfo = getInventorySummariesWithHttpInfo(granularityType, granularityId, marketplaceIds, details, startDateTime, sellerSkus, currentNextToken);

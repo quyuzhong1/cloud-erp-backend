@@ -2,9 +2,13 @@ package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
 import java.time.LocalDateTime;
+
 import com.baomidou.mybatisplus.annotation.TableField;
+
 import java.io.Serializable;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -18,7 +22,7 @@ import com.common.business.enums.ApproveStatusEnum;
  *
  * @author Jim
  * @since 2024-08-26
-*/
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
@@ -26,70 +30,106 @@ import com.common.business.enums.ApproveStatusEnum;
 public class DmpFbaInventoryEntity extends BaseEntity<DmpFbaInventoryEntity> {
 
     /**
-    * 平台SPU
-    */
+     * 平台SPU
+     */
     @TableField("asin")
     private String asin;
     /**
-    * 卖家sku
-    */
+     * 卖家sku
+     */
     @TableField("msku")
     private String msku;
     /**
-    * FNSKU
-    */
+     * FNSKU
+     */
     @TableField("fn_sku")
     private String fnSku;
     /**
-    * 产品名称
-    */
+     * 产品名称
+     */
     @TableField("product_name")
     private String productName;
     /**
-    * 平台最后更新时间
-    */
+     * 平台最后更新时间
+     */
     @TableField("last_platform_update_time")
     private LocalDateTime lastPlatformUpdateTime;
     /**
-    * 亚马逊库存SKU使用状况
-    */
+     * 亚马逊库存SKU使用状况
+     */
     @TableField("condition")
     private String condition;
     /**
-    * 亚马逊站点代号
-    */
+     * 亚马逊站点代号
+     */
     @TableField("marketplace_id")
     private String marketplaceId;
     /**
-    * 输入任务ID
-    */
+     * 输入任务ID
+     */
     @TableField("input_task_id")
     private String inputTaskId;
     /**
-    * 亚马逊账号代号
-    */
+     * 亚马逊账号代号
+     */
     @TableField("platform_shop_code")
     private String platformShopCode;
     /**
-    * 任务转换ID
-    */
+     * 任务转换ID
+     */
     @TableField("convert_id")
     private String convertId;
     /**
-    * 店铺ID
-    */
+     * 店铺ID
+     */
     @TableField("next_level_id")
     private String nextLevelId;
     /**
-    * 任务来源唯一加密代号
-    */
+     * 任务来源唯一加密代号
+     */
     @TableField("unique_encrypt")
     private String uniqueEncrypt;
     /**
-    * 任务数据加密代号
-    */
+     * 任务数据加密代号
+     */
     @TableField("data_encrypt")
     private String dataEncrypt;
+
+    /**
+     * 计划入库数量
+     */
+    @TableField("inbound_working_qty")
+    private Integer inboundWorkingQty;
+    /**
+     * 已发货数量
+     */
+    @TableField("inbound_shipped_qty")
+    private Integer inboundShippedQty;
+    /**
+     * 入库中数量
+     */
+    @TableField("inbound_receiving_qty")
+    private Integer inboundReceivingQty;
+    /**
+     * FBI可售
+     */
+    @TableField("fulfillable_qty")
+    private Integer fulfillableQty;
+    /**
+     * 预留
+     */
+    @TableField("reserved_qty")
+    private Integer reservedQty;
+    /**
+     * 调查中数量
+     */
+    @TableField("researching_qty")
+    private Integer researchingQty;
+    /**
+     * 不可售数量
+     */
+    @TableField("unsellable_qty")
+    private Integer unsellableQty;
 
 
     public static final String ASIN = "asin";

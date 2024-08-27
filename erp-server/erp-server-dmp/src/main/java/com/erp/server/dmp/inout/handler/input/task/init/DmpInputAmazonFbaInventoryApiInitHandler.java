@@ -14,6 +14,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +44,15 @@ public class DmpInputAmazonFbaInventoryApiInitHandler extends DmpInputInitHandle
         String shopId = dmpCfgInputDetailEntity.getNextLevelId();
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        String extendJson = dmpInputTaskEntity.getExtendJson();
+        // 查询所有
+        boolean hasAll = false;
+        if(StringUtils.isNotBlank(extendJson)) {
+            JSONObject parseObject = JSON.parseObject(extendJson);
+            if(parseObject != null) {
+                hasAll = parseObject.getBooleanValue("hasAll");
+            }
+        }
 
         // 目前仅支持市场类型
         String granularityType = "Marketplace";
@@ -50,9 +60,9 @@ public class DmpInputAmazonFbaInventoryApiInitHandler extends DmpInputInitHandle
         String granularityId = marketplaceEnum.getMarketplaceId();
         List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
         // 是否包含明细
-        Boolean details = false;
+        Boolean details = true;
         // 数据开始时间(空=全量)
-        OffsetDateTime startDateTime = null == dmpInputTaskEntity.getStartTime() ? null : DateUtil.plus8SameUtcOffset(dmpInputTaskEntity.getStartTime());
+        OffsetDateTime startDateTime = null == dmpInputTaskEntity.getStartTime() || hasAll ? null : DateUtil.plus8SameUtcOffset(dmpInputTaskEntity.getStartTime());
         // Sku列表
         List<String> sellerSkus = null;
         FbaInventoryApi api = AmazonSpApiInitUtils.create(FbaInventoryApi.class, shopInfoDTO, false);
