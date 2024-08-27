@@ -42,6 +42,9 @@ public class DmpInputErpPushApiInitHandler extends DmpInputInitHandler{
         if(StringUtils.isBlank(system)) {
         	throw new ServiceException("dmp_cfg_input的extend_json扩展字段中系统未配置");
         }
+        if(StringUtils.isBlank(apiType)) {
+        	throw new ServiceException("dmp_cfg_api的api_type接口类型未配置");
+        }
         String className = "com.erp.model."+ system +".entity."+ StringUtils.capitalize(system) +"PushMsgEntity";
         Class<BaseEntity> clazz = null;
 		try {
@@ -56,7 +59,7 @@ public class DmpInputErpPushApiInitHandler extends DmpInputInitHandler{
 		while(list == null) {
 			try {
 				list = FeignQuery.create(clazz)
-						.eq("source_type", apiType)
+						.in("source_type", apiType.split(","))
 						.ge(BaseEntity::getUpdateTime, dmpInputTaskEntity.getStartTime())
 						.le(BaseEntity::getUpdateTime, dmpInputTaskEntity.getEndTime())
 						.list();

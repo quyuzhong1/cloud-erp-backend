@@ -55,6 +55,10 @@ public class FeignBuilder {
         return this;
     }
 
+    public <T extends BaseEntity<T>> FeignBuilder in(String name, Object... values) {
+        queryParams.add(new QueryParam(QueryTypeEnum.IN, name, values));
+        return this;
+    }
     
     public <T extends BaseEntity<T>> FeignBuilder in(SFunction<T, ?> function, Object... values) {
         queryParams.add(new QueryParam(QueryTypeEnum.IN, getColumn(function), values));
