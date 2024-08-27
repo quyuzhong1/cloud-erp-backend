@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -173,12 +174,17 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		try {
 			Object invoke = method.invoke(bean, dmpOutputTaskRecordEntity.getRequestData());
 			try {responseData = JSON.toJSONString(invoke);} catch (Exception e) {}
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+		} catch (InvocationTargetException e) {
+			Throwable targetException = e.getTargetException();
+			status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
+			responseData = "调用" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(targetException);
+			message = "调用" + apiClass + "的" + outputMethod + "方法报错" + targetException.getMessage();
+		} catch (IllegalAccessException | IllegalArgumentException e) {
 			status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
 			responseData = "调用" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(e);
 			message = "调用" + apiClass + "的" + outputMethod + "方法报错";
 		}
-		dmpOutputUtils.updateStatus(id, status, responseData , message);
+		dmpOutputUtils.updateStatus(id, status, "traceId=【" + MDC.get("traceId") + "】" + responseData , message);
 	}
 
 	
