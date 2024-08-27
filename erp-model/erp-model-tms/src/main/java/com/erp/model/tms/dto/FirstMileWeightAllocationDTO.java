@@ -146,7 +146,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * 出库重量
          */
-        private BigDecimal boxWeight;
+        private BigDecimal outStockWeight;
 
         /**
         * 出库计费重【可排序】
