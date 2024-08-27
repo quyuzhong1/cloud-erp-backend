@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.service.DmpPushMsgService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
@@ -37,6 +40,9 @@ import lombok.extern.slf4j.Slf4j;
 @Scope("prototype")
 public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 
+	@Autowired
+	private DmpPushMsgService dmpPushMsgService;
+	
 	@Override
 	public List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
 		DmpCfgOutputEntity dmpCfgOutputEntity = dmpResponse.getDmpCfgOutputEntity();
@@ -51,7 +57,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		String typeId = dmpCfgInputEntity.getTypeId();
 		String apiType = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(typeId)).get(0).getApiType();
 		
-		String systemId = dmpCfgInputEntity.getSystemId();
+		String systemId = dmpCfgOutputEntity.getSystemId();
 		String code = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(systemId)).get(0).getCode();
 		
 		List<DmpPushMsgEntity> dmpPushMsgEntityList = new ArrayList<>();
@@ -96,7 +102,6 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
 				i = i + 1;
 			}
-			dmpOutputTaskRecordService.saveBatch(dmpOutputTaskRecordEntityList);
 		}
 		
 		return dmpOutputTaskRecordEntityList;
@@ -105,6 +110,27 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 	@Override
 	protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity,
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+		String dataId = dmpOutputTaskRecordEntity.getDataId();
+		DmpPushMsgEntity dmpPushMsgEntity = dmpPushMsgService.getById(dataId);
+		String parentId = dmpPushMsgEntity.getParentId();
+		if(StringUtils.isNotBlank(parentId) && "operateApprove".equals(dmpPushMsgEntity.getSyncOperate())) {
+			List<DmpPushMsgEntity> list = dmpPushMsgService.lambdaQuery().eq(DmpPushMsgEntity::getSourceId, parentId)
+					.eq(DmpPushMsgEntity::getSyncOperate, dmpPushMsgEntity.getSyncOperate()).orderByDesc(DmpPushMsgEntity::getMessageUpdateTime).list();
+			if(CollUtil.isEmpty(list)) {
+				return;
+			}
+			
+			DmpPushMsgEntity parentDmpPushMsgEntity = list.get(0);
+			String parentDataId = parentDmpPushMsgEntity.getId();
+			List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
+					.eq(DmpOutputTaskRecordEntity::getDataId, parentDataId)
+					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.list();
+			if(CollUtil.isEmpty(parentOutputList)) {
+				return;
+			}
+		}
+		
 		String id = dmpOutputTaskRecordEntity.getId();
 		String outputTypeId = dmpCfgOutputEntity.getTypeId();
 		DmpCfgApiEntity outputDmpCfgApiEntity = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(outputTypeId)).get(0);
