@@ -6,6 +6,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.ReportPeriodMonthDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -50,4 +51,10 @@ public interface ReportPeriodMonthService extends SuperService<ReportPeriodMonth
      * @return
      */
     List<ReportPeriodMonthDTO.SelectDTO> queryList(ReportPeriodMonthDTO.QueryDTO dto);
+
+    /**
+     * 获取已存在核算期间列表
+     * @return
+     */
+    List<ReportPeriodMonthDTO.ListDTO> listLocalDate();
 }

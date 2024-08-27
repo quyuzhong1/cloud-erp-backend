@@ -610,7 +610,7 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 对账月份【导出使用】
          */
-        private LocalDate reconciliationMonthStr;
+        private String reconciliationMonthStr;
 
         /**
          * 店铺id

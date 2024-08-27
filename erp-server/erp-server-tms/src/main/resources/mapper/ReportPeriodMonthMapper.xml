@@ -48,6 +48,13 @@
             </foreach>
         </if>
     </select>
+    <select id="listLocalDate" resultType="com.erp.model.tms.dto.ReportPeriodMonthDTO$ListDTO">
+        select
+            to_char(month, 'YYYY-MM') AS reportPeriodStr
+        FROM report_period_month
+        where is_deleted = FALSE
+        group by month order by month desc
+    </select>
 
 
 </mapper>

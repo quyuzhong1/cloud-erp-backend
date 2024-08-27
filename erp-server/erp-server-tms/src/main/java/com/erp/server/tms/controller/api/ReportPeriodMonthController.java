@@ -20,6 +20,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.ReportPeriodMonthDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -70,12 +71,20 @@ public class ReportPeriodMonthController extends BaseController {
     }
 
     /**
-     * 获取所有核算期间下拉框
+     * 通过重量分摊获取所有核算期间下拉框
      * @param dto
      * @return
      */
     @PostMapping("/queryList")
     public ApiResult<List<ReportPeriodMonthDTO.SelectDTO>> queryList(@RequestBody @Validated ReportPeriodMonthDTO.QueryDTO dto) {
         return success(reportPeriodMonthService.queryList(dto));
+    }
+    /**
+     * 获取所有核算期间下拉框
+     * @return
+     */
+    @PostMapping("/listLocalDate")
+    public ApiResult<List<ReportPeriodMonthDTO.ListDTO>> listLocalDate() {
+        return success(reportPeriodMonthService.listLocalDate());
     }
 }

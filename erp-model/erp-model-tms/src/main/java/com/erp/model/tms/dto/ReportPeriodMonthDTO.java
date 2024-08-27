@@ -142,4 +142,12 @@ public class ReportPeriodMonthDTO implements Serializable {
         @NotEmpty(message = "重量分摊ids不能为空")
         private List<String> ids;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        private String id;
+        private String reportPeriodStr;
+        private boolean disabled;
+    }
 }

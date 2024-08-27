@@ -106,8 +106,9 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     @TableField("currency")
     private String currency;
     /**
-     * 费用来源：estimated=预估账单，actual=实际账单
+     * 账单来源：estimated=预估账单，actual=实际账单
      * ReconciliationBillTypeEnum
+     *
     */
     @TableField("bill_source_type")
     private String billSourceType;

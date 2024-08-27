@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -26,4 +27,10 @@ public interface ReportPeriodMonthMapper extends BaseMapper<ReportPeriodMonthEnt
      * @return
      */
     List<ReportPeriodMonthDTO.SelectDTO> queryList(@Param("orgIds") List<String> orgIds);
+
+    /**
+     * 获取核算期间列表
+     * @return
+     */
+    List<ReportPeriodMonthDTO.ListDTO> listLocalDate();
 }

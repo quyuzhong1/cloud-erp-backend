@@ -163,6 +163,11 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
         return baseMapper.queryList(orgIds);
     }
 
+    @Override
+    public List<ReportPeriodMonthDTO.ListDTO> listLocalDate() {
+        return baseMapper.listLocalDate();
+    }
+
 
     /**
     * 新增修改处理数据
