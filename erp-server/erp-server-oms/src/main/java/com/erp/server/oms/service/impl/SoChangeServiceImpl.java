@@ -878,12 +878,12 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             });
         }
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(pushTaskList);
-            }
-        });
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(pushTaskList);
+//            }
+//        });
         return Boolean.TRUE;
     }
 

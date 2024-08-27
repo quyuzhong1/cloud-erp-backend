@@ -3,6 +3,8 @@ package com.erp.server.oms.kingdee.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -12,6 +14,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -20,6 +23,7 @@ import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
+import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
@@ -82,6 +86,10 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
     @Resource
     private  KingdeeReceiptConditionService kingdeeReceiptConditionService;
+    
+    @Resource
+    private OmsPushMsgService omsPushMsgService;
+    
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -252,16 +260,27 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
      */
     private DmpPushTaskEntity saveTask (CustomerInfoEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
-        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-        taskFeignDTO.setSourceId(entity.getId());
-        taskFeignDTO.setSourceCode(entity.getCode());
-        taskFeignDTO.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
-        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName());
-        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        taskFeignDTO.setSyncOperate(operate);
-        return dmpMqFeign.saveTask(taskFeignDTO);
+//        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+//        taskFeignDTO.setSourceId(entity.getId());
+//        taskFeignDTO.setSourceCode(entity.getCode());
+//        taskFeignDTO.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
+//        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+//        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName());
+//        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+//        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+//        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+//        taskFeignDTO.setSyncOperate(operate);
+//        return dmpMqFeign.saveTask(taskFeignDTO);
+    	
+    	OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setSourceId(entity.getId());
+        omsPushMsgEntity.setSourceCode(entity.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
+        omsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        omsPushMsgEntity.setSyncOperate(operate);
+        omsPushMsgService.save(omsPushMsgEntity);
+        
+        return null;
     }
 }

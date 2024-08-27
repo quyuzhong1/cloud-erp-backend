@@ -1,7 +1,11 @@
 package com.erp.server.dmp.inout.job;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +13,15 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.utils.ApplicationContextUtils;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
+import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.erp.server.dmp.inout.utils.DmpOutputRocketMQPushUtils;
+import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.service.DmpCfgOutputService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
+import com.erp.server.dmp.service.DmpOutputTaskService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -23,7 +33,9 @@ public class DmpOutputTaskJob {
 	@Autowired
 	private DmpOutputTaskRecordService dmpOutputTaskRecordService;
 	@Autowired
-	private DmpOutputRocketMQPushUtils dmpOutputRocketMQPushUtils;
+	private DmpOutputTaskService dmpOutputTaskService;
+	@Autowired
+	private DmpCfgOutputService dmpCfgOutputService;
 	
 	@XxlJob("doOutputErrorTask")
     public ReturnT doOutputErrorTask(){
@@ -55,7 +67,31 @@ public class DmpOutputTaskJob {
 					+ "order by update_time limit " + size)
 			.list();
 		
-		dmpOutputRocketMQPushUtils.dealDmpOutputTaskRecordEntityList(dmpOutputTaskRecordEntityList);
+		if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+			Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
+	    			.in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
+	    			.select(DmpOutputTaskEntity::getId , DmpOutputTaskEntity::getCfgOutputId)
+	    			.list().stream().collect(Collectors.toMap(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId));
+	    	
+	    	Map<String, DmpCfgOutputEntity> outputIdEntityMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
+	    			.list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, d -> d));
+	    	
+	    	Map<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMaps = new HashMap<>();
+	    	for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+	    		String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
+	    		List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMaps.get(cfgOutputId);
+	    		if(CollUtil.isEmpty(list)) {
+	    			list = new ArrayList<>();
+	    		}
+	    		list.add(dmpOutputTaskRecordEntity);
+	    		cfgOutputRecordEntityListMaps.put(cfgOutputId, list);
+	    	}
+	    	for(Map.Entry<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMap : cfgOutputRecordEntityListMaps.entrySet()) {
+	    		DmpCfgOutputEntity dmpCfgOutputEntity = outputIdEntityMaps.get(cfgOutputRecordEntityListMap.getKey());
+	    		DmpOutputTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(dmpCfgOutputEntity.getOutputClass()) , DmpOutputTaskHandler.class);
+	    		dmpOutputTaskHandler.dealDmpOutputTaskRecordEntityList(dmpCfgOutputEntity, dmpOutputTaskRecordEntityList);
+	    	}
+		}
 		
         return ReturnT.SUCCESS;
     }

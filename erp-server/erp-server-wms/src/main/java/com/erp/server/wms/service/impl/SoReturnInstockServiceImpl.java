@@ -1563,12 +1563,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             resultList.add(pushTaskEntity);
         });
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(resultList);
+//            }
+//        });
     }
 
     private void syncToWdt(SoReturnInstockEntity entity,SyncOperateEnum operateEnum) {
