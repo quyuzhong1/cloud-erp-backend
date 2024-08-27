@@ -21,7 +21,7 @@ import java.util.List;
 @Mapper
 public interface WmsCartonDetailMapper extends BaseMapper<WmsCartonDetailEntity> {
 
-    List<WmsCartonSpecDTO.PackingItemDTO> boxInfoBySourceId(@Param("sourceId") String sourceId);
+    List<WmsCartonSpecDTO.PackingItemDTO> boxInfoBySourceId(@Param("sourceIdList") List<String> sourceId);
 
     /**
      * 根据箱子id获取装箱明细
