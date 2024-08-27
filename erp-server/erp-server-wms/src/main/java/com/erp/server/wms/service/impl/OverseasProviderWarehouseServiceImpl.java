@@ -13,6 +13,7 @@ import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdShopDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -269,5 +270,23 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         }
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean isApiWarehouse(String destWarehouseId) {
+        if(StringUtils.isBlank(destWarehouseId)){
+            return false;
+        }
+        OverseasProviderWarehouseEntity entity = getByWarehouseId(destWarehouseId);
+        if (null == entity || entity.getDisabled()) {
+            return false;
+        }
+
+        OverseasProviderEntity providerEntity = overseasProviderService.getById(entity.getMainId());
+        if (null == providerEntity || !AuthStatusEnum.ALREADY.getCode().equals(providerEntity.getAuthStatus())) {
+            return false;
+        }
+
+        return true;
     }
 }

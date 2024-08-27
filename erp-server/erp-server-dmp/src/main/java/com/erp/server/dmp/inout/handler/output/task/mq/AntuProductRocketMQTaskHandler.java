@@ -1,18 +1,6 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
-
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.utils.MD5Util;
@@ -23,12 +11,16 @@ import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
 
-import cn.hutool.core.collection.CollUtil;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @Scope("prototype")
-public class DmpOutputGoodCangProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler{
+public class AntuProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler{
 
 	@Override
 	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -115,7 +107,8 @@ public class DmpOutputGoodCangProductRocketMQTaskHandler extends DmpOutputRocket
 		product.setUniqueId(MD5Util.toMD5(sourcePlatform + skuNo));
     	product.setMatchResult(false);
     	product.setPlatform(sourcePlatform);
-		product.setAuthId(dmpProductInfoEntity.getAuthId());
+    	product.setAuthId(dmpProductInfoEntity.getAuthId());
+
         return product;
     }
 

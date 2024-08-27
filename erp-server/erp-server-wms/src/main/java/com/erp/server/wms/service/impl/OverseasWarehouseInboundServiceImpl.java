@@ -628,7 +628,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
         List<OverseasWarehouseInboundDetailEntity> updateDetailEntityList = new ArrayList<>();
-        if (StringUtils.isNotBlank(entity.getDictPlatform())){
+        if (overseasProviderWarehouseService.isApiWarehouse(entity.getToWarehouseId())){
             //有平台对接的入库单，判断入库状态
             if(!OverseasInstockStatusEnum.SIGNED.getCode().equals(entity.getInstockStatus())){
                 throw new ServiceException("平台状态未签收完成，不能手动完结");
@@ -760,9 +760,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO cancel(String id) {
         OverseasWarehouseInboundEntity mainEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
-        // 只有待提交的单据允许撤销
-        if (!OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())) {
-            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL);
+        boolean isApi = overseasProviderWarehouseService.isApiWarehouse(mainEntity.getToWarehouseId());
+        if(isApi){
+            // 只有待提交的单据允许撤销
+            if (!OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())) {
+                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL);
+            }
+        }else{
+            // 无API对接的三方仓入库单，可以在“待签收”状态下，操作取消入库
+            if (!OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())
+             && !OverseasInstockStatusEnum.TO_BE_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())) {
+                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL);
+            }
         }
         // 更新状态
         mainEntity.setInstockStatus(OverseasInstockStatusEnum.CANCELED.getCode());
@@ -785,7 +794,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         String msg = StrUtil.format("用户【{}】取消了单据编号为【{}】的海外入库单", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "取消操作");
 
-        if (null != providerEntity){
+        if (isApi){
             if (StringUtils.isBlank(mainEntity.getCode())) {
                 throw new ServiceException("数据异常：历史入库单未有单号");
             }

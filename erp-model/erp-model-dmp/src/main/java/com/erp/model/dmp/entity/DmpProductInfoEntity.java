@@ -85,7 +85,11 @@ public class DmpProductInfoEntity extends BaseEntity<DmpProductInfoEntity> {
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
-
+    /**
+     * ERP系统店铺ID
+     */
+    @TableField("auth_id")
+    private String authId;
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 
