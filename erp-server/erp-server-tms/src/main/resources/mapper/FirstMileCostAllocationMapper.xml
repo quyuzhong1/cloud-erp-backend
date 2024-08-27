@@ -14,7 +14,6 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="remark" property="remark" />
        <result column="reconciliation_id" property="reconciliationId" />
-       <result column="reconciliation_code" property="reconciliationCode" />
        <result column="logistics_bill_id" property="logisticsBillId" />
        <result column="sku_cost_id" property="skuCostId" />
        <result column="report_period_id" property="reportPeriodId" />
@@ -51,20 +50,20 @@
         update_time,
         version,
         is_deleted,
-        remark, reconciliation_id, reconciliation_code, logistics_bill_id, logistics_bill_detail_id, estimated_bill_id,
+        remark, reconciliation_id, logistics_bill_id, logistics_bill_detail_id, estimated_bill_id,
         sku_cost_id, sku_cost_detail_id, weight_allocation_id, report_period_id, account_period, status, supplier_id, supplier_name,
         business_code, business_type, transport_no, reconciliation_month, shop_id, shop_name, from_warehouse_id,
         from_warehouse_name, to_warehouse_id, to_warehouse_name,to_country,delivery_time,source_id,source_code,org_id,org_name
     </sql>
     <sql id="pageSql">
         SELECT
-        a.id,a.reconciliation_id, a.reconciliation_code, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
+        a.id,a.reconciliation_id, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
         ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
         a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,a.to_country,
         a.source_id,a.source_code,a.org_id,a.org_name,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
-        ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_id, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
+        ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
         ca.product_cost, ca.product_total_cost,ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,
         ca.as_last_month_receive_qty,ca.as_current_month_receive_qty, ca.weight_unit, ca.currency, ca.bill_source_type,lbd.sign_time as receiveTime,
         cad.id as detailId,cad.fee_type, cad.allocation_type, cad.amount, cad.allocated_amount, cad.product_allocated_amount, cad.init_transit_cost,
@@ -109,13 +108,13 @@
     </select>
     <select id="listSkuBySourceCodes" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
         SELECT
-        a.id,a.reconciliation_id, a.reconciliation_code, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
+        a.id,a.reconciliation_id, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
         ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
         a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,a.to_country,
         a.source_id,a.source_code,a.org_id,a.org_name,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
-        ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_id, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
+        ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
         ca.product_cost, ca.product_total_cost,ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,
         ca.as_last_month_receive_qty,ca.as_current_month_receive_qty, ca.weight_unit, ca.currency, ca.bill_source_type,lbd.sign_time as receiveTime,
         rpm.month as reportPeriodMonth,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr
@@ -133,13 +132,13 @@
     </select>
     <select id="listBySourceIds" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
         SELECT
-        a.id,a.reconciliation_id, a.reconciliation_code, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
+        a.id,a.reconciliation_id, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
         ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
         a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,a.to_country,
         a.source_id,a.source_code,a.org_id,a.org_name,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
-        ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_id, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
+        ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
         ca.product_cost, ca.product_total_cost,ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,
         ca.as_last_month_receive_qty,ca.as_current_month_receive_qty, ca.weight_unit, ca.currency, ca.bill_source_type,lbd.sign_time as receiveTime,
         rpm.month as reportPeriodMonth,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr

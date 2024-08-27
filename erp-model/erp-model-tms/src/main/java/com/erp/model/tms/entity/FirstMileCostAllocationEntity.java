@@ -43,11 +43,6 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     @TableField("estimated_bill_id")
     private String estimatedBillId;
     /**
-    * 对账单单据编号
-    */
-    @TableField("reconciliation_code")
-    private String reconciliationCode;
-    /**
     * 物流单id
     */
     @TableField("logistics_bill_id")
@@ -160,8 +155,6 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     public static final String REMARK = "remark";
 
     public static final String RECONCILIATION_ID = "reconciliation_id";
-
-    public static final String RECONCILIATION_CODE = "reconciliation_code";
 
     public static final String LOGISTICS_BILL_ID = "logistics_bill_id";
 

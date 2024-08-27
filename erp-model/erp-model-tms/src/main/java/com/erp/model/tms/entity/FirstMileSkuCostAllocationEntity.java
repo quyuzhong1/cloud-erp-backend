@@ -40,11 +40,6 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     */
     @TableField("sku_no")
     private String skuNo;
-//    /**
-//    * 平台skuId
-//    */
-//    @TableField("platform_sku_id")
-//    private String platformSkuId;
     /**
     * 平台skuNo
     */
@@ -150,8 +145,6 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
-
-    public static final String PLATFORM_SKU_ID = "platform_sku_id";
 
     public static final String PLATFORM_SKU_NO = "platform_sku_no";
 

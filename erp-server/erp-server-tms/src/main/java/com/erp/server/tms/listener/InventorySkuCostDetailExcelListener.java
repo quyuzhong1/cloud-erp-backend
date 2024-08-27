@@ -79,6 +79,8 @@ public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<I
                     errorMsgList.add(StrUtil.format("SKU【{}】不存在",addDTO.getSkuNo()));
                 }else {
                     addDTO.setSkuId(productDetailEntityList.get(0).getId());
+                    addDTO.setProductName(productDetailEntityList.get(0).getName());
+                    addDTO.setUnit(productDetailEntityList.get(0).getUnitName());
                 }
             }
             if (StrUtil.isNotBlank(addDTO.getSkuId())){

@@ -1756,7 +1756,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto) {
-        dto.setMonth(LocalDate.now());
         //汇总 亚马逊签收报告/第三方仓签收报告签收数量
         List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList1 = overseasWarehouseInboundService.countReceiveQtyByParams(dto);
         List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList2 =fbaShipmentReceiveService.countReceiveQtyByParams(dto);

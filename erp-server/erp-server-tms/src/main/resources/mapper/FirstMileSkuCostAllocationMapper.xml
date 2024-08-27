@@ -15,7 +15,6 @@
        <result column="main_id" property="mainId" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
-       <result column="platform_sku_id" property="platformSkuId" />
        <result column="platform_sku_no" property="platformSkuNo" />
        <result column="delivery_qty" property="deliveryQty" />
        <result column="allocated_weight" property="allocatedWeight" />
@@ -47,7 +46,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, sku_id, sku_no, platform_sku_id, platform_sku_no, delivery_qty, allocated_weight, product_cost, product_total_cost, init_receive_qty, last_month_receive_qty, current_month_receive_qty, as_last_month_receive_qty, as_current_month_receive_qty,weight_unit, currency, bill_source_type
+        main_id, sku_id, sku_no, platform_sku_no, delivery_qty, allocated_weight, product_cost, product_total_cost, init_receive_qty, last_month_receive_qty, current_month_receive_qty, as_last_month_receive_qty, as_current_month_receive_qty,weight_unit, currency, bill_source_type
     </sql>
 
 

@@ -58,11 +58,6 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private String reconciliationId;
 
         /**
-        * 对账单单据编号
-        */
-        private String reconciliationCode;
-
-        /**
         * 物流单id
         */
         private String logisticsBillId;
@@ -231,13 +226,6 @@ public class FirstMileCostAllocationDTO implements Serializable {
         @NotBlank(message = "对账单id不能为空")
         @Size(max = 19,message = "对账单id最大长度不能超过19位")
         private String reconciliationId;
-
-        /**
-        * 对账单单据编号
-        */
-        @NotBlank(message = "对账单单据编号不能为空")
-        @Size(max = 64,message = "对账单单据编号最大长度不能超过64位")
-        private String reconciliationCode;
 
         /**
         * 物流单id
@@ -491,11 +479,6 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private String reconciliationDetailId;
 
         /**
-         * 对账单单据编号
-         */
-        private String reconciliationCode;
-
-        /**
          * 物流单id
          */
         private String logisticsBillId;
@@ -656,11 +639,6 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * skuNO
          */
         private String skuNo;
-
-        /**
-         * 平台skuId
-         */
-        private String platformSkuId;
 
         /**
          * 平台skuNo
