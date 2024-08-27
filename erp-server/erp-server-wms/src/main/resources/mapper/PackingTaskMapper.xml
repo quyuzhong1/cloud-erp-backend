@@ -311,7 +311,9 @@
         (SELECT CASE WHEN error_msg is null or error_msg = '' THEN '' ELSE concat('第',wc.box_no,'箱:',wc.error_msg) END AS errorMsg FROM wms_carton wc WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE order by wc.create_time DESC limit 1) as errorMsg,
         (SELECT COALESCE(SUM(wcd.pack_qty), 0) FROM wms_carton wc LEFT JOIN wms_carton_detail wcd ON wcd.main_id = wc.id and wcd.is_deleted = false WHERE wc.packing_task_id = pt.ID AND wc.is_deleted = FALSE) as packedQty,
         (SELECT COALESCE(SUM(wcs.package_weight), 0) FROM wms_carton_spec wcs WHERE wcs.main_id = pt.ID AND wcs.is_deleted = FALSE) as packingWeight,
-        (SELECT COALESCE(SUM(rad.picking_qty), 0) FROM first_mile_delivery fmd LEFT JOIN requisition_application_detail rad on fmd.source_id = rad.main_id and rad.is_deleted = FALSE WHERE fmd.id = pt.source_id AND fmd.is_deleted = FALSE) as pickQty
+        COALESCE ( (SELECT SUM(rad.picking_qty)
+        FROM requisition_application ra LEFT JOIN requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = FALSE WHERE ra.id = pt.source_id AND ra.is_deleted = FALSE),(SELECT SUM(rad.picking_qty)
+        FROM first_mile_delivery fmd LEFT JOIN requisition_application_detail rad on fmd.source_id = rad.main_id and rad.is_deleted = FALSE WHERE fmd.id = pt.source_id AND fmd.is_deleted = FALSE),0) as pickQty
         FROM
         packing_task pt
         where pt.is_deleted = FALSE and pt.source_type in ('FBA','thirdWarehouse')

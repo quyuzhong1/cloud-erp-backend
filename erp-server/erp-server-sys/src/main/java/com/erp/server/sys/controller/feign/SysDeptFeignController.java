@@ -134,4 +134,14 @@ public class SysDeptFeignController extends BaseController {
     public List<SysDepartmentTreeDTO> getDeptByParentId(@RequestParam("deptId") String deptId) {
         return departmentService.getDeptByParentId(deptId);
     }
+
+    /**
+     * 根据父级获取全量子集
+     *
+     * @return
+     */
+    @PostMapping("/getDeptByNames")
+    public List<SysDepartmentEntity> getDeptByNames(@RequestBody List<String> deptNameList) {
+        return departmentService.getDeptByNames(deptNameList);
+    }
 }

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.*;
 import lombok.experimental.Accessors;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 
@@ -89,4 +90,12 @@ public class PlatformOrderReceiverDTO implements Serializable {
      * 收件人税号
      */
     private String receiverTaxNo;
+
+    public String getCountry() {
+        // 全局替换UK为GB
+        if ("UK".equalsIgnoreCase(this.country)){
+            return "GB";
+        }
+        return country;
+    }
 }

@@ -42,6 +42,7 @@ import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.cache.annotation.Cacheable;
@@ -257,6 +258,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:wms:listByWarehouseIds",keyGenerator = "myKeyGenerator")
     public List<WarehouseLocationEntity> listByWarehouseIds(List<String> warehouseIds) {
         if(CollUtil.isEmpty(warehouseIds)) {
             return Lists.newArrayList();
@@ -355,6 +357,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public Boolean addWarehouseLocation(PdaWarehouseLocationDTO.WarehouseLocationAddDTO dto) {
         List<String> areaIdList = dto.getAreaIdList();
         List<WarehouseLocationEntity> areaEntities = this.listByIds(areaIdList);
@@ -408,6 +411,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void addArea(WarehouseAreaDTO.Add dto) {
         existCode(dto.getCode(), null, WarehouseLocationTypeEnum.AREA.getCode());
         existName(dto.getName(), null, WarehouseLocationTypeEnum.AREA.getCode());
@@ -417,6 +421,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void updateArea(WarehouseAreaDTO.Update dto) {
         existCode(dto.getCode(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode());
         existName(dto.getName(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode());
@@ -434,6 +439,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void deleteArea(List<String> ids) {
         List<WarehouseLocationEntity> occupyStatusAreas = list(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getOccupyStatus, true)
@@ -447,6 +453,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void updateStatusArea(UpdateStateDTO.BatchUpdateDTO dto) {
         if (Boolean.TRUE.equals(dto.getDisabled())) {
             List<WarehouseLocationEntity> occupyStatusAreas = list(Wrappers.<WarehouseLocationEntity>lambdaQuery()
@@ -532,6 +539,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public List<String> deleteBatch(WarehouseLocationDTO.IdsDto idsDto) {
         List<String> errorList = new ArrayList<>();
         LoginUser user = UserContext.getNonLoginUser();
@@ -562,6 +570,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void importExcel(MultipartFile file, HttpServletResponse response) {
         LoginUser user = UserContext.getNonLoginUser();
         //读取Excel
@@ -670,6 +679,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public List<BatchResultDTO> recycle(WarehouseLocationDTO.IdsDto idsDto) {
         LoginUser user = UserContext.getNonLoginUser();
         List<BatchResultDTO> errorList = new ArrayList<>();
@@ -701,6 +711,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void updateDisabled(WarehouseLocationDTO.updateStatusDto dto) {
         LoginUser user = UserContext.getNonLoginUser();
         WarehouseLocationEntity entity = new WarehouseLocationEntity();
@@ -718,6 +729,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void add(WarehouseLocationDTO.AddDTO dto) {
         LoginUser user = UserContext.getNonLoginUser();
         WarehouseLocationEntity codeEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
@@ -764,6 +776,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void update(WarehouseLocationDTO.updateDto dto) {
         LoginUser user = UserContext.getNonLoginUser();
         if(dto.getCode().length() > 32){
@@ -877,6 +890,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
+    @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void updateLocationStatus(String warehouseId, String warehouseLocation, String status) {
         baseMapper.updateLocationStatus(warehouseId, warehouseLocation, status);
     }

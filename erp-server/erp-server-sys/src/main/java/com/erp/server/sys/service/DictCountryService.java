@@ -128,4 +128,9 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
     PagingVO<DictCountryDTO.ListDTO> pagingSelect(PagingDTO<DictCountryDTO.SelectDTO> dto);
 
     void exportList(DictCountryDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 根据国家id或三字码 集合 获取到国家列表
+     */
+    List<DictCountryEntity> listCountryByIdsOrAlpha3(List<String> codeList);
 }

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.InventoryFlowOverrideRecordMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.InventoryFlowOverrideRecordEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="start_time" property="startTime" />
+       <result column="end_time" property="endTime" />
+       <result column="inventory_org_id" property="inventoryOrgId" />
+       <result column="inventory_org_name" property="inventoryOrgName" />
+       <result column="type" property="type" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        start_time, end_time, inventory_org_id, inventory_org_name, type
+    </sql>
+    <select id="listMaxEndTimeGroupByOrgId" resultType="com.erp.model.wms.entity.InventoryFlowOverrideRecordEntity">
+        SELECT
+            i.id,
+            i.create_user_id,
+            i.create_user_name,
+            i.create_time,
+            i.version,
+            i.start_time,
+            i.end_time,
+            i.inventory_org_id,
+            i.inventory_org_name,
+            i.type
+        FROM
+            inventory_flow_override_record i
+                INNER JOIN
+            (SELECT
+                 inventory_org_id,
+                 MAX(end_time) AS max_end_time
+             FROM
+                 inventory_flow_override_record
+             <where>
+                 <if test="inventoryOrgId != null and inventoryOrgId != ''">
+                     inventory_org_id = #{inventoryOrgId}
+                 </if>
+             </where>
+             GROUP BY
+                 inventory_org_id
+            ) AS max_records
+            ON i.inventory_org_id = max_records.inventory_org_id
+            AND i.end_time = max_records.max_end_time;
+
+    </select>
+
+
+</mapper>

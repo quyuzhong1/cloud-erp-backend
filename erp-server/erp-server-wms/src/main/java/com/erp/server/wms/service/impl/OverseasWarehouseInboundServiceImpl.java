@@ -134,9 +134,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(addDTO.getSourceId());
         Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
-        PackingTaskEntity packingTaskEntity = packingTaskService.getBySourceCode(deliveryEntity.getCode());
+        List<PackingTaskEntity> packingTaskEntity = packingTaskService.listBySourceCodes(Arrays.asList(deliveryEntity.getCode(),deliveryEntity.getSourceCode()));
 
-        if (Objects.isNull(packingTaskEntity) || !PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.getPackingStatus())) {
+        if (CollectionUtils.isEmpty(packingTaskEntity) || !PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.get(0).getPackingStatus())) {
             throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND);
         }
 

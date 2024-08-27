@@ -15,6 +15,7 @@ public enum InstockTypeEnum implements EnumMessage {
 
     SAMPLE_RETURN("sampleReturn", "样品归还"),
     THREE_NO_PRODUCT("threeNoProduct", "三无产品"),
+    THREE_NO_PRODUCT_PRE_INSTOCK("threeNoProductPreInstock", "三无退货预入库"),
     REPORT_OVERFLOW("reportOverflow", "库存差异调整"),
     GIFT_INSTOCK("giftInstock", "赠品入库"),
     ;

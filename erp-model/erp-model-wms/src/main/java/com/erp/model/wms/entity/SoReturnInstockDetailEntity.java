@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -118,6 +119,26 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
      */
     @TableField(exist = false)
     private String approveStatus;
+    /**
+     * 单价
+     */
+    @TableField("price")
+    private BigDecimal price;
+    /**
+     * 金额
+     */
+    @TableField("amount")
+    private BigDecimal amount;
+    /**
+     * 币种
+     */
+    @TableField("currency")
+    private String currency;
+    /**
+     * 汇率
+     */
+    @TableField("exchange_rate")
+    private BigDecimal exchangeRate;
 
     public static final String MAIN_ID = "main_id";
 
