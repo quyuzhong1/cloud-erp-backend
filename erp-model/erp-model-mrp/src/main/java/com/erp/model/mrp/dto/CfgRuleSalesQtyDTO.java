@@ -2,12 +2,14 @@ package com.erp.model.mrp.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -22,6 +24,28 @@ import javax.validation.constraints.Size;
 public class CfgRuleSalesQtyDTO implements Serializable {
 
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+         * 是否同常规品设置
+         */
+        private Boolean isCfgSame;
+
+        /**
+         * 常规品
+         */
+        private ViewDetailDTO conventionalDetail;
+
+        /**
+         * 新品
+         */
+        private ViewDetailDTO newDetail;
+    }
 
 
     /**
@@ -29,7 +53,7 @@ public class CfgRuleSalesQtyDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDetailDTO {
 
         /**
         * 主键id
@@ -48,8 +72,7 @@ public class CfgRuleSalesQtyDTO implements Serializable {
 
         /**
         * sales_qty_type
-｜ 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
-销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
+        * 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
         */
         private String salesQtyType;
 
@@ -78,17 +101,58 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         */
         private String type;
 
+        /**
+         * 默认日销量
+         */
+        @NotEmpty
+        @Valid
+        private CfgRuleSalesFormulaDTO.ViewDTO defaultSalesQtyDTO;
 
+        /**
+         * 动态日销量
+         */
+        @Valid
+        private List<CfgRuleSalesFormulaDTO.ViewDTO> dynamicSalesQtyList;
+
+        /**
+         * 固定日销量
+         */
+        @Valid
+        private List<CfgRuleSalesFormulaDTO.ViewDTO> fixedSalesQtyList;
+
+        /**
+         *销量去噪
+         */
+        @Valid
+        private List<CfgRuleSalesDenoisingDTO.ViewDTO> salesDenoisingList;
     }
 
     /**
-    * 新增
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class UpdateDTO {
 
+        /**
+         * 是否同常规品设置
+         */
+        @NotNull(message = "是否同常规品设置不能为空")
+        private Boolean isCfgSame;
 
+        /**
+         * 常规品
+         */
+        @Valid
+        @NotNull(message = "常规品不能为空")
+        private UpdateDetailDTO conventionalDetail;
+
+        /**
+         * 新品
+         */
+        @Valid
+        @NotNull(message = "新品不能为空")
+        private UpdateDetailDTO newDetail;
     }
 
     /**
@@ -96,13 +160,38 @@ public class CfgRuleSalesQtyDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDetailDTO extends CommonDTO {
 
         /**
         * 主键id
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 默认日销量
+         */
+        @NotEmpty
+        @Valid
+        private CfgRuleSalesFormulaDTO.UpdateDTO defaultSalesQtyDTO;
+
+        /**
+         * 动态日销量
+         */
+        @Valid
+        private List<CfgRuleSalesFormulaDTO.UpdateDTO> dynamicSalesQtyList;
+
+        /**
+         * 固定日销量
+         */
+        @Valid
+        private List<CfgRuleSalesFormulaDTO.UpdateDTO> fixedSalesQtyList;
+
+        /**
+         *销量去噪
+         */
+        @Valid
+        private List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList;
 
     }
 
@@ -124,15 +213,9 @@ public class CfgRuleSalesQtyDTO implements Serializable {
 
         /**
         * sales_qty_type
-｜ 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
-销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
+        * 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
         */
-        @NotBlank(message = "sales_qty_type
-｜ 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
-销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量不能为空")
-        @Size(max = 32,message = "sales_qty_type
-｜ 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
-销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量最大长度不能超过32位")
+        @NotBlank(message = "sales_qty_type")
         private String salesQtyType;
 
         /**
@@ -169,7 +252,6 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         @NotBlank(message = "类型，new 新品、conventional常规品不能为空")
         @Size(max = 32,message = "类型，new 新品、conventional常规品最大长度不能超过32位")
         private String type;
-
 
     }
 

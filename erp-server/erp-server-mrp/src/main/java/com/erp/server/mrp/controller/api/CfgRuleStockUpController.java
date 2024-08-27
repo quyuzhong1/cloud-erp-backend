@@ -2,7 +2,6 @@ package com.erp.server.mrp.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -33,18 +32,6 @@ public class CfgRuleStockUpController extends BaseController {
     @Resource
     private CfgRuleStockUpService cfgRuleStockUpService;
 
-    /**
-    * 新增
-    * @author will
-    * @date:  2024-08-23
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "备货（规则设置）新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgRuleStockUpDTO.AddDTO dto) {
-        return success(cfgRuleStockUpService.add(dto));
-    }
 
     /**
     * 修改
@@ -69,12 +56,12 @@ public class CfgRuleStockUpController extends BaseController {
      * 查看详情
      * @author will
      * @date 2024/8/23 17:06
-     * @param id
+     * @param platformType
      * @return ApiResult<ViewDTO>
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<CfgRuleStockUpDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(cfgRuleStockUpService.view(id));
+    public ApiResult<CfgRuleStockUpDTO.ViewDTO> view(@RequestParam("platformType") String platformType) {
+        return success(cfgRuleStockUpService.view(platformType));
     }
 }

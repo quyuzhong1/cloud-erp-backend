@@ -1,16 +1,16 @@
 package com.erp.model.mrp.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -65,14 +65,9 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         private String name;
 
         /**
-        * 开始日期
-        */
-        private LocalDate startDate;
-
-        /**
-        * 结束日期
-        */
-        private LocalDate endDate;
+         * 时间
+         */
+        private List<LocalDate> dateList;
 
         /**
         * 销量id(cfg_rule_sales_qty)
@@ -89,7 +84,10 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         */
         private String percentJson;
 
-
+        /**
+         * 百分比json
+         */
+        private PercentJsonDTO percentJsonDTO;
     }
 
     /**
@@ -124,7 +122,6 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
         * 销量类型：default=默认，dynamic=动态、fixed=固定
         */
-        @NotBlank(message = "销量类型：default=默认，dynamic=动态、fixed=固定不能为空")
         @Size(max = 32,message = "销量类型：default=默认，dynamic=动态、fixed=固定最大长度不能超过32位")
         private String type;
 
@@ -155,14 +152,9 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         private String name;
 
         /**
-        * 开始日期
-        */
-        private LocalDate startDate;
-
-        /**
-        * 结束日期
-        */
-        private LocalDate endDate;
+         * 时间
+         */
+        private List<LocalDate> dateList;
 
         /**
         * 销量id(cfg_rule_sales_qty)
@@ -181,11 +173,54 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
         * 百分比json
         */
-        @NotBlank(message = "百分比json不能为空")
-        private String percentJson;
-
+        @NotNull(message = "百分比json不能为空")
+        private PercentJsonDTO percentJsonDTO;
 
     }
 
+    /**
+     * 百分比JSON
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PercentJsonDTO {
+        /**
+         * 三天日均
+         */
+        private BigDecimal threeDaysRatio;
+        /**
+         * 七天日均
+         */
+        private BigDecimal sevenDaysRatio;
+        /**
+         * 十四天日均
+         */
+        private BigDecimal fourteenDaysRatio;
+        /**
+         * 三十天日均
+         */
+        private BigDecimal thirtyDaysRatio;
+        /**
+         * 六十天日均
+         */
+        private BigDecimal sixtyDaysRatio;
+        /**
+         * 九十天日均
+         */
+        private BigDecimal ninetyDaysRatio;
+        /**
+         * 一百八十天日均
+         */
+        private BigDecimal oneHandredEightyDaysRatio;
+        /**
+         * 二百七十天日均
+         */
+        private BigDecimal twoHandredSeventyDaysRatio;
+        /**
+         * 三百六十天日均
+         */
+        private BigDecimal threeHandredSixtyDaysRatio;
+
+    }
 
 }

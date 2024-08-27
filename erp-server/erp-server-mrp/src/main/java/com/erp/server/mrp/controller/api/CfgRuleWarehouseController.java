@@ -1,30 +1,27 @@
 package com.erp.server.mrp.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
+import com.erp.server.mrp.service.CfgRuleWarehouseService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 
 /**
  * 仓库（规则设置）
  *
  * @author will
- * @since 2024-08-23
+ * @since 2024-08-24
  */
 @Slf4j
 @RestController
@@ -35,23 +32,11 @@ public class CfgRuleWarehouseController extends BaseController {
     @Resource
     private CfgRuleWarehouseService cfgRuleWarehouseService;
 
-    /**
-    * 新增
-    * @author will
-    * @date:  2024-08-23
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "仓库（规则设置）新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgRuleWarehouseDTO.AddDTO dto) {
-        return success(cfgRuleWarehouseService.add(dto));
-    }
 
     /**
     * 修改
     * @author will
-    * @date:  2024-08-23
+    * @date:  2024-08-24
     * @param dto
     * @return ApiResult
     */
@@ -67,6 +52,17 @@ public class CfgRuleWarehouseController extends BaseController {
         return success();
     }
 
-
+    /**
+     * 查看详情
+     * @author will
+     * @date 2024/8/24 15:47
+     * @param platformType
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<CfgRuleWarehouseDTO.ViewDTO> view(@RequestParam("platformType") String platformType) {
+        return success(cfgRuleWarehouseService.view(platformType));
+    }
 
 }

@@ -12,8 +12,8 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="is_disable_virtual" property="isDisableVirtual" />
-       <result column="is_disable_overseas" property="isDisableOverseas" />
+       <result column="is_enable_virtual" property="isEnableVirtual" />
+       <result column="is_enable_virtual" property="isEnableOverseas" />
        <result column="platform_type" property="platformType" />
     </resultMap>
 

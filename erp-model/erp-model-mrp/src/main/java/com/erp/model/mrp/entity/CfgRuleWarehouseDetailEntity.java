@@ -1,13 +1,16 @@
 package com.erp.model.mrp.entity;
 
+import cn.hutool.json.JSONArray;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+import org.apache.ibatis.type.JdbcType;
+
+import java.io.Serializable;
+import java.util.List;
 
 
 /**
@@ -16,7 +19,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author will
- * @since 2024-08-23
+ * @since 2024-08-24
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -45,10 +48,10 @@ public class CfgRuleWarehouseDetailEntity extends BaseEntity<CfgRuleWarehouseDet
     @TableField("channel_type")
     private String channelType;
     /**
-    * 店铺id的json
+    * 渠道（店铺）id的json
     */
-    @TableField("channel_id_json")
-    private String channelIdJson;
+    @TableField(value = "channel_id_json", jdbcType = JdbcType.OTHER)
+    private JSONArray channelIdJson;
     /**
     * 库存分配类型
     */
@@ -60,6 +63,11 @@ public class CfgRuleWarehouseDetailEntity extends BaseEntity<CfgRuleWarehouseDet
     @TableField("main_id")
     private String mainId;
 
+    /**
+     * 渠道id集合
+     */
+    @TableField(exist = false)
+    private List<String> channelIdList;
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 

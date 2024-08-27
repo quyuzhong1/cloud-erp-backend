@@ -17,15 +17,6 @@ import java.util.List;
 public interface CfgRuleLogisticsService extends SuperService<CfgRuleLogisticsEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-08-23
-    * @param logisticsList
-    * @return
-    */
-    Boolean add(List<CfgRuleLogisticsDTO.AddDTO> logisticsList,String stockUpId);
-
-    /**
     * 修改
     * @author will
     * @date: 2024-08-23

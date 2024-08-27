@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
  * </p>
  *
  * @author will
- * @since 2024-08-23
+ * @since 2024-08-24
  */
 @Mapper
 public interface CfgRuleWarehouseDetailMapper extends BaseMapper<CfgRuleWarehouseDetailEntity> {

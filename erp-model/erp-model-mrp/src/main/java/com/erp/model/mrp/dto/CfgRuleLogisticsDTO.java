@@ -2,12 +2,13 @@ package com.erp.model.mrp.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -61,17 +62,10 @@ public class CfgRuleLogisticsDTO implements Serializable {
         */
         private String stockUpId;
 
-
-    }
-
-    /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
+        /**
+         * 物流明细信息
+         */
+        private List<CfgRuleLogisticsDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -125,7 +119,11 @@ public class CfgRuleLogisticsDTO implements Serializable {
         @Size(max = 19,message = "备货id（cfg_rule_stock_up）最大长度不能超过19位")
         private String stockUpId;
 
-
+        /**
+         * 物流明细信息
+         */
+        @Valid
+        private List<CfgRuleLogisticsDetailDTO.UpdateDTO> detailList;
     }
 
 

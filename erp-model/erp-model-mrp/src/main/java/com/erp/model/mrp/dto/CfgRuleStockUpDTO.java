@@ -113,34 +113,6 @@ public class CfgRuleStockUpDTO implements Serializable {
     }
 
     /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-        /**
-         * 物流信息
-         */
-        @NotEmpty(message = "物流信息配置不能为空")
-        @Valid
-        private List<CfgRuleLogisticsDTO.AddDTO> cfgLogisticsList;
-
-        /**
-         * 常规品备货系数信息
-         */
-        @Valid
-        private List<CfgRuleStockingRatioDTO.AddDTO> stockingRatioList;
-
-        /**
-         * 新品备货系数信息
-         */
-        @Valid
-        private List<CfgRuleStockingRatioDTO.AddDTO> newStockingRatioList;
-
-    }
-
-    /**
     * 修改
     */
     @Data

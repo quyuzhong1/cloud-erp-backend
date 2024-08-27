@@ -1,6 +1,6 @@
 package com.erp.server.mrp.service.impl;
 
-import com.erp.server.tms.service.CommonService;
+import com.erp.server.mrp.service.CommonService;
 import org.springframework.stereotype.Service;
 
 /**

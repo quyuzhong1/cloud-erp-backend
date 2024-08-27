@@ -1,13 +1,13 @@
 package com.erp.model.mrp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -35,6 +35,11 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
     @TableField("parent_id")
     private String parentId;
     /**
+     * 编码
+     */
+    @TableField("code")
+    private String code;
+    /**
     * 名称
     */
     @TableField("name")
@@ -47,8 +52,8 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
     /**
     * 值描述
     */
-    @TableField("description")
-    private String description;
+    @TableField("remark")
+    private String remark;
     /**
     * 是否禁用
     */
@@ -59,6 +64,12 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
     */
     @TableField("type")
     private String type;
+
+    /**
+     * 是否默认
+     */
+    @TableField("is_default")
+    private Boolean isDefault;
 
 
     public static final String INDEX = "index";

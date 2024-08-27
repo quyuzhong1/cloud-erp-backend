@@ -1,25 +1,26 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
 import com.erp.server.mrp.mapper.CfgRuleSalesDenoisingMapper;
 import com.erp.server.mrp.service.CfgRuleSalesDenoisingService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.mrp.service.OperateLogService;
-import com.erp.server.mrp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 销量去噪信息 服务实现类
@@ -34,63 +35,58 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(CfgRuleSalesDenoisingDTO.AddDTO addDTO) {
-        CfgRuleSalesDenoisingEntity cfgRuleSalesDenoisingEntity = new CfgRuleSalesDenoisingEntity();
-        BeanMapperUtils.copy(addDTO, cfgRuleSalesDenoisingEntity);
-
-        // 数据处理
-        handleData(cfgRuleSalesDenoisingEntity);
-
-        log.info("开始新增销量去噪信息");
-        boolean save = super.save(cfgRuleSalesDenoisingEntity);
-        if(!save) {
-            throw new ServiceException("销量去噪信息保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "销量去噪信息" , cfgRuleSalesDenoisingEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgRuleSalesDenoisingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(cfgRuleSalesDenoisingEntity.getId(), cfgRuleSalesDenoisingEntity.getId());
-    }
-
     /**
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(CfgRuleSalesDenoisingDTO.UpdateDTO updateDTO) {
-        CfgRuleSalesDenoisingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "销量去噪信息"));
-        CfgRuleSalesDenoisingEntity cfgRuleSalesDenoisingEntity =  BeanMapperUtils.map(CfgRuleSalesDenoisingEntity.class, updateDTO);
+    public Boolean update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList,String salesQtyId) {
+        if (CollectionUtils.isEmpty(salesDenoisingList)) {
+            salesDenoisingList = Collections.EMPTY_LIST;
+        }
+
+        List<CfgRuleSalesDenoisingEntity> list = BeanMapperUtils.copyList(CfgRuleSalesDenoisingEntity.class, salesDenoisingList);
+        //原去噪信息
+        List<CfgRuleSalesDenoisingEntity> oldList = listBySalesQtyIdList(Arrays.asList(salesQtyId));
+
+        //删除明细
+        List<String> deleteIds = getDeleteIds(list, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            this.removeByIds(deleteIds);
+        }
 
         // 数据处理
-        handleData(cfgRuleSalesDenoisingEntity);
-        log.info("编辑 开始修改销量去噪信息数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgRuleSalesDenoisingEntity);
+        handleData(list);
+        log.info("编辑 开始修改销量去噪信息数据，id：【{}】", salesQtyId);
+        boolean save = super.updateBatchById(list);
         if(!save) {
             throw new ServiceException("销量去噪信息保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录销量去噪信息日志数据，id：【{}】", cfgRuleSalesDenoisingEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleSalesDenoisingEntity.getId(), "销量去噪信息");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgRuleSalesDenoisingEntity, null, cfgRuleSalesDenoisingEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<CfgRuleSalesDenoisingEntity> listBySalesQtyIdList(List<String> salesQtyIdList) {
+        if (CollectionUtils.isEmpty(salesQtyIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(CfgRuleSalesDenoisingEntity::getSalesQtyId,salesQtyIdList).list();
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<CfgRuleSalesDenoisingEntity> newList, List<CfgRuleSalesDenoisingEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(CfgRuleSalesDenoisingEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(CfgRuleSalesDenoisingEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(CfgRuleSalesDenoisingEntity cfgRuleSalesDenoisingEntity) {
+    private void handleData(List<CfgRuleSalesDenoisingEntity> list) {
     // TODO 验证数据 & 数据赋值
     }
 }

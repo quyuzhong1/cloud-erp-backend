@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 
 /**
@@ -63,6 +64,11 @@ public class CfgRuleStockingRatioEntity extends BaseEntity<CfgRuleStockingRatioE
     @TableField("type")
     private String type;
 
+    /**
+     * 时间数组
+     */
+    @TableField(exist = false)
+    private List<LocalDate> dateList;
 
     public static final String STOCK_UP_ID = "stock_up_id";
 

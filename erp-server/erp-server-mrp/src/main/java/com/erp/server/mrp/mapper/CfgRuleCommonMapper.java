@@ -1,8 +1,12 @@
 package com.erp.server.mrp.mapper;
-import com.erp.model.mrp.entity.CfgRuleCommonEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.mrp.dto.CfgRuleCommonDTO;
+import com.erp.model.mrp.entity.CfgRuleCommonEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +19,22 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface CfgRuleCommonMapper extends BaseMapper<CfgRuleCommonEntity> {
-
+    /**
+     * 查询树结构数据
+     * @author will
+     * @date 2024/8/26 9:46
+     * @param platformType
+     * @param isEnableOverseas
+     * @return List<ViewDTO>
+     */
+    List<CfgRuleCommonDTO.ViewDTO> listRuleCommon(@Param("platformType") String platformType,@Param("isEnableOverseas") Boolean isEnableOverseas);
+    /**
+     * 
+     * @author will
+     * @date 2024/8/26 14:38
+     * @param platformType
+     * @param isEnableOverseas
+     * @return List<ViewDTO>
+     */
+    List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommon(@Param("platformType")String platformType,@Param("isEnableOverseas") Boolean isEnableOverseas);
 }

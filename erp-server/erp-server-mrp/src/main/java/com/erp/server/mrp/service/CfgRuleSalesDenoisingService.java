@@ -1,8 +1,9 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
+import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,22 +16,20 @@ import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
 public interface CfgRuleSalesDenoisingService extends SuperService<CfgRuleSalesDenoisingEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-08-23
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgRuleSalesDenoisingDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author will
     * @date: 2024-08-23
-    * @param dto
+    * @param salesDenoisingList
     * @return
     */
-    Boolean update(CfgRuleSalesDenoisingDTO.UpdateDTO dto);
+    Boolean update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList,String salesQtyId);
 
-
+    /**
+     * 根据销量id集合查询
+     * @author will
+     * @date 2024/8/24 10:16
+     * @param salesQtyIdList
+     * @return List<CfgRuleSalesDenoisingEntity>
+     */
+    List<CfgRuleSalesDenoisingEntity> listBySalesQtyIdList(List<String> salesQtyIdList);
 }

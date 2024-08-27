@@ -1,8 +1,9 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CfgRuleCommonEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
+import com.erp.model.mrp.entity.CfgRuleCommonEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -18,19 +19,26 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
     * 新增
     * @author will
     * @date: 2024-08-23
-    * @param dto
+    * @param commonList
     * @return
     */
-    BaseResultDTO.AddDTO add(CfgRuleCommonDTO.AddDTO dto);
+    Boolean add(List<CfgRuleCommonDTO.AddDTO> commonList);
 
     /**
     * 修改
     * @author will
     * @date: 2024-08-23
-    * @param dto
+    * @param commonList
     * @return
     */
-    Boolean update(CfgRuleCommonDTO.UpdateDTO dto);
+    Boolean update(List<CfgRuleCommonDTO.UpdateDTO> commonList);
 
-
+    /**
+     * 查询详情
+     * @author will
+     * @date 2024/8/26 9:19
+     * @param platformType
+     * @return List<CfgRuleCommonDTO.ViewDTO>
+     */
+    List<CfgRuleCommonDTO.ViewDTO> view(String platformType);
 }

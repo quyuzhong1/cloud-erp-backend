@@ -9,7 +9,6 @@ import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import com.erp.server.mrp.mapper.CfgRuleStockingRatioMapper;
 import com.erp.server.mrp.service.CfgRuleStockingRatioService;
 import com.erp.server.mrp.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -17,8 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 /**
@@ -35,26 +35,6 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean add(List<CfgRuleStockingRatioDTO.AddDTO> stockingRatioList,String stockUpId,String type) {
-        if (CollectionUtils.isEmpty(stockingRatioList)) {
-            return Boolean.TRUE;
-        }
-        List<CfgRuleStockingRatioEntity> list = BeanMapperUtils.copyList(CfgRuleStockingRatioEntity.class, stockingRatioList);
-
-        // 数据处理
-        handleData(list,stockUpId,type);
-
-        log.info("开始新增备货系数（规则设置）");
-        boolean save = super.saveBatch(list);
-        if(!save) {
-            throw new ServiceException("备货系数（规则设置）保存失败");
-        }
-        return Boolean.TRUE;
-    }
-
     /**
     * 修改
     */
@@ -62,7 +42,7 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
     @Override
     public Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList,String stockUpId,String type) {
         if (CollectionUtils.isEmpty(stockingRatioList)) {
-            stockingRatioList = new ArrayList<>();
+            stockingRatioList = Collections.EMPTY_LIST;
         }
         List<CfgRuleStockingRatioEntity> list = BeanMapperUtils.copyList(CfgRuleStockingRatioEntity.class, stockingRatioList);
         //原物流信息
@@ -87,9 +67,14 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
     @Override
     public List<CfgRuleStockingRatioEntity> listByStockUpIdList (List<String> stockUpIdList) {
         if (CollectionUtils.isEmpty(stockUpIdList)) {
-            return  new ArrayList<>();
+            return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().eq(CfgRuleStockingRatioEntity::getStockUpId,stockUpIdList).list();
+        List<CfgRuleStockingRatioEntity> list = lambdaQuery().eq(CfgRuleStockingRatioEntity::getStockUpId, stockUpIdList).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        list.stream().forEach(obj -> obj.setDateList(Arrays.asList(obj.getStartDate(),obj.getEndDate())));
+        return list;
     }
 
     /**
@@ -114,6 +99,10 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             stockingRatioEntity.setStockUpId(stockUpId);
             //类型
             stockingRatioEntity.setType(type);
+            //时间
+            List<LocalDate> dateList = stockingRatioEntity.getDateList();
+            stockingRatioEntity.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
+            stockingRatioEntity.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
         }
     }
 }

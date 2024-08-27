@@ -15,7 +15,7 @@
        <result column="main_id" property="mainId" />
        <result column="area" property="area" />
        <result column="type" property="type" />
-       <result column="shop_id_json" property="shopIdJson" />
+       <result column="shop_id_json" jdbcType="OTHER" property="shopIdJson" typeHandler="com.erp.server.mrp.handler.ObjectJsonArrayHandler" />
        <result column="warehouse_id" property="warehouseId" />
        <result column="logistics_days" property="logisticsDays" />
     </resultMap>

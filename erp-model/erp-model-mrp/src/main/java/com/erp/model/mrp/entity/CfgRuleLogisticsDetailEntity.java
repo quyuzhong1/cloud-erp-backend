@@ -1,13 +1,16 @@
 package com.erp.model.mrp.entity;
 
+import cn.hutool.json.JSONArray;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+import org.apache.ibatis.type.JdbcType;
+
+import java.io.Serializable;
+import java.util.List;
 
 
 /**
@@ -29,6 +32,10 @@ public class CfgRuleLogisticsDetailEntity extends BaseEntity<CfgRuleLogisticsDet
     */
     @TableField("main_id")
     private String mainId;
+
+    /**
+     * 区域
+     */
     @TableField("area")
     private String area;
     /**
@@ -39,8 +46,8 @@ public class CfgRuleLogisticsDetailEntity extends BaseEntity<CfgRuleLogisticsDet
     /**
     * 店铺Idjson
     */
-    @TableField("shop_id_json")
-    private String shopIdJson;
+    @TableField(value = "shop_id_json" , jdbcType = JdbcType.OTHER)
+    private JSONArray shopIdJson;
     /**
     * 海外仓id
     */
@@ -51,6 +58,12 @@ public class CfgRuleLogisticsDetailEntity extends BaseEntity<CfgRuleLogisticsDet
     */
     @TableField("logistics_days")
     private Integer logisticsDays;
+
+    /**
+     * 店铺id集合
+     */
+    @TableField(exist = false)
+    private List<String> shopIdList;
 
 
     public static final String MAIN_ID = "main_id";

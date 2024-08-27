@@ -16,7 +16,7 @@
        <result column="parent_id" property="parentId" />
        <result column="name" property="name" />
        <result column="value" property="value" />
-       <result column="description" property="description" />
+       <result column="remark" property="remark" />
        <result column="disable" property="disable" />
        <result column="type" property="type" />
     </resultMap>
@@ -32,8 +32,40 @@
         update_time,
         version,
         is_deleted,
-        index, parent_id, name, value, description, disable, type
+        index, parent_id, name, value, remark, disable, type
     </sql>
+
+    <!-- 查询数据 -->
+    <select id="listRuleCommon" resultType="com.erp.model.mrp.dto.CfgRuleCommonDTO$ViewDTO">
+        select
+            <include refid="Base_Column_List"></include>
+        from cfg_rule_common crc
+        <where>
+            crc.is_deleted = false
+            <if test="platformType != null and platformType != ''">
+              and  crc.type = #{platformType}
+            </if>
+            <if test="isEnableOverseas != null and isEnableOverseas == true">
+                and  crc.remark = 'isEnableOverseas'
+            </if>
+        </where>
+    </select>
+
+    <!-- 查询默认配置 -->
+    <select id="listDefaultRuleCommon" resultType="com.erp.model.mrp.dto.CfgRuleCommonDTO$ViewDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from cfg_rule_common crc
+        <where>
+            crc.is_deleted = false and is_default = true
+            <if test="platformType != null and platformType != ''">
+                and  crc.type = #{platformType}
+            </if>
+            <if test="isEnableOverseas != null and isEnableOverseas == true">
+                and  crc.remark = 'isEnableOverseas'
+            </if>
+        </where>
+    </select>
 
 
 </mapper>

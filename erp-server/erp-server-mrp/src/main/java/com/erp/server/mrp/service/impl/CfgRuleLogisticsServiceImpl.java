@@ -2,15 +2,14 @@ package com.erp.server.mrp.service.impl;
 
 
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 import com.erp.server.mrp.mapper.CfgRuleLogisticsMapper;
+import com.erp.server.mrp.service.CfgRuleLogisticsDetailService;
 import com.erp.server.mrp.service.CfgRuleLogisticsService;
 import com.erp.server.mrp.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -18,8 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 /**
@@ -36,25 +35,8 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean add(List<CfgRuleLogisticsDTO.AddDTO> logisticsList,String stockUpId) {
-        if (CollectionUtils.isEmpty(logisticsList)) {
-            throw new ServiceException(ApiError.ERROR_1041,"备货物流信息");
-        }
-        List<CfgRuleLogisticsEntity> list = BeanMapperUtils.copyList(CfgRuleLogisticsEntity.class, logisticsList);
-
-        // 数据处理
-        handleData(list,stockUpId);
-
-        log.info("开始新增备货物流（规则设置）");
-        boolean save = super.saveBatch(list);
-        if(!save) {
-            throw new ServiceException("备货物流（规则设置）保存失败");
-        }
-        return Boolean.TRUE;
-    }
+    @Autowired
+    private CfgRuleLogisticsDetailService cfgRuleLogisticsDetailService;
 
     /**
     * 修改
@@ -63,7 +45,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     @Override
     public Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList,String stockUpId) {
         if (CollectionUtils.isEmpty(logisticsList)) {
-            logisticsList = new ArrayList<>();
+            logisticsList = Collections.EMPTY_LIST;
         }
         List<CfgRuleLogisticsEntity> list = BeanMapperUtils.copyList(CfgRuleLogisticsEntity.class, logisticsList);
         //原物流信息
@@ -71,7 +53,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         //删除明细
         List<String> deleteIds = getDeleteIds(list, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-            this.removeByIds(deleteIds);
+            this.deleteByIdList(deleteIds);
         }
         // 数据处理
         handleData(list,stockUpId);
@@ -80,15 +62,36 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         if(!save) {
             throw new ServiceException("备货物流（规则设置）保存失败");
         }
+
+        //更新物流明细信息
+        list.stream().forEach(obj -> cfgRuleLogisticsDetailService.update(obj.getDetailList(),obj.getId()));
         return Boolean.TRUE;
     }
 
     @Override
     public List<CfgRuleLogisticsEntity> listByStockUpIdList (List<String> stockUpIdList) {
         if (CollectionUtils.isEmpty(stockUpIdList)) {
-            return  new ArrayList<>();
+            return Collections.EMPTY_LIST;
         }
        return lambdaQuery().eq(CfgRuleLogisticsEntity::getStockUpId,stockUpIdList).list();
+    }
+
+
+    /**
+     * 根据id删除
+     * @author will
+     * @date 2024/8/27 11:37
+     * @param idList
+     */
+    private void deleteByIdList (List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return;
+        }
+        //删除物流信息
+        this.removeByIds(idList);
+
+        //删除物流明细数据
+        cfgRuleLogisticsDetailService.deleteByMainIdList(idList);
     }
 
 

@@ -1,8 +1,9 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDetailDTO;
+import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -10,27 +11,33 @@ import com.erp.model.mrp.dto.CfgRuleWarehouseDetailDTO;
  * </p>
  *
  * @author will
- * @since 2024-08-23
+ * @since 2024-08-24
  */
 public interface CfgRuleWarehouseDetailService extends SuperService<CfgRuleWarehouseDetailEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-08-23
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgRuleWarehouseDetailDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author will
-    * @date: 2024-08-23
-    * @param dto
+    * @date: 2024-08-24
+    * @param cfgLocalWarehouseList
     * @return
     */
-    Boolean update(CfgRuleWarehouseDetailDTO.UpdateDTO dto);
+    Boolean update(List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalWarehouseList,String mainId,String type);
 
-
+    /**
+     * 根据主表id集合查询
+     * @author will
+     * @date 2024/8/24 15:54
+     * @param mainIdList
+     * @return List<CfgRuleWarehouseDetailEntity>
+     */
+    List<CfgRuleWarehouseDetailEntity> listByMainIdList(List<String> mainIdList);
+    /**
+     * 根据主表id集合查询详情数据
+     * @author will
+     * @date 2024/8/24 16:42
+     * @param mainIdList
+     * @return List<ViewDTO>
+     */
+    List<CfgRuleWarehouseDetailDTO.ViewDTO> listViewByMainIdList(List<String> mainIdList);
 }

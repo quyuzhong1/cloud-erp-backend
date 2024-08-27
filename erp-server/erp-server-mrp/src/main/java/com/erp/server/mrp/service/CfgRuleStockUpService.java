@@ -1,8 +1,7 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
+import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 
 /**
  * <p>
@@ -13,15 +12,6 @@ import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
  * @since 2024-08-23
  */
 public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity> {
-
-    /**
-    * 新增
-    * @author will
-    * @date: 2024-08-23
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgRuleStockUpDTO.AddDTO dto);
 
     /**
     * 修改
@@ -35,8 +25,8 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      * 查看详情
      * @author will
      * @date 2024/8/23 17:07
-     * @param id
+     * @param platformType
      * @return ViewDTO
      */
-    CfgRuleStockUpDTO.ViewDTO view(String id);
+    CfgRuleStockUpDTO.ViewDTO view(String platformType);
 }

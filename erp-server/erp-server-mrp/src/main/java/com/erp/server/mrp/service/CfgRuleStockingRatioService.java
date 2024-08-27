@@ -16,15 +16,6 @@ import java.util.List;
 public interface CfgRuleStockingRatioService extends SuperService<CfgRuleStockingRatioEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-08-23
-    * @param stockingRatioList
-    * @return
-    */
-    Boolean add(List<CfgRuleStockingRatioDTO.AddDTO> stockingRatioList,String stockUpId,String type);
-
-    /**
     * 修改
     * @author will
     * @date: 2024-08-23

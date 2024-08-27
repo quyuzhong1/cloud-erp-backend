@@ -1,21 +1,19 @@
 package com.erp.model.mrp.enums;
+
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * <p>
- * 销量公式（规则设置） 销量类型 枚举
- * </p>
- *
+ * 仓库配置类型枚举
  * @author will
- * @since 2024-08-23 15:05:16
+ * @date 2024/8/24 15:19
  */
-public enum CfgRuleSalesFormulaTypeEnum implements EnumMessage {
-	DEFAULT("default", "默认"),
-	DYNAMIC("dynamic", "动态"),
-    FIXED("fixed", "固定"),
+public enum CfgRuleCommonTypeEnum implements EnumMessage {
+
+    INVENTORY("inventory", "库存配置"),
+    SUGGEST("suggest", "建议配置"),
     ;
     /**
      * 类型
@@ -28,7 +26,7 @@ public enum CfgRuleSalesFormulaTypeEnum implements EnumMessage {
      */
     private String name;
 
-    CfgRuleSalesFormulaTypeEnum(String code, String name) {
+    CfgRuleCommonTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -47,7 +45,7 @@ public enum CfgRuleSalesFormulaTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (CfgRuleSalesFormulaTypeEnum statusEnum : CfgRuleSalesFormulaTypeEnum.values()) {
+        for (CfgRuleCommonTypeEnum statusEnum : CfgRuleCommonTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

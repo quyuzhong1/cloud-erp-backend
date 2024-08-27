@@ -1,8 +1,10 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
+import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,23 +16,22 @@ import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
  */
 public interface CfgRuleSalesFormulaService extends SuperService<CfgRuleSalesFormulaEntity> {
 
-    /**
-    * 新增
-    * @author will
-    * @date: 2024-08-23
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgRuleSalesFormulaDTO.AddDTO dto);
 
     /**
     * 修改
     * @author will
     * @date: 2024-08-23
-    * @param dto
+    * @param salesFormulaList
     * @return
     */
-    Boolean update(CfgRuleSalesFormulaDTO.UpdateDTO dto);
+    Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList,String salesQtyId);
 
-
+    /**
+     * 获取默认的日销量数据
+     * @author will
+     * @date 2024/8/24 9:49
+     * @param salesQtyIdList
+     * @return List<CfgRuleSalesFormulaEntity>
+     */
+    List<CfgRuleSalesFormulaEntity> listBySalesQtyIdList(List<String> salesQtyIdList);
 }

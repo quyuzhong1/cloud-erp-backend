@@ -10,6 +10,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -54,14 +55,9 @@ public class CfgRuleStockingRatioDTO implements Serializable {
         private String name;
 
         /**
-        * 开始时间
-        */
-        private LocalDate startDate;
-
-        /**
-        * 结束日期
-        */
-        private LocalDate endDate;
+         * 日期数组
+         */
+        private List<LocalDate> dateList;
 
         /**
         * 备货系数
@@ -121,14 +117,9 @@ public class CfgRuleStockingRatioDTO implements Serializable {
         private String name;
 
         /**
-        * 开始时间
-        */
-        private LocalDate startDate;
-
-        /**
-        * 结束日期
-        */
-        private LocalDate endDate;
+         * 日期数组
+         */
+        private List<LocalDate> dateList;
 
         /**
         * 备货系数

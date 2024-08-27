@@ -1,13 +1,13 @@
 package com.erp.model.mrp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -16,7 +16,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author will
- * @since 2024-08-23
+ * @since 2024-08-24
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -25,15 +25,15 @@ import com.common.business.enums.ApproveStatusEnum;
 public class CfgRuleWarehouseEntity extends BaseEntity<CfgRuleWarehouseEntity> {
 
     /**
-    * 是否启禁用虚拟仓，false启用，true禁用
+    * 是否启禁用虚拟仓，true启用，false禁用
     */
     @TableField("is_disable_virtual")
-    private Boolean isDisableVirtual;
+    private Boolean isEnableVirtual;
     /**
-    * 是否启禁用海外仓，false启用，true禁用
+    * 是否启禁用海外仓，true启用，false禁用
     */
     @TableField("is_disable_overseas")
-    private Boolean isDisableOverseas;
+    private Boolean isEnableOverseas;
     /**
     * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
     */

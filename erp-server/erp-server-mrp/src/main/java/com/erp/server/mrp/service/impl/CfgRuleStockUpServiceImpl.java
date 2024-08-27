@@ -3,13 +3,14 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
+import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
@@ -20,7 +21,6 @@ import com.erp.server.mrp.service.CfgRuleLogisticsService;
 import com.erp.server.mrp.service.CfgRuleStockUpService;
 import com.erp.server.mrp.service.CfgRuleStockingRatioService;
 import com.erp.server.mrp.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 备货（规则设置） 服务实现类
@@ -51,36 +52,6 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Autowired
     private CfgRuleStockingRatioService cfgRuleStockingRatioService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(CfgRuleStockUpDTO.AddDTO addDTO) {
-        CfgRuleStockUpEntity cfgRuleStockUpEntity = new CfgRuleStockUpEntity();
-        BeanMapperUtils.copy(addDTO, cfgRuleStockUpEntity);
-
-        // 数据处理
-        handleData(cfgRuleStockUpEntity);
-
-        log.info("开始新增备货（规则设置）");
-        boolean save = super.save(cfgRuleStockUpEntity);
-        if(!save) {
-            throw new ServiceException("备货（规则设置）保存失败");
-        }
-
-        //物流信息
-        cfgRuleLogisticsService.add(addDTO.getCfgLogisticsList(),cfgRuleStockUpEntity.getId());
-
-        //常规备货系数
-        cfgRuleStockingRatioService.add(addDTO.getStockingRatioList(),cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode());
-        //新品备货系数
-        cfgRuleStockingRatioService.add(addDTO.getNewStockingRatioList(),cfgRuleStockUpEntity.getId(),CfgRuleStockingRatioTypeEnum.NEW.getCode());
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "备货（规则设置）" , cfgRuleStockUpEntity.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_RULE_COMMON.getCode(), cfgRuleStockUpEntity.getId(), "新增操作");
-
-        return new BaseResultDTO.AddDTO(cfgRuleStockUpEntity.getId(), cfgRuleStockUpEntity.getId());
-    }
 
     /**
     * 修改
@@ -88,14 +59,16 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(CfgRuleStockUpDTO.UpdateDTO updateDTO) {
-        CfgRuleStockUpEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "备货（规则设置）"));
         CfgRuleStockUpEntity cfgRuleStockUpEntity =  BeanMapperUtils.map(CfgRuleStockUpEntity.class, updateDTO);
-
+        //旧数据
+        CfgRuleStockUpEntity old = super.getById(updateDTO.getId());
+        if (ObjectUtil.isEmpty(old)) {
+            cfgRuleStockUpEntity.setId(old.getId());
+        }
         // 数据处理
         handleData(cfgRuleStockUpEntity);
         log.info("编辑 开始修改备货（规则设置）数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgRuleStockUpEntity);
+        boolean save = super.saveOrUpdate(cfgRuleStockUpEntity);
         if(!save) {
             throw new ServiceException("备货（规则设置）保存失败");
         }
@@ -115,23 +88,45 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     }
 
     @Override
-    public CfgRuleStockUpDTO.ViewDTO view(String id) {
+    public CfgRuleStockUpDTO.ViewDTO view(String platformType) {
         CfgRuleStockUpDTO.ViewDTO viewDTO = new CfgRuleStockUpDTO.ViewDTO();
-        CfgRuleStockUpEntity oldEntity = this.getById(id);
+        CfgRuleStockUpEntity oldEntity = this.getByPlatformType(platformType);
         if (ObjectUtil.isEmpty(oldEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"备货设置");
         }
         BeanMapperUtils.copy(oldEntity,viewDTO);
 
         //物流配置信息
-        List<CfgRuleLogisticsEntity> logisticsList = cfgRuleLogisticsService.listByStockUpIdList(Arrays.asList(id));
-        if (CollectionUtils.isEmpty(logisticsList)) {
+        List<CfgRuleLogisticsEntity> logisticsList = cfgRuleLogisticsService.listByStockUpIdList(Arrays.asList(oldEntity.getId()));
+        if (CollectionUtils.isNotEmpty(logisticsList)) {
+            List<CfgRuleLogisticsDTO.ViewDTO> cfgLogisticsList = BeanMapperUtils.copyList(CfgRuleLogisticsDTO.ViewDTO.class, logisticsList);
+            viewDTO.setCfgLogisticsList(cfgLogisticsList);
         }
-        List<CfgRuleStockingRatioEntity> stockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(Arrays.asList(id));
-        if (CollectionUtils.isEmpty(stockingRatioList)) {
-
+        List<CfgRuleStockingRatioEntity> stockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(Arrays.asList(oldEntity.getId()));
+        //常规品
+        List<CfgRuleStockingRatioEntity> oldList = stockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(oldList)) {
+            List<CfgRuleStockingRatioDTO.ViewDTO> oldStockingRatioList = BeanMapperUtils.copyList(CfgRuleStockingRatioDTO.ViewDTO.class, oldList);
+            viewDTO.setStockingRatioList(oldStockingRatioList);
+        }
+        //新品
+        List<CfgRuleStockingRatioEntity> newList = stockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(newList)) {
+            List<CfgRuleStockingRatioDTO.ViewDTO> oldStockingRatioList = BeanMapperUtils.copyList(CfgRuleStockingRatioDTO.ViewDTO.class, newList);
+            viewDTO.setNewStockingRatioList(oldStockingRatioList);
         }
         return viewDTO;
+    }
+
+    /**
+     * 根据平台类型查询
+     * @author will
+     * @date 2024/8/24 9:30
+     * @param platformType
+     * @return CfgRuleStockUpEntity
+     */
+    private CfgRuleStockUpEntity getByPlatformType (String platformType) {
+        return lambdaQuery().eq(CfgRuleStockUpEntity::getPlatformType,platformType).last("limit 1").one();
     }
 
 
@@ -139,6 +134,6 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     * 新增修改处理数据
     */
     private void handleData(CfgRuleStockUpEntity cfgRuleStockUpEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 }

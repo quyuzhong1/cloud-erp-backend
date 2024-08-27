@@ -1,8 +1,9 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
+import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,22 +16,19 @@ import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
 public interface CfgRuleLogisticsDetailService extends SuperService<CfgRuleLogisticsDetailEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-08-23
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgRuleLogisticsDetailDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author will
     * @date: 2024-08-23
-    * @param dto
+    * @param detailList
     * @return
     */
-    Boolean update(CfgRuleLogisticsDetailDTO.UpdateDTO dto);
+    Boolean update(List<CfgRuleLogisticsDetailDTO.UpdateDTO> detailList,String mainId);
 
-
+    /**
+     * 根据主表id
+     * @author will
+     * @date 2024/8/27 11:01
+     * @param mainIdList
+     */
+    void deleteByMainIdList(List<String> mainIdList);
 }
