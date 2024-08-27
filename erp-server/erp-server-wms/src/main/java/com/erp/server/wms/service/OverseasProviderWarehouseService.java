@@ -83,4 +83,12 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
 
     PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(PagingDTO<OverseasProviderWarehouseDTO.SelectDTO> dto);
     Boolean feignBind(OverseasProviderDTO.FeignDTO feignDTO);
+
+
+    /**
+     * 是否API对接仓库
+     * @param destWarehouseId
+     * @return
+     */
+    Boolean isApiWarehouse(String destWarehouseId);
 }
