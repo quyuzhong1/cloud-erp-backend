@@ -1717,36 +1717,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO generateLogisticsBill(FirstMileDeliveryEntity firstMileDeliveryEntity) {
-        if (!ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())){
-            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"只有已审核发货单才能下推物流单");
-        }
-        if(!FmDeliveryLogisticsStatusEnum.WAIT.equals(firstMileDeliveryEntity.getLogisticsStatus())){
-            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"物流单只有未生成状态才能下推");
-        }
-
-        TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
-        addDTO.setOutstockId(firstMileDeliveryEntity.getId());
-        //走TMS生成物流单逻辑
-        try {
-            BatchResultDTO autoGenerateResult = tmsFirstMileLogisticFeign.generateFirstMileLogistic(addDTO);
-            if(autoGenerateResult.getSuccess()){
-                FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                updateStatusDTO.setIds(Arrays.asList(firstMileDeliveryEntity.getId()));
-                updateStatusDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.getCode());
-                this.updateStatus(updateStatusDTO);
-            }
-            return autoGenerateResult;
-        }catch (Exception e){
-            log.error("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", firstMileDeliveryEntity.getCode(), e.getMessage());
-            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),StrUtil.format("头程发货单{} 手动下推生成物流单失败：{}", firstMileDeliveryEntity.getCode(), e.getMessage()));
-        }
-
-    }
-
-    @Override
     public List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(List<String> codes,List<String> sourceCodes) {
         if (CollectionUtils.isEmpty(codes) && CollectionUtils.isEmpty(sourceCodes)){
             return Collections.emptyList();

@@ -13,19 +13,17 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.EnumCacheUtils;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.entity.InitFirstMileAllocationEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.query.TmsFirstMileLogisticQueryHandler;
-import com.erp.server.tms.schedule.FmLogisticWarnJob;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -55,6 +53,8 @@ public class TmsFirstMileLogisticController extends BaseController {
 
     @Resource
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
+    @Resource
+    private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
 
     /**
      * tabList
@@ -388,4 +388,29 @@ public class TmsFirstMileLogisticController extends BaseController {
         }
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
     }
+
+    /**
+     * 下推物流单
+     **/
+    @PostMapping("/generateLogisticsBill")
+    public ApiResult<List<BatchResultDTO>> generateLogisticsBill(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> entityList = wmsFirstMileDeliveryFeign.listByIds(ids);
+        List<BatchResultDTO> result = new ArrayList<>();
+        for (String id : ids){
+            FirstMileDeliveryEntity firstMileDeliveryEntity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(firstMileDeliveryEntity)){
+                result.add(BatchResultDTO.fail(id,id,"发货单为空"));
+                continue;
+            }
+            try {
+                result.add(tmsFirstMileLogisticService.generateLogisticsBill(firstMileDeliveryEntity));
+            }catch (Exception e){
+                log.error("头程发货单下推装箱任务失败>>>>>", e);
+                result.add(BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),e.getMessage()));
+            }
+        }
+        return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
+    }
+
 }

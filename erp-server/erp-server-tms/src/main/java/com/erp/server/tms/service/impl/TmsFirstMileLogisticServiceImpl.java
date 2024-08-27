@@ -1711,14 +1711,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO generateFirstMileLogistic(TmsFirstMileLogisticDTO.AddDTO addDTO) {
-        this.add(addDTO);
-        return BatchResultDTO.success(addDTO.getOutstockId(),"", "头程物流单创建成功");
-    }
-
-    @Override
     public List<TmsFirstMileLogisticDTO.WeightAllocationDTO> assembleFirstMileEstimatedList() {
         return baseMapper.assembleFirstMileEstimatedList(null);
     }
@@ -1759,5 +1751,29 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             dto.setSupplierName(supplierMap.get(allocationDTO.getSupplierId()).getSupplierName());
         }
         return firstMileWeightAllocationService.add(dto);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO generateLogisticsBill(FirstMileDeliveryEntity firstMileDeliveryEntity) {
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())){
+            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"只有已审核发货单才能下推物流单");
+        }
+        if(!com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum.WAIT.equals(firstMileDeliveryEntity.getLogisticsStatus())){
+            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"物流单只有未生成状态才能下推");
+        }
+
+        TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
+        addDTO.setOutstockId(firstMileDeliveryEntity.getId());
+        //走TMS生成物流单逻辑
+        try {
+            this.add(addDTO);
+            return BatchResultDTO.success(addDTO.getOutstockId(),"", "头程物流单创建成功");
+        }catch (Exception e){
+            log.error("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", firstMileDeliveryEntity.getCode(), e.getMessage());
+            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),StrUtil.format("头程发货单{} 手动下推生成物流单失败：{}", firstMileDeliveryEntity.getCode(), e.getMessage()));
+        }
+
     }
 }

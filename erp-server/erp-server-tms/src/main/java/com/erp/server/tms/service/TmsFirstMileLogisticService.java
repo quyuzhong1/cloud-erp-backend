@@ -11,6 +11,7 @@ import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.*;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -142,12 +143,6 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> listAutoGenerateFirstMileReconciliation(LocalDate startDate, LocalDate endDate);
 
     BatchResultDTO autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO);
-    /**
-     * 手动生成物流单
-     * @param addDTO
-     * @return
-     */
-    BatchResultDTO generateFirstMileLogistic(TmsFirstMileLogisticDTO.AddDTO addDTO);
 
     /**
      * 查询生成重量分摊单据所需参数
@@ -159,4 +154,6 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * @param id 物流单ID
      */
     BatchResultDTO pushWeightAllocation(String id);
+
+    BatchResultDTO generateLogisticsBill(FirstMileDeliveryEntity firstMileDeliveryEntity);
 }
