@@ -141,8 +141,8 @@ public class AntuServerTest {
     public void createInboundBillTest() {
         AntuCreateInboundReq antuGetReceiptReq = AntuCreateInboundReq.builder()
                 .referenceNo("wjtest20231205")
-                .incomeType(1)
-                .receivingType("T")
+                .incomeType(0)
+                .receivingType("D")
                 .smCode("PAC")
                 .contacter("张三")
                 .contactPhone("123456789")
