@@ -77,6 +77,11 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
     @TableField("is_default")
     private Boolean isDefault;
 
+    /**
+     * 字段类型，single单选,multiple多选
+     */
+    @TableField("field_type")
+    private String fieldType;
 
     public static final String INDEX = "index";
 

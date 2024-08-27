@@ -55,6 +55,11 @@ public class CfgRuleCommonDTO implements Serializable {
         private String value;
 
         /**
+         * 字段类型，single单选,multiple多选
+         */
+        private String fieldType;
+
+        /**
          * 子级信息
          */
         List<ViewDTO> childrenList;

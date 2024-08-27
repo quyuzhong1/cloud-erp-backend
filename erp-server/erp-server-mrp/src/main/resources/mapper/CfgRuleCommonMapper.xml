@@ -34,7 +34,7 @@
         update_time,
         version,
         is_deleted,
-        index, parent_id, name, value, remark, disable, type,platform_type,is_default
+        index, parent_id, name, value, remark, disable, type,platform_type,is_default,field_type
     </sql>
 
     <!-- 查询数据 -->
