@@ -544,6 +544,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         if(locationEntity != null) {
             return locationEntity.getName();
         }
+        log.error("库位信息不存在,仓库id：{}，仓库名称:{},仓位编号:{}",warehouseId, warehouseName,warehouseLocation);
         throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_FOUND,warehouseName, warehouseLocation);
     }
 
