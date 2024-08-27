@@ -5,8 +5,10 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +58,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		DmpCfgInputEntity dmpCfgInputEntity = dmpHandlerCache.getDmpCfgInputEntityList(d -> d.getId().equals(mainId)).get(0);
 		String typeId = dmpCfgInputEntity.getTypeId();
 		String apiType = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(typeId)).get(0).getApiType();
+		List<String> apiTypeList = Arrays.asList(apiType.split(","));
 		
 		String systemId = dmpCfgOutputEntity.getSystemId();
 		String code = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(systemId)).get(0).getCode();
@@ -70,7 +73,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					if(!dmpPushMsgEntity.getTargetPlatform().equals(code)) {
 						continue;
 					}
-					if(!dmpPushMsgEntity.getSourceType().equals(apiType)) {
+					if(!apiTypeList.contains(dmpPushMsgEntity.getSourceType())) {
 						continue;
 					}
 					if(this.validateDataBlack(dmpPushMsgEntity, cfgOutputId)) {
@@ -112,6 +115,24 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
 		String dataId = dmpOutputTaskRecordEntity.getDataId();
 		DmpPushMsgEntity dmpPushMsgEntity = dmpPushMsgService.getById(dataId);
+		String sourceId = dmpPushMsgEntity.getSourceId();
+		List<DmpPushMsgEntity> sourceList = dmpPushMsgService.lambdaQuery()
+				.eq(DmpPushMsgEntity::getSourceId, sourceId)
+				.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
+				.ne(DmpPushMsgEntity::getId, dataId)
+				.select(DmpPushMsgEntity::getId)
+				.list();
+		if(CollUtil.isNotEmpty(sourceList)) {
+			Integer count = dmpOutputTaskRecordService.lambdaQuery()
+					.in(DmpOutputTaskRecordEntity::getDataId, sourceList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+					.ne(DmpOutputTaskRecordEntity::getId , dmpOutputTaskRecordEntity.getId())
+					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.count();
+			if(count > 0) {
+				return;
+			}
+		}
+		
 		String parentId = dmpPushMsgEntity.getParentId();
 		if(StringUtils.isNotBlank(parentId) && "operateApprove".equals(dmpPushMsgEntity.getSyncOperate())) {
 			List<DmpPushMsgEntity> list = dmpPushMsgService.lambdaQuery().eq(DmpPushMsgEntity::getSourceId, parentId)

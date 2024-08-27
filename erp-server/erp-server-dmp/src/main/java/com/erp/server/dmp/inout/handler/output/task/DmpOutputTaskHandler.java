@@ -127,22 +127,20 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		}
 		dmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getUpdateTime().compareTo(d2.getUpdateTime()));
     	for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
-    		dmpOutputExecutorPool.execute(() -> {
-				String dataId = dmpOutputTaskRecordEntity.getDataId();
-				String redisKey = "dmp:output:task:" + dataId;
-				if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 3600, TimeUnit.SECONDS)) {
-					try {
-						this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
-					} catch (Exception e) {
-						log.error("处理推送数据失败" , e);
-						throw new RuntimeException(e);
-					}finally {
-						redisTemplate.delete(redisKey);
-					}
-				}else {
-					log.error(redisKey + "任务正在执行中");
+			String dataId = dmpOutputTaskRecordEntity.getDataId();
+			String redisKey = "dmp:output:task:" + dataId;
+			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 3600, TimeUnit.SECONDS)) {
+				try {
+					this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+				} catch (Exception e) {
+					log.error("处理推送数据失败" , e);
+					throw new RuntimeException(e);
+				}finally {
+					redisTemplate.delete(redisKey);
 				}
-    		});
+			}else {
+				log.error(redisKey + "任务正在执行中");
+			}
     		
     		if(pushRate > 0) {
 				i = i + 1;
