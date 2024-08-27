@@ -116,7 +116,7 @@ public class FirstMileCostAllocationController extends BaseController {
                 resultDTOS.add(firstMileCostAllocationService.delete(entity));
             }catch (Exception e){
                 log.error("费用分摊记录删除失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getReconciliationCode(), e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -177,7 +177,7 @@ public class FirstMileCostAllocationController extends BaseController {
                     resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
                 }catch (Exception e){
                     log.error("费用分摊记录删除失败",e);
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getReconciliationCode(), e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
                 }
             }
         }

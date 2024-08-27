@@ -486,6 +486,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             if (Objects.isNull(firstMileSkuCostAllocationEntity)) {
                 firstMileSkuCostAllocationEntity = new FirstMileSkuCostAllocationEntity();
             }
+            //上面已经删除了记录，这里重置sku分摊id
+            firstMileSkuCostAllocationEntity.setId(null);
             firstMileSkuCostAllocationEntity.setMainId(entity.getId());
             firstMileSkuCostAllocationEntity.setSourceDetailId(deliveryDetailEntity.getId());
             InitFirstMileAllocationDetailEntity initFirstMileAllocationDetailEntity = initFirstMileAllocationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(deliveryDetailEntity.getSkuId()))

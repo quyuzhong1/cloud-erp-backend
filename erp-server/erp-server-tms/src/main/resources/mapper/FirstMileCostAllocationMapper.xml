@@ -31,8 +31,6 @@
        <result column="from_warehouse_name" property="fromWarehouseName" />
        <result column="to_warehouse_id" property="toWarehouseId" />
        <result column="to_warehouse_name" property="toWarehouseName" />
-       <result column="to_country" property="toCountry" />
-       <result column="delivery_time" property="deliveryTime" />
        <result column="source_id" property="sourceId" />
        <result column="source_code" property="sourceCode" />
        <result column="org_id" property="orgId" />
@@ -53,7 +51,7 @@
         remark, reconciliation_id, logistics_bill_id, logistics_bill_detail_id, estimated_bill_id,
         sku_cost_id, sku_cost_detail_id, weight_allocation_id, report_period_id, account_period, status, supplier_id, supplier_name,
         business_code, business_type, transport_no, reconciliation_month, shop_id, shop_name, from_warehouse_id,
-        from_warehouse_name, to_warehouse_id, to_warehouse_name,to_country,delivery_time,source_id,source_code,org_id,org_name
+        from_warehouse_name, to_warehouse_id, to_warehouse_name,delivery_time,source_id,source_code,org_id,org_name
     </sql>
     <sql id="pageSql">
         SELECT
@@ -61,7 +59,7 @@
         ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
-        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,a.to_country,
+        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,
         a.source_id,a.source_code,a.org_id,a.org_name,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
         ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
         ca.product_cost, ca.product_total_cost,ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,
@@ -112,7 +110,7 @@
         ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
-        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,a.to_country,
+        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,
         a.source_id,a.source_code,a.org_id,a.org_name,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
         ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
         ca.product_cost, ca.product_total_cost,ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,
@@ -136,7 +134,7 @@
         ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
-        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,a.to_country,
+        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,
         a.source_id,a.source_code,a.org_id,a.org_name,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
         ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
         ca.product_cost, ca.product_total_cost,ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,

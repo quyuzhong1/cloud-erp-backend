@@ -192,8 +192,6 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
 
     public static final String TO_WAREHOUSE_NAME = "to_warehouse_name";
 
-    public static final String TO_COUNTRY = "to_country";
-
     public static final String DELIVERY_TIME = "delivery_time";
 
     @Override

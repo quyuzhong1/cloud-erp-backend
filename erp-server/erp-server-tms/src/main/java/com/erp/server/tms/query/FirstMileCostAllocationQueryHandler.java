@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,7 +27,7 @@ public class FirstMileCostAllocationQueryHandler extends AbstractQueryHandler {
         if ("reportPeriodStr".equals(field)){
             if (value instanceof String){
                 String value1 = value + "-01";
-                this.buildDefaultDTO("rpm.month", dateTimeFormatter.parse(value1));
+                this.buildDefaultDTO("rpm.month", Collections.singletonList(LocalDate.parse(value1)));
             }else if (value instanceof List){
                 List<LocalDate> values = new ArrayList<>();
                 for (String s : (List<String>)value) {
