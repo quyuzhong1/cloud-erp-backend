@@ -12,6 +12,8 @@ import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -236,5 +238,10 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         this.removeById(id);
         String msg = StrUtil.format("用户【{}】删除海外仓信息 ", UserContext.getDefaultLoginUser().getUserName());
         operateLogService.addModuleOperateLog(msg,  ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), entity.getId(), "删除");
+    }
+
+    @Override
+    public OverseasProviderEntity getAlreadyAuthById(String id) {
+        return lambdaQuery().eq(BaseEntity::getId,id).eq(OverseasProviderEntity::getAuthStatus,AuthStatusEnum.ALREADY.getCode()).one();
     }
 }

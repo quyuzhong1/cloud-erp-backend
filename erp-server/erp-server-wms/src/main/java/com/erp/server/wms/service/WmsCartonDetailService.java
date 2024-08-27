@@ -50,7 +50,7 @@ public interface WmsCartonDetailService extends SuperService<WmsCartonDetailEnti
      * @param mainId
      * @return
      */
-    List<WmsCartonSpecDTO.PackingItemDTO> boxInfoBySourceId(String mainId);
+    List<WmsCartonSpecDTO.PackingItemDTO> boxInfoBySourceIds(List<String> mainId);
 
     /**
      * 新增箱子明细

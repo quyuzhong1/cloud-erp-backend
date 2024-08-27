@@ -92,6 +92,7 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     OverseasProviderEntity getByPlatformCode(String code);
 
     OverseasProviderDTO.FeignDTO getOverseasWarehouse(OverseasProviderDTO.FeignDTO feignDTO);
+    OverseasProviderEntity getAlreadyAuthById(String id);
 
     void add(OverseasProviderDTO.AddDTO dto);
 
