@@ -82,17 +82,17 @@ public class ExportTmsFeignController {
     }
 
     @PostMapping("/b2cDeclareReconciliationDetail")
+    public PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(@RequestBody PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto) {
+        return tmsB2cDeclareReconciliationDetailService.exportB2cDeclareReconciliationDetail(dto);
+    }
+
+    @PostMapping("/b2cDeclareReconciliation")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:tmsB2cDeclareReconciliation:export",
             tableAlias = "tbdr"
     )
     @WebAdvanceQuery(handler = TmsB2cDeclareReconciliationQueryHandler.class)
-    public PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(@RequestBody PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto) {
-        return tmsB2cDeclareReconciliationDetailService.exportB2cDeclareReconciliationDetail(dto);
-    }
-
-    @PostMapping("/b2cDeclareReconciliation")
     public PagingVO<TmsB2cDeclareReconciliationDTO.ListDTO> exportB2cDeclareReconciliation(@RequestBody PagingDTO<TmsB2cDeclareReconciliationDTO.ExportDTO> dto) {
         return tmsB2cDeclareReconciliationService.exportB2cDeclareReconciliation(dto);
     }
