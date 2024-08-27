@@ -25,7 +25,7 @@ public class ExportTmsProductRegistrationHandler extends AbstractPageFileEventHa
 
     @Override
     public String getExcelPath() {
-        return "excel/workflow/processDefinition.xlsx";
+        return "excel/tms/productRegistration.xlsx";
     }
 
     @Override
