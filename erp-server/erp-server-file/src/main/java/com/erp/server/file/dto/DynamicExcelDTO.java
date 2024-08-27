@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -11,6 +12,6 @@ public class DynamicExcelDTO {
 
     private LinkedHashMap<String, String> headers;
 
-    private LinkedHashMap<String, Object> data;
+    private Map<String, Object> data;
 
 }

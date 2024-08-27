@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -33,7 +34,6 @@ import com.erp.server.wms.mapper.VirtualTransFlowMapper;
 import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -152,14 +152,13 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
 
     @Override
     public PagingVO<VirtualTransFlowDTO.ListDTO> exportVirtualTransFlow(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
-        PagingVO<VirtualTransFlowDTO.ListDTO> resultList = this.paging(dto);
-        List<VirtualTransFlowDTO.ListDTO> list = (List<VirtualTransFlowDTO.ListDTO>)resultList.getList();
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        IPage<VirtualTransFlowDTO.ListDTO> pageData = this.baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollUtil.isNotEmpty(pageData.getRecords())){
+            //数据赋值处理
+            fillPageData(pageData.getRecords());
         }
-        //数据赋值处理
-        fillPageData(list);
-        return new PagingVO<>(list, resultList.getTotalPage(), dto.getPageSize(), dto.getCurrPage());
+        return new PagingVO<>(pageData);
     }
 
     /**

@@ -4,9 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
-import com.erp.rpc.workflow.ExportWorkflowFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -27,9 +25,9 @@ public class ExportTmsShippingCalculationHandler extends AbstractPageFileEventHa
     @Override
     public String getExcelPath() {
         ShippingCalculationDTO.PagingParamDTO dto = threadLocal.get();
-        String excelPath = "excel/shippingCalculation_self.xlsx";
+        String excelPath = "excel/tms/shippingCalculation_self.xlsx";
         if ("first".equals(dto.getShipmentMethod())) {
-            excelPath = "excel/shippingCalculation_first.xlsx";
+            excelPath = "excel/tms/shippingCalculation_first.xlsx";
         }
         threadLocal.remove();
         return excelPath;

@@ -95,7 +95,7 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
             }
             int totalCount = data.getTotalCount();
             if (totalCount <= detailDto.getCurrPage() * getPageSize()) {
-                hasNext = false;
+                detailHasNext = false;
             }
             detailDto.setCurrPage(detailDto.getCurrPage() + 1);
         }

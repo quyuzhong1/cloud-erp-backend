@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -87,7 +86,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_DAILY_QC_BILL;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_BILL;
 
 /**
  * <p>
@@ -2462,13 +2462,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     public PagingVO<QcInfoDTO.QcDailyReportDTO> exportDailyQcBill(PagingDTO<QcInfoDTO.ExportDTO> dto) {
 
-//        // 查询数据
-//        List<QcInfoDTO.DailyListDTO> dataList = baseMapper.getDailyExport(dto);
-//        // 填充数据
-//        List<QcInfoDTO.QcDailyReportDTO> resultList = fillQcDailyRptData(dataList);
-//        // 导出Excel
-//        generateDailyRptExcel(resultList, response);
-        return null;
+        // 查询数据
+        Page<QcInfoDTO.DailyListDTO> page = baseMapper.getDailyExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        // 填充数据
+        List<QcInfoDTO.QcDailyReportDTO> resultList = fillQcDailyRptData(page.getRecords());
+        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
     @Override

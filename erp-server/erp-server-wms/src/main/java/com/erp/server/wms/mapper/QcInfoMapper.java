@@ -130,6 +130,8 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      */
     List<QcInfoDTO.DailyListDTO> getDailyExport(@Param("params") QcInfoDTO.ExportDTO dto);
 
+    Page<QcInfoDTO.DailyListDTO> getDailyExport(@Param("page") Page<QcInfoDTO.DailyListDTO> page, @Param("params") QcInfoDTO.ExportDTO dto);
+
     List<QcInfoDTO.QcReceiveResultDTO> getQcReceiveResult(@Param("purchaseDetailIds") List<String> purchaseDetailIds);
     /**
      * @description: 统计未质检数量
