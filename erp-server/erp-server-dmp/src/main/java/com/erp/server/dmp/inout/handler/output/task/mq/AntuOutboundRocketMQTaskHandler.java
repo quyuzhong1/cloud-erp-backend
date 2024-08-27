@@ -9,6 +9,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import io.seata.common.util.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -70,7 +71,7 @@ public class AntuOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
     		return null;
     	}
     	String orderStatus = dmpThirdOutboundEntity.getOrderStatus();
-		String erpOrderStatus = GoodCangEnums.OrderStatusEnum.getErpOrderStatus(orderStatus);
+		String erpOrderStatus = AntuEnums.OrderStatusEnum.getErpOrderStatus(orderStatus);
 		if(StringUtils.isBlank(erpOrderStatus)) {
 			return null;
 		}
@@ -80,7 +81,7 @@ public class AntuOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
     	platformOutboundDTO.setProvider(sourcePlatform);
     	platformOutboundDTO.setOutBoundTime(dmpThirdOutboundEntity.getDateShipping());
 		platformOutboundDTO.setOrderStatus(erpOrderStatus);
-    	platformOutboundDTO.setThirdOrderStatus(GoodCangEnums.OrderStatusEnum.getName(orderStatus));
+    	platformOutboundDTO.setThirdOrderStatus(AntuEnums.OrderStatusEnum.getName(orderStatus));
     	platformOutboundDTO.setTrackNo(dmpThirdOutboundEntity.getTrackingNo());
     	
         return platformOutboundDTO;
