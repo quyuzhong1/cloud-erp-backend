@@ -58,4 +58,13 @@ public interface FirstMileCostAllocationMapper extends BaseMapper<FirstMileCostA
      * @return
      */
     List<FirstMileCostAllocationDTO.PagingVO> listBySourceIds(@Param("sourceIds") List<String> sourceIds);
+
+    /**
+     * 查询物流单最新的核算月份
+     * @param logisticsBillIds 物流单ID
+     * @return
+     * @date: 2024-08-26
+     * @author: tanmujin
+     */
+    List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> listLastedAllocationMonth(@Param("logisticsBillIds") List<String> logisticsBillIds);
 }

@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -81,9 +82,14 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String costAllocationStatusName;
 
         /**
-        * 最新费用分摊月份
+        * 最新核算期间
         */
-        private String latestCostAllocationMonth;
+        private LocalDate latestCostAllocationMonth;
+
+        /**
+         * 最新核算期间Str
+         */
+        private String latestCostAllocationMonthStr;
 
         private String skuId;
 
@@ -120,17 +126,17 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
         * 箱长
         */
-        private Integer length;
+        private Integer boxLength;
 
         /**
         * 箱宽
         */
-        private Integer width;
+        private Integer boxWidth;
 
         /**
         * 箱高
         */
-        private Integer height;
+        private Integer BoxHeight;
 
         /**
         * 箱子尺寸单位
@@ -140,7 +146,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * 出库重量
          */
-        private BigDecimal boxWeight;
+        private BigDecimal outStockWeight;
 
         /**
         * 出库计费重【可排序】
@@ -192,6 +198,12 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         * 计费规则【可排序】
         */
         private String feeRule;
+
+        /**
+         * 计费规则名称
+         * ShippingFeeRuleEnum
+         */
+        private String feeRuleName;
 
         /**
         * 店铺ID
@@ -365,11 +377,11 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * 箱子宽
          */
-        private String boxWide;
+        private String boxWidth;
         /**
          * 箱子高
          */
-        private String boxHigh;
+        private String boxHeight;
         /**
          * 箱子尺寸单位
          */

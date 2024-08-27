@@ -99,4 +99,9 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @param reportPeriodMonth
      */
     void autoGenerateFirstMileCostAllocation(LocalDate reportPeriodMonth);
+
+    /**
+     * 获取物流单对应的最新核算期间
+     */
+    List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> listLastedAllocationMonth(List<String> logisticsBillIds);
 }

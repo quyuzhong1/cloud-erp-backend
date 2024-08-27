@@ -93,18 +93,18 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     /**
     * 箱长
     */
-    @TableField("length")
-    private BigDecimal length = BigDecimal.ZERO;
+    @TableField("box_length")
+    private BigDecimal boxLength = BigDecimal.ZERO;
     /**
     * 箱宽
     */
-    @TableField("width")
-    private BigDecimal width = BigDecimal.ZERO;
+    @TableField("box_width")
+    private BigDecimal boxWidth = BigDecimal.ZERO;
     /**
     * 箱高
     */
-    @TableField("height")
-    private BigDecimal height = BigDecimal.ZERO;
+    @TableField("box_height")
+    private BigDecimal boxHeight = BigDecimal.ZERO;
     /**
     * 箱子尺寸单位
     */

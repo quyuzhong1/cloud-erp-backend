@@ -811,4 +811,36 @@ public class FirstMileCostAllocationDTO implements Serializable {
         //上月开始有账单
         private boolean lastMonthReconciliation = false;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class LastedAllocMonthDTO{
+        /**
+         * 物流单ID
+         */
+        private String logisticsBillId;
+        /**
+         * 最新核算期间
+         */
+        private LocalDate latestMonth;
+        /**
+         * 核算期间ID
+         */
+        private String reportPeriodId;
+
+        /**
+         * 费用来源：estimated=预估账单，actual=实际账单
+         * ReconciliationBillTypeEnum
+         */
+        private String billSourceType;
+
+        /**
+         * 期末在途费用
+         */
+        private BigDecimal endPeriodTransitCost;
+        /**
+         * 最新核算状态
+         */
+        private String status;
+    }
 }

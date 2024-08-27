@@ -13,6 +13,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
@@ -25,6 +26,7 @@ import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.rpc.plm.feign.ProductPackFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.PackingTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.tms.mapper.FirstMileWeightAllocationMapper;
@@ -80,6 +82,8 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     private LogisticsBillCostService logisticsBillCostService;
     @Resource
     private TmsCostDetailService tmsCostDetailService;
+    @Resource
+    private SysDictFeign sysDictFeign;
 
     @Override
     public BatchResultDTO add(FirstMileWeightAllocationDTO.AddDTO addDTO) {
@@ -149,9 +153,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             entity.setFeeRule(dto.getFeeRule());
             entity.setBoxId(packingDTO.getId());
             entity.setBoxNo(packingDTO.getBoxNo());
-            entity.setLength(packingDTO.getLength());
-            entity.setWidth(packingDTO.getWidth());
-            entity.setHeight(packingDTO.getHeight());
+            entity.setBoxLength(packingDTO.getLength());
+            entity.setBoxWidth(packingDTO.getWidth());
+            entity.setBoxHeight(packingDTO.getHeight());
             entity.setBoxSizeUnit(packingDTO.getSizeUnit());
             if(! cartonSepcViewMap.containsKey(packingDTO.getTaskId())){
                 throw new ServiceException("没有找到装箱信息");
@@ -243,30 +247,35 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         List<WarehouseDTO.ListDTO> warehouseList = warehouseFeign.listByIds(warehouseIds);
         Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
         //费用分摊
-        List<String> sourceIds = records.stream().map(item -> item.getSourceId()).distinct().collect(Collectors.toList());
-//        List<FirstMileCostAllocationDTO.PagingVO> costAllocationList = costAllocationService.listBySourceIds(sourceIds);
+        List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
+        List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> lastedAllocationMonthList =  costAllocationService.listLastedAllocationMonth(logisticsBillIds);
+        //国家
+        List<String> countryCodeList = records.stream().map(item -> item.getToCountry()).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryCodeList);
+        Map<String, String> countryNameMap = countryList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getNameCn()));
         for (FirstMileWeightAllocationDTO.ViewDTO item : records) {
             item.setCostAllocationStatusName(CostAllocationStatusEnum.getName(item.getCostAllocationStatus()));
             item.setAllocationTypeName(WeightAllocationTypeEnum.getName(item.getAllocationType()));
+            item.setFeeRuleName(ShippingFeeRuleEnum.getName(item.getFeeRule()));
             if(warehouseMap.containsKey(item.getFromWarehouseId())){
                 item.setFromWarehouseName(warehouseMap.get(item.getFromWarehouseId()).getName());
             }
-//            List<FirstMileCostAllocationDTO.PagingVO> costAllocFilterList = costAllocationList.stream().filter(v -> v.getSourceId().equals(item.getSourceId()) && v.getSkuId().equals(item.getSkuId())).collect(Collectors.toList());
-//            costAllocFilterList.sort(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
-            /*if(! costAllocFilterList.isEmpty()){
-                FirstMileCostAllocationDTO.PagingVO costAllocationDTO = costAllocFilterList.get(0);
-                item.setCalculatePeriodId(costAllocationDTO.getReportPeriodId());
-                item.setCalculateMonth(monthFormatter.format(costAllocationDTO.getReportPeriodMonth()));
-                if(costAllocationDTO.getStatus().equals("confirm") && costAllocationDTO.getBillSourceType().equals(ReconciliationBillTypeEnum.ACTUAL.getCode()) && costAllocationDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) == 0){
+            item.setToCountryName(countryNameMap.get(item.getToCountry()));
+            FirstMileCostAllocationDTO.LastedAllocMonthDTO lastedAllocMonthDTO = lastedAllocationMonthList.stream().filter(v -> v.getLogisticsBillId().equals(item.getLogisticsBillId())).findFirst().orElse(null);
+            if(lastedAllocMonthDTO != null){
+                item.setCalculatePeriodId(lastedAllocMonthDTO.getReportPeriodId());
+                item.setLatestCostAllocationMonth(lastedAllocMonthDTO.getLatestMonth());
+                item.setLatestCostAllocationMonthStr(monthFormatter.format(lastedAllocMonthDTO.getLatestMonth()));
+                if(lastedAllocMonthDTO.getStatus().equals("confirm") && lastedAllocMonthDTO.getBillSourceType().equals(ReconciliationBillTypeEnum.ACTUAL.getCode()) && lastedAllocMonthDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) == 0){
                     item.setCostAllocationStatus(CostAllocationStatusEnum.ALREADY.getCode());
-                }else if(costAllocationDTO.getStatus().equals("confirm") && costAllocationDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) > 0){
+                }else if(lastedAllocMonthDTO.getStatus().equals("confirm") && lastedAllocMonthDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) > 0){
                     item.setCostAllocationStatus(CostAllocationStatusEnum.PART.getCode());
                 }else{
                     item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
                 }
             }else {
                 item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
-            }*/
+            }
         }
     }
 
