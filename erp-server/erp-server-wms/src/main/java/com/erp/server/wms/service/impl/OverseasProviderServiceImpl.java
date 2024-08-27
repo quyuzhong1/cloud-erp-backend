@@ -9,6 +9,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -195,5 +196,10 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     @Override
     public OverseasProviderDTO.FeignDTO getOverseasWarehouse(OverseasProviderDTO.FeignDTO feignDTO) {
         return baseMapper.getOverseasWarehouse(feignDTO);
+    }
+
+    @Override
+    public OverseasProviderEntity getAlreadyAuthById(String id) {
+        return lambdaQuery().eq(BaseEntity::getId,id).eq(OverseasProviderEntity::getAuthStatus,AuthStatusEnum.ALREADY.getCode()).one();
     }
 }
