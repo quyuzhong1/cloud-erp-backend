@@ -56,28 +56,25 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-//        AntuCreateInboundReq antuCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToAntu(createInboundReq);;
-//        AntuResponse<String> antuResponse = antuService.createInboundBill(antuCreateInboundReq);
-        return success();
+        AntuCreateInboundReq antuCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToAntu(createInboundReq);
+        log.warn("安兔创建入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
+        AntuResponse<String> antuResponse = antuService.createInboundBill(antuCreateInboundReq);
+        return isSuccess(antuResponse.getAsk()) ? success(antuResponse.getData()) : failure(antuResponse.getMessage());
     }
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-//        AntuCreateInboundReq antuCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToAntu(createInboundReq);
-//        // 修改入库单
-//        if("FHD24031900016".equals(createInboundReq.getReferenceNo())){
-//            antuCreateInboundReq.setSmCode("XBLY");
-//        }
-//        AntuResponse<String> antuResponse = antuService.editInboundBill(antuCreateInboundReq);
-//        return isSuccess(antuResponse.getAsk()) ? success(antuResponse.getData()) : failure(antuResponse.getMessage());
-        return success();
+        AntuCreateInboundReq antuCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToAntu(createInboundReq);
+        log.warn("安兔编辑入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
+        // 修改入库单
+        AntuResponse<String> antuResponse = antuService.editInboundBill(antuCreateInboundReq);
+        return isSuccess(antuResponse.getAsk()) ? success(antuResponse.getData()) : failure(antuResponse.getMessage());
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
-//        AntuResponse<String> response = antuService.cancelInboundBill(cancelInboundReq.getReceivingCode());
-//        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
-        return success();
+        AntuResponse<String> response = antuService.cancelInboundBill(cancelInboundReq.getReceivingCode());
+        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
 
     @Override
