@@ -1201,10 +1201,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if (CollectionUtils.isEmpty(detailEntityList)) {
             return;
         }
-        detailEntityList.forEach(e -> e.setIsDeleted(true));
-        if (!this.updateBatchById(detailEntityList)) {
-            throw new ServiceException("批量删除失败, 请重试");
-        }
+        detailEntityList.forEach(e -> {
+            //更新其他对账单对账次数
+            updateReconciliationDetailCount(e.getId(),e.getSourceId(),e.getReconciliationCount());
+
+        });
+        this.lambdaUpdate().eq(TmsFirstMileReconciliationDetailEntity::getMainId, id).remove();
         List<String> mainIds = detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
         List<String> sourceIds = detailEntityList.stream()

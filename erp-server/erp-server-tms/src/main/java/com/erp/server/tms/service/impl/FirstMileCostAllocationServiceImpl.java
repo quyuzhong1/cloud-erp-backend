@@ -11,11 +11,14 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ConfirmStatusEnum;
+import com.common.business.enums.UnitEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -470,6 +473,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(reportPeriodMonth.getOrgId(), skuIds, ApproveStatusEnum.APPROVE.getStatus());
         //保存分摊主表记录
         this.saveOrUpdate(entity);
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "头程费用分摊", entity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.COST_ALLOCATION.getCode(), entity.getId(), "新增操作");
+
         List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList = new ArrayList<>(firstMileDeliveryDetailEntityList.size());
         //遍历计算sku分摊
         for (FirstMileDeliveryDetailEntity deliveryDetailEntity : firstMileDeliveryDetailEntityList) {
@@ -495,6 +502,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             firstMileSkuCostAllocationEntity
                     .setSkuId(deliveryDetailEntity.getSkuId())
                     .setSkuNo(deliveryDetailEntity.getSkuNo())
+                    .setCurrency(CurrencyEnum.CNY.getCurrencyCode())
+                    .setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol())
+                    .setWeightUnit(UnitEnum.WeightUnitEnum.KG.code)
                     .setPlatformSkuNo(deliveryDetailEntity.getPlatformSkuNo())
                     .setDeliveryQty(Objects.nonNull(deliveryDetailEntity.getDeliveryQty()) ? deliveryDetailEntity.getDeliveryQty() : MathUtil.ZERO);
             //分摊重量 若有期初值则取值期初，无期初值则
@@ -1192,5 +1202,25 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Override
     public List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> listLastedAllocationMonth(List<String> logisticsBillIds) {
         return baseMapper.listLastedAllocationMonth(logisticsBillIds);
+    }
+
+    @Override
+    public BatchResultDTO updateStatus(FirstMileCostAllocationEntity entity, String status, String accountPeriod) {
+        if (StrUtil.isBlank(status) && StrUtil.isBlank(accountPeriod)){
+            return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(),"会计期间和核算状态不能同时为空");
+        }
+        if (StrUtil.isNotBlank(status)){
+            String name = ConfirmStatusEnum.getName(status);
+            if (StrUtil.isBlank(name)){
+                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(),"核算状态枚举值错误");
+            }
+        }
+        this.lambdaUpdate().eq(FirstMileCostAllocationEntity::getId, entity.getId())
+                .set(StrUtil.isNotBlank(status), FirstMileCostAllocationEntity::getStatus, status)
+                .set(StrUtil.isNotBlank(accountPeriod), FirstMileCostAllocationEntity::getAccountPeriod, accountPeriod)
+                .update();
+        String msg = StrUtil.format("用户【{}】更新状态会计期间由【{}】改为【{}】，核算状态由【{}】改为【{}】", UserContext.getDefaultLoginUser().getUserName(),entity.getAccountPeriod(), accountPeriod, ConfirmStatusEnum.getName(entity.getStatus()), ConfirmStatusEnum.getName(status));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.COST_ALLOCATION.getCode(), entity.getId(), "更新状态");
+        return BatchResultDTO.success(entity.getId(), entity.getSourceCode(),"更新状态成功");
     }
 }

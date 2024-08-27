@@ -225,6 +225,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsBillEntity.setPlatformCode(soB2cEntity.getPlatformCode());
             }
         }
+        //订单是否已存在
 
     }
 

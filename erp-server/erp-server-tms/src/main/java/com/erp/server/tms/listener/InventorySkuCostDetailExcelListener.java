@@ -64,6 +64,12 @@ public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<I
             errorMsgList.addAll(msgList);
         }
         //判断是否存在明细
+        if (CollectionUtils.isNotEmpty(dataList)){
+            InventorySkuCostDetailExcelDTO addDTO1 = dataList.stream().filter(e -> Objects.equals(e.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
+            if (Objects.nonNull(addDTO1)){
+                errorMsgList.add(StrUtil.format("SKU【{}】已存在",addDTO1.getSkuNo()));
+            }
+        }
         if (CollectionUtils.isNotEmpty(detailList)){
             InventorySkuCostDetailDTO.AddDTO addDTO1 = detailList.stream().filter(e -> Objects.equals(e.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
             if (Objects.nonNull(addDTO1)){

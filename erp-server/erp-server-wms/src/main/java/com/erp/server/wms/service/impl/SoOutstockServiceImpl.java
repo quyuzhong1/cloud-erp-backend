@@ -1005,6 +1005,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     detailList.add(addDetailDTO);
                 }
             }
+            //非第三方仓和平台仓发货 则默认为自发货
+            if (StrUtil.isBlank(addDTO.getShipmentType())){
+                addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
+            }
             addDTO.setDetailList(detailList);
             logisticsBillFeign.addLogisticsBill(addDTO);
 

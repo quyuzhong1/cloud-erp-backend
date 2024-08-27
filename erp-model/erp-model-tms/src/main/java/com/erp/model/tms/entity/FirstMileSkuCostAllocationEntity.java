@@ -101,6 +101,11 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     @TableField("currency")
     private String currency;
     /**
+     * 币种符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+    /**
      * 账单来源：estimated=预估账单，actual=实际账单
      * ReconciliationBillTypeEnum
      *

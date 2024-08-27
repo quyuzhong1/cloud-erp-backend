@@ -93,6 +93,35 @@ public class FirstMileCostAllocationController extends BaseController {
         return success(pagingVO);
     }
     /**
+     * 批量更新状态
+     */
+    @PostMapping("/updateStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:firstMileCostAllocation:updateStatus",
+            serviceClass = FirstMileCostAllocationService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Valid FirstMileCostAllocationDTO.UpdateStatusDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByIds(ids);
+        for (String id : ids) {
+            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"费用分摊记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(firstMileCostAllocationService.updateStatus(entity,dto.getStatus(),dto.getAccountPeriod()));
+            }catch (Exception e){
+                log.error("费用分摊记录更新状态失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
      * 删除记录
      */
     @PostMapping("/delete")

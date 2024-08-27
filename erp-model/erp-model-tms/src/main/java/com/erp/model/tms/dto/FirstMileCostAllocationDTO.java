@@ -436,6 +436,26 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private List<String> ids;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStatusDTO extends PermissionsDTO {
+        /**
+         * 会计期间
+         */
+        private String accountPeriod;
+        /**
+         * 核算状态：waitConfirm=待确认，confirm=已确认
+         * 接口地址  http://172.16.100.11:3002/project/128/interface/api/25522  key = allocationStatus
+         */
+        private String status;
+
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+    }
 
     /**
      * 分页参数
@@ -463,6 +483,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          *
          */
         private String  id;
+        /**
+         * 明细id(sku费用分摊明细id)
+         */
+        private String  detailId;
 
         /**
          * 备注
@@ -697,6 +721,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 币种（默认CNY）
          */
         private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
 
         /**
          * 费用来源：estimated=预估账单，actual=实际账单
@@ -729,47 +757,47 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private String allocationTypeName;
 
         /**
-         * 头程总金额
+         * 头程总金额【可排序】
          */
         private BigDecimal amount;
 
         /**
-         * 头程分摊金额
+         * 头程分摊金额【可排序】
          */
         private BigDecimal allocatedAmount;
 
         /**
-         * 单个产品分摊金额
+         * 单个产品分摊金额【可排序】
          */
         private BigDecimal productAllocatedAmount;
 
         /**
-         * 期初在途费用
+         * 期初在途费用【可排序】
          */
         private BigDecimal initTransitCost;
 
         /**
-         * 期初暂估费用
+         * 期初暂估费用【可排序】
          */
         private BigDecimal initEstimatedCost;
 
         /**
-         * 冲期初在途费用
+         * 冲期初在途费用【可排序】
          */
         private BigDecimal midPeriodTransitCost;
 
         /**
-         * 本期分摊费用
+         * 本期分摊费用【可排序】
          */
         private BigDecimal currentPeriodAllocatedCost;
 
         /**
-         * 期末在途费用
+         * 期末在途费用【可排序】
          */
         private BigDecimal endPeriodTransitCost;
 
         /**
-         * 期末暂估费用
+         * 期末暂估费用【可排序】
          */
         private BigDecimal endPeriodEstimatedCost;
         /**
@@ -777,9 +805,28 @@ public class FirstMileCostAllocationDTO implements Serializable {
          */
         private String orgId;
         /**
-         * 分摊组织名称
+         * 分摊组织名称【可排序】
          */
         private String orgName;
+        /**
+         * 创建人名称【可排序】
+         */
+        private String  createUserName;
+
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新人名称【可排序】
+         */
+        private String  updateUserName;
+
+        /**
+         * 更新时间【可排序】
+         */
+        private LocalDateTime  updateTime;
     }
     @Data
     @NoArgsConstructor

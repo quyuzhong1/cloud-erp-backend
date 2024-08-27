@@ -27,6 +27,7 @@
        <result column="as_current_month_receive_qty" property="asCurrentMonthReceiveQty" />
        <result column="weight_unit" property="weightUnit" />
        <result column="currency" property="currency" />
+       <result column="currency_symbol" property="currencySymbol" />
        <result column="bill_source_type" property="billSourceType" />
         <result column="logistics_bill_detail_id" property="logisticsBillDetailId" />
         <result column="estimated_bill_id" property="estimatedBillId" />
@@ -46,6 +47,7 @@
         update_time,
         version,
         is_deleted,
+        currency_symbol,
         main_id, sku_id, sku_no, platform_sku_no, delivery_qty, allocated_weight, product_cost, product_total_cost, init_receive_qty, last_month_receive_qty, current_month_receive_qty, as_last_month_receive_qty, as_current_month_receive_qty,weight_unit, currency, bill_source_type
     </sql>
 

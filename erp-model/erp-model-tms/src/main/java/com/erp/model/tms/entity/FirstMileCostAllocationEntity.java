@@ -65,6 +65,7 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     private String accountPeriod;
     /**
     * 核算状态：waitConfirm=待确认，confirm=已确认
+     * 接口地址  http://172.16.100.11:3002/project/128/interface/api/25522  key = allocationStatus
     */
     @TableField("status")
     private String status;

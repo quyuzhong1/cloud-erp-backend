@@ -984,12 +984,13 @@ public class LogisticsBillDTO implements Serializable {
          * 运输状态
          * 来源 http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatus
          */
+        @NotNull(message = "运输状态不能为空")
         private String trackStatus;
 
         /**
          * 状态时间
          */
-        @NotNull(message = "状态时间不能为空")
+
         private LocalDateTime trackTime;
 
         /**

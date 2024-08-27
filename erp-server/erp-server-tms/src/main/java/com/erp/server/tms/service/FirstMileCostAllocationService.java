@@ -104,4 +104,13 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * 获取物流单对应的最新核算期间
      */
     List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> listLastedAllocationMonth(List<String> logisticsBillIds);
+
+    /**
+     * 更新状态
+     * @param entity
+     * @param status
+     * @param accountPeriod
+     * @return
+     */
+    BatchResultDTO updateStatus(FirstMileCostAllocationEntity entity, String status, String accountPeriod);
 }

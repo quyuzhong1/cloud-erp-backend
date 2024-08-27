@@ -1803,7 +1803,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if(CollectionUtils.isEmpty(result)){
             return new ArrayList<>();
         }
-        List<String> ids = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getOutstockId).collect(Collectors.toList());
+        List<String> outStockIds = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getOutstockId).collect(Collectors.toList());
+        //会存在已要货申请id下推装箱任务
+        List<String> sourceIds = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getSourceId).collect(Collectors.toList());
+        List<String> ids = Stream.concat(outStockIds.stream(), sourceIds.stream()).distinct().collect(Collectors.toList());
         //箱子明细信息
         List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
         Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
