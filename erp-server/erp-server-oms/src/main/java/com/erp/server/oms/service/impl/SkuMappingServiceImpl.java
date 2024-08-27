@@ -33,7 +33,6 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.oms.enums.CalculateSizeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -1255,31 +1254,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(platformSkuList)) {
             return Collections.emptyMap();
         }
-        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setPlatform(dictPlatform);
-        paramDTO.setShopIdList(Collections.singletonList(shopId));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)){
-            // 速卖通订单SKU为空的情况只根据PlatformSkuNo匹配
-            if (CollectionUtils.isNotEmpty(platformSkuList) && platformSkuList.stream().allMatch(StringUtils::isNotBlank)){
-                paramDTO.setPlatformSkuNoList(platformSkuList);
-            }
-            // 存在空SKU忽略PlatformSkuNo查询
-        } else {
-            // 其他平台正常通过平台SKU查询
-            paramDTO.setPlatformSkuNoList(platformSkuList);
-        }
-
-        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
-                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
-                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)){
-            paramDTO.setPlatformSpuNoList(platformSpuList);
-        }
-        paramDTO.setMatchResult(true);
-        paramDTO.setLastExpireDate(platformOrderCreateTime);
-        paramDTO.setIsExpire(isExpire);
+        // 构建请求参数
+        ListingInfoParamDTO paramDTO = constructDto(platformSkuList, platformSpuList, dictPlatform, Collections.singletonList(shopId), platformOrderCreateTime, isExpire);
         // 查询ListingInfo和skuMapping的关系
         List<ListingInfoWithSkuMappingDTO> listDto = this.findListDto(paramDTO);
         if (CollectionUtils.isEmpty(listDto)){
@@ -1288,6 +1264,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return listDto.stream()
                 .collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
     }
+
 
     /**
      * 检查或获取映射关系
@@ -1338,5 +1315,61 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return new ArrayList<>();
         }
         return baseMapper.listByWarehouseAndPlatformSku(warehouseId,platformSkuNoList);
+    }
+
+
+    @Override
+    public ListingInfoParamDTO constructDto(List<String> platformSkuList,
+                                            List<String> platformSpuList,
+                                            String dictPlatform,
+                                            List<String> shopIdList,
+                                            LocalDateTime platformOrderCreateTime,
+                                            Boolean isExpire
+    ) {
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(dictPlatform);
+        paramDTO.setShopIdList(shopIdList);
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+
+        // 亚马逊订单来源spu为空
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dictPlatform)){
+            // 过滤空spu
+            platformSpuList = platformSpuList.stream()
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
+        // 校验平台sku和平台spu必须其一不为空
+        if (CollectionUtils.isEmpty(platformSkuList) && CollectionUtils.isEmpty(platformSpuList)){
+            ServiceException.runError("参数异常:平台sku和平台spu都为空");
+        }
+
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+                && PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
+                && PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
+        ){
+            // 速卖通/Shopify/Tiktok订单SKU为空的情况只根据PlatformSkuNo匹配
+            if (CollectionUtils.isNotEmpty(platformSkuList) && platformSkuList.stream().allMatch(StringUtils::isNotBlank)){
+                paramDTO.setPlatformSkuNoList(platformSkuList);
+            }
+            // 存在空SKU忽略PlatformSkuNo查询
+        } else {
+            // 其他平台正常通过平台SKU查询
+            paramDTO.setPlatformSkuNoList(platformSkuList);
+        }
+
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
+        ){
+            paramDTO.setPlatformSpuNoList(platformSpuList);
+        }
+        paramDTO.setMatchResult(true);
+        paramDTO.setLastExpireDate(platformOrderCreateTime);
+        paramDTO.setIsExpire(isExpire);
+        return paramDTO;
     }
 }
