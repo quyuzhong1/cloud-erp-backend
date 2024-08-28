@@ -36,6 +36,8 @@ import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Resource;
+
 /**
  * 输出任务创建工厂，添加handler给handler链路执行
  * @author Administrator
