@@ -731,6 +731,15 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.checkData != null and !params.checkData.isEmpty()">
+                and (
+                <foreach collection="params.checkData" item="item" separator=" OR ">
+                    (tf.warehouse_id = #{item.warehouseId}
+                    and tf.org_id = #{item.orgId}
+                    and tf.sku_id = #{item.skuId})
+                </foreach>
+                )
+            </if>
         </where>
         group by tf.sku_id,tf.warehouse_id
         <if test="params.hideZeroInventory">
