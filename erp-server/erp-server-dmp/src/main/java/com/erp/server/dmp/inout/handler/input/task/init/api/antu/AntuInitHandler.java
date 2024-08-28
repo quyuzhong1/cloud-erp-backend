@@ -40,6 +40,7 @@ public class AntuInitHandler extends DmpInputInitHandler {
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+		List<DmpInputTaskInitDTO> resultList = new ArrayList<>();
 		String typeId = dmpCfgInputEntity.getTypeId();
 		DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
 		String apiType = dmpCfgApiEntity.getApiType();
@@ -53,37 +54,41 @@ public class AntuInitHandler extends DmpInputInitHandler {
 		if(CollUtil.isEmpty(overseasProviderEntityList)) {
 			throw new ServiceException("安兔授权信息不存在");
 		}
-		OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.get(0);
-		ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
-		while(true) {
-			antuGetProductReq.setPage(page);
-			String response = AntuUtils.callService(apiType, antuGetProductReq);
-			AntuResponse<List<?>> result = JSONObject.parseObject(response,new TypeReference<AntuResponse<List<Object>>>() {}.getType());
-			List<?> data = result.getData();
-			int size = data.size();
-			if(size == 0) {
-				break;
+		for (OverseasProviderEntity overseasProviderEntity : overseasProviderEntityList) {
+			ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
+			while(true) {
+				antuGetProductReq.setPage(page);
+				String response = AntuUtils.callService(apiType, antuGetProductReq);
+				AntuResponse<List<?>> result = JSONObject.parseObject(response,new TypeReference<AntuResponse<List<Object>>>() {}.getType());
+				List<?> data = result.getData();
+				int size = data.size();
+				if(size == 0) {
+					break;
+				}
+				allResult.addAll(data);
+				currTotal = currTotal + size;
+				Integer count = result.getCount();
+				if(count == null) {
+					count  = 0;
+				}
+				if(currTotal >= count) {
+					break;
+				}
+				page = page + 1;
 			}
-			allResult.addAll(data);
-			currTotal = currTotal + size;
-			Integer count = result.getCount();
-			if(count == null) {
-				count  = 0;
-			}
-			if(currTotal >= count) {
-				break;
-			}
-			page = page + 1;
+			String id = overseasProviderEntity.getId();
+			DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+			JSONArray parseArray = JSON.parseArray(JSONObject.toJSONString(allResult));
+			parseArray.forEach(p -> {
+				JSONObject j = (JSONObject)p;
+				j.put("authId", id);
+			});
+			dmpInputTaskInitDTO.setMsg(parseArray.toJSONString());
+
+			resultList.add(dmpInputTaskInitDTO);
 		}
-		String id = overseasProviderEntity.getId();
-		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		JSONArray parseArray = JSON.parseArray(JSONObject.toJSONString(allResult));
-		parseArray.forEach(p -> {
-			JSONObject j = (JSONObject)p;
-			j.put("authId", id);
-		});
-		dmpInputTaskInitDTO.setMsg(parseArray.toJSONString());
-		return Collections.singletonList(dmpInputTaskInitDTO);
+
+		return resultList;
 	}
 
 
