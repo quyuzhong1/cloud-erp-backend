@@ -44,11 +44,13 @@ public class FirstMileEstimatedBillDTO implements Serializable {
 
         /**
          * 暂估账单状态【可排序】
+         * /api/tms/common/enumDropDown?type=ConfirmStatus
          */
         private String status;
 
         /**
          * 暂估账单状态（名称）
+         * ConfirmStatusEnum
          */
         private String statusName;
 

@@ -12,7 +12,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ConfirmStatusEnum {
 
-    WAIT_CONFIRM("waitConfirm", "待确认"),
+    TO_BE_CONFIRM("toBeConfirm", "待确认"),
     CONFIRMED("confirmed", "已确认")
     ;
 
