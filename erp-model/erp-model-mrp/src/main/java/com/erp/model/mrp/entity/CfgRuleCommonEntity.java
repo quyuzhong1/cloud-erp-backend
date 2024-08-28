@@ -98,6 +98,12 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
     private Boolean isRequired;
 
     /**
+     * 是否变更
+     */
+    @TableField("is_change")
+    private Boolean isChange;
+
+    /**
      * 子级信息
      */
     @TableField(exist = false)

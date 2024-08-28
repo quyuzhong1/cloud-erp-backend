@@ -97,6 +97,11 @@ public class CfgRuleCommonDTO implements Serializable {
         private Boolean isRequired;
 
         /**
+         * 是否变更
+         */
+        private Boolean isChange;
+
+        /**
          * 子级信息
          */
         List<ViewDTO> childrenList;
@@ -204,6 +209,12 @@ public class CfgRuleCommonDTO implements Serializable {
          */
         @NotNull(message = "是否必填不能为空")
         private Boolean isRequired;
+
+        /**
+         * 是否变更
+         */
+        @NotNull(message = "是否变更不能为空")
+        private Boolean isChange;
 
         /**
          * 子级信息
