@@ -101,12 +101,12 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         if (addResult) {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
-//            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-//                @Override
-//                public void afterCommit() {
-//                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-//                }
-//            });
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+                }
+            });
         }
         return addResult;
     }
@@ -128,12 +128,12 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         if (updateResult) {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
-//            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-//                @Override
-//                public void afterCommit() {
-//                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-//                }
-//            });
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+                }
+            });
         }
         return updateResult;
     }
@@ -456,12 +456,12 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         //金蝶推送
         DmpPushTaskEntity pushTaskEntity = syncKingdeeCountryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
         //推送金蝶
-//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-//            @Override
-//            public void afterCommit() {
-//                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-//            }
-//        });
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+            }
+        });
         thirdpartyRefBusinessService.removeByBusinessId(id);
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
 
