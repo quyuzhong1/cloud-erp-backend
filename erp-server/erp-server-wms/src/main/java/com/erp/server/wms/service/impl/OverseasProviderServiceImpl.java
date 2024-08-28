@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OmsPlatformEnum;
@@ -200,6 +201,10 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         if(Objects.nonNull(existShortName)){
             throw new ServiceException("已存在相同仓库简称");
         }
+        OverseasProviderEntity existAccount = this.lambdaQuery().eq(OverseasProviderEntity::getPlatformAccount,dto.getPlatformAccount()).eq(OverseasProviderEntity::getCode,dto.getCode()).one();
+        if(Objects.nonNull(existAccount)){
+            throw new ServiceException("已存在相同店铺");
+        }
         OverseasProviderEntity add = BeanUtil.copyProperties(dto,OverseasProviderEntity.class);
         this.save(add);
         String msg = StrUtil.format("用户【{}】新增三方仓信息 ", UserContext.getDefaultLoginUser().getUserName());
@@ -242,6 +247,11 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         this.removeById(id);
         String msg = StrUtil.format("用户【{}】删除海外仓信息 ", UserContext.getDefaultLoginUser().getUserName());
         operateLogService.addModuleOperateLog(msg,  ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), entity.getId(), "删除");
+    }
+
+    @Override
+    public List<String> getShortName(String platformCode) {
+        return this.lambdaQuery().eq(OverseasProviderEntity::getCode,platformCode).eq(OverseasProviderEntity::getAuthStatus,AuthStatusEnum.ALREADY.getCode()).list().stream().map(OverseasProviderEntity::getShortName).collect(Collectors.toList());
     }
 
     @Override

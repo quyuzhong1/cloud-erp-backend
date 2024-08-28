@@ -407,6 +407,10 @@ public class OverseasProviderDTO implements Serializable {
         private String code;
 
         /**
+         * 第三方账号
+         */
+        private String platformAccount;
+        /**
          * 第三方仓库编码
          */
         private String platformWarehouseCode;

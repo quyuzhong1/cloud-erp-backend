@@ -61,6 +61,7 @@
     <select id="getOverseasWarehouse" resultType="com.erp.model.wms.dto.OverseasProviderDTO$FeignDTO">
         SELECT
         opw.id as overseasProviderWarehouseId,
+        op.platform_account as platformAccount,
         opw.platform_warehouse_code,
         opw.platform_warehouse_name,
         opw.warehouse_id,
@@ -77,6 +78,9 @@
         </if>
           <if test="params.platformWarehouseCode != null and params.platformWarehouseCode != ''">
             AND opw.platform_warehouse_code = #{params.platformWarehouseCode}
+        </if>
+        <if test="params.platformAccount != null and params.platformAccount != ''">
+            AND op.platform_account = #{params.platformAccount}
         </if>
         and op.code=#{params.code}
     </select>

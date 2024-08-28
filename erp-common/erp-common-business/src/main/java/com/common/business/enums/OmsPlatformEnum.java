@@ -34,4 +34,14 @@ public enum OmsPlatformEnum {
         }
         return null;
     }
+
+    public static boolean isThirdWarehouse(String code) {
+        OmsPlatformEnum[] values = values();
+        for (OmsPlatformEnum value : values) {
+            if (value.code.equals(code)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

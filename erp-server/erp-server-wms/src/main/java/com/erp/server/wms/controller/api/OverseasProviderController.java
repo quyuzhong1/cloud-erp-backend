@@ -204,4 +204,13 @@ public class OverseasProviderController extends BaseController {
         overseasProviderService.delete(dto.getId());
         return success();
     }
+
+    /**
+     * 获取仓库简称
+     */
+    @GetMapping("/getShortName")
+    public ApiResult<List<String>> getShortName(@RequestParam(value = "platformCode") String platformCode) {
+        return success(overseasProviderService.getShortName(platformCode));
+    }
+
 }
