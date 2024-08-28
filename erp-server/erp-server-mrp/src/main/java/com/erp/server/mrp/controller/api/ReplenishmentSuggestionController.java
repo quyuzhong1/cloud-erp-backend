@@ -1,10 +1,14 @@
 package com.erp.server.mrp.controller.api;
 
 
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RestController;
+import com.common.business.dto.base.PagingDTO;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * <p>
@@ -15,7 +19,13 @@ import com.common.core.controller.BaseController;
  * @since 2024-08-28
  */
 @RestController
-@RequestMapping("/replenishment-suggestion-entity")
+@RequestMapping("/replenishment")
 public class ReplenishmentSuggestionController extends BaseController {
+
+
+
+    public ApiResult paging(@RequestBody @Validated PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
+        return null;
+    }
 
 }
