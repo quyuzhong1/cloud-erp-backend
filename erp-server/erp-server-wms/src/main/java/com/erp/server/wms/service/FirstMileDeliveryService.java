@@ -293,4 +293,8 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     FirstMileDeliveryEntity getByCode(String key);
+
+    FirstMileDeliveryEntity getBySourceCode(String key);
+
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordByFbaCode(String fbaShipmentCode);
 }

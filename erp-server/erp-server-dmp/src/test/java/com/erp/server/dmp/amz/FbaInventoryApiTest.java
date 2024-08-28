@@ -13,24 +13,32 @@
 
 package com.erp.server.dmp.amz;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.FbaInventoryApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.model.fbainventory.GetInventorySummariesResponse;
+import com.erp.sdk.oms.amz.spapi.model.fbainventory.GetInventorySummariesResult;
+import com.erp.sdk.oms.amz.spapi.model.fbainventory.InventorySummary;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.service.CfgAppClientService;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
-import com.erp.server.dmp.ErpServerDmpApplication;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.junit.Test;
 
+import javax.annotation.Resource;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -41,7 +49,8 @@ import java.util.List;
 @Profile("dev")
 public class FbaInventoryApiTest {
 
-    private final FbaInventoryApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
     public FbaInventoryApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
 //        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
@@ -75,18 +84,26 @@ public class FbaInventoryApiTest {
      */
     @Test
     public void getInventorySummariesTest() throws ApiException {
-        String granularityType = "Marketplace";
-        String granularityId = "A1AM78C64UM0Y8";
-        List<String> marketplaceIds = Arrays.asList( "A1AM78C64UM0Y8");
-        Boolean details = null;
-        OffsetDateTime startDateTime = null;
-        List<String> sellerSkus = null;
-        String nextToken = null;
-        GetInventorySummariesResponse response = api.getInventorySummaries(granularityType, granularityId, marketplaceIds, details, startDateTime, sellerSkus, nextToken);
+        String shopId = "1736957812266766338";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 
+        String granularityType = "Marketplace";
+        String granularityId = "A39IBJ37TRP1C6";
+//        OffsetDateTime startDateTime = null;
+        OffsetDateTime startDateTime = OffsetDateTime.of(2024,1,1,0,0,0,0, ZoneOffset.UTC);
+//        String granularityType = null;
+//        String granularityId = null;
+//        AmazonMarketplaceEnum.
+//        List<String> marketplaceIds = new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet());
+        List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
+        Boolean details = false;
+        List<String> sellerSkus = null;
+        FbaInventoryApi api = AmazonSpApiInitUtils.create(FbaInventoryApi.class, shopInfoDTO, false);
+        List<InventorySummary> allList = api.getAllInventorySummaries(granularityType, granularityId, marketplaceIds, details, startDateTime, sellerSkus);
         // TODO: test validations
         System.out.println("库存信息");
-        System.out.println(JSONUtil.toJsonStr(response));
+        System.out.println(JSONUtil.toJsonStr(allList));
     }
-    
+
 }

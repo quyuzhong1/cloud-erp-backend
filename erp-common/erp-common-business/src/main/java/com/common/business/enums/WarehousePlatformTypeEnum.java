@@ -5,7 +5,9 @@ package com.common.business.enums;
  */
 public enum WarehousePlatformTypeEnum {
 
-    OVERSEAS_WAREHOUSE("overseasWarehouse","海外仓");
+    OVERSEAS_WAREHOUSE("overseasWarehouse","海外仓"),
+    FBA_INVENTORY("fbaInventory","FBA仓库")
+    ;
     public final String code;
     public final String name;
 
