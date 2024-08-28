@@ -1,8 +1,19 @@
 package com.erp.server.oms.kingdee.impl;
 
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -10,12 +21,15 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.InvoiceDTO;
@@ -37,16 +51,20 @@ import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerContactService;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.CustomerAddressService;
+import com.erp.server.oms.service.CustomerContactService;
+import com.erp.server.oms.service.CustomerInfoService;
+import com.erp.server.oms.service.CustomerInvoiceService;
+import com.erp.server.oms.service.DictBasicService;
+import com.erp.server.oms.service.KingdeeReceiptConditionService;
+import com.erp.server.oms.service.OmsPushMsgService;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Resource;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 同步客户到金蝶
@@ -259,18 +277,26 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (CustomerInfoEntity entity, String operate, Map<String, Object> resultMap) {
-        //添加推送任务
-//        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-//        taskFeignDTO.setSourceId(entity.getId());
-//        taskFeignDTO.setSourceCode(entity.getCode());
-//        taskFeignDTO.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
-//        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-//        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName());
-//        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-//        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-//        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-//        taskFeignDTO.setSyncOperate(operate);
-//        return dmpMqFeign.saveTask(taskFeignDTO);
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, settingEnum.getKey())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+            taskFeignDTO.setSourceId(entity.getId());
+            taskFeignDTO.setSourceCode(entity.getCode());
+            taskFeignDTO.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
+            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName());
+            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            taskFeignDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(taskFeignDTO);
+        }
     	
     	OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         omsPushMsgEntity.setSourceId(entity.getId());
