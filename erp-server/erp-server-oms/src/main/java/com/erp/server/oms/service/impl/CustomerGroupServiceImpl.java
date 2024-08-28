@@ -97,12 +97,12 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
             pushTaskList.add(pushTaskEntity);
         });
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(pushTaskList);
-            }
-        });
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(pushTaskList);
+//            }
+//        });
         return flag;
 
     }

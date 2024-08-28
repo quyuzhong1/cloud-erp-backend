@@ -1,6 +1,8 @@
 package com.erp.server.sys.rocketmq.sync.kingdee.impl;
 
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -11,13 +13,16 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.SysPushMsgEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeCountryService;
 import com.erp.server.sys.service.DictGlobalAreaService;
+import com.erp.server.sys.service.SysPushMsgService;
 import com.erp.server.sys.service.ThirdpartyRefBusinessService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +51,9 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    
+    @Resource
+    private SysPushMsgService sysPushMsgService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -100,16 +108,28 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
 
     private DmpPushTaskEntity saveTask(DictCountryEntity entity, String operate, Map<String, Object> resultMap) {
         //添加推送任务
-        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-        taskFeignDTO.setSourceId(entity.getId());
-        taskFeignDTO.setSourceCode(entity.getRegionCode());
-        taskFeignDTO.setSourceType(SourceTypeEnum.COUNTRY.getCode());
-        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_ASSISTANT_DATA_TAG.getName());
-        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        taskFeignDTO.setSyncOperate(operate);
-       return dmpMqFeign.saveTask(taskFeignDTO);
+//        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+//        taskFeignDTO.setSourceId(entity.getId());
+//        taskFeignDTO.setSourceCode(entity.getRegionCode());
+//        taskFeignDTO.setSourceType(SourceTypeEnum.COUNTRY.getCode());
+//        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+//        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_ASSISTANT_DATA_TAG.getName());
+//        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+//        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+//        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+//        taskFeignDTO.setSyncOperate(operate);
+//       return dmpMqFeign.saveTask(taskFeignDTO);
+    	
+    	SysPushMsgEntity sysPushMsgEntity = new SysPushMsgEntity();
+    	sysPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+    	sysPushMsgEntity.setSourceType(SourceTypeEnum.COUNTRY.getCode());
+    	sysPushMsgEntity.setSourceId(entity.getId());
+    	sysPushMsgEntity.setSourceCode(entity.getRegionCode());
+    	sysPushMsgEntity.setSyncOperate(operate);
+    	sysPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+    	sysPushMsgService.save(sysPushMsgEntity);
+        
+        return null;
     }
 }

@@ -1,6 +1,8 @@
 package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
@@ -12,12 +14,15 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.PlmPushMsgEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
+import com.erp.server.plm.service.PlmPushMsgService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -49,6 +54,9 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    
+    @Resource
+    private PlmPushMsgService plmPushMsgService;
 
     /**
      * 组装数据发送到金蝶
@@ -139,17 +147,29 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
      * @param resultMap
      */
     private DmpPushTaskEntity  saveTask (String operate,Map<String, Object> resultMap) {
-        //添加推送任务
-        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-        taskFeignDTO.setSourceId((String)resultMap.get("id"));
-        taskFeignDTO.setSourceCode((String)resultMap.get("version"));
-        taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_BOM_INFO.getCode());
-        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_BOM_INFO_TAG.getName());
-        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        taskFeignDTO.setSyncOperate(operate);
-        return dmpMqFeign.saveTask(taskFeignDTO);
+//        //添加推送任务
+//        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+//        taskFeignDTO.setSourceId((String)resultMap.get("id"));
+//        taskFeignDTO.setSourceCode((String)resultMap.get("version"));
+//        taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_BOM_INFO.getCode());
+//        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+//        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_BOM_INFO_TAG.getName());
+//        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+//        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+//        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+//        taskFeignDTO.setSyncOperate(operate);
+//        return dmpMqFeign.saveTask(taskFeignDTO);
+    	
+    	PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.PRODUCT_BOM_INFO.getCode());
+        plmPushMsgEntity.setSourceId((String)resultMap.get("id"));
+        plmPushMsgEntity.setSourceCode((String)resultMap.get("version"));
+        plmPushMsgEntity.setSyncOperate(operate);
+        plmPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+        plmPushMsgService.save(plmPushMsgEntity);
+        
+        return null;
     }
 }
