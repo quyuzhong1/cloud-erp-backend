@@ -50,7 +50,7 @@ public interface FmLogisticsConverter {
 //            @Mapping(target = "orderTime", source = "addDTO.logisticsOrderTime"),
             @Mapping(target = "deliveryTime", source = "deliveryDTO.approveTime"),
             @Mapping(target = "transportNo", source = "addDTO.transportNo"),
-            @Mapping(target = "toCountry", source = "deliveryDTO.toCountry"),
+            @Mapping(target = "toCountry", source = "deliveryDTO.toCountryName"),
             @Mapping(target = "orderType", expression = "java(com.common.business.enums.OrderTypeEnum.FIRST_MILE.getCode())"),
             @Mapping(target = "counterNo", source = "addDTO.counterNo"),
             @Mapping(target = "carrierId", source = "addDTO.carrierId"),
