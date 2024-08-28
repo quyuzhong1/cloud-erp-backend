@@ -504,7 +504,7 @@
                 and lbc.reconciliation_status = #{reconciliationStatus}
             </if>
             <if test="reconciliationStatus==null">
-                and lbc.reconciliation_status  in ('toBeConfirm','confirmed')
+                and lbc.reconciliation_status  in ('toBeGenerated','confirmed')
             </if>
             <if test="trackStatus!=null and trackStatus!=''">
                 and lbd.track_status = #{trackStatus}
