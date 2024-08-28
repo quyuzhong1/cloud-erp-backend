@@ -359,7 +359,8 @@ public class ExportWmsFeignController {
             menuCode = "wms:packingTask:exportPacking",
             tableAlias = "pt"
     )
-    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
+
+    @WebAdvanceQuery(handler = PackingTaskQueryHandler.class)
     public PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(@RequestBody PagingDTO<PackingTaskDTO.PagingParamDTO> dto) {
         return packingTaskService.exportPackingTask(dto);
     }

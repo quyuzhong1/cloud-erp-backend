@@ -208,7 +208,7 @@ public class DeliveryOrderFeginController extends BaseController {
         return detailService.cancelReceive(detailIds);
     }
 
-    @PostMapping("/feign/deliveryOrder/exportSupplierDeliveryOrder")
+    @PostMapping("/exportSupplierDeliveryOrder")
     public PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(@RequestBody PagingDTO<DeliveryOrderDTO.ParamDTO> dto){
         return deliveryOrderService.exportSupplierDeliveryOrder(dto);
     }

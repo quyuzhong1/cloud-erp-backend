@@ -43,7 +43,6 @@ public class ExportWmsQcBillHandler extends AbstractPageFileEventHandler<QcBillE
 
     @Override
     public String getExcelPath() {
-        //todo
-        return "excel/wms/inventory.xlsx";
+        return "excel/wms/qcBillExport.xlsx";
     }
 }
