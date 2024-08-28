@@ -124,4 +124,9 @@ public class RocketMqNewConsumerGroup {
      */
     public static final String DMP_LX_SHOP_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_shop_to_dmp_group";
 
+    /**
+     * 新中台领星FBA签收
+     */
+    public static final String DMP_LX_FBA_SHIPMENT_RECEIVE_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_fba_shipment_receive_to_dmp_group";
+
 }

@@ -119,8 +119,13 @@ public class RocketMqNewTag {
 
 
     /**
-     * 新中台旺店通仓库
+     * 新中台领星店铺
      */
     public static final String DMP_LX_SHOP_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_shop_to_dmp_tag";
+
+    /**
+     * 新中台领星FBA签收
+     */
+    public static final String DMP_LX_FBA_SHIPMENT_RECEIVE_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_fba_shipment_receive_to_dmp_tag";
 
 }

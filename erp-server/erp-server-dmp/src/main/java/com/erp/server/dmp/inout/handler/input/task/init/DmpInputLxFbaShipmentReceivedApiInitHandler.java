@@ -41,7 +41,7 @@ public class DmpInputLxFbaShipmentReceivedApiInitHandler extends DmpInputInitHan
         if (StringUtils.isBlank(shopId)){
             ServiceException.runError("拉取领星货件签收明细异常:shopId为空");
         }
-        LocalDate requestTime = dmpInputTaskEntity.getStartTime().toLocalDate();
+        LocalDate requestTime = dmpCfgInputDetailEntity.getLastTime().toLocalDate();
         // 查询映射关系
         ShopInfoMappingEntity mappingEntity = shopInfoMappingService.getByShopIdAndType(shopId, PlatformEnum.LINGXING.getName());
         if (null == mappingEntity){
@@ -53,7 +53,9 @@ public class DmpInputLxFbaShipmentReceivedApiInitHandler extends DmpInputInitHan
             log.info("拉取领星货件签收明细数据列表数据为空,sid={}, date={}", sid, requestTime);
             return Collections.emptyList();
         }
-
+        dtoList.forEach(e->{
+            e.setShopId(shopId);
+        });
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(dtoList)));
     }
 
