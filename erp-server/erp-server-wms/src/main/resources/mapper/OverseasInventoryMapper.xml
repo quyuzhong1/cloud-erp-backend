@@ -3,33 +3,33 @@
 <mapper namespace="com.erp.server.wms.mapper.OverseasInventoryMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.OverseasInventoryEntity">
-       <result column="id" property="id" />
-       <result column="create_time" property="createTime" />
-       <result column="update_time" property="updateTime" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="warehouse_code" property="warehouseCode" />
-       <result column="dict_platform" property="dictPlatform" />
-       <result column="name" property="name" />
-       <result column="platform_sku" property="platformSku" />
-       <result column="platform_sku_name" property="platformSkuName" />
-       <result column="product_name" property="productName" />
-       <result column="sku_no" property="skuNo" />
-       <result column="sku_id" property="skuId" />
-       <result column="deliver_onway_qty" property="deliverOnwayQty" />
-       <result column="pending_qty" property="pendingQty" />
-       <result column="sellable_qty" property="sellableQty" />
-       <result column="unsellable_qty" property="unsellableQty" />
-       <result column="reserved_qty" property="reservedQty" />
-       <result column="onway_qty" property="onwayQty" />
-       <result column="lack_qty" property="lackQty" />
-       <result column="frozen_qty" property="frozenQty" />
-       <result column="shipped_qty" property="shippedQty" />
-       <result column="download_time" property="downloadTime" />
+        <result column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="warehouse_code" property="warehouseCode"/>
+        <result column="dict_platform" property="dictPlatform"/>
+        <result column="name" property="name"/>
+        <result column="platform_sku" property="platformSku"/>
+        <result column="platform_sku_name" property="platformSkuName"/>
+        <result column="product_name" property="productName"/>
+        <result column="sku_no" property="skuNo"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="deliver_onway_qty" property="deliverOnwayQty"/>
+        <result column="pending_qty" property="pendingQty"/>
+        <result column="sellable_qty" property="sellableQty"/>
+        <result column="unsellable_qty" property="unsellableQty"/>
+        <result column="reserved_qty" property="reservedQty"/>
+        <result column="onway_qty" property="onwayQty"/>
+        <result column="lack_qty" property="lackQty"/>
+        <result column="frozen_qty" property="frozenQty"/>
+        <result column="shipped_qty" property="shippedQty"/>
+        <result column="download_time" property="downloadTime"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -63,13 +63,15 @@
 
         <if test="params.platformWarehouseCodeList!=null and params.platformWarehouseCodeList.size>0">
             AND oi.warehouse_code IN
-            <foreach collection="params.platformWarehouseCodeList" item="platformWarehouseCode" open="(" separator="," close=")">
+            <foreach collection="params.platformWarehouseCodeList" item="platformWarehouseCode" open="(" separator=","
+                     close=")">
                 #{platformWarehouseCode,jdbcType=VARCHAR}
             </foreach>
         </if>
 
         <if test="params.updateTimeList != null and params.updateTimeList.size > 0">
-            and oi.download_time >= #{params.updateTimeList[0]} and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.download_time
+            and oi.download_time >= #{params.updateTimeList[0]} and (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL
+            '1 DAY' ) > oi.download_time
         </if>
         <if test="params.name !=null and params.name!=''">
             AND oi.name ILIKE concat('%', #{params.name}::text ,'%')
@@ -154,8 +156,36 @@
 
     <select id="listByParams" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
         SELECT
-        oi.*
+        oi.id,
+        oi.create_time,
+        oi.update_time as updateTime,
+        oi.create_user_name,
+        oi.create_user_id,
+        oi.update_user_name,
+        oi.update_user_id,
+        oi.version,
+        oi.is_deleted,
+        oi.warehouse_code,
+        oi.dict_platform,
+        oi.platform_sku,
+        oi.platform_sku_name,
+        oi.product_name,
+        oi.sku_no,
+        oi.sku_id,
+        oi.deliver_onway_qty as deliverOnwayQty,
+        oi.pending_qty as pendingQty,
+        oi.sellable_qty as sellableQty,
+        oi.unsellable_qty as unsellableQty,
+        oi.reserved_qty as reservedQty,
+        oi.onway_qty as onwayQty,
+        oi.lack_qty as lackQty,
+        oi.frozen_qty as frozenQty,
+        oi.shipped_qty as shippedQty,
+        oi.download_time as downloadTime,
+        opw.warehouse_name as name
         FROM overseas_inventory as oi
+        LEFT JOIN overseas_provider_warehouse as opw
+        on opw.platform_warehouse_code = oi.warehouse_code
         <where>
             <if test="params.ids!=null and params.ids.size>0 ">
                 AND oi.id IN
@@ -163,9 +193,8 @@
                     #{id}
                 </foreach>
             </if>
-            <if test="params.ids == null">
-                <include refid="conditionSql"/>
-            </if>
+            <include refid="page_where_sql"/>
+            <include refid="conditionSql"/>
 
         </where>
     </select>
