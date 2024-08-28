@@ -637,10 +637,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
         for (OtherInstockDTO.ListDTO obj : records) {
             //产品名称
-            String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
-            if (StringUtils.isBlank(productName)) {
-                throw new ServiceException(ApiError.ERROR_95084);
-            }
+            String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             obj.setProductName(productName);
 
             //库存方向名称
