@@ -1,6 +1,5 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -10,10 +9,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
-import org.apache.xpath.operations.Bool;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -329,5 +326,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return
      */
     PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
-
+    /**
+     * 区域远程搜索
+     * @author will
+     * @date 2024/8/28 17:15
+     * @param dto
+     * @return PagingVO<AreaDTO>
+     */
+    PagingVO<ShopDTO.AreaDTO> pagingSelectArea(PagingDTO<ShopDTO.AreaParamDTO> dto);
 }

@@ -387,12 +387,21 @@
             <if test="params.warehouseManageType != null and params.warehouseManageType != ''">
                 and wh.warehouse_manage_type = #{params.warehouseManageType}
             </if>
-        <if test="params.ids != null and params.ids.size > 0">
-            and wh.id in
-            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
-                (#{item})
-            </foreach>
-        </if>
+            <if test="params.geographyLocationList != null and params.geographyLocationList.size > 0">
+                and wh.geography_location in
+                <foreach collection="params.geographyLocationList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.type != null and params.type != ''">
+                and wh.type_id in (select id from dict_basic where is_deleted = false and type = 'warehouseType' and value = #{type})
+            </if>
+            <if test="params.ids != null and params.ids.size > 0">
+                and wh.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    (#{item})
+                </foreach>
+            </if>
             <if test="params.orgIds != null and params.orgIds.size > 0">
                 and org_id in
                 <foreach collection="params.orgIds" item="orgId" open="(" close=")" separator=",">

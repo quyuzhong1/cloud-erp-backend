@@ -30,6 +30,10 @@ public class DropDownListController extends BaseController {
 
     /**
      * 查询字典下拉
+     * amazonPlatform 亚马逊平台
+     * overseasPlatform 海外平台
+     * internalPlatform 国内平台
+     * b2bPlatform B2B平台
      * @return
      */
     @GetMapping("/dict/list")
