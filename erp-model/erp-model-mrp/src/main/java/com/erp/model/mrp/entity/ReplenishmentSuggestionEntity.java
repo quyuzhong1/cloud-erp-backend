@@ -1,0 +1,120 @@
+package com.erp.model.mrp.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+/**
+ * <p>
+ * 补货建议主表
+ * </p>
+ *
+ * @author liaohui
+ * @since 2024-08-28
+ */
+@Getter
+@Setter
+@Accessors(chain = true)
+@TableName("replenishment_suggestion")
+public class ReplenishmentSuggestionEntity extends BaseEntity<ReplenishmentSuggestionEntity> {
+
+    /**
+     * 平台类型
+     */
+    @TableField("platform_type")
+    private String platformType;
+
+    /**
+     * 关注
+     */
+    @TableField("favorite")
+    private Boolean favorite;
+
+    /**
+     * sku id
+     */
+    @TableField("sku_id")
+    private String skuId;
+
+    /**
+     * sku
+     */
+    @TableField("sku_no")
+    private String skuNo;
+
+    /**
+     * 国家
+     */
+    @TableField("country")
+    private String country;
+
+    /**
+     * 店铺
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
+     * 平台
+     */
+    @TableField("platform")
+    private String platform;
+
+    /**
+     * 品牌
+     */
+    @TableField("brand_id")
+    private String brandId;
+
+    /**
+     * 分类
+     */
+    @TableField("category_id")
+    private String categoryId;
+
+    /**
+     * 是否补货
+     */
+    @TableField("restock")
+    private String restock;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+
+    public static final String PLATFORM_TYPE = "platform_type";
+
+    public static final String FAVORITE = "favorite";
+
+    public static final String SKU_ID = "sku_id";
+
+    public static final String SKU_NO = "sku_no";
+
+    public static final String COUNTRY = "country";
+
+    public static final String SHOP_ID = "shop_id";
+
+    public static final String PLATFORM = "platform";
+
+    public static final String BRAND_ID = "brand_id";
+
+    public static final String CATEGORY_ID = "category_id";
+
+    public static final String RESTOCK = "restock";
+
+    public static final String REMARK = "remark";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}
