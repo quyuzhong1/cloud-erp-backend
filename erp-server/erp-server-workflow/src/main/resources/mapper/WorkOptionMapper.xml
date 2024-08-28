@@ -111,6 +111,7 @@
         WHERE pm.is_deleted = FALSE
         <if test="params.status == 'waitHandle'">
             AND ptm.task_status = 'approveIng'
+            and pm.approve_status = 'approveIng'
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'alreadyHandle'">
