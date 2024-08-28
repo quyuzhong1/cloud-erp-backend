@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -35,19 +35,19 @@ public class RptOutOfStockEntity extends BaseEntity<RptOutOfStockEntity> {
      * 日期
      */
     @TableField("date")
-    private Date date;
+    private LocalDate date;
 
     /**
      * 断货开始日期
      */
     @TableField("start_date")
-    private Date startDate;
+    private LocalDate startDate;
 
     /**
      * 断货结束日期
      */
     @TableField("end_date")
-    private Date endDate;
+    private LocalDate endDate;
 
     /**
      * 销量

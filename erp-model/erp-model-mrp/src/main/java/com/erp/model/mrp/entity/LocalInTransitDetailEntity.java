@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -40,7 +40,7 @@ public class LocalInTransitDetailEntity extends BaseEntity<LocalInTransitDetailE
      * 预计到货日期
      */
     @TableField("plan_arrival_date")
-    private Date planArrivalDate;
+    private LocalDate planArrivalDate;
 
     /**
      * 来源id

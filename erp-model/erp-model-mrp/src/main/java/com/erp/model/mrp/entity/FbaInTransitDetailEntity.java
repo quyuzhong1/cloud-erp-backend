@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -58,7 +58,7 @@ public class FbaInTransitDetailEntity extends BaseEntity<FbaInTransitDetailEntit
      * 发货日期
      */
     @TableField("delivery_date")
-    private Date deliveryDate;
+    private LocalDate deliveryDate;
 
     /**
      * 申报数量
@@ -88,7 +88,7 @@ public class FbaInTransitDetailEntity extends BaseEntity<FbaInTransitDetailEntit
      * 预计到货日期
      */
     @TableField("plan_arrival_date")
-    private Date planArrivalDate;
+    private LocalDate planArrivalDate;
 
     /**
      * 计算版本  所有子表加   根据单号生成规则

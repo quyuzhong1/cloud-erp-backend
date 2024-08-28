@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -34,7 +34,7 @@ public class SalesInfoEntity extends BaseEntity<SalesInfoEntity> {
      * 日期
      */
     @TableField("date")
-    private Date date;
+    private LocalDate date;
 
     /**
      * 销量

@@ -148,6 +148,21 @@ public class ReplenishmentSuggestionDetailEntity extends BaseEntity<Replenishmen
      */
     @TableField("purchase_cycle_days")
     private Integer purchaseCycleDays;
+    /**
+     * 最短发货时效（天）
+     */
+    @TableField("delivery_min_days")
+    private Integer deliveryMinDays;
+    /**
+     * 默认发货时效（天）
+     */
+    @TableField("delivery_default_days")
+    private Integer deliveryDefaultDays;
+    /**
+     * 最长发货时效（天）
+     */
+    @TableField("delivery_max_days")
+    private Integer deliveryMaxDays;
 
     /**
      * 安全天数（天）

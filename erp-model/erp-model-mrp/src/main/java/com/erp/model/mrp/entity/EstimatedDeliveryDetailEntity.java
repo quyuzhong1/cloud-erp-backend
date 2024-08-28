@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -46,7 +46,7 @@ public class EstimatedDeliveryDetailEntity extends BaseEntity<EstimatedDeliveryD
      * 预计到货日期
      */
     @TableField("plan_arrival_date")
-    private Date planArrivalDate;
+    private LocalDate planArrivalDate;
 
     /**
      * 业务类型 FBA/海外仓
