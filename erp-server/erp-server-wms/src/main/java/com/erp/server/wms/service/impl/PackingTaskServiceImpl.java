@@ -381,14 +381,23 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 }
             }
             wmsCartonSpecService.checkProductPropertyIds(packingTask.getSourceType(), skuIds);
+            //校验发货单是否存在对应sku
+            List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(addDTO.getTaskId()));
+            if (CollectionUtils.isEmpty(taskDetailEntityList)){
+                throw new ServiceException("装箱任务中SKU为空，不能装箱其他SKU");
+            }
+            List<String> deliverySkuIds = taskDetailEntityList.stream().map(PackingTaskDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+            List<WmsCartonDetailDTO.AddDTO> otherSku = addDTO.getDetailList().stream().filter(e -> Objects.nonNull(e.getSkuId()) && !deliverySkuIds.contains(e.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(otherSku)){
+                List<String> skuNoList = otherSku.stream().map(WmsCartonDetailDTO.AddDTO::getSkuNo).distinct().collect(Collectors.toList());
+                throw new ServiceException(StrUtil.format("装箱任务【{}】没有SKU【{}】装箱任务不能进行装箱", packingTask.getCode(), String.join(",", skuNoList)));
+            }
             //重置装箱信息 根据配置进行更新装箱状态
             buildCartonSpecWeight(addDTO, type);
             //新增装箱信息
             wmsCartonSpecService.add(addDTO);
             //根据主表id分组sku查询发货及待装箱数
             List<WmsCartonSpecDTO.PackDateDTO> packDateDTOS = wmsCartonSpecService.listPackDateByPackingTaskId(dto.getTaskId());
-//            List<String> ids = packDateDTOS.stream().map(WmsCartonSpecDTO.PackDateDTO::getId).distinct().collect(Collectors.toList());
-            List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(dto.getTaskId()));
             //校验打包数量
             checkDeliveryQty(packDateDTOS, taskDetailEntityList);
         }
@@ -919,6 +928,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 //合并sku
                 List<String> skuIds = Stream.concat(skuIds3.stream(), skuIds4.stream()).distinct().collect(Collectors.toList());
                 wmsCartonSpecService.checkProductPropertyIds(packingTaskEntity.getSourceType(), skuIds);
+                //校验发货单是否存在对应sku
+                List<String> deliverySkuIds = taskDetailEntityList.stream().map(PackingTaskDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(adjustDTO.getCartonDetailList())){
+                    List<WmsCartonDTO.AdjustDetailDTO> otherSku = adjustDTO.getCartonDetailList().stream().filter(e -> Objects.nonNull(e) && Objects.nonNull(e.getSkuId()) && !deliverySkuIds.contains(e.getSkuId())).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(otherSku)){
+                        List<String> skuNoList = otherSku.stream().map(WmsCartonDTO.AdjustDetailDTO::getSkuNo).distinct().collect(Collectors.toList());
+                        throw new ServiceException(StrUtil.format("装箱任务【{}】没有SKU【{}】装箱任务不能进行装箱", packingTaskEntity.getCode(), String.join(",", skuNoList)));
+                    }
+                }
             }
             List<WmsCartonDTO.CartonDetailDTO> cartonDetailList = new ArrayList<>();
             for (WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO : groupSkuDTOList) {
@@ -1171,6 +1189,17 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //不同物流属性配置校验
         List<String> skuIds = addDTO.getDetailList().stream().map(WmsCartonDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         wmsCartonSpecService.checkProductPropertyIds(packingTaskEntity.getSourceType(), skuIds);
+        //校验发货单是否存在对应sku
+        List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(addDTO.getTaskId()));
+        if (CollectionUtils.isEmpty(taskDetailEntityList)){
+            throw new ServiceException("装箱任务中SKU为空，不能装箱其他SKU");
+        }
+        List<String> deliverySkuIds = taskDetailEntityList.stream().map(PackingTaskDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<WmsCartonDetailDTO.AddDTO> otherSku = addDTO.getDetailList().stream().filter(e -> Objects.nonNull(e.getSkuId()) && !deliverySkuIds.contains(e.getSkuId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(otherSku)){
+            List<String> skuNoList = otherSku.stream().map(WmsCartonDetailDTO.AddDTO::getSkuNo).distinct().collect(Collectors.toList());
+            throw new ServiceException(StrUtil.format("装箱任务【{}】没有SKU【{}】装箱任务不能进行装箱", packingTaskEntity.getCode(), String.join(",", skuNoList)));
+        }
         //校验累计装箱数量不可大于发货数量
         checkPackQtyByPickQty(packingTaskEntity, addDTO.getDetailList());
         String specId;
@@ -1304,6 +1333,17 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //合并sku
             List<String> skuIds = Stream.concat(skuIds1.stream(), skuIds2.stream()).distinct().collect(Collectors.toList());
             wmsCartonSpecService.checkProductPropertyIds(packingTaskEntity.getSourceType(), skuIds);
+            //校验发货单是否存在对应sku
+            List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(wmsCartonEntity.getPackingTaskId()));
+            if (CollectionUtils.isEmpty(taskDetailEntityList)){
+                throw new ServiceException("装箱任务中SKU为空，不能装箱其他SKU");
+            }
+            List<String> deliverySkuIds = taskDetailEntityList.stream().map(PackingTaskDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+            List<WmsCartonDTO.AdjustDetailDTO> otherSku = dto.getCartonDetailList().stream().filter(e -> Objects.nonNull(e.getSkuId()) && !deliverySkuIds.contains(e.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(otherSku)){
+                List<String> skuNoList = otherSku.stream().map(WmsCartonDTO.AdjustDetailDTO::getSkuNo).distinct().collect(Collectors.toList());
+                throw new ServiceException(StrUtil.format("装箱任务【{}】没有SKU【{}】装箱任务不能进行装箱", packingTaskEntity.getCode(), String.join(",", skuNoList)));
+            }
         }
         List<WmsCartonDTO.AdjustDetailDTO> adjustDetailDTOList = dto.getCartonDetailList();
         for (WmsCartonDTO.AdjustDetailDTO adjustDetailDTO : adjustDetailDTOList){
