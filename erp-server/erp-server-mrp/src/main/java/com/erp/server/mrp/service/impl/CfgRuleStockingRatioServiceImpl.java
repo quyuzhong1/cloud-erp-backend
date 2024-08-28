@@ -53,7 +53,9 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             this.removeByIds(deleteIds);
         }
-
+        if (CollectionUtils.isEmpty(list)) {
+            return  Boolean.TRUE;
+        }
         // 数据处理
         handleData(list,stockUpId,type);
         log.info("编辑 开始修改备货系数（规则设置）数据，id：【{}】",stockUpId);
@@ -69,7 +71,7 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         if (CollectionUtils.isEmpty(stockUpIdList)) {
             return Collections.EMPTY_LIST;
         }
-        List<CfgRuleStockingRatioEntity> list = lambdaQuery().eq(CfgRuleStockingRatioEntity::getStockUpId, stockUpIdList).list();
+        List<CfgRuleStockingRatioEntity> list = lambdaQuery().in(CfgRuleStockingRatioEntity::getStockUpId, stockUpIdList).list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }

@@ -55,6 +55,9 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             this.deleteByIdList(deleteIds);
         }
+        if (CollectionUtils.isEmpty(list)) {
+            return  Boolean.TRUE;
+        }
         // 数据处理
         handleData(list,stockUpId);
         log.info("编辑 开始修改备货物流（规则设置）数据，id：【{}】", stockUpId);
@@ -73,7 +76,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         if (CollectionUtils.isEmpty(stockUpIdList)) {
             return Collections.EMPTY_LIST;
         }
-       return lambdaQuery().eq(CfgRuleLogisticsEntity::getStockUpId,stockUpIdList).list();
+       return lambdaQuery().in(CfgRuleLogisticsEntity::getStockUpId,stockUpIdList).list();
     }
 
 

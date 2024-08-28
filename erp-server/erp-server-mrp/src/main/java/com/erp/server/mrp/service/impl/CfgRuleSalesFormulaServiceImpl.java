@@ -56,10 +56,13 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             this.removeByIds(deleteIds);
         }
+        if (CollectionUtils.isEmpty(list)) {
+            return  Boolean.TRUE;
+        }
         // 数据处理
         handleData(list);
         log.info("编辑 开始修改销量公式（规则设置）数据，id：【{}】", salesQtyId);
-        boolean save = super.updateBatchById(list);
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("销量公式（规则设置）保存失败");
         }

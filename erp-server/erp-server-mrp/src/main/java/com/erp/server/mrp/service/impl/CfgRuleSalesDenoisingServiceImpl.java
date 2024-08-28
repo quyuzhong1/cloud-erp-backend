@@ -54,11 +54,13 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             this.removeByIds(deleteIds);
         }
-
+        if (CollectionUtils.isEmpty(list)) {
+            return  Boolean.TRUE;
+        }
         // 数据处理
         handleData(list);
         log.info("编辑 开始修改销量去噪信息数据，id：【{}】", salesQtyId);
-        boolean save = super.updateBatchById(list);
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("销量去噪信息保存失败");
         }

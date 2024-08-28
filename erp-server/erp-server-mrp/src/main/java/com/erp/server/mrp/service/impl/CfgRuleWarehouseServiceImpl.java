@@ -52,14 +52,14 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         CfgRuleWarehouseEntity cfgRuleWarehouseEntity =  BeanMapperUtils.map(CfgRuleWarehouseEntity.class, updateDTO);
         //旧数据
         CfgRuleWarehouseEntity old = super.getById(updateDTO.getId());
-        if (ObjectUtil.isEmpty(old)) {
+        if (ObjectUtil.isNotEmpty(old)) {
             cfgRuleWarehouseEntity.setId(old.getId());
         }
 
         // 数据处理
         handleData(cfgRuleWarehouseEntity);
-        log.info("编辑 开始修改仓库（规则设置）数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgRuleWarehouseEntity);
+
+        boolean save = super.saveOrUpdate(cfgRuleWarehouseEntity);
         if(!save) {
             throw new ServiceException("仓库（规则设置）保存失败");
         }

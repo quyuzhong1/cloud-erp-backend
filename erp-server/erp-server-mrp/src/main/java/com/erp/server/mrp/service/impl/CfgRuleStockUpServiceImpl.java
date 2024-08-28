@@ -61,12 +61,12 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         CfgRuleStockUpEntity cfgRuleStockUpEntity =  BeanMapperUtils.map(CfgRuleStockUpEntity.class, updateDTO);
         //旧数据
         CfgRuleStockUpEntity old = super.getById(updateDTO.getId());
-        if (ObjectUtil.isEmpty(old)) {
+        if (ObjectUtil.isNotEmpty(old)) {
             cfgRuleStockUpEntity.setId(old.getId());
         }
         // 数据处理
         handleData(cfgRuleStockUpEntity);
-        log.info("编辑 开始修改备货（规则设置）数据，id：【{}】", old.getId());
+
         boolean save = super.saveOrUpdate(cfgRuleStockUpEntity);
         if(!save) {
             throw new ServiceException("备货（规则设置）保存失败");

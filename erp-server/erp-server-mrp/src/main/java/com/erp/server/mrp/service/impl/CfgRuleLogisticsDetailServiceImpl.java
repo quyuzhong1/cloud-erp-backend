@@ -54,10 +54,13 @@ public class CfgRuleLogisticsDetailServiceImpl extends SuperServiceImpl<CfgRuleL
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             this.removeByIds(deleteIds);
         }
+        if (CollectionUtils.isEmpty(list)) {
+            return  Boolean.TRUE;
+        }
         // 数据处理
         handleData(list,mainId);
         log.info("编辑 开始修改备货物流明细（规则设置）数据，id：【{}】", mainId);
-        boolean save = super.updateBatchById(list);
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("备货物流明细（规则设置）保存失败");
         }

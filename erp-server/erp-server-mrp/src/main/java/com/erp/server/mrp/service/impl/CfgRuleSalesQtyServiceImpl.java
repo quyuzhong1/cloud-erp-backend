@@ -75,13 +75,13 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity =  BeanMapperUtils.map(CfgRuleSalesQtyEntity.class, updateDetailDTO);
         //旧数据
         CfgRuleSalesQtyEntity old = super.getById(updateDetailDTO.getId());
-        if (ObjectUtil.isEmpty(old)) {
+        if (ObjectUtil.isNotEmpty(old)) {
             cfgRuleSalesQtyEntity.setId(old.getId());
         }
 
         // 数据处理
         handleData(cfgRuleSalesQtyEntity);
-        log.info("编辑 开始修改销量（规则设置）数据，id：【{}】", old.getId());
+
         boolean save = super.saveOrUpdate(cfgRuleSalesQtyEntity);
         if(!save) {
             throw new ServiceException("销量（规则设置）保存失败");

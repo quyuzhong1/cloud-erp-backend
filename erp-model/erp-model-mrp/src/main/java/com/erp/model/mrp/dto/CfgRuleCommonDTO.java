@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -55,10 +56,29 @@ public class CfgRuleCommonDTO implements Serializable {
         private String value;
 
         /**
+         * 类型，（inventory库存配置，suggest建议配置）
+         */
+        private String type;
+
+        /**
          * 字段类型，single单选,multiple多选
          */
         private String fieldType;
 
+        /**
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
+        private String platformType;
+
+        /**
+         * 分类名称
+         */
+        private String categoryName;
+
+        /**
+         * 备注
+         */
+        private String remark;
         /**
          * 子级信息
          */
@@ -109,7 +129,6 @@ public class CfgRuleCommonDTO implements Serializable {
          * 编码
          */
         @NotBlank(message = "编码不能为空")
-        @Size(max = 64,message = "编码最大长度不能超过64位")
         private String code;
 
         /**
@@ -123,7 +142,6 @@ public class CfgRuleCommonDTO implements Serializable {
         * 值
         */
         @NotBlank(message = "值不能为空")
-        @Size(max = 64,message = "值最大长度不能超过64位")
         private String value;
 
         /**
@@ -132,6 +150,31 @@ public class CfgRuleCommonDTO implements Serializable {
         @NotBlank(message = "类型，（inventory库存配置，suggest建议配置）不能为空")
         @Size(max = 32,message = "类型，（inventory库存配置，suggest建议配置）最大长度不能超过32位")
         private String type;
+
+        /**
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
+        @NotBlank(message = "平台类型不能为空")
+        @Size(max = 32,message = "平台类型最大长度不能超过32位")
+        private String platformType;
+
+        /**
+         * 字段类型，single单选,multiple多选
+         */
+        @Size(max = 32,message = "字段类型最大长度不能超过32位")
+        private String fieldType;
+
+        /**
+         * 分类名称
+         */
+        @Size(max = 32,message = "分类名称最大长度不能超过32位")
+        private String categoryName;
+
+        /**
+         * 备注
+         */
+        @TableField("remark")
+        private String remark;
     }
 
 

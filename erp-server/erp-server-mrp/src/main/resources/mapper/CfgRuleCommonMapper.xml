@@ -34,8 +34,9 @@
         update_time,
         version,
         is_deleted,
-        index, parent_id, name, value, remark, disable, type,platform_type,is_default,field_type
+        index, parent_id, name, value, remark, disable, type,code,platform_type,is_default,field_type,category_name
     </sql>
+
 
     <!-- 查询数据 -->
     <select id="listRuleCommon" resultType="com.erp.model.mrp.dto.CfgRuleCommonDTO$ViewDTO">

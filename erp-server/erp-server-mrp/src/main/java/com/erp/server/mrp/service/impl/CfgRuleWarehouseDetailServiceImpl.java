@@ -65,10 +65,13 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             this.removeByIds(deleteIds);
         }
+        if (CollectionUtils.isEmpty(list)) {
+            return  Boolean.TRUE;
+        }
         // 数据处理
         handleData(list,mainId,type);
         log.info("编辑 开始修改仓库（规则设置）明细数据，id：【{}】", mainId);
-        boolean save = super.updateBatchById(list);
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("仓库（规则设置）明细保存失败");
         }

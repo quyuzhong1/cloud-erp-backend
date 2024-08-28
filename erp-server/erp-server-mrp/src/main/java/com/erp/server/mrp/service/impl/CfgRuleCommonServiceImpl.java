@@ -13,7 +13,6 @@ import com.erp.server.mrp.mapper.CfgRuleCommonMapper;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import com.erp.server.mrp.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +56,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         // 数据处理
         handleData(list);
 
-        boolean save = super.updateBatchById(list);
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("公共配置（规则设置）保存失败");
         }

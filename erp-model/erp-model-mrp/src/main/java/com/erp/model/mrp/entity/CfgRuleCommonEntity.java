@@ -83,6 +83,12 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
     @TableField("field_type")
     private String fieldType;
 
+    /**
+     * 分类名称
+     */
+    @TableField("category_name")
+    private String categoryName;
+
     public static final String INDEX = "index";
 
     public static final String PARENT_ID = "parent_id";
@@ -96,6 +102,14 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
     public static final String DISABLE = "disable";
 
     public static final String TYPE = "type";
+
+    public static final String PLATFORM_TYPE = "platform_type";
+
+    public static final String IS_DEFAULT = "is_default";
+
+    public static final String FIELD_TYPE = "field_type";
+
+    public static final String CATEGORY_NAME = "category_name";
 
     @Override
     public Serializable pkVal() {
