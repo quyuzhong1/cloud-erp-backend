@@ -57,6 +57,9 @@ public class DmpHandlerCache implements CommandLineRunner{
 	@Value("${dmp.input.fresh.cache.time:5}")
     private int freshCacheTime;
 	
+	@Value("${dmp.input.fresh.cache.switch:true}")
+    private boolean freshCacheSwitch;
+	
 	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 	
 	private volatile List<DmpBasicSystemEntity> dmpBasicSystemCache;
@@ -242,7 +245,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	@Override
 	public void run(String... args) throws Exception {
-		this.initCache(true);
+		this.initCache(freshCacheSwitch);
 	}
 
 	public void initCache(boolean isCreateTask) {
