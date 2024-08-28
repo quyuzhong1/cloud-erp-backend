@@ -27,7 +27,9 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChainImpl;
 import com.erp.server.dmp.inout.handler.output.create.DmpOutputHotfixCreateHandler;
 import com.erp.server.dmp.inout.handler.output.create.DmpOutputInputCreateHandler;
+import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -95,7 +97,6 @@ public class DmpOutputCreateFactory{
 	@Transactional(rollbackFor = Exception.class)
 	public DmpOutputTaskResponse doHotfixOutputTask(DmpOutputHotfixCreateRequest dmpRequest) {
 		dmpRequest.setThrowException(true);
-		String cfgOutputId = dmpRequest.getCfgOutputId();
 		DmpOutputCreateResponse dmpOutputCreateResponse = this.createHotfixOutputTask(dmpRequest);
 		DmpOutputTaskRequest dmpOutputTaskRequest = new DmpOutputTaskRequest();
 		DmpOutputTaskEntity dmpOutputTaskEntity = dmpOutputCreateResponse.getAfterDmpOutputTaskEntityList().get(0);
@@ -124,41 +125,9 @@ public class DmpOutputCreateFactory{
 			dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(mainDmpCfgInputConvertEntity, list);
 			dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(mainDmpCfgInputConvertEntity, list);
 			if(CollUtil.isNotEmpty(list)) {
-				if("1801575677567136779".equals(cfgOutputId)) {
-					List<String> soOutStockIds = null;
-					for(int i = 1; i < dmpCfgInputConvertEntityList.size(); i++) {
-						DmpCfgInputConvertEntity childDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(i);
-						String storageName = childDmpCfgInputConvertEntity.getStorageName();
-						serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(storageName, true) + "ServiceImpl" , ServiceImpl.class);
-						QueryWrapper<?> wrapper = new QueryWrapper<>();
-						if("dmp_so_outStock".equals(storageName)) {
-							wrapper.in("source_id", list.stream().map(BaseEntity::getId).collect(Collectors.toList()));
-						}else if("dmp_so_outStock_detail".equals(storageName)){
-							if(CollUtil.isEmpty(soOutStockIds)) {
-								continue;
-							}
-							wrapper.in("main_id", soOutStockIds);
-						}else {
-							wrapper.in("main_id", list.stream().map(BaseEntity::getId).collect(Collectors.toList()));
-						}
-						List<BaseEntity> childEntityList = serviceImpl.list(wrapper);
-						if("dmp_so_outStock".equals(storageName)) {
-							soOutStockIds = childEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-						}
-						dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
-						dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
-					}
-				}else {
-					for(int i = 1; i < dmpCfgInputConvertEntityList.size(); i++) {
-						DmpCfgInputConvertEntity childDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(i);
-						serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(childDmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
-						QueryWrapper<?> wrapper = new QueryWrapper<>();
-						wrapper.in("main_id", list.stream().map(BaseEntity::getId).collect(Collectors.toList()));
-						List<BaseEntity> childEntityList = serviceImpl.list(wrapper);
-						dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
-						dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
-					}
-				}
+				String outputClass = dmpCfgOutputEntity.getOutputClass();
+				DmpOutputTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClass) , DmpOutputTaskHandler.class);
+				dmpOutputTaskHandler.getRetryPushSourceData(dmpCfgInputConvertEntityList, dmpOutputTaskRequest);
 			}
 		}
 		

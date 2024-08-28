@@ -154,12 +154,12 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         if (addResult) {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeProvinceService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-                }
-            });
+//            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                @Override
+//                public void afterCommit() {
+//                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+//                }
+//            });
         }
         return addResult;
     }
@@ -209,12 +209,12 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         if (updateResult) {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeProvinceService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-                }
-            });
+//            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                @Override
+//                public void afterCommit() {
+//                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+//                }
+//            });
         }
         return updateResult;
     }
@@ -233,12 +233,12 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         //金蝶推送
         DmpPushTaskEntity pushTaskEntity = syncKingdeeCityService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+//            }
+//        });
         thirdpartyRefBusinessService.removeByBusinessId(id);
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
 
@@ -301,12 +301,12 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         if (addResult) {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeCityService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-                }
-            });
+//            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                @Override
+//                public void afterCommit() {
+//                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+//                }
+//            });
         }
         return addResult;
     }
@@ -360,12 +360,12 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         if (updateResult) {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeCityService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-                }
-            });
+//            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//                @Override
+//                public void afterCommit() {
+//                    dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+//                }
+//            });
         }
         return updateResult;
 
