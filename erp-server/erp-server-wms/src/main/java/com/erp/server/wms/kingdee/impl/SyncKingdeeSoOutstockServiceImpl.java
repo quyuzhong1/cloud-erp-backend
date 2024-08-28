@@ -31,6 +31,7 @@ import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -39,9 +40,11 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -82,6 +85,7 @@ import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WmsPushMsgService;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -750,23 +754,32 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
      * @date: 2023/10/16 9:17
      */
     private DmpPushTaskEntity saveTask(SoOutstockEntity entity, String operate, Map<String, Object> resultMap) {
-        //添加推送任务
-//        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-//        dmpSyncTaskDTO.setSourceId(entity.getId());
-//        dmpSyncTaskDTO.setSourceCode(entity.getCode());
-//        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
-//        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-//        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName());
-//        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-//        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-//        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-//        dmpSyncTaskDTO.setSyncOperate(operate);
-//        // B2C订单不推送到金蝶
-//        if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
-//            dmpSyncTaskDTO.setParentId("");
-//        } else {
-//            dmpSyncTaskDTO.setParentId(entity.getSoId());
-//        }
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, settingEnum.getKey())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+	    	//添加推送任务
+	        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+	        dmpSyncTaskDTO.setSourceId(entity.getId());
+	        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+	        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+	        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+	        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName());
+	        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+	        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+	        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+	        dmpSyncTaskDTO.setSyncOperate(operate);
+	        // B2C订单不推送到金蝶
+	        if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
+	            dmpSyncTaskDTO.setParentId("");
+	        } else {
+	            dmpSyncTaskDTO.setParentId(entity.getSoId());
+	        }
+	        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+        }
         
         WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
         wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
