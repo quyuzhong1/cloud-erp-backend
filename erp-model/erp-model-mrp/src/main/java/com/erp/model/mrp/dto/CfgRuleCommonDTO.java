@@ -84,6 +84,12 @@ public class CfgRuleCommonDTO implements Serializable {
          * 是否默认
          */
         private Boolean isDefault;
+
+        /**
+         * 是否必填
+         */
+        private Boolean isRequired;
+
         /**
          * 子级信息
          */
@@ -186,6 +192,12 @@ public class CfgRuleCommonDTO implements Serializable {
          */
         @NotNull(message = "是否默认不能为空")
         private Boolean isDefault;
+
+        /**
+         * 是否必填
+         */
+        @NotNull(message = "是否必填不能为空")
+        private Boolean isRequired;
 
         /**
          * 子级信息

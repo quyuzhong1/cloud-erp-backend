@@ -60,7 +60,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
             return  Boolean.TRUE;
         }
         // 数据处理
-        handleData(list);
+        handleData(list,salesQtyId);
         log.info("编辑 开始修改销量公式（规则设置）数据，id：【{}】", salesQtyId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -101,11 +101,13 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleSalesFormulaEntity> list) {
+    private void handleData(List<CfgRuleSalesFormulaEntity> list,String salesQtyId) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         for (CfgRuleSalesFormulaEntity salesFormula : list) {
+            salesFormula.setSalesQtyId(salesQtyId);
+
             //百分比json
             JSONObject percentJson = JSONUtil.parseObj(salesFormula.getPercentJsonDTO());
             salesFormula.setPercentJson(percentJson);

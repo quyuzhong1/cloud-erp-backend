@@ -2,6 +2,7 @@ package com.erp.model.mrp.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
@@ -86,14 +87,115 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
          */
         private PercentJsonDTO percentJsonDTO;
     }
-
     /**
-    * 新增
-    */
+     * 默认日销量DTO
+     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    @Accessors(chain = true)
+    public static class  DefaultUpdateDTO {
 
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 销量默认类型：dynamic=动态、fixed=固定
+         */
+        @NotBlank(message = "销量默认类型：dynamic=动态、fixed=固定不能为空")
+        @Size(max = 32,message = "销量默认类型：dynamic=动态、fixed=固定最大长度不能超过32位")
+        private String defaultType;
+
+        /**
+         * 固定值
+         */
+        @Digits(integer = 12, fraction = 4, message = "固定值整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal fixedValue;
+
+        /**
+         * 百分比json
+         */
+        private PercentJsonDTO percentJsonDTO;
+    }
+
+    /**
+     * 动态日销量DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @Accessors(chain = true)
+    public static class DynamicUpdateDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 排序字段
+         */
+        @NotNull(message = "排序字段不能为空")
+        private Integer index;
+
+        /**
+         * 名称
+         */
+        @NotBlank(message = "名称不能为空")
+        @Size(max = 64,message = "名称最大长度不能超过64位")
+        private String name;
+
+        /**
+         * 时间段
+         */
+        @NotEmpty(message = "时间段不能为空")
+        private List<LocalDate> dateList;
+
+        /**
+         * 百分比json
+         */
+        @NotNull(message = "动态日销量占比不能为空")
+        private PercentJsonDTO percentJsonDTO;
+    }
+
+    /**
+     * 固定日销量DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @Accessors(chain = true)
+    public static class FixedUpdateDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 排序字段
+         */
+        @NotNull(message = "排序字段不能为空")
+        private Integer index;
+
+        /**
+         * 名称
+         */
+        @NotBlank(message = "名称不能为空")
+        @Size(max = 64,message = "名称最大长度不能超过64位")
+        private String name;
+
+        /**
+         * 时间段
+         */
+        @NotEmpty(message = "时间段不能为空")
+        private List<LocalDate> dateList;
+
+        /**
+         * 固定值
+         */
+        @NotNull(message = "固定值不能为空")
+        @Digits(integer = 12, fraction = 4, message = "固定值整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal fixedValue;
 
     }
 
@@ -113,6 +215,7 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @Accessors(chain = true)
     public static class CommonDTO {
 
         /**
@@ -124,7 +227,6 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
         * 销量默认类型：dynamic=动态、fixed=固定
         */
-        @NotBlank(message = "销量默认类型：dynamic=动态、fixed=固定不能为空")
         @Size(max = 32,message = "销量默认类型：dynamic=动态、fixed=固定最大长度不能超过32位")
         private String defaultType;
 
@@ -137,33 +239,28 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
         * 优先级字段
         */
-        @NotNull(message = "优先级字段不能为空")
         private Integer priority;
 
         /**
         * 名称
         */
-        @NotBlank(message = "名称不能为空")
         @Size(max = 64,message = "名称最大长度不能超过64位")
         private String name;
 
         /**
          * 时间段
          */
-        @NotEmpty(message = "时间段不能为空")
         private List<LocalDate> dateList;
 
         /**
         * 固定值
         */
-        @NotNull(message = "固定值不能为空")
         @Digits(integer = 12, fraction = 4, message = "固定值整数位不能超过12位，小数位不能超过4位")
         private BigDecimal fixedValue;
 
         /**
         * 百分比json
         */
-        @NotNull(message = "百分比json不能为空")
         private PercentJsonDTO percentJsonDTO;
 
     }

@@ -47,9 +47,9 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(CfgRuleCommonDTO.UpdateDTO updateDTO) {
+    public Boolean update(List<CfgRuleCommonDTO.UpdateDTO> updateList) {
         // 数据处理
-        List<CfgRuleCommonEntity> list = handleData(updateDTO);
+        List<CfgRuleCommonEntity> list = handleData(updateList);
 
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -122,18 +122,24 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     /**
     * 新增修改处理数据
     */
-    private List<CfgRuleCommonEntity> handleData(CfgRuleCommonDTO.UpdateDTO updateDTO) {
-        List<CfgRuleCommonEntity> resultList = new ArrayList<>();
-        CfgRuleCommonEntity entity = BeanMapperUtils.map(CfgRuleCommonEntity.class, updateDTO);
-        //是否默认，默认保存则清空默认数据
-        Boolean isDefault = updateDTO.getIsDefault();
-        if (isDefault) {
-            updateDTO.setId(null);
-            updateDTO.setIsDefault(Boolean.FALSE);
+    private List<CfgRuleCommonEntity> handleData(List<CfgRuleCommonDTO.UpdateDTO> updateList) {
+        if (CollectionUtils.isEmpty(updateList)) {
+           throw new ServiceException("保存数据不能为空");
         }
-        resultList.add(entity);
-        //子级赋值
-        getChildrenEntity(updateDTO,resultList,isDefault);
+        List<CfgRuleCommonEntity> resultList = new ArrayList<>();
+
+        for (CfgRuleCommonDTO.UpdateDTO updateDTO : updateList) {
+            CfgRuleCommonEntity entity = BeanMapperUtils.map(CfgRuleCommonEntity.class, updateDTO);
+            //是否默认，默认保存则清空默认数据
+            Boolean isDefault = updateDTO.getIsDefault();
+            if (isDefault) {
+                entity.setId(null);
+                entity.setIsDefault(Boolean.FALSE);
+            }
+            resultList.add(entity);
+            //子级赋值
+            getChildrenEntity(updateDTO,resultList,isDefault);
+        }
         return resultList;
     }
 
@@ -151,8 +157,8 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         for (CfgRuleCommonDTO.UpdateDTO childUpdateDTO :updateDTO.getChildrenList()) {
             CfgRuleCommonEntity childEntity = BeanMapperUtils.map(CfgRuleCommonEntity.class, childUpdateDTO);
             if (isDefault) {
-                updateDTO.setId(null);
-                updateDTO.setIsDefault(Boolean.FALSE);
+                childEntity.setId(null);
+                childEntity.setIsDefault(Boolean.FALSE);
             }
             resultList.add(childEntity);
             getChildrenEntity(childUpdateDTO,resultList,isDefault);

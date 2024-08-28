@@ -58,7 +58,7 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
             return  Boolean.TRUE;
         }
         // 数据处理
-        handleData(list);
+        handleData(list,salesQtyId);
         log.info("编辑 开始修改销量去噪信息数据，id：【{}】", salesQtyId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -88,7 +88,13 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleSalesDenoisingEntity> list) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(List<CfgRuleSalesDenoisingEntity> list,String salesQtyId) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (CfgRuleSalesDenoisingEntity denoisingEntity : list) {
+            denoisingEntity.setSalesQtyId(salesQtyId);
+
+        }
     }
 }

@@ -89,6 +89,12 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
     @TableField("category_name")
     private String categoryName;
 
+    /**
+     * 是否必填
+     */
+    @TableField("is_required")
+    private Boolean isRequired;
+
     public static final String INDEX = "index";
 
     public static final String PARENT_ID = "parent_id";
