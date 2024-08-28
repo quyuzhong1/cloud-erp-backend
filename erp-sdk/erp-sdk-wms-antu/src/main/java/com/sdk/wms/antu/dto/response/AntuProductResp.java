@@ -1,6 +1,7 @@
 package com.sdk.wms.antu.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.common.business.config.FastJson2LocalDateTimeDeserializer;
 import com.common.business.dto.CleanBaseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -102,11 +103,11 @@ public class AntuProductResp extends CleanBaseDTO implements Serializable {
     private Integer catIdLevel2;
 
     //添加时间
-    @JSONField(name = "product_add_time")
+    @JSONField(name = "product_add_time",deserializeUsing = FastJson2LocalDateTimeDeserializer.class)
     private LocalDateTime productAddTime;
 
     //修改时间
-    @JSONField(name = "product_modify_time")
+    @JSONField(name = "product_modify_time",deserializeUsing = FastJson2LocalDateTimeDeserializer.class)
     private LocalDateTime productModifyTime;
 
     //产品价格

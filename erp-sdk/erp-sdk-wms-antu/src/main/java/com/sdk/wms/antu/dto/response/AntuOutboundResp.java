@@ -1,6 +1,7 @@
 package com.sdk.wms.antu.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.common.business.config.FastJson2LocalDateTimeDeserializer;
 import com.common.business.dto.CleanBaseDTO;
 import lombok.*;
 
@@ -27,7 +28,7 @@ public class AntuOutboundResp extends CleanBaseDTO implements Serializable {
     private String orderStatus;
 
     //出库时间
-    @JSONField(name = "date_shipping")
+    @JSONField(name = "date_shipping",deserializeUsing = FastJson2LocalDateTimeDeserializer.class)
     private LocalDateTime outBoundTime;
 
     //跟踪号
