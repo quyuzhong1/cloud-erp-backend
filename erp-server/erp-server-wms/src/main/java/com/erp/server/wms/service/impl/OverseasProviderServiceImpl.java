@@ -117,6 +117,10 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
+        List<OverseasProviderEntity> overseasProviderEntityList = this.list();
+        if(overseasProviderEntityList.stream().filter(v->v.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())).anyMatch(v->v.getAuthJson().equals(dto.getAuthJson()))){
+            throw new ServiceException("相同授权信息已授权，无法重复授权");
+        }
         ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(getPlatFormCodeById(dto.getId()));
         boolean result = thirdWarehouseService.authorize(dto);
         if(result){

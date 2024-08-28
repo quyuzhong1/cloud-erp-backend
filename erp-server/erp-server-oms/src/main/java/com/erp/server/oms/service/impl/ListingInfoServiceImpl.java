@@ -34,14 +34,10 @@ import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.*;
-import com.erp.server.oms.service.ListingInfoService;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -107,16 +103,19 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     /**
      * 根据平台sku ，平台 获取到对应的list
+     *
+     * @param platform
+     * @param platformSkuNo
+     * @param authId
+     * @return com.erp.model.oms.entity.ListingInfoEntity
      * @author yl
      * @date 2023-08-21 11:57
-     * @param platformSkuNo
-     * @param platform
-     * @return com.erp.model.oms.entity.ListingInfoEntity
      */
     @Override
-    public ListingInfoEntity getByPlatformSkuNo(String platform, String platformSkuNo) {
+    public ListingInfoEntity getByPlatformSkuNo(String platform, String platformSkuNo, String authId) {
         return lambdaQuery().eq(ListingInfoEntity::getPlatformSkuNo, platformSkuNo).
                 eq(ListingInfoEntity::getPlatform, platform).
+                eq(ListingInfoEntity::getAuthId, authId).
                 last("LIMIT 1").
                 one();
     }
