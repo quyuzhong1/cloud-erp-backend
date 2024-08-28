@@ -51,8 +51,8 @@
             <if test="type != null and type != ''">
                 and crc.type = #{type}
             </if>
-            <if test="isEnableOverseas != null and isEnableOverseas == true">
-                and  crc.remark = 'isEnableOverseas'
+            <if test="isEnableOverseas != null and isEnableOverseas == false">
+                and  crc.remark != 'isEnableOverseas'
             </if>
         </where>
     </select>
@@ -70,8 +70,8 @@
             <if test="type != null and type != ''">
                 and crc.type = #{type}
             </if>
-            <if test="isEnableOverseas != null and isEnableOverseas == true">
-                and  crc.remark = 'isEnableOverseas'
+            <if test="isEnableOverseas != null and isEnableOverseas == false">
+                and  crc.remark != 'isEnableOverseas'
             </if>
         </where>
     </select>

@@ -146,13 +146,6 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         private String virtualWarehouseId;
 
         /**
-        * 仓库类型，local本地，overseas海外
-        */
-        @NotBlank(message = "仓库类型，local本地，overseas海外不能为空")
-        @Size(max = 32,message = "仓库类型，local本地，overseas海外最大长度不能超过32位")
-        private String warehouseType;
-
-        /**
         * 关联店铺类型，platform按平台，shop按店铺
         */
         @NotBlank(message = "关联店铺类型，platform按平台，shop按店铺不能为空")
