@@ -81,13 +81,14 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     private void fillData(List<FirstMileEstimatedBillDTO.View> records) {
         List<String> countryCodeList = records.stream().map(item -> item.getToCountry()).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryCodeList);
-        Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getNameCn()));
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByNames(countryCodeList);
+        Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(item -> item.getNameCn(), item2 -> item2.getId()));
 
         for (FirstMileEstimatedBillDTO.View item : records) {
             item.setStatusName(ConfirmStatusEnum.getNameByCode(item.getStatus()));
             item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
-            item.setToCountryName(countryMap.getOrDefault(item.getToCountry(), ""));
+            item.setToCountryName(item.getToCountry());
+            item.setToCountry(countryMap.getOrDefault(item.getToCountryName(), ""));
             item.setFeeRuleName(ShippingFeeRuleEnum.getName(item.getFeeRule()));
             item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(item.getCurrency()));
 

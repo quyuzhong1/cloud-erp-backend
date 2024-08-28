@@ -61,6 +61,7 @@ public class FirstMileEstimatedBillDTO implements Serializable {
 
         /**
          * 实际账单状态（名称）
+         * ReconciliationStatusEnum
          */
         private String actualBillStatusName;
 
