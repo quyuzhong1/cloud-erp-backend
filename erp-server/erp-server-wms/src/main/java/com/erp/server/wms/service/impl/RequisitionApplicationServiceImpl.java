@@ -360,7 +360,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap = detailEntityList.stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId));
 
             //创建旺店通虚拟仓订单
-            service.saveWdtOrder(fromVmIds, requisitionApplication, haveFromVwMap);
+            //service.saveWdtOrder(fromVmIds, requisitionApplication, haveFromVwMap);
 
         }
         //调出仓库和调入仓库不一致的单据
@@ -810,7 +810,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 List<String> fromVmIds = haveFromVwList.stream().map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
 
                 //创建旺店通虚拟仓订单
-                service.cancelWdtOrder(fromVmIds, entity, haveFromVwMap);
+                //service.cancelWdtOrder(fromVmIds, entity, haveFromVwMap);
             }
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
             //清空明细中的虚拟仓

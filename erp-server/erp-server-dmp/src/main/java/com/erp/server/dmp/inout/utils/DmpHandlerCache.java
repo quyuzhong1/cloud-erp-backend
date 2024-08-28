@@ -10,17 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.stream.CollectorUtil;
-import com.alibaba.excel.util.StringUtils;
-import com.common.business.utils.CollectionUtils;
-import com.common.business.utils.StringUtil;
-import com.common.business.wrapper.FeignQuery;
-import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
-import com.erp.model.dmp.entity.*;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.server.dmp.service.*;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -32,13 +21,24 @@ import org.springframework.stereotype.Component;
 import com.alibaba.excel.util.StringUtils;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.StrUtils;
+import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
+import com.erp.model.dmp.entity.DmpBasicSystemEntity;
+import com.erp.model.dmp.entity.DmpCfgApiEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
+import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgMqEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.dmp.service.DmpBasicSystemService;
+import com.erp.server.dmp.service.DmpCfgApiService;
 import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
 import com.erp.server.dmp.service.DmpCfgInputConvertService;
+import com.erp.server.dmp.service.DmpCfgInputConvertValueService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.DmpCfgMqService;
@@ -80,6 +80,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private volatile List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackCache;
 	
 	private volatile List<OverseasProviderEntity> overseasProviderEntityCache;
+	
+	private volatile List<DmpCfgApiEntity> dmpCfgApiEntityCache;
 
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
@@ -97,6 +99,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private DmpCfgMqService dmpCfgMqService;
 	@Autowired
 	private DmpCfgOutputBlackService dmpCfgOutputBlackService;
+	@Autowired
+	private DmpCfgApiService dmpCfgApiService;
 	
 	public List<DmpBasicSystemEntity> getDmpBasicSystemEntityList(Predicate<? super DmpBasicSystemEntity> paramPredicate) {
 		if(dmpBasicSystemCache == null) {
@@ -136,6 +140,14 @@ public class DmpHandlerCache implements CommandLineRunner{
 			this.dealConvertMappingCache();
 		}
 		return convertMappingCache.get(mainId);
+	}
+	
+	public List<DmpCfgApiEntity> getDmpCfgApiEntityList(Predicate<? super DmpCfgApiEntity> paramPredicate) {
+		if(dmpCfgApiEntityCache == null) {
+			dmpCfgApiEntityCache = dmpCfgApiService.lambdaQuery()
+					.eq(DmpCfgApiEntity::getDisabled, false).list();
+		}
+		return dmpCfgApiEntityCache.stream().filter(paramPredicate).collect(Collectors.toList());
 	}
 
 	/**
@@ -254,6 +266,9 @@ public class DmpHandlerCache implements CommandLineRunner{
 		
 		dmpCfgOutputBlackCache = dmpCfgOutputBlackService.lambdaQuery()
 				.eq(DmpCfgOutputBlackEntity::getDisabled, false).list();
+		
+		dmpCfgApiEntityCache = dmpCfgApiService.lambdaQuery()
+				.eq(DmpCfgApiEntity::getDisabled, false).list();
 		
 		try {
 			overseasProviderEntityCache = FeignQuery.create(OverseasProviderEntity.class)
@@ -376,6 +391,19 @@ public class DmpHandlerCache implements CommandLineRunner{
 				}
 
 			}, 1, freshCacheTime, TimeUnit.SECONDS);
+			
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpCfgApiEntity> dmpCfgApiEntityFreshList = dmpCfgApiService.lambdaQuery()
+						.gt(DmpCfgApiEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list();
+				if(CollUtil.isNotEmpty(dmpCfgApiEntityFreshList)) {
+					List<String> newIds = dmpCfgApiEntityFreshList.stream().map(DmpCfgApiEntity::getId).collect(Collectors.toList());
+					dmpCfgApiEntityCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpCfgApiEntityCache.addAll(dmpCfgApiEntityFreshList.stream()
+							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				}
+				
+			}, 2, freshCacheTime, TimeUnit.SECONDS);
 
 		}
 	}

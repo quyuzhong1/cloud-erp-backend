@@ -58,11 +58,11 @@ public class AntuReceiptResp extends CleanBaseDTO implements Serializable {
     private Date etaDate;
 
     //创建日期
-    @JSONField(name = "receiving_add_time")
+    @JSONField(name = "receiving_add_time",deserializeUsing = FastJson2LocalDateTimeDeserializer.class)
     private LocalDateTime receivingAddTime;
 
     //修改日期
-    @JSONField(name = "receiving_modify_time")
+    @JSONField(name = "receiving_modify_time",deserializeUsing = FastJson2LocalDateTimeDeserializer.class)
     private LocalDateTime receivingModifyTime;
 
     //揽收支持的省ID， 参考getRegionForReceiving
@@ -138,7 +138,7 @@ public class AntuReceiptResp extends CleanBaseDTO implements Serializable {
         private Integer putawayQty;
 
         //更新时间
-        @JSONField(name = "rd_update_time")
+        @JSONField(name = "rd_update_time",deserializeUsing = FastJson2LocalDateTimeDeserializer.class)
         private LocalDateTime rdUpdateTime;
 
         //箱号
