@@ -34,12 +34,12 @@ public class CfgRuleCommonController extends BaseController {
     * 修改
     * @author will
     * @date:  2024-08-23
-    * @param list
+    * @param updateDTO
     * @return ApiResult
     */
     @PostMapping("/update")
-    public ApiResult<?> update(@RequestBody @Validated List<CfgRuleCommonDTO.UpdateDTO> list) {
-        cfgRuleCommonService.update(list);
+    public ApiResult<?> update(@RequestBody @Validated CfgRuleCommonDTO.UpdateDTO updateDTO) {
+        cfgRuleCommonService.update(updateDTO);
         return success();
     }
 

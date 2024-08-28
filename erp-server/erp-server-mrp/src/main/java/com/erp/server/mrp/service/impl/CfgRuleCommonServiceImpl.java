@@ -47,14 +47,9 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<CfgRuleCommonDTO.UpdateDTO> commonList) {
-        if (CollectionUtils.isEmpty(commonList)) {
-            commonList = new ArrayList<>();
-        }
-        List<CfgRuleCommonEntity> list = BeanMapperUtils.copyList(CfgRuleCommonEntity.class, commonList);
-
+    public Boolean update(CfgRuleCommonDTO.UpdateDTO updateDTO) {
         // 数据处理
-        handleData(list);
+        List<CfgRuleCommonEntity> list = handleData(updateDTO);
 
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -127,7 +122,40 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleCommonEntity> list) {
-    // TODO 验证数据 & 数据赋值
+    private List<CfgRuleCommonEntity> handleData(CfgRuleCommonDTO.UpdateDTO updateDTO) {
+        List<CfgRuleCommonEntity> resultList = new ArrayList<>();
+        CfgRuleCommonEntity entity = BeanMapperUtils.map(CfgRuleCommonEntity.class, updateDTO);
+        //是否默认，默认保存则清空默认数据
+        Boolean isDefault = updateDTO.getIsDefault();
+        if (isDefault) {
+            updateDTO.setId(null);
+            updateDTO.setIsDefault(Boolean.FALSE);
+        }
+        resultList.add(entity);
+        //子级赋值
+        getChildrenEntity(updateDTO,resultList,isDefault);
+        return resultList;
+    }
+
+    /**
+     * 子级赋值
+     * @author will
+     * @date 2024/8/28 10:04
+     * @param updateDTO
+     * @param resultList
+     */
+    private void getChildrenEntity(CfgRuleCommonDTO.UpdateDTO updateDTO,List<CfgRuleCommonEntity> resultList,Boolean isDefault) {
+        if (CollectionUtils.isEmpty(updateDTO.getChildrenList())) {
+            return;
+        }
+        for (CfgRuleCommonDTO.UpdateDTO childUpdateDTO :updateDTO.getChildrenList()) {
+            CfgRuleCommonEntity childEntity = BeanMapperUtils.map(CfgRuleCommonEntity.class, childUpdateDTO);
+            if (isDefault) {
+                updateDTO.setId(null);
+                updateDTO.setIsDefault(Boolean.FALSE);
+            }
+            resultList.add(childEntity);
+            getChildrenEntity(childUpdateDTO,resultList,isDefault);
+        }
     }
 }

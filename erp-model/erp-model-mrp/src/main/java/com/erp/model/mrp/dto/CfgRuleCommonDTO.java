@@ -79,6 +79,11 @@ public class CfgRuleCommonDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 是否默认
+         */
+        private Boolean isDefault;
         /**
          * 子级信息
          */
@@ -175,6 +180,17 @@ public class CfgRuleCommonDTO implements Serializable {
          */
         @TableField("remark")
         private String remark;
+
+        /**
+         * 是否默认
+         */
+        @NotNull(message = "是否默认不能为空")
+        private Boolean isDefault;
+
+        /**
+         * 子级信息
+         */
+        List<UpdateDTO> childrenList;
     }
 
 
