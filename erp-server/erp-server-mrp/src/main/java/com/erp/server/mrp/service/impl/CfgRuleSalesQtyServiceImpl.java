@@ -7,6 +7,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
@@ -14,6 +15,7 @@ import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesQtyMapper;
 import com.erp.server.mrp.service.CfgRuleSalesDenoisingService;
@@ -57,11 +59,11 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         Boolean isCfgSame = updateDTO.getIsCfgSame();
 
         //编辑常规品
-        updateDTO.getConventionalDetail().setIsCfgSame(isCfgSame);
+        updateDTO.getConventionalDetail().setIsCfgSame(isCfgSame).setType(CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode());
         this.update(updateDTO.getConventionalDetail());
 
         //编辑新品
-        updateDTO.getNewDetail().setIsCfgSame(isCfgSame);
+        updateDTO.getNewDetail().setIsCfgSame(isCfgSame).setType(CfgRuleStockingRatioTypeEnum.NEW.getCode());
         this.update(updateDTO.getNewDetail());
         return Boolean.TRUE;
     }
@@ -151,6 +153,12 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
                 List<CfgRuleSalesDenoisingDTO.ViewDTO> salesDenoisingViewList = BeanMapperUtils.copyList(CfgRuleSalesDenoisingDTO.ViewDTO.class, denoisingList);
                 viewDetailDTO.setSalesDenoisingList(salesDenoisingViewList);
             }
+            //明细赋值
+            if (StrUtil.equals(cfgRuleSalesQtyEntity.getType(),CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())) {
+                viewDTO.setConventionalDetail(viewDetailDTO);
+            } else {
+                viewDTO.setNewDetail(viewDetailDTO);
+            }
         }
         viewDTO.setIsCfgSame(list.get(0).getIsCfgSame());
         return viewDTO;
@@ -166,17 +174,20 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     private List<CfgRuleSalesFormulaDTO.UpdateDTO> handleSalesFormula (CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO) {
         List<CfgRuleSalesFormulaDTO.UpdateDTO> list = new ArrayList<>();
         //默认日销量
-        updateDTO.getDefaultSalesQtyDTO().setType(CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode());
-        list.add(updateDTO.getDefaultSalesQtyDTO());
+        CfgRuleSalesFormulaDTO.UpdateDTO defaultDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.UpdateDTO.class, updateDTO.getDefaultSalesQtyDTO());
+        defaultDTO.setType(CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()).setPriority(MathUtil.THREE);
+        list.add(defaultDTO);
         //动态日销量
         if (CollectionUtils.isNotEmpty(updateDTO.getDynamicSalesQtyList())) {
-            updateDTO.getDynamicSalesQtyList().forEach(obj -> obj.setType(CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode()));
-            list.addAll(updateDTO.getDynamicSalesQtyList());
+            List<CfgRuleSalesFormulaDTO.UpdateDTO> dynamicList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.UpdateDTO.class, updateDTO.getDynamicSalesQtyList());
+            dynamicList.forEach(obj -> obj.setType(CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode()).setPriority(MathUtil.TWO));
+            list.addAll(dynamicList);
         }
         //固定日销量
         if (CollectionUtils.isNotEmpty(updateDTO.getFixedSalesQtyList())) {
-            updateDTO.getFixedSalesQtyList().forEach(obj -> obj.setType(CfgRuleSalesFormulaTypeEnum.FIXED.getCode()));
-            list.addAll(updateDTO.getFixedSalesQtyList());
+            List<CfgRuleSalesFormulaDTO.UpdateDTO> fixedList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.UpdateDTO.class, updateDTO.getFixedSalesQtyList());
+            fixedList.forEach(obj -> obj.setType(CfgRuleSalesFormulaTypeEnum.FIXED.getCode()).setPriority(MathUtil.ONE));
+            list.addAll(fixedList);
         }
         return list;
     }

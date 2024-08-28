@@ -2,10 +2,10 @@ package com.erp.model.mrp.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -104,26 +104,21 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
          * 默认日销量
          */
-        @NotEmpty
-        @Valid
         private CfgRuleSalesFormulaDTO.ViewDTO defaultSalesQtyDTO;
 
         /**
          * 动态日销量
          */
-        @Valid
         private List<CfgRuleSalesFormulaDTO.ViewDTO> dynamicSalesQtyList;
 
         /**
          * 固定日销量
          */
-        @Valid
         private List<CfgRuleSalesFormulaDTO.ViewDTO> fixedSalesQtyList;
 
         /**
          *销量去噪
          */
-        @Valid
         private List<CfgRuleSalesDenoisingDTO.ViewDTO> salesDenoisingList;
     }
 
@@ -144,12 +139,14 @@ public class CfgRuleSalesQtyDTO implements Serializable {
          * 常规品
          */
         @Valid
+        @NotNull(message = "常规品设置不能为空")
         private UpdateDetailDTO conventionalDetail;
 
         /**
          * 新品
          */
         @Valid
+        @NotNull(message = "新品设置不能为空")
         private UpdateDetailDTO newDetail;
     }
 
@@ -158,32 +155,32 @@ public class CfgRuleSalesQtyDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
+    @Accessors(chain = true)
     public static class UpdateDetailDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
         /**
          * 默认日销量
          */
-        @NotEmpty
+        @NotNull(message = "默认日销量不能为空")
         @Valid
-        private CfgRuleSalesFormulaDTO.UpdateDTO defaultSalesQtyDTO;
+        private CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultSalesQtyDTO;
 
         /**
          * 动态日销量
          */
         @Valid
-        private List<CfgRuleSalesFormulaDTO.UpdateDTO> dynamicSalesQtyList;
+        private List<CfgRuleSalesFormulaDTO.DynamicUpdateDTO> dynamicSalesQtyList;
 
         /**
          * 固定日销量
          */
         @Valid
-        private List<CfgRuleSalesFormulaDTO.UpdateDTO> fixedSalesQtyList;
+        private List<CfgRuleSalesFormulaDTO.FixedUpdateDTO> fixedSalesQtyList;
 
         /**
          *销量去噪
@@ -195,12 +192,12 @@ public class CfgRuleSalesQtyDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @Accessors(chain = true)
     public static class CommonDTO {
 
         /**
         * 是否同常规品配置一致,true是，false否
         */
-        @NotNull(message = "是否同常规品配置一致,true是，false否不能为空")
         private Boolean isCfgSame;
 
         /**
@@ -233,24 +230,20 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
         * 关联id
         */
-        @NotBlank(message = "关联id不能为空")
         @Size(max = 19,message = "关联id最大长度不能超过19位")
         private String refId;
 
         /**
         * 关联类型
         */
-        @NotBlank(message = "关联类型不能为空")
         @Size(max = 32,message = "关联类型最大长度不能超过32位")
         private String refType;
 
         /**
         * 类型，new 新品、conventional常规品
         */
-        @NotBlank(message = "类型，new 新品、conventional常规品不能为空")
         @Size(max = 32,message = "类型，new 新品、conventional常规品最大长度不能超过32位")
         private String type;
-
     }
 
 

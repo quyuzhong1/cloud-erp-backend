@@ -20,10 +20,10 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
     * 修改
     * @author will
     * @date: 2024-08-23
-    * @param updateDTO
+    * @param updateList
     * @return
     */
-    Boolean update(CfgRuleCommonDTO.UpdateDTO updateDTO);
+    Boolean update(List<CfgRuleCommonDTO.UpdateDTO> updateList);
 
     /**
      * 查询详情
