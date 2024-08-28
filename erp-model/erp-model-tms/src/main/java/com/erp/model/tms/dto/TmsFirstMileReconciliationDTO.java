@@ -148,6 +148,14 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 对账月份【导出使用】
          */
         private String reconciliationMonthStr;
+        /**
+         * 对账次数
+         */
+        private Integer reconciliationCount;
+        /**
+         * 对账次数名称【导出使用】
+         */
+        private String reconciliationCountName;
 
         /**
          * 对账周期

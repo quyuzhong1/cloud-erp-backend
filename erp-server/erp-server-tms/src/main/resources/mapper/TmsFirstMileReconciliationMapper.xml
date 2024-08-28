@@ -64,6 +64,7 @@
         COALESCE(tfmrd.actualDeclareCost, 0) AS actualDeclareCost,
         COALESCE(tfmrd.actualOtherCost, 0) AS actualOtherCost,
         COALESCE(tfmrd.actualOtherTaxCost, 0) AS actualOtherTaxCost,
+        tfmrd.reconciliationCount AS reconciliationCount,
         COALESCE(tfmrd.totalCost, 0) AS totalCostDetail
     </sql>
 
@@ -77,6 +78,7 @@
             SUM(billing_weight) AS actualBillingWeight,
             MAX(actual_weight_unit) AS actualWeightUnit,
             MAX(billing_weight_unit) AS actualBillingWeightUnit,
+            MAX(reconciliation_count) AS reconciliationCount,
             SUM(shipping_cost) AS actualShippingCost,
             SUM(declare_cost) AS actualDeclareCost,
             SUM(other_cost) AS actualOtherCost,
@@ -126,6 +128,7 @@
         SUM(declare_cost) AS actualDeclareCost,
         SUM(other_cost) AS actualOtherCost,
         SUM(other_tax_cost) AS actualOtherTaxCost,
+        MAX(reconciliation_count) AS reconciliationCount,
         SUM(total_logistics_cost) AS totalCost,
         main_id
         FROM

@@ -292,7 +292,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             data.setStatusName(ReconciliationStatusEnum.getName(data.getStatus()));
 
             if (Objects.nonNull(data.getReconciliationCount())){
-                if (Objects.equals(1, data.getReconciliationCount())){
+                if (Objects.equals(0, data.getReconciliationCount())){
+                    data.setReconciliationCountName("");
+                }else if (Objects.equals(1, data.getReconciliationCount())){
                     data.setReconciliationCountName("首次对账");
                 }else {
                     data.setReconciliationCountName(data.getReconciliationCount()+"次对账");
@@ -531,7 +533,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 viewDTO.setStatusName(ReconciliationStatusEnum.TO_BE_CONFIRM.getName());
             }
             if (Objects.nonNull(viewDTO.getReconciliationCount())){
-                if (Objects.equals(1, viewDTO.getReconciliationCount())){
+                if (Objects.equals(0, viewDTO.getReconciliationCount())){
+                    viewDTO.setReconciliationCountName("");
+                }else if (Objects.equals(1, viewDTO.getReconciliationCount())){
                     viewDTO.setReconciliationCountName("首次对账");
                 }else {
                     viewDTO.setReconciliationCountName(viewDTO.getReconciliationCount()+"次对账");

@@ -178,6 +178,10 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 对账月份（取值为对账周期末值所在月份）
          */
         private LocalDate reconciliationMonth;
+        /**
+         * 对账月份【导出使用】
+         */
+        private String reconciliationMonthStr;
 
         public String getActualWeightWithUnit() {
             BigDecimal actualWeight = this.getActualWeight();

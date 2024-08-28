@@ -44,6 +44,7 @@ import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -1780,10 +1781,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //箱子明细信息
         List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
         Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
+        //国家名称填充
+        List<DictCountryDTO.ListDTO> listDTOS = sysUserFeign.countryList();
         //设置箱子明细信息
         result.forEach(v->{
             List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.get(v.getOutstockId());
             v.setPackingDTOList(list);
+            if (StrUtil.isNotBlank(v.getToCountry())){
+                DictCountryDTO.ListDTO listDTO = listDTOS.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), v.getToCountry())).findFirst().orElse(null);
+                if (Objects.nonNull(listDTO)){
+                    v.setToCountryName(listDTO.getNameCn());
+                }
+            }
         });
         return result;
     }

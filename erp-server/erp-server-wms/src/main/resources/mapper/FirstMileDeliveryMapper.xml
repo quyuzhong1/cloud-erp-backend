@@ -178,7 +178,7 @@
 
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
-        fmd.id,
+        pt.source_id as id,
         wc.id as boxId,
         wc.box_no,
         concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
@@ -190,13 +190,12 @@
         wcs.box_height as height,
         wcs.size_unit as sizeUnit,
         (select string_agg(wcd.sku_no, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku
-        FROM first_mile_delivery fmd
-        INNER JOIN packing_task pt on pt.source_id = fmd.id and pt.is_deleted = false
+        FROM packing_task pt
         INNER JOIN wms_carton wc ON pt.id = wc.packing_task_id AND wc.is_deleted = FALSE
         INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
-        WHERE fmd.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
-            AND fmd.id IN
+            AND pt.source_id IN
             <foreach collection="ids" item="id" open="(" close=")" separator=",">
                 #{id}
             </foreach>
