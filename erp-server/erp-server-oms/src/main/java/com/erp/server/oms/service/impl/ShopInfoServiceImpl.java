@@ -1439,6 +1439,16 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
+    public List<ShopDTO.ListDTO> listSelect(ShopDTO.SelectDTO dto) {
+        PagingDTO<ShopDTO.SelectDTO> pagingParamDTO = new PagingDTO<>();
+        pagingParamDTO.setParams(dto);
+        pagingParamDTO.setPageSize(-1);
+        PagingVO<ShopDTO.ListDTO> resultList = this.pagingSelect(pagingParamDTO);
+        List<ShopDTO.ListDTO> list = (List<ShopDTO.ListDTO>) resultList.getList();
+        return list;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();

@@ -334,4 +334,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return PagingVO<AreaDTO>
      */
     PagingVO<ShopDTO.AreaDTO> pagingSelectArea(PagingDTO<ShopDTO.AreaParamDTO> dto);
+    /**
+     * 店铺下拉
+     * @author will
+     * @date 2024/8/28 18:28
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<ShopDTO.ListDTO> listSelect(ShopDTO.SelectDTO dto);
 }

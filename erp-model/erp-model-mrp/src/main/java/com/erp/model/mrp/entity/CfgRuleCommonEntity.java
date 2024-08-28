@@ -3,11 +3,13 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.List;
 
 
 /**
@@ -94,6 +96,12 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
      */
     @TableField("is_required")
     private Boolean isRequired;
+
+    /**
+     * 子级信息
+     */
+    @TableField(exist = false)
+    List<CfgRuleCommonDTO.UpdateDTO> childrenList;
 
     public static final String INDEX = "index";
 

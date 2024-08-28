@@ -3,6 +3,7 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -133,12 +134,12 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
             //是否默认，默认保存则清空默认数据
             Boolean isDefault = updateDTO.getIsDefault();
             if (isDefault) {
-                entity.setId(null);
+                entity.setId(IdWorker.getIdStr());
                 entity.setIsDefault(Boolean.FALSE);
             }
             resultList.add(entity);
             //子级赋值
-            getChildrenEntity(updateDTO,resultList,isDefault);
+            getChildrenEntity(entity,resultList,isDefault);
         }
         return resultList;
     }
@@ -147,21 +148,23 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
      * 子级赋值
      * @author will
      * @date 2024/8/28 10:04
-     * @param updateDTO
+     * @param entity
      * @param resultList
      */
-    private void getChildrenEntity(CfgRuleCommonDTO.UpdateDTO updateDTO,List<CfgRuleCommonEntity> resultList,Boolean isDefault) {
-        if (CollectionUtils.isEmpty(updateDTO.getChildrenList())) {
+    private void getChildrenEntity(CfgRuleCommonEntity entity,List<CfgRuleCommonEntity> resultList,Boolean isDefault) {
+        if (CollectionUtils.isEmpty(entity.getChildrenList())) {
             return;
         }
-        for (CfgRuleCommonDTO.UpdateDTO childUpdateDTO :updateDTO.getChildrenList()) {
+        for (CfgRuleCommonDTO.UpdateDTO childUpdateDTO :entity.getChildrenList()) {
             CfgRuleCommonEntity childEntity = BeanMapperUtils.map(CfgRuleCommonEntity.class, childUpdateDTO);
             if (isDefault) {
-                childEntity.setId(null);
+                childEntity.setId(IdWorker.getIdStr());
                 childEntity.setIsDefault(Boolean.FALSE);
+                //父级Id
+                childEntity.setParentId(entity.getId());
             }
             resultList.add(childEntity);
-            getChildrenEntity(childUpdateDTO,resultList,isDefault);
+            getChildrenEntity(childEntity,resultList,isDefault);
         }
     }
 }

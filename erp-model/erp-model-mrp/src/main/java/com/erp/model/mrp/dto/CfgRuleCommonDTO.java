@@ -36,6 +36,12 @@ public class CfgRuleCommonDTO implements Serializable {
         private String  id;
 
         /**
+         * 序号
+         */
+        private String  index;
+
+
+        /**
          * 主表id
          */
         private String  parentId;

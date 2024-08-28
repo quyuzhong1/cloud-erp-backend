@@ -522,16 +522,16 @@ public class ShopInfoController extends BaseController {
     }
 
     /**
-     * 店铺远程分页下拉查询
+     * 店铺下拉查询
      * @author will
      * @date 2024/8/28 16:50
      * @param dto
      * @return ApiResult<PagingVO<ListDTO>>
      */
-    @PostMapping("/pagingSelect")
-    public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody PagingDTO<ShopDTO.SelectDTO> dto) {
-        PagingVO<ShopDTO.ListDTO> pagingVO = shopInfoService.pagingSelect(dto);
-        return success(pagingVO);
+    @PostMapping("/listSelect")
+    public ApiResult<List<ShopDTO.ListDTO>> listSelect(@RequestBody ShopDTO.SelectDTO dto) {
+        List<ShopDTO.ListDTO> list = shopInfoService.listSelect(dto);
+        return success(list);
     }
 
 
