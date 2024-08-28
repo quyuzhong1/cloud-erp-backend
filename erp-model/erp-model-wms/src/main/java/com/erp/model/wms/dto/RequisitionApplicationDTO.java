@@ -597,10 +597,6 @@ public class RequisitionApplicationDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
-         * 服务商code
-         */
-        private String provideCode;
-        /**
          * 货件号
          */
         private String fbaShipmentCode;
@@ -608,6 +604,20 @@ public class RequisitionApplicationDTO implements Serializable {
          * 货件id
          */
         private String shipmentId;
+
+        /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 装箱状态名称
+         */
+        private String packingStatusName;
+        /**
+         * 装箱数量
+         */
+        private Integer packingQty;
     }
 
     /**

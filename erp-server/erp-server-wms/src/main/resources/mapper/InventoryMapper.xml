@@ -647,7 +647,9 @@
         </if>
         GROUP BY it.warehouse_id, it.sku_id
         ) t
-        WHERE t.realQty > 0
+        <if test="params.zeroInventory">
+            WHERE t.realQty > 0
+        </if>
     </sql>
     <select id="pageInventoryWarehouseByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseDTO">
         <include refid="inventoryWarehouseByParam"/>
@@ -703,7 +705,9 @@
         </if>
         GROUP BY it.sku_id
         ) t
-        WHERE t.realQty > 0
+        <if test="params.zeroInventory">
+            WHERE t.realQty > 0
+        </if>
     </select>
     <select id="listInventoryWarehouseBySkuId"
             resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseLocationDTO">
@@ -816,7 +820,9 @@
             </if>
             GROUP BY it.warehouse_id, it.org_id, it.sku_id, it.warehouse_location
         ) t
-        WHERE t.realQty > 0
+        <if test="params.zeroInventory">
+            WHERE t.realQty > 0
+        </if>
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.InventoryEntity">
         SELECT

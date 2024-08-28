@@ -650,8 +650,8 @@
             resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$ListTransportPagingDTO">
       select warehouse_id,warehouse_name,sku_id,sku_no,source_type,source_code,transport_qty from (
         select max(warehouse_id) as warehouse_id,max(warehouse_name) as warehouse_name ,max(sku_id) as sku_id,max(sku_no) as sku_no,
-            max(source_type) as source_type,max(source_code) as source_code,sum(qty) as transport_qty,max(trade_time) as trade_time from (
-                select tf.warehouse_id,tf.warehouse_name,tf.trade_time,tf.sku_id,tf.sku_no,tf.qty,
+            max(source_type) as source_type,max(source_code) as source_code,sum(qty) as transport_qty,max(trade_time) as trade_time, max(bill_date) as bill_date  from (
+                select tf.warehouse_id,tf.warehouse_name,tf.trade_time,tf.bill_date,tf.sku_id,tf.sku_no,tf.qty,
                 case when tf.source_type in('instockForcast','warehouseReceive','purchaseStockIn','purchaseReturnOrder') then 'purchase'
                          when tf.source_type in('transferOut','transferIn') then 'transfer'
                          else '' end

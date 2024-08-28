@@ -32,9 +32,11 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -42,25 +44,24 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
-import com.erp.server.wms.service.InventoryTransCoreService;
-import com.erp.server.wms.service.SoReturnInstockDetailService;
-import com.erp.server.wms.service.SoReturnInstockService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -95,6 +96,12 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
+    @Resource
+    private OtherInstockService otherInstockService;
+
+    @Lazy
+    @Resource
+    private SyncSoReturnService service;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -209,19 +216,61 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     @DataIdempotent(keyIdName = "dto.thirdCode")
     public void syncWdtReturnOrderToSoReturn(WdtReturnOrderDTO dto) {
-        SoReturnInstockEntity inStockEntity = BeanMapperUtils.map(SoReturnInstockEntity.class, dto);
-        List<SoReturnInstockDetailEntity> detailList = BeanMapperUtils.copyList(SoReturnInstockDetailEntity.class, dto.getDetailList());
+        //入库时间根据查询其他入库单是否已存在，存在取修改时间，否则取审核时间
+        OtherInstockEntity dbOtherInstockEntity = otherInstockService.getByThirdCode(dto.getThirdCode(), InventoryDirectionEnum.ORDINARY);
+        LocalDateTime approveTime = Objects.nonNull(dbOtherInstockEntity)?dto.getModified():dto.getApproveTime();
+        if(Objects.isNull(approveTime)){
+            throw new ServiceException(StrUtil.format("{}旺店通退货入库单审核时间为空",dto.getThirdCode()));
+        }
         SoReturnInstockEntity entity = soReturnInstockService.getOne(Wrappers.<SoReturnInstockEntity>lambdaQuery()
-                .eq(SoReturnInstockEntity::getThirdCode, inStockEntity.getThirdCode()));
+                .eq(SoReturnInstockEntity::getThirdCode, dto.getThirdCode()));
         //单据已经存在
         if (ObjectUtil.isNotEmpty(entity)){
-            return;
+            if(Objects.nonNull(entity.getApproveTime()) && approveTime.isAfter(entity.getApproveTime())){
+                //反审核重新生成
+                SoReturnInstockEntity inStockEntity = this.buildWdtReturnStock(dto,approveTime);
+                service.disApproveAndGenerate(entity,dbOtherInstockEntity,inStockEntity);
+            }
+        }else{
+            SoReturnInstockEntity inStockEntity = this.buildWdtReturnStock(dto,approveTime);
+            service.saveWdtReturnData(inStockEntity,dbOtherInstockEntity);
         }
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
-        inStockEntity.setCode(code);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveWdtReturnData(SoReturnInstockEntity inStockEntity,OtherInstockEntity dbOtherInstockEntity) {
+        //保存退货入库单和明细
+        soReturnInstockService.save(inStockEntity);
+        soReturnInstockDetailService.saveBatch(inStockEntity.getDetailEntityList());
+        //退库存
+        inventoryTransCore(Collections.singletonList(inStockEntity));
+        //推送金蝶
+        sendPushTask(Collections.singletonList(inStockEntity), SyncOperateEnum.OPERATE_APPROVE.getCode());
+        //如果其他入库单已存在，生成一个相反的入库单
+        if(Objects.nonNull(dbOtherInstockEntity)){
+            OtherInstockEntity dbReturnOtherInstockEntity = otherInstockService.getByThirdCode(dbOtherInstockEntity.getThirdCode(), InventoryDirectionEnum.RETURN_GOODS);
+            if(Objects.isNull(dbReturnOtherInstockEntity)){
+                dbOtherInstockEntity.setBillDate(inStockEntity.getBillDate());
+                dbOtherInstockEntity.setApproveTime(inStockEntity.getApproveTime());
+                otherInstockService.generateOpposite(dbOtherInstockEntity,inStockEntity.getCode() );
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void disApproveAndGenerate(SoReturnInstockEntity entity, OtherInstockEntity dbOtherInstockEntity, SoReturnInstockEntity newEntity) {
+        soReturnInstockService.disApprove(entity,Boolean.TRUE);
+        soReturnInstockService.delete(Arrays.asList(entity.getId()));
+        service.saveWdtReturnData(newEntity,dbOtherInstockEntity);
+    }
+
+    private SoReturnInstockEntity buildWdtReturnStock(WdtReturnOrderDTO dto, LocalDateTime approveTime) {
+        SoReturnInstockEntity inStockEntity = BeanMapperUtils.map(SoReturnInstockEntity.class, dto);
+        List<SoReturnInstockDetailEntity> detailList = BeanMapperUtils.copyList(SoReturnInstockDetailEntity.class, dto.getDetailList());
         //查询旺店通对应系统店铺
         List<ThirdMappingEntity> shop = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
@@ -231,6 +280,9 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, dto.getShopName());
         }
         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
+        if(Objects.isNull(shopInfo)){
+            throw new ServiceException("erp店铺信息为空");
+        }
         //查询旺店通对应系统仓库
         List<ThirdMappingEntity> warehouseList = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
                 .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.WAREHOUSE.getCode())
@@ -240,12 +292,20 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, dto.getWarehouseName());
         }
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
+        //组织信息
+        SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouse.getOrgId());
+
+        List<String> skuList = detailList.stream().map(SoReturnInstockDetailEntity::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuList);
+
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
+        inStockEntity.setCode(code);
+        inStockEntity.setApproveTime(approveTime);
+        inStockEntity.setBillDate(approveTime.toLocalDate());
         if (Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
             //暂时使用空仓位
             detailList.forEach(v -> v.setWarehouseLocation(""));
         }
-        //组织信息
-        SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouse.getOrgId());
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
         inStockEntity.setSalesOrgId(shopInfo.getSalesOrgId());
         inStockEntity.setSalesOrgName(shopInfo.getSalesOrgName());
@@ -259,8 +319,6 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             inStockEntity.setSellerId(customerInfo.getSellerId());
             inStockEntity.setSellerName(customerInfo.getSellerName());
         }
-        List<String> skuList = detailList.stream().map(SoReturnInstockDetailEntity::getSkuNo).collect(Collectors.toList());
-        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuList);
         //金蝶sku和plm对应不上跳过
         if (CollectionUtils.isEmpty(skuNoList)) {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, StringUtil.join(skuNoList, ","));
@@ -274,14 +332,15 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
             detailEntity.setMainId(inStockEntity.getId());
             detailEntity.setSkuId(skuVO.getSkuId());
+            if(Objects.nonNull(detailEntity.getAmount())){
+                detailEntity.setPrice(detailEntity.getAmount().divide(new BigDecimal(detailEntity.getRealQty()),4, RoundingMode.HALF_UP));
+            }
+            if(WmsConstant.WDT_NULL_LOCATION.contains(detailEntity.getWarehouseLocation())){
+                detailEntity.setWarehouseLocation("");
+            }
         }
-        //保存退货入库单和明细
-        soReturnInstockService.save(inStockEntity);
-        soReturnInstockDetailService.saveBatch(detailList);
-        //退库存
-        inventoryTransCore(Collections.singletonList(inStockEntity));
-        //推送金蝶
-        sendPushTask(Collections.singletonList(inStockEntity), SyncOperateEnum.OPERATE_APPROVE.getCode());
+        inStockEntity.setDetailEntityList(detailList);
+        return inStockEntity;
     }
 
     private void sendPushTask(List<SoReturnInstockEntity> list, String operate) {
@@ -292,12 +351,12 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             resultList.add(pushTaskEntity);
         });
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(resultList);
-            }
-        });
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(resultList);
+//            }
+//        });
     }
 
     /**

@@ -26,6 +26,11 @@ public class FeignBuilder {
     
     private Class<?> clazz;
     
+    public <T extends BaseEntity<T>> FeignBuilder eq(String name, Object value) {
+        queryParams.add(new QueryParam(QueryTypeEnum.EQ, name, value));
+        return this;
+    }
+    
     public <T extends BaseEntity<T>> FeignBuilder eq(SFunction<T, ?> function, Object value) {
         queryParams.add(new QueryParam(QueryTypeEnum.EQ, getColumn(function), value));
         return this;
@@ -50,6 +55,10 @@ public class FeignBuilder {
         return this;
     }
 
+    public <T extends BaseEntity<T>> FeignBuilder in(String name, Object... values) {
+        queryParams.add(new QueryParam(QueryTypeEnum.IN, name, values));
+        return this;
+    }
     
     public <T extends BaseEntity<T>> FeignBuilder in(SFunction<T, ?> function, Object... values) {
         queryParams.add(new QueryParam(QueryTypeEnum.IN, getColumn(function), values));

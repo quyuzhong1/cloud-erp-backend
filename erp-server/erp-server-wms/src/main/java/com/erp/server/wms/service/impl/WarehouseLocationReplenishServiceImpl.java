@@ -24,6 +24,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
@@ -166,7 +167,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
                         .set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
                         .set("abnormal_cause", "")
-                        .eq("id", sourceId));
+                        .eq("id", sourceId)
+                        .eq("status",SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode())
+                        .eq("abnormal_cause", AbnormalCauseEnum.GENERATION_WAVE.getCode()));
             }
         }
 
@@ -253,6 +256,15 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("dict_inventory_status", "usable")
                     .orderByAsc("qty")
             );
+
+            if(pickInventoryList.isEmpty()){
+                WarehouseLocationReplenishEntity replenishItem = new WarehouseLocationReplenishEntity();
+                BeanMapper.copy(entity, replenishItem);
+                replenishItem.setSuggestQty(dto.getQty());
+                this.save(replenishItem);
+                return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);
+            }
+
             //所有的仓位都补货
             List<WarehouseLocationReplenishEntity> replenishList = new ArrayList<>();
             for (InventoryEntity inventoryEntity : pickInventoryList) {
@@ -382,7 +394,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
                         .set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
                         .set("abnormal_cause", "")
-                        .eq("id", fullEntity.getSourceId()));
+                        .eq("id", fullEntity.getSourceId())
+                        .eq("status",SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode())
+                        .eq("abnormal_cause", AbnormalCauseEnum.GENERATION_WAVE.getCode()));
             }
         }
 

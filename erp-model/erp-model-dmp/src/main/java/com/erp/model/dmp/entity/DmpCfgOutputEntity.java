@@ -54,6 +54,11 @@ public class DmpCfgOutputEntity extends BaseEntity<DmpCfgOutputEntity> {
     */
     @TableField("extend_json")
     private String extendJson;
+    /**
+     * 推送速率，一秒推送个数，默认1秒推送3个，小于0不限速
+     */
+    @TableField("push_rate")
+    private Integer pushRate;
     
     /**
      * 输出处理类

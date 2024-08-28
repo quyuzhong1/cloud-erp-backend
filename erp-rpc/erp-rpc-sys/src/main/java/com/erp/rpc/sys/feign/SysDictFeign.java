@@ -86,4 +86,12 @@ public interface SysDictFeign {
 
     @GetMapping("/feign/dict/kingdee/listByTypeName")
     List<DictKingdeeDTO.ListDTO> listByTypeName(@RequestParam(value = "typeName")String typeName);
+
+
+    /**
+     * 根据国家id或三字码 集合 获取到国家列表
+     */
+    @PostMapping("/feign/dictCountry/listCountryByIdsOrAlpha3")
+    List<DictCountryEntity> listCountryByIdsOrAlpha3(@RequestBody List<String> code);
+
 }

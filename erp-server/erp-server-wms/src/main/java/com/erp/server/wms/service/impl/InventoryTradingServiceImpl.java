@@ -21,6 +21,7 @@ import com.erp.model.wms.dto.inventory.InventoryTransactionDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.InventoryHisEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.service.*;
@@ -92,7 +93,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             // 检查库存是否充足
             this.checkInventoryList(transactionList);
             // 4-检查每日库存是否充足
-            this.checkInventoryHisList(transactionList);
+//            this.checkInventoryHisList(transactionList);
             // 5-处理库存更新逻辑
             for (InventoryTransactionDTO transactionDTO : transactionList) {
                 this.doTransaction(transactionDTO,approveType.equals(InventoryTradingService.APPROVE));
@@ -311,13 +312,20 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             return;
         }
         /**
-         * 盘盈盘亏单出库不校验
+         * 1. 调拨单：手动创建、调拨申请下推
+         * 2. 其他出库单：
+         * 3. 采购退货单：
+         * 4. 委外发料：正常领料、超出领料
+         * 5. 加工单：组装、拆卸
+         *
          */
+        List<String> typeList = Arrays.asList(InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode(),InventorySourceTypeEnum.OTHER_INSTOCK.getCode(),InventorySourceTypeEnum.PURCHASE_RETURN_ORDER.getCode()
+                ,InventorySourceTypeEnum.RECEIVE_MATERIAL.getCode(),InventorySourceTypeEnum.RETURN_MATERIAL.getCode(),InventorySourceTypeEnum.MACHINE_INFO.getCode());
         //以上类型出可用时需要进行分配数量校验
         List<InventoryTransactionDTO> checkTransactionList = transactionList.stream().filter(obj ->
                         MathUtil.compareTo(obj.getQty(), MathUtil.ZERO ) < MathUtil.ZERO
                         && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus())
-                        && !(InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode().equals(obj.getSourceType())))
+                        && (typeList.contains(obj.getSourceType()) || Arrays.asList(InventoryBusinessTypeEnum.DIRECT_ALLOCATE.getCode(),InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode()).contains(obj.getDictBizType())))
                         .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(checkTransactionList)) {
             return;
@@ -334,7 +342,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
         dto.setWarehouseIdList(warehouseIdList);
         dto.setSkuIdList(skuIdList);
-        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode()));
+        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
 
         for (InventoryTransactionDTO transactionDTO : checkTransactionList) {
@@ -345,11 +353,11 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                 continue;
             }
             //仓库可用库存
-            Integer usableInventoryTotal = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),transactionDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(),transactionDTO.getSkuId()))
+            Integer realInventoryTotal = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),transactionDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(),transactionDTO.getSkuId()))
                     .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
-            log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",transactionDTO.getWarehouseName(),transactionDTO.getSkuNo(),virtualQty,usableInventoryTotal);
-            if (Math.abs(transactionDTO.getQty()) > usableInventoryTotal - virtualQty) {
-                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),virtualQty,usableInventoryTotal - virtualQty);
+            log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",transactionDTO.getWarehouseName(),transactionDTO.getSkuNo(),virtualQty,realInventoryTotal);
+            if (Math.abs(transactionDTO.getQty()) > realInventoryTotal - virtualQty) {
+                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),virtualQty,realInventoryTotal - virtualQty);
             }
         }
     }

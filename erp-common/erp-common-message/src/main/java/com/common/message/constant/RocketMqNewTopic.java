@@ -109,6 +109,17 @@ public class RocketMqNewTopic {
     public static final String DMP_KINGDEE_SHOP_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_shop_to_dmp_topic";
 
     /**
+     * 新中台旺店通预入库
+     */
+    public static final String DMP_WDT_PRE_STOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_pre_stock_to_wms_topic";
+
+    /**
+     * 新中台平台库存
+     */
+    public static final String DMP_FBA_INVENTORY_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inventory_to_wms_topic";
+
+
+    /**
      * 新中台领星店铺
      */
     public static final String DMP_LX_SHOP_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_shop_to_dmp_topic";
