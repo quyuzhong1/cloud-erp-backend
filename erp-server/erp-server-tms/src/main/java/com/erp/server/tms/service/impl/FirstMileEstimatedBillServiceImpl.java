@@ -48,6 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -137,7 +138,13 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public BatchResultDTO updateStatus(String id, String status) {
-        this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).eq(FirstMileEstimatedBillEntity::getId, id).update();
+        if(status.equals(ConfirmStatusEnum.CONFIRMED.getCode())){
+            this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).set(FirstMileEstimatedBillEntity::getConfirmTime, LocalDateTime.now()).eq(FirstMileEstimatedBillEntity::getId, id).update();
+        }
+        if(status.equals(ConfirmStatusEnum.TO_BE_CONFIRM.getCode())){
+            this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).set(FirstMileEstimatedBillEntity::getConfirmTime, "").eq(FirstMileEstimatedBillEntity::getId, id).update();
+        }
+
         return BatchResultDTO.success(id, id);
     }
 
