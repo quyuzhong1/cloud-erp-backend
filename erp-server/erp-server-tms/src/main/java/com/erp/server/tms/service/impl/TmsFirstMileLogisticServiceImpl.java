@@ -1283,32 +1283,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> generateReconciliation(TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto) {
-        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // 当前添加的主账单记录
-        Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
-        for (String id : ids) {
-            BatchResultDTO updateResult;
-            try {
-                updateResult = this.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap,ReconciliationTypeEnum.ACTUAL.getCode());
-            } catch (Exception e) {
-                log.error("头程对账生成失败", e);
-                LogisticsBillEntity entity = this.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    updateResult = BatchResultDTO.fail(id, id, "B物流单不存在, 头程对账生成失败");
-                    resultDTOS.add(updateResult);
-                    continue;
-                }
-                updateResult = BatchResultDTO.fail(id, entity.getTransportNo(), e.getMessage());
-            }
-            resultDTOS.add(updateResult);
-        }
-        return resultDTOS;
-    }
-
-    @Override
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) throws Exception{
         //物流信息
         FmLogisticsBillExcelListener billListener = new FmLogisticsBillExcelListener();

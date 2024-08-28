@@ -1786,6 +1786,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //设置箱子明细信息
         result.forEach(v->{
             List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.get(v.getOutstockId());
+            if (CollectionUtils.isEmpty(list) && StrUtil.isNotBlank(v.getSourceId())){
+                list = packingDetailMap.get(v.getSourceId());
+            }
             v.setPackingDTOList(list);
             if (StrUtil.isNotBlank(v.getToCountry())){
                 DictCountryDTO.ListDTO listDTO = listDTOS.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), v.getToCountry())).findFirst().orElse(null);
