@@ -26,6 +26,7 @@ import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.cost.CostDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
+import com.sdk.oms.mercado.dto.mercado.order.OrdersBean;
 import com.sdk.oms.mercado.dto.mercado.order.ResultsBean;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
@@ -73,8 +74,9 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
         System.out.println(apiResult.getData());*/
 
 
+
         String url = MercadoConstant.URL;
-        String path = "/marketplace/orders/search";
+        String path = "/marketplace/orders/2000006225879447";
         //每次最多获取200条
         Integer pageSize = 200;
         //当前页数
@@ -90,13 +92,9 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
             HashMap<String, Object> params = new HashMap<>(2);
 //            params.put("seller.id", "1511265855");
 //            params.put("seller.id", shopInfoDTO.getUserId());
-            params.put("last_updated.from", "2024-01-01");
-            params.put("last_updated.to", "2024-08-26");
-            params.put("limit", pageSize);
-            params.put("offset", pageNo);
             //设置请求头
             Map<String, String> headerMap = new HashMap<>(1);
-            headerMap.put("Authorization", "Bearer " + "APP_USR-3457166802805723-082602-401a2915b31722054e3e957d1cbf384e-1509269799");
+            headerMap.put("Authorization", "Bearer " + "APP_USR-3457166802805723-082902-95af1fbcbc57490cafb6081deaca410e-1509269799");
 
             //拉取数据
             ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
@@ -118,6 +116,13 @@ public class MercadoOrderHandler extends AbstractOrderHandler<MercadoOrderDTO, P
 //            OrderDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
             if (CollectionUtils.isEmpty(orderDTO.getResults())) {
                 break;
+            }
+
+            for (ResultsBean result : orderDTO.getResults()) {
+                for (OrdersBean order : result.getOrders()) {
+                    System.out.println(order.getFid());
+                }
+
             }
             pageCount = (orderDTO.getPaging().getTotal() + pageSize - 1) / pageSize;
             pageNo++;
