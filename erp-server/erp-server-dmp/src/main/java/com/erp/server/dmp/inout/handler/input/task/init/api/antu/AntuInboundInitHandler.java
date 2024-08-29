@@ -59,7 +59,7 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
 
             List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(OmsPlatformEnum.OMS_ANTU.getCode()));
             if (CollUtil.isEmpty(overseasProviderEntityList)) {
-                throw new ServiceException("安兔授权信息不存在");
+                return Collections.emptyList();
             }
             ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
             //列表数据较多情况下，进行分割集合
