@@ -29,4 +29,11 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      * @return ViewDTO
      */
     CfgRuleStockUpDTO.ViewDTO view(String platformType);
+    /**
+     * 根据来源id删除
+     * @author will
+     * @date 2024/8/29 16:13
+     * @param refId
+     */
+    void deleteByRefId(String refId);
 }

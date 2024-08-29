@@ -22,7 +22,7 @@
         <result column="platform" property="platform" />
         <result column="brand_id" property="brandId" />
         <result column="category_id" property="categoryId" />
-        <result column="restock" property="restock" />
+        <result column="replenishment_type" property="replenishmentType" />
         <result column="remark" property="remark" />
     </resultMap>
 

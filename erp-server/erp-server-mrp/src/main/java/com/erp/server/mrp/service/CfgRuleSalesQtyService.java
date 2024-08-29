@@ -40,5 +40,11 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @return ViewDTO
      */
     CfgRuleSalesQtyDTO.ViewDTO view(String platformType);
-
+    /**
+     * 根据来源id删除
+     * @author will
+     * @date 2024/8/29 16:16
+     * @param refId
+     */
+    void deleteByRefId(String refId);
 }

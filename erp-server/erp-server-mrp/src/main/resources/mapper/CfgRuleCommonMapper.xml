@@ -55,6 +55,7 @@
                 and  crc.remark != 'isEnableOverseas'
             </if>
         </where>
+        order by crc.index asc
     </select>
 
     <!-- 查询默认配置 -->
@@ -74,6 +75,7 @@
                 and  crc.remark != 'isEnableOverseas'
             </if>
         </where>
+        order by crc.index asc
     </select>
 
 

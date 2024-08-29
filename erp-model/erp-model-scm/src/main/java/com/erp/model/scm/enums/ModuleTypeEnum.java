@@ -104,7 +104,8 @@ public enum ModuleTypeEnum {
     CFG_RULE_WAVE("92", "波次规则"),
     WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
 
-    CFG_RULE_COMMON("94", "规则设置"),
+    CFG_RULE_COMMON("97", "规则设置"),
+    REPLENISHMENT_SUGGESTION("98", "补货建议"),
 
     ;
 

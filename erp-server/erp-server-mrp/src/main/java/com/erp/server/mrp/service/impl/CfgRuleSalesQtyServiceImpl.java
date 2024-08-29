@@ -164,6 +164,11 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         return viewDTO;
     }
 
+    @Override
+    public void deleteByRefId(String refId) {
+
+    }
+
     /**
      * 销量信息合并
      * @author will

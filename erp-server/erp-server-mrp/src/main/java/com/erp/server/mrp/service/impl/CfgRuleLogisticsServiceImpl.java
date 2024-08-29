@@ -111,6 +111,11 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         return cfgLogisticsViewList;
     }
 
+    @Override
+    public void deleteByStockUpId(String stockUpId) {
+
+    }
+
     /**
      * 根据id删除
      * @author will

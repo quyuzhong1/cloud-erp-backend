@@ -42,4 +42,11 @@ public interface CfgRuleLogisticsService extends SuperService<CfgRuleLogisticsEn
      * @return List<CfgRuleLogisticsDTO.ViewDTO>
      */
     List<CfgRuleLogisticsDTO.ViewDTO> listViewByStockUpIdList (List<String> stockUpIdList);
+    /**
+     * 根据备货主表id删除
+     * @author will
+     * @date 2024/8/29 16:32
+     * @param stockUpId
+     */
+    void deleteByStockUpId(String stockUpId);
 }

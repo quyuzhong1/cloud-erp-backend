@@ -78,10 +78,16 @@ public class ReplenishmentSuggestionEntity extends BaseEntity<ReplenishmentSugge
     private String categoryId;
 
     /**
-     * 是否补货
+     * 是否补货,normal正常补货，notRestocking暂不补货
      */
-    @TableField("restock")
-    private String restock;
+    @TableField("replenishment_type")
+    private String replenishmentType;
+
+    /**
+     * 补货原因
+     */
+    @TableField("replenishment_remark")
+    private String replenishmentRemark;
 
     /**
      * 备注
