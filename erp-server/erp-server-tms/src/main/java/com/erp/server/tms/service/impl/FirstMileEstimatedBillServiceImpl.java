@@ -1,6 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -36,6 +38,7 @@ import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.TmsCostDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -78,6 +81,9 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     }
 
     private void fillData(List<FirstMileEstimatedBillDTO.View> records) {
+        if(records.isEmpty()){
+            return;
+        }
         List<String> countryCodeList = records.stream().map(item -> item.getToCountry()).distinct().collect(Collectors.toList());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByNames(countryCodeList);
         Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(item -> item.getNameCn(), item2 -> item2.getId()));
@@ -110,7 +116,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 FirstMileEstimatedBillDTO.EstimatedCost otherDTO = estimatedCosts.stream().filter(v -> v.getDictCostCategory().equals(DictCostCategoryEnum.OTHER_COST.getCode())).findFirst().orElse(null);
                 item.setOtherCost(otherDTO != null ? otherDTO.getCostValue() : BigDecimal.ZERO);
                 //总计
-                item.setCostTotal(item.getLogisticsCost().add(item.getCustomsClearanceCost()).add(item.getOtherTaxCost()).add(item.getOtherCost()));
+                BigDecimal total = item.getLogisticsCost().add(item.getCustomsClearanceCost()).add(item.getOtherTaxCost()).add(item.getOtherCost());
+                item.setCostTotal(total);
             }
 
             //预计重量
@@ -215,10 +222,10 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     @Override
     public void exportExcel(FirstMileEstimatedBillDTO.ExportParam dto, HttpServletResponse response) {
         List<FirstMileEstimatedBillDTO.View> viewList;
-        if(! dto.getIds().isEmpty()){
-            viewList = baseMapper.listByParamIds(dto.getIds());
-        }else {
+        if(dto.getIds() == null || ArrayUtils.isEmpty(dto.getIds().toArray())){
             viewList = baseMapper.listByParam(dto);
+        }else {
+            viewList = baseMapper.listByParamIds(dto.getIds());
         }
         fillData(viewList);
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);

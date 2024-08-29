@@ -98,7 +98,7 @@ public class FirstMileEstimatedBillDTO implements Serializable {
         /**
          * 预计费用总计
          */
-        private BigDecimal costTotal;
+        private BigDecimal costTotal = BigDecimal.ZERO;
 
         /**
          * 预计物流运费（总）

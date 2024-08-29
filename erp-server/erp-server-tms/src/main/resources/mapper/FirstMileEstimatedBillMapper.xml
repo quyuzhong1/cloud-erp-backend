@@ -28,6 +28,7 @@
                  left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
         <where>
             ${params.sqlMap.default}
+            and eb.is_deleted = false
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -39,28 +40,28 @@
     </select>
     <select id="listByParamIds" resultType="com.erp.model.tms.dto.FirstMileEstimatedBillDTO$View">
         select eb.id,
-               lb.source_code businessCode,
-               lb.outstock_id outStockId,
-               lb.transport_no transportNo,
-               eb.status,
-               rd.status actualBillStatus,
-               lb.shop_id shopId,
-               lb.shop_name shopName,
-               lb.to_country toCountry,
-               lc.fee_rule feeRule,
-               lbc.id logisticsBillCostId,
-               lbc.currency,
-               lbd.track_status transportStatus,
-               lbd.sign_time signTime,
-               eb.confirm_time confirmTime,
-               eb.create_time createTime,
-               lb.channel_id logisticsChannelId
+                lb.source_code businessCode,
+                lb.outstock_id outStockId,
+                lb.transport_no transportNo,
+                eb.status,
+                lb.shop_id shopId,
+                lb.shop_name shopName,
+                lb.to_country toCountry,
+                lc.fee_rule feeRule,
+                lbc.id logisticsBillCostId,
+                lbc.currency,
+                lbc.reconciliation_status actualBillStatus,
+                lbd.track_status transportStatus,
+                lbd.sign_time signTime,
+                eb.confirm_time confirmTime,
+                eb.create_time createTime,
+                lb.channel_id logisticsChannelId,
+                eb.logistics_bill_id
         from first_mile_estimated_bill eb
-                 inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
-                 left join logistics_channel lc on lb.channel_id = lc.id
-                 left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-                 left join tms_first_mile_reconciliation_detail rd on lb.source_code = rd.source_code and rd.transport_no = lb.transport_no and rd.reconciliation_type = 'actual' and type = 'actual' and rd.is_deleted = false
-                 left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
+                inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
+                left join logistics_channel lc on lb.channel_id = lc.id
+                left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+                left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
         <where>
             eb.id in
             <foreach collection="ids" item="id" open="(" separator="," close=")">
@@ -74,26 +75,27 @@
                 lb.outstock_id outStockId,
                 lb.transport_no transportNo,
                 eb.status,
-                rd.status actualBillStatus,
                 lb.shop_id shopId,
                 lb.shop_name shopName,
                 lb.to_country toCountry,
                 lc.fee_rule feeRule,
                 lbc.id logisticsBillCostId,
                 lbc.currency,
+                lbc.reconciliation_status actualBillStatus,
                 lbd.track_status transportStatus,
                 lbd.sign_time signTime,
                 eb.confirm_time confirmTime,
                 eb.create_time createTime,
-                lb.channel_id logisticsChannelId
+                lb.channel_id logisticsChannelId,
+                eb.logistics_bill_id
         from first_mile_estimated_bill eb
             inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
             left join logistics_channel lc on lb.channel_id = lc.id
             left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-            left join tms_first_mile_reconciliation_detail rd on lb.source_code = rd.source_code and rd.transport_no = lb.transport_no and rd.reconciliation_type = 'actual' and type = 'actual' and rd.is_deleted = false
             left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
         <where>
             ${params.sqlMap.default}
+            and eb.is_deleted = false
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -109,23 +111,23 @@
                 lb.outstock_id outStockId,
                 lb.transport_no transportNo,
                 eb.status,
-                rd.status actualBillStatus,
                 lb.shop_id shopId,
                 lb.shop_name shopName,
                 lb.to_country toCountry,
                 lc.fee_rule feeRule,
                 lbc.id logisticsBillCostId,
                 lbc.currency,
+                lbc.reconciliation_status actualBillStatus,
                 lbd.track_status transportStatus,
                 lbd.sign_time signTime,
                 eb.confirm_time confirmTime,
                 eb.create_time createTime,
-                lb.channel_id logisticsChannelId
+                lb.channel_id logisticsChannelId,
+                eb.logistics_bill_id
         from first_mile_estimated_bill eb
             inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
             left join logistics_channel lc on lb.channel_id = lc.id
             left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-            left join tms_first_mile_reconciliation_detail rd on lb.source_code = rd.source_code and rd.transport_no = lb.transport_no and rd.reconciliation_type = 'actual' and type = 'actual' and rd.is_deleted = false
             left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
         <where>
             eb.is_deleted = false
@@ -164,8 +166,9 @@
         from first_mile_estimated_bill eb
             left join logistics_bill_cost lbc on lbc.logistics_bill_id = eb.logistics_bill_id and lbc.is_deleted = false
         <where>
+            eb.is_deleted = false
             <if test="actualStatus != null and actualStatus != ''">
-                lbc.reconciliation_status = #{actualStatus}
+                and lbc.reconciliation_status = #{actualStatus}
             </if>
             <if test="estimatedStatus != null and estimatedStatus != ''">
                 and eb.status = #{estimatedStatus}
