@@ -24,9 +24,15 @@ public class FirstMileEstimatedQueryHandler extends AbstractQueryHandler {
     private String getTabSql(Object value) {
         if (Objects.equals("", value) || Objects.equals("all", value)){
             return this.getQueryAllSql();
-        }else {
-            this.buildDefaultDTO("eb.status", value);
         }
+        if(Objects.equals("toBeConfirm", value)){
+            this.buildDefaultDTO("eb.status", "toBeConfirm");
+            this.buildDefaultDTO("lbc.reconciliation_status", "toBeConfirm");
+        }
+        if(Objects.equals("confirmed", value)){
+            this.buildDefaultDTO("eb.status", "confirmed");
+        }
+
         return super.getSplicingSQL();
     }
 }

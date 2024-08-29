@@ -8,23 +8,23 @@
                lb.outstock_id outStockId,
                lb.transport_no transportNo,
                eb.status,
-               rd.status actualBillStatus,
                lb.shop_id shopId,
                lb.shop_name shopName,
                lb.to_country toCountry,
                lc.fee_rule feeRule,
                lbc.id logisticsBillCostId,
                lbc.currency,
+               lbc.reconciliation_status actualBillStatus,
                lbd.track_status transportStatus,
                lbd.sign_time signTime,
                eb.confirm_time confirmTime,
                eb.create_time createTime,
-               lb.channel_id logisticsChannelId
+               lb.channel_id logisticsChannelId,
+               eb.logistics_bill_id
         from first_mile_estimated_bill eb
                  inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
                  left join logistics_channel lc on lb.channel_id = lc.id
                  left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-                 left join tms_first_mile_reconciliation_detail rd on lb.source_code = rd.source_code and rd.transport_no = lb.transport_no and rd.reconciliation_type = 'actual' and type = 'actual' and rd.is_deleted = false
                  left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
         <where>
             ${params.sqlMap.default}
@@ -140,5 +140,23 @@
                 and eb.status = #{status}
             </if>
         </where>
+    </select>
+    <select id="listEstimatedCost" resultType="com.erp.model.tms.dto.FirstMileEstimatedBillDTO$EstimatedCost">
+        select fmeb.logistics_bill_id logisticsBillId,
+               tcc.dict_cost_attribution dictCostAttribution,
+               tcc.dict_cost_category dictCostCategory,
+               sum(tcd.cost_value) costValue
+        from first_mile_estimated_bill fmeb
+                 inner join logistics_bill_cost lbc on fmeb.logistics_bill_id = lbc.logistics_bill_id
+                 left join tms_cost_detail tcd on lbc.id = tcd.main_id and tcd.is_deleted = false
+                 left join tms_cfg_cost tcc on tcd.cfg_cost_id = tcc.id
+        <where>
+            tcc.dict_cost_attribution = 'firstMile'
+            and fmeb.logistics_bill_id in
+            <foreach collection="logisticsBillIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </where>
+        group by fmeb.logistics_bill_id, tcc.dict_cost_attribution, tcc.dict_cost_category;
     </select>
 </mapper>

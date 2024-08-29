@@ -61,6 +61,7 @@ public class FirstMileEstimatedBillDTO implements Serializable {
 
         /**
          * 实际账单状态（名称）
+         * ReconciliationStatusEnum
          */
         private String actualBillStatusName;
 
@@ -183,6 +184,11 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 物流渠道ID
          */
         private String logisticsChannelId;
+
+        /**
+         * 物流单ID
+         */
+        private String logisticsBillId;
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -237,5 +243,25 @@ public class FirstMileEstimatedBillDTO implements Serializable {
     @Data
     public static class ExportExcel extends View{
 
+    }
+
+    @Data
+    public static class EstimatedCost{
+        /**
+         * 物流单ID
+         */
+        private String logisticsBillId;
+        /**
+         * 费用归属
+         */
+        private String dictCostAttribution;
+        /**
+         * 费用分类
+         */
+        private String dictCostCategory;
+        /**
+         * 分类费用合计
+         */
+        private BigDecimal costValue = BigDecimal.ZERO;
     }
 }
