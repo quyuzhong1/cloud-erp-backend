@@ -265,6 +265,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryCodeList);
         Map<String, String> countryNameMap = countryList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getNameCn()));
         for (FirstMileWeightAllocationDTO.ViewDTO item : records) {
+            if(StringUtils.isBlank(item.getCostAllocationStatus())){
+                item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
+            }
             item.setCostAllocationStatusName(CostAllocationStatusEnum.getName(item.getCostAllocationStatus()));
             item.setAllocationTypeName(WeightAllocationTypeEnum.getName(item.getAllocationType()));
             item.setFeeRuleName(ShippingFeeRuleEnum.getName(item.getFeeRule()));
