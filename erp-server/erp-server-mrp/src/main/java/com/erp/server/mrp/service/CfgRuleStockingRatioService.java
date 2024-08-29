@@ -33,5 +33,13 @@ public interface CfgRuleStockingRatioService extends SuperService<CfgRuleStockin
      */
     List<CfgRuleStockingRatioEntity> listByStockUpIdList (List<String> stockUpIdList);
 
-
+    /**
+     * 根据备货主表id和类型查询
+     * @author will
+     * @date 2024/8/29 11:48
+     * @param stockUpIdList
+     * @param type
+     * @return List<CfgRuleStockingRatioEntity>
+     */
+    List<CfgRuleStockingRatioEntity> listByStockUpIdListAndType (List<String> stockUpIdList,String type);
 }

@@ -1,6 +1,8 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -8,6 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
+import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleLogisticsDetailMapper;
 import com.erp.server.mrp.service.CfgRuleLogisticsDetailService;
 import com.erp.server.mrp.service.OperateLogService;
@@ -92,7 +95,8 @@ public class CfgRuleLogisticsDetailServiceImpl extends SuperServiceImpl<CfgRuleL
      * @param mainIdList
      * @return List<CfgRuleLogisticsDetailEntity>
      */
-    private List<CfgRuleLogisticsDetailEntity> listByMainIdList(List<String> mainIdList) {
+    @Override
+    public List<CfgRuleLogisticsDetailEntity> listByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.EMPTY_LIST;
         }
@@ -107,6 +111,10 @@ public class CfgRuleLogisticsDetailServiceImpl extends SuperServiceImpl<CfgRuleL
             return;
         }
         for (CfgRuleLogisticsDetailEntity detailEntity : list) {
+
+            if (StrUtil.equals(detailEntity.getType(), ShopAuthTypeEnum.ENUM_PART.getCode()) && ObjectUtil.isEmpty(detailEntity.getShopIdList())) {
+                throw new ServiceException("指定店铺时店铺不能为空");
+            }
             //主表id
             detailEntity.setMainId(mainId);
             //店铺id

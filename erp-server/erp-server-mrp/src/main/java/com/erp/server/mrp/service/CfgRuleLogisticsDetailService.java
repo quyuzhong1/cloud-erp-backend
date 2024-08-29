@@ -31,4 +31,12 @@ public interface CfgRuleLogisticsDetailService extends SuperService<CfgRuleLogis
      * @param mainIdList
      */
     void deleteByMainIdList(List<String> mainIdList);
+    /**
+     * 物流明细选项
+     * @author will
+     * @date 2024/8/29 12:06
+     * @param mainIdList
+     * @return List<CfgRuleLogisticsDetailEntity>
+     */
+    List<CfgRuleLogisticsDetailEntity> listByMainIdList(List<String> mainIdList);
 }

@@ -1,4 +1,5 @@
 package com.erp.server.mrp.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.entity.HistoryImportRecordEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -24,13 +25,11 @@ public interface HistoryImportRecordService extends SuperService<HistoryImportRe
     BaseResultDTO.AddDTO add(HistoryImportRecordDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author will
-    * @date: 2024-08-27
-    * @param dto
-    * @return
-    */
-    Boolean update(HistoryImportRecordDTO.UpdateDTO dto);
-
-
+     * 分页查询
+     * @author will
+     * @date 2024/8/29 9:54
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<HistoryImportRecordDTO.ListDTO> paging(PagingDTO<HistoryImportRecordDTO.PagingParamDTO> dto);
 }

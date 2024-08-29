@@ -46,7 +46,10 @@ public class CfgRuleLogisticsDTO implements Serializable {
         * 物流方式
         */
         private String logisticsMethod;
-
+        /**
+         * 物流方式名称
+         */
+        private String logisticsMethodName;
         /**
         * 物流时效（天）
         */

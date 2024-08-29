@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -99,11 +99,13 @@ public class CfgRuleLogisticsDetailDTO implements Serializable {
         /**
          * 区域
          */
+        @NotBlank(message = "区域不能为空")
         private String area;
 
         /**
          * 店铺类型（all全部店铺，part指定店铺）
          */
+        @NotBlank(message = "店铺类型不能为空")
         private String type;
 
         /**
@@ -119,6 +121,7 @@ public class CfgRuleLogisticsDetailDTO implements Serializable {
         /**
          * 物流时效（天）
          */
+        @NotNull(message = "物流时效不能为空")
         private Integer logisticsDays;
     }
 }

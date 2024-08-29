@@ -1,11 +1,15 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
+import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
+import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.server.mrp.mapper.CfgRuleLogisticsMapper;
 import com.erp.server.mrp.service.CfgRuleLogisticsDetailService;
 import com.erp.server.mrp.service.CfgRuleLogisticsService;
@@ -79,6 +83,33 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
        return lambdaQuery().in(CfgRuleLogisticsEntity::getStockUpId,stockUpIdList).list();
     }
 
+    @Override
+    public List<CfgRuleLogisticsDTO.ViewDTO> listViewByStockUpIdList (List<String> stockUpIdList) {
+        if (CollectionUtils.isEmpty(stockUpIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<CfgRuleLogisticsEntity> list = lambdaQuery().in(CfgRuleLogisticsEntity::getStockUpId, stockUpIdList).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<CfgRuleLogisticsDTO.ViewDTO> cfgLogisticsViewList = BeanMapperUtils.copyList(CfgRuleLogisticsDTO.ViewDTO.class, list);
+        //物流配置明细
+        List<String> mainIdList = cfgLogisticsViewList.stream().map(CfgRuleLogisticsDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
+        List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetailList = cfgRuleLogisticsDetailService.listByMainIdList(mainIdList);
+        if (CollectionUtils.isEmpty(cfgRuleLogisticsDetailList)) {
+            return cfgLogisticsViewList;
+        }
+        for (CfgRuleLogisticsDTO.ViewDTO viewDTO : cfgLogisticsViewList) {
+            List<CfgRuleLogisticsDetailEntity> detailList = cfgRuleLogisticsDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), viewDTO.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(detailList)) {
+                continue;
+            }
+            List<CfgRuleLogisticsDetailDTO.ViewDTO> cfgLogisticsDetailViewList = BeanMapperUtils.copyList(CfgRuleLogisticsDetailDTO.ViewDTO.class, detailList);
+            viewDTO.setDetailList(cfgLogisticsDetailViewList);
+            viewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(viewDTO.getLogisticsMethod()));
+        }
+        return cfgLogisticsViewList;
+    }
 
     /**
      * 根据id删除

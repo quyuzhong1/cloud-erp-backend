@@ -10,16 +10,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
-import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleStockUpMapper;
-import com.erp.server.mrp.service.CfgRuleLogisticsService;
-import com.erp.server.mrp.service.CfgRuleStockUpService;
-import com.erp.server.mrp.service.CfgRuleStockingRatioService;
-import com.erp.server.mrp.service.OperateLogService;
+import com.erp.server.mrp.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +47,8 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Autowired
     private CfgRuleStockingRatioService cfgRuleStockingRatioService;
 
+    @Autowired
+    private CfgRuleLogisticsDetailService cfgRuleLogisticsDetailService;
 
     /**
     * 修改
@@ -87,7 +85,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     }
 
     @Override
-    public CfgRuleStockUpDTO.ViewDTO view(String platformType) {
+    public CfgRuleStockUpDTO.ViewDTO  view(String platformType) {
         CfgRuleStockUpDTO.ViewDTO viewDTO = new CfgRuleStockUpDTO.ViewDTO();
         CfgRuleStockUpEntity oldEntity = this.getByPlatformType(platformType);
         if (ObjectUtil.isEmpty(oldEntity)) {
@@ -96,10 +94,9 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         BeanMapperUtils.copy(oldEntity,viewDTO);
 
         //物流配置信息
-        List<CfgRuleLogisticsEntity> logisticsList = cfgRuleLogisticsService.listByStockUpIdList(Arrays.asList(oldEntity.getId()));
-        if (CollectionUtils.isNotEmpty(logisticsList)) {
-            List<CfgRuleLogisticsDTO.ViewDTO> cfgLogisticsList = BeanMapperUtils.copyList(CfgRuleLogisticsDTO.ViewDTO.class, logisticsList);
-            viewDTO.setCfgLogisticsList(cfgLogisticsList);
+        List<CfgRuleLogisticsDTO.ViewDTO> logisticsViewList = cfgRuleLogisticsService.listViewByStockUpIdList(Arrays.asList(oldEntity.getId()));
+        if (CollectionUtils.isNotEmpty(logisticsViewList)) {
+            viewDTO.setCfgLogisticsList(logisticsViewList);
         }
         List<CfgRuleStockingRatioEntity> stockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(Arrays.asList(oldEntity.getId()));
         //常规品

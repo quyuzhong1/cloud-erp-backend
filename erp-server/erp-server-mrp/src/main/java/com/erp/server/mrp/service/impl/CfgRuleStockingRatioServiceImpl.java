@@ -46,7 +46,7 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         }
         List<CfgRuleStockingRatioEntity> list = BeanMapperUtils.copyList(CfgRuleStockingRatioEntity.class, stockingRatioList);
         //原物流信息
-        List<CfgRuleStockingRatioEntity> oldList = listByStockUpIdList(Arrays.asList(stockUpId));
+        List<CfgRuleStockingRatioEntity> oldList = listByStockUpIdListAndType(Arrays.asList(stockUpId),type);
 
         //删除明细
         List<String> deleteIds = getDeleteIds(list, oldList);
@@ -72,6 +72,19 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             return Collections.EMPTY_LIST;
         }
         List<CfgRuleStockingRatioEntity> list = lambdaQuery().in(CfgRuleStockingRatioEntity::getStockUpId, stockUpIdList).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        list.stream().forEach(obj -> obj.setDateList(Arrays.asList(obj.getStartDate(),obj.getEndDate())));
+        return list;
+    }
+
+    @Override
+    public List<CfgRuleStockingRatioEntity> listByStockUpIdListAndType (List<String> stockUpIdList,String type) {
+        if (CollectionUtils.isEmpty(stockUpIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<CfgRuleStockingRatioEntity> list = lambdaQuery().in(CfgRuleStockingRatioEntity::getStockUpId, stockUpIdList).eq(CfgRuleStockingRatioEntity::getType,type).list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }

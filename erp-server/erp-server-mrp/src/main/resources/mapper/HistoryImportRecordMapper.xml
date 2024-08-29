@@ -16,6 +16,7 @@
        <result column="type" property="type" />
        <result column="module" property="module" />
        <result column="file_url" property="fileUrl" />
+       <result column="business_id" property="businessId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -29,8 +30,28 @@
         update_time,
         version,
         is_deleted,
-        name, type, module, file_url
+        name, type, module, file_url,business_id
     </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.mrp.dto.HistoryImportRecordDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from history_import_record hir
+        <where>
+            hir.is_deleted = false
+            <if test="params.businessId != null and params.businessId != ''">
+                and hir.business_id = #{params.businessId}
+            </if>
+            <if test="params.type != null and params.type != ''">
+                and hir.type = #{params.type}
+            </if>
+            <if test="params.module != null and params.module != ''">
+                and hir.module = #{params.module}
+            </if>
+        </where>
+        order by id desc
+    </select>
 
 
 </mapper>

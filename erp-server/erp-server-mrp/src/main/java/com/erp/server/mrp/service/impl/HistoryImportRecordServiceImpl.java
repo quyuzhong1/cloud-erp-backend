@@ -2,24 +2,28 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.mrp.dto.HistoryImportRecordDTO;
 import com.erp.model.mrp.entity.HistoryImportRecordEntity;
+import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.server.mrp.mapper.HistoryImportRecordMapper;
 import com.erp.server.mrp.service.HistoryImportRecordService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.mrp.service.OperateLogService;
-import com.erp.server.mrp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.mrp.dto.HistoryImportRecordDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+
 /**
  * <p>
  * 历史导入记录 服务实现类
@@ -31,66 +35,58 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class HistoryImportRecordServiceImpl extends SuperServiceImpl<HistoryImportRecordMapper, HistoryImportRecordEntity> implements HistoryImportRecordService {
-    @Autowired
-    private OperateLogService operateLogService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(HistoryImportRecordDTO.AddDTO addDTO) {
-        HistoryImportRecordEntity historyImportRecordEntity = new HistoryImportRecordEntity();
-        BeanMapperUtils.copy(addDTO, historyImportRecordEntity);
-
         // 数据处理
-        handleData(historyImportRecordEntity);
+        HistoryImportRecordEntity historyImportRecordEntity =  upLoadFile(addDTO);
 
         log.info("开始新增历史导入记录");
         boolean save = super.save(historyImportRecordEntity);
         if(!save) {
             throw new ServiceException("历史导入记录保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "历史导入记录" , historyImportRecordEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, historyImportRecordEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
         return new BaseResultDTO.AddDTO(historyImportRecordEntity.getId(), historyImportRecordEntity.getId());
     }
 
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(HistoryImportRecordDTO.UpdateDTO updateDTO) {
-        HistoryImportRecordEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "历史导入记录"));
-        HistoryImportRecordEntity historyImportRecordEntity =  BeanMapperUtils.map(HistoryImportRecordEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(historyImportRecordEntity);
-        log.info("编辑 开始修改历史导入记录数据，id：【{}】", old.getId());
-        boolean save = super.updateById(historyImportRecordEntity);
-        if(!save) {
-            throw new ServiceException("历史导入记录保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录历史导入记录日志数据，id：【{}】", historyImportRecordEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), historyImportRecordEntity.getId(), "历史导入记录");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, historyImportRecordEntity, null, historyImportRecordEntity.getId(), msg);
-        return Boolean.TRUE;
+    public PagingVO<HistoryImportRecordDTO.ListDTO> paging(PagingDTO<HistoryImportRecordDTO.PagingParamDTO> dto) {
+        HistoryImportRecordDTO.PagingParamDTO params = dto.getParams();
+        Page<HistoryImportRecordDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<HistoryImportRecordDTO.ListDTO> pageData = baseMapper.paging(query, params);
+        return new PagingVO<>(pageData);
     }
 
 
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(HistoryImportRecordEntity historyImportRecordEntity) {
-    // TODO 验证数据 & 数据赋值
+     * 上传导入文件到fastdfs
+     * @author will
+     * @date 2024/8/29 10:32
+     * @param addDTO 
+     * @return HistoryImportRecordEntity
+     */
+    private HistoryImportRecordEntity upLoadFile(HistoryImportRecordDTO.AddDTO addDTO) {
+        HistoryImportRecordEntity entity = new HistoryImportRecordEntity();
+        BeanMapperUtils.copy(addDTO,entity);
+        //导入文件
+        try {
+            String url = "";
+            String fileName = addDTO.getName();
+            File file = ExcelUtil.exportFile(fileName, "sheet", addDTO.getImportList(), PurchaseOrderImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+            //url不能为空
+            if (StrUtil.isBlank(url)) {
+                throw new ServiceException("导入失败！");
+            }
+            entity.setFileUrl(url);
+        } catch (Exception e) {
+            throw new ServiceException("导入文件上传到fastdfs失败");
+        }
+        return entity;
     }
 }
