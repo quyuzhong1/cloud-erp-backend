@@ -1344,12 +1344,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException("未生成装箱任务，不允许下推发货单");
         }
-        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgRuleOutService.getCfgOverweightDetailDTOByType(taskEntity.getSourceType());
-        if(Objects.nonNull(cfgOverweightDetailDTO) && cfgOverweightDetailDTO.isCheckStatusWhenApprove()){
-            if(!(taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()) && taskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode()))){
-                throw new ServiceException(StrUtil.format("{}未完成装箱/称重无法发货",taskEntity.getCode()));
-            }
-        }
 
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
         List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
