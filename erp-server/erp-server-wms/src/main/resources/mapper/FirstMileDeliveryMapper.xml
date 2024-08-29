@@ -182,6 +182,8 @@
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
         pt.source_id as id,
+        pt.id taskId,
+        pt.code taskCode,
         wc.id as boxId,
         wc.box_no,
         concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
@@ -192,7 +194,9 @@
         wcs.box_width as width,
         wcs.box_height as height,
         wcs.size_unit as sizeUnit,
-        (select string_agg(wcd.sku_no, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku
+        (select string_agg(wcd.sku_no, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku,
+        (select string_agg(wcd.sku_id, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as skuIds,
+        (select string_agg(concat(wcd.sku_no,':',wcd.sku_id), ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as skuMapping
         FROM packing_task pt
         INNER JOIN wms_carton wc ON pt.id = wc.packing_task_id AND wc.is_deleted = FALSE
         INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE

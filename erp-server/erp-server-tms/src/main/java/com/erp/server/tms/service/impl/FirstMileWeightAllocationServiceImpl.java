@@ -114,7 +114,12 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         List<WmsCartonSpecDTO.WmsCartonSpecView> cartonSpecViewList = packingTaskFeign.listCartonSpecByTaskIds(taskIds);
         Map<String, WmsCartonSpecDTO.WmsCartonSpecView> cartonSepcViewMap = cartonSpecViewList.stream().collect(Collectors.toMap(item -> item.getTaskId(), item2 -> item2));
         //sku明细
-        List<String> skuIds = dto.getPackingDTOList().stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
+        List<String> skuIds = new ArrayList<>();
+        for (WmsCartonDetailDTO.ListPackingDetailDTO item : dto.getPackingDTOList()) {
+            String[] skuIdArray = item.getSkuIds().split(",");
+            skuIds.addAll(Arrays.asList(skuIdArray));
+        }
+        skuIds = skuIds.stream().distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = productDetailFeign.listByIds(skuIds);
         Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
         //sku包装信息
@@ -165,23 +170,29 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             if(specView != null){
                 entity.setOutStockWeight(specView.getPackageWeight());
                 entity.setWeightUnit(specView.getWeightUnit());
-                WmsCartonDetailDTO.ViewDTO cartonDetailView = specView.getDetailList().stream().filter(item -> item.getSkuId().equals(packingDTO.getSkuId())).findFirst().orElseGet(null);
-                entity.setDeliveryQty(cartonDetailView != null ? cartonDetailView.getDeliveryQty() : 0);
+                List<String> skuNoList = Arrays.asList(packingDTO.getSku().split(","));
+                List<WmsCartonDetailDTO.ViewDTO> cartonDetailViewList = specView.getDetailList().stream().filter(item -> skuNoList.contains(item.getSkuNo())).collect(Collectors.toList());
+                int sum = cartonDetailViewList.stream().mapToInt(item -> item.getDeliveryQty()).sum();
+                entity.setDeliveryQty(sum);
+                List<String> skuQtyList = Arrays.asList(packingDTO.getBoxDesc().split(","));
+                String skuQty = skuQtyList.stream().filter(item -> item.contains(cartonDetailViewList.get(0).getSkuNo())).findFirst().orElse(new String(""));
+                entity.setSkuNo(skuQty.split("\\*")[0]);
+                String skuNo2SkuId = Arrays.asList(packingDTO.getSkuMapping().split(",")).stream().filter(item -> item.contains(entity.getSkuNo())).findFirst().orElse("");
+                String skuId = skuNo2SkuId.replace(entity.getSkuNo() + ":", "");
+                entity.setSkuId(skuId);
             }else {
                 entity.setOutStockWeight(BigDecimal.ZERO);
             }
-            entity.setSkuId(packingDTO.getSkuId());
-            entity.setSkuNo(packingDTO.getSkuNo());
 //            entity.setPlatformSkuId();
 //            entity.setPlatformSkuNo();
-            if(productDetailMap.containsKey(packingDTO.getSkuId())){
-                ProductDetailEntity productDetail = productDetailMap.get(packingDTO.getSkuId());
+            if(productDetailMap.containsKey(entity.getSkuId())){
+                ProductDetailEntity productDetail = productDetailMap.get(entity.getSkuId());
                 entity.setProductName(productDetail.getName());
             }
-            if(! productPackMap.containsKey(packingDTO.getSkuId())){
+            if(! productPackMap.containsKey(entity.getSkuId())){
                 throw new ServiceException("没有找到产品包装信息");
             }
-            ProductPackEntity productPack = productPackMap.get(packingDTO.getSkuId());
+            ProductPackEntity productPack = productPackMap.get(entity.getSkuId());
             BigDecimal productWeight = BigDecimal.ZERO;
             if(productPack.getGrossWeight() != null){
                 productWeight = productPack.getGrossWeight();
@@ -265,13 +276,17 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             if(lastedAllocMonthDTO != null){
                 item.setCalculatePeriodId(lastedAllocMonthDTO.getReportPeriodId());
                 item.setLatestCostAllocationMonth(lastedAllocMonthDTO.getLatestMonth());
-                item.setLatestCostAllocationMonthStr(monthFormatter.format(lastedAllocMonthDTO.getLatestMonth()));
-                if(lastedAllocMonthDTO.getStatus().equals("confirm") && lastedAllocMonthDTO.getBillSourceType().equals(ReconciliationBillTypeEnum.ACTUAL.getCode()) && lastedAllocMonthDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) == 0){
-                    item.setCostAllocationStatus(CostAllocationStatusEnum.ALREADY.getCode());
-                }else if(lastedAllocMonthDTO.getStatus().equals("confirm") && lastedAllocMonthDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) > 0){
-                    item.setCostAllocationStatus(CostAllocationStatusEnum.PART.getCode());
-                }else{
-                    item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
+                if(lastedAllocMonthDTO.getLatestMonth() != null){
+                    item.setLatestCostAllocationMonthStr(monthFormatter.format(lastedAllocMonthDTO.getLatestMonth()));
+                }
+                if(StringUtils.isNotBlank(lastedAllocMonthDTO.getStatus()) && StringUtils.isNotBlank(lastedAllocMonthDTO.getBillSourceType()) && lastedAllocMonthDTO.getEndPeriodTransitCost() != null){
+                    if(lastedAllocMonthDTO.getStatus().equals("confirm") && lastedAllocMonthDTO.getBillSourceType().equals(ReconciliationBillTypeEnum.ACTUAL.getCode()) && lastedAllocMonthDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) == 0){
+                        item.setCostAllocationStatus(CostAllocationStatusEnum.ALREADY.getCode());
+                    }else if(lastedAllocMonthDTO.getStatus().equals("confirm") && lastedAllocMonthDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) > 0){
+                        item.setCostAllocationStatus(CostAllocationStatusEnum.PART.getCode());
+                    }else{
+                        item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
+                    }
                 }
             }else {
                 item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());

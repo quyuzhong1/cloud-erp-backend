@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -272,6 +271,12 @@ public class WmsCartonDetailDTO implements Serializable {
          * 异常原因
          */
         private String errorMsg;
+
+        private String boxDesc;
+
+        private String skuMapping;
+
+        private String skuIds;
     }
 
     /**
