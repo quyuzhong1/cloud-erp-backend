@@ -1,7 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.math.MathUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -20,10 +19,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
-import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.excel.FirstMileEstimatedBillExcelDTO;
-import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.tms.entity.FirstMileEstimatedBillEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -172,9 +169,16 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         return list;
     }
 
-    private FirstMileEstimatedBillDTO.Tab getTabCount(String code, String tabFlagName) {
-        int count = this.count(new LambdaQueryWrapper<FirstMileEstimatedBillEntity>().eq(FirstMileEstimatedBillEntity::getStatus, code));
-        return new FirstMileEstimatedBillDTO.Tab(code, tabFlagName, count);
+    private FirstMileEstimatedBillDTO.Tab getTabCount(String status, String tabFlagName) {
+        int count = 0;
+        if(ConfirmStatusEnum.TO_BE_CONFIRM.getCode().equals(status)){
+            count = this.baseMapper.countByParam(status, status);
+        }
+        if(ConfirmStatusEnum.CONFIRMED.getCode().equals(status)){
+            count = this.baseMapper.countByParam(null, status);
+        }
+
+        return new FirstMileEstimatedBillDTO.Tab(status, tabFlagName, count);
     }
 
     @Override

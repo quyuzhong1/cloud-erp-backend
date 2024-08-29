@@ -30,7 +30,7 @@ public class FirstMileEstimatedQueryHandler extends AbstractQueryHandler {
             this.buildDefaultDTO("lbc.reconciliation_status", "toBeConfirm");
         }
         if(Objects.equals("confirmed", value)){
-            this.buildDefaultDTO("eb.status", "confirmed");
+            this.buildDefaultDTO("lbc.reconciliation_status", "confirmed");
         }
 
         return super.getSplicingSQL();

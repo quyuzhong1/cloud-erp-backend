@@ -159,4 +159,17 @@
         </where>
         group by fmeb.logistics_bill_id, tcc.dict_cost_attribution, tcc.dict_cost_category;
     </select>
+    <select id="countByParam" resultType="java.lang.Integer">
+        select count(1)
+        from first_mile_estimated_bill eb
+            left join logistics_bill_cost lbc on lbc.logistics_bill_id = eb.logistics_bill_id and lbc.is_deleted = false
+        <where>
+            <if test="actualStatus != null and actualStatus != ''">
+                lbc.reconciliation_status = #{actualStatus}
+            </if>
+            <if test="estimatedStatus != null and estimatedStatus != ''">
+                and eb.status = #{estimatedStatus}
+            </if>
+        </where>
+    </select>
 </mapper>
