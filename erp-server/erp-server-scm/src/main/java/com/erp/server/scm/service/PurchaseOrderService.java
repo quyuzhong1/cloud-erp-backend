@@ -302,7 +302,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @Author Luo_WG
      * @Date 2023/7/13 15:09
      **/
-    Boolean exportPurchaseContract(String id);
+    Boolean exportPurchaseContract(String id, HttpServletResponse response);
     /**
      * @description: 列表查询总数
      * @author Will

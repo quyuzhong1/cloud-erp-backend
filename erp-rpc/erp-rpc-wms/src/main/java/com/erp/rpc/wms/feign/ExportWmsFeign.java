@@ -131,7 +131,7 @@ public interface ExportWmsFeign {
     PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> exportQcEffectivenessPersonnel(@RequestBody PagingDTO<QcEffectivenessDTO.ExportExcelSearchParamDTO> dto);
 
     @PostMapping("/feign/export/qcReportDetail")
-    PagingVO<ExportQcReportExcelDTO> exportQcReportDetail(@RequestBody PagingDTO<String> dto);
+    PagingVO<ExportQcReportExcelDTO> exportQcReportDetail(@RequestBody PagingDTO<BaseIdDTO> dto);
 
     @PostMapping("/feign/export/soDeliveryNotice")
     PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(@RequestBody PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto);

@@ -56,17 +56,17 @@ public class ExportTmsFeignController {
     @Resource
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
 
-    @PostMapping("/b2BDeclareBillDeclare")
-    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.ExportDTO> exportB2BDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
-        dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
-        return tmsDeclareBillService.exportDeclareBillDeclare(dto);
-    }
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
+    PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
         dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
-        return tmsDeclareBillService.exportDeclareBill(dto);
+        return tmsDeclareBillService.export(dto);
+    }
+    /*@PostMapping("/b2BDeclareBill")
+    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
+    PagingVO<TmsDeclareBillDTO.ExportDTO> exportB2BDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
+        dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
+        return tmsDeclareBillService.exportDeclare(dto);
     }
     @PostMapping("/fmDeclareBillDeclare")
     @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
@@ -79,7 +79,7 @@ public class ExportTmsFeignController {
     PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
         dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         return tmsDeclareBillService.exportDeclareBill(dto);
-    }
+    }*/
 
     @PostMapping("/b2cDeclareReconciliationDetail")
     public PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(@RequestBody PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto) {
@@ -169,6 +169,12 @@ public class ExportTmsFeignController {
     }
 
     @PostMapping("/logisticsSupplier")
+    @WebAdvanceQuery(handler = LogisticsSupplierQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsSupplier:paging",
+            tableAlias = "ls"
+    )
     public PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(@RequestBody PagingDTO<LogisticsSupplierDTO.ExportDTO> dto) {
         return logisticsSupplierService.exportLogisticsSupplier(dto);
     }

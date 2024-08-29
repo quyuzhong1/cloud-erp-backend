@@ -18,6 +18,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -26,6 +27,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -2546,85 +2548,85 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<Integer> exportDataList = params.getExportDataList();
         int size = exportDataList.size();
         Integer flag = exportDataList.get(0);
-        String name = size == 2 ? "产品列表" : ProductConstant.PRODUCT_EXPORT.equals(flag) ? "产品列表" : "任务列表";
-        downloadTaskFeign.saveDownloadTask(name, EXPORT_PLM_PRODUCT_MY_PROJECT.getCode(), params);
-//
-//
-//        //分类id
-//        String categoryId = params.getCategoryId();
-//        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-//        String userId = UserContext.getDefaultLoginUser().getUid();
-//
-//
-//        //部门处理
-//        Boolean isFlag = handlePagingDept(params);
-//        if (isFlag) {
-//            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-//        }
-//        //两个都是
-//        if (size == 2) {
-//            List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
-//            fillPagingDb(list);
-//            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList, userId);
-//            for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-//                Integer status = item.getStatus();
-//                String statusName = TaskStateEnum.getName(status);
-//                item.setTaskStatusName(statusName);
-//            }
-//            StringBuffer sb = new StringBuffer();
-//            String excelPath = "excel/productDevelop.xlsx";
-//            String name = "产品列表";
-//            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-//            sb.append(date);
-//            sb.append(name);
-//            try {
-//                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
-//            } catch (IOException e) {
-//                log.error("产品列表列表导出出错 >>>>>{}", e);
-//                return Boolean.FALSE;
-//            }
-//        }
-//        if (size != 2) {
-//            //产品导出
-//            if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
-//                //我的项目
-//                List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
-//                fillPagingDb(list);
-//                StringBuffer sb = new StringBuffer();
-//                String excelPath = "excel/product.xlsx";
-//                String name = "产品列表";
-//                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-//                sb.append(date);
-//                sb.append(name);
-//                try {
-//                    new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-//                } catch (IOException e) {
-//                    log.error("产品列表列表导出出错 >>>>>{}", e);
-//                    return Boolean.FALSE;
-//                }
-//            }
-//            //任务导出
-//            if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
-//                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList, userId);
-//                for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-//                    Integer status = item.getStatus();
-//                    String statusName = TaskStateEnum.getName(status);
-//                    item.setTaskStatusName(statusName);
-//                }
-//                StringBuffer sb = new StringBuffer();
-//                String excelPath = "excel/productTask.xlsx";
-//                String name = "任务列表";
-//                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-//                sb.append(date);
-//                sb.append(name);
-//                try {
-//                    new ExcelPrintUtils().patchExport(taskList, response, sb.toString(), excelPath);
-//                } catch (IOException e) {
-//                    log.error("产品开发管理任务列表导出出错 >>>>>{}", e);
-//                    return Boolean.FALSE;
-//                }
-//            }
-//        }
+//        String name = size == 2 ? "产品列表" : ProductConstant.PRODUCT_EXPORT.equals(flag) ? "产品列表" : "任务列表";
+//        downloadTaskFeign.saveDownloadTask(name, EXPORT_PLM_PRODUCT_MY_PROJECT.getCode(), params);
+
+
+        //分类id
+        String categoryId = params.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        String userId = UserContext.getDefaultLoginUser().getUid();
+
+
+        //部门处理
+        Boolean isFlag = handlePagingDept(params);
+        if (isFlag) {
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+        }
+        //两个都是
+        if (size == 2) {
+            List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
+            fillPagingDb(list);
+            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList, userId);
+            for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
+                Integer status = item.getStatus();
+                String statusName = TaskStateEnum.getName(status);
+                item.setTaskStatusName(statusName);
+            }
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/productDevelop.xlsx";
+            String name = "产品列表";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                log.error("产品列表列表导出出错 >>>>>{}", e);
+                return Boolean.FALSE;
+            }
+        }
+        if (size != 2) {
+            //产品导出
+            if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
+                //我的项目
+                List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
+                fillPagingDb(list);
+                StringBuffer sb = new StringBuffer();
+                String excelPath = "excel/product.xlsx";
+                String name = "产品列表";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                try {
+                    new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+                } catch (IOException e) {
+                    log.error("产品列表列表导出出错 >>>>>{}", e);
+                    return Boolean.FALSE;
+                }
+            }
+            //任务导出
+            if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
+                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList, userId);
+                for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
+                    Integer status = item.getStatus();
+                    String statusName = TaskStateEnum.getName(status);
+                    item.setTaskStatusName(statusName);
+                }
+                StringBuffer sb = new StringBuffer();
+                String excelPath = "excel/productTask.xlsx";
+                String name = "任务列表";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                try {
+                    new ExcelPrintUtils().patchExport(taskList, response, sb.toString(), excelPath);
+                } catch (IOException e) {
+                    log.error("产品开发管理任务列表导出出错 >>>>>{}", e);
+                    return Boolean.FALSE;
+                }
+            }
+        }
 
 
         return Boolean.TRUE;

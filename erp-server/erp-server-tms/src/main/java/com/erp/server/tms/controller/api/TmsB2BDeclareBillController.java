@@ -25,7 +25,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2B_DECLARE_BILL;
@@ -249,22 +251,25 @@ public class TmsB2BDeclareBillController extends BaseController {
 
 
     /**
-     * 导出
+     * 导出B2B报关单列表
      */
     @PostMapping("/export")
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单列表")
+    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveDownloadTask("B2B报关单导出", EXPORT_TMS_TMS_B2B_DECLARE_DECLARE_BILL.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveDownloadTask("B2B报关单列表", EXPORT_TMS_TMS_B2B_DECLARE_BILL.getCode(), pagingParamDTO);
         return success();
     }
 
     /**
-     * 导出报关
+     * 导出B2B报关单报关信息
      */
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单报关信息")
-    public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveDownloadTask("B2B报关单", EXPORT_TMS_TMS_B2B_DECLARE_BILL.getCode(), pagingParamDTO);
+    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
+    public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+        pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
+        tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
         return success();
     }
 }

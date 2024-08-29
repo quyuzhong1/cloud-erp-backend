@@ -34,4 +34,6 @@ public interface ExportPlmFeign {
     PagingVO<ProjectReportFormsDTO.TaskDetail> exportProductTaskDetail(PagingDTO<ProjectReportFormsDTO.TaskDetailParam> dto);
     @PostMapping("/feign/export/productTaskView")
     PagingVO<ProductTaskViewDTO> exportProductTaskView(PagingDTO<ProductTaskViewSearchDTO> dto);
+
+
 }

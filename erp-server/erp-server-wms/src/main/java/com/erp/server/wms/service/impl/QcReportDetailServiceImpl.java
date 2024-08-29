@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -255,14 +256,14 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
     /**
      * 质检列表 导出质检报告
      *
-     * @param mainId
+     * @param dto
      * @return void
      * @author yl
      * @date 2023-04-25 17:12
      */
     @Override
-    public void exportReportByMainId(String mainId) {
-        downloadTaskFeign.saveDownloadTask("质检报告数据", EXPORT_WMS_QC_REPORT_DETAIL.getCode(), mainId);
+    public void exportReportByMainId(BaseIdDTO dto) {
+        downloadTaskFeign.saveDownloadTask("质检报告数据", EXPORT_WMS_QC_REPORT_DETAIL.getCode(), dto);
     }
 
     @Override
@@ -319,9 +320,9 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
     }
 
     @Override
-    public PagingVO<ExportQcReportExcelDTO> exportQcReportDetail(PagingDTO<String> dto) {
+    public PagingVO<ExportQcReportExcelDTO> exportQcReportDetail(PagingDTO<BaseIdDTO> dto) {
 
-        List<QcReportDetailDTO.ListDTO> list = baseMapper.getByMainId(dto.getParams());
+        List<QcReportDetailDTO.ListDTO> list = baseMapper.getByMainId(dto.getParams().getId());
         List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.QC_REPORT_RESULT.getKey());
         List<ExportQcReportExcelDTO> resultList = BeanMapper.copyList(list, ExportQcReportExcelDTO.class);
         for (ExportQcReportExcelDTO item : resultList) {

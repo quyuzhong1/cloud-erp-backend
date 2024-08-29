@@ -37,6 +37,6 @@ public class ExportScmPurchaseOrderContractHandler extends AbstractPageFileEvent
 
     @Override
     public String getExcelPath() {
-        return "excel/plm/bom.xlsx";
+        return "excel/scm/purchaseContractExport.xlsx";
     }
 }

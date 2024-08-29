@@ -596,8 +596,8 @@ public class PurchaseOrderController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "网采合同导出")
     @GetMapping("/exportPurchaseContract")
-    public ApiResult exportPurchaseContract(@RequestParam("id") String id) {
-        Boolean flag = purchaseOrderService.exportPurchaseContract(id);
+    public ApiResult exportPurchaseContract(@RequestParam("id") String id, HttpServletResponse response) {
+        Boolean flag = purchaseOrderService.exportPurchaseContract(id, response);
         return flag == true ? success() : failure();
     }
 

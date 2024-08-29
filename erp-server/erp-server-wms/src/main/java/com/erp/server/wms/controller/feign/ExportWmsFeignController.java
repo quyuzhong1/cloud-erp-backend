@@ -429,7 +429,7 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/qcReportDetail")
-    public PagingVO<ExportQcReportExcelDTO> exportQcReportDetail(@RequestBody PagingDTO<String> dto) {
+    public PagingVO<ExportQcReportExcelDTO> exportQcReportDetail(@RequestBody PagingDTO<BaseIdDTO> dto) {
         return qcReportDetailService.exportQcReportDetail(dto);
     }
 

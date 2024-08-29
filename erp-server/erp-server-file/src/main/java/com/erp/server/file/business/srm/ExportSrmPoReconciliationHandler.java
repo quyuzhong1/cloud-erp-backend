@@ -18,6 +18,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCIL
 public class ExportSrmPoReconciliationHandler extends AbstractDetailPageFileEventHandler<PoReconciliationDTO.ExportDTO, PoReconciliationDetailDTO.ListDTO> {
     @Resource
     private ExportSrmFeign exportSrmFeign;
+
     @Override
     protected StatementDTO<PoReconciliationDTO.ExportDTO, PoReconciliationDetailDTO.ListDTO> getData(FileTask fileTask) {
         PoReconciliationDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<PoReconciliationDTO.PagingParamDTO>() {

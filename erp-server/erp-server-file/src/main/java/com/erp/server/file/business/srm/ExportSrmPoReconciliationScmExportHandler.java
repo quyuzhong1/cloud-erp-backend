@@ -17,8 +17,10 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCIL
 
 @Component
 public class ExportSrmPoReconciliationScmExportHandler extends AbstractPageFileEventHandler<PoReconciliationDTO.ListDTO, PoReconciliationDTO.PagingParamDTO> {
+
     @Resource
     private ExportSrmFeign exportSrmFeign;
+
     @Override
     protected List<PoReconciliationDTO.ListDTO> getData(FileTask fileTask) {
         PoReconciliationDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<PoReconciliationDTO.PagingParamDTO>() {
@@ -27,13 +29,13 @@ public class ExportSrmPoReconciliationScmExportHandler extends AbstractPageFileE
     }
 
     @Override
-    protected String getExcelPath() {
-        return "excel/srm/poReconciliation.xlsx";
+    protected PagingVO<PoReconciliationDTO.ListDTO> getPageData(PagingDTO<PoReconciliationDTO.PagingParamDTO> dto) {
+        return exportSrmFeign.exportPoReconciliationScmExport(dto);
     }
 
     @Override
-    protected PagingVO<PoReconciliationDTO.ListDTO> getPageData(PagingDTO<PoReconciliationDTO.PagingParamDTO> dto) {
-        return exportSrmFeign.exportPoReconciliationScmExport(dto);
+    protected String getExcelPath() {
+        return "excel/srm/poReconciliation.xlsx";
     }
 
     @Override
