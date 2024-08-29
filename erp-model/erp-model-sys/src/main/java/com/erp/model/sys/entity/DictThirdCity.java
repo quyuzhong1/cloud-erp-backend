@@ -8,12 +8,11 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
  * <p>
- * 艾姆勒城市字典表
+ * 第三方城市字典表
  * </p>
  *
  * @author lrp
@@ -22,8 +21,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("iml_dict_city")
-public class ImlDictCityEntity extends BaseEntity<ImlDictCityEntity> {
+@TableName("dict_third_city")
+public class DictThirdCity extends BaseEntity<DictThirdCity> {
 
     /**
     * 名称
@@ -61,6 +60,11 @@ public class ImlDictCityEntity extends BaseEntity<ImlDictCityEntity> {
     @TableField("region_id")
     private String regionId;
 
+    /**
+     * 平台
+     */
+    @TableField("platform")
+    private String platform;
 
     public static final String REGION_NAME = "region_name";
 

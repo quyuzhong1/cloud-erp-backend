@@ -38,7 +38,7 @@ public class AntuServerTest {
     public void getWarehouseTest() {
         AntuGetProductReq antuProductReq = AntuGetProductReq.builder()
                 .build();
-        AntuResponse<List<AntuWarehouseResp>> response = antuService.getWarehouse(antuProductReq);
+        AntuResponse<List<AntuWarehouseResp>> response = antuService.getTransferWarehouse(antuProductReq);
         System.out.println(response);
     }
 

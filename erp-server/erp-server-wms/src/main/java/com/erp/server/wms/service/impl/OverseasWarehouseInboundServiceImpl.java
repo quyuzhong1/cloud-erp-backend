@@ -11,15 +11,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.PlatformInboundDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -28,11 +26,11 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.ImlDictCityEntity;
+import com.erp.model.sys.entity.DictThirdCity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
@@ -532,18 +530,19 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 // 区
                 commonDTO.setDictDistrictName(dictCityEntityMap.get(commonDTO.getDictDistrictId()).getName());
                 // iml
-                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)) {
+                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)
+                || OmsPlatformEnum.OMS_ANTU.getCode().equalsIgnoreCase(dictPlatform)) {
                     // 查询关联
-                    Map<String, ImlDictCityEntity> imlCityEntityMap = sysDictService.mapAndCheckImlCityIds(
+                    Map<String, DictThirdCity> thirdCityEntityMap = sysDictService.mapAndCheckThirdCityIds(
                             commonDTO.getDictProvinceId(),
                             commonDTO.getDictCityId(),
-                            commonDTO.getDictDistrictId());
+                            commonDTO.getDictDistrictId(),dictPlatform );
                     // 省
-                    commonDTO.setPlatformProvinceId(imlCityEntityMap.get(commonDTO.getDictProvinceId()).getRegionId());
+                    commonDTO.setPlatformProvinceId(thirdCityEntityMap.get(commonDTO.getDictProvinceId()).getRegionId());
                     // 市
-                    commonDTO.setPlatformCityId(imlCityEntityMap.get(commonDTO.getDictCityId()).getRegionId());
+                    commonDTO.setPlatformCityId(thirdCityEntityMap.get(commonDTO.getDictCityId()).getRegionId());
                     // 区
-                    commonDTO.setPlatformDistrictId(imlCityEntityMap.get(commonDTO.getDictDistrictId()).getRegionId());
+                    commonDTO.setPlatformDistrictId(thirdCityEntityMap.get(commonDTO.getDictDistrictId()).getRegionId());
 
                 }
 
@@ -1171,6 +1170,19 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
         }
         return ApiResult.success();
+    }
+
+    @Override
+    public List<BaseDropDownDTO.CommonDTO> getLogisticByTransferWarehouseId(String transferWarehouseId) {
+        OverseasTransferWarehouseEntity transferEntity = overseasTransferWarehouseService.getById(transferWarehouseId);
+        if (null == transferEntity){
+            return Collections.emptyList();
+        }
+        String warehouseCode = transferEntity.getPlatformWarehouseCode();
+        List<LogisticsSaleChannelEntity> list = FeignQuery.create(LogisticsSaleChannelEntity.class).eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode,warehouseCode).list();
+        return list.stream()
+                .map(e-> new BaseDropDownDTO.CommonDTO(e.getCode(), e.getCnName()+"["+e.getCode()+"]"))
+                .collect(Collectors.toList());
     }
 
     /**
