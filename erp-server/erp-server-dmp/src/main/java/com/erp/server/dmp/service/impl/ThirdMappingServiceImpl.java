@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.constant.EnumMessage;
@@ -155,7 +156,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             //如果包含iml谷仓 需要通知海外仓解除绑定
             if (ThirdSysTypeEnum.WAREHOUSE.getCode().equals(addDTO.getType())) {
                 deleteList.forEach(thirdMappingEntity -> {
-                    if (PlatformDictEnum.IML.getCode().equals(thirdMappingEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdMappingEntity.getThirdSysType())) {
+                    if (OmsPlatformEnum.getByCode(thirdMappingEntity.getThirdSysType()) != null) {
                         overseasProviderFeign.feignBind(makeOverseasFeign(thirdMappingEntity, "", "", "", true));
                     }
                 });
@@ -172,7 +173,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
                 this.updateById(existMapping);
                 if (ThirdSysTypeEnum.WAREHOUSE.getCode().equals(addDTO.getType())) {
-                    if (PlatformDictEnum.IML.getCode().equals(existMapping.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(existMapping.getThirdSysType())) {
+                    if (OmsPlatformEnum.getByCode(existMapping.getThirdSysType()) != null) {
                         //保存海外仓设置
                         overseasProviderFeign.feignBind(makeOverseasFeign(existMapping, existMapping.getSysId(), kingDeeCode, existMapping.getSysName(), false));
                     }
@@ -188,7 +189,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
                 this.save(newEntity);
                 if (ThirdSysTypeEnum.WAREHOUSE.getCode().equals(addDTO.getType())) {
-                    if (PlatformDictEnum.IML.getCode().equals(newEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(newEntity.getThirdSysType())) {
+                    if (OmsPlatformEnum.getByCode(newEntity.getThirdSysType()) != null) {
                         //保存海外仓设置
                         overseasProviderFeign.feignBind(makeOverseasFeign(newEntity, newEntity.getSysId(), kingDeeCode, newEntity.getSysName(), false));
                     }
@@ -295,7 +296,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
      * @param disabled
      */
     private void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
-        if (PlatformDictEnum.IML.getCode().equals(existMapping.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(existMapping.getThirdSysType())) {
+        if (OmsPlatformEnum.isThirdWarehouse(existMapping.getThirdSysType())) {
             OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
             feignDTO.setCode(existMapping.getThirdSysType());
             feignDTO.setOverseasProviderWarehouseId(existMapping.getThirdId());
@@ -660,7 +661,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 thirdMappingEntity.setThirdInfoId(thirdWarehouseEntity.getWarehouseId());
                 thirdMappingEntity.setThirdCode(thirdWarehouseEntity.getCode());
             }
-            if (PlatformDictEnum.IML.getCode().equals(thirdMappingEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdMappingEntity.getThirdSysType())) {
+            if (OmsPlatformEnum.isThirdWarehouse(thirdMappingEntity.getThirdSysType())) {
                 OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
                 feignDTO.setCode(thirdMappingEntity.getThirdSysType());
                 feignDTO.setOverseasProviderWarehouseId(thirdMappingEntity.getThirdId());
@@ -818,9 +819,10 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
                         thirdAddDTO.setThirdCode(thirdWarehouseEntity.getCode());
                     }
-                    if (PlatformDictEnum.IML.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdAddDTO.getSysType())) {
+                    if (OmsPlatformEnum.getByCode(thirdAddDTO.getSysType()) != null) {
                         OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
                         feignDTO.setCode(thirdAddDTO.getSysType());
+                        feignDTO.setPlatformShortName(thirdAddDTO.getThirdShortName());
                         feignDTO.setOverseasProviderWarehouseId(thirdAddDTO.getThirdId());
                         //校验第三方仓库是否存在
                         OverseasProviderDTO.FeignDTO overseasWarehouse = Optional.ofNullable(overseasProviderFeign.getOverseasWarehouse(feignDTO))

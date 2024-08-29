@@ -127,9 +127,9 @@ public class QueryParam {
             } else if(QueryTypeEnum.ORDER_BY_DESC.equals(type)) {
                 wrapper.orderByDesc(name);
             } else if (QueryTypeEnum.APPLY.equals(type)) {
-                wrapper.apply(name);
+                wrapper.apply(value.toString());
             } else if (QueryTypeEnum.LAST.equals(type)) {
-                wrapper.last(name);
+                wrapper.last(value.toString());
             } else if (QueryTypeEnum.LIKE.equals(type)) {
                 wrapper.like(name , value);
             } else if (QueryTypeEnum.NOT_LIKE.equals(type)) {

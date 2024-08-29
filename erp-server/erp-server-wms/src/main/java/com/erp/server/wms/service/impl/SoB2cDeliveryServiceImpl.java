@@ -1510,8 +1510,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
         // 如果是API对接的海外仓忽略发货单为空拦截
-        LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-        if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+        if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
             return false;
         }
 

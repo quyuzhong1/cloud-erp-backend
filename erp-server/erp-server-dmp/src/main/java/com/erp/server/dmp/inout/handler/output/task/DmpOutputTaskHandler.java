@@ -120,37 +120,49 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     		return;
     	}
 		
-    	int i = 0;
-    	Integer pushRate = dmpCfgOutputEntity.getPushRate();
-		if(pushRate == null) {
-			pushRate = 3;
-		}
-		dmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getUpdateTime().compareTo(d2.getUpdateTime()));
-    	for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+		List<DmpOutputTaskRecordEntity> pushDmpOutputTaskRecordEntityList = new ArrayList<>();
+		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			String dataId = dmpOutputTaskRecordEntity.getDataId();
 			String redisKey = "dmp:output:task:" + dataId;
-			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 3600, TimeUnit.SECONDS)) {
-				try {
-					this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
-				} catch (Exception e) {
-					log.error("处理推送数据失败" , e);
-					throw new RuntimeException(e);
-				}finally {
-					redisTemplate.delete(redisKey);
-				}
+			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 1800, TimeUnit.SECONDS)) {
+				pushDmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
 			}else {
 				log.error(redisKey + "任务正在执行中");
 			}
-    		
-    		if(pushRate > 0) {
-				i = i + 1;
-    			if(i % pushRate == 0) {
-    				try {
-    					Thread.sleep(1000);
-    				} catch (InterruptedException e) {}
-    			}
-			}
+		}
+		
+		if(CollUtil.isEmpty(pushDmpOutputTaskRecordEntityList)) {
+    		return;
     	}
+		
+		pushDmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getUpdateTime().compareTo(d2.getUpdateTime()));
+		dmpOutputExecutorPool.execute(() -> {
+			int i = 0;
+	    	Integer pushRate = dmpCfgOutputEntity.getPushRate();
+			if(pushRate == null) {
+				pushRate = 3;
+			}
+			for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : pushDmpOutputTaskRecordEntityList) {
+				String dataId = dmpOutputTaskRecordEntity.getDataId();
+				String redisKey = "dmp:output:task:" + dataId;
+				try {
+					this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+				} catch (Exception e) {
+					log.error("处理推送数据失败{}" , dmpOutputTaskRecordEntity.getId() , e);
+				}finally {
+					redisTemplate.delete(redisKey);
+				}
+	    		
+	    		if(pushRate > 0) {
+					i = i + 1;
+	    			if(i % pushRate == 0) {
+	    				try {
+	    					Thread.sleep(1000);
+	    				} catch (InterruptedException e) {}
+	    			}
+				}
+	    	}
+		});
 	}
 	
 	protected abstract void pushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity);

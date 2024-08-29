@@ -581,7 +581,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     public void downloadPackingTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/packing.xlsx";
+        String path = "excel/packing.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

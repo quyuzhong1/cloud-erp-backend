@@ -24,6 +24,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
     GOODCANG("goodcang", "谷仓"),
     IML("iml", "艾姆勒"),
     ERP("erp", "数大臣"),
+    ANTU("antu", "安兔"),
     ;
     /**
      * 类型

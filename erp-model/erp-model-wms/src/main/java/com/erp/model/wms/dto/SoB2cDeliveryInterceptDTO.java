@@ -495,6 +495,12 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 处理结果描述
          */
         private String resultRemark;
+
+        /**
+         * 是否海外仓
+         */
+        private boolean isThirdWarehouse;
+
     }
 
     /**
