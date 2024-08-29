@@ -112,8 +112,15 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteByStockUpId(String stockUpId) {
-
+        List<CfgRuleLogisticsEntity> cfgRuleLogisticsList = listByStockUpIdList(Arrays.asList(stockUpId));
+        if (CollectionUtils.isEmpty(cfgRuleLogisticsList)) {
+            return;
+        }
+        //根据id删除
+        List<String> idList = cfgRuleLogisticsList.stream().map(CfgRuleLogisticsEntity::getId).distinct().collect(Collectors.toList());
+        deleteByIdList(idList);
     }
 
     /**

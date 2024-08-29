@@ -92,6 +92,11 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         return list;
     }
 
+    @Override
+    public void deleteByStockUpId(String stockUpId) {
+       lambdaUpdate().eq(CfgRuleStockingRatioEntity::getStockUpId,stockUpId).remove();
+    }
+
     /**
      * 查询需要删除的数据
      */

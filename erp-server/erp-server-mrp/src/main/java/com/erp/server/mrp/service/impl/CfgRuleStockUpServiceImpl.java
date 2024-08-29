@@ -116,6 +116,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteByRefId(String refId) {
         CfgRuleStockUpEntity cfgRuleStockUpEntity = getByRefId(refId);
         if (ObjectUtil.isEmpty(cfgRuleStockUpEntity)) {
@@ -127,6 +128,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         cfgRuleLogisticsService.deleteByStockUpId(cfgRuleStockUpEntity.getId());
 
         //删除备货系数配置
+        cfgRuleStockingRatioService.deleteByStockUpId(cfgRuleStockUpEntity.getId());
     }
 
     /**
