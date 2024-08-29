@@ -204,4 +204,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     BatchResultDTO handleData(String id,Boolean isFlag);
 
     BatchResultDTO generatePackingTask(RequisitionApplicationEntity entity);
+
+    List<RequisitionApplicationEntity> listByCodes(List<String> codes);
 }

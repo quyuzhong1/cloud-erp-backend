@@ -1949,4 +1949,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         packingTaskService.addPackingByRequisition(entity);
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
+
+    @Override
+    public List<RequisitionApplicationEntity> listByCodes(List<String> codes) {
+        if(CollectionUtils.isEmpty(codes)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(RequisitionApplicationEntity::getCode,codes).list();
+    }
 }
