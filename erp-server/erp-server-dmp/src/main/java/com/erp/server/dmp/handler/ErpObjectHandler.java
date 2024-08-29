@@ -24,11 +24,19 @@ public class ErpObjectHandler implements MetaObjectHandler {
         String userId = loginUser.getUid();
         String userName = loginUser.getUserName();
         LocalDateTime nowDate = LocalDateTime.now();
-        Object createTime = metaObject.getValue("createTime");
+        Object createTime = null;;
+		try {
+			createTime = metaObject.getValue("createTime");
+		} catch (Exception e) {
+		}
         if(createTime == null) {
         	this.setFieldValByName("createTime", nowDate, metaObject);
         }
-        Object updateTime = metaObject.getValue("updateTime");
+        Object updateTime = null;
+		try {
+			updateTime = metaObject.getValue("updateTime");
+		} catch (Exception e) {
+		}
         if(updateTime == null) {
         	this.setFieldValByName("updateTime", nowDate, metaObject);
         }

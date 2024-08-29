@@ -111,9 +111,9 @@ public class SyncKingdeeCustomerContactServiceImpl implements SyncKingdeeCustome
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (CustomerContactEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH;
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, settingEnum.getKey())
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.CUSTOMER_CONTACT.getCode())
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();
