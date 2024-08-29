@@ -103,4 +103,6 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     void delete(String id);
 
     List<String> getShortName(String platformCode);
+
+    OverseasProviderEntity getByWarehouseId(String warehouseId);
 }

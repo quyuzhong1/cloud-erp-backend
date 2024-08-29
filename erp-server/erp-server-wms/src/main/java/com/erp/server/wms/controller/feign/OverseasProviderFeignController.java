@@ -29,9 +29,9 @@ public class OverseasProviderFeignController {
      * @param code
      * @return com.erp.model.wms.entity.OverseasProviderEntity
      **/
-    @GetMapping("/getByPlatformCode")
-    public OverseasProviderEntity getByPlatformCode(@RequestParam("code") String code) {
-        return overseasProviderService.getByPlatformCode(code);
+    @GetMapping("/getByWarehouseId")
+    public OverseasProviderEntity getByWarehouseId(@RequestParam("warehouseId") String warehouseId) {
+        return overseasProviderService.getByWarehouseId(warehouseId);
     }
 
     /**

@@ -17,8 +17,8 @@ public interface OverseasProviderFeign {
      * @param code
      * @return com.erp.model.wms.entity.OverseasProviderEntity
      **/
-    @GetMapping("/feign/overseasProvider/getByPlatformCode")
-    OverseasProviderEntity getByPlatformCode(@RequestParam("code") String code);
+    @GetMapping("/feign/overseasProvider/getByWarehouseId")
+    OverseasProviderEntity getByWarehouseId(@RequestParam("warehouseId") String warehouseId);
     /**
      * 查询仓库信息
      *

@@ -255,6 +255,15 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     @Override
+    public OverseasProviderEntity getByWarehouseId(String warehouseId) {
+        OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(warehouseId);
+        if(Objects.isNull(overseasProviderWarehouseEntity)){
+            return null;
+        }
+        return this.getById(overseasProviderWarehouseEntity.getMainId());
+    }
+
+    @Override
     public OverseasProviderEntity getAlreadyAuthById(String id) {
         return lambdaQuery().eq(BaseEntity::getId,id).eq(OverseasProviderEntity::getAuthStatus,AuthStatusEnum.ALREADY.getCode()).one();
     }
