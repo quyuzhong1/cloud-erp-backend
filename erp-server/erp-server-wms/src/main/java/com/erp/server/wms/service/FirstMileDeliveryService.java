@@ -301,6 +301,10 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      */
     FirstMileDeliveryEntity getByCode(String key);
 
+    FirstMileDeliveryEntity getBySourceCode(String key);
+
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordByFbaCode(String fbaShipmentCode);
+
     /**
      * 根据编码获取明细列表
      * @param codes 编码

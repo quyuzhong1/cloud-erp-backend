@@ -172,6 +172,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             listDTO.setRegistrationCost(shippingCalculationDTO.getRegistrationCost());
             listDTO.setOperatingCost(shippingCalculationDTO.getOperatingCost());
             listDTO.setTotalShippingCost(shippingCalculationDTO.getTotalShippingCost());
+//            listDTO.setDeclareCost(shippingCalculationDTO.getDeclareCost());
+//            listDTO.setOtherCost(shippingCalculationDTO.getOtherCost());
             //其他费用
             ShippingCalculationDTO.OtherCostDTO otherCostDTO = new ShippingCalculationDTO.OtherCostDTO();
             otherCostDTO.setDiscountCost(shippingCalculationDTO.getDiscountCost());
@@ -284,6 +286,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
          * 价格进制进行处理
          */
         BigDecimal totalShippingCost = shippingCost
+//                .add(shippingCost)
                 .add(shippingTemplateRule.getOperatingCost())
                 .add(shippingTemplateRule.getRegistrationCost())
                 .add(signatureCost)
@@ -301,6 +304,15 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
                 .add(shippingTemplateRule.getOperatingCost())
                 .add(shippingTemplateRule.getRegistrationCost());
         shippingCalculationDTO.setTotalTrialShippingCost(handlePriceBinary(totalTrialShippingCost, entity.getPriceBinary()));
+//        //关税费用
+//        shippingCalculationDTO.setDeclareCost(BigDecimal.ZERO);
+//        //其他费用
+//        BigDecimal otherCost = oversizeSurchargeCost
+//                .add(signatureCost)
+//                .add(fuelSurchargeCost)
+//                .add(premiumCost)
+//                .subtract(discountCost);
+//        shippingCalculationDTO.setOtherCost(handlePriceBinary(otherCost, entity.getPriceBinary()));
         return shippingCalculationDTO;
     }
 

@@ -20,6 +20,8 @@
        <result column="billing_weight" property="billingWeight" />
        <result column="billing_weight_logistics" property="billingWeightLogistics" />
        <result column="currency" property="currency" />
+       <result column="fee_rule" property="feeRule" />
+       <result column="confirm_time" property="confirmTime" />
        <result column="remark" property="remark" />
     </resultMap>
 
@@ -90,6 +92,8 @@
             lbc.weight_unit as weightUnit,
             lbc.currency,
             lb.platform_code as platformCode,
+            lbc.fee_rule,
+            lbc.confirm_time as confirmTime,
             lbc.shop_charge_id,
             lbc.shop_charge_name
         from logistics_bill_cost lbc
@@ -145,6 +149,8 @@
             lbc.weight_unit as weightUnit,
             lbc.currency,
             lb.platform_code as platformCode,
+            lbc.fee_rule as feeRule,
+            lbc.confirm_time as confirmTime,
             lbc.shop_charge_id,
             lbc.shop_charge_name
         from logistics_bill_cost lbc

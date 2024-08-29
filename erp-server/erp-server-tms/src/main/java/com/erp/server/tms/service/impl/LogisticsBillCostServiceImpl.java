@@ -53,11 +53,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -102,6 +104,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Autowired
     private LogisticsLastMileCostQueryHandler logisticsLastMileCostQueryHandler;
 
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -221,15 +225,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     public BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus) {
         LogisticsBillCostEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
-
-        if (ReconciliationStatusEnum.INVALID.getCode().equals(entity.getReconciliationStatus()) || ReconciliationStatusEnum.CONFIRMED.getCode().equals(entity.getReconciliationStatus())) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS);
-        }
+        //自发货/尾程费用：状态变更【已确认/已作废】可以修改为其他状态【待确认/已确认】【现有功能优化】
+//        if (ReconciliationStatusEnum.INVALID.getCode().equals(entity.getReconciliationStatus()) || ReconciliationStatusEnum.CONFIRMED.getCode().equals(entity.getReconciliationStatus())) {
+//            throw new ServiceException(ApiError.ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS);
+//        }
         //状态变更
         lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
                 .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
+                .set(ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmTime, LocalDateTime.now())
+                .set(ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmUserId, UserContext.getDefaultLoginUser().getUid())
+                .set(ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmUserName, UserContext.getDefaultLoginUser().getUserName())
+                .set(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmTime, null)
+                .set(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmUserId, "")
+                .set(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmUserName, "")
                 .update();
-
         // 状态变更日志
         log.info("状态变更日志数据，id集合：【{}】", id);
         String msg = StrUtil.format("用户【{}】自发货费用【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getTransportNo(), "自发货费用", ReconciliationStatusEnum.getName(reconciliationStatus));
@@ -343,7 +352,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     public LogisticsBillCostDTO.ViewDTO view(String id) {
         LogisticsBillCostEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到自发货物流费用数据"));
         LogisticsBillCostDTO.ViewDTO data = BeanMapperUtils.map(LogisticsBillCostDTO.ViewDTO.class, entity);
-
+        data.setFeeRuleName(ShippingFeeRuleEnum.getName(data.getFeeRule()));
         //查询实际明细
         List<TmsCostDetailEntity> costDetailList = tmsCostDetailService.listByMainIdList(Arrays.asList(data.getId()));
         costDetailList = costDetailList.stream().filter(obj -> StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode())).collect(Collectors.toList());
@@ -450,6 +459,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     ? DictCostAttributionEnum.SELF_DELIVER.getCode() : DictCostAttributionEnum.LAST_MILE.getCode();
         }
         entity.setType(type);
+        if (Objects.equals(DictCostAttributionEnum.SELF_DELIVER.getCode(), entity.getType())){
+            //根据渠道设置计费规则
+            if (StrUtil.isNotBlank(entity.getChannelId())){
+                LogisticsChannelEntity channelEntity = logisticsChannelService.getById(entity.getChannelId());
+                entity.setFeeRule(Objects.nonNull(channelEntity)? channelEntity.getFeeRule() : "");
+            }
+        }else if (Objects.equals(DictCostAttributionEnum.LAST_MILE.getCode(), entity.getType())){
+            entity.setFeeRule(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode());
+        }
     }
 
 
@@ -496,6 +514,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                             && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ESTIMATED.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setEstimatedShippingCost(estimatedShippingCost);
+            //预估报关费用
+            BigDecimal estimatedDeclareCost = costList.stream().filter(obj -> StrUtil.equals(obj.getMainId(),listDTO.getId())
+                            && StrUtil.equals(DictCostCategoryEnum.DECLARE_COST.getCode(), obj.getDictCostCategory())
+                            && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ESTIMATED.getCode()))
+                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+            listDTO.setEstimatedDeclareCost(estimatedDeclareCost);
+            //预估其他费用
+            BigDecimal estimatedOtherCost = costList.stream().filter(obj -> StrUtil.equals(obj.getMainId(),listDTO.getId())
+                            && StrUtil.equals(DictCostCategoryEnum.OTHER_COST.getCode(), obj.getDictCostCategory())
+                            && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ESTIMATED.getCode()))
+                    .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+            listDTO.setEstimatedOtherCost(estimatedOtherCost);
 
             //实际运费
             BigDecimal actualShippingCost = costList.stream().filter(obj -> StrUtil.equals(obj.getMainId(),listDTO.getId())
@@ -520,6 +550,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                             && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setActualOtherCost(actualOtherCost);
+            //费用规则
+            listDTO.setFeeRuleName(ShippingFeeRuleEnum.getName(listDTO.getFeeRule()));
         }
     }
 

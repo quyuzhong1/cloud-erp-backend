@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
@@ -26,8 +29,10 @@ import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.StringUtil;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpLogisticInfoEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
@@ -193,6 +198,9 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
     public PlatformOrderDTO convert(DmpSoInfoEntity dmpSoInfoEntity , List<DmpSoDetailEntity> dmpSoDetailEntityList , List<DmpSoReceiverEntity> dmpSoReceiverEntityList
     		, List<DmpSoOutstockEntity> dmpSoOutstockEntityList , List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList , List<DmpLogisticInfoEntity> dmpLogisticInfoEntityList , String cfgOutputId) {
     	if(this.validateDataBlack(dmpSoInfoEntity, cfgOutputId)) {
+    		return null;
+    	}
+    	if(CollUtil.isEmpty(dmpSoDetailEntityList)) {
     		return null;
     	}
     	PlatformOrderDTO orderDTO = new PlatformOrderDTO();
@@ -434,5 +442,35 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
     @Override
     protected List<String> getSourceCodeKeys() {
     	return Arrays.asList("platformCode");
+    }
+    
+    @Override
+    public void getRetryPushSourceData(List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList,
+    		DmpOutputTaskRequest dmpOutputTaskRequest) {
+    	DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
+		List<String> mainIds = dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().get(dmpCfgInputConvertEntity).stream().map(BaseEntity::getId).collect(Collectors.toList());
+    	List<String> soOutStockIds = null;
+		for(int i = 1; i < dmpCfgInputConvertEntityList.size(); i++) {
+			DmpCfgInputConvertEntity childDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(i);
+			String storageName = childDmpCfgInputConvertEntity.getStorageName();
+			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(storageName, true) + "ServiceImpl" , ServiceImpl.class);
+			QueryWrapper<?> wrapper = new QueryWrapper<>();
+			if("dmp_so_outStock".equals(storageName)) {
+				wrapper.in("source_id", mainIds);
+			}else if("dmp_so_outStock_detail".equals(storageName)){
+				if(CollUtil.isEmpty(soOutStockIds)) {
+					continue;
+				}
+				wrapper.in("main_id", soOutStockIds);
+			}else {
+				wrapper.in("main_id", mainIds);
+			}
+			List<BaseEntity> childEntityList = serviceImpl.list(wrapper);
+			if("dmp_so_outStock".equals(storageName)) {
+				soOutStockIds = childEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+			}
+			dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
+			dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
+		}
     }
 }

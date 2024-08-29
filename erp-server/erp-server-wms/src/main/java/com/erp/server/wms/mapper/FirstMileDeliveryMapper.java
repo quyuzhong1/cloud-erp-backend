@@ -65,7 +65,7 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @param sourceIds
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      **/
-    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(@Param("sourceIds") List<String> sourceIds);
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecord(@Param("sourceIds") List<String> sourceIds, @Param("fbaShipmentCode") String fbaShipmentCode);
 
     /**
      * 下推加工单列表查询

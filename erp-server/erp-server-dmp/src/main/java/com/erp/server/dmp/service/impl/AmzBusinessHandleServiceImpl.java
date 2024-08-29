@@ -223,7 +223,8 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
                 sourceDTO.getShipmentDateLocale(),
                 Collections.singletonList(detailDTO),
                 sourceDTO.getUniqueId(),
-                PlatformDictEnum.AMAZON.getCode()
+                PlatformDictEnum.AMAZON.getCode(),
+                sourceDTO.getAmazonOrderId()
         );
     }
 

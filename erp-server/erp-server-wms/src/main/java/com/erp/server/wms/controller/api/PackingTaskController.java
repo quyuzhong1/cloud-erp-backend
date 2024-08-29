@@ -256,18 +256,5 @@ public class PackingTaskController extends BaseController {
     /**
      * 修复历史装箱数据
      */
-    @PostMapping("initPackingTaskData")
-    public ApiResult initPackingTaskData(){
-        packingTaskService.initPackingTaskData();
-        return success();
-    }
-    /**
-     * 更新历史装箱状态
-     */
-    @PostMapping("initPackingTaskStatus")
-    public ApiResult initPackingTaskStatus(){
-        packingTaskService.initPackingTaskStatus();
-        return success();
-    }
 
 }

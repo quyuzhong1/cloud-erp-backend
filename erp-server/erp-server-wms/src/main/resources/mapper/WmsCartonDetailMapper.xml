@@ -32,7 +32,10 @@
                 INNER JOIN packing_task pt ON pt.id = wc.packing_task_id and pt.is_deleted = FALSE
         WHERE
             wcd.is_deleted = FALSE and wcd.sku_id is not null
-          and pt.source_Id =  #{sourceId}
+          and pt.source_Id in
+        <foreach collection="sourceIdList" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
     </select>
     <select id="listCartonDetailByMainIds" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$BoxDTO">
         SELECT

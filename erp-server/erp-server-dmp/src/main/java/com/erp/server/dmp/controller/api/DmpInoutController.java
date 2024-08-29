@@ -1,37 +1,60 @@
 package com.erp.server.dmp.controller.api;
 
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
-import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
-import com.erp.model.dmp.entity.DmpCfgInputConvertValueEntity;
-import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO.SyncParamDetailDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.wrapper.FeignQuery;
 import com.common.business.wrapper.QueryParam;
+import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgMqEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
+import com.erp.model.dmp.entity.DmpOutputTaskEntity;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+import com.erp.model.dmp.entity.DmpPushMsgEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
+import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
 import com.erp.server.dmp.service.DmpCfgInputConvertService;
 import com.erp.server.dmp.service.DmpCfgMqService;
+import com.erp.server.dmp.service.DmpCfgOutputService;
+import com.erp.server.dmp.service.DmpOutputTaskRecordService;
+import com.erp.server.dmp.service.DmpOutputTaskService;
+import com.erp.server.dmp.service.DmpPushMsgService;
 
 import cn.hutool.core.collection.CollUtil;
+import lombok.extern.slf4j.Slf4j;
 
 
 /**
@@ -39,6 +62,7 @@ import cn.hutool.core.collection.CollUtil;
  * @author Administrator
  *
  */
+@Slf4j
 @RestController
 @RequestMapping("/dmpInout")
 public class DmpInoutController extends BaseController {
@@ -60,6 +84,18 @@ public class DmpInoutController extends BaseController {
 
 	@Autowired
 	private DmpCfgInputConvertMappingService dmpCfgInputConvertMappingService;
+	
+	@Autowired
+	private DmpOutputTaskService dmpOutputTaskService;
+	
+	@Autowired
+	private DmpCfgOutputService dmpCfgOutputService;
+	
+	@Autowired
+	private DmpPushMsgService dmpPushMsgService;
+	
+	@Autowired
+	private DmpOutputTaskRecordService dmpOutputTaskRecordService;
 	
     @PostMapping("doInputTask")
     public ApiResult<?> doInputTask(@RequestBody DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest) {
@@ -119,6 +155,7 @@ public class DmpInoutController extends BaseController {
     	typeCacheMap.put("dmpCfgMqEntity", rocketMQDmpCfgMqCache);
     	typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
     	typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
+    	typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
     	
     	return success(typeCacheMap);
     }
@@ -129,4 +166,94 @@ public class DmpInoutController extends BaseController {
     	return success();
     }
     
+    @PostMapping("querySyncByIds")
+    public ApiResult<?> querySyncIds(@RequestBody List<String> ids) {
+    	return this.querySync(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", ids)));
+    }
+    
+    @PostMapping("querySync")
+    public ApiResult<?> querySync(@RequestBody List<QueryParam> queryParams) {
+    	QueryWrapper<?> queryWrapper = QueryParam.getQueryWrapper(queryParams);
+    	queryWrapper.eq("status", DmpOutputTaskRecordStatusEnum.ERROR.getCode());
+    	ServiceImpl serviceImpl = ApplicationContextUtils.getBean("dmpOutputTaskRecordServiceImpl" , ServiceImpl.class);
+    	List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = (List<DmpOutputTaskRecordEntity>)serviceImpl.list(queryWrapper);
+    	if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+    		Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
+	    			.in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
+	    			.select(DmpOutputTaskEntity::getId , DmpOutputTaskEntity::getCfgOutputId)
+	    			.list().stream().collect(Collectors.toMap(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId));
+	    	
+	    	Map<String, DmpCfgOutputEntity> outputIdEntityMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
+	    			.list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, d -> d));
+	    	
+	    	Map<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMaps = new HashMap<>();
+	    	for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+	    		String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
+	    		List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMaps.get(cfgOutputId);
+	    		if(CollUtil.isEmpty(list)) {
+	    			list = new ArrayList<>();
+	    		}
+	    		list.add(dmpOutputTaskRecordEntity);
+	    		cfgOutputRecordEntityListMaps.put(cfgOutputId, list);
+	    	}
+    		
+	    	for(Map.Entry<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMap : cfgOutputRecordEntityListMaps.entrySet()) {
+	    		String cfgOutputId = cfgOutputRecordEntityListMap.getKey();
+				DmpCfgOutputEntity dmpCfgOutputEntity = outputIdEntityMaps.get(cfgOutputId);
+	    		String inputConvertId = dmpCfgOutputEntity.getInputConvertId();
+	    		String cfgInputId = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getId().equals(inputConvertId)).get(0).getMainId();
+	    		DmpCfgInputEntity dmpCfgInputEntity = dmpHandlerCache.getDmpCfgInputEntityList(d -> d.getId().equals(cfgInputId)).get(0);
+	    		String systemId = dmpCfgInputEntity.getSystemId();
+	    		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(systemId)).get(0).getCode();
+	    		
+	    		List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMap.getValue();
+	    		List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
+	    		List<String> ids = list.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
+	    		if(DmpBasicSystemCodeEnum.ERP.getCode().equals(systemCode)) {
+	    			String extendJson = dmpCfgInputEntity.getExtendJson();
+	    			JSONObject parseObject = JSON.parseObject(extendJson);
+	    			String system = parseObject.getString("system");
+	    			String apiType = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(dmpCfgInputEntity.getTypeId())).get(0).getApiType();
+	    			
+					List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.listByIds(dataIds);
+	    			DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO();
+	    			syncParamDTO.setSourceType(SourceTypeEnum.getEnum(apiType));
+	    			List<SyncParamDetailDTO> sourceDetailList = new ArrayList<>();
+	    			for(DmpPushMsgEntity dmpPushMsgEntity : dmpPushMsgEntityList) {
+	    				SyncParamDetailDTO syncParamDetailDTO = new SyncParamDetailDTO();
+	    				syncParamDetailDTO.setSourceId(dmpPushMsgEntity.getSourceId());
+	    				syncParamDetailDTO.setSyncOperate(dmpPushMsgEntity.getSyncOperate());
+	    				sourceDetailList.add(syncParamDetailDTO);
+	    			}
+	    			syncParamDTO.setSourceDetailList(sourceDetailList);
+	    			try {
+						FeignQuery.invoke("com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "findDataSendSyncTask", Arrays.asList(syncParamDTO));
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.in(DmpOutputTaskRecordEntity::getId, ids)
+							.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+							.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.update();
+					} catch (Exception e) {
+						log.error("查询同步调用erp服务报错" , e);
+					}
+	    		}else {
+	    			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+	    			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+	    			dmpOutputHotfixCreateRequest.setQueryParams(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", dataIds)));
+	    			try {
+						dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.in(DmpOutputTaskRecordEntity::getId, ids)
+							.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+							.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.update();
+					} catch (Exception e) {
+						log.error("查询同步调用dmp报错" , e);
+					}
+	    		}
+	    	}
+	    	
+    	}
+    	return success(dmpOutputTaskRecordEntityList);
+    }
 }
