@@ -6,15 +6,30 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
@@ -30,18 +45,33 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.output.DmpOutputHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
+import com.erp.server.dmp.inout.utils.DmpOutputUtils;
+import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpOutputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Scope("prototype")
+@Slf4j
 public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	@Autowired
 	protected DmpOutputTaskService dmpOutputTaskService;
 	@Autowired
 	protected DmpHandlerCache dmpHandlerCache;
+	@Autowired
+	protected DmpOutputTaskRecordService dmpOutputTaskRecordService;
+	@Autowired
+	@Qualifier("dmpOutputExecutorPool")
+	protected ExecutorService dmpOutputExecutorPool;
+	@Resource
+	protected RedisTemplate<String,Object> redisTemplate;
+	@Autowired
+	protected DmpOutputUtils dmpOutputUtils;
+	@Autowired
+	protected IdentifierGenerator identifierGenerator;
 	
 	protected boolean isNotValidate = false;
 	
@@ -65,6 +95,16 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		}
 		List<DmpOutputTaskRecordEntity> outputData = this.outputData(dmpRequest, dmpResponse);
 		dmpResponse.setOutputData(outputData);
+		if(CollUtil.isNotEmpty(outputData)) {
+			dmpOutputTaskRecordService.saveBatch(outputData);
+		}
+		DmpOutputTaskHandler bean = ApplicationContextUtils.getBean(this.getClass());
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+		    @Override
+		    public void afterCommit() {
+		    	bean.dealDmpOutputTaskRecordEntityList(dmpCfgOutputEntity , outputData);
+		    }
+		});
 		dmpOutputTaskService.lambdaUpdate()
 				.eq(DmpOutputTaskEntity::getId, dmpRequest.getOutputTaskId())
 				.set(DmpOutputTaskEntity::getStatus, DmpOutputTaskStatusEnum.FINISH.getCode())
@@ -73,7 +113,61 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		chain.doDmpHandler(dmpRequest, dmpResponse);
 	}
 	
-	public abstract List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse);
+	protected abstract List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse);
+	
+	public void dealDmpOutputTaskRecordEntityList(DmpCfgOutputEntity dmpCfgOutputEntity , List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList) {
+    	if(CollUtil.isEmpty(dmpOutputTaskRecordEntityList)) {
+    		return;
+    	}
+		
+    	int i = 0;
+    	Integer pushRate = dmpCfgOutputEntity.getPushRate();
+		if(pushRate == null) {
+			pushRate = 3;
+		}
+		dmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getUpdateTime().compareTo(d2.getUpdateTime()));
+    	for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+			String dataId = dmpOutputTaskRecordEntity.getDataId();
+			String redisKey = "dmp:output:task:" + dataId;
+			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 3600, TimeUnit.SECONDS)) {
+				try {
+					this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+				} catch (Exception e) {
+					log.error("处理推送数据失败" , e);
+					throw new RuntimeException(e);
+				}finally {
+					redisTemplate.delete(redisKey);
+				}
+			}else {
+				log.error(redisKey + "任务正在执行中");
+			}
+    		
+    		if(pushRate > 0) {
+				i = i + 1;
+    			if(i % pushRate == 0) {
+    				try {
+    					Thread.sleep(1000);
+    				} catch (InterruptedException e) {}
+    			}
+			}
+    	}
+	}
+	
+	protected abstract void pushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity);
+	
+	public void getRetryPushSourceData(List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList , DmpOutputTaskRequest dmpOutputTaskRequest) {
+		DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
+		List<String> mainIds = dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().get(dmpCfgInputConvertEntity).stream().map(BaseEntity::getId).collect(Collectors.toList());
+		for(int i = 1; i < dmpCfgInputConvertEntityList.size(); i++) {
+			DmpCfgInputConvertEntity childDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(i);
+			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(childDmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
+			QueryWrapper<?> wrapper = new QueryWrapper<>();
+			wrapper.in("main_id", mainIds);
+			List<BaseEntity> childEntityList = serviceImpl.list(wrapper);
+			dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
+			dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
+		}
+	}
 	
 	protected boolean validateDataBlack(Object object , String cfgOutputId) {
 		if(object != null) {

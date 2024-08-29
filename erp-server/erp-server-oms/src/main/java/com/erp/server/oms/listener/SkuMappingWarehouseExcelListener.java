@@ -211,10 +211,10 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 errorList.add(dto);
                 continue;
             }
-            if(handleSkuSet.contains(dto.getWarehouseSkuNo())){
+            if(handleSkuSet.contains(dto.getWarehouseSkuNo()+dto.getWarehouseName())){
                 continue;
             }
-            handleSkuSet.add(dto.getWarehouseSkuNo());
+            handleSkuSet.add(dto.getWarehouseSkuNo()+dto.getWarehouseName());
             ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(v->v.getPlatformSkuNo().equals(dto.getWarehouseSkuNo())).findFirst().orElse(null);
             String listingId;
             //为空，则新增
@@ -245,6 +245,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addSkuMappingList.add(addSkuMapping);
                 Pair<String, String> pair = new Pair<>(listingId,listingId);
                 addLogPairList.add(pair);
+                listingInfoEntityList.add(addListingInfoEntity);
             }else{
                 //将原来的skuMapping设置过期，再新增
                 listingId = listingInfoEntity.getId();

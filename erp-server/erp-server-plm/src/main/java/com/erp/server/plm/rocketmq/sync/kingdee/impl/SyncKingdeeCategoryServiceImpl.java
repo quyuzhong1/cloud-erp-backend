@@ -1,10 +1,15 @@
 package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -12,12 +17,18 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.entity.PlmPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;
 import com.erp.server.plm.service.BasicCategoryService;
+import com.erp.server.plm.service.PlmPushMsgService;
+
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,6 +54,9 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
 
     @Resource
     private BasicCategoryService basicCategoryService;
+    
+    @Resource
+    private PlmPushMsgService plmPushMsgService;
 
     /**
      * 组装数据发送到金蝶
@@ -108,17 +123,37 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (BasicCategoryEntity entity, String operate, Map<String, Object> resultMap) {
-        //添加推送任务
-        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-        taskFeignDTO.setSourceId(entity.getId());
-        taskFeignDTO.setSourceCode(entity.getCode());
-        taskFeignDTO.setSourceType(SourceTypeEnum.BASIC_CATEGORY.getCode());
-        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_ASSISTANT_DATA_TAG.getName());
-        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        taskFeignDTO.setSyncOperate(operate);
-        return dmpMqFeign.saveTask(taskFeignDTO);
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, settingEnum.getKey())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+          DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+          taskFeignDTO.setSourceId(entity.getId());
+          taskFeignDTO.setSourceCode(entity.getCode());
+          taskFeignDTO.setSourceType(SourceTypeEnum.BASIC_CATEGORY.getCode());
+          taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+          taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_ASSISTANT_DATA_TAG.getName());
+          taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+          taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+          taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+          taskFeignDTO.setSyncOperate(operate);
+          return dmpMqFeign.saveTask(taskFeignDTO);
+        }
+        
+        PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.BASIC_CATEGORY.getCode());
+        plmPushMsgEntity.setSourceId(entity.getId());
+        plmPushMsgEntity.setSourceCode(entity.getCode());
+        plmPushMsgEntity.setSyncOperate(operate);
+        plmPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+        plmPushMsgService.save(plmPushMsgEntity);
+        
+        return null;
     }
 }

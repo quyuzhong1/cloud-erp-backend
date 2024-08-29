@@ -170,11 +170,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         if (null == entity) {
             return null;
         }
-        OverseasProviderEntity providerEntity = overseasProviderService.getById(entity.getMainId());
-        if (null == providerEntity) {
-            throw new ServiceException("目的仓数据异常：未找到关联服务：id" + entity.getMainId());
-        }
-        return providerEntity;
+        return overseasProviderService.getAlreadyAuthById(entity.getMainId());
     }
 
     @Override

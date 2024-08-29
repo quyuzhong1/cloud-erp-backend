@@ -2,8 +2,7 @@ package com.erp.server.dmp.service.impl;
 
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Resource;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -23,18 +21,19 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpInputTaskDTO;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.mapper.DmpInputTaskMapper;
 import com.erp.server.dmp.service.DmpInputTaskService;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.extra.spring.SpringUtil;
-import cn.hutool.http.HttpUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -51,7 +50,8 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 	@Resource
     private MQProducerService mqProducerService;
 	
-	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
+	@Resource
+	private DmpHandlerCache dmpHandlerCache;
 	
 	@GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -114,8 +114,10 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
     public boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e) {
     	String errorBeforeStatus = "";
+    	DmpInputTaskEntity dmpInputTaskEntity = null;
     	if(errorFlag) {
-    		errorBeforeStatus = getById(id).getStatus() + "@@";
+    		dmpInputTaskEntity = getById(id);
+			errorBeforeStatus = dmpInputTaskEntity.getStatus() + "@@";
     	}
     	String errorMessage = errorBeforeStatus + "traceId=【" + MDC.get("traceId") + "】" + ExceptionUtil.stacktraceToString(e);
 		boolean update = lambdaUpdate().eq(DmpInputTaskEntity::getId, id)
@@ -136,7 +138,14 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
 	        mqProducerService.sendWarnMsg(warnMsgInfo);
 	        
-	        DmpHandlerUtils.sendFeiShuMsg("输入任务记录id=" + id + "处理失败：" + e.getMessage());
+	        String name = "";
+	        String cfgInputId = dmpInputTaskEntity.getCfgInputId();
+	        List<DmpCfgInputEntity> dmpCfgInputEntityList = dmpHandlerCache.getDmpCfgInputEntityList(d -> d.getId().equals(cfgInputId));
+	        if(CollUtil.isNotEmpty(dmpCfgInputEntityList)) {
+	        	DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputEntityList.get(0);
+	        	name = dmpCfgInputEntity.getName();
+	        }
+	        DmpHandlerUtils.sendFeiShuMsg("输入任务记录id=【" + id + "】处理失败：" + name + "【" + e.getMessage() + "】");
 		}
     	
 		return update;

@@ -24,6 +24,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -44,6 +45,7 @@ import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -772,13 +774,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
                 //用目的仓查询是否绑定第三方仓
                 List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Arrays.asList(entity.getDestWarehouseId()));
+                // 查询发货目的仓平台
+                OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
 
                 //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
-                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities)) {
-
-                    // 查询发货目的仓平台
-                    OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
-
+                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities) && Objects.nonNull(providerEntity)) {
                     // 推送第三方发货单审核通过
                     ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                     if (200 != resultInfo.getCode()) {
@@ -1343,7 +1343,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyList();
         }
-        return baseMapper.listDeliveryRecordBySourceIds(ids);
+        return baseMapper.listDeliveryRecord(ids,null);
     }
 
     @Override
@@ -1380,6 +1380,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
         //查询库存sku
         List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
+        List<DictCountryEntity> dictCountryEntityList = FeignQuery.list(DictCountryEntity.class);
         for (FirstMileDeliveryDTO.ListDTO detailEntity : list) {
             SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
             paramDTO.setSkuNo(detailEntity.getSkuNo());
@@ -1410,6 +1411,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     data.setPackingStatus(packingTaskEntity.getPackingStatus());
                     data.setPackingStatusName(PackingTaskStatusEnum.getName(packingTaskEntity.getPackingStatus()));
                 }
+            }
+            DictCountryEntity dictCountryEntity = dictCountryEntityList.stream().filter(v->v.getId().equals(data.getCountryId())).findFirst().orElse(null);
+            if(Objects.nonNull(dictCountryEntity)){
+                data.setCountryName(dictCountryEntity.getNameCn());
             }
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
 
@@ -1698,6 +1703,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return null;
         }
         return this.lambdaQuery().eq(FirstMileDeliveryEntity::getSourceCode, code).last("limit 1").one();
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordByFbaCode(String fbaShipmentCode) {
+        if (StringUtils.isBlank(fbaShipmentCode)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listDeliveryRecord(null,fbaShipmentCode);
     }
 
     @Override

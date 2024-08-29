@@ -360,7 +360,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap = detailEntityList.stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId));
 
             //创建旺店通虚拟仓订单
-            service.saveWdtOrder(fromVmIds, requisitionApplication, haveFromVwMap);
+            //service.saveWdtOrder(fromVmIds, requisitionApplication, haveFromVwMap);
 
         }
         //调出仓库和调入仓库不一致的单据
@@ -810,7 +810,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 List<String> fromVmIds = haveFromVwList.stream().map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).collect(Collectors.toList());
 
                 //创建旺店通虚拟仓订单
-                service.cancelWdtOrder(fromVmIds, entity, haveFromVwMap);
+                //service.cancelWdtOrder(fromVmIds, entity, haveFromVwMap);
             }
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
             //清空明细中的虚拟仓
@@ -1370,6 +1370,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         for (Map.Entry<String, List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
             List<RequisitionApplicationDTO.GenerateDeliverViewDTO> value = entry.getValue();
             RequisitionApplicationDTO.GenerateDeliverViewDTO view = value.get(MathUtil.ZERO);
+            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) && StringUtils.isBlank(view.getFbaShipmentCode())){
+                throw new ServiceException(StrUtil.format("要货申请{}未绑定货件单号，无法下推发货单",view.getSourceCode()));
+            }
             //映射主表信息
             FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateDeliverFDD(view);
 

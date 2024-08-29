@@ -28,6 +28,7 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -990,9 +991,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                                                                      String verityCode
     ) {
         // 查询包装信息
-        List<WmsCartonSpecDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceId(mainEntity.getSourceId());
+        FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getById(mainEntity.getSourceId());
+        String requisitionId = Objects.nonNull(firstMileDeliveryEntity)?firstMileDeliveryEntity.getSourceId():"";
+
+        List<WmsCartonSpecDTO.PackingItemDTO> packingQtyDTOS = wmsCartonDetailService.boxInfoBySourceIds(Arrays.asList(requisitionId,mainEntity.getSourceId()));
         if (CollectionUtils.isEmpty(packingQtyDTOS)) {
-            String format = StrUtil.format("【{}】发货单：未找到包装信息", mainEntity.getSourceCode());
+            String format = StrUtil.format("【{}】发货单：未找到装箱信息", mainEntity.getSourceCode());
             throw new ServiceException(format);
         }
 
