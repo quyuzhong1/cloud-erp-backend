@@ -472,7 +472,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
             throw new ServiceException("数据异常:报告文档ID为空: report=" + entity.getReportId());
         }
         // 查询文档信息
-        ReportDocument reportDocument = amzReportHandleService.queryAmzReportDocument(reportInfo, entity.getId(), entity.getStatus());
+        ReportDocument reportDocument = amzReportHandleService.queryAmzReportDocument(reportInfo.getShopId(), reportInfo.getReportDocumentId(), entity.getId(), entity.getStatus());
 
         // 根据url下载到FastDFS
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();

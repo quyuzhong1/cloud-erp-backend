@@ -473,7 +473,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ReportDocument queryAmzReportDocument(DmpAmzReportInfoEntity reportInfoEntity, String taskId, String taskStatus){
+    public ReportDocument queryAmzReportDocument(String shopId, String reportDocumentId, String taskId, String taskStatus){
         // 从缓存获取(已完成或结束删除)
         String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, taskId, taskStatus);
         Object reportDocumentObj = redisUtil.get(key);
@@ -482,7 +482,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         }
 
         // 店铺
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(reportInfoEntity.getShopId());
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         // 市场
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         // 接口类型
@@ -498,7 +498,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         ApiResponse<ReportDocument> respWithHttpInfo;
         ReportDocument reportDocument;
         try {
-            respWithHttpInfo = reportsApi.getReportDocumentWithHttpInfo(reportInfoEntity.getReportDocumentId());
+            respWithHttpInfo = reportsApi.getReportDocumentWithHttpInfo(reportDocumentId);
             reportDocument = respWithHttpInfo.getData();
         } catch (ApiException e) {
             throw new RuntimeException(e);

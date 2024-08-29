@@ -2,7 +2,8 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器下
@@ -52,7 +54,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         String extendJson = dmpCfgInputEntity.getExtendJson();
         JSONObject extendObj = JSONObject.parseObject(extendJson);
-        if (null == extendObj){
+        if (null == extendObj) {
             ServiceException.runError("extendJson参数为空");
         }
         String reportType = extendObj.getString("reportType");
@@ -88,13 +90,21 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
         } catch (ApiException e) {
             throw new RuntimeException(e);
         }
+        // TODO 校验mongo已存在跳过处理
 
-        String resultJson = JSONUtil.toJsonStr(report);
+        JSONObject jsonObject = (JSONObject) JSON.toJSON(report);
+        // 补充其他信息
+        jsonObject.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
+        jsonObject.put("createdMethod", "query");
+        jsonObject.put("shopId", shopInfoDTO.getId());
+        if (null != report) {
+            jsonObject.put("marketplaceIds", String.join(",", report.getMarketplaceIds()));
+        }
+        String resultJson = JSONUtil.toJsonStr(jsonObject);
         if (null != report) {
             // 设置到缓存(已完成或结束删除)
-            redisUtil.set(key, resultJson);
+            redisUtil.set(key, resultJson, 600);
         }
-
-         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(resultJson));
+        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(resultJson));
     }
 }

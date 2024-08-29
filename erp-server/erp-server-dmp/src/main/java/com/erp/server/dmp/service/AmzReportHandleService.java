@@ -80,7 +80,7 @@ public interface AmzReportHandleService {
      * @Author Jim
      * @since 2024-01-20
      **/
-    ReportDocument queryAmzReportDocument(DmpAmzReportInfoEntity reportInfoEntity, String taskId, String taskStatus);
+    ReportDocument queryAmzReportDocument(String shopId, String reportDocumentId, String taskId, String taskStatus);
 
     /**
      * 定时任务处理
