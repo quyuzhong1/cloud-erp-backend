@@ -78,6 +78,9 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     }
 
     private void fillData(List<FirstMileEstimatedBillDTO.View> records) {
+        if(records.isEmpty()){
+            return;
+        }
         List<String> countryCodeList = records.stream().map(item -> item.getToCountry()).distinct().collect(Collectors.toList());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByNames(countryCodeList);
         Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(item -> item.getNameCn(), item2 -> item2.getId()));
