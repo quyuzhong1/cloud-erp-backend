@@ -149,7 +149,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).set(FirstMileEstimatedBillEntity::getConfirmTime, LocalDateTime.now()).eq(FirstMileEstimatedBillEntity::getId, id).update();
         }
         if(status.equals(ConfirmStatusEnum.TO_BE_CONFIRM.getCode())){
-            this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).set(FirstMileEstimatedBillEntity::getConfirmTime, "").eq(FirstMileEstimatedBillEntity::getId, id).update();
+            this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).set(FirstMileEstimatedBillEntity::getConfirmTime, null).eq(FirstMileEstimatedBillEntity::getId, id).update();
         }
 
         return BatchResultDTO.success(id, id);
