@@ -2,7 +2,7 @@ package com.erp.model.sys.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -10,7 +10,7 @@ import javax.validation.constraints.Size;
 
 /**
  * <p>
- * 艾姆勒城市字典表请求响应实体
+ * 第三方城市字典表请求响应实体
  * </p>
  *
  * @author lrp
@@ -18,7 +18,7 @@ import javax.validation.constraints.Size;
 */
 @Data
 @NoArgsConstructor
-public class ImlDictCityDTO implements Serializable {
+public class DictThirdCityDTO implements Serializable {
 
 
 

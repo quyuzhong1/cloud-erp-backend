@@ -6,14 +6,10 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import com.common.business.dto.PlatformInboundDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
@@ -196,5 +192,6 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
             String verityCode);
 
     ApiResult<?> handlePlatformMessage(PlatformInboundDTO dto);
-    
+
+    List<BaseDropDownDTO.CommonDTO> getLogisticByTransferWarehouseId(String transferWarehouseId);
 }

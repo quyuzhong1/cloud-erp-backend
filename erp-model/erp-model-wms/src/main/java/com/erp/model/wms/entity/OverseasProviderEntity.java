@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
@@ -12,7 +14,6 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -55,6 +56,23 @@ public class OverseasProviderEntity extends BaseEntity<OverseasProviderEntity> {
     @TableField(value = "auth_json", typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> authJson;
 
+    /**
+     * 平台账号
+     */
+    @TableField("platform_account")
+    private String platformAccount;
+
+    /**
+     * 仓库简称
+     */
+    @TableField("short_name")
+    private String shortName;
+
+    /**
+     * 启用时间
+     */
+    @TableField("enable_date")
+    private LocalDate enableDate;
 
     public static final String CODE = "code";
 

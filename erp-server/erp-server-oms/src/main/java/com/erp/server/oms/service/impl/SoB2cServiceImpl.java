@@ -17,7 +17,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
@@ -37,7 +36,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
@@ -131,8 +129,6 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.*;
@@ -2077,6 +2073,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setWarehouseCode(platformWarehouseCode);
         createOutboundReq.setVerify(MathUtil.ONE);
         createOutboundReq.setReferenceNo(entity.getCode());
+        createOutboundReq.setPlatformCode(entity.getPlatformCode());
         createOutboundReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
         createOutboundReq.setAuthId(overseasProviderWarehouse.getMainId());
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);
@@ -2226,9 +2223,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //2、如果是API对接的海外仓拦截调用海外仓拦截，否则触发物流拦截
         LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-        if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+        if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
             //API海外物流拦截
-            BatchResultDTO resultDTO = this.overseasProviderIntercept(add.getId(), entity, platformEnum);
+            BatchResultDTO resultDTO = this.overseasProviderIntercept(add.getId(), entity, platformEnum,detailList.get(0).getWarehouseId() );
             return resultDTO;
         } else {
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "已生成发货拦截单");
@@ -2240,15 +2237,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param id           拦截单id
      * @param soB2cEntity  订单信息
      * @param platformEnum 物流平台枚举
+     * @param warehouseId
      * @return com.common.business.dto.base.BatchResultDTO
      * @Author Luo_WG
      * @Date 2024/1/19 11:23
      **/
-    private BatchResultDTO overseasProviderIntercept(String id, SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum) {
+    private BatchResultDTO overseasProviderIntercept(String id, SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum, String warehouseId) {
         ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
         req.setOrderCode(soB2cEntity.getShippingOrderNo());
         req.setThirdWarehouseProvideCode(platformEnum.getCode());
-        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByPlatformCode(platformEnum.getCode());
+        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByWarehouseId(warehouseId);
         if (ObjectUtils.isNotEmpty(overseasProviderEntity)) {
             req.setAuthId(overseasProviderEntity.getId());
         }
@@ -2259,6 +2257,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto = new SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO();
             dto.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             dto.setResultRemark("第三方海外仓拦截成功，自动生成拦截单");
+            dto.setThirdWarehouse(true);
             soB2cDeliveryInterceptFeign.interceptResultConfirm(dto, id);
             return BatchResultDTO.success(id, soB2cEntity.getCode(), "发货拦截成功");
         } else {
@@ -2266,8 +2265,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto = new SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO();
             dto.setHandleResult(HandleResultEnum.FAILURE.getCode());
             dto.setResultRemark("第三方海外仓拦截失败，自动生成拦截单");
+            dto.setThirdWarehouse(true);
             soB2cDeliveryInterceptFeign.interceptResultConfirm(dto, id);
-            return BatchResultDTO.success(id, soB2cEntity.getCode(), "发货拦截失败");
+            return BatchResultDTO.fail(id, soB2cEntity.getCode(), "发货拦截失败");
         }
     }
 
@@ -5527,8 +5527,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(auth)) {
                 throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
             }
-            LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-            if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+            if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
                 // 海外仓出库单 (扣可用库存)
                 sourceType = SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode();
             } else {

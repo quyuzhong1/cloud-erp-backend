@@ -111,6 +111,11 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     @TableField("platform_sku_id")
     private String platformSkuId;
 
+    /**
+     * erp授权id
+     */
+    @TableField("auth_id")
+    private String authId;
 
     public static final String SKU_NO = "sku_no";
 

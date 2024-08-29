@@ -21,6 +21,7 @@ import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import com.sdk.tms.yanwen.dto.response.YanWenChannel;
 import com.sdk.tms.yuntu.dto.response.YunTuChannel;
+import com.sdk.wms.antu.dto.response.AntuLogisticsProductsResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangLogisticsProductsResp;
 import com.sdk.wms.iml.dto.response.ImlInventoryLogisticsProductsResp;
 import org.apache.ibatis.annotations.Param;
@@ -282,4 +283,16 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "supplierId", ignore = true)
     })
     LogisticsChannelDTO.BaseDTO convertToChannelDTO(@Param("item") LogisticsChannelEntity item);
+    @Mappings({
+            @Mapping(target = "code", source = "code"),
+            @Mapping(target = "cnName", source = "name"),
+            @Mapping(target = "enName", source = "nameEn"),
+            @Mapping(target = "isTrack", constant = "true"),
+            @Mapping(target = "logisticsPlatform", constant = "antu"),
+            @Mapping(target = "overseasWarehouseId", source = "erpWarehouseId"),
+            @Mapping(target = "platformWarehouseCode", source = "warehouseCode"),
+            @Mapping(target = "id", ignore = true)
+    })
+    LogisticsSaleChannelEntity channelConvertByAntu(AntuLogisticsProductsResp data);
+    List<LogisticsSaleChannelEntity> channelConvertByAntu(List<AntuLogisticsProductsResp> data);
 }
