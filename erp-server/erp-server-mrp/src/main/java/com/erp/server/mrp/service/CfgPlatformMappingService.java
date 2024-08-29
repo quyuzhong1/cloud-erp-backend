@@ -1,9 +1,10 @@
 package com.erp.server.mrp.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
+import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -38,7 +39,7 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
      * @author will
      * @date 2024/8/29 17:17
      * @param dto
-     * @return PagingVO<ListDTO>
+     * @return List<ListDTO>
      */
-    PagingVO<CfgPlatformMappingDTO.ListDTO> selectPaging(PagingDTO<CfgPlatformMappingDTO.SelectDTO> dto);
+    List<CfgPlatformMappingDTO.ListDTO> selectPlatformMapping(CfgPlatformMappingDTO.SelectDTO dto);
 }

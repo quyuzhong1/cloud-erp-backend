@@ -3,9 +3,7 @@ package com.erp.server.mrp.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -21,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 平台映射表
@@ -71,16 +70,16 @@ public class CfgPlatformMappingController extends BaseController {
     }
 
     /**
-     * 远程分页下拉查询
+     * 下拉查询
      * @author Will
      * @date: 2024/08/29 17:06
      * @param dto
-     * @return ApiResult<PagingVO<ListDTO>>
+     * @return ApiResult<List<ListDTO>>
      */
-    @PostMapping("/selectPaging")
-    public ApiResult<PagingVO<CfgPlatformMappingDTO.ListDTO>> selectPaging(@RequestBody PagingDTO<CfgPlatformMappingDTO.SelectDTO> dto) {
-        PagingVO<CfgPlatformMappingDTO.ListDTO> pagingVO = cfgPlatformMappingService.selectPaging(dto);
-        return success(pagingVO);
+    @PostMapping("/selectPlatformMapping")
+    public ApiResult<List<CfgPlatformMappingDTO.ListDTO>> selectPlatformMapping(@RequestBody CfgPlatformMappingDTO.SelectDTO dto) {
+        List<CfgPlatformMappingDTO.ListDTO> list = cfgPlatformMappingService.selectPlatformMapping(dto);
+        return success(list);
     }
 
 }

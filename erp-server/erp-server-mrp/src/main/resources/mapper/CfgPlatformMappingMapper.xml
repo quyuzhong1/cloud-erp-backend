@@ -32,8 +32,8 @@
         platform, type, disabled, effective_date
     </sql>
 
-    <!-- 远程下拉 -->
-    <select id="pagingSelect" resultType="com.erp.model.mrp.dto.CfgPlatformMappingDTO$ListDTO">
+    <!-- 下拉 -->
+    <select id="selectPlatformMapping" resultType="com.erp.model.mrp.dto.CfgPlatformMappingDTO$ListDTO">
         select
             <include refid="Base_Column_List" />
         from cfg_platform_mapping cpm

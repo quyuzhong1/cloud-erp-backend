@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
@@ -120,7 +119,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     public void deleteByRefId(String refId) {
         CfgRuleStockUpEntity cfgRuleStockUpEntity = getByRefId(refId);
         if (ObjectUtil.isEmpty(cfgRuleStockUpEntity)) {
-            throw new ServiceException(ApiError.ERROR_CFG_RULE_STOCK_UP_NOT_EXIST);
+            return;
         }
         this.removeById(cfgRuleStockUpEntity.getId());
 

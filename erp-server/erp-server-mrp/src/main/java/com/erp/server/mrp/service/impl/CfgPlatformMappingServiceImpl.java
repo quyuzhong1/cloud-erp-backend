@@ -2,13 +2,9 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -100,12 +96,10 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
     }
 
     @Override
-    public PagingVO<CfgPlatformMappingDTO.ListDTO> selectPaging(PagingDTO<CfgPlatformMappingDTO.SelectDTO> searchDTO) {
-        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
-        CfgPlatformMappingDTO.SelectDTO params = searchDTO.getParams();
-        IPage<CfgPlatformMappingDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
-        handleSelectPaging(pagResult.getRecords());
-        return new PagingVO<>(pagResult);
+    public List<CfgPlatformMappingDTO.ListDTO> selectPlatformMapping(CfgPlatformMappingDTO.SelectDTO dto) {
+        List<CfgPlatformMappingDTO.ListDTO> list = baseMapper.selectPlatformMapping(dto);
+        handleSelectPaging(list);
+        return list;
     }
 
 

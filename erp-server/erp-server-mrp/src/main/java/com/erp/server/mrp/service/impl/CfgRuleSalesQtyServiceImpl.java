@@ -166,7 +166,23 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
     @Override
     public void deleteByRefId(String refId) {
+        //销量数据
+        CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity = getByRefId(refId);
+        if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity)) {
+            return;
+        }
+        
+    }
 
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2024/8/29 17:57
+     * @param refId
+     * @return CfgRuleSalesQtyEntity
+     */
+    private CfgRuleSalesQtyEntity getByRefId (String refId) {
+       return lambdaQuery().eq(CfgRuleSalesQtyEntity::getRefId,refId).last("limit 1").one();
     }
 
     /**

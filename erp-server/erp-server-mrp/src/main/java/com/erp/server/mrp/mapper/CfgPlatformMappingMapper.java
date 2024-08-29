@@ -1,12 +1,11 @@
 package com.erp.server.mrp.mapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -20,12 +19,11 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface CfgPlatformMappingMapper extends BaseMapper<CfgPlatformMappingEntity> {
     /**
-     * 远程下拉
+     * 下拉
      * @author will
      * @date 2024/8/29 17:18
-     * @param query
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<CfgPlatformMappingDTO.ListDTO> pagingSelect(Page query,@Param("params") CfgPlatformMappingDTO.SelectDTO params);
+    List<CfgPlatformMappingDTO.ListDTO> selectPlatformMapping(@Param("params") CfgPlatformMappingDTO.SelectDTO params);
 }
