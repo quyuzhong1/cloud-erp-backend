@@ -672,6 +672,7 @@
                 left join transfer_out tfo on tfo.id = tf.source_id and tf.source_type = 'transferOut'
                 left join transfer_in tfi on tfi.id = tf.source_id and tf.source_type = 'transferIn'
                 where 1 = 1
+                and tf.is_deleted='f'
                 and tf.dict_inventory_status = 'inTransit'
                 and tf.source_type in ('instockForcast','warehouseReceive','purchaseStockIn','purchaseReturnOrder','transferOut','transferIn')
                 and tf.warehouse_id = #{params.warehouseId} and tf.sku_id = #{params.skuId}
