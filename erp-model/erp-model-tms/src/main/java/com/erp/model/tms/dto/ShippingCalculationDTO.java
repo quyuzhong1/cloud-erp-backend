@@ -177,6 +177,17 @@ public class ShippingCalculationDTO {
         private BigDecimal shippingCost;
 
         /**
+         * 报关费用  新增字段，目前无计算规则取值显示为0
+         */
+        private BigDecimal declareCost;
+
+        /**
+         * 其他费用
+         * 新增字段，按照计算模板计算类型【超尺寸附加费+签名费+燃油附加费+保险费】【若有折扣则按照折扣计算】
+         */
+        private BigDecimal otherCost;
+
+        /**
          * 挂号费
          */
         private BigDecimal registrationCost;
@@ -361,6 +372,16 @@ public class ShippingCalculationDTO {
          * 最终运费（运费试算）
          */
         private BigDecimal totalTrialShippingCost;
+//        /**
+//         * 报关费用  新增字段，目前无计算规则取值显示为0
+//         */
+//        private BigDecimal declareCost;
+//
+//        /**
+//         * 其他费用
+//         * 新增字段，按照计算模板计算类型【超尺寸附加费+签名费+燃油附加费+保险费】【若有折扣则按照折扣计算】
+//         */
+//        private BigDecimal otherCost;
     }
 
     /**

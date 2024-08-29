@@ -137,11 +137,21 @@ public class LogisticsBillCostDTO implements Serializable {
         private String weightUnit;
 
         /**
-         * 预估运费【可排序】
+         * 预估运费
          */
         private BigDecimal estimatedShippingCost;
+        /**
+         * 预估报关费用
+         */
+        private BigDecimal estimatedDeclareCost;
 
-         /**
+        /**
+         * 预估其他费用
+         */
+        private BigDecimal estimatedOtherCost;
+
+
+        /**
          * 计费重（物流商）【可排序】
          */
         private BigDecimal  billingWeightLogistics;
@@ -239,7 +249,18 @@ public class LogisticsBillCostDTO implements Serializable {
          * 店铺负责人【可排序】
          */
         private String shopChargeName;
-
+        /**
+         * 费用规则
+         */
+        private String feeRule;
+        /**
+         * 费用规则名称
+         */
+        private String feeRuleName;
+        /**
+         * 账单确认时间【可排序】
+         */
+        private LocalDateTime confirmTime;
     }
 
     /**
@@ -345,6 +366,18 @@ public class LogisticsBillCostDTO implements Serializable {
         * 币别
         */
         private String currency;
+        /**
+         * 费用规则
+         */
+        private String feeRule;
+        /**
+         * 费用规则名称
+         */
+        private String feeRuleName;
+        /**
+         * 账单确认时间【可排序】
+         */
+        private LocalDateTime confirmTime;
 
         /**
         * 备注
