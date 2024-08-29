@@ -60,6 +60,9 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
     			} catch (InterruptedException e) {
     			}
             }
+        }else {
+        	log.warn("{}接收到异常数据 ，数据：{}" , bizName , ext);
+        	return;
         }
         
         try {
