@@ -293,6 +293,9 @@
             or  pd.sku_no ILIKE concat('%', #{params.skuStr}::text ,'%'))
         </if>
         GROUP BY inv.id
+        <if test="params.isZeroDisabled != null and params.isZeroDisabled">
+         HAVING SUM(CASE WHEN inv.dict_inventory_status = 'usable' THEN inv.qty ELSE 0 END) > 0 OR SUM(CASE WHEN inv.dict_inventory_status = 'frozen' THEN inv.qty ELSE 0 END) > 0
+        </if>
         ORDER BY skuNo ASC, warehouseName ASC, inventoryId ASC
     </select>
 
