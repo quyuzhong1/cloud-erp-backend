@@ -1,9 +1,11 @@
 package com.erp.server.wms.controller.feign;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -152,7 +154,8 @@ public class SoOutstockFeignController {
      */
     @PostMapping("/generateB2cSoOutstockByPlatformData")
     Boolean generateB2cSoOutstockByPlatformData(@RequestBody PlatformGenerateSoOutstockDTO platformDeliveryDetailDTO) {
-        return soOutstockService.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTO);
+        String redissonKey = StrUtil.format("{}:{}", RedisKeyConstant.SO_STOCK_KEY, platformDeliveryDetailDTO.getGenerateB2cDTO().getSourceCode());
+        return soOutstockService.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTO, redissonKey);
     }
 
     /**

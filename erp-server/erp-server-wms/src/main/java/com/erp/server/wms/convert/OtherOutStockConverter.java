@@ -62,6 +62,7 @@ public interface OtherOutStockConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "billDate", source = "billDate"),
+            @Mapping(target = "remark", source = "remark"),
             @Mapping(target = "inventoryDirection", source = "inventoryDirectionEnum.code"),
             @Mapping(target = "warehouseKeeperId", constant = ""),
             @Mapping(target = "warehouseKeeperName", constant = ""),
@@ -90,7 +91,9 @@ public interface OtherOutStockConverter {
                                          SysDepartmentDTO departmentDTO,
                                          FindUserDTO userDTO,
                                          BaseIdDTO orgDTO,
-                                         String code);
+                                         String code,
+                                         String remark
+    );
 
     @Mappings({
             @Mapping(target = "id", ignore = true),

@@ -58,7 +58,7 @@ public enum SettingEnum {
     // 亚马逊货件白名单
     AMAZON_FBA_SHIPMENT_SKIP_LIST("amazon_fba_shipment_skip", SettingEnum.AMAZON_FBA_SHIPMENT_SKIP, "亚马逊FBA货件暂时跳过亚马逊请求列表(英文逗号拼接)"),
     
-    NEW_DMP_PUSH_SWTICH("push_swtich", SettingEnum.NEW_DMP, "新中台推送开关"),
+    NEW_DMP_PUSH_SWTICH_LIST("push_swtich", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台推送开关"),
     ;
 
     @EnumValue
@@ -120,7 +120,7 @@ public enum SettingEnum {
     /**
      * 新中台推送开关
      */
-    public static final String NEW_DMP = "new_dmp";
+    public static final String NEW_DMP_PUSH_SWTICH = "new_dmp_push_swtich";
 
     /**
      * 亚马逊报告

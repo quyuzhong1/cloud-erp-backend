@@ -360,9 +360,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (SoReturnInstockEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH;
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, settingEnum.getKey())
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_RETURN_INSTOCK.getCode())
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();
