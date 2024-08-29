@@ -822,7 +822,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     if (OmsPlatformEnum.getByCode(thirdAddDTO.getSysType()) != null) {
                         OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
                         feignDTO.setCode(thirdAddDTO.getSysType());
-                        feignDTO.setPlatformAccount(thirdAddDTO.getThirdAccount());
+                        feignDTO.setPlatformShortName(thirdAddDTO.getThirdShortName());
                         feignDTO.setOverseasProviderWarehouseId(thirdAddDTO.getThirdId());
                         //校验第三方仓库是否存在
                         OverseasProviderDTO.FeignDTO overseasWarehouse = Optional.ofNullable(overseasProviderFeign.getOverseasWarehouse(feignDTO))

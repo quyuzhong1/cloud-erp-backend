@@ -95,8 +95,7 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 第三方账号
          */
-        private String thirdAccount;
-
+        private String thirdShortName;
     }
 
     /**
@@ -156,7 +155,7 @@ public class ThirdMappingDTO implements Serializable {
         /**
          * 第三方账号
          */
-        private String thirdAccount;
+        private String thirdShortName;
     }
 
 

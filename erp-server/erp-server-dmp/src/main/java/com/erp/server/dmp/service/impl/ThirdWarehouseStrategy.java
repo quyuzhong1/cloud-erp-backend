@@ -499,7 +499,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
                     viewDTOList.add(viewDTO);
                     continue;
                 }
-                viewDTO.setThirdAccount(overseasWarehouse.getPlatformAccount());
+                viewDTO.setThirdShortName(overseasWarehouse.getPlatformShortName());
                 viewDTO.setName(overseasWarehouse.getPlatformWarehouseName());
                 viewDTO.setCode(overseasWarehouse.getPlatformWarehouseCode());
             }

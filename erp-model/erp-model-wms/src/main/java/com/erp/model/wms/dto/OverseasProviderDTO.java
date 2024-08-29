@@ -3,9 +3,6 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.baomidou.mybatisplus.annotation.FieldStrategy;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -409,7 +406,7 @@ public class OverseasProviderDTO implements Serializable {
         /**
          * 第三方账号
          */
-        private String platformAccount;
+        private String platformShortName;
         /**
          * 第三方仓库编码
          */
