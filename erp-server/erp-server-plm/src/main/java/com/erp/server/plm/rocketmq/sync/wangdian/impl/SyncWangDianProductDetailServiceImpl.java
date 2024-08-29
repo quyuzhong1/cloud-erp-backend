@@ -1,16 +1,23 @@
 package com.erp.server.plm.rocketmq.sync.wangdian.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.SaleMethodEnum;
@@ -51,6 +58,8 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
     private BomSkuService bomSkuService;
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private PlmPushMsgService plmPushMsgService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -144,17 +153,37 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask(ProductDetailEntity entity, String operate, Map<String, Object> resultMap) {
-        //添加推送任务
-        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-        taskFeignDTO.setSourceId(entity.getId());
-        taskFeignDTO.setSourceCode(entity.getSkuNo());
-        taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
-        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName());
-        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        taskFeignDTO.setSyncOperate(operate);
-        return dmpMqFeign.saveTask(taskFeignDTO);
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.PRODUCT_DETAIL.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+            taskFeignDTO.setSourceId(entity.getId());
+            taskFeignDTO.setSourceCode(entity.getSkuNo());
+            taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName());
+            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            taskFeignDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(taskFeignDTO);
+        }
+        
+        PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceId(entity.getId());
+        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
+        plmPushMsgEntity.setSyncOperate(operate);
+        plmPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+        plmPushMsgService.save(plmPushMsgEntity);
+        
+        return null;
     }
 }
