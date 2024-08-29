@@ -472,6 +472,8 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/updateById")
     Boolean updateById(@RequestBody SoB2cEntity soB2cEntity);
 
+    @PostMapping("/feign/soB2c/updateStatus")
+    Boolean updateStatus(@RequestBody SoB2cEntity soB2cEntity);
 
     @PostMapping("/feign/soB2c/checkAndFillBySoOutStock")
     Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto);
