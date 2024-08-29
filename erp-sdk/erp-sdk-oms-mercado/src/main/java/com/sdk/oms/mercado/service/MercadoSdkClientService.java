@@ -58,24 +58,23 @@ import java.util.stream.Collectors;
 @Component
 public class MercadoSdkClientService {
     public static void main(String[] args) {
-//        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&code=TG-65e84c33beaa890001c29f80-1715441696&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
-//        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=authorization_code&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&code=TG-65f29b46a699630001e07f5b-1715441696&redirect_uri=https://erptest.ulanzi.cn:8020/store-permission-result";
-//{"access_token":"APP_USR-3457166802805723-031402-17b6fbb732670467f62b20061ede0901-1715441696","token_type":"Bearer","expires_in":21600,"scope":"offline_access read write","user_id":1715441696,"refresh_token":"TG-65f29b597c47900001b2091a-1715441696"}
-        //组装刷新token请求的url
-        String baseUrl = "https://api.mercadolibre.com/oauth/token?grant_type=refresh_token&client_id=3457166802805723&client_secret=QucvI4VWHO0w3AZftOElz5liVOurfjQG&refresh_token=TG-65ea8afdd926bf0001865f9c-1509269799";
 
+        String orderUrl = "https://api.mercadolibre.com/marketplace/orders/2000006213527517";
 
-        //入参（无）
-        Map<String, Object> param = new HashMap<>();
+        //入参
+        HashMap<String, Object> orderParams = new HashMap<>(1);
 
-        //请求头
-        Map<String, String> headerMap = new HashMap<>();
-        headerMap.put("content-type", "application/x-www-form-urlencoded");
-        headerMap.put("accept", "application/json");
+        //设置请求头
+        Map<String, String> orderHeaderMap = new HashMap<>(1);
+        orderHeaderMap.put("Authorization", "Bearer APP_USR-3457166802805723-082902-95af1fbcbc57490cafb6081deaca410e-1509269799");
 
-        //发起POST请求
-        String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
-        System.out.println(bodyStr);
+        //拉取数据
+        ApiResult orderResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+        if (!Objects.equals(orderResult.getCode(), 200) && !Objects.equals(orderResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, 美客多marketplace/orders数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                    orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderResult)));
+        }
     }
 
 
