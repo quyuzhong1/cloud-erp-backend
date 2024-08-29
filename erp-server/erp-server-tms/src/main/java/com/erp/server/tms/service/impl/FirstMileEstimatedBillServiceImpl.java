@@ -48,6 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,6 +85,10 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByNames(countryCodeList);
         Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(item -> item.getNameCn(), item2 -> item2.getId()));
 
+        //预计费用
+        List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
+        List<FirstMileEstimatedBillDTO.EstimatedCost> estimatedCostList = this.baseMapper.listEstimatedCost(logisticsBillIds);
+        Map<String, List<FirstMileEstimatedBillDTO.EstimatedCost>> estimatedCostMap = estimatedCostList.stream().collect(Collectors.groupingBy(item -> item.getLogisticsBillId()));
         for (FirstMileEstimatedBillDTO.View item : records) {
             item.setStatusName(ConfirmStatusEnum.getNameByCode(item.getStatus()));
             item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
@@ -93,20 +98,23 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(item.getCurrency()));
 
             //预计费用
-            List<TmsCostDetailDTO.CostCompareDTO> costCompareList = tmsCostDetailService.getCostCompareListById(item.getLogisticsBillCostId());
-            TmsCostDetailDTO.CostCompareDTO logisticsDTO = costCompareList.stream().filter(v -> v.getCostCode().equals(DictCostCategoryEnum.SHIPPING_COST.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostCompareDTO());
-            item.setLogisticsCost(logisticsDTO.getEstimatedFee());
-            TmsCostDetailDTO.CostCompareDTO declareDTO = costCompareList.stream().filter(v -> v.getCostCode().equals(DictCostCategoryEnum.DECLARE_COST.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostCompareDTO());
-            item.setCustomsClearanceCost(declareDTO.getEstimatedFee());
-            TmsCostDetailDTO.CostCompareDTO otherTaxDTO = costCompareList.stream().filter(v -> v.getCostCode().equals(DictCostCategoryEnum.OTHER_TAX_FEE.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostCompareDTO());
-            item.setOtherTaxCost(otherTaxDTO.getEstimatedFee());
-            TmsCostDetailDTO.CostCompareDTO otherDTO = costCompareList.stream().filter(v -> v.getCostCode().equals(DictCostCategoryEnum.OTHER_COST.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostCompareDTO());
-            item.setOtherCost(otherDTO.getEstimatedFee());
-            BigDecimal logisticsCost = Objects.nonNull(item.getLogisticsCost()) ? item.getLogisticsCost() : BigDecimal.ZERO;
-            BigDecimal customsClearanceCost = Objects.nonNull(item.getCustomsClearanceCost()) ? item.getCustomsClearanceCost() : BigDecimal.ZERO;
-            BigDecimal otherTaxCost = Objects.nonNull(item.getOtherTaxCost()) ? item.getOtherTaxCost() : BigDecimal.ZERO;
-            BigDecimal otherCost = Objects.nonNull(item.getOtherCost()) ? item.getOtherCost() : BigDecimal.ZERO;
-            item.setCostTotal(logisticsCost.add(customsClearanceCost).add(otherTaxCost).add(otherCost));
+            if(estimatedCostMap.containsKey(item.getLogisticsBillId())){
+                List<FirstMileEstimatedBillDTO.EstimatedCost> estimatedCosts = estimatedCostMap.get(item.getLogisticsBillId());
+                //物流运费
+                FirstMileEstimatedBillDTO.EstimatedCost logisticsDTO = estimatedCosts.stream().filter(v -> v.getDictCostCategory().equals(DictCostCategoryEnum.SHIPPING_COST.getCode())).findFirst().orElse(null);
+                item.setLogisticsCost(logisticsDTO != null ? logisticsDTO.getCostValue() : BigDecimal.ZERO);
+                //报关费
+                FirstMileEstimatedBillDTO.EstimatedCost declareDTO = estimatedCosts.stream().filter(v -> v.getDictCostCategory().equals(DictCostCategoryEnum.DECLARE_COST.getCode())).findFirst().orElse(null);
+                item.setCustomsClearanceCost(declareDTO != null ? declareDTO.getCostValue() : BigDecimal.ZERO);
+                //其它税费
+                FirstMileEstimatedBillDTO.EstimatedCost otherTaxDTO = estimatedCosts.stream().filter(v -> v.getDictCostCategory().equals(DictCostCategoryEnum.OTHER_TAX_FEE.getCode())).findFirst().orElse(null);
+                item.setOtherTaxCost(otherTaxDTO != null ? otherTaxDTO.getCostValue() : BigDecimal.ZERO);
+                //其它费用
+                FirstMileEstimatedBillDTO.EstimatedCost otherDTO = estimatedCosts.stream().filter(v -> v.getDictCostCategory().equals(DictCostCategoryEnum.OTHER_COST.getCode())).findFirst().orElse(null);
+                item.setOtherCost(otherDTO != null ? otherDTO.getCostValue() : BigDecimal.ZERO);
+                //总计
+                item.setCostTotal(item.getLogisticsCost().add(item.getCustomsClearanceCost()).add(item.getOtherTaxCost()).add(item.getOtherCost()));
+            }
 
             //预计重量
             FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
@@ -137,7 +145,13 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public BatchResultDTO updateStatus(String id, String status) {
-        this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).eq(FirstMileEstimatedBillEntity::getId, id).update();
+        if(status.equals(ConfirmStatusEnum.CONFIRMED.getCode())){
+            this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).set(FirstMileEstimatedBillEntity::getConfirmTime, LocalDateTime.now()).eq(FirstMileEstimatedBillEntity::getId, id).update();
+        }
+        if(status.equals(ConfirmStatusEnum.TO_BE_CONFIRM.getCode())){
+            this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).set(FirstMileEstimatedBillEntity::getConfirmTime, "").eq(FirstMileEstimatedBillEntity::getId, id).update();
+        }
+
         return BatchResultDTO.success(id, id);
     }
 
