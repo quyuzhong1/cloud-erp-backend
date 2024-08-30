@@ -85,6 +85,8 @@ public class OverseasInventoryDTO implements Serializable {
          * 平台仓库代号列表
          */
         private List<String> platformWarehouseCodeList;
+
+        private Boolean sortFlag = false;
     }
 
 

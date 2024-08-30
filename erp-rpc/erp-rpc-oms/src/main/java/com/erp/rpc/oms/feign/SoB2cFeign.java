@@ -537,7 +537,7 @@ public interface SoB2cFeign {
      * 添加销售订单日志
      */
     @PostMapping("/feign/soB2c/addModuleOperateLog")
-    Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO);
+    Boolean addModuleOperateLog(@RequestBody OperateLogDTO.AddModuleOperateLogDTO operateLogDTO);
 
     /**
      * 根据扫描的单号获取订单

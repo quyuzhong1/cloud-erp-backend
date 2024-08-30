@@ -713,7 +713,7 @@ public class SoB2cFeignController extends BaseController {
      * 添加操作日志
      */
     @PostMapping("/addModuleOperateLog")
-    public Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO){
+    public Boolean addModuleOperateLog(@RequestBody OperateLogDTO.AddModuleOperateLogDTO operateLogDTO){
         return operateLogService.addModuleOperateLog(operateLogDTO.getContent(),
                 operateLogDTO.getModuleType(),
                 operateLogDTO.getBusinessId(),

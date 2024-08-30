@@ -138,6 +138,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
             List<String> codeList = warehouseDTOList.stream().map(OverseasProviderDTO.WarehouseDTO::getPlatformWarehouseCode).distinct().collect(Collectors.toList());
             params.setPlatformWarehouseCodeList(codeList);
         }
+        dto.getParams().setSortFlag(true);
         Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<OverseasInventoryDTO.ListDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isEmpty(pageData.getRecords())){
