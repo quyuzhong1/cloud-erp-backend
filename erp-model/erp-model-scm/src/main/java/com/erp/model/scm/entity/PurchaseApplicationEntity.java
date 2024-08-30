@@ -91,6 +91,24 @@ public class PurchaseApplicationEntity extends BaseEntity<PurchaseApplicationEnt
     @TableField("approve_user_name")
     private String approveUserName;
 
+    /**
+     * 来源单据ID
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源单据编码
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
+     * 来源单据类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -109,6 +127,12 @@ public class PurchaseApplicationEntity extends BaseEntity<PurchaseApplicationEnt
     public static final String IS_FIRST_MASS_PRODUCT = "is_first_mass_product";
 
     public static final String APPROVE_TIME = "approve_time";
+
+    public static final String SOURCE_ID = "source_id";
+
+    public static final String SOURCE_CODE = "source_code";
+
+    public static final String SOURCE_TYPE = "source_type";
 
 
     @Override

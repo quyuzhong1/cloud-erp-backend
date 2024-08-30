@@ -340,4 +340,11 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @param sysUserInfoDTO
      */
     void updateProjectTaskChargeName(SysUserInfoDTO sysUserInfoDTO);
+
+    /**
+     * 任务高级查询
+     */
+    PagingVO<ProjectTaskDTO.SimpleViewDTO> pagingByAdvanceQuery(PagingDTO<ProjectTaskDTO.PagingParamDTO> dto);
+
+    List<ProjectTaskDTO.SimpleViewDTO> listSimpleViewByIds(List<String> taskIds);
 }

@@ -1836,5 +1836,43 @@
         </foreach>
     </update>
 
+    <select id="pagingByAdvanceQuery" resultType="com.erp.model.plm.dto.ProjectTaskDTO$SimpleViewDTO">
+        select  pt.id,
+                pt.name,
+                pt.charge_id   chargeId,
+                pt.charge_name chargeName,
+                pt.phase_id    phaseId,
+                pt.phase_name  phaseName,
+                pt.product_id  productId,
+                pt.status,
+                pi.name productName,
+                pi.spu_no spuNo
+        from project_task pt
+            left join product_info pi on pt.product_id = pi.id
+        <where>
+            pt.is_deleted = false ${params.sqlMap.default}
+        </where>
+    </select>
+    <select id="listByTaskIds" resultType="com.erp.model.plm.dto.ProjectTaskDTO$SimpleViewDTO">
+        select  pt.id,
+                pt.name,
+                pt.charge_id   chargeId,
+                pt.charge_name chargeName,
+                pt.phase_id    phaseId,
+                pt.phase_name  phaseName,
+                pt.product_id  productId,
+                pi.name productName,
+                pt.status,
+                pi.spu_no spuNo
+        from project_task pt
+            left join product_info pi on pt.product_id = pi.id
+        <where>
+            pt.is_deleted = false
+            and pt.id in
+            <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+                #{taskId}
+            </foreach>
+        </where>
+    </select>
 
 </mapper>
