@@ -85,13 +85,11 @@ public class ExportOmsFeignController {
     }
 
     @PostMapping("/platformSku")
-    @WebAdvanceQuery
     public PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.ExportDTO> dto) {
         return skuMappingService.exportPlatformSku(dto);
     }
 
     @PostMapping("/warehouseSku")
-    @WebAdvanceQuery
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
         return skuMappingService.exportWarehouseSku(dto);
     }

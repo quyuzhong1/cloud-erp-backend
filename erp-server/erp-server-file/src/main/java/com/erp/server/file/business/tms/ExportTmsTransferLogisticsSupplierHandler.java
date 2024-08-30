@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -18,7 +19,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TRANSFER_LO
 
 @Component
 @Slf4j
-public class ExportTmsTransferLogisticsSupplierHandler extends AbstractPageFileEventHandler<LogisticsSupplierDTO.PagingViewDTO, LogisticsSupplierDTO.ExportDTO> {
+public class ExportTmsTransferLogisticsSupplierHandler extends AbstractPageFileEventHandler<LogisticsSupplierDTO.PagingViewDTO, TransferLogisticsSupplierDTO.ExportDTO> {
     @Resource
     private ExportTmsFeign exportTmsFeign;
 
@@ -34,13 +35,13 @@ public class ExportTmsTransferLogisticsSupplierHandler extends AbstractPageFileE
 
     @Override
     protected List<LogisticsSupplierDTO.PagingViewDTO> getData(FileTask fileTask) {
-        LogisticsSupplierDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<LogisticsSupplierDTO.ExportDTO>() {
+        TransferLogisticsSupplierDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<TransferLogisticsSupplierDTO.ExportDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<LogisticsSupplierDTO.PagingViewDTO> getPageData(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto) {
+    protected PagingVO<LogisticsSupplierDTO.PagingViewDTO> getPageData(PagingDTO<TransferLogisticsSupplierDTO.ExportDTO> dto) {
         return exportTmsFeign.exportTransferLogisticsSupplier(dto);
     }
 }

@@ -228,7 +228,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         }
         //数据赋值处理
         fillExportData(page.getRecords());
-        return new PagingVO<>();
+        return new PagingVO<>(page);
     }
 
     @Override

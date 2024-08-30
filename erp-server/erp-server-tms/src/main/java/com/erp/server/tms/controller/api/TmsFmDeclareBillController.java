@@ -25,6 +25,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
@@ -250,10 +251,19 @@ public class TmsFmDeclareBillController extends BaseController {
     /**
      * 导出报关
      */
-    @PostMapping("/exportDeclare")
+/*    @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
     public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO){
         downloadTaskFeign.saveDownloadTask("头程报关单导出", EXPORT_TMS_TMS_FM_DECLARE_BILL_DECLARE.getCode(), pagingParamDTO);
+        return success();
+    }*/
+
+    @PostMapping("/exportDeclare")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
+    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
+    public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+        pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
+        tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
         return success();
     }
 }

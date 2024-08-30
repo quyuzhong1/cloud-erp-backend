@@ -3,6 +3,7 @@ package com.erp.server.file.business.dmp;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
@@ -16,14 +17,14 @@ import java.util.List;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PULL_TASK_HISTORY;
 
 @Component
-public class ExportDmpPullTaskHistoryHandler extends AbstractPageFileEventHandler<DmpPushTaskDTO.ListDTO, DmpPushTaskDTO.ParamDTO> {
+public class ExportDmpPullTaskHistoryHandler extends AbstractPageFileEventHandler<DmpPullTaskDTO.ListDTO, DmpPullTaskDTO.ParamDTO> {
 
     @Resource
     private ExportDmpFeign exportDmpFeign;
 
     @Override
-    protected List<DmpPushTaskDTO.ListDTO> getData(FileTask fileTask) {
-        DmpPushTaskDTO.ParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DmpPushTaskDTO.ParamDTO>() {
+    protected List<DmpPullTaskDTO.ListDTO> getData(FileTask fileTask) {
+        DmpPullTaskDTO.ParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DmpPullTaskDTO.ParamDTO>() {
         });
         return listSeqData(dto);
     }
@@ -34,8 +35,8 @@ public class ExportDmpPullTaskHistoryHandler extends AbstractPageFileEventHandle
     }
 
     @Override
-    protected PagingVO<DmpPushTaskDTO.ListDTO> getPageData(PagingDTO<DmpPushTaskDTO.ParamDTO> dto) {
-        return exportDmpFeign.exportPushTaskHistory(dto);
+    protected PagingVO<DmpPullTaskDTO.ListDTO> getPageData(PagingDTO<DmpPullTaskDTO.ParamDTO> dto) {
+        return exportDmpFeign.exportPullTaskHistory(dto);
     }
 
     @Override

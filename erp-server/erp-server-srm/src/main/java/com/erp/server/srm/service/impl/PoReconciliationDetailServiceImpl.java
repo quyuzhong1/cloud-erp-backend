@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -102,11 +103,12 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
     }
 
     @Override
-    public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto) {
+    public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response) {
         //默认查询当前登录人的绑定的供应商数据
         SupplierEntity supplierEntity = commonService.getSupplierEntity();
         dto.setSupplierId(supplierEntity.getId());
-        downloadTaskFeign.saveDownloadTask("对账明细导出", EXPORT_SRM_PO_RECONCILIATION_DETAIL.getCode(), dto);
+//        downloadTaskFeign.saveDownloadTask("对账明细导出", EXPORT_SRM_PO_RECONCILIATION_DETAIL.getCode(), dto);
+        poReconciliationDetailScmService.exportList(dto, response);
     }
 
     /**

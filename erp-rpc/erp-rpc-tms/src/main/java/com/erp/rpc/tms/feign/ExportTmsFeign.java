@@ -49,7 +49,7 @@ public interface ExportTmsFeign {
     @PostMapping("/feign/export/transferDeclare")
     PagingVO<TransferDeclareDTO.ExportListDTO> exportTransferDeclare(@RequestBody PagingDTO<TransferDeclareDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/transferLogisticsSupplier")
-    PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportTransferLogisticsSupplier(@RequestBody PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
+    PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportTransferLogisticsSupplier(@RequestBody PagingDTO<TransferLogisticsSupplierDTO.ExportDTO> dto);
     @PostMapping("/feign/export/warehouseMapping")
     PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(@RequestBody PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto);
 }

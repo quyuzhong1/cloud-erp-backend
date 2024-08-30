@@ -83,7 +83,6 @@
         order by id desc
     </select>
 
-
     <select id="getEntityByCondition" resultType="com.erp.model.dmp.entity.DmpPushTaskEntity">
         select <include refid="Base_Column_List"/>
             from  dmp_push_task_history

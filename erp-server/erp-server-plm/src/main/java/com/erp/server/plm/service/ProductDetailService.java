@@ -226,7 +226,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @Author Luo_WG
      * @Date 2022/10/9 11:49
      **/
-    void exportProduct(ProductSkuExcelDTO productSkuExcelDTO);
+    void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
 
     /**
      * 根据sku id集合

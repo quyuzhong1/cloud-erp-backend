@@ -1955,7 +1955,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Date 2022/10/10 12:09
      **/
     @Override
-    public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO) {
+    public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
 //        downloadTaskFeign.saveDownloadTask("产品sku明细表", EXPORT_PLM_PRODUCT_DETAIL.getCode(), productSkuExcelDTO);
         List<ProductDetailExcelExportDTO> list = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         if(CollUtil.isNotEmpty(list)) {
@@ -2091,7 +2091,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             });
         }
-//        ExcelUtil.export("产品sku明细表", "产品sku明细表", list, ProductDetailExcelExportDTO.class, response,productSkuExcelDTO.getExportFields());
+        ExcelUtil.export("产品sku明细表", "产品sku明细表", list, ProductDetailExcelExportDTO.class, response,productSkuExcelDTO.getExportFields());
     }
 
     private void getParentBasicCategory(String pid , Map<String, BasicCategoryEntity> idBasicCategoryMaps , List<BasicCategoryEntity> resultList){

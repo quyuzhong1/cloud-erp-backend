@@ -17,6 +17,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -28,6 +29,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierAccountEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -235,11 +237,17 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
 
         for (PoReconciliationDTO.ListDTO listDTO : list) {
             PoReconciliationDTO.ExportDTO exportDTO = new PoReconciliationDTO.ExportDTO();
+            exportDTO.setSupplierName(listDTO.getSupplierName());
             //供应商
             SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
             SupplierEntity supplierEntity = supplierDefaultDTO.getSupplierEntity();
             if (ObjectUtils.isNotEmpty(supplierEntity)) {
-                exportDTO.setSupplierName(supplierEntity.getName());
+                exportDTO.setTitil(StrUtil.format("{}{}年{}月对账单", supplierEntity.getName(), listDTO.getEndDate().getYear(), listDTO.getEndDate().getMonthValue()));
+                //结算方式名称
+                List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(Arrays.asList(supplierEntity.getPayMethodId()));
+                if (CollectionUtils.isNotEmpty(dictBasicList)) {
+                    exportDTO.setSettleDictName(dictBasicList.get(0).getName());
+                }
             }
             //联系人
             SupplierContactEntity supplierContactEntity = supplierDefaultDTO.getSupplierContactEntity();
@@ -256,12 +264,23 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 exportDTO.setBankAccount(accountEntity.getBankAccount());
             }
             //明细
-            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId())).collect(Collectors.toList());
+            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId())).sorted(Comparator.comparing(PoReconciliationDetailEntity::getSourceCode).reversed()).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailList)) {
                 continue;
             }
             List<PoReconciliationDetailDTO.ListDTO> detailDTOList = BeanMapperUtils.copyList(PoReconciliationDetailDTO.ListDTO.class, detailList);
             poReconciliationDetailScmService.fillList(detailDTOList);
+
+            //出货小计
+            BigDecimal totalDeliveryAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.DELIVERY_ORDER.getCode().equals(obj.getSourceType()))
+                    .map(PoReconciliationDetailDTO.ListDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            exportDTO.setTotalDeliveryAmount(totalDeliveryAmount);
+            //退料小计
+            BigDecimal totalReceiveAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType()))
+                    .map(PoReconciliationDetailDTO.ListDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            exportDTO.setTotalReceiveAmount(totalReceiveAmount);
+            //合计
+            exportDTO.setTotalAmount(MathUtil.add(totalDeliveryAmount, totalReceiveAmount));
 
             // 导出数据
             StringBuffer sb = new StringBuffer();
@@ -270,7 +289,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date).append(name);
             try {
-                new ExcelPrintUtils().patchExport(list,exportDTO, response, sb.toString(), excelPath);
+                new ExcelPrintUtils().patchExport(detailDTOList,exportDTO, response, sb.toString(), excelPath);
             } catch (Exception e) {
                 throw new ServiceException(ApiError.ERROR_1015);
             }

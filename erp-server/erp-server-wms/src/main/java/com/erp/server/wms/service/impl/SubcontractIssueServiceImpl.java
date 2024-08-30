@@ -582,7 +582,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             // 数据处理
             fillList(page.getRecords());
         }
-        return new PagingVO<>();
+        return new PagingVO<>(page);
     }
 
     @Override

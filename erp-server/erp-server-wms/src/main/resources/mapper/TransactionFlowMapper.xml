@@ -691,7 +691,18 @@
     <!-- 每日库存列表 -->
     <select id="dailyInventoryPaging"
             resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$ListDailyInventoryDTO">
-        select
+        SELECT
+            t.balanceQty,
+            t.skuId,
+            t.warehouseId,
+            t.warehouseName,
+            t.orgId,
+            t.skuNo,
+            t.saleState,
+            t.productName,
+            t.imagesUrl
+        FROM (
+            select
             sum(tf.qty) as balanceQty,
             tf.sku_id as skuId,
             tf.warehouse_id as warehouseId,
@@ -701,51 +712,54 @@
             max(ps.sale_state) as saleState,
             max(pd.name) as productName,
             max(pd.images_url) as imagesUrl
-        from transaction_flow tf
-        left join product_detail pd on pd.id = tf.sku_id and pd.is_deleted = false
-        left join product_info pi on pd.product_id = pi.id and pi.is_deleted = false
-        left join product_sale ps on ps.sku_id = pd.id and ps.is_deleted = false
+            from transaction_flow tf
+            left join product_detail pd on pd.id = tf.sku_id and pd.is_deleted = false
+            left join product_info pi on pd.product_id = pi.id and pi.is_deleted = false
+            left join product_sale ps on ps.sku_id = pd.id and ps.is_deleted = false
+            <where>
+                tf.is_deleted = false and (tf.dict_inventory_status = 'frozen' or tf.dict_inventory_status = 'usable')
+                <if test="params.dateType != null and params.dateType != '' and params.dateType == 'approveDate'">
+                    and (#{params.date}::TIMESTAMP + INTERVAL '1 DAY' ) > tf.trade_time
+                </if>
+                <if test="params.dateType != null and params.dateType != '' and params.dateType == 'billDate'">
+                    and (#{params.date}::TIMESTAMP + INTERVAL '1 DAY' ) > tf.bill_date
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                    and pd.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                    and tf.warehouse_id in
+                    <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.orgIdList != null and params.orgIdList.size != ''">
+                    and tf.org_id in
+                    <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+
+            </where>
+            group by tf.sku_id,tf.warehouse_id
+            <if test="params.hideZeroInventory">
+                having  sum(tf.qty) != 0
+            </if>
+        ) t
         <where>
-            tf.is_deleted = false and (tf.dict_inventory_status = 'frozen' or tf.dict_inventory_status = 'usable')
-            <if test="params.dateType != null and params.dateType != '' and params.dateType == 'approveDate'">
-                and (#{params.date}::TIMESTAMP + INTERVAL '1 DAY' ) > tf.trade_time
-            </if>
-            <if test="params.dateType != null and params.dateType != '' and params.dateType == 'billDate'">
-                and (#{params.date}::TIMESTAMP + INTERVAL '1 DAY' ) > tf.bill_date
-            </if>
-            <if test="params.skuNoList != null and params.skuNoList.size != ''">
-                and pd.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
-                and tf.warehouse_id in
-                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.orgIdList != null and params.orgIdList.size != ''">
-                and tf.org_id in
-                <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.checkData != null and !params.checkData.isEmpty()">
-                and (
-                <foreach collection="params.checkData" item="item" separator=" OR ">
-                    (tf.warehouse_id = #{item.warehouseId}
-                    and tf.org_id = #{item.orgId}
-                    and tf.sku_id = #{item.skuId})
-                </foreach>
-                )
-            </if>
-        </where>
-        group by tf.sku_id,tf.warehouse_id
-        <if test="params.hideZeroInventory">
-            having  sum(tf.qty) != 0
+        <!-- 使用 IN 语句匹配 checkData -->
+        <if test="params.checkData != null and !params.checkData.isEmpty()">
+            and (t.warehouseId, t.orgId, t.skuId) in
+            <foreach collection="params.checkData" item="item" open="(" close=")" separator=",">
+                (#{item.warehouseId}, #{item.orgId}, #{item.skuId})
+            </foreach>
         </if>
-        order by tf.sku_id,tf.warehouse_id
+        </where>
+        order by t.skuId, t.warehouseId
+
     </select>
 
     <select id="listDailyInventoryQty"
