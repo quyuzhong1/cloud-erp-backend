@@ -40,19 +40,21 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList,String salesQtyId) {
+    public Boolean update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList,String salesQtyId,Boolean isCustom) {
         if (CollectionUtils.isEmpty(salesDenoisingList)) {
             salesDenoisingList = Collections.EMPTY_LIST;
         }
 
         List<CfgRuleSalesDenoisingEntity> list = BeanMapperUtils.copyList(CfgRuleSalesDenoisingEntity.class, salesDenoisingList);
-        //原去噪信息
-        List<CfgRuleSalesDenoisingEntity> oldList = listBySalesQtyIdList(Arrays.asList(salesQtyId));
-
-        //删除明细
-        List<String> deleteIds = getDeleteIds(list, oldList);
-        if (CollectionUtils.isNotEmpty(deleteIds)) {
-            this.removeByIds(deleteIds);
+        //自定义更新无需删除
+        if (!isCustom) {
+            //原去噪信息
+            List<CfgRuleSalesDenoisingEntity> oldList = listBySalesQtyIdList(Arrays.asList(salesQtyId));
+            //删除明细
+            List<String> deleteIds = getDeleteIds(list, oldList);
+            if (CollectionUtils.isNotEmpty(deleteIds)) {
+                this.removeByIds(deleteIds);
+            }
         }
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;
@@ -73,6 +75,11 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
             return Collections.EMPTY_LIST;
         }
         return lambdaQuery().in(CfgRuleSalesDenoisingEntity::getSalesQtyId,salesQtyIdList).list();
+    }
+
+    @Override
+    public void deleteBySalesQtyId(String salesQtyId) {
+        lambdaUpdate().eq(CfgRuleSalesDenoisingEntity::getSalesQtyId,salesQtyId).remove();
     }
 
     /**

@@ -91,10 +91,10 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
         //销量信息调整
         List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = handleSalesFormula(updateDetailDTO);
-        cfgRuleSalesFormulaService.update(salesFormulaList,cfgRuleSalesQtyEntity.getId());
+        cfgRuleSalesFormulaService.update(salesFormulaList,cfgRuleSalesQtyEntity.getId(),updateDetailDTO.getIsCustom());
 
         //销量去噪
-        cfgRuleSalesDenoisingService.update(updateDetailDTO.getSalesDenoisingList(),cfgRuleSalesQtyEntity.getId());
+        cfgRuleSalesDenoisingService.update(updateDetailDTO.getSalesDenoisingList(),cfgRuleSalesQtyEntity.getId(),updateDetailDTO.getIsCustom());
 
         // 记录主单操作日志
         log.info("编辑 开始记录销量（规则设置）日志数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
@@ -165,13 +165,25 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteByRefId(String refId) {
         //销量数据
         CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity = getByRefId(refId);
         if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity)) {
             return;
         }
-        
+        this.removeById(cfgRuleSalesQtyEntity.getId());
+
+        //删除销量信息
+        cfgRuleSalesFormulaService.deleteBySalesQtyId(cfgRuleSalesQtyEntity.getId());
+
+        //删除销量去噪信息
+        cfgRuleSalesDenoisingService.deleteBySalesQtyId(cfgRuleSalesQtyEntity.getId());
+    }
+
+    @Override
+    public void customUpdate(CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO) {
+
     }
 
     /**

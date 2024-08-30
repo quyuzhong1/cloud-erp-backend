@@ -89,7 +89,7 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 销量设置
          */
         @Valid
-        private CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO;
+        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
 
     }
 
@@ -110,13 +110,13 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 备货设置
          */
         @Valid
-        private CfgRuleStockUpDTO.UpdateDTO stockUpUpdateDTO;
+        private CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO;
 
        /**
         * 销量设置
         */
        @Valid
-       private CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO;
+       private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
 
     }
 

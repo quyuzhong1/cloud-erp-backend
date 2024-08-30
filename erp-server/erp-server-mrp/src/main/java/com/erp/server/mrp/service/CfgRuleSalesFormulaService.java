@@ -24,7 +24,7 @@ public interface CfgRuleSalesFormulaService extends SuperService<CfgRuleSalesFor
     * @param salesFormulaList
     * @return
     */
-    Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList,String salesQtyId);
+    Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList,String salesQtyId,Boolean isCustom);
 
     /**
      * 获取默认的日销量数据
@@ -34,4 +34,11 @@ public interface CfgRuleSalesFormulaService extends SuperService<CfgRuleSalesFor
      * @return List<CfgRuleSalesFormulaEntity>
      */
     List<CfgRuleSalesFormulaEntity> listBySalesQtyIdList(List<String> salesQtyIdList);
+    /**
+     * 根据销量主表id删除
+     * @author will
+     * @date 2024/8/29 18:22
+     * @param salesQtyId
+     */
+    void deleteBySalesQtyId(String salesQtyId);
 }

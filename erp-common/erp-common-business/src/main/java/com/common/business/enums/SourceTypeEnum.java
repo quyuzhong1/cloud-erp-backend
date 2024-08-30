@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -132,6 +131,9 @@ public enum SourceTypeEnum {
 
     LOGISTICS_BILL("logisticsBill", "物流单","logistics_bill"),
     TMS_FIRST_MILE_RECONCILIATION("tmsFirstMileReconciliation", "头程对账单","tms_first_mile_reconciliation"),
+
+    //MRP
+    REPLENISHMENT_SUGGESTION("replenishmentSuggestion", "补货建议","replenishment_suggestion"),
 
 
     //Mabang

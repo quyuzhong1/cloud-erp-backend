@@ -70,12 +70,12 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
             throw new ServiceException("备货（规则设置）保存失败");
         }
         //物流信息
-        cfgRuleLogisticsService.update(updateDTO.getCfgLogisticsList(),cfgRuleStockUpEntity.getId());
+        cfgRuleLogisticsService.update(updateDTO.getCfgLogisticsList(),cfgRuleStockUpEntity.getId(),updateDTO.getIsCustom());
 
         //常规备货系数
-        cfgRuleStockingRatioService.update(updateDTO.getStockingRatioList(),cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode());
+        cfgRuleStockingRatioService.update(updateDTO.getStockingRatioList(),cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),updateDTO.getIsCustom());
         //新品备货系数
-        cfgRuleStockingRatioService.update(updateDTO.getNewStockingRatioList(),cfgRuleStockUpEntity.getId(),CfgRuleStockingRatioTypeEnum.NEW.getCode());
+        cfgRuleStockingRatioService.update(updateDTO.getNewStockingRatioList(),cfgRuleStockUpEntity.getId(),CfgRuleStockingRatioTypeEnum.NEW.getCode(),updateDTO.getIsCustom());
 
         // 记录主单操作日志
         log.info("编辑 开始记录备货（规则设置）日志数据，id：【{}】", cfgRuleStockUpEntity.getId());
@@ -87,7 +87,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Override
     public CfgRuleStockUpDTO.ViewDTO  view(String platformType) {
         CfgRuleStockUpDTO.ViewDTO viewDTO = new CfgRuleStockUpDTO.ViewDTO();
-        CfgRuleStockUpEntity oldEntity = this.getByPlatformType(platformType);
+        CfgRuleStockUpEntity oldEntity = this.getDefaultByPlatformType(platformType);
         if (ObjectUtil.isEmpty(oldEntity)) {
             return viewDTO;
         }
@@ -130,6 +130,11 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         cfgRuleStockingRatioService.deleteByStockUpId(cfgRuleStockUpEntity.getId());
     }
 
+    @Override
+    public void customUpdate(CfgRuleStockUpDTO.UpdateDTO stockUpUpdateDTO) {
+        update();
+    }
+
     /**
      * 根据来源id查询
      * @author will
@@ -137,7 +142,8 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
      * @param refId
      * @return CfgRuleStockUpEntity
      */
-    private CfgRuleStockUpEntity getByRefId(String refId) {
+    @Override
+    public CfgRuleStockUpEntity getByRefId(String refId) {
         return lambdaQuery().eq(CfgRuleStockUpEntity::getRefId,refId).last("limit 1").one();
     }
 
@@ -148,8 +154,11 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
      * @param platformType
      * @return CfgRuleStockUpEntity
      */
-    private CfgRuleStockUpEntity getByPlatformType (String platformType) {
-        return lambdaQuery().eq(CfgRuleStockUpEntity::getPlatformType,platformType).last("limit 1").one();
+    private CfgRuleStockUpEntity getDefaultByPlatformType (String platformType) {
+        return lambdaQuery().eq(CfgRuleStockUpEntity::getPlatformType,platformType)
+                .eq(CfgRuleStockUpEntity::getRefId,"")
+                .last("limit 1")
+                .one();
     }
 
 

@@ -43,18 +43,20 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList,String salesQtyId) {
+    public Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList,String salesQtyId,Boolean isCustom) {
         if (CollectionUtils.isEmpty(salesFormulaList)) {
             salesFormulaList = Collections.EMPTY_LIST;
         }
         List<CfgRuleSalesFormulaEntity> list = BeanMapperUtils.copyList(CfgRuleSalesFormulaEntity.class, salesFormulaList);
-        //原物流信息
-        List<CfgRuleSalesFormulaEntity> oldList = listBySalesQtyIdList(Arrays.asList(salesQtyId));
-
-        //删除明细
-        List<String> deleteIds = getDeleteIds(list, oldList);
-        if (CollectionUtils.isNotEmpty(deleteIds)) {
-            this.removeByIds(deleteIds);
+        //自定义更新无需删除
+        if (!isCustom) {
+            //原物流信息
+            List<CfgRuleSalesFormulaEntity> oldList = listBySalesQtyIdList(Arrays.asList(salesQtyId));
+            //删除明细
+            List<String> deleteIds = getDeleteIds(list, oldList);
+            if (CollectionUtils.isNotEmpty(deleteIds)) {
+                this.removeByIds(deleteIds);
+            }
         }
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;
@@ -86,6 +88,11 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
             formulaEntity.setDateList(Arrays.asList(formulaEntity.getStartDate(),formulaEntity.getEndDate()));
         }
         return list;
+    }
+
+    @Override
+    public void deleteBySalesQtyId(String salesQtyId) {
+        lambdaUpdate().eq(CfgRuleSalesFormulaEntity::getSalesQtyId,salesQtyId).remove();
     }
 
     /**

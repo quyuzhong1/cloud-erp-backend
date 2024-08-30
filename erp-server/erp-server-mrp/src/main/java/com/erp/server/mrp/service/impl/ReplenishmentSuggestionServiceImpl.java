@@ -1,15 +1,19 @@
 package com.erp.server.mrp.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.*;
+import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.enums.ReplenishmentRuleTypeEnum;
 import com.erp.model.mrp.enums.ReplenishmentTypeEnum;
@@ -123,11 +127,48 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     public void updateRule(ReplenishmentSuggestionDTO.UpdateRuleDTO dto) {
-
+        if (ObjectUtil.isEmpty(dto.getStockUpUpdateDTO()) && ObjectUtil.isEmpty(dto.getSalesQtyUpdateDTO())) {
+            throw new ServiceException("备货、销量设置不能全部为空！");
+        }
+        //更新备货信息
+        if (ObjectUtil.isEmpty(dto.getStockUpUpdateDTO())) {
+            dto.getStockUpUpdateDTO().setRefId(dto.getId());
+            dto.getStockUpUpdateDTO().setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            cfgRuleStockUpService.update(dto.getStockUpUpdateDTO());
+        }
+        //更新销量信息
+        if (ObjectUtil.isEmpty(dto.getSalesQtyUpdateDTO())) {
+            dto.getSalesQtyUpdateDTO().setRefId(dto.getId());
+            dto.getSalesQtyUpdateDTO().setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            cfgRuleSalesQtyService.update(dto.getSalesQtyUpdateDTO());
+        }
     }
 
     @Override
-    public BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.UpdateDTO stockUpUpdateDTO, CfgRuleStockUpDTO.UpdateDTO stockUpUpdateDTO1) {
+    public BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO) {
+        if (ObjectUtil.isEmpty(stockUpUpdateDTO) && ObjectUtil.isEmpty(salesQtyUpdateDTO)) {
+            throw new ServiceException("备货、销量设置不能全部为空！");
+        }
+        //更新备货信息
+        if (ObjectUtil.isEmpty(stockUpUpdateDTO)) {
+            CfgRuleStockUpEntity ruleStockUpEntity = cfgRuleStockUpService.getByRefId(id);
+            if (ObjectUtil.isNotEmpty(ruleStockUpEntity)) {
+                stockUpUpdateDTO.setId(ruleStockUpEntity.getId());
+            }
+            stockUpUpdateDTO.setRefId(id);
+            stockUpUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            stockUpUpdateDTO.setIsCustom(Boolean.TRUE);
+            CfgRuleStockUpDTO.UpdateDTO updateDTO = BeanMapperUtils.map(CfgRuleStockUpDTO.UpdateDTO.class, stockUpUpdateDTO);
+            cfgRuleStockUpService.update(updateDTO);
+        }
+        //更新销量信息
+        if (ObjectUtil.isEmpty(salesQtyUpdateDTO)) {
+            salesQtyUpdateDTO.setRefId(id);
+            salesQtyUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            stockUpUpdateDTO.setIsCustom(Boolean.TRUE);
+            cfgRuleSalesQtyService.update(salesQtyUpdateDTO);
+        }
+
         return null;
     }
 

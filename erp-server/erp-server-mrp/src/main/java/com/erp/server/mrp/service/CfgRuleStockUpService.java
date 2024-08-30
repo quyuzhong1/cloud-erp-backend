@@ -36,4 +36,19 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      * @param refId
      */
     void deleteByRefId(String refId);
+    /**
+     * 自定义更新
+     * @author will
+     * @date 2024/8/30 9:26
+     * @param stockUpUpdateDTO
+     */
+    void customUpdate(CfgRuleStockUpDTO.UpdateDTO stockUpUpdateDTO);
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2024/8/30 9:54
+     * @param refId
+     * @return CfgRuleStockUpEntity
+     */
+    CfgRuleStockUpEntity getByRefId(String refId);
 }

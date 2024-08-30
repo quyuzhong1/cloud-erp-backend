@@ -164,6 +164,11 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         private String id;
 
         /**
+         * 是否是自定义
+         */
+        private Boolean isCustom = false;
+
+        /**
          * 默认日销量
          */
         @NotNull(message = "默认日销量不能为空")

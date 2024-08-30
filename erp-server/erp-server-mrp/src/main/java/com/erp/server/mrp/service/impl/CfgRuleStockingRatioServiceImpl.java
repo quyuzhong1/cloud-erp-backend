@@ -40,19 +40,22 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList,String stockUpId,String type) {
+    public Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList,String stockUpId,String type,Boolean isCustom) {
         if (CollectionUtils.isEmpty(stockingRatioList)) {
             stockingRatioList = Collections.EMPTY_LIST;
         }
         List<CfgRuleStockingRatioEntity> list = BeanMapperUtils.copyList(CfgRuleStockingRatioEntity.class, stockingRatioList);
-        //原物流信息
-        List<CfgRuleStockingRatioEntity> oldList = listByStockUpIdListAndType(Arrays.asList(stockUpId),type);
-
-        //删除明细
-        List<String> deleteIds = getDeleteIds(list, oldList);
-        if (CollectionUtils.isNotEmpty(deleteIds)) {
-            this.removeByIds(deleteIds);
+        //自定义更新无需删除
+        if (!isCustom) {
+            //原物流信息
+            List<CfgRuleStockingRatioEntity> oldList = listByStockUpIdListAndType(Arrays.asList(stockUpId),type);
+            //删除明细
+            List<String> deleteIds = getDeleteIds(list, oldList);
+            if (CollectionUtils.isNotEmpty(deleteIds)) {
+                this.removeByIds(deleteIds);
+            }
         }
+
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;
         }

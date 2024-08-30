@@ -47,17 +47,20 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList,String stockUpId) {
+    public Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList,String stockUpId,Boolean isCustom) {
         if (CollectionUtils.isEmpty(logisticsList)) {
             logisticsList = Collections.EMPTY_LIST;
         }
         List<CfgRuleLogisticsEntity> list = BeanMapperUtils.copyList(CfgRuleLogisticsEntity.class, logisticsList);
-        //原物流信息
-        List<CfgRuleLogisticsEntity> oldList = listByStockUpIdList(Arrays.asList(stockUpId));
-        //删除明细
-        List<String> deleteIds = getDeleteIds(list, oldList);
-        if (CollectionUtils.isNotEmpty(deleteIds)) {
-            this.deleteByIdList(deleteIds);
+        //自定义更新无需删除
+        if (!isCustom) {
+            //原物流信息
+            List<CfgRuleLogisticsEntity> oldList = listByStockUpIdList(Arrays.asList(stockUpId));
+            //删除明细
+            List<String> deleteIds = getDeleteIds(list, oldList);
+            if (CollectionUtils.isNotEmpty(deleteIds)) {
+                this.deleteByIdList(deleteIds);
+            }
         }
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;

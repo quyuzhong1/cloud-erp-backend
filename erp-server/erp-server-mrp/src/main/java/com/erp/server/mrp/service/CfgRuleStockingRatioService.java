@@ -22,7 +22,7 @@ public interface CfgRuleStockingRatioService extends SuperService<CfgRuleStockin
     * @param stockingRatioList
     * @return
     */
-    Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList,String stockUpId,String type);
+    Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList,String stockUpId,String type,Boolean isCustom);
 
     /**
      * 根据备货主表id查询

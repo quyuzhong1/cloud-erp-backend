@@ -141,7 +141,13 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
 
             //关联店铺json
             List<String> channelIdList = detailEntity.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
-            detailEntity.setChannelIdList(channelIdList);
+            viewDTO.setChannelIdList(channelIdList);
+
+            //按平台
+            if (StrUtil.equals(detailEntity.getChannelType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())) {
+                viewDTO.setPlatformList(channelIdList);
+            }
+
             //关联类型
             String channelType = detailEntity.getChannelType();
             viewDTO.setChannelTypeName(VitualWarehouseChannelTypeEnum.getName(channelType));

@@ -23,7 +23,7 @@ public interface CfgRuleLogisticsService extends SuperService<CfgRuleLogisticsEn
     * @param logisticsList
     * @return
     */
-    Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList,String stockUpId);
+    Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList,String stockUpId,Boolean isCustom);
 
     /**
      * 根据备货主表id查询

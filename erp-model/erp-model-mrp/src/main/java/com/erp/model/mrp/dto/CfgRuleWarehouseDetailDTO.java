@@ -159,6 +159,13 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         private List<String> channelIdList;
 
         /**
+         * 平台集合
+         */
+        private List<String> platformList;
+
+
+
+        /**
         * 库存分配类型
         */
         @NotBlank(message = "库存分配类型不能为空")

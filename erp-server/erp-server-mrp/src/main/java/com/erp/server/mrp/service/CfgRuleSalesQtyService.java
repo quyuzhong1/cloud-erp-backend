@@ -47,4 +47,11 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @param refId
      */
     void deleteByRefId(String refId);
+    /**
+     * 自定义更新
+     * @author will
+     * @date 2024/8/30 9:33
+     * @param salesQtyUpdateDTO
+     */
+    void customUpdate(CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO);
 }

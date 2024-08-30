@@ -22,7 +22,7 @@ public interface CfgRuleSalesDenoisingService extends SuperService<CfgRuleSalesD
     * @param salesDenoisingList
     * @return
     */
-    Boolean update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList,String salesQtyId);
+    Boolean update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList,String salesQtyId,Boolean isCustom);
 
     /**
      * 根据销量id集合查询
@@ -32,4 +32,11 @@ public interface CfgRuleSalesDenoisingService extends SuperService<CfgRuleSalesD
      * @return List<CfgRuleSalesDenoisingEntity>
      */
     List<CfgRuleSalesDenoisingEntity> listBySalesQtyIdList(List<String> salesQtyIdList);
+    /**
+     * 根据销量主表id删除
+     * @author will
+     * @date 2024/8/29 18:25
+     * @param salesQtyId
+     */
+    void deleteBySalesQtyId(String salesQtyId);
 }
