@@ -39,6 +39,7 @@ public interface PurchaseChangeMapper extends BaseMapper<PurchaseChangeEntity> {
      * @return List<PurchaseChangeExportExcelDTO>
      */
     List<PurchaseChangeExportExcelDTO> listExportExcel(@Param("params") PurchaseChangeDTO.SearchParamDTO params);
+    Page<PurchaseChangeExportExcelDTO> listExportExcel(@Param("page") Page<PurchaseChangeExportExcelDTO> page, @Param("params") PurchaseChangeDTO.SearchParamDTO params);
     /**
      * @description: 查询数量
      * @author Will

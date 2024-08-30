@@ -27,13 +27,11 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
-import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
-import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.DeclareReconciliationStandardExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -51,6 +49,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
@@ -59,6 +58,8 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION_DETAIL;
 
 /**
  * <p>
@@ -103,7 +104,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
     @Autowired
     private TmsCfgCostService tmsCfgCostService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -192,25 +194,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
 
     @Override
-    public void exportDetailList(TmsB2cDeclareReconciliationDetailDTO.ExportDTO param, HttpServletResponse response) {
-        List<TmsB2cDeclareReconciliationDetailDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/tmsB2cDeclareReconciliationDetail.xlsx";
-        String name = "b2c报关对账单明细导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportDetailList(TmsB2cDeclareReconciliationDetailDTO.ExportDTO param) {
+        downloadTaskFeign.saveDownloadTask("b2c报关对账单明细导出", EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION_DETAIL.getCode(), param);
     }
 
     @Override
@@ -307,6 +292,15 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
         LinkedList<String> thirdFieldList = cfgReconciliationFieldService.thirdFieldListName(Arrays.asList(CfgReconciliationTypeEnum.B2C_DECLARE.getCode()), transferLogisticsSupplierEntity.getSupplierId(), Boolean.TRUE);
         return thirdFieldList;
+    }
+
+    @Override
+    public PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto) {
+        Page<TmsB2cDeclareReconciliationDetailDTO.ListDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     @Override

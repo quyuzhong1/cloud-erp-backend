@@ -116,9 +116,8 @@ public class StocktakingProfitLossController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出盘盈盘亏单")
     @PostMapping("/export")
-    @WebAdvanceQuery(handler = StocktakingProfitLossQueryHandler.class)
-    public ApiResult exportWarehouse(@RequestBody @Valid StocktakingProfitLossDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = stocktakingProfitLossService.exportExcel(dto, response);
+    public ApiResult exportWarehouse(@RequestBody @Valid StocktakingProfitLossDTO.ExportDTO dto) {
+        Boolean result = stocktakingProfitLossService.exportExcel(dto);
         return result ? success() : failure();
     }
 

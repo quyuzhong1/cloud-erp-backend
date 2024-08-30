@@ -6,19 +6,14 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
-import com.erp.model.wms.dto.excel.ExportQcDocumentExcelDTO;
-import com.erp.model.wms.dto.excel.ExportQcPersonnelExcelDTO;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcReportExportExcelTypeEnum;
 import com.erp.model.wms.enums.ViewQcTrendEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.QcEffectivenessService;
@@ -26,7 +21,6 @@ import com.erp.server.wms.service.WarehouseReceiveService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -34,6 +28,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_EFFECTIVENESS_DOCUMENT;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_EFFECTIVENESS_PERSONNEL;
 
 /**
  * @author Will
@@ -52,7 +49,8 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
 
     @Resource
     private WarehouseReceiveService warehouseReceiveService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
 
@@ -197,32 +195,16 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     }
 
     @Override
-    public Boolean exportExcel(QcEffectivenessDTO.ExportExcelSearchParamDTO dto, HttpServletResponse response) {
+    public Boolean exportExcel(QcEffectivenessDTO.ExportExcelSearchParamDTO dto) {
         //导出类型
         String type = dto.getType();
-        String fileName = "";
-        Class<?> clazz = null;
-        List<?> list = null;
         if (QcReportExportExcelTypeEnum.PERSONNEL.getCode().equals(type)) {
-             list =  this.qcInfoMapper.viewExportQcForPersonnel(dto);
-             fileName = "按人员导出";
-             clazz = ExportQcPersonnelExcelDTO.class;
-             list =  BeanMapperUtils.copyList(ExportQcPersonnelExcelDTO.class,list);
+            downloadTaskFeign.saveDownloadTask("按人员导出", EXPORT_WMS_QC_EFFECTIVENESS_PERSONNEL.getCode(), dto);
+
         }
         if (QcReportExportExcelTypeEnum.DOCUMENT.getCode().equals(type)) {
-             list =  this.qcInfoMapper.viewExportQcForDocument(dto);
-             fileName = "按单据导出";
-             clazz = ExportQcDocumentExcelDTO.class;
-             doOpHandleQcForDocument((List<QcEffectivenessDTO.ViewQcForDocumentDTO>) list);
-            list =  BeanMapperUtils.copyList(ExportQcDocumentExcelDTO.class,list);
-        }
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        try {
-            ExcelUtil.export(fileName, fileName, list, clazz, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            downloadTaskFeign.saveDownloadTask("按单据导出", EXPORT_WMS_QC_EFFECTIVENESS_DOCUMENT.getCode(), dto);
+
         }
         return Boolean.TRUE;
     }
@@ -232,6 +214,18 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         //质检总览
         List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> list = qcInfoMapper.listQcBillGroupQcStatus(dto);
         return list;
+    }
+
+    @Override
+    public PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> exportQcEffectivenessDocument(PagingDTO<QcEffectivenessDTO.ExportExcelSearchParamDTO> dto) {
+        Page<QcEffectivenessDTO.ViewQcForDocumentDTO> page = this.qcInfoMapper.viewExportQcForDocument(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> exportQcEffectivenessPersonnel(PagingDTO<QcEffectivenessDTO.ExportExcelSearchParamDTO> dto) {
+        Page<QcEffectivenessDTO.ViewQcForPersonnelDTO> page = this.qcInfoMapper.viewExportQcForPersonnel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        return new PagingVO<>(page);
     }
 
     /**

@@ -2,12 +2,11 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.common.core.entity.BaseEntity;
-import com.common.core.enums.ApiError;
+import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ExcelUtil;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
@@ -16,24 +15,23 @@ import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.wms.convert.SupplierDeliveryConverter;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.SupplierDeliveryOrderService;
 import com.erp.server.wms.service.WarehouseReceiveService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SUPPLIER_DELIVERY_ORDER;
 
 /**
  * 供应商送货单接口实现类
@@ -50,16 +48,11 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
 
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
-    public Boolean export(DeliveryOrderDTO.ParamDTO dto, HttpServletResponse response) {
-        List<DeliveryOrderExportExcelDTO> resultList = srmDeliveryFeign.getExportList(dto);
-        String fileName = "供应商送货单";
-        try {
-            ExcelUtil.export(fileName, "供应商送货单", resultList, DeliveryOrderExportExcelDTO.class, response);
-        } catch (Exception e) {
-            log.error("供应商送货单导出失败:",e);
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean export(DeliveryOrderDTO.ParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("供应商送货单", EXPORT_WMS_SUPPLIER_DELIVERY_ORDER.getCode(), dto);
         return true;
     }
 
@@ -132,5 +125,10 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
             resultDTO.setSuccess(true);
         });
         return resultDTOList;
+    }
+
+    @Override
+    public PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
+        return srmDeliveryFeign.exportSupplierDeliveryOrder(dto);
     }
 }

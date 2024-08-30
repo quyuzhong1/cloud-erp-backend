@@ -26,8 +26,8 @@ public class PackingExcelDTO implements Serializable {
     /**
      * 发货单号
      */
-    @ExcelProperty(value = "发货单号", index = 0)
-    @FieldValid(fieldName = "发货单号", isNotBlank = true)
+    @ExcelProperty(value = "来源单号", index = 0)
+    @FieldValid(fieldName = "来源单号", isNotBlank = true)
     private String code;
 
     /**

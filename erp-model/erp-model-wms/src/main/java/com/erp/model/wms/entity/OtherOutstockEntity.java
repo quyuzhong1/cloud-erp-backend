@@ -179,6 +179,12 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     @TableField("out_type")
     private String outType;
 
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
     @TableField(exist = false)
     private List<OtherOutstockDetailEntity> detailEntityList;
 

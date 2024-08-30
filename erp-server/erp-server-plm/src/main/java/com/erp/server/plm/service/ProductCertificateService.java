@@ -48,11 +48,10 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
      * @description: 导出
      * @author Will
      * @date: 2024/2/19 14:51
-     * @param dto 
-     * @param response 
+     * @param dto
      * @return Boolean 
      */
-    Boolean exportExcel(ProductCertificateDTO.ExportParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(ProductCertificateDTO.ExportParamDTO dto);
 
     /**
      * @description: 新增
@@ -118,4 +117,10 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
      * @return List<ProductCertificateEntity>
      */
     List<ProductCertificateEntity> listBySkuIdList(List<String> skuIdList);
+
+    /**
+     * 导出
+     * @param dto 导出
+     */
+    PagingVO<ProductCertificateDTO.ListDTO> exportProductCertificate(PagingDTO<ProductCertificateDTO.ExportParamDTO> dto);
 }

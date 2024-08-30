@@ -9,7 +9,6 @@ import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -58,7 +57,7 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
 
     List<BatchResultDTO> delete(List<String> ids);
 
-    void export(ProductRegistrationDTO.PagingParamDTO dto, HttpServletResponse response);
+    void export(ProductRegistrationDTO.PagingParamDTO dto);
 
     ApiResult<?> pullAllProduct(String declareSupplierId);
     /**
@@ -71,4 +70,6 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
     List<ProductRegistrationEntity> listBySkuId(String skuId);
 
     void sendMsgWhenNotRegistration(List<ProductRegistrationEntity> sendMsgList);
+
+    PagingVO<ProductRegistrationDTO.PagingVO> exportProductRegistration(PagingDTO<ProductRegistrationDTO.PagingParamDTO> dto);
 }

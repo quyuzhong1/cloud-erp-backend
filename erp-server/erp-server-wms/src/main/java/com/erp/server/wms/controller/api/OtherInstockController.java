@@ -1,7 +1,6 @@
 package com.erp.server.wms.controller.api;
 
 
-import cn.hutool.core.lang.Tuple;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -262,7 +261,7 @@ public class OtherInstockController extends BaseController {
                     resultDTO = BatchResultDTO.fail(id,flagCode, "其他入库单不存在");
                 } else {
                     flagCode = entity.getCode();
-                    resultDTO = otherInstockService.approve(id,dto.getType(),dto.getComment());
+                    resultDTO = otherInstockService.approve(id,dto.getType(),dto.getComment(), true);
                 }
             } catch (Exception e) {
                 log.error("其他入库单审核失败>>>>{}", e);
@@ -299,7 +298,7 @@ public class OtherInstockController extends BaseController {
                     resultDTO = BatchResultDTO.fail(id,flagCode, "其他入库单不存在");
                 } else {
                     flagCode = entity.getCode();
-                    resultDTO = otherInstockService.disApprove(id);
+                    resultDTO = otherInstockService.disApprove(id, true);
                 }
             } catch (Exception e) {
                 log.error("其他入库单反审核失败>>>>{}", e);
@@ -334,19 +333,12 @@ public class OtherInstockController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出其他入库单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherInstock:paging",
-            tableAlias = "oi"
-    )
-    @WebAdvanceQuery(handler = OtherInstockQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody OtherInstockDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = otherInstockService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody OtherInstockDTO.SearchParamDTO dto) {
+        Boolean flag = otherInstockService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

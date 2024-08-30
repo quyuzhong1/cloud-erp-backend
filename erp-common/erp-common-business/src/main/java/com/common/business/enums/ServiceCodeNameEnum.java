@@ -21,6 +21,7 @@ public enum ServiceCodeNameEnum implements EnumMessage {
     TMS("tms","物流系统"),
     WMS("wms","仓储系统"),
     MRP("mrp","智能补货系统"),
+    FILE("file","文件系统"),
     ;
 
     @EnumValue

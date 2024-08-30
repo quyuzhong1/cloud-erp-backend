@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
@@ -19,7 +18,6 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -166,13 +164,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     
     /**
      * 导出销售出库单
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-22 11:41
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      */
-    Boolean exportExcel(SoOutstockDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SoOutstockDTO.ExportDTO dto);
 
     
     /**
@@ -457,7 +455,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
     List<SoOutstockEntity> listByCodes(List<String> codes);
 
-    Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
+    Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO, String redissonKey);
     /**
      * @description: 重新生成销售出库单
      * @author Will
@@ -531,4 +529,5 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     void deleteTransferInfo(List<SoOutstockEntity> list);
 
+    PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
 }

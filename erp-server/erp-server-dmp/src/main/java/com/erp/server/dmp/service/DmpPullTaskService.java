@@ -1,7 +1,5 @@
 package com.erp.server.dmp.service;
 
-import com.common.business.dto.DmpPullTaskFeignDTO;
-import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -10,7 +8,6 @@ import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -77,14 +74,13 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      */
     PagingVO<DmpPullTaskDTO.ListDTO> paging(PagingDTO<DmpPullTaskDTO.ParamDTO> dto);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/10/17 14:38
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto);
     /**
      * @description: 批量同步
      * @author Will
@@ -135,4 +131,6 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * @return
      */
     List<DmpPullTaskEntity> getWarnPullTaskList(List<String> statusList);
+
+    PagingVO<DmpPullTaskDTO.ListDTO> exportPullTask(PagingDTO<DmpPullTaskDTO.ParamDTO> dto);
 }

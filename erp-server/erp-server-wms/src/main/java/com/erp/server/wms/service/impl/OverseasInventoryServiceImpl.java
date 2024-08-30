@@ -12,21 +12,18 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.excel.ExportOverseasInventoryExcelDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.OverseasInventoryService;
 import com.erp.server.wms.service.OverseasProviderService;
@@ -38,12 +35,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OVERSEAS_INVENTORY;
 
 /**
  * <p>
@@ -64,7 +62,8 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     private SkuMappingFeign skuMappingFeign;
     @Resource
     private OverseasProviderService overseasProviderService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -157,7 +156,6 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         //获取库存sku信息
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatformSkuNoList(plaformSkuNoList);
-        paramDTO.setMatchResult(true);
         paramDTO.setIsExpire(false);
         List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
 
@@ -167,12 +165,10 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                     // 匹配关系
                     .filter(e -> this.checkMatch(e, data, listWithWarehouseDTOS))
                     .findFirst()
-                    .orElse(null);
-            if (null != view){
-                data.setSkuId(view.getProductSkuId());
-                data.setSkuNo(view.getProductSkuNo());
-                data.setPlatformSkuName(view.getPlatformSkuName());
-            }
+                    .orElse(new ListingInfoWithSkuMappingDTO());
+            data.setSkuId(view.getProductSkuId());
+            data.setSkuNo(view.getProductSkuNo());
+            data.setPlatformSkuName(view.getPlatformSkuName());
         }
 
         //查询产品信息
@@ -222,20 +218,8 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     }
 
     @Override
-    public Boolean exportExcel(OverseasInventoryDTO.ExportDTO dto, HttpServletResponse response) {
-        //查询所有数据
-        List<OverseasInventoryDTO.ListDTO> list = baseMapper.listByParams(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return true;
-        }
-        List<ExportOverseasInventoryExcelDTO> resultList = BeanMapper.copyList(list,ExportOverseasInventoryExcelDTO.class);
-        //  导出
-        String fileName = "海外仓库数据";
-        try {
-            ExcelUtil.export(fileName, "海外仓库数据", resultList, ExportOverseasInventoryExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015 + e.getMessage());
-        }
+    public Boolean exportExcel(OverseasInventoryDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("海外仓库数据", EXPORT_WMS_OVERSEAS_INVENTORY.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -314,6 +298,23 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         if (!updateList.isEmpty()) {
             this.updateBatchById(updateList);
         }
+    }
+
+    @Override
+    public PagingVO<OverseasInventoryDTO.ListDTO> exportOverseasInventory(PagingDTO<OverseasInventoryDTO.ExportDTO> dto) {
+        OverseasInventoryDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        // 查询关联仓库ID
+        if (CollectionUtils.isNotEmpty(dto.getParams().getWarehouseIdList())){
+            List<OverseasProviderDTO.WarehouseDTO> warehouseDTOList = overseasProviderService.listProviderWarehouseByIds(dto.getParams().getWarehouseIdList());
+            if (CollectionUtils.isEmpty(warehouseDTOList)){
+                return new PagingVO<>(new Page<>());
+            }
+            List<String> codeList = warehouseDTOList.stream().map(OverseasProviderDTO.WarehouseDTO::getPlatformWarehouseCode).distinct().collect(Collectors.toList());
+            params.setPlatformWarehouseCodeList(codeList);
+        }
+        Page<OverseasInventoryDTO.ListDTO> page = baseMapper.listByParams(new Page<>(dto.getCurrPage(), dto.getPageSize()), params);
+        return new PagingVO<>(page);
     }
 
 }

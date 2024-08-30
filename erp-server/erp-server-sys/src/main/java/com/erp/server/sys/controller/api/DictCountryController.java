@@ -9,7 +9,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.sys.query.DictParentBaseQueryHandler;
 import com.erp.server.sys.service.DictCountryService;
@@ -19,7 +18,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,8 +70,9 @@ public class DictCountryController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
-    public void paging(@RequestBody @Validated DictCountryDTO.PagingParamDTO dto, HttpServletResponse response) {
-        dictCountryService.exportList(dto,response);
+    public ApiResult<Boolean> paging(@RequestBody @Validated DictCountryDTO.PagingParamDTO dto) {
+        dictCountryService.exportList(dto);
+        return success(true);
     }
 
     /**

@@ -9,15 +9,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.SupplierReportDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SupplierReportMapper;
 import com.erp.server.scm.service.SupplierReportService;
@@ -27,12 +24,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_REPORT;
 
 /**
  * 供应商相关报表服务实现类
@@ -48,7 +45,8 @@ public class SupplierReportServiceImpl implements SupplierReportService {
 
     @Autowired
     private WmsTaskFeign wmsTaskFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<SupplierReportDTO.PagingViewDTO> supplierPaging(PagingDTO<SupplierReportDTO.PagingSearchParamDTO> paramDTO) {
         paramDTO.getParams().setPermissionSql(paramDTO.getPermissionSql());
@@ -65,24 +63,18 @@ public class SupplierReportServiceImpl implements SupplierReportService {
     }
 
     @Override
-    public void exportList(SupplierReportDTO.ExportSearchParamDTO paramDTO, HttpServletResponse response) {
-        paramDTO.setPermissionSql(paramDTO.getPermissionSql());
-        List<SupplierReportDTO.PagingViewDTO> dataList = supplierReportMapper.exportList(paramDTO);
+    public void exportList(SupplierReportDTO.ExportSearchParamDTO paramDTO) {
+        downloadTaskFeign.saveDownloadTask("供应商报表导出", EXPORT_SCM_SUPPLIER_REPORT.getCode(), paramDTO);
+    }
 
+    @Override
+    public PagingVO<SupplierReportDTO.PagingViewDTO> exportSupplierReport(PagingDTO<SupplierReportDTO.ExportSearchParamDTO> dto) {
+
+        dto.getParams().setPermissionSql(dto.getParams().getPermissionSql());
+        Page<SupplierReportDTO.PagingViewDTO> page = supplierReportMapper.exportList(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         // 填充供应商报表其他字段值
-        fillSupplierRptInfo(dataList, paramDTO);
-
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/supplierRpt.xlsx";
-        String name = "供应商报表导出";
-        String date = com.common.core.utils.date.DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        fillSupplierRptInfo(page.getRecords(), dto.getParams());
+        return new PagingVO<>(page);
     }
 
     /**

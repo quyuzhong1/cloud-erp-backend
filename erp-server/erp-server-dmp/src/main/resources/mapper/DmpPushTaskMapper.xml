@@ -101,7 +101,6 @@
             ${params.permissionSql}
         </if>
         order by id desc
-        limit 50000
     </select>
 
 

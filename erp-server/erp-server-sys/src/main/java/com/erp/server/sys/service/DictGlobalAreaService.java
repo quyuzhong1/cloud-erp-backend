@@ -7,7 +7,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -101,11 +100,14 @@ public interface DictGlobalAreaService extends SuperService<DictGlobalAreaEntity
 
     /**
      * 导出
-     * @description
+     *
      * @param
      * @return
+     * @description
      * @date 2024-03-20 16:17
      * @author Lambda
      */
-    void exportList(DictGlobalAreaDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportList(DictGlobalAreaDTO.PagingParamDTO dto);
+
+    PagingVO<DictGlobalAreaDTO.PagingViewDTO> exportGlobalArea(PagingDTO<DictGlobalAreaDTO.PagingParamDTO> dto);
 }

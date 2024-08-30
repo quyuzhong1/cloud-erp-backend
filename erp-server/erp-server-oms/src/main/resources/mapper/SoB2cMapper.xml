@@ -554,7 +554,6 @@
         sb.dict_platform,
         sb.shop_id,
         sbd.platform_spu_no
-        limit 50000
     </select>
     <!--获取标记发货信息-->
     <select id="getSignShipParam" resultType="com.erp.model.oms.dto.SoB2cDTO$SignShipOrderDTO">
@@ -848,7 +847,6 @@
             </if>
         </where>
         order by sb2c.id desc
-        limit 50000
     </select>
 
     <!-- 异常订单分页 -->
@@ -923,7 +921,6 @@
             </if>
         </where>
         order by sb2c.id desc
-        limit 50000
     </select>
     <select id="getForeignOrderDeliveryInfo"
             resultType="com.erp.model.oms.dto.SoB2cForeignDTO$OrderDeliveryResp">

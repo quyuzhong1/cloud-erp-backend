@@ -1470,7 +1470,7 @@ public enum ApiError implements Serializable {
     ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
     ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
 
-    ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"仓位【{}】不存在"),
+    ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 
 
 

@@ -1,18 +1,12 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.ProjectTaskTimeRecordDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -20,6 +14,7 @@ import com.erp.model.plm.entity.ProjectTaskTimeRecordEntity;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
 import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.ProjectTaskTimeRecordMapper;
 import com.erp.server.plm.service.ProjectTaskService;
@@ -30,12 +25,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_TASK_TIME_RECORD;
 
 /**
  * <p>
@@ -53,6 +47,8 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
     private SysUserFeign sysUserFeign;
     @Resource
     private ProjectTaskService projectTaskService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<ProjectTaskTimeRecordPageVO> pageRecord(PagingDTO<ProjectTaskTimeRecordDTO.PageRecordDto> dto) {
@@ -96,17 +92,8 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
     }
 
     @Override
-    public Boolean exportTaskTimeList(ProjectTaskTimeRecordDTO.PageRecordDto dto, HttpServletResponse response) {
-        List<ProjectTaskTimeRecordPageVO> projectTaskTimeRecordList = baseMapper.pageTaskTimeRecord(dto, dto.getPermissionSql());
-        initPlanWorkTime(projectTaskTimeRecordList);
-        String excelPath = "excel/taskTime.xlsx";
-        String name = "工时统计";
-        String dateStr = LocalDateTimeUtil.format(LocalDateTime.now(), DateUtil.fmt);
-        try {
-            new ExcelPrintUtils().patchExport(projectTaskTimeRecordList, response, StrUtil.format("{}-{}", name, dateStr), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportTaskTimeList(ProjectTaskTimeRecordDTO.PageRecordDto dto) {
+        downloadTaskFeign.saveDownloadTask("工时统计", EXPORT_PLM_TASK_TIME_RECORD.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -196,5 +183,12 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
 
         return resultList;
 
+    }
+
+    @Override
+    public PagingVO<ProjectTaskTimeRecordPageVO> exportTaskTimeRecord(PagingDTO<ProjectTaskTimeRecordDTO.PageRecordDto> dto) {
+        IPage<ProjectTaskTimeRecordPageVO> page = baseMapper.pageTaskTimeRecord(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), dto.getPermissionSql());
+        initPlanWorkTime(page.getRecords());
+        return new PagingVO<>(page);
     }
 }

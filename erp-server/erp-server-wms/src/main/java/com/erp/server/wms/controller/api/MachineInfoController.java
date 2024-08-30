@@ -351,19 +351,12 @@ public class MachineInfoController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出加工单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
-            menuCode = "wms:machineInfo:paging",
-            tableAlias = "mi"
-    )
-    @WebAdvanceQuery(handler = MachineInfoQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody MachineInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = machineInfoService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody MachineInfoDTO.SearchParamDTO dto) {
+        Boolean flag = machineInfoService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

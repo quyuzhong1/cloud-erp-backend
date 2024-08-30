@@ -222,14 +222,9 @@ public class VirtualWarehouseAllocationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货单")
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:virtualWarehouseAllocation:export",
-            serviceClass = VirtualWarehouseAllocationService.class,
-            keyIdName = "id")
-    @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
-    public void export(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto, HttpServletResponse response) {
-        virtualWarehouseAllocationService.export(dto, response);
+    public ApiResult<Boolean> export(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
+        virtualWarehouseAllocationService.export(dto);
+        return success(true);
     }
 
     /**

@@ -43,6 +43,7 @@ public interface TransferInfoMapper extends BaseMapper<TransferInfoEntity> {
      * @return List<ListDTO>
      */
     List<TransferInfoDTO.ListDTO> listExportExcel(@Param("params") TransferInfoDTO.SearchParamDTO params);
+    Page<TransferInfoDTO.ListDTO> listExportExcel(@Param("page") Page<TransferInfoDTO.ListDTO> page, @Param("params") TransferInfoDTO.SearchParamDTO params);
 
     /**
      * pda:列表查询

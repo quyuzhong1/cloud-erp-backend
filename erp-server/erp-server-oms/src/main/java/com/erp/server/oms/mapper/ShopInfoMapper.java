@@ -38,6 +38,9 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
 
 
     List<ShopDTO.PagingViewDTO> listExport(@Param("params") ShopDTO.ExportDTO dto);
+
+    Page<ShopDTO.PagingViewDTO> listExport(@Param("page") Page<ShopDTO.PagingViewDTO> page,@Param("params") ShopDTO.ExportDTO dto);
+
     /**
      * 分页查询区域
      * @author will

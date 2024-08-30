@@ -754,6 +754,11 @@ public class WarehouseDTO implements Serializable {
          */
         private String skuStr;
 
+        /**
+         * 是否显示 0 库存
+         */
+        private Boolean isZeroDisabled;
+
     }
 
     /**

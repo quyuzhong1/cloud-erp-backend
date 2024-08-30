@@ -20,7 +20,6 @@ import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.SalesDemandService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
@@ -379,18 +378,12 @@ public class SalesDemandController extends BaseController {
      * @author Will
      * @date: 2023/3/15 18:01
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出备货申请单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
-            menuCode = "scm:salesDemand:paging",
-            tableAlias = "sd")
-    @WebAdvanceQuery
-    public ApiResult exportExcel(@RequestBody SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = salesDemandService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody SalesDemandDTO.SearchParamDTO dto) {
+        Boolean flag = salesDemandService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

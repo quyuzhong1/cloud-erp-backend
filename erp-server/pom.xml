@@ -31,6 +31,7 @@
         <module>erp-server-tms</module>
         <module>erp-server-srm</module>
         <module>erp-server-mrp</module>
+        <module>erp-server-file</module>
     </modules>
     <dependencies>
         <dependency>

@@ -20,6 +20,7 @@ public interface WarehouseLocationReplenishMapper extends BaseMapper<WarehouseLo
     IPage<WarehouseLocationReplenishEntity> paging(@Param("page") Page<Object> page, @Param("params") WarehouseLocationReplenishDTO.SearchParamDTO params);
 
     List<WarehouseLocationReplenishEntity> listByParam(@Param("params") WarehouseLocationReplenishDTO.SearchParamDTO params);
+    Page<WarehouseLocationReplenishEntity> listByParam(@Param("page") Page<WarehouseLocationReplenishEntity> page, @Param("params") WarehouseLocationReplenishDTO.SearchParamDTO params);
 
     List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo();
 }

@@ -10,7 +10,6 @@ import com.erp.model.workflow.entity.ProcessManagementEntity;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.impl.pvm.PvmActivity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -129,9 +128,10 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
 
     /**
      * 导出
+     *
      * @param dto
      */
-    void export(ProcessManagementDTO.ExportDTO dto, HttpServletResponse response) throws Exception ;
+    void export(ProcessManagementDTO.ExportDTO dto);
 
     /**
      * 流程进度
@@ -218,4 +218,6 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @param dto
      */
     void sameApproverAutoPass(ProcessManagementDTO.ApproveDTO dto, String processDefinitionId,String ProcessInstanceId);
+
+    PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(PagingDTO<ProcessManagementDTO.ExportDTO> dto);
 }

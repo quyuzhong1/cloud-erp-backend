@@ -1,7 +1,6 @@
 package com.erp.server.workflow.controller.api;
 
 
-import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -19,11 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.util.List;
 
 /**
@@ -149,12 +144,9 @@ public class ProcessManagementController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "流程管理导出")
     @PostMapping("/export")
-    public void export(@RequestBody @Valid ProcessManagementDTO.ExportDTO dto, HttpServletResponse response) {
-        try {
-            processManagementService.export(dto, response);
-        } catch (Exception e) {
-            log.error("导出流程管理数据失败 dot = {}", JSONUtil.toJsonStr(dto), e);
-        }
+    public ApiResult<Boolean> export(@RequestBody @Valid ProcessManagementDTO.ExportDTO dto) {
+        processManagementService.export(dto);
+        return ApiResult.success(true);
     }
     /**
      * 查看流程进度

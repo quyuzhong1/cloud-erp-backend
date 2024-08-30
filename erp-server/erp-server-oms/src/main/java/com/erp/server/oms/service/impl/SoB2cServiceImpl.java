@@ -17,7 +17,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
@@ -98,6 +97,7 @@ import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -141,6 +141,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -336,6 +338,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private CfgRuleOutFeign cfgRuleOutFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -2077,6 +2081,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setWarehouseCode(platformWarehouseCode);
         createOutboundReq.setVerify(MathUtil.ONE);
         createOutboundReq.setReferenceNo(entity.getCode());
+        createOutboundReq.setPlatformCode(entity.getPlatformCode());
         createOutboundReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
         createOutboundReq.setAuthId(overseasProviderWarehouse.getMainId());
         LogisticsChannelEntity channelEntity = logisticsFeign.getChannelById(logisticsChannelId);
@@ -2226,9 +2231,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //2、如果是API对接的海外仓拦截调用海外仓拦截，否则触发物流拦截
         LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-        if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+        if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
             //API海外物流拦截
-            BatchResultDTO resultDTO = this.overseasProviderIntercept(add.getId(), entity, platformEnum);
+            BatchResultDTO resultDTO = this.overseasProviderIntercept(add.getId(), entity, platformEnum,detailList.get(0).getWarehouseId() );
             return resultDTO;
         } else {
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "已生成发货拦截单");
@@ -2240,15 +2245,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param id           拦截单id
      * @param soB2cEntity  订单信息
      * @param platformEnum 物流平台枚举
+     * @param warehouseId
      * @return com.common.business.dto.base.BatchResultDTO
      * @Author Luo_WG
      * @Date 2024/1/19 11:23
      **/
-    private BatchResultDTO overseasProviderIntercept(String id, SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum) {
+    private BatchResultDTO overseasProviderIntercept(String id, SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum, String warehouseId) {
         ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
         req.setOrderCode(soB2cEntity.getShippingOrderNo());
         req.setThirdWarehouseProvideCode(platformEnum.getCode());
-        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByPlatformCode(platformEnum.getCode());
+        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByWarehouseId(warehouseId);
         if (ObjectUtils.isNotEmpty(overseasProviderEntity)) {
             req.setAuthId(overseasProviderEntity.getId());
         }
@@ -2259,6 +2265,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto = new SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO();
             dto.setHandleResult(HandleResultEnum.SUCCESS.getCode());
             dto.setResultRemark("第三方海外仓拦截成功，自动生成拦截单");
+            dto.setThirdWarehouse(true);
             soB2cDeliveryInterceptFeign.interceptResultConfirm(dto, id);
             return BatchResultDTO.success(id, soB2cEntity.getCode(), "发货拦截成功");
         } else {
@@ -2266,8 +2273,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto = new SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO();
             dto.setHandleResult(HandleResultEnum.FAILURE.getCode());
             dto.setResultRemark("第三方海外仓拦截失败，自动生成拦截单");
+            dto.setThirdWarehouse(true);
             soB2cDeliveryInterceptFeign.interceptResultConfirm(dto, id);
-            return BatchResultDTO.success(id, soB2cEntity.getCode(), "发货拦截失败");
+            return BatchResultDTO.fail(id, soB2cEntity.getCode(), "发货拦截失败");
         }
     }
 
@@ -4744,40 +4752,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date 2023-09-04 16:39
      */
     @Override
-    public Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO params, HttpServletResponse response) {
-        //sku 创建时间
-        List skuCreateTimeList = params.getSkuCreateTimeList();
-        List<String> skuIdList = Lists.newArrayList();
-        if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
-            List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
-            skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(skuIdList)) {
-                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-            }
-        }
-        //获取到产品销售统计导出的数据
-        List<ReportDTO.ProductSalesPagingViewDTO> list = baseMapper.listProductSalesExport(params, skuIdList);
-        Duration between = LocalDateTimeUtil.between(params.getOrderCreateTimeList().get(0), params.getOrderCreateTimeList().get(1));
-        long diffDays = between.toDays();
-        if (diffDays == 0) {
-            diffDays = 1;
-        }
-        fillProductSalesList(list, diffDays);
-        StringBuilder sb = new StringBuilder();
-        String excelPath = "excel/ProductSalesCount.xlsx";
-        String name = "产品销售统计";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("产品销售统计导出出错 >>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO params) {
+        downloadTaskFeign.saveDownloadTask("产品销售统计", EXPORT_OMS_SO_B2C_PRODUCT_SALES.getCode(), params);
         return Boolean.TRUE;
-
-
     }
 
     @Override
@@ -5527,8 +5504,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(auth)) {
                 throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
             }
-            LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-            if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+            if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
                 // 海外仓出库单 (扣可用库存)
                 sourceType = SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode();
             } else {
@@ -6840,6 +6816,96 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public Boolean updateStatus(SoB2cEntity soB2cEntity) {
+        boolean result = this.lambdaUpdate().eq(SoB2cEntity::getId,soB2cEntity.getId()).set(SoB2cEntity::getBillStatus,soB2cEntity.getBillStatus()).set(SoB2cEntity::getApproveStatus,soB2cEntity.getApproveStatus()).update();
+        if(result){
+            String billStatusName = SoB2cBillStatusEnum.getName(soB2cEntity.getBillStatus());
+            operateLogService.addModuleOperateLog(StrUtil.format("单据状态变更为{},审核状态变更为{}",billStatusName,soB2cEntity.getApproveStatus().getName()) ,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "单据状态变更");
+        }
+        return result;
+    }
+
+    @Override
+    public PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
+        //查询店铺设置权限
+        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+            return new PagingVO<>();
+        }
+        Page<SoB2cAbnormalDTO.ListDTO> page = this.baseMapper.abnormalExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), shopAuthResultDTO);
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>(page);
+        }
+        //数据赋值处理
+        handleAbnormalList(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
+        //查询店铺设置权限
+        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+            return new PagingVO<>();
+        }
+        Page<SoB2cDTO.ExcelExportDTO> page;
+        List<SoB2cDTO.ExcelExportDTO> records;
+        List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
+        //是否缺货 过滤
+        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        try {
+            if (Objects.nonNull(isOutStock)) {
+                //必须选仓库而且只能选一个
+                List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> v.getField().equals("sb2cd.warehouse_id") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
+                if (warehouseIdList.size() != 1) {
+                    throw new ServiceException("选择缺货条件必须选择仓库且只能选择一个仓库");
+                }
+                page = this.baseMapper.exportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), shopAuthResultDTO, Boolean.TRUE);
+                // 数据处理
+                records = handleExport(page.getRecords() , dto.getParams().getExportType(), Boolean.TRUE);
+                if (isOutStock) {
+                    //缺货
+                    records = records.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.getIsOutStock()) && obj.getIsOutStock()).collect(Collectors.toList());
+                    ;
+                } else {
+                    //无缺货标识或不缺货
+                    records = records.stream().filter(obj -> ObjectUtil.isEmpty(obj.getIsOutStock()) || !obj.getIsOutStock()).collect(Collectors.toList());
+                }
+            } else {
+                page = this.baseMapper.exportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), shopAuthResultDTO, null);
+                // 数据处理
+                records = handleExport(page.getRecords() , dto.getParams().getExportType(), Boolean.FALSE);
+            }
+        } catch (Exception e) {
+            throw new ServiceException(e.getMessage());
+        }
+        return new PagingVO<>(records, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
+        //sku 创建时间
+        List skuCreateTimeList = dto.getParams().getSkuCreateTimeList();
+        List<String> skuIdList = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
+            List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
+            skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(skuIdList)) {
+                return new PagingVO<>();
+            }
+        }
+        //获取到产品销售统计导出的数据
+        Page<ReportDTO.ProductSalesPagingViewDTO> page = baseMapper.listProductSalesExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), skuIdList);
+        Duration between = LocalDateTimeUtil.between(dto.getParams().getOrderCreateTimeList().get(0), dto.getParams().getOrderCreateTimeList().get(1));
+        long diffDays = between.toDays();
+        if (diffDays == 0) {
+            diffDays = 1;
+        }
+        fillProductSalesList(page.getRecords(), diffDays);
+        return new PagingVO<>(page);
+    }
+
+    @Override
     public SoB2cDTO.SoB2cDataDTO listSoB2cData(SoB2cDTO.SoB2cDataParamDTO paramDTO) {
         //校验必填
         if(CollectionUtils.isEmpty(paramDTO.getB2cSoIdList()) && CollectionUtils.isEmpty(paramDTO.getB2cSoCodeList())) {
@@ -6931,7 +6997,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         if(TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())|| SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus()) || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())){
-            throw new ServiceException("订单预报状态为预报成功或订单发货状态待发货&已发货 不允许更新映射");
+            if(!entity.hasPlatformWarehouseOrder()){
+                throw new ServiceException("订单预报状态为预报成功或订单发货状态待发货&已发货 不允许更新映射");
+            }
         }
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
@@ -7059,64 +7127,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public Boolean exportExcel(SoB2cDTO.ExportParamDTO params, HttpServletResponse response) {
-        //查询店铺设置权限
-        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
-        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL, "B2C销售订单");
-        }
-        List<SoB2cDTO.ExcelExportDTO> records = null;
-        List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
-        //是否缺货 过滤
-        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-
-        //导出总数
-        Integer totalCount = this.baseMapper.countExportExcel(params, shopAuthResultDTO, Boolean.TRUE);
-        if (totalCount > 50000) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_EXPORT_SIZE);
-        }
-        try {
-            if (Objects.nonNull(isOutStock)) {
-                //必须选仓库而且只能选一个
-                List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> v.getField().equals("sb2cd.warehouse_id") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
-                if (warehouseIdList.size() != 1) {
-                    throw new ServiceException("选择缺货条件必须选择仓库且只能选择一个仓库");
-                }
-                List<SoB2cDTO.ExcelExportDTO> exportExcelList = this.baseMapper.exportExcel(params, shopAuthResultDTO, Boolean.TRUE);
-                // 数据处理
-                records = handleExport(exportExcelList, params.getExportType(), Boolean.TRUE);
-                if (isOutStock) {
-                    //缺货
-                    records = records.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.getIsOutStock()) && obj.getIsOutStock()).collect(Collectors.toList());
-                    ;
-                } else {
-                    //无缺货标识或不缺货
-                    records = records.stream().filter(obj -> ObjectUtil.isEmpty(obj.getIsOutStock()) || !obj.getIsOutStock()).collect(Collectors.toList());
-                    ;
-                }
-            } else {
-                List<SoB2cDTO.ExcelExportDTO> exportExcelList = this.baseMapper.exportExcel(params, shopAuthResultDTO, null);
-                // 数据处理
-                records = handleExport(exportExcelList, params.getExportType(), Boolean.FALSE);
-            }
-        } catch (Exception e) {
-            throw new ServiceException(e.getMessage());
-        }
-        if (CollectionUtils.isEmpty(records)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL, "B2C销售订单");
-        }
-        String name = "B2C销售订单";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/soB2c.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(records, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("产品认证列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(SoB2cDTO.ExportParamDTO params) {
+        downloadTaskFeign.saveDownloadTask("B2C销售订单", EXPORT_OMS_SO_B2C.getCode(), params);
         return Boolean.TRUE;
     }
 
@@ -7522,39 +7534,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO params, HttpServletResponse response) {
-        //查询店铺设置权限
-        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
-        if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL, "B2C异常销售订单");
-        }
-        List<SoB2cAbnormalDTO.ListDTO> records = null;
-        try {
-            records = this.baseMapper.abnormalExportExcel(params, shopAuthResultDTO);
-        } catch (Exception e) {
-            throw new ServiceException("导出失败");
-        }
-        if (CollectionUtils.isEmpty(records)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL, "B2C异常销售订单");
-        }
-        if (records.size() >= 50000) {
-            throw new ServiceException("导出条数不能超过50000");
-        }
-
-        //数据赋值处理
-        handleAbnormalList(records);
-        String name = "B2C销售订单";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/soB2cAbnormal.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(records, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("产品认证列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO params) {
+        downloadTaskFeign.saveDownloadTask("B2C异常销售订单", EXPORT_OMS_SO_B2C_ABNORMAL.getCode(), params);
         return Boolean.TRUE;
     }
 

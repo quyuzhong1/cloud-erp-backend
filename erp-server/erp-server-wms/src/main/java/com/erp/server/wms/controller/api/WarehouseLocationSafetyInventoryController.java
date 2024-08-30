@@ -84,8 +84,8 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery(handler = WarehouseLocationSafetyInventoryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody WarehouseLocationSafetyInventoryDTO.exportParamDTO dto, HttpServletResponse response){
-        boolean flag = safetyInventoryService.exportExcel(dto, response);
+    public ApiResult<?> exportExcel(@RequestBody WarehouseLocationSafetyInventoryDTO.exportParamDTO dto){
+        boolean flag = safetyInventoryService.exportExcel(dto);
         return flag ? success() : failure();
     }
 

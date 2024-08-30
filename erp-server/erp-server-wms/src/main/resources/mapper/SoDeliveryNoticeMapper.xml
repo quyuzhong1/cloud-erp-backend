@@ -108,7 +108,6 @@
             </foreach>
         </if>
         sdn.create_time desc
-        limit 50000
     </select>
 
     <select id="listGenerateSoOutstockView" resultType="com.erp.model.wms.dto.SoOutstockDTO$GenerateSoOutstockViewDTO">

@@ -76,9 +76,8 @@ public class WarehouseLocationReplenishController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/exportExcel")
-    @WebAdvanceQuery(handler = WarehouseLocationReplenishQueryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response){
-        Boolean flag = replenishService.exportExcel(dto, response);
+    public ApiResult<?> exportExcel(@RequestBody WarehouseLocationReplenishDTO.ExportParamDTO dto){
+        Boolean flag = replenishService.exportExcel(dto);
         return flag ? success() : failure();
     }
 

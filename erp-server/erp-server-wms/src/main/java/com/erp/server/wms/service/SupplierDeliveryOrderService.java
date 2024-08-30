@@ -1,9 +1,11 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
+import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -11,7 +13,9 @@ import java.util.List;
  */
 public interface SupplierDeliveryOrderService {
 
-    Boolean export(DeliveryOrderDTO.ParamDTO dto, HttpServletResponse response);
+    Boolean export(DeliveryOrderDTO.ParamDTO dto);
 
     List<BatchResultDTO> generateReceive(DeliveryOrderDTO.GenerateDTO dto);
+
+    PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
 }

@@ -40,6 +40,7 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -126,6 +127,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
@@ -340,8 +343,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             List<String> mergeIds = Arrays.asList(v.getMergeSourceId().split(","));
             List<String> mergedSourceCodeList = allMergeSourceList.stream().filter(t->mergeIds.contains(t.getId())).map(TmsDeclareBillEntity::getSourceCode).distinct().collect(Collectors.toList());
             sourceCodeList.addAll(mergedSourceCodeList);
-            sourceCodeList = sourceCodeList.stream().distinct().collect(Collectors.toList());
-            v.setSourceCodeList(sourceCodeList);
+            v.setSourceCodeList(sourceCodeList.stream().distinct().collect(Collectors.joining(",")));
             v.setIsInvalid(v.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.INVALID.getCode()));
         });
     }
@@ -703,53 +705,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return resultList;
     }
 
-    @Override
-    public void export(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
-        pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(1, Integer.MAX_VALUE,false);
-        IPage<TmsDeclareBillDTO.PagingVO> pageData = baseMapper.paging(query, pagingParamDTO);
-        List<TmsDeclareBillDTO.PagingVO> list = pageData.getRecords();
-        fillPagingDb(list,pagingParamDTO.getType());
-        ExcelUtil.export("报关单"+ DateUtil.currentYMD(),"报关单",list,TmsDeclareBillDTO.PagingVO.class,response);
-    }
-
-    @Override
-    public void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
-        pagingParamDTO.setExportDeclareStatus(Arrays.asList(com.erp.model.tms.enums.DeclareStatusEnum.DECLARED.getCode(), com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode()));
-        List<TmsDeclareBillDTO.ExportDTO> list = baseMapper.exportDeclare(pagingParamDTO);
-        if(CollectionUtils.isEmpty(list)){
-            return;
-        }
-        fillExport(list);
-        String excelPath = "excel/declareExport.xlsx";
-        String name = "报关单导出";
-        //超过一行数据压缩成zip
-        if(list.size() == 1){
-            TmsDeclareBillDTO.ExportDTO exportDTO = list.get(0);
-            // 导出数据
-            StringBuffer sb = new StringBuffer();
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date).append(name);
-            try {
-                new ExcelPrintUtils().patchExport(exportDTO.getProductDetailList(),exportDTO, response, sb.toString(), excelPath);
-            } catch (Exception e) {
-                throw new ServiceException(ApiError.ERROR_1015);
-            }
-        }else{
-            List<ExcelData> excelDataList = new ArrayList<>();
-            int temp = 1;
-            for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
-                ExcelData excelData = new ExcelData();
-                excelData.setData(exportDTO);
-                excelData.setDetailList(exportDTO.getProductDetailList());
-                excelData.setFilename("报关单"+exportDTO.getCode()+".xlsx");
-                excelDataList.add(excelData);
-                temp++;
-            }
-            ExcelPrintUtils.exportZipStream(excelDataList,response,excelPath,"报关单"+DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP));
-        }
-    }
-
     private void fillExport(List<TmsDeclareBillDTO.ExportDTO> list) {
         if(CollectionUtils.isEmpty(list)){
             return;
@@ -980,4 +935,49 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return true;
     }
 
+
+    @Override
+    public PagingVO<TmsDeclareBillDTO.PagingVO> export(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getParams().getPermissionSql());
+        IPage<TmsDeclareBillDTO.PagingVO> pageData = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        fillPagingDb(pageData.getRecords(), dto.getParams().getType());
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+        pagingParamDTO.setExportDeclareStatus(Arrays.asList(com.erp.model.tms.enums.DeclareStatusEnum.DECLARED.getCode(), com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode()));
+        List<TmsDeclareBillDTO.ExportDTO> list = baseMapper.exportDeclare(pagingParamDTO);
+        if(CollectionUtils.isEmpty(list)){
+            return;
+        }
+        fillExport(list);
+        String excelPath = "excel/declareExport.xlsx";
+        String name = "报关单导出";
+        //超过一行数据压缩成zip
+        if(list.size() == 1){
+            TmsDeclareBillDTO.ExportDTO exportDTO = list.get(0);
+            // 导出数据
+            StringBuffer sb = new StringBuffer();
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date).append(name);
+            try {
+                new ExcelPrintUtils().patchExport(exportDTO.getProductDetailList(),exportDTO, response, sb.toString(), excelPath);
+            } catch (Exception e) {
+                throw new ServiceException(ApiError.ERROR_1015);
+            }
+        }else{
+            List<ExcelData> excelDataList = new ArrayList<>();
+            int temp = 1;
+            for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
+                ExcelData excelData = new ExcelData();
+                excelData.setData(exportDTO);
+                excelData.setDetailList(exportDTO.getProductDetailList());
+                excelData.setFilename("报关单"+exportDTO.getCode()+".xlsx");
+                excelDataList.add(excelData);
+                temp++;
+            }
+            ExcelPrintUtils.exportZipStream(excelDataList,response,excelPath,"报关单"+DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP));
+        }
+    }
 }

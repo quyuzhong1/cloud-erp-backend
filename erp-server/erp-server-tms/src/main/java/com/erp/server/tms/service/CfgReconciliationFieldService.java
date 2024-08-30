@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
+import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -62,7 +63,7 @@ public interface CfgReconciliationFieldService extends SuperService<CfgReconcili
      * @author Jim
      * {@code @date:} 2024-03-25
      */
-    Boolean exportExcel(CfgReconciliationFieldDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(CfgReconciliationFieldDTO.PagingParamDTO dto);
 
     /**
      * 下载导入模板
@@ -152,4 +153,6 @@ public interface CfgReconciliationFieldService extends SuperService<CfgReconcili
     List<CfgReconciliationFieldEntity> listByTypeList(List<String> typeList, String supplierId);
 
     List<BaseDropDownDTO.SupplierDisabledDTO> logisticsSupplierList(List<String> reconciliationTypeList);
+
+    PagingVO<CfgReconciliationFieldExportExcelDTO> exportCfgReconciliationField(PagingDTO<CfgReconciliationFieldDTO.PagingParamDTO> dto);
 }

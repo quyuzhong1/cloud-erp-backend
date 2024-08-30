@@ -1,7 +1,6 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -307,7 +306,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
 
     List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto);
 
-    void listExport(ShopDTO.ExportDTO dto, HttpServletResponse response);
+    void listExport(ShopDTO.ExportDTO dto);
 
 
     /**
@@ -326,6 +325,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return
      */
     PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto);
+
+    /**
+     * 导出店铺
+     */
+    PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto);
     /**
      * 区域远程搜索
      * @author will

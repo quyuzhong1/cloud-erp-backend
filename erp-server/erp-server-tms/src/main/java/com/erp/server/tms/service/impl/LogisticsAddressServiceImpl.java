@@ -13,19 +13,17 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.LogisticsAddressMapper;
 import com.erp.server.tms.service.LogisticsAddressService;
@@ -41,10 +39,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_ADDRESS;
 
 /**
  * <p>
@@ -69,6 +70,8 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     @Autowired
     @Lazy
     private LogisticsChannelService logisticsChannelService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -148,21 +151,8 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
 
 
     @Override
-    public Boolean exportExcel(LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response) {
-        List<LogisticsAddressDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-        fillData(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/LogisticsAddress.xlsx";
-        String name = "物流地址列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, "", excelPath);
-        } catch (IOException e) {
-            log.error("销物流地址导出错 {}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(LogisticsAddressDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("物流地址列表", EXPORT_TMS_LOGISTICS_ADDRESS.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -250,6 +240,15 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
             });
         }
         return BeanMapperUtils.copyList(LogisticsAddressDTO.ListDTO.class,addressList);
+    }
+
+    @Override
+    public PagingVO<LogisticsAddressDTO.PagingViewDTO> exportLogisticsAddress(PagingDTO<LogisticsAddressDTO.ExportDTO> dto) {
+        Page<LogisticsAddressDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            fillData(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     private LogisticsAddressEntity getLogisticsServiceAddress(String addressId,String shopId){

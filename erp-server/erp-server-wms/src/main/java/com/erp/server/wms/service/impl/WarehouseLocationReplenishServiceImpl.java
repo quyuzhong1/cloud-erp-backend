@@ -16,17 +16,17 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.WarehouseLocationReplenishMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.boot.autoconfigure.properties.SagaAsyncThreadPoolProperties;
@@ -39,12 +39,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH;
 
 /**
  * 仓位库存预警服务类
@@ -66,7 +68,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     private WarehouseLocationMoveService warehouseLocationMoveService;
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> paging(PagingDTO<WarehouseLocationReplenishDTO.SearchParamDTO> pagingDTO) {
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
@@ -166,7 +169,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
                         .set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
                         .set("abnormal_cause", "")
-                        .eq("id", sourceId));
+                        .eq("id", sourceId)
+                        .eq("status",SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode())
+                        .eq("abnormal_cause", AbnormalCauseEnum.GENERATION_WAVE.getCode()));
             }
         }
 
@@ -176,31 +181,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     }
 
     @Override
-    public Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response) {
-        WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
-        BeanMapper.copy(dto, searchParamDto);
-        List<WarehouseLocationReplenishEntity> entityList = this.baseMapper.listByParam(searchParamDto);
-        List<WarehouseLocationReplenishDTO.ViewDTO> viewList = fillViewList(entityList);
-        List<String> waitHandleIds = viewList.stream()
-                .filter(item -> item.getStatus().equals(ReplenishBillStatusEnum.WAIT_HANDLE.getCode()))
-                .map(WarehouseLocationReplenishDTO.ViewDTO::getId)
-                .collect(Collectors.toList());
-        try {
-            String fileName = "仓位补货" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            String excelPath = "excel/warehouseLocationReplenishExport.xlsx";
-            new ExcelPrintUtils().patchExport(viewList, response, fileName, excelPath);
-
-            //只有勾选导出的才更新状态：处理中
-            boolean isExportById = dto.getAdvanceQueryDTOList().stream().anyMatch(item -> item.getField().equals("id"));
-            if(isExportById && !waitHandleIds.isEmpty()){
-                this.update(new UpdateWrapper<WarehouseLocationReplenishEntity>()
-                        .set("status", ReplenishBillStatusEnum.HANDLE_ING.getCode())
-                        .in("id", waitHandleIds));
-            }
-        } catch (IOException e) {
-            log.error("导出仓位补货清单失败：{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("仓位补货", EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -391,7 +373,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
                         .set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
                         .set("abnormal_cause", "")
-                        .eq("id", fullEntity.getSourceId()));
+                        .eq("id", fullEntity.getSourceId())
+                        .eq("status",SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode())
+                        .eq("abnormal_cause", AbnormalCauseEnum.GENERATION_WAVE.getCode()));
             }
         }
 
@@ -575,5 +559,26 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         }
 
         return verifyResultList;
+    }
+
+    @Override
+    public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> exportWarehouseLocationReplenish(PagingDTO<WarehouseLocationReplenishDTO.ExportParamDTO> dto) {
+
+        WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
+        BeanMapper.copy(dto.getParams(), searchParamDto);
+        Page<WarehouseLocationReplenishEntity> entityList = this.baseMapper.listByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()),searchParamDto);
+        List<WarehouseLocationReplenishDTO.ViewDTO> viewList = fillViewList(entityList.getRecords());
+        List<String> waitHandleIds = viewList.stream()
+                .filter(item -> item.getStatus().equals(ReplenishBillStatusEnum.WAIT_HANDLE.getCode()))
+                .map(WarehouseLocationReplenishDTO.ViewDTO::getId)
+                .collect(Collectors.toList());
+        //只有勾选导出的才更新状态：处理中
+        boolean isExportById = dto.getParams().getAdvanceQueryDTOList().stream().anyMatch(item -> item.getField().equals("id"));
+        if (isExportById && !waitHandleIds.isEmpty()) {
+            this.update(new UpdateWrapper<WarehouseLocationReplenishEntity>()
+                    .set("status", ReplenishBillStatusEnum.HANDLE_ING.getCode())
+                    .in("id", waitHandleIds));
+        }
+        return new PagingVO<>(viewList, (int) entityList.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 }

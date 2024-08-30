@@ -1,39 +1,29 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
-import com.erp.model.wms.dto.PackageForecastDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.entity.PackageForecastEntity;
-import com.erp.server.wms.query.PackageForecastQueryHandler;
-import com.erp.server.wms.query.SoOutstockQueryHandler;
-import com.erp.server.wms.service.PackageForecastDetailService;
-import com.erp.server.wms.service.SoOutstockService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.PackageForecastService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
+import com.erp.model.wms.dto.PackageForecastDetailDTO;
+import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.server.wms.query.PackageForecastQueryHandler;
+import com.erp.server.wms.service.PackageForecastDetailService;
+import com.erp.server.wms.service.PackageForecastService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -243,19 +233,12 @@ public class PackageForecastController extends BaseController {
      * 导出组包预报
      *
      * @param dto
-     * @param response
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出组包预报")
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:packageForecast:paging",
-            tableAlias = "pf"
-    )
-    @WebAdvanceQuery(handler = PackageForecastQueryHandler.class)
-    public ApiResult export(@RequestBody @Valid PackageForecastDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = packageForecastService.exportExcel(dto, response);
+    public ApiResult export(@RequestBody @Valid PackageForecastDTO.ExportDTO dto) {
+        Boolean result = packageForecastService.exportExcel(dto);
         return result ? success() : failure();
     }
 

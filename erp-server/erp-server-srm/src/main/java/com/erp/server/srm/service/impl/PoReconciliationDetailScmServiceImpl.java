@@ -42,6 +42,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmDictFeign;
@@ -66,6 +67,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM;
 
 /**
  * <p>
@@ -100,6 +103,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     private SysUserFeign sysUserFeign;
     @Resource
     private UserService userService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -226,6 +231,11 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     }
 
     @Override
+    public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("对账明细导出", EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM.getCode(), dto);
+    }
+
+    @Override
     public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response) {
         List<PoReconciliationDetailDTO.ListDTO> list = this.baseMapper.listExport(dto);
         if(CollUtil.isEmpty(list)) {
@@ -242,6 +252,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_1015);
         }
     }
@@ -398,6 +409,16 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         return lambdaQuery().eq(PoReconciliationDetailEntity::getSupplierId,supplierId)
                 .eq(PoReconciliationDetailEntity::getBusinessStatus,ConfirmStatusEnum.WAIT_CONFIRM.getCode())
                 .count();
+    }
+
+    @Override
+    public PagingVO<PoReconciliationDetailDTO.ListDTO> exportPoReconciliationDetailScm(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> dto) {
+                Page<PoReconciliationDetailDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if(!CollUtil.isEmpty(page.getRecords())) {
+            // 数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

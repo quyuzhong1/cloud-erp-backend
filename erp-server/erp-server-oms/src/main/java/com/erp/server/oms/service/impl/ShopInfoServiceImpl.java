@@ -33,6 +33,7 @@ import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
@@ -78,6 +79,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SHOP;
 
 /**
  * <p>
@@ -135,6 +138,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private KingdeeReceiptConditionService kingdeeReceiptConditionService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * 添加店铺
@@ -1431,6 +1436,16 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
+    public PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto) {
+        Page<ShopDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isNotEmpty(page.getRecords())) {
+            //填充数据
+            fillDb(page.getRecords());
+        }
+        return new PagingVO<>(page);
+    }
+
+    @Override
     public PagingVO<ShopDTO.AreaDTO> pagingSelectArea(PagingDTO<ShopDTO.AreaParamDTO> dto) {
         ShopDTO.AreaParamDTO params = dto.getParams();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -1488,28 +1503,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * 导出
      *
      * @param dto
-     * @param response
      * @author hyj
      * @date 2024/5/23 10:54
      */
     @Override
-    public void listExport(ShopDTO.ExportDTO dto, HttpServletResponse response) {
-        List<ShopDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-        if (CollectionUtils.isNotEmpty(list)) {
-            //填充数据
-            fillDb(list);
-        }
-        StringBuffer stringBuffer = new StringBuffer();
-        String excelPath = "excel/ShopInfo.xlsx";
-        String name = "店铺导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        stringBuffer.append(date);
-        stringBuffer.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, stringBuffer.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void listExport(ShopDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("店铺导出", EXPORT_OMS_SHOP.getCode(),dto);
     }
 
     private boolean verifyHmac(String data, String hmacHeader) {

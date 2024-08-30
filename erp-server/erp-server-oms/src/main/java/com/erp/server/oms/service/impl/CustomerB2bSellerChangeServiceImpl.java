@@ -26,7 +26,6 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
@@ -37,6 +36,7 @@ import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.CustomerInfoConverter;
@@ -53,11 +53,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE;
 
 /**
  * <p>
@@ -87,6 +88,9 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
 
     @Resource
     private KingdeeFeign kingdeeFeign;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -514,36 +518,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     }
 
     @Override
-    public void export(CustomerB2bSellerChangeDTO.ParamDTO dto, HttpServletResponse response) {
-        List<CustomerB2bSellerExcelDTO> list = this.baseMapper.export(dto);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        List<String> ids = list.stream().map(CustomerB2bSellerExcelDTO::getMainId).collect(Collectors.toList());
-        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        ids.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode(), obj));
-        });
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
-            listApiResult = workflowFeign.curApprover(dtoList);
-            Integer code = listApiResult.getCode();
-            if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
-            }
-        }
-        for (CustomerB2bSellerExcelDTO customerB2bSellerExcelDTO : list) {
-            customerB2bSellerExcelDTO.setApproveStatusName(ApproveStatusEnum.getName(customerB2bSellerExcelDTO.getApproveStatus()));
-            //最新待审核人
-            if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(customerB2bSellerExcelDTO.getMainId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                if(StringUtils.isNotBlank(curApprove)){
-                    customerB2bSellerExcelDTO.setApproveUserName(curApprove);
-                }
-            }
-        }
-        // 数据处理
-        ExcelUtil.export("客户b2b销售变更单","客户b2b销售变更单",list,CustomerB2bSellerExcelDTO.class,response);
+    public void export(CustomerB2bSellerChangeDTO.ParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("客户b2b销售变更单", EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE.getCode(), dto);
     }
 
     @Override
@@ -555,6 +531,36 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 .eq(CustomerB2bSellerChangeEntity::getMainId, businessId)
                 .last(" LIMIT 1")
                 .one();
+    }
+
+    @Override
+    public PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
+        Page<CustomerB2bSellerExcelDTO> page = this.baseMapper.export(new Page<>(dto.getCurrPage(), dto.getPageSize()) ,dto.getParams());
+        if(CollUtil.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
+        }
+        List<String> ids = page.getRecords().stream().map(CustomerB2bSellerExcelDTO::getMainId).collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        ids.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode(), obj)));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
+            }
+        }
+        for (CustomerB2bSellerExcelDTO customerB2bSellerExcelDTO : page.getRecords()) {
+            customerB2bSellerExcelDTO.setApproveStatusName(ApproveStatusEnum.getName(customerB2bSellerExcelDTO.getApproveStatus()));
+            //最新待审核人
+            if (listApiResult != null && org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(customerB2bSellerExcelDTO.getMainId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if(StringUtils.isNotBlank(curApprove)){
+                    customerB2bSellerExcelDTO.setApproveUserName(curApprove);
+                }
+            }
+        }
+        return new PagingVO<>(page);
     }
 
     /**

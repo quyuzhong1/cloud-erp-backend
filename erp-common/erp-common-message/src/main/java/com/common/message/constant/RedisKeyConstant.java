@@ -65,4 +65,10 @@ public class RedisKeyConstant {
 
     public static final String SO_B2C_ORDER_KEY = "SO_B2C_ORDER_KEY";
     public static final String SO_B2C_DELIVERY_KEY = "SO_B2C_DELIVERY_KEY";
+
+
+    /**
+     * 生成销售出库单key
+     */
+    public static final String SO_STOCK_KEY = "SO_STOCK_KEY";
 }

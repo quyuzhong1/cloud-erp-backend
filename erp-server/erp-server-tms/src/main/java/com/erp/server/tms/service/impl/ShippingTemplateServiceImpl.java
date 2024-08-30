@@ -33,6 +33,7 @@ import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.ShippingTemplateCityExcelListener;
@@ -61,6 +62,8 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_SHIPPING_TEMPLATE;
 
 /**
  * <p>
@@ -109,7 +112,8 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
     @Resource
     private ShippingCalculationService shippingCalculationService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public List<ShippingTemplateDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<ShippingTemplateDTO.TabListDTO> dbList = baseMapper.tabList(dto.getPermissionSql());
@@ -539,25 +543,8 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
 
     @Override
-    public Boolean exportExcel(ShippingTemplateDTO.ExportExcelParamDTO params, HttpServletResponse response) {
-        List<ShippingTemplateDTO.ListDTO> resultList = this.baseMapper.listByExportExcel(params);
-        if (CollectionUtils.isEmpty(resultList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //数据赋值处理
-        doOpHandleShippingTemplate(resultList);
-        String name = "运费模板列表";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/shippingTemplate.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("运费模板列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(ShippingTemplateDTO.ExportExcelParamDTO params) {
+        downloadTaskFeign.saveDownloadTask("运费模板列表", EXPORT_TMS_SHIPPING_TEMPLATE.getCode(), params);
         return Boolean.TRUE;
     }
 
@@ -992,6 +979,15 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     @Override
     public List<ShippingTemplateEntity> getByChannelIds(List<String> channelIds) {
         return baseMapper.getByChannelIds(channelIds);
+    }
+
+    @Override
+    public PagingVO<ShippingTemplateDTO.ListDTO> exportShippingTemplate(PagingDTO<ShippingTemplateDTO.ExportExcelParamDTO> dto) {
+        Page<ShippingTemplateDTO.ListDTO> page = baseMapper.listByExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            doOpHandleShippingTemplate(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
 }

@@ -29,6 +29,7 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     IPage<SoOutstockDTO.PagingViewDTO> paging(Page query, @Param("params") SoOutstockDTO.PagingParamDTO params);
 
     List<SoOutstockDTO.PagingViewDTO> listExport(@Param("params") SoOutstockDTO.ExportDTO dto);
+    Page<SoOutstockDTO.PagingViewDTO> listExport(@Param("page") Page<SoOutstockDTO.PagingViewDTO> page, @Param("params") SoOutstockDTO.ExportDTO dto);
 
     List<InOutStockDTO> listInventoryInOut(@Param("ids") List<String> idList);
 

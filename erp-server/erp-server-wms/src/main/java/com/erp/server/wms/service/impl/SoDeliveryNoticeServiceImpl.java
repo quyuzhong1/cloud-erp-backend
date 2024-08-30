@@ -53,6 +53,7 @@ import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -72,12 +73,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_DELIVERY_NOTICE;
 
 /**
  * <p>
@@ -159,6 +161,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private TransferInfoDetailService transferInfoDetailService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -699,45 +703,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public Boolean exportExcel(SoDeliveryNoticeDTO.PagingParam dto, HttpServletResponse response) {
-        List<SoDeliveryNoticeDTO.PagingView> pagingViews = baseMapper.soDeliveryNoticeExportExcel(dto);
-        //获取sku的id集合
-        List<String> skuIdList = pagingViews.stream().map(SoDeliveryNoticeDTO.PagingView::getSkuId).collect(Collectors.toList());
-        //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = pagingViews.stream().map(SoDeliveryNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
-        //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
-        for (SoDeliveryNoticeDTO.PagingView pagingView : pagingViews) {
-            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
-            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
-            if (pagingView.getDeliveryStatus()) {
-                pagingView.setDeliveryStatusName(DeliveryStatusEnum.COMPLETE_SHIPMENT.getName());
-            } else {
-                pagingView.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
-            }
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            pagingView.setProductName(productDetailEntity.getName());
-            pagingView.setSalesQty(soDetailEntity.getQty());
-            pagingView.setUnit(productDetailEntity.getUnitName());
-            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-            pagingView.setCustomerName(customerInfoEntity.getName());
-            pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() ? "已发货" : "未发货");
-        }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/soDeliveryNoticeExport.xlsx";
-        String name = "销售发货通知单";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(pagingViews, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public Boolean exportExcel(SoDeliveryNoticeDTO.PagingParam dto) {
+        downloadTaskFeign.saveDownloadTask("销售发货通知单", EXPORT_WMS_SO_DELIVERY_NOTICE.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -1580,4 +1547,37 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         paramList.add(outInStockDTO);
     }
 
+
+    @Override
+    public PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) {
+
+        Page<SoDeliveryNoticeDTO.PagingView> pagingViews = baseMapper.soDeliveryNoticeExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        //获取sku的id集合
+        List<String> skuIdList = pagingViews.getRecords().stream().map(SoDeliveryNoticeDTO.PagingView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //获取界面传过来的采购单详情表id集合
+        List<String> orderDetailIds = pagingViews.getRecords().stream().map(SoDeliveryNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        for (SoDeliveryNoticeDTO.PagingView pagingView : pagingViews.getRecords()) {
+            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
+            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
+            if (pagingView.getDeliveryStatus()) {
+                pagingView.setDeliveryStatusName(DeliveryStatusEnum.COMPLETE_SHIPMENT.getName());
+            } else {
+                pagingView.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
+            }
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            pagingView.setProductName(productDetailEntity.getName());
+            pagingView.setSalesQty(soDetailEntity.getQty());
+            pagingView.setUnit(productDetailEntity.getUnitName());
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            pagingView.setCustomerName(customerInfoEntity.getName());
+            pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() ? "已发货" : "未发货");
+        }
+        return new PagingVO<>(pagingViews);
+    }
 }

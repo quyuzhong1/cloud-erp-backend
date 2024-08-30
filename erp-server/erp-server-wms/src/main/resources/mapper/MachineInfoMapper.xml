@@ -125,7 +125,6 @@
             </foreach>
         </if>
         mi.id desc,md.id desc
-        limit 50000
     </select>
     <!--根据sku 信息获取到 加工单信息-->
     <select id="listBySku" resultType="com.erp.model.wms.dto.MachineInfoDTO$ListDTO">

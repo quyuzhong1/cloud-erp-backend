@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -15,10 +16,11 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
-import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
@@ -26,22 +28,21 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowMapper;
 import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_TRANS_FLOW;
 
 /**
  * <p>
@@ -60,6 +61,9 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<VirtualTransFlowDTO.ListDTO> paging(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
@@ -141,35 +145,20 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     }
 
     @Override
-    public Boolean exportExcel(VirtualTransFlowDTO.SearchParamDTO dto, HttpServletResponse response) {
-        //总数
-        Integer count = baseMapper.pagingCount(dto);
-        if (count > MathUtil.EXPORT_MAX_COUNT) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_EXPORT_SIZE);
-        }
-        PagingDTO<VirtualTransFlowDTO.SearchParamDTO> pagingParamDTO = new PagingDTO<>();
-        pagingParamDTO.setParams(dto);
-        pagingParamDTO.setPageSize(-1);
-        PagingVO<VirtualTransFlowDTO.ListDTO> resultList = this.paging(pagingParamDTO);
-        List<VirtualTransFlowDTO.ListDTO> list = (List<VirtualTransFlowDTO.ListDTO>)resultList.getList();
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //数据赋值处理
-        fillPageData(list);
-        String name = "虚拟库存流水列表信息";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/virtualTransFlow.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("虚拟库存流水列表信息导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(VirtualTransFlowDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("虚拟库存流水列表信息", EXPORT_WMS_VIRTUAL_TRANS_FLOW.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<VirtualTransFlowDTO.ListDTO> exportVirtualTransFlow(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        IPage<VirtualTransFlowDTO.ListDTO> pageData = this.baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollUtil.isNotEmpty(pageData.getRecords())){
+            //数据赋值处理
+            fillPageData(pageData.getRecords());
+        }
+        return new PagingVO<>(pageData);
     }
 
     /**

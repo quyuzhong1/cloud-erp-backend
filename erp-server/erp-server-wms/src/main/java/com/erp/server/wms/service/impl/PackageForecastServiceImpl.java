@@ -43,6 +43,7 @@ import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.ForecastFeign;
@@ -77,13 +78,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKAGE_FORECAST;
 
 /**
  * <p>
@@ -134,6 +136,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -877,28 +881,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     }
 
     @Override
-    public Boolean exportExcel(PackageForecastDTO.ExportDTO dto, HttpServletResponse response) {
-        String uploadStatus = "";
-
-        List<PackageForecastDTO.ExportViewDTO> list = baseMapper.listExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //处理分页数据
-        fillExportPaging(list);
-
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/packageForecast.xlsx";
-        String name = "组包预报列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("组包预报导出出错 {}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(PackageForecastDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("组包预报列表", EXPORT_WMS_PACKAGE_FORECAST.getCode(), dto);
         return Boolean.TRUE;
 
     }
@@ -1028,5 +1012,16 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 .shopIds(shopIds)
                 .build();
         return logisticsFeign.listAddressByType(dto);
+    }
+
+    @Override
+    public PagingVO<PackageForecastDTO.ExportViewDTO> exportPackageForecast(PagingDTO<PackageForecastDTO.ExportDTO> dto) {
+        Page<PackageForecastDTO.ExportViewDTO> page = baseMapper.listExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //处理分页数据
+        fillExportPaging(page.getRecords());
+        return new PagingVO<>(page);
     }
 }

@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -13,11 +14,9 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.LogisticsLastMileCostExcelDTO;
@@ -27,7 +26,9 @@ import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.listener.LogisticsLastMileCostExcelListener;
+import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -35,11 +36,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_LAST_MILE_COST;
 
 /**
  * @author Will
@@ -52,6 +59,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Autowired
     private LogisticsBillCostService logisticsBillCostService;
+    @Resource
+    private LogisticsBillCostMapper logisticsBillCostMapper;
 
     @Autowired
     private TmsCfgCostService tmsCfgCostService;
@@ -61,7 +70,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Autowired
     private LogisticsBillService logisticsBillService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto) {
@@ -333,26 +343,19 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     }
 
     @Override
-    public Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<LogisticsBillCostDTO.ListDTO> resultList = this.logisticsBillCostService.listLogisticsLastMileCostExport(dto);
-        if (CollectionUtils.isEmpty(resultList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //数据赋值处理
-        logisticsBillCostService.handleDataPaging(resultList);
-        String name = "尾程费用列表";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/logisticsLastMileCost.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("自发货列表列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("尾程费用列表", EXPORT_TMS_LOGISTICS_LAST_MILE_COST.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsLastMileCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
+        Page<LogisticsBillCostDTO.ListDTO> page = logisticsBillCostMapper.listByExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            //数据赋值处理
+            logisticsBillCostService.handleDataPaging(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

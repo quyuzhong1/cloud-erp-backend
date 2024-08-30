@@ -43,7 +43,7 @@
         fd.declare_status
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN packing_task pt on pt.source_id = fd.id and pt.is_deleted = false
+        LEFT JOIN packing_task pt on  (pt.source_id = fd.id  or pt.source_id = fd.source_id ) and pt.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and    fd.is_deleted = FALSE
@@ -117,7 +117,6 @@
             </foreach>
         </if>
         fd.create_time DESC, fd.code, fdd.id
-        limit 50000
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$TabListDTO">
         SELECT
@@ -129,7 +128,7 @@
         GROUP BY approve_status
     </select>
 
-    <select id="listDeliveryRecordBySourceIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$DeliverRecordView">
+    <select id="listDeliveryRecord" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$DeliverRecordView">
         SELECT
         fd.code AS deliveryCode,
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatus,
@@ -145,6 +144,9 @@
             <foreach collection="sourceIds" item="sourceId" open="(" close=")" separator=",">
                 #{sourceId}
             </foreach>
+        </if>
+        <if test="fbaShipmentCode != null and fbaShipmentCode != ''">
+            AND fdd.fba_shipment_code = #{fbaShipmentCode}
         </if>
         GROUP BY fd.code,
         deliveryStatus,
@@ -228,7 +230,6 @@
         and fd.is_deleted = FALSE
         ORDER BY fd.code,
         CAST(wc.box_no AS INTEGER)
-        limit 50000
     </select>
     <select id="getGenerateLogisticDTO"
             resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GenerateLogisticDTO">

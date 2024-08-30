@@ -1,10 +1,6 @@
 package com.erp.server.plm.controller.api;
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseDicDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -12,13 +8,13 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProjectReportFormsDTO;
-import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectReportFormsService;
-import com.erp.server.plm.service.ProjectTaskService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -73,7 +69,6 @@ public class ProjectReportFormsController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/6/12 18:27
      * @param dto
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出项目报表")
@@ -82,8 +77,8 @@ public class ProjectReportFormsController extends BaseController {
             tableField = "create_user_id",
             menuCode = "scm:ProjectReportForms:exportExcelProjectReportForms",
             tableAlias = "pod")*/
-    public ApiResult exportExcelProjectReportForms(@RequestBody ProjectReportFormsDTO.PagingParam dto, HttpServletResponse response) {
-        Boolean flag = projectReportFormsService.exportExcelProjectReportForms(dto, response);
+    public ApiResult exportExcelProjectReportForms(@RequestBody ProjectReportFormsDTO.PagingParam dto) {
+        Boolean flag = projectReportFormsService.exportExcelProjectReportForms(dto);
         return flag == true ? success() : failure();
     }
 
@@ -92,7 +87,6 @@ public class ProjectReportFormsController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/6/12 18:27
      * @param dto
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出项目任务明细")
@@ -101,8 +95,8 @@ public class ProjectReportFormsController extends BaseController {
             tableField = "create_user_id",
             menuCode = "scm:ProjectReportForms:exportExcelProjectReportForms",
             tableAlias = "pod")*/
-    public ApiResult exportExcelTaskDetail(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto, HttpServletResponse response) {
-        Boolean flag = projectReportFormsService.exportExcelTaskDetail(dto, response);
+    public ApiResult exportExcelTaskDetail(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto) {
+        Boolean flag = projectReportFormsService.exportExcelTaskDetail(dto);
         return flag == true ? success() : failure();
     }
 }

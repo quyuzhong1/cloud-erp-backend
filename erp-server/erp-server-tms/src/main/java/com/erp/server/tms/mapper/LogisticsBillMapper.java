@@ -1,4 +1,6 @@
 package com.erp.server.tms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
@@ -6,8 +8,6 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -69,6 +69,7 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@date 2023-11-16
      */
     List<LogisticsBillDTO.PagingVO> listExport(@Param("params")LogisticsBillDTO.PagingParamDTO dto);
+    Page<LogisticsBillDTO.PagingVO> listExport(@Param("page") Page<LogisticsBillDTO.PagingVO> page, @Param("params")LogisticsBillDTO.PagingParamDTO dto);
 
     /**
      * 获取物流单基础信息 根据跟踪号

@@ -19,11 +19,9 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -49,6 +47,7 @@ import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
@@ -69,13 +68,13 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_RETURN;
 
 /**
  * <p>
@@ -144,6 +143,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @Override
@@ -517,6 +518,37 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         log.info("推送消息开始：{}", taskFeignDTO.toString());
     }
 
+    @Override
+    public PagingVO<SoReturnDTO.PagingView> exportSoReturn(PagingDTO<SoReturnDTO.PagingParam> dto) {
+        Page<SoReturnDTO.PagingView> page = baseMapper.soDeliveryNoticeExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        //获取sku的id集合
+        List<String> skuIdList = page.getRecords().stream().map(SoReturnDTO.PagingView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<String> soIds = page.getRecords().stream().map(SoReturnDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        List<String> soDetailIds = page.getRecords().stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(soDetailIds);
+        for (SoReturnDTO.PagingView pagingView : page.getRecords()) {
+            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
+            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
+            pagingView.setTypeName(BillTypeEnum.getName(pagingView.getType()));
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            pagingView.setProductName(productDetailEntity.getName());
+            pagingView.setSalesQty(soDetailEntity.getQty());
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(pagingView.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            pagingView.setDeliveryQty(actualQty);
+            pagingView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
+            pagingView.setUnit(productDetailEntity.getUnitName());
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            pagingView.setCustomerName(customerInfoEntity.getName());
+            pagingView.setSalesAmount(soDetailEntity.getAmount());
+        }
+        return new PagingVO<>(page);
+    }
+
     /**
      * 销售出货单字段转换
      *
@@ -747,45 +779,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    public Boolean exportExcel(SoReturnDTO.PagingParam dto, HttpServletResponse response) {
-        List<SoReturnDTO.PagingView> pagingViews = baseMapper.soDeliveryNoticeExportExcel(dto);
-        //获取sku的id集合
-        List<String> skuIdList = pagingViews.stream().map(SoReturnDTO.PagingView::getSkuId).collect(Collectors.toList());
-        //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        List<String> soIds = pagingViews.stream().map(SoReturnDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
-        List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
-        List<String> soDetailIds = pagingViews.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(soDetailIds);
-        for (SoReturnDTO.PagingView pagingView : pagingViews) {
-            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
-            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
-            pagingView.setTypeName(BillTypeEnum.getName(pagingView.getType()));
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            pagingView.setProductName(productDetailEntity.getName());
-            pagingView.setSalesQty(soDetailEntity.getQty());
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(pagingView.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-            pagingView.setDeliveryQty(actualQty);
-            pagingView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
-            pagingView.setUnit(productDetailEntity.getUnitName());
-            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-            pagingView.setCustomerName(customerInfoEntity.getName());
-            pagingView.setSalesAmount(soDetailEntity.getAmount());
-        }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/SoReturnExport.xlsx";
-        String name = "销售退货订单";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(pagingViews, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return Boolean.TRUE;
+    public Boolean exportExcel(SoReturnDTO.PagingParam dto) {
+
+        downloadTaskFeign.saveDownloadTask("销售退货订单", EXPORT_OMS_SO_RETURN.getCode() ,dto);
+        return true;
     }
 
     @Override

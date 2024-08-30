@@ -1,10 +1,12 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
 
-import javax.servlet.http.HttpServletResponse;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
+import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
+
 import java.util.List;
 
 /**
@@ -58,7 +60,12 @@ public interface SoB2cDeclareProductService extends SuperService<SoB2cDeclarePro
     /**
      * 申报信息导出
      * @param dto
-     * @param response
      */
-    Boolean exportExcel(SoB2cDeclareProductDTO.ListDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SoB2cDeclareProductDTO.ListDTO dto);
+
+    /**
+     * 申报信息导出
+     * @param dto
+     */
+    PagingVO<SoB2cDeclareProductDTO.ViewDTO> exportSoB2CDeclare(PagingDTO<SoB2cDeclareProductDTO.ListDTO> dto);
 }

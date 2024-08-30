@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -153,13 +154,13 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
 
     /**
      * 导出仓库数据
+     *
+     * @param dto
+     * @return void
      * @author yl
      * @date 2023-03-22 16:08
-     * @param dto
-     * @param response
-     * @return void
      */
-    void exportWarehouse(WarehouseDTO.ExportDTO dto, HttpServletResponse response);
+    void exportWarehouse(WarehouseDTO.ExportDTO dto);
 
     /**
      * 下载仓库模板
@@ -297,4 +298,5 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
     List<WarehouseEntity> listWarehouseWithCaches();
 
 
+    PagingVO<WarehouseExportExcelDTO> exportWarehouse(PagingDTO<WarehouseDTO.ExportDTO> dto);
 }

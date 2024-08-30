@@ -9,7 +9,6 @@ import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -53,7 +52,7 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      *
      * @param dto dto
      **/
-    void export(PickingListsDTO.ExportDTO dto, HttpServletResponse response);
+    void export(PickingListsDTO.ExportDTO dto);
     /**
      * 批量打印
      *
@@ -96,5 +95,10 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * @return
      */
     List<PickingListsDTO.DetailPickDTO> listDetailBySourceIds(List<String> sourceIds);
-
+    /**
+     * 导出
+     *
+     * @param dto dto
+     **/
+    PagingVO<PickingListsDTO.ExportInfoDTO> exportPickingLists(PagingDTO<PickingListsDTO.ExportDTO> dto);
 }

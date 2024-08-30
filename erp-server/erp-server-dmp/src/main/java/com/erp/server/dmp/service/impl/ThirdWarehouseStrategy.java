@@ -2,6 +2,7 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
@@ -272,7 +273,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
                 thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
                 thirdAddDTO.setThirdCode(thirdWarehouseEntity.getCode());
             }
-            if (PlatformDictEnum.IML.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdAddDTO.getSysType())) {
+            if (OmsPlatformEnum.isThirdWarehouse(thirdAddDTO.getSysType())) {
                 OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
                 feignDTO.setCode(thirdAddDTO.getSysType());
                 feignDTO.setOverseasProviderWarehouseId(thirdAddDTO.getThirdId());
@@ -342,7 +343,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
-        if (PlatformDictEnum.IML.getCode().equals(existMapping.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(existMapping.getThirdSysType())) {
+        if (OmsPlatformEnum.isThirdWarehouse(existMapping.getThirdSysType())) {
             OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
             feignDTO.setCode(existMapping.getThirdSysType());
             feignDTO.setOverseasProviderWarehouseId(existMapping.getThirdId());
@@ -418,7 +419,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
             thirdMappingEntity.setThirdInfoId(thirdWarehouseEntity.getWarehouseId());
             thirdMappingEntity.setThirdCode(thirdWarehouseEntity.getCode());
         }
-        if (PlatformDictEnum.IML.getCode().equals(thirdMappingEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdMappingEntity.getThirdSysType())) {
+        if (OmsPlatformEnum.isThirdWarehouse(thirdMappingEntity.getThirdSysType())) {
             OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
             feignDTO.setCode(thirdMappingEntity.getThirdSysType());
             feignDTO.setOverseasProviderWarehouseId(thirdMappingEntity.getThirdId());
@@ -488,7 +489,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
                 viewDTO.setName(thirdWarehouseEntity.getName());
                 viewDTO.setCode(thirdWarehouseEntity.getCode());
             }
-            if (PlatformDictEnum.IML.getCode().equals(thirdMappingEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdMappingEntity.getThirdSysType())) {
+            if (OmsPlatformEnum.isThirdWarehouse(thirdMappingEntity.getThirdSysType())) {
                 //校验第三方仓库是否存在
                 OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
                 feignDTO.setCode(thirdMappingEntity.getThirdSysType());
@@ -498,6 +499,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
                     viewDTOList.add(viewDTO);
                     continue;
                 }
+                viewDTO.setThirdShortName(overseasWarehouse.getPlatformShortName());
                 viewDTO.setName(overseasWarehouse.getPlatformWarehouseName());
                 viewDTO.setCode(overseasWarehouse.getPlatformWarehouseCode());
             }

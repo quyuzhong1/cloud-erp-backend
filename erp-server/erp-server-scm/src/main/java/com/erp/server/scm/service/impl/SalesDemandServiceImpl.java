@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -29,7 +28,6 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.BiShopInfoDTO;
-import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
@@ -44,6 +42,7 @@ import com.erp.model.scm.enums.PurchaseTableFlagEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -68,6 +67,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SALES_DEMAND;
 
 /**
  * <p>
@@ -101,7 +102,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -268,14 +270,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    public Boolean exportExcel(SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<SalesDemandExportExcelDTO> resultList = baseMapper.listExportExcel(dto);
-        String fileName = "备货申请单数据";
-        try {
-            ExcelUtil.export(fileName, "备货申请单数据", resultList, SalesDemandExportExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(SalesDemandDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("备货申请单数据", EXPORT_SCM_SALES_DEMAND.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -476,6 +472,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
                 eq(SalesDemandEntity::getInvalidStatus,Boolean.FALSE).count();
     }
 
+    @Override
+    public PagingVO<SalesDemandExportExcelDTO> exportSalesDemand(PagingDTO<SalesDemandDTO.SearchParamDTO> dto) {
+        Page<SalesDemandExportExcelDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        return new PagingVO<>(page);
+    }
 
 
     /**

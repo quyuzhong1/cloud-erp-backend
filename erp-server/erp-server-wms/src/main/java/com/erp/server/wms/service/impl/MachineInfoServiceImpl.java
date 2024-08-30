@@ -41,6 +41,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -60,12 +61,13 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_MACHINE_INFO;
 
 /**
  * 加工单
@@ -130,7 +132,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Resource
     private DmpMqFeign dmpMqFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private WarehouseLocationService warehouseLocationService;
     @Resource
@@ -654,23 +657,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     }
 
     @Override
-    public Boolean exportExcel(MachineInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<MachineInfoDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        doOpHandleData(list,true);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/machineInfo.xlsx";
-        String name = "加工单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(MachineInfoDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("加工单导出", EXPORT_WMS_MACHINE_INFO.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -957,6 +945,15 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Override
     public List<MachineInfoDTO.ListDTO> listBySku(MachineInfoDTO.FindInfoBySkuDTO dto) {
         return baseMapper.listBySku(dto);
+    }
+
+    @Override
+    public PagingVO<MachineInfoDTO.ListDTO> exportMachineInfo(PagingDTO<MachineInfoDTO.SearchParamDTO> dto) {
+        Page<MachineInfoDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            doOpHandleData(page.getRecords(),true);
+        }
+        return new PagingVO<>(page);
     }
 
     /**

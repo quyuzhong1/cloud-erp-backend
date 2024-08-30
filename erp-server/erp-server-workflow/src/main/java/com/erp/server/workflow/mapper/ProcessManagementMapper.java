@@ -53,6 +53,7 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
      * @return
      */
     List<ProcessManagementDTO.PagingResultDTO> export(@Param("param") ProcessManagementDTO.ExportDTO dto);
+    Page<ProcessManagementDTO.PagingResultDTO> export(@Param("page") Page<ProcessManagementDTO.PagingResultDTO> page, @Param("param") ProcessManagementDTO.ExportDTO dto);
 
     /**
      * 根据业务id和业务类型获取流程管理信息
