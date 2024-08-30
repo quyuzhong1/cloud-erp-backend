@@ -281,6 +281,9 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     @Async("wmsErpExecutor")
     public void asyncCancelThirdWarehouseOrder(SoB2cEntity mainEntity) {
+        if(mainEntity.getIsIntercept()){
+            return;
+        }
         //调用发货拦截接口
         OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
         operateLogDTO.setOperation("三方仓出库异常");
@@ -290,18 +293,18 @@ public class AsyncServiceImpl implements AsyncService {
             BatchResultDTO batchResultDTO = soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(mainEntity.getId(), "三方仓出库异常，自动取消"));
             if(batchResultDTO.getSuccess()){
                 //拦截成功，接口会更新订单为待提交-待配货，需要自动变更为审核通过-配货中
-                mainEntity.setVersion(null);
                 mainEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
                 mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-                soB2cFeign.updateById(mainEntity);
+                mainEntity.setIsIntercept(false);
+                soB2cFeign.updateStatus(mainEntity);
                 operateLogDTO.setContent("三方仓出库异常，三方仓出库单已自动取消");
             }else{
                 operateLogDTO.setContent("三方仓出库异常，三方仓出库单自动取消失败");
             }
+            soB2cFeign.addModuleOperateLog(operateLogDTO);
         }catch (Exception e){
             log.error("三方仓出库异常，自动取消异常",e);
         }
-        soB2cFeign.addModuleOperateLog(operateLogDTO);
     }
 
 }

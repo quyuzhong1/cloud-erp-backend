@@ -92,7 +92,7 @@
             ${params.permissionSql}
         </if>
 
-        <if test="params.sortList != null and params.sortList.size > 0">
+        <if test="params.sortList != null and params.sortList.size > 0 and params.sortFlag">
             <foreach collection="params.sortList" item="item" separator="," open=" ORDER BY ">
                 ${item.field} ${item.sort}
             </foreach>

@@ -133,6 +133,12 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 					.count();
 			if(count > 0) {
+				dmpOutputTaskRecordService.lambdaUpdate()
+					.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功")
+					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.update();
 				return;
 			}
 		}
@@ -148,6 +154,12 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 						.orderByDesc(DmpPushMsgEntity::getMessageUpdateTime)
 						.list();
 				if(CollUtil.isEmpty(list)) {
+					dmpOutputTaskRecordService.lambdaUpdate()
+						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未拉取到")
+						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.update();
 					return;
 				}
 				
@@ -158,6 +170,12 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 						.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 						.list();
 				if(CollUtil.isEmpty(parentOutputList)) {
+					dmpOutputTaskRecordService.lambdaUpdate()
+						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未推送成功")
+						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.update();
 					return;
 				}
 			}
@@ -194,7 +212,10 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			responseData = "调用" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(e);
 			message = "调用" + apiClass + "的" + outputMethod + "方法报错";
 		}
-		dmpOutputUtils.updateStatus(id, status, "traceId=【" + MDC.get("traceId") + "】" + responseData , message);
+		if(!status.equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
+			responseData = "traceId=【" + MDC.get("traceId") + "】" + responseData;
+		}
+		dmpOutputUtils.updateStatus(id, status, responseData , message);
 	}
 
 	

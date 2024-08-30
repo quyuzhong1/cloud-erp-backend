@@ -472,6 +472,8 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/updateById")
     Boolean updateById(@RequestBody SoB2cEntity soB2cEntity);
 
+    @PostMapping("/feign/soB2c/updateStatus")
+    Boolean updateStatus(@RequestBody SoB2cEntity soB2cEntity);
 
     @PostMapping("/feign/soB2c/checkAndFillBySoOutStock")
     Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto);
@@ -535,7 +537,7 @@ public interface SoB2cFeign {
      * 添加销售订单日志
      */
     @PostMapping("/feign/soB2c/addModuleOperateLog")
-    Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO);
+    Boolean addModuleOperateLog(@RequestBody OperateLogDTO.AddModuleOperateLogDTO operateLogDTO);
 
     /**
      * 根据扫描的单号获取订单
