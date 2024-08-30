@@ -30,12 +30,6 @@ public class ReplenishmentSuggestionEntity extends BaseEntity<ReplenishmentSugge
     private String platformType;
 
     /**
-     * 关注
-     */
-    @TableField("favorite")
-    private Boolean favorite;
-
-    /**
      * sku id
      */
     @TableField("sku_id")

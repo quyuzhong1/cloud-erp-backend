@@ -2,6 +2,7 @@ package com.erp.server.mrp.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -251,6 +252,66 @@ public class ReplenishmentSuggestionController extends BaseController {
                 ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     resultDTO = BatchResultDTO.fail(id, id, "补货建议不存在, 恢复规则设置失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 关注
+     * @author will
+     * @date 2024/8/30 10:53
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/favorite")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "关注补货建议")
+    public ApiResult<?> favorite(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = replenishmentSuggestionService.favorite(id);
+            }catch (Exception e){
+                log.error("关注补货建议",e);
+                ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "补货建议不存在, 关注补货建议失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 取消关注
+     * @author will
+     * @date 2024/8/30 11:08
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/cancelFavorite")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消关注补货建议")
+    public ApiResult<?> cancelFavorite(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = replenishmentSuggestionService.cancelFavorite(id);
+            }catch (Exception e){
+                log.error("取消关注补货建议",e);
+                ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "补货建议不存在, 取消关注补货建议失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }

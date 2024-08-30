@@ -1,7 +1,5 @@
 package com.erp.model.mrp.dto;
 
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -128,7 +126,7 @@ public class CfgRuleStockUpDTO implements Serializable {
         /**
          * 是否是自定义
          */
-        private Boolean isCustom = false;
+        private Boolean isCustom = true;
 
         /**
          * 采购审批天数（天）

@@ -14,7 +14,6 @@
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
         <result column="platform_type" property="platformType" />
-        <result column="favorite" property="favorite" />
         <result column="sku_id" property="skuId" />
         <result column="sku_no" property="skuNo" />
         <result column="country" property="country" />

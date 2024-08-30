@@ -8,6 +8,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -20,16 +21,12 @@ import com.erp.model.mrp.enums.ReplenishmentTypeEnum;
 import com.erp.model.mrp.vo.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.ReplenishmentSuggestionMapper;
-import com.erp.server.mrp.service.CfgRuleSalesQtyService;
-import com.erp.server.mrp.service.CfgRuleStockUpService;
-import com.erp.server.mrp.service.OperateLogService;
-import com.erp.server.mrp.service.ReplenishmentSuggestionService;
+import com.erp.server.mrp.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -50,6 +47,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Autowired
     private CfgRuleSalesQtyService cfgRuleSalesQtyService;
+
+    @Autowired
+    private ReplenishmentSuggestionFavoriteService replenishmentSuggestionFavoriteService;
 
     @Override
     public PagingVO<ReplenishmentSuggestionVO.PagingView> paging(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
@@ -106,8 +106,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         updateIsReplenishment(id,replenishmentRemark,ReplenishmentTypeEnum.NOT_RESTOCKING.getCode());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】SKU为【{}】的【{}】单据暂不补货操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSkuNo(), "补货建议");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "暂不补货操作");
+        String msg = StrUtil.format("操作了暂不补货，原因：【{}】 ",replenishmentRemark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "暂不补货");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
 
@@ -120,8 +120,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         updateIsReplenishment(id,replenishmentRemark,ReplenishmentTypeEnum.NORMAL.getCode());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】SKU为【{}】的【{}】单据恢复补货操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSkuNo(), "补货建议");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "恢复补货操作");
+        String msg = StrUtil.format("操作了恢复补货，原因：【{}】 ",replenishmentRemark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "恢复补货");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
 
@@ -145,10 +145,13 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO) {
         if (ObjectUtil.isEmpty(stockUpUpdateDTO) && ObjectUtil.isEmpty(salesQtyUpdateDTO)) {
             throw new ServiceException("备货、销量设置不能全部为空！");
         }
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+
         //更新备货信息
         if (ObjectUtil.isEmpty(stockUpUpdateDTO)) {
             CfgRuleStockUpEntity ruleStockUpEntity = cfgRuleStockUpService.getByRefId(id);
@@ -157,7 +160,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             }
             stockUpUpdateDTO.setRefId(id);
             stockUpUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
-            stockUpUpdateDTO.setIsCustom(Boolean.TRUE);
             CfgRuleStockUpDTO.UpdateDTO updateDTO = BeanMapperUtils.map(CfgRuleStockUpDTO.UpdateDTO.class, stockUpUpdateDTO);
             cfgRuleStockUpService.update(updateDTO);
         }
@@ -168,8 +170,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             stockUpUpdateDTO.setIsCustom(Boolean.TRUE);
             cfgRuleSalesQtyService.update(salesQtyUpdateDTO);
         }
-
-        return null;
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
 
     @Override
@@ -185,9 +186,49 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             cfgRuleSalesQtyService.deleteByRefId(entity.getId());
         }
         // 操作日志
-        String ruleNames = ruleTypeList.stream().map(obj -> ReplenishmentRuleTypeEnum.getName(obj)).collect(Collectors.joining(","));
-        String msg = StrUtil.format("用户【{}】SKU为【{}】的【{}】单据恢复【{}】规则配置操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSkuNo(), "补货建议",ruleNames);
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "恢复规则配置操作");
+        String msg = StrUtil.format("恢复了系统默认规则");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "恢复默认规则");
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO favorite(String id) {
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        Boolean isFavorite = replenishmentSuggestionFavoriteService.isFavorite(userInfo.getUid(), entity.getId());
+        if (isFavorite) {
+            return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "补货建议已关注，无需再次关注");
+        }
+
+        ReplenishmentSuggestionFavoriteDTO.AddDTO dto = new ReplenishmentSuggestionFavoriteDTO.AddDTO();
+        dto.setUserId(userInfo.getUid());
+        dto.setReplenishmentSuggestionId(entity.getId());
+        replenishmentSuggestionFavoriteService.add(dto);
+
+        // 操作日志
+        String msg = StrUtil.format("设置了关注");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "关注");
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelFavorite(String id) {
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        Boolean isFavorite = replenishmentSuggestionFavoriteService.isFavorite(userInfo.getUid(), entity.getId());
+        if (!isFavorite) {
+            return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "补货建议未关注，无需取消关注");
+        }
+        replenishmentSuggestionFavoriteService.cancelFavorite(userInfo.getUid(),entity.getId());
+
+        // 操作日志
+        String msg = StrUtil.format("设置了取消关注");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "取消关注");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
 

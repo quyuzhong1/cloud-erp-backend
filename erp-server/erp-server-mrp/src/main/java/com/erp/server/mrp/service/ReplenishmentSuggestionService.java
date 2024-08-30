@@ -79,4 +79,20 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return BatchResultDTO
      */
     BatchResultDTO restoreRule(String id, List<String> ruleTypeList);
+    /**
+     * 关注补货建议
+     * @author will
+     * @date 2024/8/30 10:54
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO favorite(String id);
+    /**
+     * 取消关注
+     * @author will
+     * @date 2024/8/30 11:09
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelFavorite(String id);
 }
