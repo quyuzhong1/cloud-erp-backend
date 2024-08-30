@@ -253,6 +253,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     }
 
     private void fillData(List<FirstMileWeightAllocationDTO.ViewDTO> records) {
+        if(records.isEmpty()){
+            return;
+        }
         //仓库
         List<String> warehouseIds = records.stream().map(item -> item.getFromWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = warehouseFeign.listByIds(warehouseIds);
