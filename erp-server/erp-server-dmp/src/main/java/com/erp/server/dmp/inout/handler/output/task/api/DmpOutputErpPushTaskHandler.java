@@ -116,9 +116,12 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
 		String dataId = dmpOutputTaskRecordEntity.getDataId();
 		DmpPushMsgEntity dmpPushMsgEntity = dmpPushMsgService.getById(dataId);
+		
+		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getSystemId())).get(0).getCode();
 		String sourceId = dmpPushMsgEntity.getSourceId();
 		List<DmpPushMsgEntity> sourceList = dmpPushMsgService.lambdaQuery()
 				.eq(DmpPushMsgEntity::getSourceId, sourceId)
+				.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
 				.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
 				.ne(DmpPushMsgEntity::getId, dataId)
 				.select(DmpPushMsgEntity::getId)
@@ -136,20 +139,27 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		
 		String parentId = dmpPushMsgEntity.getParentId();
 		if(StringUtils.isNotBlank(parentId) && "operateApprove".equals(dmpPushMsgEntity.getSyncOperate())) {
-			List<DmpPushMsgEntity> list = dmpPushMsgService.lambdaQuery().eq(DmpPushMsgEntity::getSourceId, parentId)
-					.eq(DmpPushMsgEntity::getSyncOperate, dmpPushMsgEntity.getSyncOperate()).orderByDesc(DmpPushMsgEntity::getMessageUpdateTime).list();
-			if(CollUtil.isEmpty(list)) {
-				return;
-			}
-			
-			DmpPushMsgEntity parentDmpPushMsgEntity = list.get(0);
-			String parentDataId = parentDmpPushMsgEntity.getId();
-			List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
-					.eq(DmpOutputTaskRecordEntity::getDataId, parentDataId)
-					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-					.list();
-			if(CollUtil.isEmpty(parentOutputList)) {
-				return;
+			String[] split = parentId.split(",");
+			for(String s : split) {
+				List<DmpPushMsgEntity> list = dmpPushMsgService.lambdaQuery()
+						.eq(DmpPushMsgEntity::getSourceId, s)
+						.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
+						.eq(DmpPushMsgEntity::getSyncOperate, dmpPushMsgEntity.getSyncOperate())
+						.orderByDesc(DmpPushMsgEntity::getMessageUpdateTime)
+						.list();
+				if(CollUtil.isEmpty(list)) {
+					return;
+				}
+				
+				DmpPushMsgEntity parentDmpPushMsgEntity = list.get(0);
+				String parentDataId = parentDmpPushMsgEntity.getId();
+				List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
+						.eq(DmpOutputTaskRecordEntity::getDataId, parentDataId)
+						.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.list();
+				if(CollUtil.isEmpty(parentOutputList)) {
+					return;
+				}
 			}
 		}
 		
