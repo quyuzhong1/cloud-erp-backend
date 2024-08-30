@@ -660,6 +660,11 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.updateById(soB2cEntity);
     }
 
+    @PostMapping("/updateStatus")
+    public Boolean updateStatus(@RequestBody SoB2cEntity soB2cEntity) {
+        return soB2cService.updateStatus(soB2cEntity);
+    }
+
     @PostMapping("/checkAndFillBySoOutStock")
     public Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto){
         return soB2cService.checkAndFillBySoOutStock(dto);
@@ -708,7 +713,7 @@ public class SoB2cFeignController extends BaseController {
      * 添加操作日志
      */
     @PostMapping("/addModuleOperateLog")
-    public Boolean addModuleOperateLog(OperateLogDTO.AddModuleOperateLogDTO operateLogDTO){
+    public Boolean addModuleOperateLog(@RequestBody OperateLogDTO.AddModuleOperateLogDTO operateLogDTO){
         return operateLogService.addModuleOperateLog(operateLogDTO.getContent(),
                 operateLogDTO.getModuleType(),
                 operateLogDTO.getBusinessId(),

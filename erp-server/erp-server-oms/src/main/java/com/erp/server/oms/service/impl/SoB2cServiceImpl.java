@@ -6842,6 +6842,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public Boolean updateStatus(SoB2cEntity soB2cEntity) {
+        boolean result = this.lambdaUpdate().eq(SoB2cEntity::getId,soB2cEntity.getId())
+                .set(SoB2cEntity::getBillStatus,soB2cEntity.getBillStatus())
+                .set(SoB2cEntity::getApproveStatus,soB2cEntity.getApproveStatus())
+                .set(SoB2cEntity::getIsIntercept,soB2cEntity.getIsIntercept())
+                .update();
+        if(result){
+            String billStatusName = SoB2cBillStatusEnum.getName(soB2cEntity.getBillStatus());
+            operateLogService.addModuleOperateLog(StrUtil.format("单据状态变更为{},审核状态变更为{}",billStatusName,soB2cEntity.getApproveStatus().getName()) ,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "单据状态变更");
+        }
+        return result;
+    }
+
+    @Override
     public SoB2cDTO.SoB2cDataDTO listSoB2cData(SoB2cDTO.SoB2cDataParamDTO paramDTO) {
         //校验必填
         if(CollectionUtils.isEmpty(paramDTO.getB2cSoIdList()) && CollectionUtils.isEmpty(paramDTO.getB2cSoCodeList())) {
