@@ -264,4 +264,42 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          */
         private BigDecimal costValue = BigDecimal.ZERO;
     }
+
+    @Data
+    public static class LogisticsInfoDTO{
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 物流运单号
+         */
+        private String transportNo;
+        /**
+         * 暂估账单状态
+         */
+        private String estimatedStatus;
+        /**
+         * 实际账单状态
+         */
+        private String actualStatus;
+        /**
+         * 物流跟踪号
+         */
+        private String trackNo;
+
+        /**
+         * 物流费用ID
+         */
+        private String costId;
+
+        /**
+         * 物流单ID
+         */
+        private String logisticsBillId;
+    }
 }

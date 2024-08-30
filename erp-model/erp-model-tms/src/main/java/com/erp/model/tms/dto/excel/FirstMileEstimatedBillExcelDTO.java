@@ -6,6 +6,7 @@ import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * 头程暂估账单
@@ -25,7 +26,7 @@ public class FirstMileEstimatedBillExcelDTO implements Serializable {
      * 物流运单号
      */
     @ExcelProperty(value = "物流运单号", index = 1)
-    @FieldValid(fieldName = "物流运单号", maxLength = 32)
+    @FieldValid(fieldName = "物流运单号", maxLength = 32, isNotBlank = true)
     private String transportNo;
 
     /**
@@ -54,7 +55,7 @@ public class FirstMileEstimatedBillExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "*预付费用", index = 5)
     @FieldValid(fieldName = "预付费用", maxLength = 32, isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
-    private String costValue;
+    private BigDecimal costValue;
 
     /**
      * 错误信息
