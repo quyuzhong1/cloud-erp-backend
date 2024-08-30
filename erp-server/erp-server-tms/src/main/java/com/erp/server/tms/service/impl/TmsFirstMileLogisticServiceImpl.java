@@ -671,7 +671,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(Objects.nonNull(logisticsBillCostEntity)){
             List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListById(logisticsBillCostEntity.getId());
             dto.setLogisticFeeList( BeanUtil.copyToList(costCompareDTOList,TmsFirstMileLogisticDTO.FeeViewDTO.class));
-            BigDecimal totalEstimatedFee = costCompareDTOList.stream().map(TmsCostDetailDTO.CostCompareDTO::getEstimatedFee).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            BigDecimal totalEstimatedFee = costCompareDTOList.stream().filter(e -> Objects.nonNull(e.getEstimatedFee())).map(TmsCostDetailDTO.CostCompareDTO::getEstimatedFee).reduce(BigDecimal.ZERO,BigDecimal::add);
             if(dto.getCurrency().equals(CurrencyEnum.CNY.getCurrencyCode())){
                 dto.setTotalEstimatedFee(totalEstimatedFee);
             }else{
