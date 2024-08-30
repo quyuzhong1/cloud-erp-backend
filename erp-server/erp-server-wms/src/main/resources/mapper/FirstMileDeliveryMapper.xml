@@ -129,7 +129,7 @@
         GROUP BY approve_status
     </select>
 
-    <select id="listDeliveryRecordBySourceIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$DeliverRecordView">
+    <select id="listDeliveryRecord" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$DeliverRecordView">
         SELECT
         fd.code AS deliveryCode,
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatus,
@@ -145,6 +145,9 @@
             <foreach collection="sourceIds" item="sourceId" open="(" close=")" separator=",">
                 #{sourceId}
             </foreach>
+        </if>
+        <if test="fbaShipmentCode != null and fbaShipmentCode != ''">
+            AND fdd.fba_shipment_code = #{fbaShipmentCode}
         </if>
         GROUP BY fd.code,
         deliveryStatus,

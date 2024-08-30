@@ -265,7 +265,7 @@ public class FeignBuilder {
 	public <T> T invoke(FeignInvoke feignInvoke) {
 		ApiResult<?> result = invokeFeign(feignInvoke);
     	T data = null;
-    	if(result.isSuccess()) {
+    	if(clazz != null && result.isSuccess()) {
     		if(result.getData() != null) {
     			data = (T) JSON.parseObject(JSON.toJSONString(result.getData()) , clazz);
     		}
@@ -292,6 +292,14 @@ public class FeignBuilder {
     		throw new RuntimeException("获取远程基础信息查询失败，截取到的服务名是：" + serviceCode);
     	}
     	BaseDataFeign baseDataFeign = dictCore.getBaseDataFeign(serviceCodeNameEnum);
+    	List<Object> param = feignInvoke.getParam();
+    	List<Object> jsonParam = new ArrayList<>();
+    	if(CollUtil.isNotEmpty(param)) {
+    		for(Object p : param) {
+    			jsonParam.add(JSON.toJSONString(p));
+    		}
+    		feignInvoke.setParam(jsonParam);
+    	}
     	return JSON.parseObject(baseDataFeign.invoke(feignInvoke) , ApiResult.class);
 	}
 	

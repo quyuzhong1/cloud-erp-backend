@@ -39,6 +39,11 @@ public class PlatformOtherOutStockDTO extends UniqueDto {
     private String platformDeliveryTime;
 
     /**
+     * 主表备注
+     */
+    private String remark;
+
+    /**
      * 明细列表
      */
     private List<PlatformOtherOutStockDetailDTO> detailList;
@@ -48,12 +53,15 @@ public class PlatformOtherOutStockDTO extends UniqueDto {
                                     String platformDeliveryTime,
                                     List<PlatformOtherOutStockDetailDTO> detailList,
                                     String uniqueId,
-                                    String platform
+                                    String platform,
+                                    String remark
+
     ) {
         this.platformCode = platformCode;
         this.shopId = shopId;
         this.platformDeliveryTime = platformDeliveryTime;
         this.detailList = detailList;
+        this.remark = remark;
         super.setUniqueId(uniqueId);
         super.setPlatform(platform);
     }

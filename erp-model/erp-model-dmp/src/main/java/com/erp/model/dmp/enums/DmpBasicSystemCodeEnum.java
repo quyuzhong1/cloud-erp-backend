@@ -23,6 +23,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
     MERCADOLIBRE("mercadolibre", "美客多"),
     GOODCANG("goodcang", "谷仓"),
     IML("iml", "艾姆勒"),
+    ERP("erp", "数大臣"),
     ANTU("antu", "安兔"),
     ;
     /**

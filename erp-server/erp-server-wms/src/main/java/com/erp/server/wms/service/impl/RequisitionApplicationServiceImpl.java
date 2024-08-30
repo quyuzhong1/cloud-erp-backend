@@ -1344,12 +1344,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException("未生成装箱任务，不允许下推发货单");
         }
-        CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgRuleOutService.getCfgOverweightDetailDTOByType(taskEntity.getSourceType());
-        if(Objects.nonNull(cfgOverweightDetailDTO) && cfgOverweightDetailDTO.isCheckStatusWhenApprove()){
-            if(!(taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()) && taskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode()))){
-                throw new ServiceException(StrUtil.format("{}未完成装箱/称重无法发货",taskEntity.getCode()));
-            }
-        }
 
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
         List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
@@ -1370,6 +1364,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         for (Map.Entry<String, List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
             List<RequisitionApplicationDTO.GenerateDeliverViewDTO> value = entry.getValue();
             RequisitionApplicationDTO.GenerateDeliverViewDTO view = value.get(MathUtil.ZERO);
+            if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType()) && StringUtils.isBlank(view.getFbaShipmentCode())){
+                throw new ServiceException(StrUtil.format("要货申请{}未绑定货件单号，无法下推发货单",view.getSourceCode()));
+            }
             //映射主表信息
             FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateDeliverFDD(view);
 
@@ -1951,5 +1948,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public BatchResultDTO generatePackingTask(RequisitionApplicationEntity entity) {
         packingTaskService.addPackingByRequisition(entity);
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
+    }
+
+    @Override
+    public List<RequisitionApplicationEntity> listByCodes(List<String> codes) {
+        if(CollectionUtils.isEmpty(codes)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(RequisitionApplicationEntity::getCode,codes).list();
     }
 }

@@ -283,6 +283,11 @@ public class OtherOutstockDTO implements Serializable {
          * 流程申请单号
          */
         private String processApplyCode;
+
+        /**
+         * 备注(同步金蝶)
+         */
+        private String remark;
     }
 
     @Data
@@ -420,6 +425,11 @@ public class OtherOutstockDTO implements Serializable {
          * 创建时间
          */
         private String createTime;
+
+        /**
+         * 备注(同步金蝶)
+         */
+        private String remark;
 
         /**
          * 客户信息

@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
@@ -457,7 +456,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
     List<SoOutstockEntity> listByCodes(List<String> codes);
 
-    Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
+    Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO, String redissonKey);
     /**
      * @description: 重新生成销售出库单
      * @author Will
