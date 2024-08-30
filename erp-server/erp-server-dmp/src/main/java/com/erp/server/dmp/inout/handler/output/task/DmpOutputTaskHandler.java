@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
@@ -143,6 +144,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				pushRate = 3;
 			}
 			for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : pushDmpOutputTaskRecordEntityList) {
+				MDC.put("traceId", dmpOutputTaskRecordEntity.getId());
 				String dataId = dmpOutputTaskRecordEntity.getDataId();
 				String redisKey = "dmp:output:task:" + dataId;
 				try {
