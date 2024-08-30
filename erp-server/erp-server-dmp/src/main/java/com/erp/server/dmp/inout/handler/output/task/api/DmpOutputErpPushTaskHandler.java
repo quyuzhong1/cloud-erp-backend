@@ -163,13 +163,11 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					return;
 				}
 				
-				DmpPushMsgEntity parentDmpPushMsgEntity = list.get(0);
-				String parentDataId = parentDmpPushMsgEntity.getId();
 				List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
-						.eq(DmpOutputTaskRecordEntity::getDataId, parentDataId)
-						.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.in(DmpOutputTaskRecordEntity::getDataId, list.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 						.list();
-				if(CollUtil.isEmpty(parentOutputList)) {
+				if(CollUtil.isNotEmpty(parentOutputList)) {
 					dmpOutputTaskRecordService.lambdaUpdate()
 						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未推送成功")
 						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
