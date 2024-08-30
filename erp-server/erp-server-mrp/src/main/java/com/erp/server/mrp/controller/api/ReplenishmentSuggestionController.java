@@ -19,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -395,4 +396,33 @@ public class ReplenishmentSuggestionController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 补货规则导入模板
+     * @author will
+     * @date 2024/8/30 16:40
+     * @param response 
+     * @return ApiResult<?>
+     */
+    @GetMapping("/downloadRuleTemplate")
+    public ApiResult<?> downloadRuleTemplate(HttpServletResponse response) {
+        replenishmentSuggestionService.downloadRuleTemplate(response);
+        return success();
+    }
+
+
+    /**
+     * 运营预估月销导入模板
+     * @author will
+     * @date 2024/8/30 16:40
+     * @param response
+     * @return ApiResult<?>
+     */
+    @GetMapping("/downloadSalesEstimateTemplate")
+    public ApiResult<?> downloadSalesEstimateTemplate(HttpServletResponse response) {
+        replenishmentSuggestionService.downloadSalesEstimateTemplate(response);
+        return success();
+    }
+
+
 }

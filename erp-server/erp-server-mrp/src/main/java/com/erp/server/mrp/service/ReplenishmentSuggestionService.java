@@ -8,6 +8,7 @@ import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -121,4 +122,18 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return BatchResultDTO
      */
     BatchResultDTO cancelLabel(String id, List<String> labelIdList);
+    /**
+     * 补货规则导入模板
+     * @author will
+     * @date 2024/8/30 16:40
+     * @param response
+     */
+    void downloadRuleTemplate(HttpServletResponse response);
+    /**
+     * 运营预估月销导入模板
+     * @author will
+     * @date 2024/8/30 16:42
+     * @param response
+     */
+    void downloadSalesEstimateTemplate(HttpServletResponse response);
 }

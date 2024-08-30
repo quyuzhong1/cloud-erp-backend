@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -267,6 +268,16 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         //取消标签
         replenishmentRefLabelService.deleteLabel(labelIdList,entity.getId());
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public void downloadRuleTemplate(HttpServletResponse response) {
+
+    }
+
+    @Override
+    public void downloadSalesEstimateTemplate(HttpServletResponse response) {
+
     }
 
     /**
