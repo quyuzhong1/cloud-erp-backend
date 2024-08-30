@@ -487,8 +487,15 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             return Boolean.TRUE;
         }
         List<String> parentIdList = Arrays.stream(entity.getParentId().split(",")).collect(Collectors.toList());
-        List<DmpPushTaskEntity> dmpPushTaskEntities = list(Wrappers.<DmpPushTaskEntity>lambdaQuery().in(DmpPushTaskEntity::getSourceId, parentIdList));
-        Integer historyCount = dmpPushTaskHistoryMapper.selectCount(Wrappers.<DmpPushTaskHistoryEntity>lambdaQuery().in(DmpPushTaskHistoryEntity::getSourceId, parentIdList));
+        LambdaQueryWrapper<DmpPushTaskEntity> queryWrapper = Wrappers.<DmpPushTaskEntity>lambdaQuery().in(DmpPushTaskEntity::getSourceId, parentIdList)
+                .eq(DmpPushTaskEntity::getSourcePlatformName, entity.getSourcePlatformName())
+                .eq(DmpPushTaskEntity::getTargetPlatformName, entity.getTargetPlatformName());
+        List<DmpPushTaskEntity> dmpPushTaskEntities = list(queryWrapper);
+        //归档数据
+        LambdaQueryWrapper<DmpPushTaskHistoryEntity> historyQueryWrapper = Wrappers.<DmpPushTaskHistoryEntity>lambdaQuery().in(DmpPushTaskHistoryEntity::getSourceId, parentIdList)
+                .eq(DmpPushTaskHistoryEntity::getSourcePlatformName, entity.getSourcePlatformName())
+                .eq(DmpPushTaskHistoryEntity::getTargetPlatformName, entity.getTargetPlatformName());
+        Integer historyCount = dmpPushTaskHistoryMapper.selectCount(historyQueryWrapper);
         if (CollectionUtil.isEmpty(dmpPushTaskEntities) && historyCount == 0) {
             entity.setReturnMsg("未找到上级单据推送任务");
             entity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
