@@ -1,17 +1,20 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.date.DateUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.IsConstant;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.RedisService;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
-import com.common.business.constant.IsConstant;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.enums.ProjectStateEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.ProjectTaskViewService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -19,10 +22,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_TASK_VIEW;
 
 /**
  * @author Will
@@ -39,9 +44,8 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
     @Autowired
     private RedisService redisService;
 
-
-    @Autowired(required = false)
-    private HttpServletResponse response;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * @description: 项目视图按人员查询
@@ -273,26 +277,28 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
     }
 
     @Override
-    public void exportExcel(ProductTaskViewSearchDTO dto, HttpServletResponse response) {
+    public void exportExcel(ProductTaskViewSearchDTO dto) {
+        downloadTaskFeign.saveDownloadTask("任务视图", EXPORT_PLM_TASK_VIEW.getCode(), dto);
+    }
+
+    @Override
+    public PagingVO<ProductTaskViewDTO> exportProductTaskView(PagingDTO<ProductTaskViewSearchDTO> dto) {
+
         //导出时类型必填
-        if (ObjectUtils.isNull(dto.getType())) {
+        if (ObjectUtils.isNull(dto.getParams().getType())) {
             throw new ServiceException(ApiError.ERROR_95075);
         }
-        switch (dto.getType()) {
+        switch (dto.getParams().getType()) {
             case 1 :
-                exportExcelByPersonnel(dto);
-                break;
+                return exportExcelByPersonnel(dto);
             case 2 :
-                exportExcelByProduct(dto);
-                break;
+                return exportExcelByProduct(dto);
             case 3 :
-                exportExcelByPhase(dto);
-                break;
+                return exportExcelByPhase(dto);
             case 4 :
-                exportExcelByInWarehouseTime(dto);
-                break;
+                return exportExcelByInWarehouseTime(dto);
             default:
-                break;
+                return new PagingVO<>();
         }
     }
 
@@ -302,18 +308,15 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @date: 2022/11/23 18:52
      * @param dto
      */
-    private void exportExcelByPersonnel(ProductTaskViewSearchDTO dto) {
+    private PagingVO<ProductTaskViewDTO> exportExcelByPersonnel(PagingDTO<ProductTaskViewSearchDTO> dto) {
         //查询所有任务
-        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskPersonnelView(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return;
+        Page<ProductTaskViewDTO> page = projectTaskMapper.getAllTaskPersonnelView(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
         }
         //根据人员排序
-        list.stream().forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
-        List<ProductTaskViewPersonnelExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewPersonnelExcelDTO.class, list);
-        String fileName = getFileName("按人员导出");
-        ExcelUtil.export(fileName, "按人员导出", excelList, ProductTaskViewPersonnelExcelDTO.class, response);
-        return;
+        page.getRecords().forEach(obj-> obj.setStatusName(TaskStateEnum.getName(obj.getStatus())));
+        return new PagingVO<>(page);
     }
 
     /**
@@ -322,18 +325,15 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @date: 2022/11/23 18:52
      * @param dto
      */
-    private void exportExcelByProduct(ProductTaskViewSearchDTO dto) {
+    private PagingVO<ProductTaskViewDTO> exportExcelByProduct(PagingDTO<ProductTaskViewSearchDTO> dto) {
         //查询所有任务
-        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskProductView(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return;
+        Page<ProductTaskViewDTO> page = projectTaskMapper.getAllTaskProductView(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
         }
         //根据产品排序
-        list.stream().forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
-        List<ProductTaskViewProductExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewProductExcelDTO.class, list);
-        String fileName = getFileName("按产品导出");
-        ExcelUtil.export(fileName, "按产品导出", excelList, ProductTaskViewProductExcelDTO.class, response);
-        return;
+        page.getRecords().forEach(obj-> obj.setStatusName(TaskStateEnum.getName(obj.getStatus())));
+        return new PagingVO<>(page);
     }
 
     /**
@@ -342,18 +342,15 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @date: 2022/11/23 18:53
      * @param dto
      */
-    private void exportExcelByPhase(ProductTaskViewSearchDTO dto) {
+    private PagingVO<ProductTaskViewDTO> exportExcelByPhase(PagingDTO<ProductTaskViewSearchDTO> dto) {
         //查询所有任务
-        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskPhaseView(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return;
+        Page<ProductTaskViewDTO> page = projectTaskMapper.getAllTaskPhaseView(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
         }
         //根据阶段名称排序
-        list.stream().forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
-        List<ProductTaskViewPhaseExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewPhaseExcelDTO.class, list);
-        String fileName = getFileName("按阶段导出");
-        ExcelUtil.export(fileName, "按阶段导出", excelList, ProductTaskViewPhaseExcelDTO.class, response);
-        return;
+        page.getRecords().forEach(obj-> obj.setStatusName(TaskStateEnum.getName(obj.getStatus())));
+        return new PagingVO<>(page);
     }
 
     /**
@@ -362,22 +359,19 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @date: 2022/11/23 18:53
      * @param dto
      */
-    private void exportExcelByInWarehouseTime(ProductTaskViewSearchDTO dto) {
+    private PagingVO<ProductTaskViewDTO> exportExcelByInWarehouseTime(PagingDTO<ProductTaskViewSearchDTO> dto) {
         //查询所有任务
-        List<ProductTaskInWarehouseTimeChildDTO> list = projectTaskMapper.getAllTaskInWarehouseTimeView(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return;
+        Page<ProductTaskViewDTO> page = projectTaskMapper.getAllTaskInWarehouseTimeViewByPage(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
         }
         //根据时间区间排序
-        list.stream().forEach(obj->{
+        page.getRecords().forEach(obj->{
             String timeInterval = obj.getTimeInterval();
             obj.setTimeInterval(StringUtils.isBlank(timeInterval) ? "" : timeInterval.substring(0,4).concat("年").concat(timeInterval.substring(4).concat("月")));
             obj.setStatusName(obj.getIsProjectStatus().equals(IsConstant.YES) ? ProjectStateEnum.getName(obj.getStatus()) : ApprovalStatusEnum.getName(obj.getStatus()));
         });
-        List<ProductTaskViewInWarehouseTimeExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewInWarehouseTimeExcelDTO.class, list);
-        String fileName = getFileName("按量产入库时间导出");
-        ExcelUtil.export(fileName, "按量产入库时间导出", excelList, ProductTaskViewInWarehouseTimeExcelDTO.class, response);
-        return;
+        return new PagingVO<>(page);
     }
 
     /**

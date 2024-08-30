@@ -10,13 +10,13 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -151,13 +151,13 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
 
     /**
      * 导出
+     *
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param dto dto
-     * @param response response
-     * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean exportExcel(@RequestBody WarehouseReceiveDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(@RequestBody WarehouseReceiveDTO.PagingParamDTO dto);
 
     /**
      * 下推入库单列表查询
@@ -344,4 +344,6 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @date 2024/5/14 14:30
      */
     void instockStatusCleanJob();
+
+    PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto);
 }

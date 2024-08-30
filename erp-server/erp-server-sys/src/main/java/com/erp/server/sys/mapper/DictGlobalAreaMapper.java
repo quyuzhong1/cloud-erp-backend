@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
-import com.erp.model.sys.dto.KingdeeDepartmentDTO;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -39,6 +38,7 @@ public interface DictGlobalAreaMapper extends BaseMapper<DictGlobalAreaEntity> {
      * @return
      */
     List<DictGlobalAreaDTO.PagingViewDTO> listExport(@Param("params")DictGlobalAreaDTO.PagingParamDTO dto);
+    Page<DictGlobalAreaDTO.PagingViewDTO> listExport(@Param("page") Page<DictGlobalAreaDTO.PagingViewDTO> page, @Param("params")DictGlobalAreaDTO.PagingParamDTO dto);
 
     /**
      *

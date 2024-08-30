@@ -2,6 +2,8 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -28,7 +30,7 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      */
     ProductItemScheduleVO getTaskList(ProjectPlanTaskConditionDTO dto);
 
-    Boolean exportExcel(ProjectPlanTaskConditionDTO dto, HttpServletResponse response);
+    Boolean exportExcel(ProjectPlanTaskConditionDTO dto);
 
     Boolean importTaskSchedule(MultipartFile excelFile,String productId, HttpServletResponse response);
 
@@ -144,4 +146,6 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      * @return
      */
     List<PlanTaskNameDTO> listByPlanId(List<String> planIdList);
+
+    PagingVO<TaskDTO.TaskExportDTO> exportScheduleTask(PagingDTO<ProjectPlanTaskConditionDTO> dto);
 }

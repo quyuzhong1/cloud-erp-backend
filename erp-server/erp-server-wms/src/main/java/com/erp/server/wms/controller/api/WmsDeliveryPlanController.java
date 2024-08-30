@@ -387,19 +387,13 @@ public class WmsDeliveryPlanController extends BaseController {
     * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
-    * @param response
     * @return
     */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:overseasDeliveryPlan:export",
-            tableAlias = "odp"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "发货计划导出Excel数据")
-    @WebAdvanceQuery(handler = WmsDeliveryPlanQueryHandler.class)
-    public void exportList(@RequestBody @Validated WmsDeliveryPlanDTO.PagingParamDTO dto, HttpServletResponse response) {
-        wmsDeliveryPlanService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated WmsDeliveryPlanDTO.PagingParamDTO dto) {
+        wmsDeliveryPlanService.exportList(dto);
+        return success(true);
     }
 
     /**

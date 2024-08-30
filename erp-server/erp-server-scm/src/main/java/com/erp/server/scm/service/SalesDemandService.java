@@ -1,6 +1,5 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -10,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
+import com.erp.model.scm.dto.excel.SalesDemandExportExcelDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -84,14 +84,13 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      */
     Boolean cancelProcess(List<String> ids);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/3/15 18:01
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SalesDemandDTO.SearchParamDTO dto);
     /**
      * @description: 批量反审核
      * @author Will
@@ -167,4 +166,5 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      */
     Integer getPushDownBySourceIds(List<String> soIds);
 
+    PagingVO<SalesDemandExportExcelDTO> exportSalesDemand(PagingDTO<SalesDemandDTO.SearchParamDTO> dto);
 }

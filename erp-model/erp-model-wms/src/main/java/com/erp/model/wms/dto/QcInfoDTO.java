@@ -10,6 +10,7 @@ import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -1035,6 +1036,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 检验日期
          */
+        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate qcDate;
 
         /**
@@ -1066,11 +1068,14 @@ public class QcInfoDTO implements Serializable {
          * 产品图片
          */
         private List<String> productImgUrl;
+        private String productImg;
+
 
         /**
          * 箱唛图片
          */
         private List<String> boxMarkImgUrl;
+        private String boxMarkImg;
 
         /**
          * 供应商
@@ -1132,6 +1137,7 @@ public class QcInfoDTO implements Serializable {
          * 不良附图
          */
         private List<WmsAttachmentDTO.UpdateDTO> badAttachments;
+        private String badAttachment;
 
         /**
          * 处理措施
@@ -1164,6 +1170,8 @@ public class QcInfoDTO implements Serializable {
          */
         private BigDecimal productHeight;
 
+        private String productSize;
+
         /**
          * 产品净重
          */
@@ -1184,6 +1192,8 @@ public class QcInfoDTO implements Serializable {
          */
         private BigDecimal boxHeight;
 
+        private String boxSize;
+
         /**
          * 外箱重量
          */
@@ -1203,6 +1213,8 @@ public class QcInfoDTO implements Serializable {
          * 报告
          */
         private List<QcReportDetailDTO.ViewDTO> reportList;
+
+        private String reportListLink;
 
     }
 

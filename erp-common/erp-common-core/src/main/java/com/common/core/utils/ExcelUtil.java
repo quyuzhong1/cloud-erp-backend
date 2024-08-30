@@ -3,6 +3,7 @@ package com.common.core.utils;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
@@ -26,10 +27,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -308,6 +306,38 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
 
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.Default);
+        }
+    }
+
+    public static byte[] easyUtilStr(List<String> heads,String head,List<LinkedHashMap<String, Object>> list,String fileName){
+        List<List<String>> hs = new ArrayList<>();
+        for (String s : heads) {
+            hs.add(Arrays.asList(head,s));
+        }
+        Collection<Object> values;
+        List<List<Object>> list2 = new ArrayList<>();
+
+        for (LinkedHashMap<String, Object> stringObjectLinkedHashMap : list) {
+            List<Object> objects = new ArrayList<>();
+            values = stringObjectLinkedHashMap.values();
+            for (Object value : values) {
+                objects.add(value.toString());
+            }
+            list2.add(objects);
+        }
+        try(ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            // 这里需要设置不关闭流
+            EasyExcelFactory.write(outputStream)
+                    .head(hs)
+                    .registerWriteHandler(getStyleStrategy())
+                    // 设置 sheet
+                    .autoCloseStream(Boolean.FALSE).sheet(fileName)
+                    .sheetName(fileName)
+                    //自定义注解
+                    .doWrite(list2);
+            return outputStream.toByteArray();
         } catch (Exception e) {
             throw new ServiceException(ApiError.Default);
         }

@@ -18,15 +18,14 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.DictBasicDTO;
-import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
-import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsAuthStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.tms.convert.TransferLogisticsChannelConverter;
 import com.erp.server.tms.convert.TransferLogisticsSupplierConverter;
@@ -40,10 +39,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TRANSFER_LOGISTICS_SUPPLIER;
 
 /**
  * <p>
@@ -76,6 +77,8 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
 
     @Autowired
     private TransferDeclareService transferDeclareService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -218,21 +221,8 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
 
 
     @Override
-    public Boolean export(TransferLogisticsSupplierDTO.ExportDTO dto, HttpServletResponse response) {
-        List<TransferLogisticsSupplierDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-        fillPagingData(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/transferLogisticsSupplier.xlsx";
-        String name = "中转报关服务商列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("中转报关服务商列表导出出错 {}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean export(TransferLogisticsSupplierDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("中转报关服务商列表", EXPORT_TMS_TRANSFER_LOGISTICS_SUPPLIER.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -318,6 +308,15 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     @Override
     public List<BaseIdDTO.CodeDTO> listBySupplierId(String supplierId) {
         return baseMapper.listBySupplierId(supplierId);
+    }
+
+    @Override
+    public PagingVO<TransferLogisticsSupplierDTO.PagingViewDTO> exportTransferLogisticsSupplier(PagingDTO<TransferLogisticsSupplierDTO.ExportDTO> dto) {
+        Page<TransferLogisticsSupplierDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            fillPagingData(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

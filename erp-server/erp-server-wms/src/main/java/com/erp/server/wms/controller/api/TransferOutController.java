@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -265,14 +264,9 @@ public class TransferOutController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分布式调出单")
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
-            menuCode = "wms:transfer:out:export",
-            tableAlias = "tfo"
-    )
-    @WebAdvanceQuery(handler = TransferOutQueryHandler.class)
-    public void exportList(@RequestBody @Valid TransferOutDTO.ExportDTO dto, HttpServletResponse response) {
-        transferOutService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Valid TransferOutDTO.ExportDTO dto) {
+        transferOutService.exportList(dto);
+        return success(true);
     }
 
 

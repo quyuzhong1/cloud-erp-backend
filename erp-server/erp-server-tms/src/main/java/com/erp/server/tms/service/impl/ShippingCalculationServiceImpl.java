@@ -7,24 +7,23 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.UnitEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.ShippingRegionCityMapper;
+import com.erp.server.tms.mapper.ShippingTemplateOtherCostMapper;
 import com.erp.server.tms.service.ShippingCalculationService;
 import com.erp.server.tms.service.ShippingTemplateCostSettingService;
 import com.erp.server.tms.service.ShippingTemplateOtherCostService;
@@ -33,12 +32,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_SHIPPING_CALCULATION;
 
 /**
  * @author Will
@@ -58,6 +57,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
 
     @Resource
     private ShippingRegionCityMapper shippingRegionCityMapper;
+    @Resource
+    private ShippingTemplateOtherCostMapper shippingTemplateOtherCostMapper;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -67,7 +68,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
 
     @Resource
     private SoB2cFeign soB2cFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<ShippingCalculationDTO.ListDTO> paging(PagingDTO<ShippingCalculationDTO.PagingParamDTO> pagingDTO) {
@@ -188,28 +190,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     }
 
     @Override
-    public Boolean exportExcel(ShippingCalculationDTO.PagingParamDTO params, HttpServletResponse response) {
-        List<ShippingCalculationDTO.ListDTO> resultList = this.shippingTemplateOtherCostService.listByExportExcel(params);
-        if (CollectionUtils.isEmpty(resultList)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //处理数据
-        handleData(resultList, params);
-        String name = "运费计算列表";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/shippingCalculation_self.xlsx";
-        if ("first".equals(params.getShipmentMethod())) {
-            excelPath = "excel/shippingCalculation_first.xlsx";
-        }
-        try {
-            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("运费模板列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(ShippingCalculationDTO.PagingParamDTO params) {
+        downloadTaskFeign.saveDownloadTask("运费计算列表", EXPORT_TMS_SHIPPING_CALCULATION.getCode(), params);
         return Boolean.TRUE;
     }
 
@@ -585,6 +567,17 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         }
         resultDTO.setCostList(channelCostList);
         return resultDTO;
+    }
+
+    @Override
+    public PagingVO<ShippingCalculationDTO.ListDTO> exportShippingCalculation(PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto) {
+        BigDecimal volume = MathUtil.multiply(MathUtil.multiply(dto.getParams().getLength(), dto.getParams().getWidth()), dto.getParams().getHeight());
+        dto.getParams().setVolume(volume);
+        Page<ShippingCalculationDTO.ListDTO> page = shippingTemplateOtherCostMapper.listByExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            handleData(page.getRecords(), dto.getParams());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

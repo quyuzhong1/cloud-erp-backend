@@ -11,23 +11,22 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
-import com.erp.model.dmp.dto.excel.DmpPullTaskExportExcelDTO;
-import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -49,11 +48,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PULL_TASK;
 
 /**
  * <p>
@@ -95,6 +95,9 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 
     @Resource
     private MQProducerService mqProducerService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
     private RedisUtil redisUtil;
@@ -269,20 +272,8 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
-    public Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto, HttpServletResponse response) {
-        List<DmpPullTaskDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        //数据处理
-        doOpHandleDmpPushTask(list);
-        List<DmpPullTaskExportExcelDTO> resultList = BeanMapperUtils.copyList(DmpPullTaskExportExcelDTO.class, list);
-        String fileName = "中台拉取任务表";
-        try {
-            ExcelUtil.export(fileName, "中台拉取任务表", resultList, DmpPullTaskExportExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("中台拉取任务表", EXPORT_PULL_TASK.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -469,5 +460,15 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                         DmpPullTaskEntity::getReturnMsg,
                         DmpPullTaskEntity::getUpdateTime)
                 .in(DmpPullTaskEntity::getStatus, statusList).eq(DmpPullTaskEntity::getIsDeleted, Boolean.FALSE).list();
+    }
+
+    @Override
+    public PagingVO<DmpPullTaskDTO.ListDTO> exportPullTask(PagingDTO<DmpPullTaskDTO.ParamDTO> dto) {
+        Page<DmpPullTaskDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            //数据处理
+            doOpHandleDmpPushTask(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 }

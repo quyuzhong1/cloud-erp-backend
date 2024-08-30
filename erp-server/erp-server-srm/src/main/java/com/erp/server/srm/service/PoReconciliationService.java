@@ -1,10 +1,13 @@
 package com.erp.server.srm.service;
+
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.srm.dto.PoReconciliationDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -37,13 +40,12 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
      */
     PagingVO<PoReconciliationDTO.ListDTO> paging(PagingDTO<PoReconciliationDTO.PagingParamDTO> dto);
     /**
+     * @param dto
      * @description: 导出
      * @author Will
      * @date: 2024/1/20 12:21
-     * @param dto
-     * @param response
      */
-    void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportList(PoReconciliationDTO.PagingParamDTO dto);
     /**
      * @description: 对账确认
      * @author Will
@@ -85,11 +87,10 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
      */
     List<PoReconciliationDetailDTO.ViewDTO> viewDetail(PoReconciliationDetailDTO.PagingParamDTO dto);
     /**
+     * @param dto
      * @description: 导出对账单
      * @author Will
      * @date: 2024/1/25 10:44
-     * @param dto
-     * @param response
      */
     void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
 

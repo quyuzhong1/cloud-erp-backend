@@ -63,7 +63,7 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * @param params
      * @return
      */
-    List<LinkedHashMap> exportInventoryPage(@Param("params") InventoryReportDTO.ExportInventoryAgeSearchParamDTO params);
+    Page<LinkedHashMap> exportInventoryPage(@Param("page") Page<LinkedHashMap> page,@Param("params") InventoryReportDTO.ExportInventoryAgeSearchParamDTO params);
 
     /**
      * 库存分页查询
@@ -188,15 +188,27 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * 按仓库导出数据
      */
     List<InventoryDTO.PagingViewDTO> exportByWarehouse(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO);
+    /**
+     * 按仓库导出数据
+     */
+    Page<InventoryDTO.PagingViewDTO> exportByWarehouse(@Param("page") Page<InventoryDTO.PagingViewDTO> page, @Param("params") InventoryDTO.SearchParamDTO searchParamDTO);
 
     /**
      * 按库区导出数据
      */
     List<InventoryDTO.PagingViewDTO> exportByArea(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseAreaCodeList") List<String> warehouseAreaCodeList);
+    /**
+     * 按库区导出数据
+     */
+    Page<InventoryDTO.PagingViewDTO> exportByArea(@Param("page") Page<InventoryDTO.PagingViewDTO> page, @Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseAreaCodeList") List<String> warehouseAreaCodeList);
 
     /**
      * 按仓位导出数据
      */
     List<InventoryDTO.PagingViewDTO> exportByLocation(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList);
 
+    /**
+     * 按仓位导出数据
+     */
+    Page<InventoryDTO.PagingViewDTO> exportByLocation(@Param("page") Page<InventoryDTO.PagingViewDTO> page, @Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList);
 }

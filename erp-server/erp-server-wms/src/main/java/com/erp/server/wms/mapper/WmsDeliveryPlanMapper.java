@@ -1,14 +1,13 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
-import com.erp.model.wms.entity.WmsDeliveryPlanEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-import org.apache.ibatis.annotations.Mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.apache.ibatis.annotations.Param;
-
 import com.common.business.dto.base.ApproveStatusQtyDTO;
+import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
+import com.erp.model.wms.entity.WmsDeliveryPlanEntity;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -44,6 +43,7 @@ public interface WmsDeliveryPlanMapper extends BaseMapper<WmsDeliveryPlanEntity>
     * @return
     */
     List<WmsDeliveryPlanDTO.ListDTO> listExport(@Param("params") WmsDeliveryPlanDTO.PagingParamDTO params);
+    Page<WmsDeliveryPlanDTO.ListDTO> listExport(@Param("page") Page<WmsDeliveryPlanDTO.ListDTO> page, @Param("params") WmsDeliveryPlanDTO.PagingParamDTO params);
 
 
     /**

@@ -39,6 +39,7 @@ public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChang
      * @return List<PagingViewDTO>
      */
     List<PurchasePriceChangeDTO.PagingViewDTO> listExport(@Param("params") PurchasePriceChangeDTO.PagingParamDTO dto);
+    Page<PurchasePriceChangeDTO.PagingViewDTO> listExport(@Param("page") Page<PurchasePriceChangeDTO.PagingViewDTO> page, @Param("params") PurchasePriceChangeDTO.PagingParamDTO dto);
 
     /**
      * 临时查询方法

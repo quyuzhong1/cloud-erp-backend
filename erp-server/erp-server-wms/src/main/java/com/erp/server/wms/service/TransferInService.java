@@ -7,7 +7,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -99,13 +98,13 @@ public interface TransferInService extends SuperService<TransferInEntity> {
     
     /**
      * 导出数据
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-29 10:04
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      */
-    Boolean exportExcel(TransferInDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(TransferInDTO.ExportDTO dto);
 
     /**
      * 分布是调入详情
@@ -142,4 +141,6 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @return
      */
     List<TransferInEntity> listBySourceIds(List<String> sourceIds);
+
+    PagingVO<TransferInDTO.PagingViewDTO> exportTransferIn(PagingDTO<TransferInDTO.ExportDTO> dto);
 }

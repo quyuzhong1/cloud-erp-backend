@@ -50,6 +50,7 @@ public interface DictCountryMapper extends BaseMapper<DictCountryEntity> {
     IPage<DictCountryDTO.PagingViewDTO> paging(Page query, @Param("params")DictCountryDTO.PagingParamDTO paramDTO);
 
     List<DictCountryDTO.PagingViewDTO> listExport(@Param("params")DictCountryDTO.PagingParamDTO dto);
+    Page<DictCountryDTO.PagingViewDTO> listExport(@Param("page") Page<DictCountryDTO.PagingViewDTO> page,@Param("params")DictCountryDTO.PagingParamDTO dto);
 
     IPage<DictCountryDTO.ListDTO> pagingSelect(Page query, @Param("params") DictCountryDTO.SelectDTO params);
     /**

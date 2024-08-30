@@ -1,13 +1,12 @@
 package com.erp.server.tms.service;
 
-import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
-import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -147,7 +146,7 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
      * @author Jim
      * @date: 2024-03-25
      */
-    void exportList(TmsFirstMileReconciliationDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(TmsFirstMileReconciliationDTO.ExportDTO dto);
 
     /**
      * 审核通过回调方法
@@ -171,4 +170,6 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
     TmsFirstMileReconciliationEntity findByCycleAndSupplier(String supplier, String currency, LocalDate startDate, LocalDate endDate);
 
     TmsFirstMileReconciliationEntity getByCode(String code);
+
+    PagingVO<TmsFirstMileReconciliationDTO.ListDTO> exportFirstMileReconciliation(PagingDTO<TmsFirstMileReconciliationDTO.ExportDTO> dto);
 }

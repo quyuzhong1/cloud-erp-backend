@@ -1,10 +1,5 @@
 package com.erp.server.wms.service;
 
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletResponse;
-
 import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
@@ -16,6 +11,9 @@ import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -128,7 +126,7 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @author Jim
      * @date: 2023-11-27
      */
-    Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto);
 
     List<String> getReceiptNumbersForStatus(List<String> statusList, String platform);
 
@@ -194,4 +192,6 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
     ApiResult<?> handlePlatformMessage(PlatformInboundDTO dto);
 
     List<BaseDropDownDTO.CommonDTO> getLogisticByTransferWarehouseId(String transferWarehouseId);
+
+    PagingVO<OverseasWarehouseInboundDTO.ListDTO> exportOverseasWarehouseInbound(PagingDTO<OverseasWarehouseInboundDTO.ExportDTO> dto);
 }

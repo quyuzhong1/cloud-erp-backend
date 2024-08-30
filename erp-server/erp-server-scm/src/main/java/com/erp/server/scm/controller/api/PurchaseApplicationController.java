@@ -454,18 +454,12 @@ public class PurchaseApplicationController extends BaseController {
      * @author Will
      * @date: 2023/3/15 18:23
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id,create_user_id",
-            menuCode = "scm:purchaseApplication:paging",
-            tableAlias = "pa")
-    @WebAdvanceQuery(handler = PurchaseApplicationQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = purchaseApplicationService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto) {
+        Boolean flag = purchaseApplicationService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

@@ -60,7 +60,8 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
     List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(@Param("ids") List<String> ids);
 
     List<FbaShipmentDTO.ListDTO> export(@Param("params") FbaShipmentDTO.PagingParamDTO dto);
-    
+    Page<FbaShipmentDTO.ListDTO> export(@Param("page") Page<FbaShipmentDTO.ListDTO> page, @Param("params") FbaShipmentDTO.PagingParamDTO dto);
+
     /**
      * 根据条件获取数据对比系统数据
      * @param params

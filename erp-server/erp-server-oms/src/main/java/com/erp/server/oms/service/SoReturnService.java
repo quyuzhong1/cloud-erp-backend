@@ -11,7 +11,6 @@ import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -147,10 +146,9 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @Author Luo_WG
      * @Date 2023/5/10 16:47
      * @param dto dto
-     * @param response response
      * @return java.lang.Boolean
      **/
-    Boolean exportExcel(@RequestBody SoReturnDTO.PagingParam dto, HttpServletResponse response);
+    Boolean exportExcel(@RequestBody SoReturnDTO.PagingParam dto);
 
     /**
      * 下推退货通知单-列表查询
@@ -242,4 +240,10 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
     SoReturnDTO.View pdaView(String id);
 
     void syncOrderToDmp(SoReturnEntity entity, String syncOperate);
+
+    /**
+     * 导出销售退货
+     * @param dto 参数
+     */
+    PagingVO<SoReturnDTO.PagingView> exportSoReturn(PagingDTO<SoReturnDTO.PagingParam> dto);
 }

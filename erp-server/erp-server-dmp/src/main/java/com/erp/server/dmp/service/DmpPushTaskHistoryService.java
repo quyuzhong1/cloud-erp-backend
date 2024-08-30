@@ -6,7 +6,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -30,13 +29,12 @@ public interface DmpPushTaskHistoryService extends IService<DmpPushTaskHistoryEn
 
     /**
      * @param dto
-     * @param response
      * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/10/13 15:34
      */
-    Boolean exportExcel(DmpPushTaskDTO.ParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(DmpPushTaskDTO.ParamDTO dto);
 
     /**
      * @param ids
@@ -61,4 +59,5 @@ public interface DmpPushTaskHistoryService extends IService<DmpPushTaskHistoryEn
      */
     void syncPushTaskHistory();
 
+    PagingVO<DmpPushTaskDTO.ListDTO> exportPushTaskHistory(PagingDTO<DmpPushTaskDTO.ParamDTO> dto);
 }

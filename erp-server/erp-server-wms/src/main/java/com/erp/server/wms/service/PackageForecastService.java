@@ -12,7 +12,6 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -88,11 +87,9 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
 
     /**
      * 导出
-     * @param dto
-     * @param response
      * @return
      */
-    Boolean exportExcel(PackageForecastDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PackageForecastDTO.ExportDTO dto);
 
     /**
      * 取消上传
@@ -153,4 +150,9 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @return
      */
     List<LogisticsAddressDTO.ListDTO> listAddressByForecastIds(List<String> ids);
+
+    /**
+     * 导出组包预报
+     */
+    PagingVO<PackageForecastDTO.ExportViewDTO> exportPackageForecast(PagingDTO<PackageForecastDTO.ExportDTO> dto);
 }

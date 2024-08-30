@@ -13,12 +13,11 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ExcelUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
-import com.erp.model.dmp.dto.excel.DmpPullTaskExportExcelDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPullTaskHistoryEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.DmpPullTaskHistoryMapper;
 import com.erp.server.dmp.service.DmpPullTaskHistoryService;
 import com.erp.server.dmp.service.DmpPullTaskService;
@@ -35,13 +34,14 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PULL_TASK_HISTORY;
 
 /**
  * <p>
@@ -59,6 +59,8 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
     private DmpPullTaskService dmpPullTaskService;
     @Resource
     private MQProducerService mqProducerService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Resource(name = "pullErpOpenApi")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
@@ -76,24 +78,8 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
     }
 
     @Override
-    public Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto, HttpServletResponse response) {
-        List<DmpPullTaskDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        //数据处理
-        doOpHandleDmpPushTask(list);
-        List<DmpPullTaskExportExcelDTO> resultList = list.stream().map(entity -> {
-            DmpPullTaskExportExcelDTO e = new DmpPullTaskExportExcelDTO();
-            BeanUtils.copyProperties(entity, e);
-            return e;
-        }).collect(Collectors.toList());
-        String fileName = "中台拉取任务表";
-        try {
-            ExcelUtil.export(fileName, "中台拉取任务表", resultList, DmpPullTaskExportExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("中台拉取任务历史表", EXPORT_PULL_TASK_HISTORY.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -196,5 +182,15 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
             }
         });
         log.info("完成归档3个月前拉取成功的数据");
+    }
+
+    @Override
+    public PagingVO<DmpPullTaskDTO.ListDTO> exportPullTaskHistory(PagingDTO<DmpPullTaskDTO.ParamDTO> dto) {
+        Page<DmpPullTaskDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            //数据处理
+            doOpHandleDmpPushTask(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 }

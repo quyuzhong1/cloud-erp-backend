@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -15,11 +14,9 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
@@ -30,6 +27,7 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.VwAllocationDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -37,12 +35,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY_DIFF;
 
 /**
  * 库存差异 服务实现类
@@ -68,6 +65,8 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
 
     @Resource
     private VirtualInventoryService virtualInventoryService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     
@@ -102,37 +101,8 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
     }
 
     @Override
-    public Boolean exportExcel(VirtualInventoryDiffDTO.SearchParamDTO dto, HttpServletResponse response) {
-
-        List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> list = baseMapper.listDiffExportData(dto);
-        //统计数据
-        Object isDiff = dto.getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
-        if (ObjectUtil.isNotNull(isDiff)) {
-            dto.setIsDiff(Boolean.valueOf(isDiff.toString()));
-        }
-        List<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> warehouseStatisticsList = baseMapper.listWarehouseStatistics(dto);
-
-        //数据赋值处理
-        fillExportData(list);
-
-        List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
-        //主表数据
-        pairList.add(new Pair<>(MathUtil.ZERO, list));
-        //明细数据
-        pairList.add(new Pair<>(MathUtil.ONE, warehouseStatisticsList));
-
-        String name = "库存差异列表信息";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/virtualInventoryDiff.xlsx";
-        try {
-            new ExcelPrintUtils().sheetPatchExport(pairList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("虚拟仓库库存信息导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(VirtualInventoryDiffDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("库存差异列表信息", EXPORT_WMS_VIRTUAL_INVENTORY_DIFF.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -246,6 +216,25 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             resultList.add(listSuggestQtyDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
+        Page<VirtualInventoryDiffDTO.ListDiffExportDataDTO> page = baseMapper.listDiffExportData(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        //统计数据
+        Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
+        if (ObjectUtil.isNotNull(isDiff)) {
+            dto.getParams().setIsDiff(Boolean.valueOf(isDiff.toString()));
+        }
+        //数据赋值处理
+        fillExportData(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> exportWarehouseStatisticsData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
+        Page<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> page = baseMapper.listWarehouseStatistics(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        return new PagingVO<>(page);
     }
 
     /**

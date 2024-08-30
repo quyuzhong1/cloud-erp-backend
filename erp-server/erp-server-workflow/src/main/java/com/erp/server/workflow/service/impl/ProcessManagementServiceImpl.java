@@ -17,10 +17,8 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.DeduplicationUtil;
-import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
@@ -34,6 +32,7 @@ import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.handle.BaseWorkflowService;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
@@ -70,10 +69,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_MANAGEMENT;
 
 /**
  * <p>
@@ -113,6 +113,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private MQProducerService mqProducerService;
     @Resource
     private WorkMenuService workMenuService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @Override
@@ -668,21 +670,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
-    public void export(ProcessManagementDTO.ExportDTO dto, HttpServletResponse response) throws Exception {
-        // 查询流程实例
-        List<ProcessManagementDTO.PagingResultDTO> list = baseMapper.export(dto);
-        if (CollectionUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        list.stream().filter(item -> ObjectUtil.isNotEmpty(item.getProcessStatus()))
-                .peek(x -> x.setProcessStatusName(x.getProcessStatus().getName()))
-                .collect(Collectors.toList());
-        List<ProcessManagementDTO.ExportResultDTO> exportList = BeanUtil.copyToList(list, ProcessManagementDTO.ExportResultDTO.class);
-        // 导出
-        String excelPath = "excel/process_management.xlsx";
-        String name = "流程管理";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        new ExcelPrintUtils().patchExport(exportList, response, StrUtil.format("{}_{}", name, date), excelPath);
+    public void export(ProcessManagementDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("流程管理", EXPORT_PROCESS_MANAGEMENT.getCode(), dto);
     }
 
     @Override
@@ -1033,6 +1022,18 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
             exitTaskIdList.addAll(curTaskIdList);
         }
+    }
+
+    @Override
+    public PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(PagingDTO<ProcessManagementDTO.ExportDTO> dto) {
+        // 查询流程实例
+        Page<ProcessManagementDTO.PagingResultDTO> page = baseMapper.export(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtil.isEmpty(page.getRecords())) {
+            page.getRecords().stream().filter(item -> ObjectUtil.isNotEmpty(item.getProcessStatus()))
+                    .peek(x -> x.setProcessStatusName(x.getProcessStatus().getName()))
+                    .collect(Collectors.toList());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

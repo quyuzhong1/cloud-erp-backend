@@ -161,7 +161,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 计费重带单位
          */
-        private BigDecimal billingWeightWithUnit;
+        private String billingWeightWithUnit;
 
         public String getActualWeightWithUnit() {
             BigDecimal actualWeight = this.getActualWeight();

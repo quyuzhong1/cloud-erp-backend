@@ -1,7 +1,6 @@
 package com.erp.server.wms.controller.api;
 
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -30,7 +29,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -387,15 +385,8 @@ public class SoOutstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售出库单")
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id,seller_id",
-            menuCode = "wms:so:outstock:paging",
-            serviceClass = SoOutstockService.class,
-            keyIdName = "so"
-    )
-    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
-    public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = soOutstockService.exportExcel(dto, response);
+    public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.ExportDTO dto) {
+        Boolean result = soOutstockService.exportExcel(dto);
         return result ? success() : failure();
     }
 

@@ -42,6 +42,7 @@ import com.erp.model.workflow.dto.BusinessTableDTO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -68,6 +69,8 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_BOM;
 
 /**
  * bom 信息表(BomInfo)表服务实现类
@@ -121,6 +124,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private ProductLogisticsService productLogisticsService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * 添加bom
@@ -302,6 +308,69 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
 
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public PagingVO<BomExportExcelVO> exportBom(PagingDTO<SearchPagingDTO> dto) {
+        String searchType = dto.getParams().getSearchType();
+        String searchKeyword = dto.getParams().getSearchKeyword();
+        //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
+        List<String> skuIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(searchKeyword)) {
+            skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
+        }
+        List<Integer> stateList = new ArrayList<>();
+        //待审核
+        List<String> bomIdList = new ArrayList<>();
+        if (SearchType.WAIT_AUDIT.equals(searchType)) {
+            String userId = UserContext.getDefaultLoginUser().getUid();
+            //获取我的待办信息
+            //TODO 2020330暂时取消审核流程，只修改状态
+/*            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(bomIdList)) {
+                ExcelUtil.export(fileName, "BOM", new ArrayList<>(), BomExportExcelVO.class, response);
+                return;
+            }*/
+            stateList.add(BomStateEnum.WAIT_AUDIT.getState());
+            stateList.add(BomStateEnum.AUDIT_ING.getState());
+        }
+
+        List<FindUserDTO> userList = commonService.getAllUser();
+
+        Page<BomPagingVO> page = baseMapper.getAllBom(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(), bomIdList, skuIdList, stateList);
+        List<BomPagingVO> list = page.getRecords();
+        //对应sku集合
+        List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
+        List<String> parentSkuNoList = list.stream().map(BomPagingVO::getParentSkuNo).collect(Collectors.toList());
+        skuNoList.addAll(parentSkuNoList);
+        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
+        for (BomPagingVO item : list) {
+            String skuNo = item.getSkuNo();
+            String parentSkuNo = item.getParentSkuNo();
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+
+            SkuVO parentSkuVO = skuList.stream().filter(s -> s.getSkuNo().equals(parentSkuNo)).findFirst().orElse(null);
+
+            FindUserDTO createUser = userList.stream().filter(u -> u.getUserId().equals(item.getCreateUserId())).findFirst().orElse(null);
+            if (createUser != null) {
+                item.setCreateUserName(createUser.getUserName());
+            }
+            Integer state = item.getState();
+            item.setStateName(BomStateEnum.getName(state));
+            String type = item.getType();
+            item.setTypeName(BomTypeEnum.getName(type));
+            if (skuVO != null) {
+                item.setSkuName(skuVO.getSkuName());
+                item.setSpuNo(skuVO.getSpuNo());
+                item.setSpuName(skuVO.getSpuName());
+            }
+            if (parentSkuVO != null) {
+                item.setParentSkuName(parentSkuVO.getSkuName());
+            }
+        }
+        List<BomExportExcelVO> excelList = BeanMapperUtils.copyList(BomExportExcelVO.class, list);
+        return new PagingVO<>(excelList,(int) page.getTotal(),dto.getPageSize(), dto.getCurrPage());
     }
 
     /**
@@ -1014,69 +1083,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-29 17:32
      */
     @Override
-    public void exportExcel(SearchPagingDTO dto, HttpServletResponse response) {
-        String fileName = "BOM数据";
-        String searchType = dto.getSearchType();
-        String searchKeyword = dto.getSearchKeyword();
-        //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
-        List<String> skuIdList = new ArrayList<>();
-        if (StringUtils.isNotBlank(searchKeyword)) {
-            skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
-        }
-        List<Integer> stateList = new ArrayList<>();
-        //待审核
-        List<String> bomIdList = new ArrayList<>();
-        if (SearchType.WAIT_AUDIT.equals(searchType)) {
-            String userId = UserContext.getDefaultLoginUser().getUid();
-            //获取我的待办信息
-            //TODO 2020330暂时取消审核流程，只修改状态
-/*            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
-            bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(bomIdList)) {
-                ExcelUtil.export(fileName, "BOM", new ArrayList<>(), BomExportExcelVO.class, response);
-                return;
-            }*/
-            stateList.add(BomStateEnum.WAIT_AUDIT.getState());
-            stateList.add(BomStateEnum.AUDIT_ING.getState());
-        }
-
-        List<FindUserDTO> userList = commonService.getAllUser();
-
-        List<BomPagingVO> list = baseMapper.getAllBom(dto, bomIdList, skuIdList, stateList);
-        //对应sku集合
-        List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
-        List<String> parentSkuNoList = list.stream().map(BomPagingVO::getParentSkuNo).collect(Collectors.toList());
-        skuNoList.addAll(parentSkuNoList);
-        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
-        for (BomPagingVO item : list) {
-            String skuNo = item.getSkuNo();
-            String parentSkuNo = item.getParentSkuNo();
-            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
-
-            SkuVO parentSkuVO = skuList.stream().filter(s -> s.getSkuNo().equals(parentSkuNo)).findFirst().orElse(null);
-
-            FindUserDTO createUser = userList.stream().filter(u -> u.getUserId().equals(item.getCreateUserId())).findFirst().orElse(null);
-            if (createUser != null) {
-                item.setCreateUserName(createUser.getUserName());
-            }
-            Integer state = item.getState();
-            item.setStateName(BomStateEnum.getName(state));
-            String type = item.getType();
-            item.setTypeName(BomTypeEnum.getName(type));
-            if (skuVO != null) {
-                item.setSkuName(skuVO.getSkuName());
-                item.setSpuNo(skuVO.getSpuNo());
-                item.setSpuName(skuVO.getSpuName());
-            }
-            if (parentSkuVO != null) {
-                item.setParentSkuName(parentSkuVO.getSkuName());
-            }
-        }
-        List<BomExportExcelVO> excelList = BeanMapperUtils.copyList(BomExportExcelVO.class, list);
-
-        ExcelUtil.export(fileName, "BOM", excelList, BomExportExcelVO.class, response);
-
-
+    public void exportExcel(SearchPagingDTO dto) {
+        downloadTaskFeign.saveDownloadTask("BOM数据", EXPORT_PLM_BOM.getCode(), dto);
     }
 
     /**

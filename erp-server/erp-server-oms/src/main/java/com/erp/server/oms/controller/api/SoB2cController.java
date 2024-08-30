@@ -32,7 +32,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1108,14 +1107,12 @@ public class SoB2cController extends BaseController {
      * @author Will
      * @date: 2024/4/16 15:06
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2C销售订单信息")
     @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody SoB2cDTO.ExportParamDTO dto, HttpServletResponse response) {
-        Boolean flag = soB2cService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody SoB2cDTO.ExportParamDTO dto) {
+        Boolean flag = soB2cService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

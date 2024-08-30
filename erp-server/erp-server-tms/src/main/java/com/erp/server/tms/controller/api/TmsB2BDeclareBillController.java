@@ -17,6 +17,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.query.TmsB2BDeclareQueryHandler;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2B_DECLARE_BILL;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2B_DECLARE_DECLARE_BILL;
 
 /**
  * B2B报关单
@@ -43,6 +47,8 @@ public class TmsB2BDeclareBillController extends BaseController {
 
     @Resource
     private TmsDeclareBillService tmsDeclareBillService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * tabList
@@ -245,19 +251,18 @@ public class TmsB2BDeclareBillController extends BaseController {
 
 
     /**
-     * 导出
+     * 导出B2B报关单列表
      */
     @PostMapping("/export")
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单列表")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
-    public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
-        pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
-        tmsDeclareBillService.export(pagingParamDTO,response);
+    public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
+        downloadTaskFeign.saveDownloadTask("B2B报关单列表", EXPORT_TMS_TMS_B2B_DECLARE_BILL.getCode(), pagingParamDTO);
         return success();
     }
 
     /**
-     * 导出报关
+     * 导出B2B报关单报关信息
      */
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单报关信息")

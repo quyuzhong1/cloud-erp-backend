@@ -45,6 +45,7 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
@@ -68,7 +69,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -76,6 +76,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_CUSTOMER;
 
 /**
  * <p>
@@ -134,6 +136,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     /**
@@ -882,62 +886,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      * 导出 客户列表
      *
      * @param dto
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-15 14:53
      */
     @Override
-    public Boolean exportExcel(CustomerDTO.ExportDTO dto, HttpServletResponse response) {
-        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-
-        //平台信息
-        String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
-
-        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        List<String> ids = list.stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
-        ids.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj));
-        });
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
-        if (CollectionUtils.isNotEmpty(dtoList)) {
-            listApiResult = workflowFeign.curApprover(dtoList);
-            Integer code = listApiResult.getCode();
-            if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
-            }
-        }
-        for (CustomerDTO.PagingViewDTO item : list) {
-            Boolean disabled = item.getDisabled();
-            String disabledName = disabled ? "停用" : "启用";
-            item.setDisabledName(disabledName);
-            ApproveStatusEnum approveStatus = item.getApproveStatus();
-            item.setApproveStatusName(approveStatus.getName());
-            //平台类型名称
-            String platformTypeName = dictList.stream().filter(obj -> obj.getValue().equals(item.getPlatformType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setPlatformTypeName(platformTypeName);
-            //最新审核人
-            if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                item.setApproveUserName(curApprove);
-            }
-        }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/CustomerExport.xlsx";
-        String name = "客户列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("客户列表导出出错 {}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(CustomerDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("客户列表", EXPORT_OMS_CUSTOMER.getCode(), dto);
         return Boolean.TRUE;
-
-
     }
 
     @Override
@@ -1990,5 +1946,42 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         return new PagingVO<>(pageData);
 
+    }
+
+    @Override
+    public PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(PagingDTO<CustomerDTO.ExportDTO> dto) {
+        Page<CustomerDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+
+        //平台信息
+        String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        List<String> ids = page.getRecords().stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        ids.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj)));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
+            }
+        }
+        for (CustomerDTO.PagingViewDTO item : page.getRecords()) {
+            Boolean disabled = item.getDisabled();
+            String disabledName = disabled ? "停用" : "启用";
+            item.setDisabledName(disabledName);
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            //平台类型名称
+            String platformTypeName = dictList.stream().filter(obj -> obj.getValue().equals(item.getPlatformType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setPlatformTypeName(platformTypeName);
+            //最新审核人
+            if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
+            }
+        }
+        return new PagingVO<>(page);
     }
 }

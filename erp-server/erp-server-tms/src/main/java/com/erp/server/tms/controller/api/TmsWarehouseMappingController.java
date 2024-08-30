@@ -178,19 +178,12 @@ public class TmsWarehouseMappingController extends BaseController {
      * @author Will
      * @date: 2024/3/19 12:06
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓库匹配")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsWarehouseMapping:paging",
-            tableAlias = "twm"
-    )
-    @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody TmsWarehouseMappingDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = tmsWarehouseMappingService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody TmsWarehouseMappingDTO.PagingParamDTO dto) {
+        Boolean flag = tmsWarehouseMappingService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 }

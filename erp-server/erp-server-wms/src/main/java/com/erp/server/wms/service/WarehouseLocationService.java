@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
+import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -225,12 +226,11 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     /**
      * 导出仓位信息
      * @param dto 导出excel的参数
-     * @param response
      * @return void
      * @date: 2024-05-31
      * @author: tanmujin
      */
-    void exportExcel(WarehouseLocationDTO.exportParamDto dto, HttpServletResponse response);
+    void exportExcel(WarehouseLocationDTO.exportParamDto dto);
 
     /**
      * 新增仓位
@@ -327,11 +327,8 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     List<WarehouseLocationDTO.MappingDTO> listArea2LocationMapping(String warehouseId);
 
     /**
-     * 根据仓库id和库位code查询库位
-     * @param warehouseId       仓库id
-     * @param warehouseLocation 库位code
-     * @param type              库位类型(库位/库区)
-     * @return                  库位信息
+     * 导出库位
      */
+    PagingVO<WarehouseLocationExportVo> exportWarehouseLocation(PagingDTO<WarehouseLocationDTO.exportParamDto> dto);
     WarehouseLocationEntity getWarehouseLocation(String warehouseId, String warehouseLocation, WarehouseLocationTypeEnum type);
 }

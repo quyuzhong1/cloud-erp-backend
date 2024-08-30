@@ -63,7 +63,6 @@ import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.listener.DeliveryExcelListener;
 import com.erp.server.srm.mapper.DeliveryOrderMapper;
 import com.erp.server.srm.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -892,6 +891,48 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
         List<String> detailIdList = deliveryOrderDetailList.stream().map(DeliveryOrderDetailEntity::getId).collect(Collectors.toList());
         poReconciliationDetailScmService.deleteDetailBySourceDetailIdList(detailIdList,true);
+    }
+
+    @Override
+    public PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
+        Page<DeliveryOrderExportExcelDTO> page = this.baseMapper.getExportList(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(page.getRecords().stream().map(DeliveryOrderExportExcelDTO::getSupplierId).distinct().collect(Collectors.toList()));
+        List<String> purchaseDetailIds = page.getRecords().stream().filter(v->StringUtils.isNotBlank(v.getReceiveCode())).map(DeliveryOrderExportExcelDTO::getPurchaseDetailId).distinct().collect(Collectors.toList());
+        List<QcInfoDTO.QcReceiveResultDTO> qcReceiveResultDTOList = wmsTaskFeign.getQcReceiveResult(purchaseDetailIds);
+        WarehouseReceiveDTO.SourceParamDTO sourceParamDTO = new WarehouseReceiveDTO.SourceParamDTO();
+        sourceParamDTO.setSourceIds(page.getRecords().stream().map(DeliveryOrderExportExcelDTO::getId).distinct().collect(Collectors.toList()));
+        sourceParamDTO.setSourceType(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode());
+        List<WarehouseReceiveEntity> warehouseReceiveEntityList = wmsTaskFeign.listReceiveBySourceTypeAndIds(sourceParamDTO);
+
+        List<String> purchaseIds = page.getRecords().stream().map(DeliveryOrderExportExcelDTO::getSourceId).distinct().collect(Collectors.toList());
+        //查询采购签收信息
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIdsAll(purchaseIds);
+
+        page.getRecords().forEach(v->{
+            Integer receiveQty = 0;
+            Integer giftReceiveQty = 0;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                receiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(v.getDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                giftReceiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(v.getDetailId()) )
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getGiftReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            v.setReceiveQty(receiveQty);
+            v.setGiftReceiveQty(giftReceiveQty);
+
+            v.setReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
+            v.setDetailReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getDetailReceiptStatus()));
+            v.setPrintStatus(v.getIsPrint()?"已打印":"未打印");
+            v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
+            WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveEntityList.stream().filter(t->t.getSourceId().equals(v.getId())).findFirst().orElse(new WarehouseReceiveEntity());
+            v.setReceiveUserName(warehouseReceiveEntity.getReceiveUserName());
+            QcInfoDTO.QcReceiveResultDTO qcReceiveResultDTO = qcReceiveResultDTOList.stream().filter(t->t.getPurchaseDetailId().equals(v.getPurchaseDetailId()) && t.getReceiveCode().equals(v.getReceiveCode())).findFirst().orElse(null);
+            if(Objects.nonNull(qcReceiveResultDTO)){
+                v.setQcGoodQty(qcReceiveResultDTO.getQcGoodQty());
+            }
+        });
+        return new PagingVO<>(page);
     }
 
     /**

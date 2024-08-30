@@ -30,7 +30,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -290,19 +289,12 @@ public class RequisitionApplicationController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/11/17 10:55
      * @param dto
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出要货申请")
     @PostMapping("/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:requisitionApplication:exportExcel",
-            tableAlias = "ra"
-    )
-    @WebAdvanceQuery(handler = RequisitionApplicationQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody @Validated RequisitionApplicationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        requisitionApplicationService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody @Validated RequisitionApplicationDTO.PagingParamDTO dto) {
+        requisitionApplicationService.exportExcel(dto);
         return success();
     }
 

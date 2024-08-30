@@ -307,9 +307,8 @@ public class TransferInController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分布式调入单")
     @PostMapping("/export")
-    @WebAdvanceQuery(handler = TransferInQueryHandler.class)
-    public ApiResult exportWarehouse(@RequestBody @Valid TransferInDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = transferInService.exportExcel(dto, response);
+    public ApiResult exportWarehouse(@RequestBody @Valid TransferInDTO.ExportDTO dto) {
+        Boolean result = transferInService.exportExcel(dto);
         return result ? success() : failure();
     }
 

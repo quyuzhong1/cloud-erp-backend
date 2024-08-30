@@ -309,7 +309,6 @@
             </if>
         </where>
         order by ls.id desc , lc.id desc,st.id desc , str.id desc
-        limit 50000
     </select>
 
 

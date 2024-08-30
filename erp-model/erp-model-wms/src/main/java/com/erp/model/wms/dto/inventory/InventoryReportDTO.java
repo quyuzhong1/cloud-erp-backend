@@ -492,6 +492,31 @@ public class InventoryReportDTO implements Serializable {
          *
          */
         private List<String> skuIdList;
+
+        /**
+         * 勾选数据
+         */
+        private List<CheckData> checkData;
+    }
+
+    /**
+     * 查询唯一条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CheckData {
+        /**
+         * 仓库
+         */
+        private String warehouseId;
+        /**
+         * 组织
+         */
+        private String orgId;
+        /**
+         * sku编号集合
+         */
+        private String skuId;
     }
 
     /**

@@ -43,13 +43,12 @@ public interface TmsB2cDeclareReconciliationDetailService extends SuperService<T
     Boolean update(List<TmsB2cDeclareReconciliationDetailDTO.UpdateDTO> detailList,String mianId);
 
     /**
+     * @param dto
      * @description: 导出明细数据
      * @author Will
      * @date: 2024/3/26 10:00
-     * @param dto
-     * @param response
      */
-    void exportDetailList(TmsB2cDeclareReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response);
+    void exportDetailList(TmsB2cDeclareReconciliationDetailDTO.ExportDTO dto);
 
     /**
      * @description: 分页查询
@@ -117,4 +116,7 @@ public interface TmsB2cDeclareReconciliationDetailService extends SuperService<T
      * @return LinkedList<String>
      */
     LinkedList<String> thirdFieldListName(TmsB2cDeclareReconciliationDetailDTO.ExcelDownloadTemplateDTO dto);
+
+    PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto);
+
 }

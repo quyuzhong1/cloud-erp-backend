@@ -24,6 +24,8 @@
         <module>erp-rpc-oms</module>
         <module>erp-rpc-tms</module>
         <module>erp-rpc-srm</module>
+        <module>erp-rpc-file</module>
+        <module>erp-rpc-bi</module>
 
     </modules>
 

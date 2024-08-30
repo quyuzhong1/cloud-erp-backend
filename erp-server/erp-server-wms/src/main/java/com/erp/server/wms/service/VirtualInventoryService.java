@@ -5,7 +5,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -27,13 +26,13 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
     PagingVO<VirtualInventoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto);
     /**
      * 库存差异明细导出
+     *
+     * @param dto
+     * @return Boolean
      * @author will
      * @date 2024/6/3 17:17
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(VirtualInventoryDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(VirtualInventoryDTO.SearchParamDTO dto);
     /**
      * 根据仓库、sku、库存状态查询
      * @author will
@@ -142,4 +141,6 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
      * @return SkuReturnDTO
      */
     List<VirtualInventoryDTO.SkuReturnDTO> listSkuVirtualInventoryQty(List<VirtualInventoryDTO.BomParamDTO> paramList);
+
+    PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto);
 }

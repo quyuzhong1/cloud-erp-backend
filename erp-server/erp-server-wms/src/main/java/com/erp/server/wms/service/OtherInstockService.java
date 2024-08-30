@@ -137,14 +137,13 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      */
     Boolean cancelProcess(List<String> ids);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/5/17 15:17
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(OtherInstockDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(OtherInstockDTO.SearchParamDTO dto);
 
     /**
      * @description: 更新金蝶状态等信息
@@ -220,4 +219,9 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
     OtherInstockEntity getByThirdCode(String thirdCode, InventoryDirectionEnum inventoryDirectionEnum);
 
     void generateOpposite(OtherInstockEntity dbOtherInstockEntity, String code);
+
+    /**
+     * 其他入库
+     */
+    PagingVO<OtherInstockDTO.ListDTO> exportOtherInStock(PagingDTO<OtherInstockDTO.SearchParamDTO> dto);
 }

@@ -1,21 +1,17 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.SupplierRefUserDTO;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.dto.UserPagingSearchDTO;
-import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -99,10 +95,10 @@ public interface SupplierUserService {
 
     /**
      * 导出供应商协作用户列表
+     *
      * @param dto
-     * @param response
      */
-    Boolean exportSupplierUser(UserPagingSearchDTO dto, HttpServletResponse response);
+    Boolean exportSupplierUser(UserPagingSearchDTO dto);
 
     /**
      * 根据条件获取供应商用户列表
@@ -110,4 +106,6 @@ public interface SupplierUserService {
      * @return
      */
     List<SupplierUserVO> getSupplierUserList(UserPagingSearchDTO dto);
+
+    PagingVO<SupplierUserVO> exportSupplierUser(PagingDTO<UserPagingSearchDTO> dto);
 }

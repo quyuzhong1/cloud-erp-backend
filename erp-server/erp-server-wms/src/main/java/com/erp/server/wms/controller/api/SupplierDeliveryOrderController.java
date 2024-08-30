@@ -10,19 +10,16 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.server.wms.query.SupplierDeliveryQueryHandler;
 import com.erp.server.wms.service.SupplierDeliveryOrderService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -136,9 +133,8 @@ public class SupplierDeliveryOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/export")
-    @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
-    public ApiResult<Boolean> export(@RequestBody  DeliveryOrderDTO.ParamDTO dto, HttpServletResponse response) {
-        return success(service.export(dto,response));
+    public ApiResult<Boolean> export(@RequestBody  DeliveryOrderDTO.ParamDTO dto) {
+        return success(service.export(dto));
     }
 
     /**

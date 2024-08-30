@@ -4,7 +4,6 @@ package com.erp.server.scm.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,15 +14,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
-import com.erp.server.scm.service.PurchaseOrderService;
-import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.server.scm.query.SupplierQueryHandler;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
@@ -36,8 +33,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -378,14 +373,8 @@ public class SupplierController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出供应商")
     @PostMapping("/exportSupplier")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id",
-            menuCode = "scm:supplier:paging",
-            tableAlias = "supplier"
-    )
-    @WebAdvanceQuery(handler = SupplierQueryHandler.class)
-    public ApiResult exportSupplier(@RequestBody @Valid SupplierDTO.PagingParamDTO dto, HttpServletResponse response) {
-        supplierService.exportSupplier(dto, response);
+    public ApiResult exportSupplier(@RequestBody @Valid SupplierDTO.PagingParamDTO dto) {
+        supplierService.exportSupplier(dto);
         return success();
     }
 

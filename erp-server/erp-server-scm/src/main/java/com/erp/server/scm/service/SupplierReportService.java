@@ -4,9 +4,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierReportDTO;
 
-import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-
 /**
  * @Classname: SupplierReportService
  * @Description: 供应商相关报表服务接口类
@@ -24,9 +21,11 @@ public interface SupplierReportService {
 
     /**
      * 导出
+     *
      * @param paramDTO
      * @return
      */
-    void exportList(SupplierReportDTO.ExportSearchParamDTO paramDTO, HttpServletResponse response);
+    void exportList(SupplierReportDTO.ExportSearchParamDTO paramDTO);
 
+    PagingVO<SupplierReportDTO.PagingViewDTO> exportSupplierReport(PagingDTO<SupplierReportDTO.ExportSearchParamDTO> dto);
 }
