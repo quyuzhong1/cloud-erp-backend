@@ -82,4 +82,12 @@ public interface WmsFirstMileDeliveryFeign {
      */
     @PostMapping("/feign/firstMileDelivery/countReceiveQtyByParams")
     List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(@RequestBody FirstMileDeliveryDTO.RequestReceiveDTO dto);
+
+    /**
+     * 发货单查询业务单号
+     * @param ids
+     * @return
+     */
+    @PostMapping("/feign/firstMileDelivery/getBusinessCodeByIds")
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@RequestBody List<String> ids);
 }

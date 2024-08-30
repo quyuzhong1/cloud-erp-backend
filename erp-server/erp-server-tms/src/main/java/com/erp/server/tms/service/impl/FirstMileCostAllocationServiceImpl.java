@@ -46,7 +46,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -60,7 +59,6 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotBlank;
 
 /**
  * <p>
@@ -374,7 +372,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = JSONUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.AllocationSettingDTO.class);
 
         if (!CollectionUtils.isEmpty(reconciliationDetailEntityList)) {
-            // TODO 后面再进行考虑定时分摊计算，现在只考虑分摊重算
+            //后面再进行考虑定时分摊计算，现在只考虑分摊重算
             TmsFirstMileReconciliationDetailEntity oldReconciliationDetailEntity = reconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(entity.getReconciliationMonth()) && Objects.equals(e.getReconciliationMonth(), entity.getReconciliationMonth())).findFirst().orElse(null);
             if (Objects.nonNull(oldReconciliationDetailEntity)) {
                 entity.setStatus(ConfirmStatusEnum.WAIT_CONFIRM.getCode());
@@ -656,8 +654,6 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (CollectionUtils.isEmpty(firstMileSkuCostAllocationEntityList)) {
             return;
         }
-        //新增sku分摊记录
-//        firstMileSkuCostAllocationService.saveBatch(firstMileSkuCostAllocationEntityList);
         //计算费用分摊明细
         List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList = calcAllocatedSkuCostDetail(firstMileSkuCostAllocationEntityList, allocationSettingDTO, firstMileEstimatedBillEntity, reconciliationDetailEntity, weightAllocationEntityList);
         //同一个发货单-核算月份-对账月份内 计算期初冲期初
@@ -874,7 +870,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public void autoGenerateFirstMileCostAllocation(LocalDate reportPeriodMonth) {
+    public void autoGenerateFirstMileCostAllocation(LocalDate reportPeriodMonth, String sourceId) {
         if (null == reportPeriodMonth) {
             throw new ServiceException("核算期间时间为空");
         }
@@ -882,7 +878,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         statusList.add(CostAllocationStatusEnum.NOT.getCode());
         statusList.add(CostAllocationStatusEnum.PART.getCode());
         // 头程重量分摊-费用状态为{未分摊，部分分摊}+本期账单数据 判断是否进入头程费用分摊表
-        List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(null, statusList);
+        List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(sourceId), statusList);
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -932,7 +928,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                                                                                     List<FirstMileWeightAllocationEntity> weightAllocationEntityList) {
         List<FirstMileSkuCostAllocationDetailEntity> firstMileSkuCostAllocationDetailEntityList = new ArrayList<>();
         //sku成本总金额
-        BigDecimal skuTotalCost = firstMileSkuCostAllocationEntityList.stream().map(e -> e.getProductCost().multiply(new BigDecimal(e.getDeliveryQty()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+//        BigDecimal skuTotalCost = firstMileSkuCostAllocationEntityList.stream().map(e -> e.getProductCost().multiply(new BigDecimal(e.getDeliveryQty()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //SKU单位成本合计
+        BigDecimal skuTotalCost = firstMileSkuCostAllocationEntityList.stream().map(FirstMileSkuCostAllocationEntity::getProductCost).reduce(BigDecimal.ZERO, BigDecimal::add);
         //sku总重量
         BigDecimal weightTotal = weightAllocationEntityList.stream().map(FirstMileWeightAllocationEntity::getAllocationWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
         //头程总金额

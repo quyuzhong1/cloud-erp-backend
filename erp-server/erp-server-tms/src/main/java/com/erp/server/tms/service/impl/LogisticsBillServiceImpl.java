@@ -1007,7 +1007,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                         costDetailAddDTO1.setCostValue(BigDecimal.ZERO);
                         costDetailAddDTO1.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
                         costDetailAddDTO1.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
-                        costDetailList.add(costDetailAddDTO);
+                        costDetailList.add(costDetailAddDTO1);
                     }
                 }
                 //暂估其他费用
@@ -1021,7 +1021,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                         costDetailAddDTO2.setCostValue(otherCost);
                         costDetailAddDTO2.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
                         costDetailAddDTO2.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
-                        costDetailList.add(costDetailAddDTO);
+                        costDetailList.add(costDetailAddDTO2);
                     }
                 }
                 addDTO.setCostDetailList(costDetailList);

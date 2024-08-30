@@ -75,6 +75,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1763,6 +1764,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList1 = overseasWarehouseInboundService.countReceiveQtyByParams(dto);
         List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList2 =fbaShipmentReceiveService.countReceiveQtyByParams(dto);
         return Stream.concat(receiveDTOList1.stream(),receiveDTOList2.stream()).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@Param("ids") List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return null;
+        }
+        return baseMapper.getBusinessCodeByIds(ids);
     }
 
     @Override

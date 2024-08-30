@@ -405,4 +405,21 @@
             </foreach>
         </if>
     </select>
+    <select id="getBusinessCodeById" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
+        SELECT
+            fd.id,
+            concat(fs.code,owi.code) AS businessCode,
+            fs.code as fbaShipmentCode,
+            owi.code as overseasWarehouseCode
+        FROM first_mile_delivery fd
+         LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE
+         LEFT JOIN fba_shipment fs ON fs.code = fd.source_code AND fs.is_deleted = FALSE
+        where fd.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            fd.id in
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>
