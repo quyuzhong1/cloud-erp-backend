@@ -1,8 +1,9 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.ReplenishmentRefLabelEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.ReplenishmentRefLabelDTO;
+import com.erp.model.mrp.entity.ReplenishmentRefLabelEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,22 +16,20 @@ import com.erp.model.mrp.dto.ReplenishmentRefLabelDTO;
 public interface ReplenishmentRefLabelService extends SuperService<ReplenishmentRefLabelEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-08-30
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(ReplenishmentRefLabelDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author will
     * @date: 2024-08-30
     * @param dto
     * @return
     */
-    Boolean update(ReplenishmentRefLabelDTO.UpdateDTO dto);
+    Boolean update(ReplenishmentRefLabelDTO.UpdateDTO dto,String refId);
 
-
+    /**
+     * 取消标签
+     * @author will
+     * @date 2024/8/30 16:19
+     * @param labelIdList
+     * @param id
+     */
+    void deleteLabel(List<String> labelIdList, String id);
 }

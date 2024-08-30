@@ -140,4 +140,37 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         private List<String> ruleTypeList;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateLabelDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 标签选项
+         */
+        @NotEmpty(message = "标签选项不能为空")
+        private List<String> labelIdList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BatchSaveLabelDTO {
+        /**
+         * 主键ids
+         */
+        @NotEmpty(message = "主键ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 标签选项
+         */
+        @NotEmpty(message = "标签选项不能为空")
+        private List<String> labelIdList;
+
+    }
 }

@@ -4,6 +4,8 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -83,11 +85,33 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
         return Boolean.TRUE;
     }
 
+    @Override
+    public BatchResultDTO delete(String id) {
+        LabelInfoEntity old = super.getById(id);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "标签信息单"));
+        //删除标签
+        this.removeById(old.getId());
+        return BatchResultDTO.success(old.getId(), old.getName(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public BatchResultDTO updateDisabled(String id,Boolean disabled) {
+        LabelInfoEntity old = super.getById(id);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "标签信息单"));
+        if (old.getDisabled().equals(disabled)) {
+            if (disabled) {
+                return BatchResultDTO.success(old.getId(), old.getName(), "已禁用不支持再次禁用");
+            } else {
+                return BatchResultDTO.success(old.getId(), old.getName(), "已启用不支持再次启用");
+            }
+        }
+        old.setDisabled(disabled);
+        this.updateById(old);
+        return BatchResultDTO.success(old.getId(), old.getName(), OperationTypeEnum.UPDATE);
+    }
+
     /**
      * 根据名称查询
-     *
-     *
-     *
      * @author will
      * @date 2024/8/30 11:45
      * @param name

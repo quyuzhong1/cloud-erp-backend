@@ -300,7 +300,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @return ApiResult<?>
      */
     @PostMapping("/cancelFavorite")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消关注补货建议")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议取消关注")
     public ApiResult<?> cancelFavorite(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -308,10 +308,84 @@ public class ReplenishmentSuggestionController extends BaseController {
             try {
                 resultDTO = replenishmentSuggestionService.cancelFavorite(id);
             }catch (Exception e){
-                log.error("取消关注补货建议",e);
+                log.error("补货建议取消关注",e);
                 ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "补货建议不存在, 取消关注补货建议失败");
+                    resultDTO = BatchResultDTO.fail(id, id, "补货建议不存在, 补货建议取消关注失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 编辑标签（单个）
+     * @author will
+     * @date 2024/8/30 14:50
+     * @param updateLabelDTO
+     * @return ApiResult<?>
+     */
+    @PostMapping("/updateLabel")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议添加标签")
+    public ApiResult<?> updateLabel(@RequestBody @Validated ReplenishmentSuggestionDTO.UpdateLabelDTO updateLabelDTO) {
+        replenishmentSuggestionService.updateLabel(updateLabelDTO);
+        return success();
+    }
+
+    /**
+     * 批量添加标签
+     * @author will
+     * @date 2024/8/30 15:55
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/batchAddLabel")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议批量添加标签")
+    public ApiResult<?> batchAddLabel(@RequestBody @Validated ReplenishmentSuggestionDTO.BatchSaveLabelDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = replenishmentSuggestionService.batchAddLabel(id,dto.getLabelIdList());
+            }catch (Exception e){
+                log.error("补货建议添加标签",e);
+                ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "补货建议不存在, 补货建议批量添加标签失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 取消标签
+     * @author will
+     * @date 2024/8/30 15:56
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/cancelLabel")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议取消标签")
+    public ApiResult<?> cancelLabel(@RequestBody @Validated ReplenishmentSuggestionDTO.BatchSaveLabelDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = replenishmentSuggestionService.cancelLabel(id,dto.getLabelIdList());
+            }catch (Exception e){
+                log.error("补货建议取消标签",e);
+                ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "补货建议不存在, 补货建议取消标签失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }

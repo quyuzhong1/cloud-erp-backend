@@ -1,15 +1,17 @@
 package com.erp.server.mrp.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.LabelInfoDTO;
+import com.erp.model.mrp.entity.LabelInfoEntity;
 import com.erp.server.mrp.service.LabelInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 标签信息表
@@ -56,17 +60,70 @@ public class LabelInfoController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "标签信息表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "mrp:labelInfo:update",
-        serviceClass = LabelInfoService.class,
-        keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated LabelInfoDTO.UpdateDTO dto) {
         labelInfoService.update(dto);
         return success();
     }
 
 
+    /**
+     * 批量删除
+     * @author will
+     * @date 2024/8/30 14:25
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "删除标签管理")
+    public ApiResult<?> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = labelInfoService.delete(id);
+            }catch (Exception e){
+                log.error("删除标签管理",e);
+                LabelInfoEntity entity = labelInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "标签管理不存在, 删除标签管理失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 启禁用变更
+     * @author will
+     * @date 2024/8/30 14:34
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/updateDisabled")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启禁用变更")
+    public ApiResult<?> updateDisabled(@RequestBody @Validated LabelInfoDTO.UpdateDisabledDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = labelInfoService.updateDisabled(id,dto.getDisabled());
+            }catch (Exception e){
+                log.error("启禁用变更",e);
+                LabelInfoEntity entity = labelInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "标签管理不存在, 启禁用变更失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
 }

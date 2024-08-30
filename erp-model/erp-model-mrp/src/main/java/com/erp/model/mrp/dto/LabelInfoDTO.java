@@ -4,9 +4,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -102,6 +104,21 @@ public class LabelInfoDTO implements Serializable {
         private Boolean disabled;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDisabledDTO {
 
+        /**
+         * 主键ids
+         */
+        @NotEmpty(message = "主键ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 是否禁用，true禁用，false启用
+         */
+        @NotNull(message = "启禁用状态不能为空")
+        private Boolean disabled;
+    }
 
 }

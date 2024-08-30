@@ -51,6 +51,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Autowired
     private ReplenishmentSuggestionFavoriteService replenishmentSuggestionFavoriteService;
 
+    @Autowired
+    private ReplenishmentRefLabelService replenishmentRefLabelService;
+
+
     @Override
     public PagingVO<ReplenishmentSuggestionVO.PagingView> paging(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         return null;
@@ -230,6 +234,39 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         String msg = StrUtil.format("设置了取消关注");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "取消关注");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public BatchResultDTO updateLabel(ReplenishmentSuggestionDTO.UpdateLabelDTO updateLabelDTO) {
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(updateLabelDTO.getId()).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+
+        //单个编辑标签
+        ReplenishmentRefLabelDTO.UpdateDTO dto = new ReplenishmentRefLabelDTO.UpdateDTO();
+        dto.setLabelIdList(updateLabelDTO.getLabelIdList());
+        dto.setType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+        replenishmentRefLabelService.update(dto,entity.getId());
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public BatchResultDTO batchAddLabel(String id, List<String> labelIdList) {
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+
+        //新增标签
+        ReplenishmentRefLabelDTO.UpdateDTO dto = new ReplenishmentRefLabelDTO.UpdateDTO();
+        dto.setLabelIdList(labelIdList);
+        dto.setType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+        replenishmentRefLabelService.update(dto,entity.getId());
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public BatchResultDTO cancelLabel(String id, List<String> labelIdList) {
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+
+        //取消标签
+        replenishmentRefLabelService.deleteLabel(labelIdList,entity.getId());
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DELETE);
     }
 
     /**

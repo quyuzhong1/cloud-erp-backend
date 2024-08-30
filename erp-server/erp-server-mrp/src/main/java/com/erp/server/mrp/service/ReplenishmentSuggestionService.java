@@ -95,4 +95,30 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return BatchResultDTO
      */
     BatchResultDTO cancelFavorite(String id);
+    /**
+     * 添加标签
+     * @author will
+     * @date 2024/8/30 14:51
+     * @param updateLabelDTO
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateLabel(ReplenishmentSuggestionDTO.UpdateLabelDTO updateLabelDTO);
+    /**
+     * 批量更新标签
+     * @author will
+     * @date 2024/8/30 16:02
+     * @param id
+     * @param labelIdList
+     * @return BatchResultDTO
+     */
+    BatchResultDTO batchAddLabel(String id, List<String> labelIdList);
+    /**
+     * 取消标签
+     * @author will
+     * @date 2024/8/30 16:15
+     * @param id
+     * @param labelIdList
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelLabel(String id, List<String> labelIdList);
 }
