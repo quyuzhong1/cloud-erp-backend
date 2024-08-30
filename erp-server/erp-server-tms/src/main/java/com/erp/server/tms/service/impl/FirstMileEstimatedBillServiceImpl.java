@@ -177,10 +177,10 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     private FirstMileEstimatedBillDTO.Tab getTabCount(String status, String tabFlagName) {
         int count = 0;
         if(ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(status)){
-            count = this.baseMapper.countByParam(status, status);
+            count = this.baseMapper.countByParam(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
         }
         if(ConfirmStatusEnum.CONFIRM.getCode().equals(status)){
-            count = this.baseMapper.countByParam(null, status);
+            count = this.baseMapper.countByParam(null, ReconciliationStatusEnum.CONFIRMED.getCode());
         }
 
         return new FirstMileEstimatedBillDTO.Tab(status, tabFlagName, count);
