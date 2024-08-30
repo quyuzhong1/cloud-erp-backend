@@ -16,6 +16,7 @@ import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.mercado.dto.mercado.order.OrderItemsBean;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
+import com.sdk.oms.mercado.dto.mercado.shipment.ShippingAddressBeanX;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -325,7 +326,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         if (Objects.isNull(orderViewDTO) || Objects.isNull(orderViewDTO.getShipping())) {
             return null;
         }
-
+        ShippingAddressBeanX shippingAddress = orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress();
         return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(orderViewDTO.getBuyer().getFid()))
                 .customerId(String.valueOf(orderViewDTO.getBuyer().getFid()))
@@ -334,18 +335,18 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 .telNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
                 .receiverTelNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
                 .email("")
-                .country(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getCountry().getFid())
-                .provinceName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getState().getName())
-                .cityName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getCity().getName())
-                .districtName(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getAddressLine())
-                .postCode(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getZipCode())
-                .firstAddress(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getNeighborhood().getName()+" "+
-                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getMunicipality().getName()+" "+
-                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getComment())
+                .country(shippingAddress.getCountry().getFid())
+                .provinceName(shippingAddress.getState().getName())
+                .cityName(shippingAddress.getCity().getName())
+                .districtName(shippingAddress.getAddressLine())
+                .postCode(shippingAddress.getZipCode())
+                .firstAddress(shippingAddress.getNeighborhood().getName()+" "+
+                        (StringUtils.isNotBlank(shippingAddress.getMunicipality().getName()) ? shippingAddress.getMunicipality().getName() : "")+" "+
+                        shippingAddress.getComment())
                 .secondAddress("")
-                .fullAddress(orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getNeighborhood().getName()+" "+
-                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getMunicipality().getName()+" "+
-                        orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress().getComment())
+                .fullAddress(shippingAddress.getNeighborhood().getName()+" "+
+                        (StringUtils.isNotBlank(shippingAddress.getMunicipality().getName()) ? shippingAddress.getMunicipality().getName() : "") +" "+
+                        shippingAddress.getComment())
                 .build();
     }
 
@@ -365,12 +366,20 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         String trackingNumber = "";
         String name = "";
         BigDecimal cost = BigDecimal.ZERO;
-
-        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO().getTrackingNumber())) {
+        LocalDateTime deliveryTime = null;
+        if (ObjectUtil.isNotEmpty(orderBean.getShipmentViewDTO())) {
             trackingNumber = orderBean.getShipmentViewDTO().getTrackingNumber();
             name = orderBean.getShipmentViewDTO().getLeadTime().getShippingMethod().getName();
             cost = orderBean.getShipmentViewDTO().getLeadTime().getCost();
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+            OffsetDateTime offsetDateTime = OffsetDateTime.parse(orderBean.getShipmentViewDTO().getDateCreated(), formatter);
+            //发货时间
+            deliveryTime = offsetDateTime.toLocalDateTime();
         }
+
+
+
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         //自发货不用更新物流单
         if (!logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
@@ -381,7 +390,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
                 .code(trackingNumber)
                 .name(name)
-                .deliveryTime(null)
+                .deliveryTime(deliveryTime)
                 .logisticsChannelId("")
                 .logisticsChannelName("")
                 .estimatedShippingCost(cost)

@@ -2,6 +2,7 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
@@ -218,7 +219,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
-        if (PlatformDictEnum.IML.getCode().equals(existMapping.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(existMapping.getThirdSysType())) {
+        if (OmsPlatformEnum.isThirdWarehouse(existMapping.getThirdSysType())) {
             OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
             feignDTO.setCode(existMapping.getThirdSysType());
             feignDTO.setOverseasProviderWarehouseId(existMapping.getThirdId());
@@ -335,7 +336,7 @@ public class ThirdVirtualWarehouseStrategy implements ThirdMappingStrategy {
                 viewDTO.setName(thirdWarehouseEntity.getName());
                 viewDTO.setCode(thirdWarehouseEntity.getCode());
             }
-            if (PlatformDictEnum.IML.getCode().equals(thirdMappingEntity.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(thirdMappingEntity.getThirdSysType())) {
+            if (OmsPlatformEnum.isThirdWarehouse(thirdMappingEntity.getThirdSysType())) {
                 //校验第三方仓库是否存在
                 OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
                 feignDTO.setCode(thirdMappingEntity.getThirdSysType());

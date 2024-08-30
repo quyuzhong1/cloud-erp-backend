@@ -367,4 +367,13 @@ public class OverseasWarehouseInboundController extends BaseController {
         Boolean result = overseasWarehouseInboundService.exportExcel(dto, response);
         return result ? success() : failure();
     }
+
+    /**
+     * 获取海外仓入库单可选择的物流产品
+     */
+    @GetMapping("/getLogisticByTransferWarehouseId")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> getLogisticByTransferWarehouseId(@RequestParam(value = "transferWarehouseId") String transferWarehouseId) {
+        List<BaseDropDownDTO.CommonDTO> baseSelectDTOS = overseasWarehouseInboundService.getLogisticByTransferWarehouseId(transferWarehouseId);
+        return success(baseSelectDTOS);
+    }
 }

@@ -65,7 +65,6 @@
             odp.approve_user_name AS approveUserName,
             odp.create_time AS createTime,
             odp.approve_time AS  approveTime,
-            op.code AS sourcePlatformCode,
             odpd.platform_sku as thirdWarehouseSku,
             odpd.platform_sku as  platformSku,
             odpd.platform_spu as platformProductId,
@@ -75,12 +74,9 @@
             odp.shop_name as shopName
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
-        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = odp.to_warehouse_id and opw.is_deleted = false
-        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and  odp.is_deleted = FALSE
-
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

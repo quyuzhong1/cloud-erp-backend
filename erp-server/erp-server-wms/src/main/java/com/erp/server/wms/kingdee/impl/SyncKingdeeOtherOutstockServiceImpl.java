@@ -101,6 +101,11 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
         //其他出库类型
         resultMap.put("type", entity.getType());
         resultMap.put("outType", entity.getOutType());
+        // 主表备注
+        if (StringUtils.isNotBlank(entity.getRemark())){
+            resultMap.put("remark", entity.getRemark());
+        }
+
         //出库日期
         resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
         //仓库
