@@ -1,10 +1,13 @@
 package com.erp.server.mrp.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.erp.model.mrp.entity.SalesEstimateManualEntity;
 import com.erp.server.mrp.mapper.SalesEstimateManualMapper;
 import com.erp.server.mrp.service.SalesEstimateManualService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +20,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class SalesEstimateManualServiceImpl extends SuperServiceImpl<SalesEstimateManualMapper, SalesEstimateManualEntity> implements SalesEstimateManualService {
 
+    @Override
+    public List<SalesEstimateManualEntity> listByReplenishmentDetailIds(List<String> detailIds) {
+        return list(Wrappers.<SalesEstimateManualEntity>lambdaQuery().in(SalesEstimateManualEntity::getReplenishmentId, detailIds));
+    }
 }

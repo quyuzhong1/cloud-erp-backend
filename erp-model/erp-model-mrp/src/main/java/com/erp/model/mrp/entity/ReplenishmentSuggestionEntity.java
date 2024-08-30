@@ -60,18 +60,6 @@ public class ReplenishmentSuggestionEntity extends BaseEntity<ReplenishmentSugge
     private String platform;
 
     /**
-     * 品牌
-     */
-    @TableField("brand_id")
-    private String brandId;
-
-    /**
-     * 分类
-     */
-    @TableField("category_id")
-    private String categoryId;
-
-    /**
      * 是否补货,normal正常补货，notRestocking暂不补货
      */
     @TableField("replenishment_type")

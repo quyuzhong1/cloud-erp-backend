@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service.impl;
 
+import com.common.business.service.impl.SuperServiceImpl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -13,6 +14,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.LabelInfoDTO;
 import com.erp.model.mrp.entity.LabelInfoEntity;
+import com.erp.model.mrp.vo.LabelVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.LabelInfoMapper;
 import com.erp.server.mrp.service.LabelInfoService;
@@ -22,6 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
 
 import java.util.Optional;
 /**
@@ -131,5 +136,14 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
             throw new ServiceException("标签名称重复，不支持新增");
         }
 
+    }
+    @Override
+    public List<LabelVO> listLabelByReplenishmentIds(List<String> ids) {
+        return baseMapper.listLabelByReplenishmentIds(ids);
+    }
+
+    @Override
+    public List<LabelVO> listLabelByReplenishmentId(String id) {
+        return baseMapper.listLabelByReplenishmentIds(Collections.singletonList(id));
     }
 }

@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionFavoriteDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 补货建议关注表 服务类
@@ -39,4 +41,10 @@ public interface ReplenishmentSuggestionFavoriteService extends SuperService<Rep
      * @param replenishmentSuggestionId
      */
     void cancelFavorite(String userId, String replenishmentSuggestionId);
+
+    /**
+     * 根据建议id查询是否关注
+     * @param ids 建议id
+     */
+    List<ReplenishmentSuggestionFavoriteEntity> listByReplenishmentIds(List<String> ids);
 }

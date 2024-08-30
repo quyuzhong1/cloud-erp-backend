@@ -1,7 +1,7 @@
 package com.erp.server.mrp.service;
 
-import com.erp.model.mrp.entity.RptOutOfStockEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.mrp.entity.RptOutOfStockEntity;
 
 /**
  * <p>

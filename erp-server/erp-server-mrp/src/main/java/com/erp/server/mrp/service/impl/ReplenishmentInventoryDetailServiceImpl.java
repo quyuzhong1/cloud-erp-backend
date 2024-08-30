@@ -1,10 +1,13 @@
 package com.erp.server.mrp.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
 import com.erp.server.mrp.mapper.ReplenishmentInventoryDetailMapper;
 import com.erp.server.mrp.service.ReplenishmentInventoryDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +20,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<ReplenishmentInventoryDetailMapper, ReplenishmentInventoryDetailEntity> implements ReplenishmentInventoryDetailService {
 
+    @Override
+    public List<ReplenishmentInventoryDetailEntity> listByReplenishmentDetailIds(List<String> ids) {
+        return list(Wrappers.<ReplenishmentInventoryDetailEntity>lambdaQuery().in(ReplenishmentInventoryDetailEntity::getReplenishmentDetailId, ids));
+    }
 }

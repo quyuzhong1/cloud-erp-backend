@@ -1,8 +1,11 @@
 package com.erp.server.mrp.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.mrp.entity.OverseasInTransitDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.mrp.vo.OverseasInTransitDetailVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -15,4 +18,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface OverseasInTransitDetailMapper extends BaseMapper<OverseasInTransitDetailEntity> {
 
+    Page<OverseasInTransitDetailVO> overseasInTransitDetail(@Param("page") Page<OverseasInTransitDetailVO> page,@Param("detailId") String detailId);
 }

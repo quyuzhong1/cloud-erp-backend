@@ -8,6 +8,7 @@ import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
 
+import java.math.BigDecimal;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -20,24 +21,69 @@ import java.util.List;
  * @since 2024-08-28
  */
 public interface ReplenishmentSuggestionService extends SuperService<ReplenishmentSuggestionEntity> {
-
+    /**
+     * 补货建议列表
+     * @param params 参数
+     */
     PagingVO<ReplenishmentSuggestionVO.PagingView> paging(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params);
-
+    /**
+     * 补货建议明细
+     * @param detailId 明细id
+     */
     ReplenishmentSuggestionVO.View view(String detailId);
-
+    /**
+     * fba在途明细明细
+     * @param params 明细id
+     */
     PagingVO<FbaInTransitDetailVO> fbaInTransitDetail(PagingDTO<String> params);
-
+    /**
+     * 海外仓在途明细
+     * @param params 明细id
+     */
     PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<String> params);
-
+    /**
+     * 本地仓在途明细
+     * @param params 明细id
+     */
     PagingVO<LocalInTransitDetailVO> localInTransitDetail(PagingDTO<LocalInTransitDetailDTO> params);
-
+    /**
+     * 预计发货明细
+     * @param params 明细id
+     */
     PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<EstimatedDeliveryDTO> params);
-
+    /**
+     * 预计采购明细
+     * @param params 明细id
+     */
     PagingVO<EstimatedPurchaseVO> estimatedPurchase(PagingDTO<EstimatedPurchaseDTO> params);
-
+    /**
+     * 库存总数
+     * @param params 明细id
+     */
     Integer inventoryTotal(InventoryTotalDTO params);
-
+    /**
+     * 店铺库存明细
+     * @param params 明细id
+     */
     InventoryDetailVO inventoryDetail(InventoryTotalDTO params);
+    /**
+     * 销量分析
+     * @param dto 参数
+     */
+    SalesAnalysisVO salesAnalysis(SalesAnalysisDTO dto);
+    /**
+     * 历史库存
+     * @param dto 参数
+     */
+    HistoryInventoryVO historyInventory(HistoryInventoryDTO dto);
+    /**
+     * 断货报告
+     */
+    List<RptOutOfStockVO> outOfStockReport(String detailId);
+    /**
+     * 断货报告数量
+     */
+    BigDecimal outOfStockReportTotal(String detailId);
     /**
      * 暂不补货
      * @author will

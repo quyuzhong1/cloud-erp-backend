@@ -1,7 +1,14 @@
 package com.erp.model.mrp.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.annotation.Dict;
+import com.erp.model.mrp.enums.ReplenishmentTypeEnum;
+import com.erp.model.mrp.handler.ObjectToListSaleHandler;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.ibatis.type.JdbcType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -68,17 +75,9 @@ public class ReplenishmentSuggestionVO {
         private String platform;
 
         /**
-         * 品牌
-         */
-        private String brandId;
-        /**
          * 品牌名字
          */
         private String brandName;
-        /**
-         * 分类
-         */
-        private String categoryId;
         /**
          * 分类名字
          */
@@ -145,25 +144,29 @@ public class ReplenishmentSuggestionVO {
         /**
          * 销量分析
          */
-        private List<SalesAnalysisVO> salesAnalysis;
+        private SalesAnalysisVO salesAnalysis;
         /**
          * 分时段销量
          */
+        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
         private List<SalesVO> salesQty;
 
         /**
          * 分时段日均销
          */
-        private List<AvgSalesVO> avgSalesQty;
+        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private List<SalesVO> avgSalesQty;
 
         /**
          * 预估销量
          */
-        private List<SalesEstimateVO> salesEstimateQty;
+        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private List<SalesVO> salesEstimateQty;
         /**
          * 预估日销量
          */
-        private List<AvgSalesEstimateVO> avgSalesEstimateQty;
+        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private List<SalesVO> avgSalesEstimateQty;
         /**
          * 运营月销量预估
          */
@@ -262,7 +265,8 @@ public class ReplenishmentSuggestionVO {
         /**
          * 是否补货
          */
-        private String restock;
+        @Dict(enumClass = ReplenishmentTypeEnum.class)
+        private String replenishmentType;
         /**
          * 更新时间
          */
@@ -379,29 +383,29 @@ public class ReplenishmentSuggestionVO {
          * 总库存
          */
         private Integer totalInventoryQty;
-        /**
-         * 销量分析
-         */
-        private List<SalesAnalysisVO> salesAnalysis;
 
         /**
          * 分时段销量
          */
+        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
         private List<SalesVO> salesQty;
 
         /**
          * 分时段日均销
          */
-        private List<AvgSalesVO> avgSalesQty;
+        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private List<SalesVO> avgSalesQty;
 
         /**
          * 预估销量
          */
-        private List<SalesEstimateVO> salesEstimateQty;
+        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private List<SalesVO> salesEstimateQty;
         /**
          * 预估日销量
          */
-        private List<AvgSalesEstimateVO> avgSalesEstimateQty;
+        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private List<SalesVO> avgSalesEstimateQty;
         /**
          * 采购审批天数（天）
          */
@@ -451,7 +455,8 @@ public class ReplenishmentSuggestionVO {
         /**
          * 是否补货
          */
-        private String restock;
+        @Dict(enumClass = ReplenishmentTypeEnum.class)
+        private String replenishmentType;
         /**
          * 更新时间
          */
@@ -460,32 +465,6 @@ public class ReplenishmentSuggestionVO {
          * 备注
          */
         private String remark;
-    }
-
-    @Getter
-    @Setter
-    public static class SalesEstimateVO {
-        /**
-         * 类型
-         */
-        private String type;
-        /**
-         * 数量
-         */
-        private String qty;
-    }
-
-    @Getter
-    @Setter
-    public static class AvgSalesEstimateVO {
-        /**
-         * 类型
-         */
-        private String type;
-        /**
-         * 数量
-         */
-        private String qty;
     }
 
     @Getter
@@ -503,19 +482,8 @@ public class ReplenishmentSuggestionVO {
 
     @Getter
     @Setter
-    public static class AvgSalesVO {
-        /**
-         * 类型
-         */
-        private String type;
-        /**
-         * 数量
-         */
-        private String qty;
-    }
-
-    @Getter
-    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class DateVO {
         /**
          * 预警类型
@@ -534,14 +502,16 @@ public class ReplenishmentSuggestionVO {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SalesAnalysisVO {
         /**
          * 日期
          */
-        private LocalDate date;
+        private List<LocalDate> date;
         /**
          * 数量
          */
-        private Integer qty;
+        private List<Integer> qty;
     }
 }

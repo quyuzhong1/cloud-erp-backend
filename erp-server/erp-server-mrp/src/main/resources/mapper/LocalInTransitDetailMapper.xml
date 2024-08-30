@@ -4,22 +4,33 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.LocalInTransitDetailEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="replenishment_detail_id" property="replenishmentDetailId" />
-        <result column="qty" property="qty" />
-        <result column="plan_arrival_date" property="planArrivalDate" />
-        <result column="source_id" property="sourceId" />
-        <result column="source_code" property="sourceCode" />
-        <result column="calc_version" property="calcVersion" />
-        <result column="source_type" property="sourceType" />
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="replenishment_detail_id" property="replenishmentDetailId"/>
+        <result column="qty" property="qty"/>
+        <result column="plan_arrival_date" property="planArrivalDate"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="source_code" property="sourceCode"/>
+        <result column="calc_version" property="calcVersion"/>
+        <result column="source_type" property="sourceType"/>
     </resultMap>
+    <select id="localInTransitDetail" resultType="com.erp.model.mrp.vo.LocalInTransitDetailVO">
+        select qty,
+               plan_arrival_date,
+               source_id,
+               source_code,
+               source_type
+        from local_in_transit_detail
+        where replenishment_detail_id = #{params.id}
+          and source_type = #{params.type}
+          and is_deleted = false
+    </select>
 
 </mapper>

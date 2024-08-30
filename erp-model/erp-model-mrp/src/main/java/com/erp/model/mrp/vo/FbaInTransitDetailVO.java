@@ -1,5 +1,6 @@
 package com.erp.model.mrp.vo;
 
+import com.common.business.annotation.Dict;
 import lombok.Getter;
 import lombok.Setter;
 

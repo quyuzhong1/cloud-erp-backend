@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -9,13 +10,14 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionFavoriteDTO;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionFavoriteEntity;
 import com.erp.server.mrp.mapper.ReplenishmentSuggestionFavoriteMapper;
-import com.erp.server.mrp.service.OperateLogService;
 import com.erp.server.mrp.service.ReplenishmentSuggestionFavoriteService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
 /**
  * <p>
  * 补货建议关注表 服务实现类
@@ -27,8 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 public class ReplenishmentSuggestionFavoriteServiceImpl extends SuperServiceImpl<ReplenishmentSuggestionFavoriteMapper, ReplenishmentSuggestionFavoriteEntity> implements ReplenishmentSuggestionFavoriteService {
-    @Autowired
-    private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -64,12 +64,17 @@ public class ReplenishmentSuggestionFavoriteServiceImpl extends SuperServiceImpl
                 .remove();
     }
 
+    @Override
+    public List<ReplenishmentSuggestionFavoriteEntity> listByReplenishmentIds(List<String> ids) {
+        return list(Wrappers.<ReplenishmentSuggestionFavoriteEntity>lambdaQuery().in(ReplenishmentSuggestionFavoriteEntity::getReplenishmentSuggestionId, ids));
+    }
+
     /**
     * 新增修改处理数据
     */
     private void handleData(ReplenishmentSuggestionFavoriteEntity entity) {
         Boolean favorite = isFavorite(entity.getUserId(), entity.getReplenishmentSuggestionId());
-        if (favorite) {
+        if (Boolean.TRUE.equals(favorite)) {
             throw new ServiceException("补货建议已关注，无需再次关注");
         }
     }

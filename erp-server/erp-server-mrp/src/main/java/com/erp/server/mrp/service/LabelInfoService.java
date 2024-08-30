@@ -1,6 +1,11 @@
 package com.erp.server.mrp.service;
+
 import com.erp.model.mrp.entity.LabelInfoEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.mrp.entity.LabelInfoEntity;
+import com.erp.model.mrp.vo.LabelVO;
+
+import java.util.List;
 import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.LabelInfoDTO;
 
@@ -32,6 +37,15 @@ public interface LabelInfoService extends SuperService<LabelInfoEntity> {
     */
     Boolean update(LabelInfoDTO.UpdateDTO dto);
 
+
+    /**
+     * 根据补货建议主表id查询标签
+     */
+    List<LabelVO> listLabelByReplenishmentIds(List<String> ids);
+    /**
+     * 根据补货建议主表id查询标签
+     */
+    List<LabelVO> listLabelByReplenishmentId(String id);
     /**
      * 批量删除
      * @author will

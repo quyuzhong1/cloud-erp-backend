@@ -1,8 +1,12 @@
 package com.erp.server.mrp.mapper;
 import com.erp.model.mrp.entity.LabelInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.mrp.vo.LabelVO;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +20,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface LabelInfoMapper extends BaseMapper<LabelInfoEntity> {
 
+    List<LabelVO> listLabelByReplenishmentIds(@Param("ids") List<String> ids);
 }

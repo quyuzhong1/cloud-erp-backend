@@ -3,6 +3,9 @@ package com.erp.server.mrp.service;
 import com.erp.model.mrp.entity.SalesInfoEntity;
 import com.common.business.service.SuperService;
 
+import java.time.LocalDate;
+import java.util.List;
+
 /**
  * <p>
  * 历史销量信息 服务类
@@ -13,4 +16,11 @@ import com.common.business.service.SuperService;
  */
 public interface SalesInfoService extends SuperService<SalesInfoEntity> {
 
+    /**
+     * 获取历史销量
+     * @param ids 补货建议明细id
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     */
+    List<SalesInfoEntity> listByReplenishmentDetailIds(List<String> ids, LocalDate startDate, LocalDate endDate);
 }

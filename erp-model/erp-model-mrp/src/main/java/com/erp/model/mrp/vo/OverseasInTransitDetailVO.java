@@ -24,6 +24,10 @@ public class OverseasInTransitDetailVO {
      * 状态
      */
     private String status;
+    /**
+     * 状态名字
+     */
+    private String statusName;
 
     /**
      * 发货日期

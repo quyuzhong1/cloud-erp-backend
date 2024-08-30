@@ -16,6 +16,15 @@
        <result column="color" property="color" />
        <result column="disabled" property="disabled" />
     </resultMap>
+    <select id="listLabelByReplenishmentIds" resultType="com.erp.model.mrp.vo.LabelVO">
+        select rrl.ref_id as replenishmentId, li.name, li.color
+        from label_info li
+        inner join replenishment_ref_label rrl on rrl.is_deleted = false and rrl.label_id = li.id
+        where li.disabled = false and rrl.ref_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">

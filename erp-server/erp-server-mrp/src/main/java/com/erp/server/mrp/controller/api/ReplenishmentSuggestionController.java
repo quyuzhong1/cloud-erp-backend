@@ -2,6 +2,7 @@ package com.erp.server.mrp.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -13,12 +14,14 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
+import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +47,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param params 参数
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public ApiResult<PagingVO<ReplenishmentSuggestionVO.PagingView>> paging(@RequestBody @Validated PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         PagingVO<ReplenishmentSuggestionVO.PagingView> paging = replenishmentSuggestionService.paging(params);
         return success(paging);
@@ -101,7 +105,7 @@ public class ReplenishmentSuggestionController extends BaseController {
     }
 
     /**
-     * 预计发货明细
+     * 预计采购明细
      * @param params 明细id
      */
     @PostMapping("/estimatedPurchase")
@@ -111,7 +115,7 @@ public class ReplenishmentSuggestionController extends BaseController {
     }
 
     /**
-     * 预计发货明细
+     * 数量统计
      * @param params 明细id
      */
     @PostMapping("/inventoryTotal")
@@ -130,6 +134,49 @@ public class ReplenishmentSuggestionController extends BaseController {
         return success(inventoryDetail);
     }
 
+
+
+    public ApiResult<?> inventoryEstimationDetail(@RequestBody @Validated InventoryEstimationDTO dto) {
+        return null;
+    }
+
+    /**
+     * 销量分析
+     * @param dto 参数
+     */
+    @PostMapping("/salesAnalysis")
+    public ApiResult<SalesAnalysisVO> salesAnalysis(@RequestBody @Validated SalesAnalysisDTO dto) {
+        SalesAnalysisVO salesAnalysis = replenishmentSuggestionService.salesAnalysis(dto);
+        return success(salesAnalysis);
+    }
+
+    /**
+     * 历史库存
+     * @param dto 参数
+     */
+    @PostMapping("/historyInventory")
+    public ApiResult<HistoryInventoryVO> historyInventory(@RequestBody @Validated HistoryInventoryDTO dto) {
+        HistoryInventoryVO historyInventory = replenishmentSuggestionService.historyInventory(dto);
+        return success(historyInventory);
+    }
+
+    /**
+     * 断货报告
+     */
+    @GetMapping("/outOfStockReport")
+    public ApiResult<List<RptOutOfStockVO>> outOfStockReport(@RequestParam String detailId) {
+        List<RptOutOfStockVO> rptOutOfStockVOS = replenishmentSuggestionService.outOfStockReport(detailId);
+        return success(rptOutOfStockVOS);
+    }
+
+    /**
+     * 断货报告数量
+     */
+    @GetMapping("/outOfStockReport")
+    public ApiResult<BigDecimal> outOfStockReportTotal(@RequestParam String detailId) {
+        BigDecimal outOfStockReportTotal = replenishmentSuggestionService.outOfStockReportTotal(detailId);
+        return success(outOfStockReportTotal);
+    }
     /**
      * 暂不补货
      * @author will
@@ -401,7 +448,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * 补货规则导入模板
      * @author will
      * @date 2024/8/30 16:40
-     * @param response 
+     * @param response
      * @return ApiResult<?>
      */
     @GetMapping("/downloadRuleTemplate")

@@ -1,7 +1,10 @@
 package com.erp.server.mrp.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.entity.OverseasInTransitDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.mrp.vo.OverseasInTransitDetailVO;
 
 /**
  * <p>
@@ -13,4 +16,5 @@ import com.common.business.service.SuperService;
  */
 public interface OverseasInTransitDetailService extends SuperService<OverseasInTransitDetailEntity> {
 
+    PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<String> params);
 }

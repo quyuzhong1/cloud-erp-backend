@@ -1,9 +1,9 @@
 package com.erp.server.mrp.service.impl;
 
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.mrp.entity.RptOutOfStockEntity;
 import com.erp.server.mrp.mapper.RptOutOfStockMapper;
 import com.erp.server.mrp.service.RptOutOfStockService;
-import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 /**

@@ -13,6 +13,10 @@ public class EstimatedPurchaseVO {
      * 状态
      */
     private String status;
+    /**
+     * 状态名字
+     */
+    private String statusName;
 
     /**
      * 数量

@@ -4,25 +4,117 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.ReplenishmentSuggestionEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="platform_type" property="platformType" />
-        <result column="sku_id" property="skuId" />
-        <result column="sku_no" property="skuNo" />
-        <result column="country" property="country" />
-        <result column="shop_id" property="shopId" />
-        <result column="platform" property="platform" />
-        <result column="brand_id" property="brandId" />
-        <result column="category_id" property="categoryId" />
-        <result column="replenishment_type" property="replenishmentType" />
-        <result column="remark" property="remark" />
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="platform_type" property="platformType"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="sku_no" property="skuNo"/>
+        <result column="country" property="country"/>
+        <result column="shop_id" property="shopId"/>
+        <result column="platform" property="platform"/>
+        <result column="replenishment_type" property="replenishmentType"/>
+        <result column="remark" property="remark"/>
     </resultMap>
+
+    <select id="paging" resultType="com.erp.model.mrp.vo.ReplenishmentSuggestionVO$PagingView">
+        select rs.id,
+               rs.update_time,
+               rs.platform_type,
+               rs.sku_id,
+               rs.sku_no,
+               rs.country,
+               rs.shop_id,
+               rs.platform,
+               rs.brand_id,
+               rs.category_id,
+               rs.replenishment_type,
+               rs.remark,
+               rsd.id as detailId,
+               rsd.sku_type,
+               rsd.fba_usable_qty,
+               rsd.fba_in_transit_qty,
+               rsd.fba_plan_delivery_qty,
+               rsd.overseas_usable_qty,
+               rsd.overseas_in_transit_qty,
+               rsd.overseas_plan_delivery_qty,
+               rsd.local_usable_qty,
+               rsd.local_in_transit_qty,
+               rsd.local_plan_purchase_qty,
+               rsd.total_inventory_qty,
+               rsd.sales_qty,
+               rsd.avg_sales_qty,
+               rsd.sales_estimate_qty,
+               rsd.avg_sales_estimate_qty,
+               rsd.purchase_approve_days,
+               rsd.production_days,
+               rsd.supplier_delivery_days,
+               rsd.qc_days,
+               rsd.purchase_cycle_days,
+               rsd.safe_days,
+               rsd.instock_days,
+               rsd.fba_sellable_days,
+               rsd.overseas_sellable_days,
+               rsd.local_sellable_days,
+               rsd.total_sellable_days,
+               rsd.delivery_min_days,
+               rsd.delivery_default_days,
+               rsd.delivery_max_days
+        from replenishment_suggestion rs
+                 inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
+    </select>
+
+    <select id="view" resultType="com.erp.model.mrp.vo.ReplenishmentSuggestionVO$View">
+        select rs.id,
+               rs.update_time,
+               rs.platform_type,
+               rs.sku_id,
+               rs.sku_no,
+               rs.country,
+               rs.shop_id,
+               rs.platform,
+               rs.brand_id,
+               rs.category_id,
+               rs.replenishment_type,
+               rs.remark,
+               rsd.id as detailId,
+               rsd.sku_type,
+               rsd.fba_usable_qty,
+               rsd.fba_in_transit_qty,
+               rsd.fba_plan_delivery_qty,
+               rsd.overseas_usable_qty,
+               rsd.overseas_in_transit_qty,
+               rsd.overseas_plan_delivery_qty,
+               rsd.local_usable_qty,
+               rsd.local_in_transit_qty,
+               rsd.local_plan_purchase_qty,
+               rsd.total_inventory_qty,
+               rsd.sales_qty,
+               rsd.avg_sales_qty,
+               rsd.sales_estimate_qty,
+               rsd.avg_sales_estimate_qty,
+               rsd.purchase_approve_days,
+               rsd.production_days,
+               rsd.supplier_delivery_days,
+               rsd.qc_days,
+               rsd.purchase_cycle_days,
+               rsd.safe_days,
+               rsd.instock_days,
+               rsd.fba_sellable_days,
+               rsd.overseas_sellable_days,
+               rsd.local_sellable_days,
+               rsd.total_sellable_days,
+               rsd.delivery_min_days,
+               rsd.delivery_default_days,
+               rsd.delivery_max_days
+        from replenishment_suggestion rs
+                 inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
+    </select>
 
 </mapper>
