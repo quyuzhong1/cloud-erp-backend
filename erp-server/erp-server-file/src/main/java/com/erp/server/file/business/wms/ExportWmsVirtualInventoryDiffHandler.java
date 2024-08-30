@@ -90,7 +90,7 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
         boolean detailHasNext = true;
         while (detailHasNext) {
             detailDto.setParams(searchParamDTO);
-            PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> data = getWarehouseStatisticsData(dto);
+            PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> data = getWarehouseStatisticsData(detailDto);
             if (!CollectionUtils.isEmpty(data.getList())) {
                 warehouseStatisticsList.addAll((Collection<? extends VirtualInventoryDTO.WarehouseStatisticsExcelDTO>) data.getList());
             }
