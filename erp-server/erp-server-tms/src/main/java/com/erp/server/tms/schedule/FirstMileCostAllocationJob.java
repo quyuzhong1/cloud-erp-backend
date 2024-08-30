@@ -51,9 +51,11 @@ public class FirstMileCostAllocationJob {
         String jobParam = XxlJobHelper.getJobParam();
         XxlJobHelper.log("任务参数={}", JSONUtil.toJsonStr(jobParam));
         LocalDate reportPeriodMonth = null;
+        String sourceId = null;
         if (StringUtils.isNotBlank(jobParam)) {
             JSONObject jsonObject = new JSONObject(jobParam);
             reportPeriodMonth = LocalDate.parse(jsonObject.getStr("reportPeriodMonth"));
+            sourceId = jsonObject.getStr("sourceId");
         }
         if (null == reportPeriodMonth) {
             //查询系统配置
@@ -76,7 +78,7 @@ public class FirstMileCostAllocationJob {
                 return ReturnT.SUCCESS;
             }
         }
-        firstMileCostAllocationService.autoGenerateFirstMileCostAllocation(reportPeriodMonth);
+        firstMileCostAllocationService.autoGenerateFirstMileCostAllocation(reportPeriodMonth, sourceId);
         XxlJobHelper.log("====结束自动生成头程费用分摊====");
         return ReturnT.SUCCESS;
     }

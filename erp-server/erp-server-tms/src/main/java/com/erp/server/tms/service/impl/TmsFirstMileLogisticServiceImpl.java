@@ -69,6 +69,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.udf.IndexedUDFFinder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -216,6 +217,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 throw new ServiceException("运单号已存在，不能重复新增");
             }
         }
+        //数据处理
+        dataProcess(tmsFirstMileLogisticEntity);
         log.info("开始新增头程物流单");
         boolean save = super.save(tmsFirstMileLogisticEntity);
         if(!save) {
@@ -295,6 +298,23 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         //新增暂估账单
         firstMileEstimatedBillService.add(tmsFirstMileLogisticEntity.getId());
         return new BaseResultDTO.AddDTO(tmsFirstMileLogisticEntity.getId(), tmsFirstMileLogisticEntity.getOutstockCode());
+    }
+
+    /**
+     * 业务单号取值修改
+     *
+     * @param entity
+     */
+    private void dataProcess(LogisticsBillEntity entity) {
+        if (StrUtil.isBlank(entity.getOutstockId())){
+            return;
+        }
+        List<FirstMileDeliveryDTO.BusinessDTO> businessCodeByIds = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isEmpty(businessCodeByIds)){
+            entity.setSourceCode("");
+        }else {
+            entity.setSourceCode(businessCodeByIds.get(0).getBusinessCode());
+        }
     }
 
     private LogisticsBillCostDTO.AddDTO packCostAddDTO(FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO, TmsFirstMileLogisticDTO.CommonDTO addDTO,LogisticsBillEntity tmsFirstMileLogisticEntity) {

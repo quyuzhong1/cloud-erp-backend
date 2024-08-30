@@ -138,4 +138,14 @@ public class WmsFirstMileDeliveryController {
     public List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(@RequestBody FirstMileDeliveryDTO.RequestReceiveDTO dto){
         return firstMileDeliveryService.countReceiveQtyByParams(dto);
     }
+
+    /**
+     * 发货单查询业务单号
+     * @param ids
+     * @return
+     */
+    @PostMapping("/getBusinessCodeById")
+    public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@RequestBody List<String> ids){
+        return firstMileDeliveryService.getBusinessCodeByIds(ids);
+    }
 }
