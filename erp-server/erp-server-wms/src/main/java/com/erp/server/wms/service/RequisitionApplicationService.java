@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -200,6 +201,10 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return Boolean
      */
     BatchResultDTO handleData(String id,Boolean isFlag);
+
+    BatchResultDTO generatePackingTask(RequisitionApplicationEntity entity);
+
+    List<RequisitionApplicationEntity> listByCodes(List<String> codes);
 
     /**
      * 导出要货申请

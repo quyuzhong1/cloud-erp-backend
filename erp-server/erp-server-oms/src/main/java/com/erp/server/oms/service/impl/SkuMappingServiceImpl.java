@@ -493,7 +493,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException("sku不存在");
         }
-        ListingInfoEntity existEntity = listingInfoService.getByPlatformSkuNo("",warehouseSkuNo);
+        ListingInfoEntity existEntity = listingInfoService.getByPlatformSkuNo("",warehouseSkuNo, "");
         String listingId;
         if(null == existEntity){
             listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName);

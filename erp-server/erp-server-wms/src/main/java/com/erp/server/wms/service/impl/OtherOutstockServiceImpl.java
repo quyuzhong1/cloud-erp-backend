@@ -1163,7 +1163,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                         departmentDTO,
                         userDTO,
                         orgDTO,
-                        code
+                        code,
+                        ""
                 );
                 // 明细
                 OtherOutstockDetailEntity detailEntity = OtherOutStockConverter.INSTANCE.combineDetailEntity(importExcelDTO, skuVO, locationEntity, actualQty);

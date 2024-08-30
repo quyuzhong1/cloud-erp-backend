@@ -68,7 +68,9 @@ public class MercadoReceiverDmpHandler extends DmpInputDoNextDmpHandler {
                         detail.put("fullAddress", shippingAddressMap.get("comment"));
                         Map<String, Object> neighborhoodMap = (Map<String, Object>) shippingAddressMap.get("neighborhood");
                         Map<String, Object> municipalityMap = (Map<String, Object>) shippingAddressMap.get("municipality");
-                        detail.put("mainStreet", neighborhoodMap.get("name") + " " + municipalityMap.get("name") + " " + shippingAddressMap.get("comment"));
+                        detail.put("mainStreet", (ObjectUtil.isNotEmpty(neighborhoodMap.get("name")) ? neighborhoodMap.get("name") : "") + " "
+                                + (ObjectUtil.isNotEmpty(municipalityMap.get("name")) ? municipalityMap.get("name") : "") + " "
+                                + shippingAddressMap.get("comment"));
                         detail.put("mainPhone", destinationMap.get("receiverPhone"));
                     }
                 }

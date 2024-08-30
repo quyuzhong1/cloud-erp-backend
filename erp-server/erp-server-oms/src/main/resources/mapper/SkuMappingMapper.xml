@@ -313,12 +313,17 @@
         sm.expire_time,
         sm.dict_platform,
         sm.platform_name,
-        sm.has_mapping_all
+        sm.has_mapping_all,
+        op.short_name
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
         WHERE sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
+        <if test="params.shortName !=null and params.shortName!=''">
+            AND op.short_name =#{params.shortName}
+        </if>
         <if test="matchResult!=null">
             AND li.match_result=#{matchResult}
         </if>
@@ -426,10 +431,12 @@
         sm.create_user_name,
         sm.create_time,
         sm.platform_name,
-        sm.has_mapping_all
+        sm.has_mapping_all,
+        op.short_name
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
         WHERE sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
         <choose>

@@ -1,10 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.PlatformInboundDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -193,6 +190,8 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
             String verityCode);
 
     ApiResult<?> handlePlatformMessage(PlatformInboundDTO dto);
+
+    List<BaseDropDownDTO.CommonDTO> getLogisticByTransferWarehouseId(String transferWarehouseId);
 
     PagingVO<OverseasWarehouseInboundDTO.ListDTO> exportOverseasWarehouseInbound(PagingDTO<OverseasWarehouseInboundDTO.ExportDTO> dto);
 }

@@ -131,6 +131,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         updateStatus.setSoId(mainEntity.getId());
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
             updateStatus.setBillStatus(billStatus);
+            updateStatus.setAddOperationLog(false);
         }
         updateStatus.setTrackNo(dto.getTrackNo());
         updateStatus.setFromThirdWarehouseFlag(true);
@@ -153,6 +154,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             JSONUtil.toJsonStr(dto),
                             businessDesc, false);
                 }
+            }
+            //清除三方仓异常
+            if(SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode().equals(mainEntity.getSignOrderError())){
+                String type = SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode();
+                SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+                deleteDTO.setMainId(mainEntity.getId());
+                deleteDTO.setType(type);
+                soB2cFeign.deleteError(deleteDTO);
             }
 
             // 校验是否已生成销售出库单
@@ -177,6 +186,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     ""
             );
             soB2cFeign.addSoB2cError(addError);
+            //异步取消海外仓订单
+            asyncService.asyncCancelThirdWarehouseOrder(mainEntity);
         }
         return ApiResult.success();
     }

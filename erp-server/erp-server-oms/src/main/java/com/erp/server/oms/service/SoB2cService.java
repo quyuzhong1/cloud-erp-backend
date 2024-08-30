@@ -945,6 +945,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     List<SoB2cEntity> listByCreateTime(LocalDateTime startTime, LocalDateTime endTime);
 
+    Boolean updateStatus(SoB2cEntity soB2cEntity);
     /**
      * 导出异常订单
      */

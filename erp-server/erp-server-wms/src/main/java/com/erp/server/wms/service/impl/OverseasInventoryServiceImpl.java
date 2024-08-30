@@ -156,7 +156,6 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         //获取库存sku信息
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatformSkuNoList(plaformSkuNoList);
-        paramDTO.setMatchResult(true);
         paramDTO.setIsExpire(false);
         List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
 
@@ -166,12 +165,10 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                     // 匹配关系
                     .filter(e -> this.checkMatch(e, data, listWithWarehouseDTOS))
                     .findFirst()
-                    .orElse(null);
-            if (null != view){
-                data.setSkuId(view.getProductSkuId());
-                data.setSkuNo(view.getProductSkuNo());
-                data.setPlatformSkuName(view.getPlatformSkuName());
-            }
+                    .orElse(new ListingInfoWithSkuMappingDTO());
+            data.setSkuId(view.getProductSkuId());
+            data.setSkuNo(view.getProductSkuNo());
+            data.setPlatformSkuName(view.getPlatformSkuName());
         }
 
         //查询产品信息

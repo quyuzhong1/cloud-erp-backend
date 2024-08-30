@@ -1037,8 +1037,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
-        log.warn("物流商更新重量:{}",JSONUtil.toJsonStr(logisticsUpdateWeightVO));
-        return service.updateWeight(logisticsUpdateWeightVO);
+        ApiResult<String> result = service.updateWeight(logisticsUpdateWeightVO);
+        if(result.getCode() != -1){
+            if(result.isSuccess()){
+                log.warn("物流商更新重量成功:{}",JSONUtil.toJsonStr(logisticsUpdateWeightVO));
+            }else{
+                log.warn("物流商更新重量失败:{}",JSONUtil.toJsonStr(logisticsUpdateWeightVO));
+            }
+        }
+        return result;
     }
 
     @Override

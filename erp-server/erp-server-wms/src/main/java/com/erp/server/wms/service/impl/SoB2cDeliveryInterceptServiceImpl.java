@@ -422,19 +422,26 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 }
             }
         } else {
-            //拦截失败的订单正常自动出库流程
+            //拦截失败的订单正常自动出库流程（第三方仓除外）
             SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
-            SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getById(entity.getDeliveryId());
-            if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(soB2cDelivery.getStatus())
-                    || SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(soB2cDelivery.getStatus())||
-                    SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())){
-                throw new ServiceException(ApiError.ERROR_99124);
-            }
-            if(!SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(soB2cDelivery.getStatus())){
-                soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
-                soB2cDeliveryService.updateById(soB2cDelivery);
-                interceptUpdateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-                SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
+            if(dto.isThirdWarehouse()){
+                //修改拦截状态，冻结状态
+                interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+                interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+                interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+                soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
+            }else{
+                SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getById(entity.getDeliveryId());
+                if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(soB2cDelivery.getStatus())
+                        || SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(soB2cDelivery.getStatus())||
+                        SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())){
+                    throw new ServiceException(ApiError.ERROR_99124);
+                }
+                if(!SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(soB2cDelivery.getStatus())){
+                    soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
+                    soB2cDeliveryService.updateById(soB2cDelivery);
+                    interceptUpdateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+                    SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
 //                if(!soB2cEntity.getIsCancel() && !SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())){
 //                    //调用第三方平台SDK发货
 //                    PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
@@ -442,42 +449,43 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 //                    platformShipOrderDTO.setDictPlatform(soB2cEntity.getDictPlatform());
 //                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
 //                }
-                //在这里修改拦截状态，冻结状态，因为下面生成销售出库单依赖这个状态
-                interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
-                interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
-                interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
-                interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
-                soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
+                    //在这里修改拦截状态，冻结状态，因为下面生成销售出库单依赖这个状态
+                    interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+                    interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+                    interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+                    interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+                    soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
-                //扣减冻结库存
-                soB2cDeliveryService.outFreezeVirtualInventory(soB2cDelivery);
-                //生成直接调拨单
-                Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
-                if (isPush) {
-                    asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
-                }
-                //更新备注
-                soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
+                    //扣减冻结库存
+                    soB2cDeliveryService.outFreezeVirtualInventory(soB2cDelivery);
+                    //生成直接调拨单
+                    Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
+                    if (isPush) {
+                        asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
+                    }
+                    //更新备注
+                    soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
 
-                if (!soB2cEntity.getIsCancel() && soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
-                    // 调用第三方平台SDK标记发货(独立事务)
-                    String businessDesc = "称重出库";
-                    asyncService.asyncShipOrder(soB2cEntity.getId(),
-                            soB2cEntity.getCode(),
-                            soB2cEntity.getDictPlatform(),
-                            soB2cEntity.convertSubmitPlatformUniqueKey(),
-                            JSONUtil.toJsonStr(dto),
-                            businessDesc, false);
-                } else {
-                    log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+                    if (!soB2cEntity.getIsCancel() && soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
+                        // 调用第三方平台SDK标记发货(独立事务)
+                        String businessDesc = "称重出库";
+                        asyncService.asyncShipOrder(soB2cEntity.getId(),
+                                soB2cEntity.getCode(),
+                                soB2cEntity.getDictPlatform(),
+                                soB2cEntity.convertSubmitPlatformUniqueKey(),
+                                JSONUtil.toJsonStr(dto),
+                                businessDesc, false);
+                    } else {
+                        log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+                    }
+                }else{
+                    //修改拦截状态，冻结状态
+                    interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+                    interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+                    interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+                    interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+                    soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
                 }
-            }else{
-                //修改拦截状态，冻结状态
-                interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
-                interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
-                interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
-                interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
-                soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
             }
         }
 

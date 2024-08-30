@@ -768,7 +768,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         detailList.forEach(v -> v.setIndex(orderBasketNoMap.containsKey(v.getSoB2cId()) ? Integer.parseInt(orderBasketNoMap.get(v.getSoB2cId())) : Integer.MAX_VALUE));
 
         //明细取值为拣货单
-        this.allocateCargoDetail(allPrintWayBillPdfResultList);
+        if(!SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(dto.getPrintType())){
+            this.allocateCargoDetail(allPrintWayBillPdfResultList);
+        }
         //循环打印的渠道
         for (String logisticsChannel : logisticsChannelIdList) {
 
@@ -1494,8 +1496,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
         // 如果是API对接的海外仓忽略发货单为空拦截
-        LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-        if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+        if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
             return false;
         }
 

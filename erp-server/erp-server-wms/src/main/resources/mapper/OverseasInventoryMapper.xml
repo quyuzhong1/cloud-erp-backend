@@ -93,6 +93,12 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," open=" ORDER BY ">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
     </sql>
 
     <sql id="page_where_sql">

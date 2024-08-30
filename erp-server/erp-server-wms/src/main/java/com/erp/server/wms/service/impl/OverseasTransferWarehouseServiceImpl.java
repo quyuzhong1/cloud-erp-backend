@@ -136,8 +136,9 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
         if (null == providerEntity){
             return Collections.emptyList();
         }
-        // iml返回所有
-        if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(providerEntity.getCode())){
+        // 安兔,iml返回所有
+        if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(providerEntity.getCode())
+        || OmsPlatformEnum.OMS_ANTU.getCode().equalsIgnoreCase(providerEntity.getCode())){
             List<OverseasTransferWarehouseEntity> list = lambdaQuery()
                     .eq(OverseasTransferWarehouseEntity::getDictPlatform, providerEntity.getCode())
                     .list();

@@ -11,12 +11,9 @@ import lombok.Getter;
  **/
 @Getter
 public enum OmsPlatformEnum {
-
-    OMS_GOOD_CANG("goodcang","谷仓"),
-
-    OMS_IML("iml","艾姆勒"),
-
-    OMS_ANTU("antu","安兔")
+    OMS_GOOD_CANG("goodcang","谷仓海外仓"),
+    OMS_IML("iml","艾姆勒海外仓"),
+    OMS_ANTU("antu","安兔"),
     ;
 
     @EnumValue
@@ -36,5 +33,15 @@ public enum OmsPlatformEnum {
             }
         }
         return null;
+    }
+
+    public static boolean isThirdWarehouse(String code) {
+        OmsPlatformEnum[] values = values();
+        for (OmsPlatformEnum value : values) {
+            if (value.code.equals(code)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

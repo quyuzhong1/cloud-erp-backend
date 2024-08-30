@@ -26,10 +26,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
@@ -755,9 +752,26 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             List<ProductCustomsEntity> customsList = new ArrayList<>(value.size());
 
             for (LogisticsProductExcelDTO item : value) {
+                List<String> errorMsgList = new ArrayList<>();
                 String id = logistics.getId();
                 BeanMapper.copy(item, logistics);
                 logistics.setId(id);
+                //国家
+                String countryName = item.getCountry();
+                String country = "default";
+                if (StringUtils.isNotBlank(countryName)) {
+                    country = countryList.stream().filter(s -> s.getNameCn().equals(countryName)).findFirst().
+                            map(DictCountryEntity::getId).orElse("");
+                    if (StringUtils.isBlank(country)) {
+                        errorMsgList.add("国家不存在");
+                    }
+                }
+                ProductCustomsEntity customs = new ProductCustomsEntity();
+                //根据sku获取是否存在记录
+                ProductCustomsEntity oldEntity = productCustomsService.getBySkuIdAndCountry(skuId, country);
+                if (Objects.nonNull(oldEntity)){
+                    BeanMapperUtils.copy(oldEntity,customs);
+                }
                 //报关申报价
                 String declarePriceStr = item.getDeclarePrice();
                 if (StringUtils.isNotBlank(declarePriceStr)) {
@@ -771,26 +785,17 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     logistics.setDestDeclarePrice(new BigDecimal(destDeclarePriceStr));
                     logistics.setDestCurrencySymbol(usd.getCurrencySymbol());
                     logistics.setDestCurrency(usd.getCurrencyCode());
+                    customs.setToDeclarePrice(new BigDecimal(destDeclarePriceStr));
+                    customs.setToCurrency(usd.getCurrencyCode());
+                    customs.setToCurrencySymbol(usd.getCurrencySymbol());
                 }
                 logistics.setFirstQty(StrUtil.isBlank(item.getFirstQtyStr()) ? null : new BigDecimal(item.getFirstQtyStr()));
                 logistics.setSecondQty(StrUtil.isBlank(item.getSecondQtyStr()) ? null : new BigDecimal(item.getSecondQtyStr()));
-
-                List<String> errorMsgList = new ArrayList<>();
                 if (StringUtils.isBlank(skuId)) {
                     errorMsgList.add("sku不存在或者sku未审核通过");
                 }
                 if (!StrUtil.equals(logistics.getApproveStatus().getCode(),ApproveStatusEnum.WAIT_SUBMIT.getCode())) {
                     errorMsgList.add("只有待提交物流产品支持导入");
-                }
-                //国家
-                String countryName = item.getCountry();
-                String country = "";
-                if (StringUtils.isNotBlank(countryName)) {
-                    country = countryList.stream().filter(s -> s.getNameCn().equals(countryName)).findFirst().
-                            map(DictCountryEntity::getId).orElse("");
-                    if (StringUtils.isBlank(country)) {
-                        errorMsgList.add("国家不存在");
-                    }
                 }
                 String combinationDeclareTypeStr = item.getCombinationDeclareType();
                 String combinationDeclareType = "";
@@ -803,24 +808,19 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 if (StringUtils.isBlank(combinationDeclareType)) {
                     errorMsgList.add("组合品申报不存在");
                 }
-
-                ProductCustomsEntity customs = new ProductCustomsEntity();
                 customs.setSkuId(skuId);
-                customs.setCustomsCode(item.getDestCustomsCode());
-                customs.setCountryName(countryName);
-                customs.setCountry(country);
+                if (StringUtils.isNotBlank(item.getDestCustomsCode())){
+                    customs.setCustomsCode(item.getDestCustomsCode());
+                }
+                if (StringUtils.isNotBlank(country)){
+                    customs.setCountryName(countryName);
+                    customs.setCountry(country);
+                }
                 customs.setSkuNo(item.getSkuNo());
                 String taxRateStr = item.getTaxRate();
                 if (StringUtils.isNotBlank(taxRateStr)) {
                     BigDecimal taxRate = new BigDecimal(taxRateStr);
                     customs.setTaxRate(taxRate);
-                } else {
-                    customs.setTaxRate(BigDecimal.ZERO);
-                }
-                //根据sku获取是否存在记录
-                ProductCustomsEntity oldEntity = productCustomsService.getBySkuIdAndCountry(skuId, country);
-                if (Objects.nonNull(oldEntity)){
-                    customs.setId(oldEntity.getId());
                 }
                 customsList.add(customs);
 
@@ -839,9 +839,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 continue;
             }
 
-            Boolean logisticsResult = productLogisticsService.saveOrUpdate(logistics);
-            productCustomsService.removeBySkuId(Arrays.asList(skuId));
-            productCustomsService.saveBatch(customsList);
+           productLogisticsService.saveOrUpdate(logistics);
+//            productCustomsService.removeBySkuId(Arrays.asList(skuId));
+            productCustomsService.saveOrUpdateBatch(customsList);
             productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
         }
 

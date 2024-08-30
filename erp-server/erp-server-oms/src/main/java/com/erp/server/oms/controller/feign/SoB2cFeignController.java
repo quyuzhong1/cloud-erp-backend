@@ -660,6 +660,11 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.updateById(soB2cEntity);
     }
 
+    @PostMapping("/updateStatus")
+    public Boolean updateStatus(@RequestBody SoB2cEntity soB2cEntity) {
+        return soB2cService.updateStatus(soB2cEntity);
+    }
+
     @PostMapping("/checkAndFillBySoOutStock")
     public Boolean checkAndFillBySoOutStock(@RequestBody PlatformSoOutStockDTO dto){
         return soB2cService.checkAndFillBySoOutStock(dto);
