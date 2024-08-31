@@ -343,13 +343,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     }
 
     @Override
-    public BaseResultDTO.AddDTO pushCostAllocation(FirstMileWeightAllocationDTO.PushCostAllocationDTO dto) {
-        FirstMileCostAllocationDTO.AddDTO costDto = new FirstMileCostAllocationDTO.AddDTO();
-        //todo 收集参数
-        return costAllocationService.add(costDto);
-    }
-
-    @Override
     public BatchResultDTO weightReCompute(String logisticsBillId) {
         return BatchResultDTO.success(logisticsBillId, logisticsBillId, OperationTypeEnum.UPDATE);
     }

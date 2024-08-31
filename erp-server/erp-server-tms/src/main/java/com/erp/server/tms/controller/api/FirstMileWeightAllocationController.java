@@ -86,22 +86,13 @@ public class FirstMileWeightAllocationController extends BaseController {
     }
 
     /**
-     * 下推费用分摊
-     */
-    @PostMapping("/pushCostAllocation")
-    public ApiResult<BaseResultDTO.AddDTO> pushCostAllocation(@RequestBody FirstMileWeightAllocationDTO.PushCostAllocationDTO dto){
-        BaseResultDTO.AddDTO addDTO = firstMileWeightAllocationService.pushCostAllocation(dto);
-        return ApiResult.success(addDTO);
-    }
-
-    /**
      * 重量重算
      */
     @PostMapping("/weightReCompute")
-    public ApiResult<List<BatchResultDTO>> weightReCompute(@RequestBody FirstMileWeightAllocationDTO.WeightReComputeDTO dto){
-        List<BatchResultDTO> list = new ArrayList<>(dto.getLogisticsBillIds().size());
-        for (String logisticsBillId : dto.getLogisticsBillIds()) {
-            BatchResultDTO resultDTO = firstMileWeightAllocationService.weightReCompute(logisticsBillId);
+    public ApiResult<List<BatchResultDTO>> weightReCompute(@RequestBody BaseIdsDTO.IdsDTO dto){
+        List<BatchResultDTO> list = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO = firstMileWeightAllocationService.weightReCompute(id);
             list.add(resultDTO);
         }
         return list.stream().allMatch(BatchResultDTO::getSuccess) ? success(list) : failure(list);

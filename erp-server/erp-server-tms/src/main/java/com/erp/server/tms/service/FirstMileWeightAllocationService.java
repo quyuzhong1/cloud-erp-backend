@@ -56,15 +56,6 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
     List<FirstMileWeightAllocationDTO.TabDTO> tabList();
 
     /**
-     * 下推费用分摊
-     * @param dto
-     * @return 费用分摊id, code
-     * @date: 2024-08-22
-     * @author: tanmujin
-     */
-    BaseResultDTO.AddDTO pushCostAllocation(FirstMileWeightAllocationDTO.PushCostAllocationDTO dto);
-
-    /**
      * 重量重算
      * @param logisticsBillId 头程物流单ID
      * @date: 2024-08-22

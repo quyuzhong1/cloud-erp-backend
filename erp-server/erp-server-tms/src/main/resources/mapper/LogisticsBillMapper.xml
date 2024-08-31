@@ -638,7 +638,7 @@
                lb.channel_id channelId
         from logistics_bill lb
                  left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-        where lb.is_deleted = false and lbd.track_status in ('ordered', 'Inspecting', 'trackIng', 'arrived', 'sign', 'exception')
+        where lb.is_deleted = false and lb.order_type = 'firstMile' and lbd.track_status in ('ordered', 'Inspecting', 'trackIng', 'arrived', 'sign', 'exception')
         <if test="ids != null and ids.size() > 0">
             and lb.id in
             <foreach collection="ids" item="id" open="(" separator="," close=")">
