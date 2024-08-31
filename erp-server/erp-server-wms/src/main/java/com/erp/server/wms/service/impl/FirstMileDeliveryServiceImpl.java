@@ -1769,7 +1769,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@Param("ids") List<String> ids) {
         if (CollectionUtils.isEmpty(ids)){
-            return null;
+            return Collections.emptyList();
         }
         return baseMapper.getBusinessCodeByIds(ids);
     }

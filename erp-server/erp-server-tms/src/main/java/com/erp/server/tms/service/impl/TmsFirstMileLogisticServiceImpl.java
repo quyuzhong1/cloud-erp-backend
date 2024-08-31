@@ -217,8 +217,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 throw new ServiceException("运单号已存在，不能重复新增");
             }
         }
-        //数据处理
-        dataProcess(tmsFirstMileLogisticEntity);
         log.info("开始新增头程物流单");
         boolean save = super.save(tmsFirstMileLogisticEntity);
         if(!save) {
@@ -300,22 +298,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         return new BaseResultDTO.AddDTO(tmsFirstMileLogisticEntity.getId(), tmsFirstMileLogisticEntity.getOutstockCode());
     }
 
-    /**
-     * 业务单号取值修改
-     *
-     * @param entity
-     */
-    private void dataProcess(LogisticsBillEntity entity) {
-        if (StrUtil.isBlank(entity.getOutstockId())){
-            return;
-        }
-        List<FirstMileDeliveryDTO.BusinessDTO> businessCodeByIds = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(entity.getId()));
-        if (CollectionUtils.isEmpty(businessCodeByIds)){
-            entity.setSourceCode("");
-        }else {
-            entity.setSourceCode(businessCodeByIds.get(0).getBusinessCode());
-        }
-    }
 
     private LogisticsBillCostDTO.AddDTO packCostAddDTO(FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO, TmsFirstMileLogisticDTO.CommonDTO addDTO,LogisticsBillEntity tmsFirstMileLogisticEntity) {
         //装箱信息
@@ -517,8 +499,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         params.setOrderType(OrderTypeEnum.FIRST_MILE.getCode());
         IPage<TmsFirstMileLogisticDTO.PagingVO> pageData = baseMapper.firstMilePaging(query, params);
-        List<TmsFirstMileLogisticDTO.PagingVO> list = pageData.getRecords();
-        fillPagingDb(list);
+        fillPagingDb(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
 
@@ -547,6 +528,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOList = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(dto);
         List<String> carrierIds = list.stream().map(TmsFirstMileLogisticDTO.PagingVO::getCarrierId).distinct().collect(Collectors.toList());
         List<LogisticsCarrierEntity> carrierList = logisticsCarrierService.listByIds(carrierIds);
+        //业务单号查询
+        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(outstockIdList);
         for (TmsFirstMileLogisticDTO.PagingVO pagingVO : list) {
             //处理枚举值
             pagingVO.setLogisticsStatusName(EnumMessage.getNameByCode(FmLogisticTrackStatusEnum.class,pagingVO.getLogisticsStatus()));
@@ -617,6 +600,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 }else{
                     pagingVO.setWarnMsg(StrUtil.format("已超期[]小时",pagingVO.getWarnHour()));
                 }
+            }
+            //业务单号查询逻辑修改 展示FBA发货单号和第三方货号-同期初展示逻辑
+            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.stream().filter(e -> Objects.equals(e.getId(), pagingVO.getOutstockId())).findFirst().orElse(null);
+            if (Objects.nonNull(businessDTO)){
+                pagingVO.setBusinessCode(businessDTO.getBusinessCode());
+            }else {
+                pagingVO.setBusinessCode("");
             }
         }
     }
