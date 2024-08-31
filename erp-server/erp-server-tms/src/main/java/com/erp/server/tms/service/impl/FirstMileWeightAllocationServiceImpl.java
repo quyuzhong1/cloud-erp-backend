@@ -338,15 +338,13 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     @Override
     public List<FirstMileWeightAllocationDTO.TabDTO> tabList() {
         List<FirstMileWeightAllocationDTO.TabDTO> list = new ArrayList<>();
-        list.add(getTabCount(CostAllocationStatusEnum.ALREADY));
-        list.add(getTabCount(CostAllocationStatusEnum.PART));
-        list.add(getTabCount(CostAllocationStatusEnum.NOT));
+        Integer all = this.lambdaQuery().in(FirstMileWeightAllocationEntity::getCostAllocationStatus, Arrays.asList("not", "part", "already")).count();
+        Integer wait = this.lambdaQuery().in(FirstMileWeightAllocationEntity::getCostAllocationStatus, Arrays.asList("not", "part")).count();
+        Integer already = this.lambdaQuery().in(FirstMileWeightAllocationEntity::getCostAllocationStatus, Collections.singletonList("already")).count();
+        list.add(new FirstMileWeightAllocationDTO.TabDTO("all", "全部", all));
+        list.add(new FirstMileWeightAllocationDTO.TabDTO("wait", "待分摊", wait));
+        list.add(new FirstMileWeightAllocationDTO.TabDTO("already", "已分摊", already));
         return list;
-    }
-
-    private FirstMileWeightAllocationDTO.TabDTO getTabCount(CostAllocationStatusEnum statusEnum) {
-        int count = baseMapper.tabCount(statusEnum.getCode());
-        return new FirstMileWeightAllocationDTO.TabDTO(statusEnum.getCode(), statusEnum.getName(), count);
     }
 
     @Override
