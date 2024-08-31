@@ -318,12 +318,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     public void exportExcel(FirstMileWeightAllocationDTO.ExportParamDTO dto, HttpServletResponse response) {
-        List<FirstMileWeightAllocationDTO.ViewDTO> list;
-        if(! dto.getIds().isEmpty()){
-            list = baseMapper.listByParamIds(dto.getIds());
-        }else {
-            list = baseMapper.listByParam(dto);
-        }
+        List<FirstMileWeightAllocationDTO.ViewDTO> list = baseMapper.listByParam(dto);
         fillData(list);
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         StringBuilder builder = new StringBuilder();
