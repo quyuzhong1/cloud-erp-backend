@@ -144,7 +144,7 @@ public class WmsFirstMileDeliveryController {
      * @param ids
      * @return
      */
-    @PostMapping("/getBusinessCodeById")
+    @PostMapping("/getBusinessCodeByIds")
     public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@RequestBody List<String> ids){
         return firstMileDeliveryService.getBusinessCodeByIds(ids);
     }

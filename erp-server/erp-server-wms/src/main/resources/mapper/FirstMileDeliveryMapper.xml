@@ -405,7 +405,7 @@
             </foreach>
         </if>
     </select>
-    <select id="getBusinessCodeById" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
+    <select id="getBusinessCodeByIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
         SELECT
             fd.id,
             concat(fs.code,owi.code) AS businessCode,
@@ -416,7 +416,7 @@
          LEFT JOIN fba_shipment fs ON fs.code = fd.source_code AND fs.is_deleted = FALSE
         where fd.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
-            fd.id in
+            and fd.id in
             <foreach collection="ids" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
