@@ -200,7 +200,6 @@
             </foreach>
         </if>
         pp.create_time asc
-        limit 50000
     </select>
 
     <select id="listProductPlanTotalCount" resultType="java.lang.Integer">

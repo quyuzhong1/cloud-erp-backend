@@ -32,6 +32,7 @@ public interface PurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDTO.PagingViewDTO>
      */
     List<PurchasePriceDTO.PagingViewDTO> getExport(@Param("params") PurchasePriceDTO.PagingParamDTO dto);
+    Page<PurchasePriceDTO.PagingViewDTO> getExport(@Param("page") Page<PurchasePriceDTO.PagingViewDTO> page, @Param("params") PurchasePriceDTO.PagingParamDTO dto);
 
     /**
      * 获取供应商价格

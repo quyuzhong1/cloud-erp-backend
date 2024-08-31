@@ -51,6 +51,14 @@ public interface ProductCertificateMapper extends BaseMapper<ProductCertificateE
      * @return List<ListDTO>
      */
     List<ProductCertificateDTO.ListDTO> exportExcel(@Param("params") ProductCertificateDTO.ExportParamDTO params);
+    /**
+     * @description: 导出数据
+     * @author Will
+     * @date: 2024/2/19 16:50
+     * @param params
+     * @return List<ListDTO>
+     */
+    Page<ProductCertificateDTO.ListDTO> exportExcel(@Param("page") Page<ProductCertificateDTO.ListDTO> page, @Param("params") ProductCertificateDTO.ExportParamDTO params);
 }
 
 

@@ -155,7 +155,6 @@
             </foreach>
         </if>
         td.create_time desc
-        limit 50000
     </select>
     <!--根据销售订单查询-->
     <select id="getBySoId" resultType="com.erp.model.tms.entity.TransferDeclareEntity">

@@ -5,7 +5,6 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -55,12 +54,13 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
     
     /**
      * 导出
-     * @author yl
-     * @date 2023-11-08 17:39
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-11-08 17:39
      */
-    Boolean exportExcel(LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(LogisticsAddressDTO.ExportDTO dto);
 
     /**
      * 删除物流地址
@@ -110,4 +110,7 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
      * @return
      */
     List<LogisticsAddressDTO.ListDTO> listAddressByType(LogisticsAddressDTO.AddressByTypeDTO dto);
+
+    PagingVO<LogisticsAddressDTO.PagingViewDTO> exportLogisticsAddress(PagingDTO<LogisticsAddressDTO.ExportDTO> dto);
+
 }

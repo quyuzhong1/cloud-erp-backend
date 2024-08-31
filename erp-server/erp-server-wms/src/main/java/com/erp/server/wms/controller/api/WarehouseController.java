@@ -282,13 +282,8 @@ public class WarehouseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓库数据")
     @PostMapping("/exportWarehouse")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:warehouse:paging",
-            tableAlias = "warehouse"
-    )
-    public ApiResult exportWarehouse(@RequestBody @Valid WarehouseDTO.ExportDTO dto, HttpServletResponse response) {
-        warehouseService.exportWarehouse(dto, response);
+    public ApiResult exportWarehouse(@RequestBody @Valid WarehouseDTO.ExportDTO dto) {
+        warehouseService.exportWarehouse(dto);
         return success();
     }
 

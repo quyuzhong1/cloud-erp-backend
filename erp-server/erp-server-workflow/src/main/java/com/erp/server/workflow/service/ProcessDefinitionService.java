@@ -7,7 +7,6 @@ import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.common.business.service.SuperService;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -49,10 +48,11 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
 
     /**
      * 流程定义导出
+     *
      * @param dto
      * @return
      */
-    Boolean exportExcel(ProcessDefinitionDTO.QueryExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(ProcessDefinitionDTO.QueryExportDTO dto);
 
     /**
      * 删除流程定义
@@ -60,4 +60,6 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
      * @return
      */
     boolean deleteByIds(List<String> ids);
+
+    PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto);
 }

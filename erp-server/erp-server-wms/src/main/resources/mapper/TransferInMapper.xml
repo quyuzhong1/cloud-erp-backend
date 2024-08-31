@@ -98,7 +98,6 @@
             </foreach>
         </if>
         ti.create_time DESC
-        limit 50000
     </select>
 
     <select id="listInventoryInOut" resultType="com.erp.model.wms.dto.inventory.InOutStockDTO">

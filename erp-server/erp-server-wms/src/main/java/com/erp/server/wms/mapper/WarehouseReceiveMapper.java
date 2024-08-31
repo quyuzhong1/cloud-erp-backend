@@ -40,6 +40,7 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
     List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(@Param("ids") List<String> ids);
 
     List<WarehouseReceiveExcelDTO> warehouseReceiveExportExcel(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
+    Page<WarehouseReceiveExcelDTO> warehouseReceiveExportExcel(@Param("page") Page<WarehouseReceiveExcelDTO> page, @Param("params") WarehouseReceiveDTO.PagingParamDTO params);
 
     List<QcInfoDTO.ReceiveToQcDTO> getQcList(@Param("mainIds") List<String> mainIds);
 

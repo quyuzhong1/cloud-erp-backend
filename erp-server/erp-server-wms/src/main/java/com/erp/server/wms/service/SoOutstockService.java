@@ -18,7 +18,6 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -165,13 +164,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     
     /**
      * 导出销售出库单
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-22 11:41
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      */
-    Boolean exportExcel(SoOutstockDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SoOutstockDTO.ExportDTO dto);
 
     
     /**
@@ -530,4 +529,5 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     void deleteTransferInfo(List<SoOutstockEntity> list);
 
+    PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
 }

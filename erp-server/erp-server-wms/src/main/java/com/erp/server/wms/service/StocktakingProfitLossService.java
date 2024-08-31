@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -48,13 +47,13 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
 
     /**
      * 导出
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @author yl
      * @date 2023-08-11 12:10
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      */
-    Boolean exportExcel(StocktakingProfitLossDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(StocktakingProfitLossDTO.ExportDTO dto);
 
     /**
      * 盘盈盘亏单提交
@@ -185,4 +184,6 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @date 2024-03-07
      */
     boolean checkClosed(List<String> warehouseIds,List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate);
+
+    PagingVO<StocktakingProfitLossDTO.ExportViewDTO> exportStocktakingProfitLoss(PagingDTO<StocktakingProfitLossDTO.ExportDTO> dto);
 }

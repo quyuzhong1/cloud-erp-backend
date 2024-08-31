@@ -7,7 +7,10 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -19,9 +22,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
@@ -41,6 +42,7 @@ import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -61,14 +63,13 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.rtfparserkit.rtf.Command.list;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_CHANGE;
 
 /**
  * <p>
@@ -121,7 +122,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
@@ -353,14 +355,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
-    public Boolean exportExcel(PurchaseChangeDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<PurchaseChangeExportExcelDTO> resultList = baseMapper.listExportExcel(dto);
-        String fileName = "采购变更数据";
-        try {
-            ExcelUtil.export(fileName, "采购变更数据", resultList, PurchaseChangeExportExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(PurchaseChangeDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("采购变更数据", EXPORT_SCM_PURCHASE_CHANGE.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -475,6 +471,12 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                 .eq(PurchaseChangeEntity::getInvalidStatus, Boolean.FALSE)
                 .list();
         return list;
+    }
+
+    @Override
+    public PagingVO<PurchaseChangeExportExcelDTO> exportPurchaseChange(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto) {
+        Page<PurchaseChangeExportExcelDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        return new PagingVO<>(page);
     }
 
 

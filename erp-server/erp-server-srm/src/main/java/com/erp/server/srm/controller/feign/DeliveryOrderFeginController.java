@@ -14,7 +14,6 @@ import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.server.srm.service.DeliveryOrderDetailService;
 import com.erp.server.srm.service.DeliveryOrderService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -207,5 +206,10 @@ public class DeliveryOrderFeginController extends BaseController {
     @PostMapping("/cancelReceive")
     public Boolean cancelReceive(@RequestBody List<String> detailIds){
         return detailService.cancelReceive(detailIds);
+    }
+
+    @PostMapping("/exportSupplierDeliveryOrder")
+    public PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(@RequestBody PagingDTO<DeliveryOrderDTO.ParamDTO> dto){
+        return deliveryOrderService.exportSupplierDeliveryOrder(dto);
     }
 }

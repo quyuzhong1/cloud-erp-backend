@@ -28,6 +28,7 @@ import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.sys.vo.SupplierUserVO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.scm.listener.SupplierUserExcelListener;
@@ -53,6 +54,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_USER;
+
 /**
  * @author zdy
  * @ClassName SupplierUserServiceImpl
@@ -73,6 +76,8 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     private SupplierRefUserService supplierRefUserService;
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * 分页查询 协同用户只展示 供应商超级管理员
@@ -252,20 +257,9 @@ public class SupplierUserServiceImpl implements SupplierUserService {
     }
 
     @Override
-    public Boolean exportSupplierUser(UserPagingSearchDTO dto, HttpServletResponse response) {
-        List<SupplierUserVO> list = getSupplierUserList(dto);
-        String name = "供应商协同用户列表";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/sysUserExport.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("供应商协同用户列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportSupplierUser(UserPagingSearchDTO dto) {
+        downloadTaskFeign.saveDownloadTask("供应商协同用户列表", EXPORT_SCM_SUPPLIER_USER.getCode(), dto);
+
         return Boolean.TRUE;
     }
     @Override
@@ -279,6 +273,12 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         }
         dataProcessSupplierInfo(list, supplierMap);
         return list;
+    }
+
+    @Override
+    public PagingVO<SupplierUserVO> exportSupplierUser(PagingDTO<UserPagingSearchDTO> dto) {
+        List<SupplierUserVO> list = getSupplierUserList(dto.getParams());
+        return new PagingVO<>(list, 0, dto.getPageSize(), dto.getCurrPage());
     }
 
     private void handleImportSuccessList(List<SupplierUserImportExcelDTO> successList, List<SupplierUserImportExcelDTO> errorList) {

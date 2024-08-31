@@ -2,10 +2,10 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -84,13 +84,13 @@ public interface TransferLogisticsSupplierService extends SuperService<TransferL
 
     /**
      * 导出
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2024/1/19 15:07
-     * @param dto
-     * @param httpServletResponse
-     * @return java.lang.Boolean
      **/
-    Boolean export(TransferLogisticsSupplierDTO.ExportDTO dto, HttpServletResponse httpServletResponse);
+    Boolean export(TransferLogisticsSupplierDTO.ExportDTO dto);
 
     /**
      * 物流商下拉
@@ -148,4 +148,6 @@ public interface TransferLogisticsSupplierService extends SuperService<TransferL
      * @return
      */
     List<BaseIdDTO.CodeDTO> listBySupplierId(String supplierId);
+
+    PagingVO<TransferLogisticsSupplierDTO.PagingViewDTO> exportTransferLogisticsSupplier(PagingDTO<TransferLogisticsSupplierDTO.ExportDTO> dto);
 }

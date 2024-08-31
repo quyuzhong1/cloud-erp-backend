@@ -40,6 +40,7 @@ public interface PoReconciliationMapper extends BaseMapper<PoReconciliationEntit
      * @return List<ListDTO>
      */
     List<PoReconciliationDTO.ListDTO> listExport(@Param("params") PoReconciliationDTO.PagingParamDTO params);
+    Page<PoReconciliationDTO.ListDTO> listExport(@Param("page") Page<PoReconciliationDTO.ListDTO> page, @Param("params") PoReconciliationDTO.PagingParamDTO params);
     /**
      * @description: 获取列表统计
      * @author Will

@@ -11,7 +11,6 @@ import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -129,14 +128,13 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      */
     Boolean cancelProcess(List<String> ids);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出excel
      * @author Will
      * @date: 2023/5/15 17:55
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(MachineInfoDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(MachineInfoDTO.SearchParamDTO dto);
     /**
      * 根据明细id查询子件明细数据
      * @author Will
@@ -187,4 +185,9 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @return java.util.List<com.erp.model.wms.dto.MachineInfoDTO.ListDTO>
      */
     List<MachineInfoDTO.ListDTO> listBySku(MachineInfoDTO.FindInfoBySkuDTO dto);
+
+    /**
+     * 导出
+     */
+    PagingVO<MachineInfoDTO.ListDTO> exportMachineInfo(PagingDTO<MachineInfoDTO.SearchParamDTO> dto);
 }

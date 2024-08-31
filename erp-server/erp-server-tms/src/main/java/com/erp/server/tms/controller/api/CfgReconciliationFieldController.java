@@ -4,7 +4,10 @@ package com.erp.server.tms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,7 +18,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
-import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.server.tms.query.CfgReconciliationFieldQueryHandler;
 import com.erp.server.tms.service.CfgReconciliationFieldService;
 import com.erp.server.tms.service.LogisticsSupplierService;
@@ -149,9 +151,8 @@ public class CfgReconciliationFieldController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出对账字段配置")
     @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery(handler = CfgReconciliationFieldQueryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody @Validated CfgReconciliationFieldDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = cfgReconciliationFieldService.exportExcel(dto, response);
+    public ApiResult<?> exportExcel(@RequestBody @Validated CfgReconciliationFieldDTO.PagingParamDTO dto) {
+        Boolean flag = cfgReconciliationFieldService.exportExcel(dto);
         return flag ? success() : failure();
     }
 

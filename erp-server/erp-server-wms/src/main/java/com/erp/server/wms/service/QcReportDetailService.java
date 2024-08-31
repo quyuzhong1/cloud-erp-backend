@@ -1,7 +1,11 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcReportDetailDTO;
+import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.model.wms.entity.QcReportDetailEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -60,7 +64,7 @@ public interface QcReportDetailService extends SuperService<QcReportDetailEntity
      */
     void removeByMainIds(List<String> mainIdList);
 
-    void exportReportByMainId(String id, HttpServletResponse response);
+    void exportReportByMainId(BaseIdDTO dto);
 
     /**
      * 根据质检单id集合  获取报告明细信息
@@ -68,4 +72,6 @@ public interface QcReportDetailService extends SuperService<QcReportDetailEntity
      * @return
      */
     Map<String, List<QcReportDetailDTO.ViewDTO>> getByMainIds(List<String> ids);
+
+    PagingVO<ExportQcReportExcelDTO> exportQcReportDetail(PagingDTO<BaseIdDTO> dto);
 }

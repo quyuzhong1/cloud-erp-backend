@@ -8,7 +8,6 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.vo.CustomerInfoVO;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
@@ -172,12 +171,11 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * 导出 客户列表
      *
      * @param dto
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-15 14:53
      */
-    Boolean exportExcel(CustomerDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(CustomerDTO.ExportDTO dto);
 
 
     /**
@@ -377,4 +375,6 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     List<CustomerDTO.SellerUserDeptDTO> listSellerUserDepByCodes(List<String> codeList);
 
     PagingVO<CustomerDTO.PageSelectDTO> pagingSelect(PagingDTO<CustomerDTO.SelectDTO> dto);
+
+    PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(PagingDTO<CustomerDTO.ExportDTO> dto);
 }

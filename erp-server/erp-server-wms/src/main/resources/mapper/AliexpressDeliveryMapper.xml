@@ -92,6 +92,5 @@
         WHERE
         ${params.sqlMap.default}
           and  ad.is_deleted = FALSE
-        limit 50000
     </select>
 </mapper>

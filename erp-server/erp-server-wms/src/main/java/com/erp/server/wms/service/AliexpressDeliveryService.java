@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -7,7 +8,6 @@ import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -40,13 +40,13 @@ public interface AliexpressDeliveryService extends SuperService<AliexpressDelive
 
     /**
      * 导出excel
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2024/1/26 16:51
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      **/
-    Boolean exportExcel(AliexpressDeliveryDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(AliexpressDeliveryDTO.SearchParamDTO dto);
 
     /**
      *
@@ -56,4 +56,8 @@ public interface AliexpressDeliveryService extends SuperService<AliexpressDelive
      **/
     List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop();
 
+    /**
+     * 导出
+     */
+    PagingVO<AliexpressDeliveryDTO.ListDTO> exportAliexpressDelivery(PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto);
 }

@@ -15,7 +15,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
-import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.server.wms.service.OverseasTransferWarehouseService;
 import com.erp.server.wms.service.OverseasWarehouseInboundDetailService;
@@ -26,7 +25,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -362,9 +360,8 @@ public class OverseasWarehouseInboundController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出海外入库单")
     @PostMapping("/export")
-    @WebAdvanceQuery
-    public ApiResult<?> exportWarehouse(@RequestBody @Valid OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = overseasWarehouseInboundService.exportExcel(dto, response);
+    public ApiResult<?> exportWarehouse(@RequestBody @Valid OverseasWarehouseInboundDTO.ExportDTO dto) {
+        Boolean result = overseasWarehouseInboundService.exportExcel(dto);
         return result ? success() : failure();
     }
 

@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -37,6 +36,7 @@ public interface TransferOutMapper extends BaseMapper<TransferOutEntity> {
      * @return
      */
     List<TransferOutDTO.PagingViewDTO> exportList(@Param("params") TransferOutDTO.ExportDTO params);
+    Page<TransferOutDTO.PagingViewDTO> exportList(@Param("page") Page<TransferOutDTO.PagingViewDTO> page, @Param("params") TransferOutDTO.ExportDTO params);
 
     /**
      * 状态数量

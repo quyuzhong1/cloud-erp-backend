@@ -333,19 +333,12 @@ public class OtherInstockController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出其他入库单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherInstock:paging",
-            tableAlias = "oi"
-    )
-    @WebAdvanceQuery(handler = OtherInstockQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody OtherInstockDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = otherInstockService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody OtherInstockDTO.SearchParamDTO dto) {
+        Boolean flag = otherInstockService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

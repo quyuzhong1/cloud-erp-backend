@@ -24,8 +24,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -41,6 +39,7 @@ import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.tms.enums.ProductRegistrationEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
@@ -62,13 +61,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_PRODUCT_REGISTRATION;
 
 /**
  * <p>
@@ -111,6 +111,8 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
 
     @Resource
     private FsService fsService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
@@ -406,12 +408,8 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
     }
 
     @Override
-    public void export(ProductRegistrationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Page query = new Page(1, Integer.MAX_VALUE,false);
-        IPage<ProductRegistrationDTO.PagingVO> pageData = baseMapper.paging(query, dto);
-        List<ProductRegistrationDTO.PagingVO> list = pageData.getRecords();
-        fillPagingDb(list);
-        ExcelUtil.export("备案列表"+ DateUtil.currentYMD(),"备案列表",list,ProductRegistrationDTO.PagingVO.class,response);
+    public void export(ProductRegistrationDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("备案列表", EXPORT_TMS_PRODUCT_REGISTRATION.getCode(), dto);
     }
 
     @Override
@@ -631,6 +629,13 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
             fsService.sendMessage(sendMessage);
         });
 
+    }
+
+    @Override
+    public PagingVO<ProductRegistrationDTO.PagingVO> exportProductRegistration(PagingDTO<ProductRegistrationDTO.PagingParamDTO> dto) {
+        IPage<ProductRegistrationDTO.PagingVO> pageData = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        fillPagingDb(pageData.getRecords());
+        return new PagingVO<>(pageData);
     }
 
 }

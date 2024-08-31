@@ -10,7 +10,6 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -131,13 +130,13 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
 
     /**
      * 导出中转报关单
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2024/1/24 18:45
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      **/
-    Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto);
 
     /**
      * 入库预报
@@ -193,4 +192,6 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
     TransferDeclareDTO.ShippingOrderDTO b2cOrderForecast(TransferDeclareDTO.B2cOrderForecastDTO b2cOrderForecastDTO);
 
     ApiResult<String> cancelOrderForecast(TransferDeclareDTO.CancelOrderForecastDTO cancelOrderForecastDTO);
+
+    PagingVO<TransferDeclareDTO.ExportListDTO> exportTransferDeclare(PagingDTO<TransferDeclareDTO.PagingParamDTO> dto);
 }

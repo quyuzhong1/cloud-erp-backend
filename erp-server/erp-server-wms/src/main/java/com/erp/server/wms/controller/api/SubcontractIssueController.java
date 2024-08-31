@@ -1,33 +1,29 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
-import com.erp.server.wms.query.SubcontractIssueQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.SubcontractIssueService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
+import com.erp.server.wms.query.SubcontractIssueQueryHandler;
+import com.erp.server.wms.service.SubcontractIssueService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 委外发料单
@@ -343,19 +339,13 @@ public class SubcontractIssueController extends BaseController {
     * @author will
     * @date:  2024-01-08
     * @param dto
-    * @param response
     * @return
     */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:subcontractIssue:paging",
-            tableAlias = "si"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "委外发料单导出Excel数据")
-    @WebAdvanceQuery(handler = SubcontractIssueQueryHandler.class)
-    public void exportList(@RequestBody @Validated SubcontractIssueDTO.PagingParamDTO dto, HttpServletResponse response) {
-        subcontractIssueService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SubcontractIssueDTO.PagingParamDTO dto) {
+        subcontractIssueService.exportList(dto);
+        return success(true);
     }
 
     /**

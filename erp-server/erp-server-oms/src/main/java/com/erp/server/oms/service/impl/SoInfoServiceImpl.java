@@ -67,6 +67,7 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -108,6 +109,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO;
 
 /**
  * <p>
@@ -216,6 +219,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private VirtualInventoryFeign virtualInventoryFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * 添加销售订单
@@ -1591,44 +1596,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * 导出数据
      *
      * @param dto
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 18:02
      */
     @Override
-    public Boolean exportExcel(SoInfoDTO.ExportDTO dto, HttpServletResponse response) {
-
-
-        //获取导出数据
-        List<String> fieldList = CollectionUtils.isEmpty(dto.getAdvanceQueryDTOList()) ? new ArrayList<>() :  dto.getAdvanceQueryDTOList().stream().map(AdvanceQueryDTO::getField).collect(Collectors.toList());
-        dto.setFieldList(fieldList);
-        List<SoInfoDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //填充分页列表
-        fillPagingDb(list);
-        List<String> nopermitFields = dto.getNopermitFields();
-        Map<String, String> headMap = SoUtils.getExportHeadList();
-        List<LinkedHashMap<String, Object>> dataList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(list)) {
-            for (SoInfoDTO.PagingViewDTO item : list) {
-                LinkedHashMap<String, Object> data = SoUtils.fillToMap(item, headMap, nopermitFields);
-                dataList.add(data);
-            }
-        }
-        // 去除掉无权限字段
-        if (CollUtil.isNotEmpty(nopermitFields)) {
-            headMap.keySet().removeIf(r -> nopermitFields.contains(r));
-        }
-        // 隐藏主单列
-        SoUtils.hideForExport(dataList);
-        // 去除id字段
-        headMap.keySet().removeIf(r -> Objects.equals("id", r));
-        dataList.stream().forEach(data -> data.keySet().removeIf(r -> Objects.equals("id", r)));
+    public Boolean exportExcel(SoInfoDTO.ExportDTO dto) {
         String fileName = StrUtil.format("销售订单{}.xlsx", System.currentTimeMillis());
-        ExcelUtil.easyUtilStr(new ArrayList<>(headMap.values()), "销售订单", dataList, fileName, response);
+        downloadTaskFeign.saveDownloadTask(fileName, EXPORT_OMS_SO.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -2133,7 +2108,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * 导出销售订单发票信息
      *
      * @param id
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-07-04 14:48
@@ -3127,6 +3101,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<SoInfoDTO.PagingViewDTO> exportSo(PagingDTO<SoInfoDTO.ExportDTO> dto) {
+
+        //获取导出数据
+        List<String> fieldList = CollectionUtils.isEmpty(dto.getParams().getAdvanceQueryDTOList()) ? new ArrayList<>() :  dto.getParams().getAdvanceQueryDTOList().stream().map(AdvanceQueryDTO::getField).collect(Collectors.toList());
+        dto.getParams().setFieldList(fieldList);
+        Page<SoInfoDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>(page);
+        }
+        //填充分页列表
+        fillPagingDb(page.getRecords());
+        return new PagingVO<>(page);
     }
 
 

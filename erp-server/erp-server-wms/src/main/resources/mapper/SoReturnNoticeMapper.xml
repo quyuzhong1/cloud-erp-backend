@@ -100,7 +100,6 @@
             </foreach>
         </if>
         srn.create_time desc
-        limit 50000
     </select>
 
     <select id="generateSoDeliveryView" resultType="com.erp.model.wms.dto.SoReturnNoticeDTO$GenerateSoReturnReceiveView">

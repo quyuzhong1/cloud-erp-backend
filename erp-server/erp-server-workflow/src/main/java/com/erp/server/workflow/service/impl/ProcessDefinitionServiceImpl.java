@@ -7,19 +7,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.utils.ExportUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ExcelUtil;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ProcessDefinitionMapper;
 import com.erp.server.workflow.service.ProcessBusinessService;
 import com.erp.server.workflow.service.ProcessDefinitionService;
-import org.apache.commons.collections4.CollectionUtils;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.impl.persistence.entity.DeploymentEntity;
 import org.camunda.bpm.engine.repository.Deployment;
@@ -27,9 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_DEFINITION;
 
 /**
  * <p>
@@ -48,6 +47,8 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     private RepositoryService repositoryService;
     @Resource
     private RedisService redisService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -136,16 +137,8 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     }
 
     @Override
-    public Boolean exportExcel(ProcessDefinitionDTO.QueryExportDTO dto, HttpServletResponse response) {
-        // 查询数据
-        List<ProcessDefinitionDTO.ExportDTO> list = this.baseMapper.query(dto);
-//        list.stream().peek(x -> x.setApproveStatusName(x.getApproveStatusCode().getName())).collect(Collectors.toList());
-        // 导出数据
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        String fileName = ExportUtil.getFileName(redisService, "流程设计记录");
-        ExcelUtil.export(fileName, "流程设计记录", list, ProcessDefinitionDTO.ExportDTO.class, response);
+    public Boolean exportExcel(ProcessDefinitionDTO.QueryExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("流程设计记录", EXPORT_PROCESS_DEFINITION.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -170,5 +163,12 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         }
         // 删除流程定义
         return removeByIds(ids);
+    }
+
+    @Override
+    public PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto) {
+        // 查询数据
+        Page<ProcessDefinitionDTO.ExportDTO> page = this.baseMapper.query(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        return new PagingVO<>(page);
     }
 }

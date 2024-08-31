@@ -336,19 +336,12 @@ public class PoReturnController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      * @param dto dto
-     * @param response response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购退货单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "return_user_id",
-            menuCode = "wms:purchaseReturnOrder:paging",
-            tableAlias = "pro"
-    )
-    @WebAdvanceQuery(handler = PoReturnQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = poReturnService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto) {
+        Boolean flag = poReturnService.exportExcel(dto);
         return flag ? success() : failure();
     }
 

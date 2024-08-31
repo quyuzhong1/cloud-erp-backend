@@ -1,11 +1,18 @@
 package com.erp.server.tms.service;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
-import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -49,9 +56,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     List<BatchResultDTO> cancelMerge(TmsDeclareBillDTO.MergeDeclareDTO dto);
 
-    void export(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
 
-    void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException;
 
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
 
@@ -75,4 +80,8 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     Boolean autoGenerateFirstMileDeclare(AutoGenerateBillDTO autoGenerateBillDTO);
 
     Boolean autoGenerateB2bDeclare(AutoGenerateBillDTO autoGenerateBillDTO);
+
+    PagingVO<TmsDeclareBillDTO.PagingVO> export(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
+
+    void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException;
 }

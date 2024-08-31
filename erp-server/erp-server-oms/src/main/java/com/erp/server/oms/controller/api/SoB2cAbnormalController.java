@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -63,15 +62,12 @@ public class SoB2cAbnormalController extends BaseController {
      * 异常订单导出
      * @author Will
      * @date: 2024/4/22 19:50
-     * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2C销售异常订单信息")
     @PostMapping(value = "/abnormalExportExcel")
-    @WebAdvanceQuery(handler = SoB2cAbnormalQueryHandler.class)
-    public ApiResult abnormalExportExcel(@RequestBody SoB2cAbnormalDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = soB2cAbnormalService.abnormalExportExcel(dto, response);
+    public ApiResult abnormalExportExcel(@RequestBody SoB2cAbnormalDTO.PagingParamDTO dto) {
+        Boolean flag = soB2cAbnormalService.abnormalExportExcel(dto);
         return flag == true ? success() : failure();
     }
 

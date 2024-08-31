@@ -45,7 +45,7 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.PackageForecastFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -63,9 +63,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -74,6 +72,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TRANSFER_DECLARE;
 
 /**
  * <p>
@@ -121,7 +121,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Autowired
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -338,24 +339,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
 
     @Override
-    public Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<TransferDeclareDTO.ExportListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        //数据转换
-        fileExportList(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/transferDeclare.xlsx";
-        String name = "中转报关单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("中转报关单导出", EXPORT_TMS_TRANSFER_DECLARE.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -733,6 +718,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             return ApiResult.error(StrUtil.format("{}平台不支持API取消",authEntity.getLogisticsPlatform()));
         }
         return service.cancelOrder(cancelOrderForecastDTO.getTransferCancelOrderReq(),authEntity.getId());
+    }
+
+    @Override
+    public PagingVO<TransferDeclareDTO.ExportListDTO> exportTransferDeclare(PagingDTO<TransferDeclareDTO.PagingParamDTO> dto) {
+        Page<TransferDeclareDTO.ExportListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            fileExportList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {

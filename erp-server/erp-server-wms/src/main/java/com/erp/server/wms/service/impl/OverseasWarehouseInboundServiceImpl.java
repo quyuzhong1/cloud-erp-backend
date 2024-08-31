@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -21,8 +20,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -32,12 +29,12 @@ import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictThirdCity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -55,13 +52,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OVERSEAS_WAREHOUSE_INBOUND;
 
 /**
  * <p>
@@ -121,6 +119,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Resource
     private PackingTaskService packingTaskService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -834,20 +834,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     }
 
     @Override
-    public Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response) {
-        List<OverseasWarehouseInboundDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        //数据处理
-        fillList(list);
-        List<ExportOverseasWarehouseInboundExcelDTO> resultList = BeanMapperUtils.copyList(ExportOverseasWarehouseInboundExcelDTO.class, list);
-        String fileName = "海外入库单数据";
-        try {
-            ExcelUtil.export(fileName, "海外入库单数据", resultList, ExportOverseasWarehouseInboundExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("海外入库单数据", EXPORT_WMS_OVERSEAS_WAREHOUSE_INBOUND.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -1183,6 +1171,16 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         return list.stream()
                 .map(e-> new BaseDropDownDTO.CommonDTO(e.getCode(), e.getCnName()+"["+e.getCode()+"]"))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public PagingVO<OverseasWarehouseInboundDTO.ListDTO> exportOverseasWarehouseInbound(PagingDTO<OverseasWarehouseInboundDTO.ExportDTO> dto) {
+        Page<OverseasWarehouseInboundDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            //数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

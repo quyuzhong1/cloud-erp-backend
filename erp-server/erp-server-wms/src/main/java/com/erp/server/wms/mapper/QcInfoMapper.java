@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.QcEffectivenessDTO;
-import com.erp.model.wms.dto.QcInfoDTO;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.QcInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -68,6 +65,7 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @return List<ViewQcForPersonnelDTO>
      */
     List<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewExportQcForPersonnel(@Param("params") QcEffectivenessDTO.ExportExcelSearchParamDTO params);
+    Page<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewExportQcForPersonnel(@Param("page") Page<QcEffectivenessDTO.ViewQcForPersonnelDTO> page, @Param("params") QcEffectivenessDTO.ExportExcelSearchParamDTO params);
     /**
      * @description: 按人员单据导出
      * @author Will
@@ -76,6 +74,7 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @return List<ViewQcForPersonnelDTO>
      */
     List<QcEffectivenessDTO.ViewQcForDocumentDTO>viewExportQcForDocument(@Param("params") QcEffectivenessDTO.ExportExcelSearchParamDTO params);
+    Page<QcEffectivenessDTO.ViewQcForDocumentDTO>viewExportQcForDocument(@Param("page") Page<QcEffectivenessDTO.ViewQcForDocumentDTO> page, @Param("params") QcEffectivenessDTO.ExportExcelSearchParamDTO params);
 
     /**
      * 分页获取
@@ -94,6 +93,7 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.PagingViewDTO>
      */
     List<QcInfoDTO.PagingViewDTO> getExport(@Param("params") QcInfoDTO.ExportDTO dto);
+    Page<QcInfoDTO.PagingViewDTO> getExport(@Param("page") Page<QcInfoDTO.PagingViewDTO> page, @Param("params") QcInfoDTO.ExportDTO dto);
 
     /**
      * 获取下推数据
@@ -129,6 +129,8 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.PagingViewDTO>
      */
     List<QcInfoDTO.DailyListDTO> getDailyExport(@Param("params") QcInfoDTO.ExportDTO dto);
+
+    Page<QcInfoDTO.DailyListDTO> getDailyExport(@Param("page") Page<QcInfoDTO.DailyListDTO> page, @Param("params") QcInfoDTO.ExportDTO dto);
 
     List<QcInfoDTO.QcReceiveResultDTO> getQcReceiveResult(@Param("purchaseDetailIds") List<String> purchaseDetailIds);
     /**

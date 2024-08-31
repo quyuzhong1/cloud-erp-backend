@@ -186,12 +186,11 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 导出数据
      *
      * @param dto
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 18:02
      */
-    Boolean exportExcel(SoInfoDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SoInfoDTO.ExportDTO dto);
 
     /**
      * 获取到已审核的销售订单列表
@@ -464,4 +463,9 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return Boolean
      */
     Boolean unLockVirtualInventory(String id);
+
+    /**
+     * 导出销售订单
+     */
+    PagingVO<SoInfoDTO.PagingViewDTO> exportSo(PagingDTO<SoInfoDTO.ExportDTO> dto);
 }
