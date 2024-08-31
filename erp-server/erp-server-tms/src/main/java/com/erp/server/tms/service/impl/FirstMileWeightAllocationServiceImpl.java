@@ -253,6 +253,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     }
 
     private void fillData(List<FirstMileWeightAllocationDTO.ViewDTO> records) {
+        if(records.isEmpty()){
+            return;
+        }
         //仓库
         List<String> warehouseIds = records.stream().map(item -> item.getFromWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = warehouseFeign.listByIds(warehouseIds);
@@ -315,12 +318,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     public void exportExcel(FirstMileWeightAllocationDTO.ExportParamDTO dto, HttpServletResponse response) {
-        List<FirstMileWeightAllocationDTO.ViewDTO> list;
-        if(! dto.getIds().isEmpty()){
-            list = baseMapper.listByParamIds(dto.getIds());
-        }else {
-            list = baseMapper.listByParam(dto);
-        }
+        List<FirstMileWeightAllocationDTO.ViewDTO> list = baseMapper.listByParam(dto);
         fillData(list);
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         StringBuilder builder = new StringBuilder();
@@ -335,15 +333,13 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     @Override
     public List<FirstMileWeightAllocationDTO.TabDTO> tabList() {
         List<FirstMileWeightAllocationDTO.TabDTO> list = new ArrayList<>();
-        list.add(getTabCount(CostAllocationStatusEnum.ALREADY));
-        list.add(getTabCount(CostAllocationStatusEnum.PART));
-        list.add(getTabCount(CostAllocationStatusEnum.NOT));
+        Integer all = this.lambdaQuery().in(FirstMileWeightAllocationEntity::getCostAllocationStatus, Arrays.asList("not", "part", "already")).count();
+        Integer wait = this.lambdaQuery().in(FirstMileWeightAllocationEntity::getCostAllocationStatus, Arrays.asList("not", "part")).count();
+        Integer already = this.lambdaQuery().in(FirstMileWeightAllocationEntity::getCostAllocationStatus, Collections.singletonList("already")).count();
+        list.add(new FirstMileWeightAllocationDTO.TabDTO("all", "全部", all));
+        list.add(new FirstMileWeightAllocationDTO.TabDTO("wait", "待分摊", wait));
+        list.add(new FirstMileWeightAllocationDTO.TabDTO("already", "已分摊", already));
         return list;
-    }
-
-    private FirstMileWeightAllocationDTO.TabDTO getTabCount(CostAllocationStatusEnum statusEnum) {
-        int count = baseMapper.tabCount(statusEnum.getCode());
-        return new FirstMileWeightAllocationDTO.TabDTO(statusEnum.getCode(), statusEnum.getName(), count);
     }
 
     @Override

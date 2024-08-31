@@ -144,6 +144,11 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String boxSizeUnit;
 
         /**
+         * 出库尺寸（导出用）
+         */
+        private String boxSizeStr;
+
+        /**
          * 出库重量
          */
         private BigDecimal outStockWeight;
