@@ -1715,50 +1715,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(list.isEmpty()){
             return BatchResultDTO.fail(id, id, "只有下单后的物流单才能推送重量分摊");
         }
-        TmsFirstMileLogisticDTO.WeightAllocationDTO allocationDTO = list.get(0);
-        //头程发货单
-        FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
-        reqDto.setIds(Collections.singletonList(allocationDTO.getSourceId()));
-        List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOList = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
-        Map<String, FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOMap = generateLogisticDTOList.stream().collect(Collectors.toMap(item -> item.getOutstockId(), item2 -> item2));
-        //物流渠道
-        List<LogisticsChannelEntity> channelList = logisticsChannelService.listByIds(Collections.singletonList(allocationDTO.getChannelId()));
-        Map<String, LogisticsChannelEntity> channelMap = channelList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
-        //物流商
-        List<LogisticsSupplierEntity> supplierList = logisticsSupplierService.listByIds(Collections.singletonList(allocationDTO.getSupplierId()));
-        Map<String, LogisticsSupplierEntity> supplierMap = supplierList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
-        FirstMileWeightAllocationDTO.AddDTO dto = new FirstMileWeightAllocationDTO.AddDTO();
-        BeanMapper.copy(allocationDTO, dto);
-        //发货单
-        String deliveryId = allocationDTO.getSourceId();
-        List<FirstMileDeliveryEntity> firstMileDeliveryList = wmsFirstMileDeliveryFeign.listByIds(Collections.singletonList(deliveryId));
-        FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryList.get(0);
-        if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode())){
-            //备货第三方仓：取海外仓入库单号
-            List<OverseasWarehouseInboundEntity> warehouseInboundEntity = overseaWarehouseInboundFeign.listBySourceIds(Collections.singletonList(deliveryId));
-            dto.setBusinessCode(warehouseInboundEntity.get(0).getCode());
-        }
-        if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())){
-            //备货FBA仓：取FBA货件单号
-            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailList = firstMileDeliveryDetailFeign.listByMainId(Collections.singletonList(firstMileDeliveryEntity.getId()));
-            dto.setBusinessCode(firstMileDeliveryDetailList.get(0).getFbaShipmentCode());
-        }
-
-        if(generateLogisticDTOMap.containsKey(allocationDTO.getSourceId())){
-            FirstMileDeliveryDTO.GenerateLogisticDTO deliveryDto = generateLogisticDTOMap.get(allocationDTO.getSourceId());
-            dto.setFromWarehouseId(deliveryDto.getFromWarehouseId());
-            dto.setPackingDTOList(deliveryDto.getPackingDTOList());
-        }
-        if(channelMap.containsKey(allocationDTO.getChannelId())){
-            LogisticsChannelEntity logisticsChannel = channelMap.get(allocationDTO.getChannelId());
-            dto.setChannelId(allocationDTO.getChannelId());
-            dto.setVolumeSetting(logisticsChannel.getVolumeSetting());
-            dto.setFeeRule(logisticsChannel.getFeeRule());
-        }
-        if(supplierMap.containsKey(allocationDTO.getSupplierId())){
-            dto.setSupplierName(supplierMap.get(allocationDTO.getSupplierId()).getSupplierName());
-        }
-        return firstMileWeightAllocationService.add(dto);
+        return firstMileWeightAllocationService.add(id);
     }
 
     @Override

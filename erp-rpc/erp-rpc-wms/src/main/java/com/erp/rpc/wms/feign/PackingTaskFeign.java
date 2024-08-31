@@ -3,9 +3,12 @@ package com.erp.rpc.wms.feign;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -29,4 +32,10 @@ public interface PackingTaskFeign {
      */
     @PostMapping("/feign/packingTask/listCartonSpecByTaskIds")
     List<WmsCartonSpecDTO.WmsCartonSpecView> listCartonSpecByTaskIds(@RequestBody List<String> taskIds);
+
+    /**
+     * 根据来源ID查询
+     */
+    @GetMapping("/feign/packingTask/getBySourceId")
+    PackingTaskEntity getBySourceId(@RequestParam String sourceId);
 }

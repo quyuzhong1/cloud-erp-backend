@@ -37,6 +37,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     /**
     * 发货单明细id
     */
+    @Deprecated
     @TableField("delivery_detail_id")
     private String deliveryDetailId;
     /**
@@ -68,6 +69,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     /**
     * 平台skuId
     */
+    @Deprecated
     @TableField("platform_sku_id")
     private String platformSkuId;
     /**

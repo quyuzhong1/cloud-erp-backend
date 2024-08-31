@@ -40,12 +40,6 @@ public class FirstMileWeightAllocationJob {
     private TmsFirstMileLogisticService firstMileLogisticService;
     @Resource
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
-    @Resource
-    private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
-    @Resource
-    private LogisticsChannelService logisticsChannelService;
-    @Resource
-    private LogisticsSupplierService logisticsSupplierService;
 
     /**
      * 自动生成头程重量分摊
@@ -58,43 +52,14 @@ public class FirstMileWeightAllocationJob {
             XxlJobHelper.log("没有找到物流状态为【已下单】的物流单");
             return ReturnT.SUCCESS;
         }
-        //头程发货单
-        List<String> outstockIdList = list.stream().map(item -> item.getSourceId()).distinct().collect(Collectors.toList());
-        FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
-        reqDto.setIds(outstockIdList);
-        List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOList = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
-        Map<String, FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOMap = generateLogisticDTOList.stream().collect(Collectors.toMap(item -> item.getOutstockId(), item2 -> item2));
-        //物流渠道
-        List<String> channelIds = list.stream().map(item -> item.getChannelId()).distinct().collect(Collectors.toList());
-        List<LogisticsChannelEntity> channelList = logisticsChannelService.listByIds(channelIds);
-        Map<String, LogisticsChannelEntity> channelMap = channelList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
-        //物流商
-        List<String> supplierIds = list.stream().map(item -> item.getSupplierId()).distinct().collect(Collectors.toList());
-        List<LogisticsSupplierEntity> supplierList = logisticsSupplierService.listByIds(supplierIds);
-        Map<String, LogisticsSupplierEntity> supplierMap = supplierList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
         for (TmsFirstMileLogisticDTO.WeightAllocationDTO allocationDTO : list) {
-            FirstMileWeightAllocationDTO.AddDTO dto = new FirstMileWeightAllocationDTO.AddDTO();
-            BeanMapper.copy(allocationDTO, dto);
-            if(generateLogisticDTOMap.containsKey(allocationDTO.getSourceId())){
-                FirstMileDeliveryDTO.GenerateLogisticDTO deliveryDto = generateLogisticDTOMap.get(allocationDTO.getSourceId());
-                dto.setFromWarehouseId(deliveryDto.getFromWarehouseId());
-                dto.setPackingDTOList(deliveryDto.getPackingDTOList());
-            }
-            if(channelMap.containsKey(allocationDTO.getChannelId())){
-                LogisticsChannelEntity logisticsChannel = channelMap.get(allocationDTO.getChannelId());
-                dto.setChannelId(allocationDTO.getChannelId());
-                dto.setVolumeSetting(logisticsChannel.getVolumeSetting());
-                dto.setFeeRule(logisticsChannel.getFeeRule());
-            }
-            if(supplierMap.containsKey(allocationDTO.getSupplierId())){
-                dto.setSupplierName(supplierMap.get(allocationDTO.getSupplierId()).getSupplierName());
-            }
             try {
-                BatchResultDTO resultDTO = firstMileWeightAllocationService.add(dto);
+                firstMileWeightAllocationService.add(allocationDTO.getLogisticsBillId());
             }catch (ServiceException e){
                 XxlJobHelper.log("生成重量分摊失败：{} {}",allocationDTO.getSourceCode(), e.getMessage());
             }
         }
+
         return ReturnT.SUCCESS;
     }
 }

@@ -129,6 +129,7 @@
         from first_mile_weight_allocation wa
         <where>
             ${params.sqlMap.default}
+            and wa.is_deleted = false
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -136,7 +137,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        wa.create_time DESC
+        wa.create_time DESC, wa.box_no
     </select>
     <select id="listByParamIds" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
         select wa.id,
@@ -236,6 +237,23 @@
             </foreach>
         </if>
         wa.create_time DESC
+    </select>
+    <select id="getLogisticsBillInfo"
+            resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$LogisticsBillInfoDTO">
+        select  lb.id logisticsBillId,
+                lb.outstock_id sourceId,
+                lb.outstock_code sourceCode,
+                lb.source_id businessId,
+                lb.source_code businessCode,
+                lb.transport_no transportNo,
+                lb.logistics_supplier_id supplierId,
+                lb.shop_id shopId,
+                lb.shop_name shopName,
+                lb.to_country toCountry,
+                lb.channel_id channelId
+        from logistics_bill lb
+            left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+        where lb.is_deleted = false and lb.id = #{logisticsBillId} and lbd.track_status in ('ordered', 'Inspecting', 'trackIng', 'arrived', 'sign', 'exception')
     </select>
 
 

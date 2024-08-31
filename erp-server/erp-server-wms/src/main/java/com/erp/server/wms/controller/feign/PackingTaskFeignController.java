@@ -59,4 +59,12 @@ public class PackingTaskFeignController extends BaseController {
         return resultList;
     }
 
+    /**
+     * 根据来源ID查询
+     */
+    @GetMapping("/getBySourceId")
+    PackingTaskEntity getBySourceId(@RequestParam String sourceId){
+        return packingTaskService.lambdaQuery().eq(PackingTaskEntity::getSourceId, sourceId).one();
+    }
+
 }

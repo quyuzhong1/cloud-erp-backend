@@ -19,15 +19,6 @@ import java.util.List;
 public interface FirstMileWeightAllocationService extends SuperService<FirstMileWeightAllocationEntity> {
 
     /**
-    * 新增
-    * @author tmj
-    * @date: 2024-08-20
-    * @param dto
-    * @return
-    */
-    BatchResultDTO add(FirstMileWeightAllocationDTO.AddDTO dto);
-
-    /**
      * 分页查询
      * @param dto
      * @return
@@ -87,4 +78,9 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
      * @return
      */
     List<FirstMileWeightAllocationEntity> listBySourceIds(List<String> sourceIds, List<String> statusList);
+
+    /**
+     * 新增重量分摊
+     */
+    BatchResultDTO add(String logisticsBillId);
 }
