@@ -632,6 +632,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @ExcelIgnore
         private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * 运单号
