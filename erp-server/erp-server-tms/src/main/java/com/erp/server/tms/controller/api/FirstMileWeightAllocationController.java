@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
+import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.server.tms.query.FirstMileCostAllocationQueryHandler;
 import com.erp.server.tms.query.FirstMileEstimatedQueryHandler;
 import com.erp.server.tms.query.FirstMileWeightAllocationQueryHandler;
@@ -32,6 +33,7 @@ import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 头程重量分摊
@@ -90,9 +92,11 @@ public class FirstMileWeightAllocationController extends BaseController {
      */
     @PostMapping("/weightReCompute")
     public ApiResult<List<BatchResultDTO>> weightReCompute(@RequestBody BaseIdsDTO.IdsDTO dto){
-        List<BatchResultDTO> list = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO resultDTO = firstMileWeightAllocationService.weightReCompute(id);
+        List<FirstMileWeightAllocationEntity> entityList = firstMileWeightAllocationService.listByIds(dto.getIds());
+        List<String> logisticsBillIds = entityList.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> list = new ArrayList<>(logisticsBillIds.size());
+        for (String logisticsBillId : logisticsBillIds) {
+            BatchResultDTO resultDTO = firstMileWeightAllocationService.weightReCompute(logisticsBillId);
             list.add(resultDTO);
         }
         return list.stream().allMatch(BatchResultDTO::getSuccess) ? success(list) : failure(list);

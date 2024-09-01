@@ -188,8 +188,126 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO weightReCompute(String logisticsBillId) {
-        return BatchResultDTO.success(logisticsBillId, logisticsBillId, OperationTypeEnum.UPDATE);
+        List<FirstMileWeightAllocationEntity> list = this.lambdaQuery().eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).list();
+        boolean allMatch = list.stream().allMatch(item -> item.getCostAllocationStatus().equals(CostAllocationStatusEnum.NOT.getCode()));
+        if(!allMatch){
+            throw new ServiceException("只能对未分摊的数据进行重量重算");
+        }
+
+        FirstMileWeightAllocationDTO.LogisticsBillInfoDTO logisticsBillInfo = baseMapper.getLogisticsBillInfo(logisticsBillId);
+        //物流渠道
+        LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsBillInfo.getChannelId());
+        //物流单
+        LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillId);
+        //发货单
+        String deliveryId = logisticsBillEntity.getOutstockId();
+        List<FirstMileDeliveryEntity> firstMileDeliveryList = wmsFirstMileDeliveryFeign.listByIds(Collections.singletonList(deliveryId));
+        FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryList.get(0);
+        //发货单明细
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailList = firstMileDeliveryDetailFeign.listByMainId(Collections.singletonList(firstMileDeliveryEntity.getId()));
+        //装箱任务
+        PackingTaskEntity packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getSourceId());
+        if(packingTaskEntity == null){
+            throw new ServiceException("没有找到装箱任务");
+        }
+        //系统配置
+        CfgSettingDTO.ViewDTO cfgSettingView = cfgSettingService.view();
+        String cfgWeightAllocationType = cfgSettingView.getAllocationSettingDTO().getWeightFirstAllocation();
+        //产品包装信息
+        List<String> skuIds = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomSkuList = bomSkuFeign.listBomChildBySkuIds(skuIds);
+        List<String> childrenSkuIds = bomSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+        childrenSkuIds.addAll(skuIds);
+        List<ProductPackEntity> productPackList = productPackFeign.listBySkuIds(childrenSkuIds);
+
+        List<FirstMileWeightAllocationEntity> entityList = this.lambdaQuery().eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).list();
+        List<FirstMileWeightAllocationEntity> updateList = new ArrayList<>(entityList.size());
+        for (FirstMileWeightAllocationEntity oldEntity : entityList) {
+            FirstMileWeightAllocationEntity entity = new FirstMileWeightAllocationEntity();
+            entity.setId(oldEntity.getId());
+            entity.setBoxId(oldEntity.getBoxId());
+            entity.setBoxNo(oldEntity.getBoxNo());
+            entity.setDeliveryQty(oldEntity.getDeliveryQty());
+            entity.setFeeRule(logisticsChannelEntity.getFeeRule());
+            entity.setOutStockWeight(oldEntity.getOutStockWeight());
+            BigDecimal boxSize = oldEntity.getBoxLength().multiply(oldEntity.getBoxWidth()).multiply(oldEntity.getBoxHeight());
+            BigDecimal volumeSetting = BigDecimal.valueOf(logisticsChannelEntity.getVolumeSetting());
+            if(volumeSetting.compareTo(BigDecimal.ZERO) == 0){
+                throw new ServiceException("物流渠道【{}】的材积设置不能为0", logisticsChannelEntity.getName());
+            }
+            BigDecimal volumeWeight = boxSize.divide(volumeSetting, 4, RoundingMode.HALF_UP);
+            entity.setVolumeWeight(volumeWeight);
+            entity.setChargedWeight(oldEntity.getOutStockWeight().max(volumeWeight));
+            if(cfgWeightAllocationType.equals("outstockChargedWeight")){
+                if(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(logisticsChannelEntity.getFeeRule())){
+                    entity.setAllocationType(WeightAllocationTypeEnum.BILLING_WEIGHT.getCode());
+                }
+                if(ShippingFeeRuleEnum.NET_WEIGHT.getCode().equals(logisticsChannelEntity.getFeeRule())){
+                    entity.setAllocationType(WeightAllocationTypeEnum.NET_WEIGHT.getCode());
+                }
+                if(ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(logisticsChannelEntity.getFeeRule())){
+                    entity.setAllocationType(WeightAllocationTypeEnum.VOLUME_WEIGHT.getCode());
+                }
+            }
+            if(cfgWeightAllocationType.equals("productWeight")){
+                entity.setAllocationType(WeightAllocationTypeEnum.PRODUCT_WEIGHT.getCode());
+            }
+            List<BomChildrenSkuDTO> bomChildrenList = bomSkuList.stream().filter(item -> item.getParentSkuId().equals(oldEntity.getSkuId())).collect(Collectors.toList());
+            if(!bomChildrenList.isEmpty()){
+                //bom
+                BigDecimal parentSkuWeight = getParentSkuWeight(bomChildrenList, productPackList);
+                entity.setProductWeight(parentSkuWeight);
+            }else {
+                //单sku
+                Optional<ProductPackEntity> productPackOptional = productPackList.stream().filter(item -> item.getSkuId().equals(oldEntity.getSkuId())).findFirst();
+                ProductPackEntity productPackEntity = productPackOptional.get();
+                productPackEntity.handleData();
+                BigDecimal productWeight = productPackEntity.getGrossWeight().compareTo(BigDecimal.ZERO) != 0 ? productPackEntity.getGrossWeight() : productPackEntity.getNetWeight();
+                entity.setProductWeight(productWeight.divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
+            }
+            updateList.add(entity);
+        }
+        computeAllocationWeight(updateList, cfgWeightAllocationType, logisticsChannelEntity);
+        boolean updated = this.updateBatchById(updateList);
+
+        return updated ? BatchResultDTO.success(logisticsBillId, logisticsBillId) : BatchResultDTO.fail(logisticsBillId, logisticsBillId, OperationTypeEnum.UPDATE);
+    }
+
+    /**
+     * 计算分摊重量
+     */
+    private void computeAllocationWeight(List<FirstMileWeightAllocationEntity> entityList, String cfgWeightAllocationType, LogisticsChannelEntity logisticsChannelEntity) {
+        Map<String, List<FirstMileWeightAllocationEntity>> boxGroupMap = entityList.stream().collect(Collectors.groupingBy(FirstMileWeightAllocationEntity::getBoxId));
+        for (Map.Entry<String, List<FirstMileWeightAllocationEntity>> entry : boxGroupMap.entrySet()) {
+            //统计每个箱子中所有sku的总重量
+            BigDecimal boxWeightSum = BigDecimal.ZERO;
+            List<FirstMileWeightAllocationEntity> boxEntityList = entry.getValue();
+            for (FirstMileWeightAllocationEntity dto : boxEntityList) {
+                BigDecimal skuWeightSum = dto.getProductWeight().multiply(BigDecimal.valueOf(dto.getDeliveryQty()));
+                boxWeightSum = boxWeightSum.add(skuWeightSum);
+            }
+            //计算分摊重量
+            BigDecimal allocationWeightSum = BigDecimal.ZERO;
+            for (FirstMileWeightAllocationEntity entity : boxEntityList) {
+                BigDecimal skuWeightSum = entity.getProductWeight().multiply(BigDecimal.valueOf(entity.getDeliveryQty()));
+                BigDecimal divide = skuWeightSum.divide(boxWeightSum, 4, RoundingMode.HALF_UP);
+                if(cfgWeightAllocationType.equals("outstockChargedWeight")){
+                    BigDecimal weightByAllocationType = getFeeRuleWeight(logisticsChannelEntity.getFeeRule(), entity);
+                    BigDecimal allocationWeight = divide.multiply(weightByAllocationType);
+                    entity.setAllocationWeight(allocationWeight);
+                }
+                if(cfgWeightAllocationType.equals("productWeight")){
+                    entity.setAllocationWeight(entity.getProductWeight().multiply(BigDecimal.valueOf(entity.getDeliveryQty())));
+                }
+                allocationWeightSum = allocationWeightSum.add(entity.getAllocationWeight());
+                //如果是箱子中最后一个产品
+                if(boxEntityList.indexOf(entity) != (boxEntityList.size() - 1)){
+
+                }
+            }
+        }
     }
 
     @Override
@@ -323,7 +441,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             BigDecimal volumeWeight = boxSize.divide(volumeSetting, 4, RoundingMode.HALF_UP);
             entity.setVolumeWeight(volumeWeight);
             entity.setChargedWeight(cartonDetail.getPackageWeight().max(volumeWeight));
-            if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(cfgWeightAllocationType)){
+            if(cfgWeightAllocationType.equals("outstockChargedWeight")){
                 if(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(weightAllocationDTO.getFeeRule())){
                     entity.setAllocationType(WeightAllocationTypeEnum.BILLING_WEIGHT.getCode());
                 }
@@ -334,13 +452,13 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                     entity.setAllocationType(WeightAllocationTypeEnum.VOLUME_WEIGHT.getCode());
                 }
             }
-            if(WeightAllocationEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(cfgWeightAllocationType)){
+            if(cfgWeightAllocationType.equals("productWeight")){
                 entity.setAllocationType(WeightAllocationTypeEnum.PRODUCT_WEIGHT.getCode());
             }
             saveList.add(entity);
         }
-
-        Map<String, List<FirstMileWeightAllocationEntity>> boxGroupMap = saveList.stream().collect(Collectors.groupingBy(FirstMileWeightAllocationEntity::getBoxId));
+        computeAllocationWeight(saveList, cfgWeightAllocationType, logisticsChannelEntity);
+        /*Map<String, List<FirstMileWeightAllocationEntity>> boxGroupMap = saveList.stream().collect(Collectors.groupingBy(FirstMileWeightAllocationEntity::getBoxId));
         for (Map.Entry<String, List<FirstMileWeightAllocationEntity>> entry : boxGroupMap.entrySet()) {
             //统计每个箱子中所有sku的总重量
             BigDecimal boxWeightSum = BigDecimal.ZERO;
@@ -355,7 +473,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 BigDecimal skuWeightSum = dto.getProductWeight().multiply(BigDecimal.valueOf(dto.getDeliveryQty()));
                 BigDecimal divide = skuWeightSum.divide(boxWeightSum, 4, RoundingMode.HALF_UP);
                 if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(cfgWeightAllocationType)){
-                    BigDecimal weightByAllocationType = getFeeRuleWeight(weightAllocationDTO, dto);
+                    BigDecimal weightByAllocationType = getFeeRuleWeight(logisticsChannelEntity.getFeeRule(), dto);
                     BigDecimal allocationWeight = divide.multiply(weightByAllocationType);
                     dto.setAllocationWeight(allocationWeight);
                 }
@@ -368,7 +486,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
                 }
             }
-        }
+        }*/
         saveList.sort(Comparator.comparing(FirstMileWeightAllocationEntity::getBoxNo).reversed());
         //保存
         boolean success = this.saveBatch(saveList);
@@ -378,20 +496,20 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     /**
      * 按照计费规则获取重量
      */
-    private BigDecimal getFeeRuleWeight(FirstMileWeightAllocationDTO.AddDTO weightAllocationDTO, FirstMileWeightAllocationEntity entity) {
-        if(StringUtils.equals(weightAllocationDTO.getFeeRule(), ShippingFeeRuleEnum.BILLING_WEIGHT.getCode())){
+    private BigDecimal getFeeRuleWeight(String feeRule, FirstMileWeightAllocationEntity entity) {
+        if(StringUtils.equals(feeRule, ShippingFeeRuleEnum.BILLING_WEIGHT.getCode())){
             //计费重
             return entity.getChargedWeight();
         }
-        if(StringUtils.equals(weightAllocationDTO.getFeeRule(), ShippingFeeRuleEnum.NET_WEIGHT.getCode())){
+        if(StringUtils.equals(feeRule, ShippingFeeRuleEnum.NET_WEIGHT.getCode())){
             //出库实重
             return entity.getOutStockWeight();
         }
-        if(StringUtils.equals(weightAllocationDTO.getFeeRule(), ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode())){
+        if(StringUtils.equals(feeRule, ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode())){
             //体积重
             return entity.getVolumeWeight();
         }
-        throw new ServiceException("匹配计费规则失败:{}", weightAllocationDTO.getFeeRule());
+        throw new ServiceException("匹配计费规则失败:{}", feeRule);
     }
 
     /**
