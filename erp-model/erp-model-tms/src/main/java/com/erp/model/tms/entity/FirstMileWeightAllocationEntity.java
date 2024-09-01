@@ -175,6 +175,11 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     @TableField("to_country")
     private String toCountry;
     /**
+     * 目的国家名称
+     */
+    @TableField("to_country_name")
+    private String toCountryName;
+    /**
     * 发货仓库ID
     */
     @TableField("from_warehouse_id")
