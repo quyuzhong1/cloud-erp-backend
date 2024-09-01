@@ -539,7 +539,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<LogisticsCarrierEntity> carrierList = logisticsCarrierService.listByIds(carrierIds);
         //业务单号查询
         List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(outstockIdList);
-        for (TmsFirstMileLogisticDTO.PagingVO pagingVO : list) {
+        list.forEach(pagingVO ->{
             //处理枚举值
             pagingVO.setLogisticsStatusName(EnumMessage.getNameByCode(FmLogisticTrackStatusEnum.class,pagingVO.getLogisticsStatus()));
             pagingVO.setInvoicesStatusName(EnumMessage.getNameByCode(InvoicesStatusEnum.class,pagingVO.getInvoicesStatus()));
@@ -579,26 +579,23 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
                 pagingVO.setActualDesc(actualDesc);
             }
-            if(StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTime()) && StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTimeUnit())){
-                //0为默认值，不处理
-                if(logisticsChannelEntity.getEffectiveTime().equals("0")){
-                    continue;
-                }
+            if(StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTime()) && !logisticsChannelEntity.getEffectiveTime().equals("0")
+                    && StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTimeUnit())){
                 //判断是否是数字，不是数字的话不计算预警，直接返回中文
                 String regex = "\\d*[1-9]+\\d*";
                 Pattern pattern = Pattern.compile(regex);
                 if(!pattern.matcher(logisticsChannelEntity.getEffectiveTime()).matches()){
                     pagingVO.setEstimatedTimeDesc(logisticsChannelEntity.getEffectiveTime());
-                    continue;
-                }
-                int estimatedDay = Integer.parseInt(logisticsChannelEntity.getEffectiveTime());
-                pagingVO.setEstimatedDay(estimatedDay);
-                //现在单位只有天
-                pagingVO.setEstimatedTimeUnit("天");
-                pagingVO.setEstimatedTimeDesc(pagingVO.getEstimatedDay() + pagingVO.getEstimatedTimeUnit());
-                //设置预警
-                if(pagingVO.getActualHour() != null){
-                    pagingVO.setWarnHour(estimatedDay*24 - pagingVO.getActualHour());
+                }else {
+                    int estimatedDay = Integer.parseInt(logisticsChannelEntity.getEffectiveTime());
+                    pagingVO.setEstimatedDay(estimatedDay);
+                    //现在单位只有天
+                    pagingVO.setEstimatedTimeUnit("天");
+                    pagingVO.setEstimatedTimeDesc(pagingVO.getEstimatedDay() + pagingVO.getEstimatedTimeUnit());
+                    //设置预警
+                    if(pagingVO.getActualHour() != null){
+                        pagingVO.setWarnHour(estimatedDay*24 - pagingVO.getActualHour());
+                    }
                 }
             }
             if(pagingVO.getWarnHour()!=null){
@@ -617,7 +614,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }else {
                 pagingVO.setBusinessCode("");
             }
-        }
+        });
     }
 
     private void fillViewDb(TmsFirstMileLogisticDTO.ViewDTO dto) {

@@ -408,12 +408,13 @@
     <select id="getBusinessCodeByIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
         SELECT
             fd.id,
-            concat(fs.code,owi.code) AS businessCode,
-            fs.code as fbaShipmentCode,
+            fdd.id as detailId,
+            concat(fdd.fba_shipment_code,owi.code) AS businessCode,
+            fdd.fba_shipment_code as fbaShipmentCode,
             owi.code as overseasWarehouseCode
         FROM first_mile_delivery fd
+         LEFT JOIN first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
          LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE
-         LEFT JOIN fba_shipment fs ON fs.code = fd.source_code AND fs.is_deleted = FALSE
         where fd.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             and fd.id in
