@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapper;
@@ -357,7 +358,12 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         //发货单明细
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailList = firstMileDeliveryDetailFeign.listByMainId(Collections.singletonList(firstMileDeliveryEntity.getId()));
         //装箱任务
-        PackingTaskEntity packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getSourceId());
+        PackingTaskEntity packingTaskEntity;
+        if(firstMileDeliveryEntity.getSourceType().equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode())){
+            packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getSourceId());
+        }else {
+            packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getId());
+        }
         if(packingTaskEntity == null){
             throw new ServiceException("没有找到装箱任务");
         }
@@ -386,6 +392,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode())){
             //备货第三方仓：取海外仓入库单号
             List<OverseasWarehouseInboundEntity> warehouseInboundEntity = overseaWarehouseInboundFeign.listBySourceIds(Collections.singletonList(deliveryId));
+            if(warehouseInboundEntity.isEmpty()){
+                throw new ServiceException("没有找到有效的海外仓入库单号");
+            }
             weightAllocationDTO.setBusinessCode(warehouseInboundEntity.get(0).getCode());
         }
         if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())){
