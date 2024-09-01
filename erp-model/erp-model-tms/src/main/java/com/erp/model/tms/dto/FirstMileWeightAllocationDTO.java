@@ -256,6 +256,11 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 创建时间（导出用）
+         */
+        private String createTimeStr;
+
+        /**
          * 物流单ID
          */
         private String logisticsBillId;

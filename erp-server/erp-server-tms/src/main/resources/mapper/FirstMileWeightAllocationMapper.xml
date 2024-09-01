@@ -137,7 +137,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        wa.create_time DESC, wa.box_no
+        wa.create_time DESC
     </select>
     <select id="listByParamIds" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
         select wa.id,
