@@ -91,22 +91,22 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     * 发货量
     */
     @TableField("delivery_qty")
-    private Integer deliveryQty = 0;
+    private Integer deliveryQty;
     /**
     * 箱长
     */
     @TableField("box_length")
-    private BigDecimal boxLength = BigDecimal.ZERO;
+    private BigDecimal boxLength;
     /**
     * 箱宽
     */
     @TableField("box_width")
-    private BigDecimal boxWidth = BigDecimal.ZERO;
+    private BigDecimal boxWidth;
     /**
     * 箱高
     */
     @TableField("box_height")
-    private BigDecimal boxHeight = BigDecimal.ZERO;
+    private BigDecimal boxHeight;
     /**
     * 箱子尺寸单位
     */
