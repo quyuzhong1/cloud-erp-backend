@@ -155,13 +155,14 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "自发货物流单详情");
         }
         String signCode = LogisticTrackStatusEnum.SIGN.getCode();
+        String manualCompleteCode = LogisticTrackStatusEnum.MANUAL_COMPLETE.getCode();
         String dbTrackStatus=detailEntity.getTrackStatus();
         if (signCode.equals(dbTrackStatus) && detailEntity.getIsApiUpdate()) {
             throw new ServiceException(ApiError.ERROR_NOT_UPDATE_TRACK_STATUS);
         }
         detailEntity.setIsApiUpdate(Boolean.FALSE);
         //表示签收
-        if (signCode.equals(trackStatus)) {
+        if (signCode.equals(trackStatus) || Objects.equals(manualCompleteCode, trackStatus)) {
             detailEntity.setSignTime(trackTime);
         } else {
             detailEntity.setSignTime(null);
