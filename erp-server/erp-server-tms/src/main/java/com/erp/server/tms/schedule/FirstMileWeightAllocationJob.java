@@ -56,6 +56,7 @@ public class FirstMileWeightAllocationJob {
             try {
                 firstMileWeightAllocationService.add(allocationDTO.getLogisticsBillId());
             }catch (Exception e){
+                e.printStackTrace();
                 XxlJobHelper.log("生成重量分摊失败：{} {}", allocationDTO.getSourceCode(), e.getMessage());
             }
         }

@@ -408,7 +408,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         //物流商
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(logisticsBillEntity.getLogisticsSupplierId());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(firstMileDeliveryEntity.getCountryId()));
-        DictCountryEntity countryEntity = countryList.get(0);
 
         FirstMileWeightAllocationDTO.AddDTO weightAllocationDTO = new FirstMileWeightAllocationDTO.AddDTO();
         weightAllocationDTO.setLogisticsBillId(logisticsBillId);
@@ -435,7 +434,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         weightAllocationDTO.setFeeRule(logisticsChannelEntity.getFeeRule());
         weightAllocationDTO.setVolumeSetting(logisticsChannelEntity.getVolumeSetting());
         weightAllocationDTO.setToCountry(firstMileDeliveryEntity.getCountryId());
-        weightAllocationDTO.setToCountryName(countryEntity.getNameCn());
+        if(!countryList.isEmpty()){
+            weightAllocationDTO.setToCountryName(countryList.get(0).getNameCn());
+        }
         weightAllocationDTO.setFromWarehouseId(firstMileDeliveryEntity.getDeliveryWarehouseId());
         List<FirstMileWeightAllocationEntity> saveList = new ArrayList<>();
         for (WmsCartonDTO.DetailDTO cartonDetail : cartonDetailList) {
