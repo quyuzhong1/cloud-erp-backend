@@ -339,8 +339,8 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         if(count > 0){
             return BatchResultDTO.fail(logisticsBillId, logisticsBillId, "已下推费用分摊，不允许删除");
         }
-        int remove = baseMapper.deleteById(logisticsBillId);
-        return remove > 0 ? BatchResultDTO.success(logisticsBillId, logisticsBillId) : BatchResultDTO.fail(logisticsBillId, logisticsBillId, OperationTypeEnum.DELETE);
+        boolean remove = this.lambdaUpdate().eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).remove();
+        return remove ? BatchResultDTO.success(logisticsBillId, logisticsBillId) : BatchResultDTO.fail(logisticsBillId, logisticsBillId, OperationTypeEnum.DELETE);
     }
 
     @Override
