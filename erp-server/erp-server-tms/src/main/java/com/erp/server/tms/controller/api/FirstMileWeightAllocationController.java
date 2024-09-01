@@ -3,24 +3,16 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
-import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
-import com.erp.server.tms.query.FirstMileCostAllocationQueryHandler;
-import com.erp.server.tms.query.FirstMileEstimatedQueryHandler;
 import com.erp.server.tms.query.FirstMileWeightAllocationQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -107,9 +99,11 @@ public class FirstMileWeightAllocationController extends BaseController {
      */
     @PostMapping("/deleteBatch")
     public ApiResult<List<BatchResultDTO>> deleteBatch(@RequestBody BaseIdsDTO.IdsDTO dto){
-        List<BatchResultDTO> list = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO resultDTO = firstMileWeightAllocationService.deleteById(id);
+        List<FirstMileWeightAllocationEntity> entityList = firstMileWeightAllocationService.listByIds(dto.getIds());
+        List<String> logisticsBillIds = entityList.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> list = new ArrayList<>(logisticsBillIds.size());
+        for (String logisticsBillId : logisticsBillIds) {
+            BatchResultDTO resultDTO = firstMileWeightAllocationService.deleteByLogisticsBillId(logisticsBillId);
             list.add(resultDTO);
         }
         return list.stream().allMatch(BatchResultDTO::getSuccess) ? success(list) : failure(list);

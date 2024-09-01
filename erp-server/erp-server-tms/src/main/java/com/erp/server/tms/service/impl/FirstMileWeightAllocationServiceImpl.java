@@ -187,9 +187,32 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         return list;
     }
 
+    /**
+     * 更新费用分摊状态
+     */
+    private void updateCostAllocationStatus(String logisticsBillId){
+        //更新费用分摊状态
+        List<FirstMileWeightAllocationDTO.CostAllocationDTO> costAllocationList = baseMapper.listCostAllocation(logisticsBillId);
+        if(costAllocationList.isEmpty()){
+            this.lambdaUpdate()
+                    .set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.NOT.getCode())
+                    .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
+                    .update();
+            return;
+        }
+        costAllocationList.sort(Comparator.comparing(FirstMileWeightAllocationDTO.CostAllocationDTO::getReportPeriod).reversed());
+        FirstMileWeightAllocationDTO.CostAllocationDTO costAllocationDTO = costAllocationList.get(0);
+        if(costAllocationDTO.getCostAllocationStatus().equals("waitConfirm") && costAllocationDTO.getBillSourceType().equals("actual") && costAllocationDTO.getEndPeriodTransitCost().equals(BigDecimal.ZERO)){
+            this.lambdaUpdate().set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.ALREADY.getCode()).eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).update();
+            return;
+        }
+        this.lambdaUpdate().set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.PART.getCode()).eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).update();
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO weightReCompute(String logisticsBillId) {
+        updateCostAllocationStatus(logisticsBillId);
         List<FirstMileWeightAllocationEntity> list = this.lambdaQuery().eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).list();
         boolean allMatch = list.stream().allMatch(item -> item.getCostAllocationStatus().equals(CostAllocationStatusEnum.NOT.getCode()));
         if(!allMatch){
@@ -311,14 +334,13 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     }
 
     @Override
-    public BatchResultDTO deleteById(String id) {
-        FirstMileWeightAllocationEntity entity = baseMapper.selectById(id);
-        int count = costAllocationService.count(new LambdaQueryWrapper<FirstMileCostAllocationEntity>().eq(FirstMileCostAllocationEntity::getLogisticsBillId, entity.getLogisticsBillId()));
+    public BatchResultDTO deleteByLogisticsBillId(String logisticsBillId) {
+        int count = costAllocationService.count(new LambdaQueryWrapper<FirstMileCostAllocationEntity>().eq(FirstMileCostAllocationEntity::getLogisticsBillId, logisticsBillId));
         if(count > 0){
-            return BatchResultDTO.fail(id, entity.getBusinessCode(), "已下推费用分摊，不允许删除");
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillId, "已下推费用分摊，不允许删除");
         }
-        int remove = baseMapper.deleteById(id);
-        return remove > 0 ? BatchResultDTO.success(id, entity.getBusinessCode()) : BatchResultDTO.fail(id, entity.getBusinessCode(), OperationTypeEnum.DELETE);
+        int remove = baseMapper.deleteById(logisticsBillId);
+        return remove > 0 ? BatchResultDTO.success(logisticsBillId, logisticsBillId) : BatchResultDTO.fail(logisticsBillId, logisticsBillId, OperationTypeEnum.DELETE);
     }
 
     @Override
@@ -348,6 +370,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         FirstMileWeightAllocationDTO.LogisticsBillInfoDTO logisticsBillInfo = baseMapper.getLogisticsBillInfo(logisticsBillId);
         //物流渠道
         LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsBillInfo.getChannelId());
+        if(logisticsChannelEntity == null){
+            throw new ServiceException("没有找到物流渠道");
+        }
         //物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillId);
         //发货单
@@ -360,6 +385,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         PackingTaskEntity packingTaskEntity;
         if(firstMileDeliveryEntity.getSourceType().equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode())){
             packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getSourceId());
+            if(packingTaskEntity == null){
+                packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getId());
+            }
         }else {
             packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getId());
         }
@@ -391,10 +419,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode())){
             //备货第三方仓：取海外仓入库单号
             List<OverseasWarehouseInboundEntity> warehouseInboundEntity = overseaWarehouseInboundFeign.listBySourceIds(Collections.singletonList(deliveryId));
-            if(warehouseInboundEntity.isEmpty()){
-                throw new ServiceException("没有找到有效的海外仓入库单号");
+            if(!warehouseInboundEntity.isEmpty()){
+//                throw new ServiceException("没有找到有效的海外仓入库单号");
+                weightAllocationDTO.setBusinessCode(warehouseInboundEntity.get(0).getCode());
             }
-            weightAllocationDTO.setBusinessCode(warehouseInboundEntity.get(0).getCode());
         }
         if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())){
             //备货FBA仓：取FBA货件单号
@@ -467,38 +495,12 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             saveList.add(entity);
         }
         computeAllocationWeight(saveList, cfgWeightAllocationType, logisticsChannelEntity);
-        /*Map<String, List<FirstMileWeightAllocationEntity>> boxGroupMap = saveList.stream().collect(Collectors.groupingBy(FirstMileWeightAllocationEntity::getBoxId));
-        for (Map.Entry<String, List<FirstMileWeightAllocationEntity>> entry : boxGroupMap.entrySet()) {
-            //统计每个箱子中所有sku的总重量
-            BigDecimal boxWeightSum = BigDecimal.ZERO;
-            List<FirstMileWeightAllocationEntity> boxEntityList = entry.getValue();
-            for (FirstMileWeightAllocationEntity dto : boxEntityList) {
-                BigDecimal skuWeightSum = dto.getProductWeight().multiply(BigDecimal.valueOf(dto.getDeliveryQty()));
-                boxWeightSum = boxWeightSum.add(skuWeightSum);
-            }
-            //计算分摊重量
-            BigDecimal allocationWeightSum = BigDecimal.ZERO;
-            for (FirstMileWeightAllocationEntity dto : boxEntityList) {
-                BigDecimal skuWeightSum = dto.getProductWeight().multiply(BigDecimal.valueOf(dto.getDeliveryQty()));
-                BigDecimal divide = skuWeightSum.divide(boxWeightSum, 4, RoundingMode.HALF_UP);
-                if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(cfgWeightAllocationType)){
-                    BigDecimal weightByAllocationType = getFeeRuleWeight(logisticsChannelEntity.getFeeRule(), dto);
-                    BigDecimal allocationWeight = divide.multiply(weightByAllocationType);
-                    dto.setAllocationWeight(allocationWeight);
-                }
-                if(WeightAllocationEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(cfgWeightAllocationType)){
-                    dto.setAllocationWeight(dto.getProductWeight().multiply(BigDecimal.valueOf(dto.getDeliveryQty())));
-                }
-                allocationWeightSum = allocationWeightSum.add(dto.getAllocationWeight());
-                //如果是箱子中最后一个产品
-                if(boxEntityList.indexOf(dto) != (boxEntityList.size() - 1)){
-
-                }
-            }
-        }*/
         saveList.sort(Comparator.comparing(FirstMileWeightAllocationEntity::getBoxNo).reversed());
         //保存
         boolean success = this.saveBatch(saveList);
+        if(success){
+            updateCostAllocationStatus(logisticsBillId);
+        }
         return success ? BatchResultDTO.success(logisticsBillId, logisticsBillId) : BatchResultDTO.fail(logisticsBillId, logisticsBillId, OperationTypeEnum.ADD);
     }
 

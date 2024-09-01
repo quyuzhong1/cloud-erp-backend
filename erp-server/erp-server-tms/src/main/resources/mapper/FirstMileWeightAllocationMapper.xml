@@ -258,6 +258,23 @@
             left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
         where lb.is_deleted = false and lb.id = #{logisticsBillId} and lbd.track_status in ('ordered', 'Inspecting', 'trackIng', 'arrived', 'sign', 'exception')
     </select>
+    <select id="listCostAllocation"
+            resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$CostAllocationDTO">
+        SELECT a.logistics_bill_id logisticsBillId,
+               a.report_period_id reportPeriodId,
+               a.account_period accountPeriod,
+               a.status costAllocationStatus,
+               ca.sku_id skuId,
+               ca.sku_no skuNo,
+               ca.bill_source_type billSourceType,
+               cad.end_period_transit_cost   as endPeriodTransitCost,
+               rpm.month                     AS reportPeriod
+        FROM first_mile_cost_allocation a
+                 LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
+                 LEFT JOIN first_mile_sku_cost_allocation_detail cad ON cad.cost_main_id = ca.id AND cad.is_deleted = FALSE
+                 LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
+        where a.logistics_bill_id = #{logisticsBillId}
+    </select>
 
 
 </mapper>

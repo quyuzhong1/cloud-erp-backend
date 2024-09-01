@@ -397,15 +397,15 @@ public class WmsCartonDTO {
         /**
          * 箱长
          */
-        private BigDecimal boxLength;
+        private BigDecimal boxLength = BigDecimal.ZERO;
         /**
          * 箱宽
          */
-        private BigDecimal boxWidth;
+        private BigDecimal boxWidth = BigDecimal.ZERO;
         /**
          * 箱高
          */
-        private BigDecimal boxHeight;
+        private BigDecimal boxHeight = BigDecimal.ZERO;
         /**
          * 尺寸单位
          */

@@ -60,7 +60,7 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
      * @date: 2024-08-22
      * @author: tanmujin
      */
-    BatchResultDTO deleteById(String id);
+    BatchResultDTO deleteByLogisticsBillId(String id);
 
     /**
      * 根据物流单号查询重量分摊

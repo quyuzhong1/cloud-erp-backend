@@ -793,4 +793,44 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          */
         private String channelId;
     }
+
+    @Data
+    public static class CostAllocationDTO{
+        /**
+         *
+         */
+        private String logisticsBillId;
+        /**
+         *
+         */
+        private String reportPeriodId;
+        /**
+         *
+         */
+        private String accountPeriod;
+        /**
+         *
+         */
+        private String costAllocationStatus;
+        /**
+         *
+         */
+        private String skuId;
+        /**
+         *
+         */
+        private String skuNo;
+        /**
+         *
+         */
+        private String billSourceType;
+        /**
+         *
+         */
+        private BigDecimal endPeriodTransitCost;
+        /**
+         *
+         */
+        private LocalDate reportPeriod;
+    }
 }
