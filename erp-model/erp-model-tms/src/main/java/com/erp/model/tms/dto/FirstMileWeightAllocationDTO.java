@@ -341,6 +341,11 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String toCountry;
 
         /**
+         * 目的国家名称
+         */
+        private String toCountryName;
+
+        /**
          * 发货仓库ID
          */
         private String fromWarehouseId;

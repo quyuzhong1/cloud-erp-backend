@@ -126,9 +126,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
         List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> lastedAllocationMonthList =  costAllocationService.listLastedAllocationMonth(logisticsBillIds);
         //国家
-        List<String> countryCodeList = records.stream().map(item -> item.getToCountry()).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryCodeList);
-        Map<String, String> countryNameMap = countryList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getNameCn()));
+//        List<String> countryCodeList = records.stream().map(item -> item.getToCountry()).distinct().collect(Collectors.toList());
+//        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryCodeList);
+//        Map<String, String> countryNameMap = countryList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getNameCn()));
         for (FirstMileWeightAllocationDTO.ViewDTO item : records) {
             if(StringUtils.isBlank(item.getCostAllocationStatus())){
                 item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
@@ -139,7 +139,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             if(warehouseMap.containsKey(item.getFromWarehouseId())){
                 item.setFromWarehouseName(warehouseMap.get(item.getFromWarehouseId()).getName());
             }
-            item.setToCountryName(countryNameMap.get(item.getToCountry()));
             item.setBoxSizeStr(item.getBoxLength() + "*" + item.getBoxWidth() + "*" + item.getBoxHeight() + " " + item.getBoxSizeUnit());
             item.setCreateTimeStr(item.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             FirstMileCostAllocationDTO.LastedAllocMonthDTO lastedAllocMonthDTO = lastedAllocationMonthList.stream().filter(v -> v.getLogisticsBillId().equals(item.getLogisticsBillId())).findFirst().orElse(null);
@@ -406,6 +405,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         weightAllocationDTO.setFeeRule(logisticsChannelEntity.getFeeRule());
         weightAllocationDTO.setVolumeSetting(logisticsChannelEntity.getVolumeSetting());
         weightAllocationDTO.setToCountry(firstMileDeliveryEntity.getCountryId());
+        weightAllocationDTO.setToCountryName(firstMileDeliveryEntity.getCountryName());
         weightAllocationDTO.setFromWarehouseId(firstMileDeliveryEntity.getDeliveryWarehouseId());
         List<FirstMileWeightAllocationEntity> saveList = new ArrayList<>();
         for (WmsCartonDTO.DetailDTO cartonDetail : cartonDetailList) {
