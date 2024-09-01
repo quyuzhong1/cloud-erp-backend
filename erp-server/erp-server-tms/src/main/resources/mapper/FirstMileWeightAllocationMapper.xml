@@ -225,7 +225,8 @@
                 wa.from_warehouse_id fromWarehouseId,
                 wa.calculate_period_id,
                 wa.calculate_month,
-                wa.logistics_bill_id
+                wa.logistics_bill_id,
+                wa.create_time createTime
         from first_mile_weight_allocation wa
         <where>
             ${params.sqlMap.default}

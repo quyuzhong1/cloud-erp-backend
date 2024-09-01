@@ -140,13 +140,13 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             }
             item.setToCountryName(countryNameMap.get(item.getToCountry()));
             item.setBoxSizeStr(item.getBoxLength() + "*" + item.getBoxWidth() + "*" + item.getBoxHeight() + " " + item.getBoxSizeUnit());
-            item.setCreateTimeStr(timeFormatter.format(item.getCreateTime()));
+            item.setCreateTimeStr(item.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             FirstMileCostAllocationDTO.LastedAllocMonthDTO lastedAllocMonthDTO = lastedAllocationMonthList.stream().filter(v -> v.getLogisticsBillId().equals(item.getLogisticsBillId())).findFirst().orElse(null);
             if(lastedAllocMonthDTO != null){
                 item.setCalculatePeriodId(lastedAllocMonthDTO.getReportPeriodId());
                 item.setLatestCostAllocationMonth(lastedAllocMonthDTO.getLatestMonth());
                 if(lastedAllocMonthDTO.getLatestMonth() != null){
-                    item.setLatestCostAllocationMonthStr(monthFormatter.format(lastedAllocMonthDTO.getLatestMonth()));
+                    item.setLatestCostAllocationMonthStr(lastedAllocMonthDTO.getLatestMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")));
                 }
                 if(StringUtils.isNotBlank(lastedAllocMonthDTO.getStatus()) && StringUtils.isNotBlank(lastedAllocMonthDTO.getBillSourceType()) && lastedAllocMonthDTO.getEndPeriodTransitCost() != null){
                     if(lastedAllocMonthDTO.getStatus().equals("confirm") && lastedAllocMonthDTO.getBillSourceType().equals(ReconciliationBillTypeEnum.ACTUAL.getCode()) && lastedAllocMonthDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) == 0){
