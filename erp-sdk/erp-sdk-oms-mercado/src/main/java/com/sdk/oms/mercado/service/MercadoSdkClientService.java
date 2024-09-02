@@ -409,7 +409,7 @@ public class MercadoSdkClientService {
                         orderDetailApiResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
                         if(orderDetailApiResult.getMsg().equalsIgnoreCase("Read timed out")) {
                             if(count == 10) {
-                                throw new ServiceException("调用速卖通" + url + path + "接口重试" + count + "失败");
+                                throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
                             }
                             try {
                                 Thread.sleep(sleepTime);
@@ -482,7 +482,7 @@ public class MercadoSdkClientService {
             shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
             if(shipmentResult.getMsg().equalsIgnoreCase("Read timed out")) {
                 if(count == 10) {
-                    throw new ServiceException("调用速卖通" + orderUrl + "接口重试" + count + "失败");
+                    throw new ServiceException("调用美客多" + orderUrl + "接口重试" + count + "失败");
                 }
                 try {
                     Thread.sleep(sleepTime);
@@ -539,7 +539,7 @@ public class MercadoSdkClientService {
             shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
             if(shipmentResult.getMsg().equalsIgnoreCase("Read timed out")) {
                 if(count == 10) {
-                    throw new ServiceException("调用速卖通" + orderUrl + "接口重试" + count + "失败");
+                    throw new ServiceException("调用美客多" + orderUrl + "接口重试" + count + "失败");
                 }
                 try {
                     Thread.sleep(sleepTime);

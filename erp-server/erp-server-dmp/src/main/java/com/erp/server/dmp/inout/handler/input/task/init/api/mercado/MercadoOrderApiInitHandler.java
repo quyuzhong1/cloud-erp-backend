@@ -106,7 +106,7 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
                 if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
                     if(count == 10) {
                         nexflag = false;
-                        throw new ServiceException("调用速卖通" + url + path + "接口重试" + count + "失败");
+                        throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
                     }
                     try {
                         Thread.sleep(sleepTime);
