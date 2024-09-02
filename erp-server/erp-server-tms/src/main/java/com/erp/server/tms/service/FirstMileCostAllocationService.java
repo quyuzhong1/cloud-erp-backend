@@ -8,7 +8,6 @@ import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -96,9 +95,11 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     /**
      * 自动生成费用分摊
+     *
      * @param reportPeriodMonth
+     * @param sourceId
      */
-    void autoGenerateFirstMileCostAllocation(LocalDate reportPeriodMonth);
+    void autoGenerateFirstMileCostAllocation(LocalDate reportPeriodMonth, String sourceId);
 
     /**
      * 获取物流单对应的最新核算期间

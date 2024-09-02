@@ -68,7 +68,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 
         log.info("开始新增自发货费用明细");
 
-        boolean saveBatch = super.saveBatch(list);
+        boolean saveBatch = super.saveOrUpdateBatch(list);
         if(!saveBatch) {
             throw new ServiceException("自发货费用明细保存失败");
         }

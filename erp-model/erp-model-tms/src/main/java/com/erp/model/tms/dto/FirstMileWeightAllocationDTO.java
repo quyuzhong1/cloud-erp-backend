@@ -144,6 +144,11 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String boxSizeUnit;
 
         /**
+         * 出库尺寸（导出用）
+         */
+        private String boxSizeStr;
+
+        /**
          * 出库重量
          */
         private BigDecimal outStockWeight;
@@ -251,6 +256,11 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 创建时间（导出用）
+         */
+        private String createTimeStr;
+
+        /**
          * 物流单ID
          */
         private String logisticsBillId;
@@ -297,6 +307,8 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          */
         private List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDTOList;
 
+        private List<ProductDetailDTO> productDetailList;
+
         /**
          * 物流商ID
          */
@@ -308,7 +320,8 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String supplierName;
 
         /**
-         * 计费规则
+         * 物流渠道的计费规则
+         * ShippingFeeRuleEnum
          */
         private String feeRule;
 
@@ -328,6 +341,11 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String toCountry;
 
         /**
+         * 目的国家名称
+         */
+        private String toCountryName;
+
+        /**
          * 发货仓库ID
          */
         private String fromWarehouseId;
@@ -340,6 +358,76 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          * 材积设置
          */
         private int volumeSetting;
+    }
+
+    @Data
+    public static class ProductDetailDTO{
+        private String skuId;
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 平台skuNo
+         */
+        private String platformSkuNo;
+        /**
+         * 发货数量
+         */
+        private int deliveryQty;
+        /**
+         * 箱ID
+         */
+        private String boxId;
+        /**
+         * 箱编号
+         */
+        private String boxNo;
+        /**
+         * 箱子重量(出库重量)
+         */
+        private BigDecimal outStockWeight;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength;
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth;
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight;
+        /**
+         * 尺寸单位
+         */
+        private String boxSizeUnit;
+        /**
+         * 单产品重量
+         */
+        private BigDecimal productWeight;
+        /**
+         * 体积重
+         */
+        private BigDecimal volumeWeight;
+        /**
+         * 计费重
+         */
+        private BigDecimal chargedWeight;
+        /**
+         * 分摊重量
+          */
+        private BigDecimal allocationWeight;
+        /**
+         * 重量分摊方式
+         */
+        private String allocationType;
     }
 
     @Data
@@ -657,5 +745,92 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          * 头程物流单ID
          */
         private List<String> logisticsBillIds;
+    }
+
+    @Data
+    public static class LogisticsBillInfoDTO{
+        /**
+         * 头程物流单ID
+         */
+        private String logisticsBillId;
+        /**
+         * 来源ID
+         */
+        private String sourceId;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 业务单号
+         * FBA：取值FBA货件单号
+         * 第三方仓：海外仓入库单号
+         */
+        private String businessCode;
+        /**
+         * 物流运单号
+         */
+        private String transportNo;
+        /**
+         * 物流商ID
+         */
+        private String supplierId;
+        /**
+         * 店铺ID
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 目的国家编码
+         */
+        private String toCountry;
+
+        /**
+         * 物流渠道ID
+         */
+        private String channelId;
+    }
+
+    @Data
+    public static class CostAllocationDTO{
+        /**
+         *
+         */
+        private String logisticsBillId;
+        /**
+         *
+         */
+        private String reportPeriodId;
+        /**
+         *
+         */
+        private String accountPeriod;
+        /**
+         *
+         */
+        private String costAllocationStatus;
+        /**
+         *
+         */
+        private String skuId;
+        /**
+         *
+         */
+        private String skuNo;
+        /**
+         *
+         */
+        private String billSourceType;
+        /**
+         *
+         */
+        private BigDecimal endPeriodTransitCost;
+        /**
+         *
+         */
+        private LocalDate reportPeriod;
     }
 }

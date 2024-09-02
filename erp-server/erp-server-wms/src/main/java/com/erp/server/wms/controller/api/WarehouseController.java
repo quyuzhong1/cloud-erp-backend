@@ -12,6 +12,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -413,5 +414,15 @@ public class WarehouseController extends BaseController {
     public ApiResult<PagingVO<WarehouseDTO.PagingProductViewDTO>> pagingProduct(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingProductDTO> dto) {
         PagingVO<WarehouseDTO.PagingProductViewDTO> pagingVO = warehouseService.pagingProduct(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 查询所有仓库信息(不带权限控制)
+     */
+    @GetMapping("/listWarehouseWithCaches")
+    public ApiResult<List<WarehouseDTO.ListDTO>> listWarehouseWithCaches(){
+        List<WarehouseEntity> warehouseEntities = warehouseService.listWarehouseWithCaches();
+        List<WarehouseDTO.ListDTO> listDTOS = BeanMapper.copyList(warehouseEntities, WarehouseDTO.ListDTO.class);
+        return success(listDTOS);
     }
 }

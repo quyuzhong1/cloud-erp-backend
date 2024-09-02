@@ -68,8 +68,8 @@ public class FirstMileEstimatedBillController extends BaseController {
      */
     @PostMapping("/importExcel")
     public ApiResult<?> importExcel(@RequestParam MultipartFile excelFile, HttpServletResponse response){
-        firstMileEstimatedBillService.importExcel(excelFile, response);
-        return ApiResult.success();
+        boolean result = firstMileEstimatedBillService.importExcel(excelFile, response);
+        return result ? success() : failure();
     }
 
     /**

@@ -192,6 +192,8 @@ public enum SourceTypeEnum {
 
     QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", "dmp_pull_task"),
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
+    PILOT_APPLICATION("pilot_application", "试产/量产单", "pilot_application"),
+    FIRST_MILE_ESTIMATED("first_mile_estimated", "头程暂估账单", "first_mile_estimated_bill"),
     ;
 
     /**

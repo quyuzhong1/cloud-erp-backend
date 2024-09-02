@@ -12,6 +12,17 @@ import org.springframework.stereotype.Component;
 public class FirstMileWeightAllocationQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        if(field.equals("tab")){
+            if(value.equals("all") || value.equals("")){
+                return "";
+            }
+            if(value.equals("wait")){
+                return "(wa.cost_allocation_status in ('not', 'part'))";
+            }
+            if(value.equals("already")){
+                return "(wa.cost_allocation_status = 'already')";
+            }
+        }
         return "";
     }
 }

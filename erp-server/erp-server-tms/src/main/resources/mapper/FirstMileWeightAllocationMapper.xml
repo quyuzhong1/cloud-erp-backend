@@ -86,6 +86,7 @@
         from first_mile_weight_allocation wa
         <where>
             wa.cost_allocation_status = #{status}
+            and wa.is_deleted = false
         </where>
     </select>
     <select id="paging" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
@@ -125,10 +126,11 @@
                wa.calculate_period_id,
                wa.calculate_month,
                wa.logistics_bill_id,
-               wa.create_time
+               wa.create_time createTime
         from first_mile_weight_allocation wa
         <where>
             ${params.sqlMap.default}
+            and wa.is_deleted = false
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -221,13 +223,16 @@
                 wa.shop_id,
                 wa.shop_name shopName,
                 wa.to_country toCountry,
+                wa.to_country_name toCountryName,
                 wa.from_warehouse_id fromWarehouseId,
                 wa.calculate_period_id,
                 wa.calculate_month,
-                wa.logistics_bill_id
+                wa.logistics_bill_id,
+                wa.create_time createTime
         from first_mile_weight_allocation wa
         <where>
             ${params.sqlMap.default}
+            and wa.is_deleted = false
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -236,6 +241,40 @@
             </foreach>
         </if>
         wa.create_time DESC
+    </select>
+    <select id="getLogisticsBillInfo"
+            resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$LogisticsBillInfoDTO">
+        select  lb.id logisticsBillId,
+                lb.outstock_id sourceId,
+                lb.outstock_code sourceCode,
+                lb.source_id businessId,
+                lb.source_code businessCode,
+                lb.transport_no transportNo,
+                lb.logistics_supplier_id supplierId,
+                lb.shop_id shopId,
+                lb.shop_name shopName,
+                lb.to_country toCountry,
+                lb.channel_id channelId
+        from logistics_bill lb
+            left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+        where lb.is_deleted = false and lb.id = #{logisticsBillId} and lbd.track_status in ('ordered', 'Inspecting', 'trackIng', 'arrived', 'sign', 'exception')
+    </select>
+    <select id="listCostAllocation"
+            resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$CostAllocationDTO">
+        SELECT a.logistics_bill_id logisticsBillId,
+               a.report_period_id reportPeriodId,
+               a.account_period accountPeriod,
+               a.status costAllocationStatus,
+               ca.sku_id skuId,
+               ca.sku_no skuNo,
+               ca.bill_source_type billSourceType,
+               cad.end_period_transit_cost   as endPeriodTransitCost,
+               rpm.month                     AS reportPeriod
+        FROM first_mile_cost_allocation a
+                 LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
+                 LEFT JOIN first_mile_sku_cost_allocation_detail cad ON cad.cost_main_id = ca.id AND cad.is_deleted = FALSE
+                 LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
+        where a.logistics_bill_id = #{logisticsBillId}
     </select>
 
 

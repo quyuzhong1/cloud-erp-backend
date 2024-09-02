@@ -175,4 +175,19 @@
             </if>
         </where>
     </select>
+    <select id="listLogisticsInfo"
+            resultType="com.erp.model.tms.dto.FirstMileEstimatedBillDTO$LogisticsInfoDTO">
+        select lb.source_code businessCode,
+               lb.outstock_code sourceCode,
+               lb.transport_no transportNo,
+               eb.status estimatedStatus,
+               lbc.reconciliation_status actualStatus,
+               lbc.track_no trackNo,
+               lbc.id costId,
+               lb.id logisticsBillId
+        from logistics_bill lb
+                 inner join first_mile_estimated_bill eb on lb.id = eb.logistics_bill_id and eb.is_deleted = false
+                 inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id and lbc.is_deleted = false
+        where lb.is_deleted = false
+    </select>
 </mapper>

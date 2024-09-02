@@ -1289,4 +1289,29 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private Integer asLastMonthReceiveQty;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class BusinessDTO {
+        /**
+         * 发货单id
+         */
+        private String id;
+        /**
+         * 发货单明细id
+         */
+        private String detailId;
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+        /**
+         * FBA单号
+         */
+        private String fbaShipmentCode;
+        /**
+         * 第三方发货单号
+         */
+        private String overseasWarehouseCode;
+    }
 }

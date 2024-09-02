@@ -983,7 +983,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
                 List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listCostAttributionAndCategory(DictCostAttributionEnum.SELF_DELIVER.getCode(), null);
                 List<TmsCostDetailDTO.AddDTO>  costDetailList = new ArrayList<>();
-                //暂估运费
+                //预估运费
                 TmsCostDetailDTO.AddDTO costDetailAddDTO = new TmsCostDetailDTO.AddDTO();
                 if (CollectionUtils.isNotEmpty(tmsCfgCostList)){
                     TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> StrUtil.isNotBlank(e.getDictCostCategory()) && e.getDictCostCategory().equals(DictCostCategoryEnum.SHIPPING_COST.getCode())).findFirst().orElse(null);
@@ -997,7 +997,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                         costDetailList.add(costDetailAddDTO);
                     }
                 }
-                //暂估报关费用
+                //预估报关费用
                 TmsCostDetailDTO.AddDTO costDetailAddDTO1 = new TmsCostDetailDTO.AddDTO();
                 if (CollectionUtils.isNotEmpty(tmsCfgCostList)){
                     TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> StrUtil.isNotBlank(e.getDictCostCategory()) && e.getDictCostCategory().equals(DictCostCategoryEnum.DECLARE_COST.getCode())).findFirst().orElse(null);
@@ -1007,10 +1007,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                         costDetailAddDTO1.setCostValue(BigDecimal.ZERO);
                         costDetailAddDTO1.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
                         costDetailAddDTO1.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
-                        costDetailList.add(costDetailAddDTO);
+                        costDetailList.add(costDetailAddDTO1);
                     }
                 }
-                //暂估其他费用
+                //预估其他费用
                 TmsCostDetailDTO.AddDTO costDetailAddDTO2 = new TmsCostDetailDTO.AddDTO();
                 if (CollectionUtils.isNotEmpty(tmsCfgCostList)){
                     TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> StrUtil.isNotBlank(e.getDictCostCategory()) && e.getDictCostCategory().equals(DictCostCategoryEnum.OTHER_COST.getCode())).findFirst().orElse(null);
@@ -1021,7 +1021,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                         costDetailAddDTO2.setCostValue(otherCost);
                         costDetailAddDTO2.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
                         costDetailAddDTO2.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
-                        costDetailList.add(costDetailAddDTO);
+                        costDetailList.add(costDetailAddDTO2);
                     }
                 }
                 addDTO.setCostDetailList(costDetailList);

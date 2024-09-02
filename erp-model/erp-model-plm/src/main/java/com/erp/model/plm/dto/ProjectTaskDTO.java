@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -219,4 +220,66 @@ public class ProjectTaskDTO  implements Serializable {
      * 任务关注人集合
      */
     private List<String> concernUserIdList;
+
+    @Data
+    public static class PagingParamDTO{
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    @Data
+    public static class SimpleViewDTO{
+        /**
+         * 任务ID
+         */
+        private String id;
+        /**
+         * 任务名称
+         */
+        private String name;
+        /**
+         * 任务负责人ID
+         */
+        private String chargeId;
+        /**
+         * 任务负责人名称
+         */
+        private String chargeName;
+        /**
+         * 阶段ID
+         */
+        private String phaseId;
+        /**
+         * 阶段名称
+         */
+        private String phaseName;
+        /**
+         * 产品ID
+         */
+        private String productId;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 任务状态
+         */
+        private int status;
+        /**
+         * 任务状态名称
+         */
+        private String statusName;
+        /**
+         * spu编码
+         */
+        private String spuNo;
+
+    }
 }

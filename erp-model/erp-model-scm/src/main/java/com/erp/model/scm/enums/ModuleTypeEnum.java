@@ -106,6 +106,7 @@ public enum ModuleTypeEnum {
     INIT_FIRST_MILE_ALLOCATION("94", "期初费用分摊"),
     INVENTORY_SKU_COST("95", "SKU成本"),
     COST_ALLOCATION("96", "费用分摊"),
+    PILOT_APPLICATION("97", "试产量产单"),
     ;
 
 

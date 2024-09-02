@@ -12,10 +12,10 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum WeightAllocationTypeEnum implements EnumMessage {
-    CHARGED("charged", "按{出库计费重}分摊"),
-    BOX_ACTUAL("boxActual", "按{出库实重}分摊"),
-    VOLUME("volume", "按{出库体积重}分摊"),
-    PRODUCT("product", "按单产品重量分摊");
+    BILLING_WEIGHT("billingWeight", "按{出库计费重}分摊"),
+    NET_WEIGHT("netWeight", "按{出库实重}分摊"),
+    VOLUME_WEIGHT("volumeWeight", "按{出库体积重}分摊"),
+    PRODUCT_WEIGHT("productWeight", "按单产品重量分摊");
 
     private String code;
     private String name;

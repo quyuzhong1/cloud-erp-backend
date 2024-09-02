@@ -37,6 +37,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     /**
     * 发货单明细id
     */
+    @Deprecated
     @TableField("delivery_detail_id")
     private String deliveryDetailId;
     /**
@@ -68,6 +69,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     /**
     * 平台skuId
     */
+    @Deprecated
     @TableField("platform_sku_id")
     private String platformSkuId;
     /**
@@ -89,22 +91,22 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     * 发货量
     */
     @TableField("delivery_qty")
-    private Integer deliveryQty = 0;
+    private Integer deliveryQty;
     /**
     * 箱长
     */
     @TableField("box_length")
-    private BigDecimal boxLength = BigDecimal.ZERO;
+    private BigDecimal boxLength;
     /**
     * 箱宽
     */
     @TableField("box_width")
-    private BigDecimal boxWidth = BigDecimal.ZERO;
+    private BigDecimal boxWidth;
     /**
     * 箱高
     */
     @TableField("box_height")
-    private BigDecimal boxHeight = BigDecimal.ZERO;
+    private BigDecimal boxHeight;
     /**
     * 箱子尺寸单位
     */
@@ -172,6 +174,11 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     */
     @TableField("to_country")
     private String toCountry;
+    /**
+     * 目的国家名称
+     */
+    @TableField("to_country_name")
+    private String toCountryName;
     /**
     * 发货仓库ID
     */

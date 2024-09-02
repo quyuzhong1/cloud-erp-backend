@@ -152,4 +152,16 @@ public class PurchaseApplicationDetailDTO implements Serializable {
          */
         private String errorUrl;
     }
+
+    @Data
+    public static class PurchaseSkuQtyDTO{
+        /**
+         * skuID
+         */
+        private String skuId;
+        /**
+         * 该sku已申请的数量
+         */
+        private int qty;
+    }
 }

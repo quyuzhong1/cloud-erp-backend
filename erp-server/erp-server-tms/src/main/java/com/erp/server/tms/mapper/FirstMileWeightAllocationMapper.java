@@ -37,4 +37,8 @@ public interface FirstMileWeightAllocationMapper extends BaseMapper<FirstMileWei
      * @return
      */
     List<FirstMileWeightAllocationEntity> listBySourceIds(@Param("sourceIds") List<String> sourceIds, @Param("statusList") List<String> statusList);
+
+    FirstMileWeightAllocationDTO.LogisticsBillInfoDTO getLogisticsBillInfo(@Param("logisticsBillId") String logisticsBillId);
+
+    List<FirstMileWeightAllocationDTO.CostAllocationDTO> listCostAllocation(@Param("logisticsBillId") String logisticsBillId);
 }
