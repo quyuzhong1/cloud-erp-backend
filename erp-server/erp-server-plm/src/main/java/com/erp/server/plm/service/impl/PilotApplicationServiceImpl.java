@@ -568,6 +568,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList) {
             detailDTO.setMainSupplierName("");
             detailDTO.setSecondSupplierName("");
+            detailDTO.setTargetTaxCost(null);
+            detailDTO.setTargetNoTaxCost(null);
+            detailDTO.setActualTaxCost(null);
+            detailDTO.setActualNoTaxCost(null);
         }
         //处理关联任务
         for (PilotApplicationRefTaskDTO.ViewDTO taskDTO : taskViewList) {
@@ -836,6 +840,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             ProductSearchDTO.SkuListDTO finalSkuListDTO = skuListDTO;
             String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(finalSkuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             skuListDTO.setMainSupplierName(supplierName);
+//            skuListDTO.setTargetTaxCost();
+//            skuListDTO.setTargetNoTaxCost();
+//            skuListDTO.setActualTaxCost();
+//            skuListDTO.setActualNoTaxCost();
             resultList.add(skuListDTO);
         }
         return resultList;

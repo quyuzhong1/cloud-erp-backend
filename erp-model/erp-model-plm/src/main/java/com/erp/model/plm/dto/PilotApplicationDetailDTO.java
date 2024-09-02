@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -79,6 +80,23 @@ public class PilotApplicationDetailDTO implements Serializable {
          * 二级供应商名称
          */
         private String secondSupplierName;
+
+        /**
+         * 目标含税成本
+         */
+        private BigDecimal targetTaxCost = BigDecimal.ZERO;
+        /**
+         * 目标不含税成本
+         */
+        private BigDecimal targetNoTaxCost = BigDecimal.ZERO;
+        /**
+         * 实际含税成本
+         */
+        private BigDecimal actualTaxCost = BigDecimal.ZERO;
+        /**
+         * 实际不含税成本
+         */
+        private BigDecimal actualNoTaxCost = BigDecimal.ZERO;
 
         /**
         * 期望到货日期

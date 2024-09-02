@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -315,6 +316,23 @@ public class ProductSearchDTO extends PermissionsDTO {
          * 供应商名称
          */
         private String mainSupplierName;
+
+        /**
+         * 目标含税成本
+         */
+        private BigDecimal targetTaxCost = BigDecimal.ZERO;
+        /**
+         * 目标不含税成本
+         */
+        private BigDecimal targetNoTaxCost = BigDecimal.ZERO;
+        /**
+         * 实际含税成本
+         */
+        private BigDecimal actualTaxCost = BigDecimal.ZERO;
+        /**
+         * 实际不含税成本
+         */
+        private BigDecimal actualNoTaxCost = BigDecimal.ZERO;
     }
 
 }
