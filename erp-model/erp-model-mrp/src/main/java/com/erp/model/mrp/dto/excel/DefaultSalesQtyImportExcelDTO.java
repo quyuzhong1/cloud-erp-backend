@@ -13,7 +13,7 @@ import java.io.Serializable;
  * {@code @date:} 2024/03/22
  */
 @Data
-public class ReplenishmentRuleImportExcelDTO implements Serializable {
+public class DefaultSalesQtyImportExcelDTO implements Serializable {
 
 
     /**

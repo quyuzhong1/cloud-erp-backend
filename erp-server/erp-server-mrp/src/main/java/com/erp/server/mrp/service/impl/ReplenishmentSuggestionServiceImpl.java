@@ -21,7 +21,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.*;
-import com.erp.model.mrp.dto.excel.ReplenishmentRuleImportExcelDTO;
+import com.erp.model.mrp.dto.excel.StockUpImportExcelDTO;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.mrp.vo.*;
@@ -526,14 +526,14 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             throw new ServiceException(ApiError.ERROR_1016);
         }
         //验证导入数据是否为空
-        List<ReplenishmentRuleImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        List<StockUpImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
         //导入数据处理
-        List<ReplenishmentRuleImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        List<StockUpImportExcelDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
-        List<ReplenishmentRuleImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        List<StockUpImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理校验导入成功数据
         handleImportReplenishmentRule(successList, errorList);
 
@@ -574,14 +574,14 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             throw new ServiceException(ApiError.ERROR_1016);
         }
         //验证导入数据是否为空
-        List<ReplenishmentRuleImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        List<StockUpImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
         //导入数据处理
-        List<ReplenishmentRuleImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        List<StockUpImportExcelDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
-        List<ReplenishmentRuleImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        List<StockUpImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理校验导入成功数据
         handleImportReplenishmentRule(successList, errorList);
 
@@ -607,7 +607,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
      * @param successList
      * @param errorList
      */
-    private void handleImportReplenishmentRule (List<ReplenishmentRuleImportExcelDTO> successList,List<ReplenishmentRuleImportExcelDTO> errorList) {
+    private void handleImportReplenishmentRule (List<StockUpImportExcelDTO> successList, List<StockUpImportExcelDTO> errorList) {
 
     }
 
