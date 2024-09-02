@@ -247,9 +247,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationDTO.PagingParamDTO searchParam = new PilotApplicationDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<PilotApplicationDTO.TabListDTO> list = new ArrayList<>();
-        int allCount = this.baseMapper.tabList(null, null, null);
-        list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.ALL.getCode(), PilotApplicationTabEnum.ALL.getName(), allCount));
-
         int waitSubmitCount = this.baseMapper.tabList(ApproveStatusEnum.WAIT_SUBMIT.getCode(), null, null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_SUBMIT.getCode(), PilotApplicationTabEnum.WAIT_SUBMIT.getName(), waitSubmitCount));
 
