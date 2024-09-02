@@ -98,7 +98,25 @@ public class MercadoProductDetailInitHandler extends DmpInputInitHandler {
 			headerMap.put("Authorization", "Bearer "+ shopInfoDTO.getAccessToken());
 
 			//拉取数据
-			ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+			ApiResult apiResult = new ApiResult();
+			Object data = null;
+			long sleepTime = 1000;
+			int count = 0;
+			while(ObjectUtil.isEmpty(data)) {
+				apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+				if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
+					if(count == 10) {
+						throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
+					}
+					try {
+						Thread.sleep(sleepTime);
+					} catch (InterruptedException e) {}
+					sleepTime = sleepTime + 1000;
+					count = count + 1;
+				}
+				data = apiResult.getData();
+			}
+
 			if (!Objects.equals(apiResult.getCode(), 200)) {
 				log.error("调用url={},入参params={}, 美客多Listing数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多Listing数据失败，返回值 responseMap={}",

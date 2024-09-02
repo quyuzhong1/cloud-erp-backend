@@ -63,16 +63,25 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
         String url = MercadoConstant.URL;
         String path = dmpInputApiInitRequest.getApiType();
 
-        //每次最多获取200条
-        Integer pageSize = 200;
+        //每次最多获取50条
+        Integer pageSize = 50;
         //当前页数
         Integer pageNo = 0;
-        //总页数
-        Integer pageCount = 1;
 
-        List<OrderViewDTO> resultList = new ArrayList<>();
+        Boolean nexflag = true;
 
-        while (pageNo < pageCount) {
+        while (nexflag) {
+            int offset = pageSize * pageNo;
+
+            StringBuffer sb = new StringBuffer();
+            sb.append(url);
+            sb.append(path);
+            sb.append("?");
+            //paid, cancelled, payment_required, confirmed
+            sb.append("limit=");//每页最大50条
+            sb.append(pageSize);
+            sb.append("&offset=");
+            sb.append(offset);
 
             //入参
             HashMap<String, Object> params = new HashMap<>(2);
@@ -82,33 +91,54 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
             params.put("last_updated.from", dmpInputApiInitRequest.getStartTime());
             params.put("last_updated.to", dmpInputApiInitRequest.getEndTime());
             params.put("limit", pageSize);
-            params.put("offset", pageNo);
+            params.put("offset", offset);
             //设置请求头
             Map<String, String> headerMap = new HashMap<>(1);
             headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 
             //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            ApiResult apiResult = new ApiResult();
+            Object data = null;
+            long sleepTime = 1000;
+            int count = 0;
+            while(ObjectUtil.isEmpty(data)) {
+                apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+                if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
+                    if(count == 10) {
+                        nexflag = false;
+                        throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
+                    }
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {}
+                    sleepTime = sleepTime + 1000;
+                    count = count + 1;
+                }
+                data = apiResult.getData();
+            }
+
             if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-                log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+                nexflag = false;
+                log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
             ObjectMapper objectMapper = new ObjectMapper();
             com.sdk.oms.mercado.dto.mercado.order.OrderDTO orderDTO = null;
             try {
                 orderDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
             } catch (JsonProcessingException e) {
+                nexflag = false;
                 log.error("美客多orders/search接口数据解析错误，数据={}", apiResult.getData());
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
             //解析数据
 //            OrderDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
             if (CollectionUtils.isEmpty(orderDTO.getResults())) {
+                nexflag = false;
                 break;
             }
-            pageCount = (orderDTO.getPaging().getTotal() + pageSize - 1) / pageSize;
             pageNo++;
 
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();

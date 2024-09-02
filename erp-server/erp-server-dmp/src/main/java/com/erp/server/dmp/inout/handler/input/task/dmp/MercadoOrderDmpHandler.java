@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
@@ -76,6 +77,15 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     dmpDataMap.put("platformUpdateTime", offsetDateTime.toLocalDateTime());
                 }
 
+                Object orders = dmpDataMap.get("orders");
+                if (ObjectUtil.isNotEmpty(orders)) {
+                    List<Object> objectsList = (List<Object>) orders;
+                    for (Object o : objectsList) {
+                        Map<String, Object> map = (Map<String, Object>) o;
+                        dmpDataMap.put("thirdCode", map.get("fid"));
+                        dmpDataMap.put("platformCode", map.get("fid"));
+                    }
+                }
 
                 Map<String, Object> shipmentIdMap = (Map<String, Object>) dmpDataMap.get("shipping");
                 Object shipmentId = shipmentIdMap.get("fid");
@@ -98,7 +108,7 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                             logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
                         } else if ("me2".equalsIgnoreCase(mode)
                                 && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(type) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(type))
-                        ){
+                        ) {
                             logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
                         } else if ("me1".equalsIgnoreCase(mode)) {
                             //自发货
