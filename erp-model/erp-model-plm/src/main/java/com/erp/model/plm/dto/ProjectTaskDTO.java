@@ -227,7 +227,6 @@ public class ProjectTaskDTO  implements Serializable {
         /**
          * 页面高级查询
          */
-        @NotEmpty
         private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
