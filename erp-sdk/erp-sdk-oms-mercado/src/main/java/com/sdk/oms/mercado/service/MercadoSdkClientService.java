@@ -206,15 +206,6 @@ public class MercadoSdkClientService {
         while (nexflag) {
             int offset = pageSize * pageNo;
 
-            StringBuffer sb = new StringBuffer();
-            sb.append(baseUrl);
-            sb.append("?");
-            //paid, cancelled, payment_required, confirmed
-            sb.append("limit=");//每页最大100条
-            sb.append(pageSize);
-            sb.append("&offset=");
-            sb.append(offset);
-
             //入参
             HashMap<String, Object> params = new HashMap<>(2);
             params.put("limit", pageSize);
@@ -225,12 +216,12 @@ public class MercadoSdkClientService {
             headerMap.put("Authorization", "Bearer "+ shopInfoDTO.getAccessToken());
 
             //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
             if (!Objects.equals(apiResult.getCode(), 200)) {
                 nexflag = false;
-                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
-                        sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
             //解析数据

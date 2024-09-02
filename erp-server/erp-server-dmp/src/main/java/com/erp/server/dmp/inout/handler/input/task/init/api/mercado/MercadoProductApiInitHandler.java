@@ -69,16 +69,6 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
         while (nexflag) {
             int offset = pageSize * pageNo;
 
-            StringBuffer sb = new StringBuffer();
-            sb.append(url);
-            sb.append(path);
-            sb.append("?");
-            //paid, cancelled, payment_required, confirmed
-            sb.append("limit=");//每页最大50条
-            sb.append(pageSize);
-            sb.append("&offset=");
-            sb.append(offset);
-
             //入参
             HashMap<String, Object> params = new HashMap<>(2);
             params.put("limit", pageSize);
@@ -94,7 +84,7 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
             long sleepTime = 1000;
             int count = 0;
             while(ObjectUtil.isEmpty(data)) {
-                apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+                apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
                 if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
                     if(count == 10) {
                         throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
@@ -110,9 +100,9 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
 
             if (!Objects.equals(apiResult.getCode(), 200)) {
                 nexflag = false;
-                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
-                        sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
             //解析数据
@@ -122,9 +112,9 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
                 listingDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingDTO.class);
             } catch (JsonProcessingException e) {
                 nexflag = false;
-                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                        sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
             if (CollectionUtils.isEmpty(listingDTO.getResults())) {
