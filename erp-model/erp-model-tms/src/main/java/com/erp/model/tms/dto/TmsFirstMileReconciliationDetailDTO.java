@@ -335,6 +335,10 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 币别
          */
         private String currency;
+        /**
+         * 对账单id 物流单费用表关联记录
+         */
+        private String reconciliationId;
 
         /**
          * 币别名称

@@ -435,6 +435,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException(ApiError.NOT_EXIST,"物流订单");
         }
         entity.setTransportNo(logisticsBillEntity.getTransportNo());
+        entity.setChannelId(logisticsBillEntity.getChannelId());
         //计费重
         BigDecimal billingWeight = MathUtil.compareTo(entity.getActualWeight(),entity.getVolumeWeight()) > MathUtil.ZERO
                 ? entity.getActualWeight() : entity.getVolumeWeight();
@@ -459,7 +460,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     ? DictCostAttributionEnum.SELF_DELIVER.getCode() : DictCostAttributionEnum.LAST_MILE.getCode();
         }
         entity.setType(type);
-        if (Objects.equals(DictCostAttributionEnum.SELF_DELIVER.getCode(), entity.getType())){
+        if (Objects.equals(DictCostAttributionEnum.SELF_DELIVER.getCode(), entity.getType()) || Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), entity.getType())){
             //根据渠道设置计费规则
             if (StrUtil.isNotBlank(entity.getChannelId())){
                 LogisticsChannelEntity channelEntity = logisticsChannelService.getById(entity.getChannelId());
@@ -467,6 +468,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
         }else if (Objects.equals(DictCostAttributionEnum.LAST_MILE.getCode(), entity.getType())){
             entity.setFeeRule(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode());
+        }
+        if (StrUtil.isBlank(entity.getLogisticsBillDetailId())){
+            List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(Collections.singletonList(logisticsBillEntity.getId()));
+            if (CollectionUtils.isNotEmpty(logisticsBillDetailEntityList)){
+                //现在正常情况下物流主表和物流明细是1：1关系
+                entity.setLogisticsBillDetailId(logisticsBillDetailEntityList.get(0).getId());
+            }
         }
     }
 
@@ -514,7 +522,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                             && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ESTIMATED.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setEstimatedShippingCost(estimatedShippingCost);
-            //预估报关费用
+            //预估关税费用
             BigDecimal estimatedDeclareCost = costList.stream().filter(obj -> StrUtil.equals(obj.getMainId(),listDTO.getId())
                             && StrUtil.equals(DictCostCategoryEnum.DECLARE_COST.getCode(), obj.getDictCostCategory())
                             && StrUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ESTIMATED.getCode()))
@@ -662,6 +670,195 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             return BigDecimal.ZERO;
         }
         return baseMapper.getActualLogisticCost(soId);
+    }
+
+    @Override
+    public void updateStatusByLogisticsBillIdsAndReconciliationId(List<String> logisticsBillIds, String reconciliationId, String status) {
+        if (CollectionUtils.isEmpty(logisticsBillIds) && StrUtil.isBlank(reconciliationId)){
+            return;
+        }
+        this.lambdaUpdate().eq(StrUtil.isNotBlank(reconciliationId), LogisticsBillCostEntity::getReconciliationId, reconciliationId)
+                .in(CollectionUtils.isNotEmpty(logisticsBillIds), LogisticsBillCostEntity::getLogisticsBillId, logisticsBillIds)
+                .set(LogisticsBillCostEntity::getReconciliationStatus,status).update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateLogisticsBillCost(TmsFirstMileReconciliationEntity mainEntity, List<TmsFirstMileReconciliationDetailEntity> detailEntityList, Map<String, TmsFirstMileReconciliationDetailEntity> actualMap) {
+        // 需要变动的物流单
+        List<String> billIds = detailEntityList.stream()
+                .filter(e -> e.getType().equalsIgnoreCase(DetailReconciliationTypeEnum.ESTIMATED.getCode()))
+                .map(TmsFirstMileReconciliationDetailEntity::getSourceId)
+                .distinct()
+                .collect(Collectors.toList());
+        //对应物流单费用记录
+        List<LogisticsBillCostEntity> billEntityList = this.listByLogisticsBillIdList(billIds);
+        //物流单记录
+        List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByIds(billIds);
+        List<LogisticsBillCostEntity> updateBillList = new ArrayList<>();
+        //根据物流单进行处理
+        for (TmsFirstMileReconciliationDetailEntity detailEntity : detailEntityList){
+            //获取费用记录
+            LogisticsBillCostEntity entity = billEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(detailEntity.getSourceId(), e.getLogisticsBillId())
+                        && Objects.equals(mainEntity.getId(), e.getReconciliationId())).findFirst().orElse(null);
+            //重置费用表记录
+            if (Objects.isNull(entity)){
+                entity = new LogisticsBillCostEntity();
+                LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(detailEntity.getSourceId(), e.getId())).findFirst().orElse(null);
+                if (Objects.isNull(logisticsBillEntity)){
+                    continue;
+                }
+                entity.setLogisticsBillId(detailEntity.getSourceId());
+            }
+            entity.setCurrency(mainEntity.getCurrency());
+            //填充信息
+            this.handleData(entity);
+            TmsFirstMileReconciliationDetailEntity actualDetailEntity = actualMap.get(detailEntity.getSourceId());
+            if (null == actualDetailEntity) {
+                // 移除
+                entity.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
+                continue;
+            }
+            // 更新实际重量和体积重, 计费重
+            entity.setVolumeWeightLogistics(actualDetailEntity.getVolumeWeight());
+            entity.setWeightLogistics(actualDetailEntity.getActualWeight());
+            // 费用重取最大
+            entity.setBillingWeight(actualDetailEntity.getVolumeWeight().max(actualDetailEntity.getActualWeight()));
+            // 设置实际费用明细
+            if (!CollectionUtils.isEmpty(actualDetailEntity.getUpdateList())) {
+                List<TmsCostDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(TmsCostDetailDTO.UpdateDTO.class, actualDetailEntity.getUpdateList());
+                updateList.forEach(e -> e.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode()));
+                entity.setUpdateList(updateList);
+            }else {
+                //如果费用明细为空，则判断对账单次数是否大于1 大于1则创建费用明细
+                if (detailEntity.getReconciliationCount() > 1 && Objects.equals(DetailReconciliationTypeEnum.ACTUAL.getCode(), detailEntity.getType())){
+                    buildFirstMileCostDetail(detailEntity,entity);
+                }
+            }
+            entity.setReconciliationStatus(actualDetailEntity.getStatus());
+            //填充下推对账单id
+            entity.setReconciliationId(mainEntity.getId());
+            updateBillList.add(entity);
+        }
+        // 批量更新物流单状态
+        if (!CollectionUtils.isEmpty(updateBillList)) {
+            // 更新费用信息
+            this.saveOrUpdateBatch(updateBillList);
+            // 更新明细信息
+            List<String> delActualCostIds = new LinkedList<>();
+            for (LogisticsBillCostEntity costEntity : updateBillList) {
+                // 检查历史明细是否需要移除
+                if (ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(costEntity.getReconciliationStatus())){
+                    delActualCostIds.add(costEntity.getId());
+                    continue;
+                }
+                List<TmsCostDetailDTO.UpdateDTO> updateList = costEntity.getUpdateList();
+                if (CollectionUtils.isEmpty(updateList)) {
+                    continue;
+                }
+                tmsCostDetailService.batchUpdate(updateList, costEntity.getId(), DictCostAttributionEnum.FIRST_MILE,Boolean.FALSE);
+            }
+            // 移除实际费用
+            if (!CollectionUtils.isEmpty(delActualCostIds)){
+                tmsCostDetailService.updateActual0ByMainId(delActualCostIds);
+            }
+        }
+    }
+
+    /**
+     * 构建头程费用明细
+     * @param detailEntity
+     * @param entity
+     */
+    private void buildFirstMileCostDetail(TmsFirstMileReconciliationDetailEntity detailEntity, LogisticsBillCostEntity entity) {
+        List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.FIRST_MILE.getCode());
+        if (CollectionUtils.isEmpty(tmsCfgCostList) || Objects.isNull(detailEntity)){
+            return;
+        }
+        List<TmsCostDetailDTO.UpdateDTO> updateList = new ArrayList<>();
+        //物流费用
+        BigDecimal shippingCost = Objects.nonNull(detailEntity.getShippingCost()) ? detailEntity.getShippingCost() : BigDecimal.ZERO;
+        if (!Objects.equals(BigDecimal.ZERO, shippingCost)){
+            TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
+                    && Objects.equals(DictCostCategoryEnum.SHIPPING_COST.getCode(), e.getDictCostCategory()) && e.getIsDefault()).findFirst().orElse(null);
+            //不存在默认配置时，取第一个配置
+            if (Objects.isNull(tmsCfgCostEntity)){
+                tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
+                        && Objects.equals(DictCostCategoryEnum.SHIPPING_COST.getCode(), e.getDictCostCategory())).findFirst().orElse(null);
+            }
+            if (Objects.nonNull(tmsCfgCostEntity)){
+                TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
+                updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                updateDTO.setCostValue(shippingCost);
+                updateDTO.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());
+                updateDTO.setDictCostCategory(DictCostCategoryEnum.SHIPPING_COST.getCode());
+                updateList.add(updateDTO);
+            }
+        }
+        //报关费用
+        BigDecimal declareCost = Objects.nonNull(detailEntity.getDeclareCost()) ? detailEntity.getDeclareCost() : BigDecimal.ZERO;
+        if (!Objects.equals(BigDecimal.ZERO, declareCost)){
+            TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
+                    && Objects.equals(DictCostCategoryEnum.DECLARE_COST.getCode(), e.getDictCostCategory()) && e.getIsDefault()).findFirst().orElse(null);
+            //不存在默认配置时，取第一个配置
+            if (Objects.isNull(tmsCfgCostEntity)){
+                tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
+                        && Objects.equals(DictCostCategoryEnum.DECLARE_COST.getCode(), e.getDictCostCategory())).findFirst().orElse(null);
+            }
+            if (Objects.nonNull(tmsCfgCostEntity)){
+                TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
+                updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                updateDTO.setCostValue(declareCost);
+                updateDTO.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());
+                updateDTO.setDictCostCategory(DictCostCategoryEnum.DECLARE_COST.getCode());
+                updateList.add(updateDTO);
+            }
+        }
+        //其他费用
+        BigDecimal otherCost = Objects.nonNull(detailEntity.getOtherCost()) ? detailEntity.getOtherCost() : BigDecimal.ZERO;
+        if (!Objects.equals(BigDecimal.ZERO, declareCost)){
+            TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
+                    && Objects.equals(DictCostCategoryEnum.OTHER_COST.getCode(), e.getDictCostCategory()) && e.getIsDefault()).findFirst().orElse(null);
+            //不存在默认配置时，取第一个配置
+            if (Objects.isNull(tmsCfgCostEntity)){
+                tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
+                        && Objects.equals(DictCostCategoryEnum.OTHER_COST.getCode(), e.getDictCostCategory())).findFirst().orElse(null);
+            }
+            if (Objects.nonNull(tmsCfgCostEntity)){
+                TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
+                updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                updateDTO.setCostValue(otherCost);
+                updateDTO.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());
+                updateDTO.setDictCostCategory(DictCostCategoryEnum.OTHER_COST.getCode());
+                updateList.add(updateDTO);
+            }
+        }
+        //其他税费
+        BigDecimal otherTaxCost = Objects.nonNull(detailEntity.getOtherTaxCost()) ? detailEntity.getOtherTaxCost() : BigDecimal.ZERO;
+        if (!Objects.equals(BigDecimal.ZERO, declareCost)){
+            TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
+                    && Objects.equals(DictCostCategoryEnum.OTHER_TAX_FEE.getCode(), e.getDictCostCategory()) && e.getIsDefault()).findFirst().orElse(null);
+            //不存在默认配置时，取第一个配置
+            if (Objects.isNull(tmsCfgCostEntity)){
+                tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
+                        && Objects.equals(DictCostCategoryEnum.OTHER_TAX_FEE.getCode(), e.getDictCostCategory())).findFirst().orElse(null);
+            }
+            if (Objects.nonNull(tmsCfgCostEntity)){
+                TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
+                updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                updateDTO.setCostValue(otherTaxCost);
+                updateDTO.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());
+                updateDTO.setDictCostCategory(DictCostCategoryEnum.OTHER_TAX_FEE.getCode());
+                updateList.add(updateDTO);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(updateList)){
+            entity.setUpdateList(updateList);
+        }
     }
 
     /**
