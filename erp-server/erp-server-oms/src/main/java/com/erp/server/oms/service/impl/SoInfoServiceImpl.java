@@ -1204,7 +1204,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //修改 订单详情
-            soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList());
+            boolean isChangeVirtual = !StrUtil.equals(soInfo.getVirtualWarehouseId(), old.getVirtualWarehouseId());
+            soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList(),isChangeVirtual);
             return id;
         }
         return "";
