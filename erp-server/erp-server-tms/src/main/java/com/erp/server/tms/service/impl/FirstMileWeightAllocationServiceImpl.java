@@ -315,10 +315,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             BigDecimal allocationWeightSum = BigDecimal.ZERO;
             for (FirstMileWeightAllocationEntity entity : boxEntityList) {
                 BigDecimal skuWeightSum = entity.getProductWeight().multiply(BigDecimal.valueOf(entity.getDeliveryQty()));
-                BigDecimal divide = skuWeightSum.divide(boxWeightSum, 4, RoundingMode.HALF_UP);
+                BigDecimal weightByAllocationType = getFeeRuleWeight(logisticsChannelEntity.getFeeRule(), entity);
                 if(cfgWeightAllocationType.equals("outstockChargedWeight")){
-                    BigDecimal weightByAllocationType = getFeeRuleWeight(logisticsChannelEntity.getFeeRule(), entity);
-                    BigDecimal allocationWeight = divide.multiply(weightByAllocationType);
+
+                    BigDecimal allocationWeight = skuWeightSum.multiply(weightByAllocationType).divide(boxWeightSum, 2, RoundingMode.DOWN);
                     entity.setAllocationWeight(allocationWeight);
                 }
                 if(cfgWeightAllocationType.equals("productWeight")){

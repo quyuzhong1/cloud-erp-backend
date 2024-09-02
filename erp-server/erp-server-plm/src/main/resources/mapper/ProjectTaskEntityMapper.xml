@@ -1850,7 +1850,12 @@
         from project_task pt
             left join product_info pi on pt.product_id = pi.id
         <where>
-            pt.is_deleted = false ${params.sqlMap.default}
+            ${params.sqlMap.default}
+            and pt.is_deleted = false
+            and pi.spu_no in
+                <foreach collection="spuNos" item="spuNo" open="(" separator="," close=")">
+                    #{spuNo}
+                </foreach>
         </where>
     </select>
     <select id="listByTaskIds" resultType="com.erp.model.plm.dto.ProjectTaskDTO$SimpleViewDTO">

@@ -3,7 +3,6 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PagingDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ChangeScheduleExportVO;
@@ -237,7 +236,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     /**
      * 任务高级查询
      */
-    IPage<ProjectTaskDTO.SimpleViewDTO> pagingByAdvanceQuery(Page query, @Param("params") ProjectTaskDTO.PagingParamDTO params);
+    IPage<ProjectTaskDTO.SimpleViewDTO> pagingByAdvanceQuery(Page query, @Param("params") ProjectTaskDTO.PagingParamDTO params, @Param("spuNos") List<String> spuNos);
 
     /**
      * 根据任务Id查询

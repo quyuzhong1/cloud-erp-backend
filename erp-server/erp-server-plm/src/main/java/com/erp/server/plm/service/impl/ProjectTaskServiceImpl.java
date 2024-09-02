@@ -5148,8 +5148,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Override
     public PagingVO<ProjectTaskDTO.SimpleViewDTO> pagingByAdvanceQuery(PagingDTO<ProjectTaskDTO.PagingParamDTO> pagingParamDTO) {
+        //查询sku关联的spu
+        List<ProductDetailEntity> skuEntityList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, pagingParamDTO.getParams().getSkuIdList()).list();
+        List<String> productIds = skuEntityList.stream().map(item -> item.getProductId()).distinct().collect(Collectors.toList());
+        List<ProductInfoEntity> productInfoList = productInfoService.lambdaQuery().in(ProductInfoEntity::getId, productIds).list();
+        List<String> spuNos = productInfoList.stream().map(item -> item.getSpuNo()).distinct().collect(Collectors.toList());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<ProjectTaskDTO.SimpleViewDTO> pageData = this.baseMapper.pagingByAdvanceQuery(query, pagingParamDTO.getParams());
+        IPage<ProjectTaskDTO.SimpleViewDTO> pageData = this.baseMapper.pagingByAdvanceQuery(query, pagingParamDTO.getParams(), spuNos);
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }

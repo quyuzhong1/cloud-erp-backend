@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -226,12 +227,19 @@ public class ProjectTaskDTO  implements Serializable {
         /**
          * 页面高级查询
          */
+        @NotEmpty
         private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 只能查询已添加sku关联SPU下的任务
+         */
+        @NotEmpty(message = "请选择SKU后才能添加任务")
+        private List<String> skuIdList;
     }
 
     @Data
