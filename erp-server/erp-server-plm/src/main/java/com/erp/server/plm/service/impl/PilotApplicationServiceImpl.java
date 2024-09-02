@@ -6,11 +6,9 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.plm.dto.PilotApplicationDetailDTO;
-import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
-import com.erp.model.plm.dto.ProjectTaskDTO;
+import com.common.core.entity.BaseEntity;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
@@ -18,10 +16,13 @@ import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.PurchaseApplicationFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.plm.mapper.PilotApplicationMapper;
 import com.erp.server.plm.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -30,14 +31,12 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -86,6 +85,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private PurchaseApplicationFeign purchaseApplicationFeign;
     @Resource
     private ProjectTaskService projectTaskService;
+    @Resource
+    private WmsTaskFeign warehouseFeign;
+    @Resource
+    private SysLogService sysLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -541,8 +544,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<String> taskIds = refTaskList.stream().map(item -> item.getTaskId()).distinct().collect(Collectors.toList());
         List<ProjectTaskDTO.SimpleViewDTO> taskList = projectTaskService.listSimpleViewByIds(taskIds);
         Map<String, ProjectTaskDTO.SimpleViewDTO> taskMap = taskList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
-        //工作流
-        List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId("");
 
         PilotApplicationDTO.ViewDTO view = BeanMapperUtils.map(PilotApplicationDTO.ViewDTO.class, pilotApplicationEntity);
         List<PilotApplicationDetailDTO.ViewDTO> detailViewList = BeanMapper.copyList(productDetailList, PilotApplicationDetailDTO.ViewDTO.class);
@@ -576,8 +577,14 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setApproveStatusName(ApproveStatusEnum.getName(view.getApproveStatus()));
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
-        view.setApproveFlowList(null);
-        view.setOperateLogList(null);
+        //什么记录
+        List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getProcessId());
+        view.setApproveFlowList(approveHistoryList);
+        //操作日志
+        SysLogSelectDTO sysLogSelectDTO = new SysLogSelectDTO();
+        sysLogSelectDTO.setBusinessId(pilotApplicationEntity.getId());
+        List<SysLogShowDTO> sysLogShowList = sysLogService.listSysLog(sysLogSelectDTO);
+        view.setOperateLogList(sysLogShowList);
         return view;
     }
 
@@ -669,6 +676,11 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     @Override
     public BatchResultDTO pushPurchaseApplication(PilotApplicationDTO.PushPurchaseApplicationDTO dto, FindUserDTO userInfo) {
+        PurchaseApplicationDTO.AddDTO paramDto = getPurchaseAddDTO(userInfo);
+        return purchaseApplicationFeign.add(paramDto);
+    }
+
+    private static PurchaseApplicationDTO.AddDTO getPurchaseAddDTO(FindUserDTO userInfo) {
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
         //todo 补充明细
         PurchaseApplicationDTO.AddDTO paramDto = new PurchaseApplicationDTO.AddDTO();
@@ -677,7 +689,104 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         paramDto.setApplyDeptId(userInfo.getDepartmentId());
         paramDto.setIsFirstMassProduct(Boolean.TRUE);
         paramDto.setDetails(detailList);
-        purchaseApplicationFeign.add(paramDto);
-        return null;
+        return paramDto;
+    }
+
+    @Override
+    public List<PilotApplicationDTO.PushPurchaseApplicationDTO> viewPurchaseApplication(PilotApplicationDTO.PurchaseApplicationParamDTO paramDTO) {
+        //主表
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.listByIds(paramDTO.getDetailIds());
+        List<String> ids = detailList.stream().map(PilotApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<PilotApplicationEntity> pilotList = this.lambdaQuery().in(PilotApplicationEntity::getId, ids).list();
+        Map<String, PilotApplicationEntity> pilotMap = pilotList.stream().collect(Collectors.toMap(BaseEntity::getId, item2 -> item2));
+        //sku信息
+        List<String> skuIds = detailList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
+        Map<String, ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
+        //采购申请单
+        List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> purchaseList = purchaseApplicationFeign.listSkuAndQty(skuIds);
+        Map<String, Integer> purchaseMap = purchaseList.stream().collect(Collectors.toMap(item1 -> item1.getSkuId(), item2 -> item2.getQty()));
+        List<PilotApplicationDTO.PushPurchaseApplicationDTO> resultList = new ArrayList<>(detailList.size());
+        for (PilotApplicationDetailEntity detailEntity : detailList) {
+            PilotApplicationDTO.PushPurchaseApplicationDTO dto = new PilotApplicationDTO.PushPurchaseApplicationDTO();
+            dto.setId(detailEntity.getMainId());
+            if(pilotMap.containsKey(detailEntity.getMainId())){
+                PilotApplicationEntity entity = pilotMap.get(detailEntity.getMainId());
+                dto.setCode(entity.getCode());
+            }
+            dto.setApproveQty(detailEntity.getApproveQty());
+            dto.setDetailId(detailEntity.getId());
+            dto.setSkuId(detailEntity.getSkuId());
+            if(skuMap.containsKey(detailEntity.getSkuId())){
+                ProductDetailEntity sku = skuMap.get(detailEntity.getSkuId());
+                dto.setProductName(sku.getName());
+                dto.setSkuNo(sku.getSkuNo());
+            }
+            dto.setType(detailEntity.getType());
+            if(purchaseMap.containsKey(detailEntity.getSkuId())){
+                //待申请量=批准数量-已下推的SKU申请累计申请量（查询采购申请单中该sku已申请的数量）
+                Integer qty = purchaseMap.get(detailEntity.getSkuId());
+                int spareApplyQty = detailEntity.getApproveQty() - qty;
+                dto.setSpareApplyQty(spareApplyQty);
+            }else {
+                dto.setSpareApplyQty(detailEntity.getApproveQty());
+            }
+            resultList.add(dto);
+        }
+        return resultList;
+    }
+
+    @Override
+    public BatchResultDTO pushAndSubmitPurchaseApplication(PilotApplicationDTO.PushPurchaseApplicationDTO dto, FindUserDTO findUserDTO) {
+        PurchaseApplicationDTO.AddDTO paramDto = getPurchaseAddDTO(findUserDTO);
+        return purchaseApplicationFeign.addAndSubmit(paramDto);
+    }
+
+    @Override
+    public List<PilotApplicationDTO.WarehouseDTO> listWarehouse() {
+        List<WarehouseDTO.UpdateDTO> list = warehouseFeign.listApproveWarehouse();
+        List<PilotApplicationDTO.WarehouseDTO> resultList = new ArrayList<>(list.size());
+        list.forEach(item -> resultList.add(new PilotApplicationDTO.WarehouseDTO(item.getId(), item.getName())));
+        return resultList;
+    }
+
+    @Override
+    public List<BaseIdDTO> listPurchaseOrg() {
+        return sysUserFeign.listAccountingCompany();
+    }
+
+    @Override
+    public Boolean addRefTaskBatch(PilotApplicationDTO.RefTaskDTO dto) {
+        List<PilotApplicationRefTaskEntity> saveList = new ArrayList<>(dto.getTaskIds().size());
+        String id = dto.getId();
+        for (String taskId : dto.getTaskIds()) {
+            PilotApplicationRefTaskEntity entity = new PilotApplicationRefTaskEntity();
+            entity.setTaskId(taskId);
+            entity.setMainId(id);
+            saveList.add(entity);
+        }
+        return pilotApplicationRefTaskService.saveBatch(saveList);
+    }
+
+    @Override
+    public Boolean deleteRefTaskBatch(PilotApplicationDTO.RefTaskDTO dto) {
+        return pilotApplicationRefTaskService.lambdaUpdate()
+                .eq(PilotApplicationRefTaskEntity::getMainId, dto.getId())
+                .in(PilotApplicationRefTaskEntity::getTaskId, dto.getTaskIds())
+                .remove();
+    }
+
+    @Override
+    public Boolean deleteProductBatch(PilotApplicationDTO.ProductDTO dto) {
+        return pilotApplicationDetailService.lambdaUpdate()
+                .eq(PilotApplicationDetailEntity::getMainId, dto.getId())
+                .in(PilotApplicationDetailEntity::getId, dto.getProductDetailIds())
+                .remove();
+    }
+
+    @Override
+    public List<PilotApplicationRefTaskDTO.SimpleListDTO> listRefTask(String id) {
+        List<PilotApplicationRefTaskEntity> list = pilotApplicationRefTaskService.lambdaQuery().eq(PilotApplicationRefTaskEntity::getMainId, id).list();
+        return Collections.emptyList();
     }
 }

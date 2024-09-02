@@ -8,15 +8,16 @@ import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 
 import com.common.business.dto.AdvanceQueryDTO;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -219,6 +220,11 @@ public class PilotApplicationDTO implements Serializable {
         * 创建时间
         */
         private LocalDateTime createTime;
+
+        /**
+         * 产品明细ID
+         */
+        private String detailId;
     }
 
     /**
@@ -283,7 +289,7 @@ public class PilotApplicationDTO implements Serializable {
         /**
          * 审核记录
          */
-        private List<ApproveFlowDTO> approveFlowList;
+        private List<ApproveNodeRecordVO> approveFlowList;
 
         /**
          * 操作日志
@@ -542,5 +548,75 @@ public class PilotApplicationDTO implements Serializable {
          * 批准数量
          */
         private int qty;
+    }
+
+    @Data
+    public static class PurchaseApplicationParamDTO {
+        /**
+         * 产品明细ID集合
+         */
+        @NotEmpty(message = "产品明细ID不能为空")
+        private List<String> detailIds;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class WarehouseDTO{
+        /**
+         * 仓库ID
+         */
+        private String id;
+        /**
+         * 仓库名称
+         */
+        private String name;
+    }
+
+    /**
+     * 统计采购申请单中sku的数量
+     */
+    @Data
+    public static class PurchaseSkuQtyDTO{
+        /**
+         * skuID
+         */
+        private String skuId;
+        /**
+         * 该sku已申请的数量
+         */
+        private int qty;
+    }
+
+    /**
+     * 关联任务
+     */
+    @Data
+    public static class RefTaskDTO {
+        /**
+         * 单据ID
+         */
+        private String id;
+        /**
+         * 任务ID
+         */
+        @NotEmpty(message = "关联任务ID不能为空")
+        private List<String> taskIds;
+    }
+
+    /**
+     * 产品明细
+     */
+    @Data
+    public static class ProductDTO{
+        /**
+         * 单据ID
+         */
+        private String id;
+        /**
+         * 产品明细ID
+         */
+        @NotEmpty(message = "产品明细ID不能为空")
+        private List<String> productDetailIds;
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.server.plm.service;
 import com.common.business.dto.FindUserDTO;
+import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
 import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -148,4 +149,45 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * 下推采购申请
      */
     BatchResultDTO pushPurchaseApplication(PilotApplicationDTO.PushPurchaseApplicationDTO dto, FindUserDTO userInfo);
+
+    /**
+     * 预览采购申请
+     */
+    List<PilotApplicationDTO.PushPurchaseApplicationDTO> viewPurchaseApplication(PilotApplicationDTO.PurchaseApplicationParamDTO paramDTO);
+
+    /**
+     * 创建并提交采购申请
+     */
+    BatchResultDTO pushAndSubmitPurchaseApplication(PilotApplicationDTO.PushPurchaseApplicationDTO dto, FindUserDTO findUserDTO);
+
+    /**
+     * 查询仓库
+     */
+    List<PilotApplicationDTO.WarehouseDTO> listWarehouse();
+
+    /**
+     * 查询已启用的核算公司
+     */
+    List<BaseIdDTO> listPurchaseOrg();
+
+    /**
+     * 保存关联任务
+     */
+    Boolean addRefTaskBatch(PilotApplicationDTO.RefTaskDTO dto);
+
+    /**
+     * 删除关联任务
+     */
+    Boolean deleteRefTaskBatch(PilotApplicationDTO.RefTaskDTO dto);
+
+    /**
+     * 删除产品
+     */
+    Boolean deleteProductBatch(PilotApplicationDTO.ProductDTO dto);
+
+    /**
+     * 查看关联的任务
+     * @param id 试产单ID
+     */
+    List<PilotApplicationRefTaskDTO.SimpleListDTO> listRefTask(String id);
 }

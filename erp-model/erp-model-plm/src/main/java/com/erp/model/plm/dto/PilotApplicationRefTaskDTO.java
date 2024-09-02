@@ -140,7 +140,7 @@ public class PilotApplicationRefTaskDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 试产/量产主表ID
+        * 试产量产单ID
         */
         private String mainId;
 
@@ -150,5 +150,64 @@ public class PilotApplicationRefTaskDTO implements Serializable {
         private String taskId;
     }
 
+    @Data
+    public static class SimpleListDTO{
+        /**
+         * 主键id
+         */
+        private String  id;
 
+        /**
+         * 任务ID
+         */
+        private String taskId;
+
+        private String spu;
+
+        /**
+         * 产品id
+         */
+        private String productId;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 任务名称
+         */
+        private String name;
+
+        /**
+         * 负责人id
+         */
+        private String chargeId;
+
+        /**
+         * 负责人名称
+         */
+        private String chargeName;
+
+        /**
+         * 任务状态
+         */
+        private Integer status;
+
+        /**
+         * 任务状态名称
+         * TaskStateEnum
+         */
+        private String statusName;
+
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachUrlList;
+    }
 }

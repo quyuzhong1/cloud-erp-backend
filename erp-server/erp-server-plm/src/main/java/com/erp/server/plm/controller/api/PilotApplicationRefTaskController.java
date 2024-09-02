@@ -47,26 +47,4 @@ public class PilotApplicationRefTaskController extends BaseController {
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated PilotApplicationRefTaskDTO.AddDTO dto) {
         return success(pilotApplicationRefTaskService.add(dto));
     }
-
-    /**
-    * 修改
-    * @author tmj
-    * @date:  2024-08-27
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "试产/量产 关联任务修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "plm:pilotApplicationRefTask:update",
-        serviceClass = PilotApplicationRefTaskService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated PilotApplicationRefTaskDTO.UpdateDTO dto) {
-        pilotApplicationRefTaskService.update(dto);
-        return success();
-    }
-
-
-
 }

@@ -1,6 +1,9 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.dto.base.BatchResultDTO;
+import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
@@ -27,7 +30,7 @@ public interface PurchaseApplicationFeign {
      * @author: tanmujin
      */
     @PostMapping("/add")
-    String add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto);
+    BatchResultDTO add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto);
 
     /**
      * 根据来源ID查询采购申请单
@@ -38,4 +41,16 @@ public interface PurchaseApplicationFeign {
      */
     @PostMapping("/listBySourceIds")
     List<PurchaseApplicationEntity> listBySourceIds(List<String> sourceIds);
+
+    /**
+     * 创建并提交
+     */
+    @PostMapping("/addAndSubmit")
+    BatchResultDTO addAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto);
+
+    /**
+     * 查询已下推的SKU及其数量
+     */
+    @PostMapping("/listSkuAndQty")
+    List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> skuIds);
 }

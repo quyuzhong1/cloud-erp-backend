@@ -62,6 +62,11 @@ public class PilotApplicationEntity extends BaseEntity<PilotApplicationEntity> {
      */
     @TableField("bill_date")
     private LocalDate billDate;
+    /**
+     * 流程实例ID
+     */
+    @TableField("process_id")
+    private String processId;
 
 
     public static final String CODE = "code";

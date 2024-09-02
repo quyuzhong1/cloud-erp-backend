@@ -31,5 +31,13 @@
         <result column="create_po_type" property="createPoType" />
         <result column="remark" property="remark" />
     </resultMap>
+    <select id="listSkuAndQty"
+            resultType="com.erp.model.scm.dto.PurchaseApplicationDetailDTO$PurchaseSkuQtyDTO">
+        select pad.sku_id skuId,
+               sum(pad.apply_qty) qty
+        from purchase_application_detail pad
+        where pad.is_deleted = false
+        group by pad.sku_id
+    </select>
 
 </mapper>

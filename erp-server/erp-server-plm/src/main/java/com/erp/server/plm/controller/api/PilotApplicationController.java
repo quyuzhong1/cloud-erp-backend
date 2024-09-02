@@ -5,9 +5,10 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.erp.model.sys.dto.SysUserDTO;
+import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.query.PilotApplicationQueryHandler;
+import com.sdk.wangdian.sdk.impl.Api;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -388,5 +389,84 @@ public class PilotApplicationController extends BaseController {
             resultList.add(result);
         }
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
+    }
+
+    /**
+     * 下推并提交采购申请
+     * @author tmj
+     */
+    @PostMapping("/pushAndSubmitPurchaseApplication")
+    public ApiResult<List<BatchResultDTO>> pushAndSubmitPurchaseApplication(@RequestBody @Validated List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList){
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUserName()));
+        List<BatchResultDTO> resultList = new ArrayList<>(dtoList.size());
+        for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : dtoList) {
+            BatchResultDTO resultDTO = pilotApplicationService.pushAndSubmitPurchaseApplication(dto, userList.get(0));
+            resultList.add(resultDTO);
+        }
+        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
+    }
+
+    /**
+     * 采购申请预览
+     * @author tmj
+     */
+    @PostMapping("/viewPurchaseApplication")
+    public ApiResult<List<PilotApplicationDTO.PushPurchaseApplicationDTO>> viewPurchaseApplication(@RequestBody @Validated PilotApplicationDTO.PurchaseApplicationParamDTO paramDTO){
+        List<PilotApplicationDTO.PushPurchaseApplicationDTO> list = pilotApplicationService.viewPurchaseApplication(paramDTO);
+        return success(list);
+    }
+
+    /**
+     * 查询目的仓库：启用+已审核
+     * @author tmj
+     */
+    @PostMapping("/listWarehouse")
+    public ApiResult<List<PilotApplicationDTO.WarehouseDTO>> listWarehouse(){
+        List<PilotApplicationDTO.WarehouseDTO> list = pilotApplicationService.listWarehouse();
+        return success(list);
+    }
+
+    /**
+     * 查询已启用的核算公司
+     * @author tmj
+     */
+    @PostMapping("/listPurchaseOrg")
+    public ApiResult<List<BaseIdDTO>> listPurchaseOrg(){
+        List<BaseIdDTO> list = pilotApplicationService.listPurchaseOrg();
+        return success(list);
+    }
+
+    /**
+     * 保存关联任务
+     */
+    @PostMapping("/addRefTaskBatch")
+    public ApiResult<Boolean> addRefTaskBatch(@RequestBody PilotApplicationDTO.RefTaskDTO dto){
+        return success(pilotApplicationService.addRefTaskBatch(dto));
+    }
+
+    /**
+     * 删除关联任务
+     */
+    @PostMapping("/deleteRefTaskBatch")
+    public ApiResult<Boolean> deleteRefTaskBatch(@RequestBody PilotApplicationDTO.RefTaskDTO dto){
+        return success(pilotApplicationService.deleteRefTaskBatch(dto));
+    }
+
+    /**
+     * 移除产品
+     */
+    @PostMapping("/deleteProductBatch")
+    public ApiResult<Boolean> deleteProductBatch(@RequestBody PilotApplicationDTO.ProductDTO dto){
+        return success(pilotApplicationService.deleteProductBatch(dto));
+    }
+
+    /**
+     * 查询关联任务
+     * @param id 试产单ID
+     */
+    @GetMapping("/listRefTask")
+    public ApiResult<List<PilotApplicationRefTaskDTO.SimpleListDTO>> listRefTask(@RequestParam String id){
+        return success(pilotApplicationService.listRefTask(id));
     }
 }
