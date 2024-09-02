@@ -350,13 +350,12 @@ public class PilotApplicationDTO implements Serializable {
         /**
          * 单据日期
          */
-        @NotBlank(message = "单据日期不能为空")
-        private LocalDate BillDate;
+        private LocalDate billDate;
 
         /**
          * 审核状态
          */
-        private String approveStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        private ApproveStatusEnum approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
 
         /**
          * 单据备注
@@ -366,13 +365,13 @@ public class PilotApplicationDTO implements Serializable {
         /**
          * 附件名称集合
          */
-        @NotBlank(message = "请上传试产/量产报告")
+        @NotEmpty(message = "请上传试产/量产报告")
         private List<String> attachNameList;
 
         /**
          * 附件URL集合
          */
-        @NotBlank(message = "请上传试产/量产报告")
+        @NotEmpty(message = "请上传试产/量产报告")
         private List<String> attachUrlList;
 
         /**
