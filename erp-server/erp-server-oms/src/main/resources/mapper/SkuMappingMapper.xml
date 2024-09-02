@@ -322,7 +322,7 @@
         WHERE sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
         <if test="params.shortName !=null and params.shortName!=''">
-            AND op.short_name =#{params.shortName}
+            AND op.short_name  ILIKE concat('%',#{params.shortName}::text,'%')
         </if>
         <if test="matchResult!=null">
             AND li.match_result=#{matchResult}
@@ -421,6 +421,7 @@
         SELECT
         sm.id,
         li.id AS listingId,
+        op.short_name as shortName,
         sm.product_sku_id,
         sm.product_sku_no,
         li.platform_sku_no AS warehouseSkuNo,
