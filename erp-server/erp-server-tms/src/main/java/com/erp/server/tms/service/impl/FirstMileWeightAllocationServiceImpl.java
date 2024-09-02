@@ -313,11 +313,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             }
             //计算分摊重量
             BigDecimal allocationWeightSum = BigDecimal.ZERO;
+            BigDecimal weightByAllocationType = getFeeRuleWeight(logisticsChannelEntity.getFeeRule(), boxEntityList.get(0));
             for (FirstMileWeightAllocationEntity entity : boxEntityList) {
                 BigDecimal skuWeightSum = entity.getProductWeight().multiply(BigDecimal.valueOf(entity.getDeliveryQty()));
-                BigDecimal weightByAllocationType = getFeeRuleWeight(logisticsChannelEntity.getFeeRule(), entity);
                 if(cfgWeightAllocationType.equals("outstockChargedWeight")){
-
                     BigDecimal allocationWeight = skuWeightSum.multiply(weightByAllocationType).divide(boxWeightSum, 2, RoundingMode.DOWN);
                     entity.setAllocationWeight(allocationWeight);
                 }
@@ -325,10 +324,12 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                     entity.setAllocationWeight(entity.getProductWeight().multiply(BigDecimal.valueOf(entity.getDeliveryQty())));
                 }
                 allocationWeightSum = allocationWeightSum.add(entity.getAllocationWeight());
-                //如果是箱子中最后一个产品
-                if(boxEntityList.indexOf(entity) != (boxEntityList.size() - 1)){
-
-                }
+            }
+            if(allocationWeightSum.compareTo(weightByAllocationType) < 0){
+                boxEntityList.sort(Comparator.comparing(FirstMileWeightAllocationEntity::getDeliveryQty).reversed());
+                FirstMileWeightAllocationEntity entity = boxEntityList.get(0);
+                BigDecimal subtract = weightByAllocationType.subtract(allocationWeightSum);
+                entity.setAllocationWeight(entity.getAllocationWeight().add(subtract));
             }
         }
     }
