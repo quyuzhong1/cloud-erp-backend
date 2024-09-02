@@ -54,33 +54,45 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
             return Collections.emptyList();
         }
 
-        //每次最多获取200条
-        Integer pageSize = 200;
+        //每次最多获取50条
+        Integer pageSize = 50;
         //当前页数
         Integer pageNo = 0;
-        //总页数
-        Integer pageCount = 1;
 
         //接口地址
         String url = MercadoConstant.URL;
         String path = dmpInputApiInitRequest.getApiType().replace("{userId}", shopInfoDTO.getUserId().toString());
-        while(pageNo < pageCount) {
+        Boolean nexflag = true;
+
+        while (nexflag) {
+            int offset = pageSize * pageNo;
+
+            StringBuffer sb = new StringBuffer();
+            sb.append(url);
+            sb.append(path);
+            sb.append("?");
+            //paid, cancelled, payment_required, confirmed
+            sb.append("limit=");//每页最大50条
+            sb.append(pageSize);
+            sb.append("&offset=");
+            sb.append(offset);
 
             //入参
             HashMap<String, Object> params = new HashMap<>(2);
             params.put("limit", pageSize);
-            params.put("offset", pageNo);
+            params.put("offset", offset);
 
             //设置请求头
             Map<String, String> headerMap = new HashMap<>(1);
             headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 
             //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
             if (!Objects.equals(apiResult.getCode(), 200)) {
-                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+                nexflag = false;
+                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
-                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
             //解析数据
@@ -89,15 +101,16 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
             try {
                 listingDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingDTO.class);
             } catch (JsonProcessingException e) {
-                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+                nexflag = false;
+                log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                        url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
             if (CollectionUtils.isEmpty(listingDTO.getResults())) {
+                nexflag = false;
                 break;
             }
-            pageCount = (listingDTO.getPaging().getTotal() + pageSize - 1) / pageSize;
             pageNo++;
 
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();

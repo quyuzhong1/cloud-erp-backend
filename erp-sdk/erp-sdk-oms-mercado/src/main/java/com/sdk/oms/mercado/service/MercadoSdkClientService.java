@@ -195,36 +195,42 @@ public class MercadoSdkClientService {
         List<ListingViewDTO> resultsBeanList = new ArrayList<>();
 
         //每次最多获取200条
-        Integer pageSize = 200;
+        Integer pageSize = 50;
         //当前页数
         Integer pageNo = 0;
         //总页数
         Integer pageCount = 1;
 
-        while(pageNo < pageCount) {
+        Boolean nexflag = true;
+        String baseUrl = "https://api.mercadolibre.com/users/"+shopInfoDTO.getUserId()+"/items/search";
+        while (nexflag) {
+            int offset = pageSize * pageNo;
 
-            //https://api.mercadolibre.com/marketplace/products/search?status=active&product_identifier=%s
-            String baseUrl = "https://api.mercadolibre.com/users/"+shopInfoDTO.getUserId()+"/items/search";
-/*            StringBuffer sb = new StringBuffer();
+            StringBuffer sb = new StringBuffer();
             sb.append(baseUrl);
-            sb.append("?limit="+ pageSize +"");
-            sb.append("&offset="+ pageNo +"");*/
+            sb.append("?");
+            //paid, cancelled, payment_required, confirmed
+            sb.append("limit=");//每页最大100条
+            sb.append(pageSize);
+            sb.append("&offset=");
+            sb.append(offset);
 
             //入参
             HashMap<String, Object> params = new HashMap<>(2);
             params.put("limit", pageSize);
-            params.put("offset", pageNo);
+            params.put("offset", offset);
 
             //设置请求头
             Map<String, String> headerMap = new HashMap<>(1);
             headerMap.put("Authorization", "Bearer "+ shopInfoDTO.getAccessToken());
 
             //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
             if (!Objects.equals(apiResult.getCode(), 200)) {
-                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
+                nexflag = false;
+                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
-                        baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
+                        sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
             //解析数据
@@ -233,15 +239,16 @@ public class MercadoSdkClientService {
             try {
                 listingDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingDTO.class);
             } catch (JsonProcessingException e) {
+                nexflag = false;
                 log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
             if (CollectionUtils.isEmpty(listingDTO.getResults())) {
+                nexflag = false;
                 break;
             }
-            pageCount = (listingDTO.getPaging().getTotal() + pageSize - 1) / pageSize;
             pageNo++;
 
             //获取到所有客户的产品id
@@ -325,8 +332,20 @@ public class MercadoSdkClientService {
         Integer pageCount = 1;
 
         List<OrderViewDTO> resultList = new ArrayList<>();
+        Boolean nexflag = true;
 
-        while (pageNo < pageCount) {
+        while (nexflag) {
+            int offset = pageSize * pageNo;
+
+            StringBuffer sb = new StringBuffer();
+            sb.append(url);
+            sb.append(path);
+            sb.append("?");
+            //paid, cancelled, payment_required, confirmed
+            sb.append("limit=");//每页最大100条
+            sb.append(pageSize);
+            sb.append("&offset=");
+            sb.append(offset);
 
             //入参
             HashMap<String, Object> params = new HashMap<>(2);
@@ -336,14 +355,15 @@ public class MercadoSdkClientService {
             params.put("last_updated.from", task.getLastTime());
             params.put("last_updated.to", task.getNextTime());
             params.put("limit", pageSize);
-            params.put("offset", pageNo);
+            params.put("offset", offset);
             //设置请求头
             Map<String, String> headerMap = new HashMap<>(1);
             headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 
             //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
             if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+                nexflag = false;
                 log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
@@ -353,6 +373,7 @@ public class MercadoSdkClientService {
             try {
                 orderDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
             } catch (JsonProcessingException e) {
+                nexflag = false;
                 log.error("美客多orders/search接口数据解析错误，数据={}", apiResult.getData());
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
@@ -360,9 +381,9 @@ public class MercadoSdkClientService {
             //解析数据
 //            OrderDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
             if (CollectionUtils.isEmpty(orderDTO.getResults())) {
+                nexflag = false;
                 break;
             }
-            pageCount = (orderDTO.getPaging().getTotal() + pageSize - 1) / pageSize;
             pageNo++;
 
 
