@@ -249,5 +249,13 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * 根据任务Id查询
      */
     List<ProjectTaskDTO.SimpleViewDTO> listByTaskIds(@Param("taskIds") List<String> taskIds);
+
+    /**
+     * @param spuNos spuNo集合
+     * @return spuNo, skuNoStr
+     * @date: 2024-09-02
+     * @author: tanmujin
+     */
+    List<ProjectTaskDTO.Spu2SkuMapping> listSkusBySpuNo(@Param("spuNos") List<String> spuNos);
 }
 

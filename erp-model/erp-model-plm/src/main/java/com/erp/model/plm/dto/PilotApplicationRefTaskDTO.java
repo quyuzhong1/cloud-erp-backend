@@ -44,9 +44,7 @@ public class PilotApplicationRefTaskDTO implements Serializable {
         */
         private String taskId;
 
-        private String spu;
-
-        private String skuId;
+        private String spuNo;
 
         private String skuNo;
         /**
