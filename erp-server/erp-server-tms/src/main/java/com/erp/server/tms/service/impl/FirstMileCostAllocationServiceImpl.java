@@ -871,6 +871,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
     @Override
     public void autoGenerateFirstMileCostAllocation(LocalDate reportPeriodMonth, String sourceId) {
+        log.info("autoGenerateFirstMileCostAllocation ----start");
         if (null == reportPeriodMonth) {
             throw new ServiceException("核算期间时间为空");
         }
@@ -880,35 +881,47 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         // 头程重量分摊-费用状态为{未分摊，部分分摊}+本期账单数据 判断是否进入头程费用分摊表
         List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(sourceId), statusList);
         if (CollectionUtils.isEmpty(list)) {
+            log.error("重量分摊记录不存在 sourceId:{}",sourceId);
             return;
         }
         List<String> deliveryIds = list.stream().map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(deliveryIds)) {
+            log.error("发货单关联记录为空 sourceId:{}",sourceId);
             return;
         }
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
         if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)){
+            log.error("发货单记录不存在 sourceId:{}",sourceId);
             return;
         }
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(deliveryIds);
         if (CollectionUtils.isEmpty(deliveryDetailEntityList)){
+            log.error("发货单明细记录不存在 sourceId:{}",sourceId);
             return;
         }
         //按照发货单进行费用分摊
         for (String id : deliveryIds) {
             FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(id)).findFirst().orElse(null);
             if (Objects.isNull(deliveryEntity)) {
+                log.error("发货单记录不存在 id:{}",id);
                 continue;
             }
             List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList1 = deliveryDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(id)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(deliveryDetailEntityList1)) {
+                log.error("发货单明细记录不存在 id:{}",id);
                 continue;
             }
             //构造数据
             FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
                     .setSourceId(deliveryEntity.getId()).setSourceCode(deliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth);
-            service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
+            BatchResultDTO resultDTO = service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
+            if (resultDTO.getSuccess()){
+                log.info("自动计算费用分摊成功：{}",resultDTO.getMsg());
+            }else {
+                log.error("自动计算费用分摊失败：{}",resultDTO.getMsg());
+            }
         }
+        log.info("autoGenerateFirstMileCostAllocation ----end");
     }
 
     /**
