@@ -19,6 +19,7 @@ import com.erp.server.mrp.service.ReplenishmentSuggestionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -444,6 +445,21 @@ public class ReplenishmentSuggestionController extends BaseController {
         return success();
     }
 
+    /**
+     * 导入补货规则
+     * @author will
+     * @date 2024/8/30 16:48
+     * @param excelFile
+     * @param response
+     * @return ApiResult<?>
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入补货规则")
+    @PostMapping("/importRule")
+    public ApiResult<?> importRule(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        replenishmentSuggestionService.importRule(excelFile, response);
+        return success();
+    }
+
 
     /**
      * 运营预估月销导入模板
@@ -458,5 +474,18 @@ public class ReplenishmentSuggestionController extends BaseController {
         return success();
     }
 
-
+    /**
+     * 导入运营预估月销
+     * @author will
+     * @date 2024/8/30 16:49
+     * @param excelFile
+     * @param response
+     * @return ApiResult<?>
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入运营预估月销")
+    @PostMapping("/importSalesEstimate")
+    public ApiResult<?> importSalesEstimate(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        replenishmentSuggestionService.importSalesEstimate(excelFile, response);
+        return success();
+    }
 }

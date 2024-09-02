@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -171,10 +172,28 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      */
     void downloadRuleTemplate(HttpServletResponse response);
     /**
+     * 导入补货规则
+     * @author will
+     * @date 2024/8/30 16:49
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    void importRule(MultipartFile excelFile, HttpServletResponse response);
+    /**
      * 运营预估月销导入模板
      * @author will
      * @date 2024/8/30 16:42
      * @param response
      */
     void downloadSalesEstimateTemplate(HttpServletResponse response);
+    /**
+     * 导入运营预估月销
+     * @author will
+     * @date 2024/8/30 16:49
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    void importSalesEstimate(MultipartFile excelFile, HttpServletResponse response);
 }
