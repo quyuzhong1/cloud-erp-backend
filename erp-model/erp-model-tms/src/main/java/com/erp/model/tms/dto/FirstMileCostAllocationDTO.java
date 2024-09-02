@@ -683,6 +683,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 单位成本
          */
         private BigDecimal productCost;
+        /**
+         * 单位成本 导出使用
+         */
+        private String productCostStr;
 
         /**
          * 产品总成本
@@ -835,6 +839,8 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private boolean currencyMonthReconciliation = false;
         //上月开始有账单
         private boolean lastMonthReconciliation = false;
+        //本月有实际账单
+        private boolean currencyReconciliation = false;
     }
 
     @Data

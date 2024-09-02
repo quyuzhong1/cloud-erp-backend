@@ -203,7 +203,7 @@
         LEFT JOIN overseas_warehouse_inbound_detail owid ON owi.ID = owid.main_id AND owid.is_deleted = FALSE
         WHERE owi.is_deleted = FALSE AND source_type = 'firstMileDelivery'
         <if test="params.businessCodes != null and params.businessCodes.size > 0">
-            and owi.source_code in
+            and owi.code in
             <foreach collection="params.businessCodes" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>

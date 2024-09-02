@@ -21,7 +21,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
@@ -388,11 +387,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     }
 
     @Override
-    public List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status) {
-        if (StrUtil.isBlank(orgId) && StrUtil.isBlank(status) && CollectionUtils.isEmpty(skuIds)){
+    public List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status, LocalDate month) {
+        if (StrUtil.isBlank(orgId) && StrUtil.isBlank(status) && CollectionUtils.isEmpty(skuIds) && Objects.isNull(month)){
             return Collections.emptyList();
         }
-        return baseMapper.listDetailByOrgIdAndSkuIds(orgId,skuIds,status);
+        return baseMapper.listDetailByOrgIdAndSkuIds(orgId,skuIds,status,month);
     }
 
 

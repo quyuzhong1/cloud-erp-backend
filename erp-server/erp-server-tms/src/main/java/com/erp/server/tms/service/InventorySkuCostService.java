@@ -8,6 +8,7 @@ import com.erp.model.tms.dto.InventorySkuCostDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -128,10 +129,12 @@ public interface InventorySkuCostService extends SuperService<InventorySkuCostEn
 
     /**
      * 根据组织和sku获取成本列表
+     *
      * @param orgId
      * @param skuIds
      * @param status
+     * @param month
      * @return
      */
-    List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status);
+    List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status, LocalDate month);
 }
