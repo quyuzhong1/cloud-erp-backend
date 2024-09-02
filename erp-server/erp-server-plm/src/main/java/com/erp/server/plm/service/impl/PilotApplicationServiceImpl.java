@@ -588,9 +588,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             taskDTO.setProductId(entity.getProductId());
             //todo 填充关联任务信息
             taskDTO.setProductName(entity.getProductName());
-            taskDTO.setSkuId("");
-            taskDTO.setSkuNo("");
-            taskDTO.setSpu(entity.getSpuNo());
+            taskDTO.setSkuNo(entity.getSkuNoStr());
+            taskDTO.setSpuNo(entity.getSpuNo());
             taskDTO.setStatus(entity.getStatus());
             taskDTO.setStatusName(TaskStateEnum.getName(entity.getStatus()));
         }
@@ -598,8 +597,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
         //什么记录
-        List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getProcessId());
-        view.setApproveFlowList(approveHistoryList);
+//        List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getProcessId());
+        view.setApproveFlowList(Collections.emptyList());
         //操作日志
         SysLogSelectDTO sysLogSelectDTO = new SysLogSelectDTO();
         sysLogSelectDTO.setBusinessId(pilotApplicationEntity.getId());

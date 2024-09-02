@@ -295,5 +295,21 @@ public class ProjectTaskDTO  implements Serializable {
          * 附件URL集合
          */
         private List<String> attachUrlList;
+        /**
+         * 拼接好的任务关联sku
+         */
+        private String skuNoStr;
+    }
+
+    @Data
+    public static class Spu2SkuMapping{
+        /**
+         * spuNo
+         */
+        private String spuNo;
+        /**
+         * 拼接好的skuNo串
+         */
+        private String skuNoStr;
     }
 }

@@ -1928,5 +1928,16 @@
             </foreach>
         </where>
     </select>
+    <select id="listSkusBySpuNo" resultType="com.erp.model.plm.dto.ProjectTaskDTO$Spu2SkuMapping">
+        select  pi.spu_no spuNo,
+                string_agg(pd.sku_no, ';') skuNoStr
+        from product_info pi
+            left join product_detail pd on pi.id = pd.product_id and pd.is_deleted = false
+        where pi.spu_no in
+        <foreach collection="spuNos" item="spuNo" open="(" separator="," close=")">
+            #{spuNo}
+        </foreach>
+        group by pi.spu_no;
+    </select>
 
 </mapper>

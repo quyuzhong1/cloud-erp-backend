@@ -5167,7 +5167,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Override
     public List<ProjectTaskDTO.SimpleViewDTO> listSimpleViewByIds(List<String> taskIds) {
-        return this.baseMapper.listByTaskIds(taskIds);
+        List<ProjectTaskDTO.SimpleViewDTO> list = this.baseMapper.listByTaskIds(taskIds);
+        List<String> spuNos = list.stream().map(item -> item.getSpuNo()).distinct().collect(Collectors.toList());
+        if(!spuNos.isEmpty()){
+            List<ProjectTaskDTO.Spu2SkuMapping> spuList = this.baseMapper.listSkusBySpuNo(spuNos);
+            for (ProjectTaskDTO.SimpleViewDTO dto : list) {
+                Optional<ProjectTaskDTO.Spu2SkuMapping> first = spuList.stream().filter(item -> item.getSpuNo().equals(dto.getSpuNo())).findFirst();
+                if(first.isPresent()){
+                    dto.setSkuNoStr(first.get().getSkuNoStr());
+                }
+            }
+        }
+        return list;
     }
-
 }
