@@ -1,11 +1,9 @@
 package com.erp.server.plm.service;
 import com.common.business.dto.FindUserDTO;
-import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
-import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -196,4 +194,9 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * sku快粘贴：根据sku编号查询
      */
     List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO);
+
+    /**
+     * 查询产品
+     */
+    PagingVO<ProductDetailShowDTO> listProduct(PagingDTO<ProductSkuDTO> pagingDTO);
 }

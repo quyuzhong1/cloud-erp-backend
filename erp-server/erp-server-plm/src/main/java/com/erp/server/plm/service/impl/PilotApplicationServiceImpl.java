@@ -11,9 +11,8 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.ProductDetailStatusEnum;
-import com.erp.model.plm.enums.SaleMethodEnum;
-import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.model.plm.enums.*;
+import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.SupplierDTO;
@@ -100,6 +99,14 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private ProductDetailMapper productDetailMapper;
     @Autowired
     private ScmTaskFeign scmTaskFeign;
+    @Resource
+    private ProjectInfoService projectInfoService;
+    @Resource
+    private ProductChangeService productChangeService;
+    @Autowired
+    private BomSkuService bomSkuService;
+    @Resource
+    private ProductRefLabelService productRefLabelService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -832,5 +839,93 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             resultList.add(skuListDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public PagingVO<ProductDetailShowDTO> listProduct(PagingDTO<ProductSkuDTO> pagingDTO) {
+        //待提交，待审核，已审核
+        pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.WAIT_CONFIRM.getCode(), ProductDetailStatusEnum.WAIT_CONFIRM.getCode(), ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        //标签列表
+        List<String> labelIds = pagingDTO.getParams().getLabelIds();
+        List<String> labelProductIds = null;
+        if (CollectionUtils.isNotEmpty(labelIds)) {
+            List<ProductRefLabelVO> productRefLabelVOS = productRefLabelService.getLabelListByIds(null, new HashSet<>(labelIds), null);
+            if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
+                labelProductIds = productRefLabelVOS.stream().map(ProductRefLabelVO::getProductId).collect(Collectors.toList());
+            } else {
+                labelProductIds = new ArrayList<>();
+                labelProductIds.add("-1");
+            }
+            pagingDTO.getParams().setLabelProductIds(labelProductIds);
+        }
+        List<String> saleMethodList = pagingDTO.getParams().getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            pagingDTO.getParams().setSaleMethod(StringUtils.join(saleMethodParams, ","));
+        }
+        IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
+        List<ProductDetailShowDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO(pageData);
+        }
+        List<String> productIdList = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
+        List<ProjectInfoEntity> projectList = projectInfoService.getByProductIdList(productIdList);
+        List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
+        List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
+
+        List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
+        List<String> skuIdList = list.stream().map(ProductDetailShowDTO::getSkuId).collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIdList);
+        for (ProductDetailShowDTO item : list) {
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                item.setIsCombination(Boolean.TRUE);
+            } else {
+                item.setIsCombination(Boolean.FALSE);
+            }
+            item.setStatusName(ProductDetailStatusEnum.getName(item.getStatus()));
+            Boolean isChangeIng = changeIngSourceIds.contains(item.getId());
+            item.setIsChangeIng(isChangeIng);
+            //首批到货状态
+            Integer arrivalState = item.getArrivalState();
+            item.setArrivalStateName(PurchaseStateEnum.getNameByCode(arrivalState));
+            //侵权风险
+            Integer pirateRisk = item.getPirateRisk();
+            item.setPirateRiskName(PirateRiskEnum.getName(pirateRisk));
+            //产品状态
+            Integer productState = item.getProductState();
+            item.setProductStateName(ProductDetailStateEnum.getNameByCode(productState));
+            //是否可销售
+            Integer isMarketable = item.getIsMarketable();
+            Integer saleState = item.getSaleState();
+            String saleStateName = SaleStateEnum.getNameByCode(saleState);
+            item.setSaleStateName(saleStateName);
+            Integer yes = 0;
+            if (yes.equals(isMarketable)) {
+                item.setIsMarketableName("是");
+            } else {
+                item.setIsMarketableName("否");
+            }
+            //项目经理
+            String projectChargeName = projectList.stream().filter(p -> p.getProductId().
+                    equals(item.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getChargeName())).orElse("");
+            item.setProjectChargeName(projectChargeName);
+
+            // 一级供应商名称
+            if (StrUtils.isNotEmpty(item.getMainSupplier()) && supplierMap.containsKey(item.getMainSupplier())) {
+                item.setMainSupplierName(supplierMap.get(item.getMainSupplier()).getName());
+            }
+        }
+
+        return new PagingVO(pageData);
     }
 }

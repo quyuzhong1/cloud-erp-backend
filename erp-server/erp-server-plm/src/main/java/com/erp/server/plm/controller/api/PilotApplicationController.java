@@ -5,8 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
-import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.query.PilotApplicationQueryHandler;
 import com.erp.server.plm.service.ProductDetailService;
@@ -30,7 +29,7 @@ import com.common.business.vo.PagingVO;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.plm.dto.PilotApplicationDTO;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -486,5 +485,19 @@ public class PilotApplicationController extends BaseController {
     public ApiResult<List<ProductSearchDTO.SkuListDTO>> listSkuBySkuNos(@RequestBody ProductSearchDTO.SkuParamDTO skuParamDTO) {
         List<ProductSearchDTO.SkuListDTO> list = pilotApplicationService.listSkuBySkuNos(skuParamDTO);
         return this.success(list);
+    }
+
+    /**
+     * 产品信息-主页列表-查询
+     * @param pagingDTO pagingDTO
+     * @return
+     * @Author tanmujin
+     * @Date 2024-09-02
+     **/
+    @PostMapping("/listProduct")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    public ApiResult<PagingVO<ProductDetailShowDTO>> listProduct(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
+        PagingVO<ProductDetailShowDTO> paging = pilotApplicationService.listProduct(pagingDTO);
+        return this.success(paging);
     }
 }
