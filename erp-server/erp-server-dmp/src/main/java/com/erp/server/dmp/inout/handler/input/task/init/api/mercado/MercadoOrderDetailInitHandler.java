@@ -69,7 +69,17 @@ public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-		List<String> orderIds = findMongoData.stream().map(req -> req.get("fid").toString()).distinct().collect(Collectors.toList());
+		List<String> orderIds = new ArrayList<>();
+		for (Map<String, Object> findMongoDatum : findMongoData) {
+			Object orders = findMongoDatum.get("orders");
+			if (ObjectUtil.isNotEmpty(orders)) {
+				List<Object> objectsList = (List<Object>) orders;
+				for (Object o : objectsList) {
+					Map<String, Object> map = (Map<String, Object>) o;
+					orderIds.add(String.valueOf(map.get("fid")));
+				}
+			}
+		}
 
 		MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
 		if (ObjectUtil.isEmpty(shopInfoDTO)) {
