@@ -95,6 +95,9 @@
         <if test="orgId != null and orgId != ''">
             and c.company_id = #{orgId}
         </if>
+        <if test="month != null">
+            and c.allocated_month = #{month}
+        </if>
     </select>
 
 </mapper>

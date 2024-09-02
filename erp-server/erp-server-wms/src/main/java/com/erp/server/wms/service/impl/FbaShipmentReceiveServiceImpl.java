@@ -458,7 +458,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
     @Override
     public List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto) {
-        if (Objects.isNull(dto) || (org.apache.commons.collections4.CollectionUtils.isEmpty(dto.getBusinessCodes()) && Objects.isNull(dto.getMonth()))){
+        if (Objects.isNull(dto) || (CollectionUtils.isEmpty(dto.getDeliveryIds()) && Objects.isNull(dto.getMonth()))){
             return Collections.emptyList();
         }
         return baseMapper.countReceiveQtyByParams(dto);

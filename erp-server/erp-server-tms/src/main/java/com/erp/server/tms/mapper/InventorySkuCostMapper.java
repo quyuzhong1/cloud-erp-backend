@@ -2,7 +2,6 @@ package com.erp.server.tms.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -10,6 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -47,10 +47,12 @@ public interface InventorySkuCostMapper extends BaseMapper<InventorySkuCostEntit
 
     /**
      * 根据组织和sku获取成本列表
+     *
      * @param orgId
      * @param skuIds
      * @param status
+     * @param month
      * @return
      */
-    List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(@Param("orgId") String orgId, @Param("skuIds") List<String> skuIds, @Param("status") String status);
+    List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(@Param("orgId") String orgId, @Param("skuIds") List<String> skuIds, @Param("status") String status, @Param("month")LocalDate month);
 }

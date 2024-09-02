@@ -1259,6 +1259,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private List<String> businessCodes;
         /**
+         * 发货单id集合
+         */
+        private List<String> deliveryIds;
+        /**
          * 日期
          */
         private LocalDate month;
