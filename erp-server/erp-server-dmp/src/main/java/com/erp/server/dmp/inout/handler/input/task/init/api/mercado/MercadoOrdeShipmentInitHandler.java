@@ -100,22 +100,40 @@ public class MercadoOrdeShipmentInitHandler extends DmpInputInitHandler {
 			orderHeaderMap.put("x-format-new", "true");
 
 			//拉取数据
-			ApiResult shipmentResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-			if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
-				log.error("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
+			ApiResult apiResult = new ApiResult();
+			Object data = null;
+			long sleepTime = 1000;
+			int count = 0;
+			while(ObjectUtil.isEmpty(data)) {
+				apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+				if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
+					if(count == 10) {
+						throw new ServiceException("调用速卖通" + url + path + "接口重试" + count + "失败");
+					}
+					try {
+						Thread.sleep(sleepTime);
+					} catch (InterruptedException e) {}
+					sleepTime = sleepTime + 1000;
+					count = count + 1;
+				}
+				data = apiResult.getData();
+			}
+
+			if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+				log.error("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult));
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-						url + path, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
+						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
 
 			//解析数据
 			ObjectMapper objectMapper = new ObjectMapper();
 			ShipmentViewDTO shipmentViewDTO = null;
 			try {
-				shipmentViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(shipmentResult.getData()), ShipmentViewDTO.class);
+				shipmentViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ShipmentViewDTO.class);
 			} catch (JsonProcessingException e) {
-				log.error("美客多shipments/'shippingId'/接口数据解析错误，数据={}", shipmentResult.getData());
+				log.error("美客多shipments/'shippingId'/接口数据解析错误，数据={}", apiResult.getData());
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-						url + path, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
+						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
 			if (ObjectUtil.isEmpty(shipmentViewDTO)) {
 				return Collections.emptyList();

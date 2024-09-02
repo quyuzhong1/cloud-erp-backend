@@ -93,8 +93,26 @@ public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 			orderHeaderMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 //			https://api.mercadolibre.com/marketplace/orders/2000007633674134
 			//拉取数据
-			ApiResult orderResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-			if (!Objects.equals(orderResult.getCode(), 200) && !Objects.equals(orderResult.getCode(), 201)) {
+			ApiResult apiResult = new ApiResult();
+			Object data = null;
+			long sleepTime = 1000;
+			int count = 0;
+			while(ObjectUtil.isEmpty(data)) {
+				apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+				if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
+					if(count == 10) {
+						throw new ServiceException("调用速卖通" + url + path + "接口重试" + count + "失败");
+					}
+					try {
+						Thread.sleep(sleepTime);
+					} catch (InterruptedException e) {}
+					sleepTime = sleepTime + 1000;
+					count = count + 1;
+				}
+				data = apiResult.getData();
+			}
+
+			if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
 				continue;
 			}
 
@@ -102,11 +120,11 @@ public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 			com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO orderViewDTO = null;
 			ObjectMapper objectMapperBase = new ObjectMapper();
 			try {
-				orderViewDTO = objectMapperBase.readValue(JSONUtil.toJsonStr(orderResult.getData()), OrderViewDTO.class);
+				orderViewDTO = objectMapperBase.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderViewDTO.class);
 			} catch (JsonProcessingException e) {
-				log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(orderResult.getData()));
+				log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult.getData()));
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-						url + path, orderParams.toString(), JSONUtil.toJsonStr(orderResult.getData())));
+						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult.getData())));
 			}
 
 			if (ObjectUtil.isEmpty(orderViewDTO)) {

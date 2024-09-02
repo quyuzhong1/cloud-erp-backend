@@ -97,7 +97,26 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
             headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 
             //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            ApiResult apiResult = new ApiResult();
+            Object data = null;
+            long sleepTime = 1000;
+            int count = 0;
+            while(ObjectUtil.isEmpty(data)) {
+                apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+                if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
+                    if(count == 10) {
+                        nexflag = false;
+                        throw new ServiceException("调用速卖通" + url + path + "接口重试" + count + "失败");
+                    }
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {}
+                    sleepTime = sleepTime + 1000;
+                    count = count + 1;
+                }
+                data = apiResult.getData();
+            }
+
             if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
                 nexflag = false;
                 log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));

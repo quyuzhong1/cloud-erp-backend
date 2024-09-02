@@ -1,11 +1,13 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.mercado;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
@@ -87,7 +89,25 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
             headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 
             //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            ApiResult apiResult = new ApiResult();
+            Object data = null;
+            long sleepTime = 1000;
+            int count = 0;
+            while(ObjectUtil.isEmpty(data)) {
+                apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+                if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
+                    if(count == 10) {
+                        throw new ServiceException("调用速卖通" + url + path + "接口重试" + count + "失败");
+                    }
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {}
+                    sleepTime = sleepTime + 1000;
+                    count = count + 1;
+                }
+                data = apiResult.getData();
+            }
+
             if (!Objects.equals(apiResult.getCode(), 200)) {
                 nexflag = false;
                 log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
