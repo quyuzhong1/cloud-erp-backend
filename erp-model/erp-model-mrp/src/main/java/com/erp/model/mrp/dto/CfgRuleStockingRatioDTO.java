@@ -105,7 +105,7 @@ public class CfgRuleStockingRatioDTO implements Serializable {
         * 名称
         */
         @NotBlank(message = "名称不能为空")
-        @Size(max = 64,message = "名称最大长度不能超过64位")
+        @Size(max = 10,message = "名称最大长度不能超过10位")
         private String name;
 
         /**

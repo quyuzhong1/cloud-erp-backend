@@ -7,6 +7,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -166,6 +168,13 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     * 新增修改处理数据
     */
     private void handleData(CfgRuleStockUpEntity cfgRuleStockUpEntity) {
-        // TODO 验证数据 & 数据赋值
+        if (MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
+                MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
+            throw new ServiceException("常规品备货系数必须大于等于0，并且小于等于99");
+        }
+        if (MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
+                MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
+            throw new ServiceException("新品备货系数必须大于等于0，并且小于等于99");
+        }
     }
 }

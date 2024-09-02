@@ -1,16 +1,22 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
+import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
+import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesFormulaMapper;
 import com.erp.server.mrp.service.CfgRuleSalesFormulaService;
+import com.erp.server.mrp.service.CfgRuleSalesQtyService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -19,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +45,9 @@ import java.util.stream.Collectors;
 public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSalesFormulaMapper, CfgRuleSalesFormulaEntity> implements CfgRuleSalesFormulaService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private CfgRuleSalesQtyService cfgRuleSalesQtyService;
 
     /**
     * 修改
@@ -113,18 +123,47 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+
+        //销量信息
+        CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyService.getById(salesQtyId);
+        if (ObjectUtil.isEmpty(salesQtyEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（备货）");
+        }
+
         Integer index = MathUtil.ONE;
         for (CfgRuleSalesFormulaEntity salesFormula : list) {
             salesFormula.setSalesQtyId(salesQtyId);
             //排序
             salesFormula.setIndex(index);
-
+            //固定销量
+            if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(salesFormula.getDefaultType())) {
+                salesFormula.setPercentJson(JSONUtil.parseObj(new CfgRuleSalesFormulaDTO.PercentJsonDTO()));
+            }
+            //动态销量
+            if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(salesFormula.getDefaultType())) {
+                salesFormula.setFixedValue(BigDecimal.ZERO);
+                //默认配置需要校验百分比之和为100
+                if (CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(salesFormula.getType())) {
+                    BigDecimal totalRatio = salesFormula.getPercentJsonDTO().getTotalRatio();
+                    if (MathUtil.compareTo(totalRatio,new BigDecimal(100)) != MathUtil.ZERO) {
+                        throw new ServiceException("默认动态销量系数之和必须=100%；");
+                    }
+                }
+            }
             //百分比json
             JSONObject percentJson = JSONUtil.parseObj(salesFormula.getPercentJsonDTO());
             salesFormula.setPercentJson(percentJson);
 
             //时间
             List<LocalDate> dateList = salesFormula.getDateList();
+            if (CollectionUtils.isNotEmpty(dateList)) {
+                if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
+                    throw new ServiceException("时间区间不能为空");
+                }
+                if (dateList.get(0).isAfter(dateList.get(1))) {
+                    throw new ServiceException("开始时间不能大于结束时间");
+                }
+            }
             salesFormula.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
             salesFormula.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
             index ++;

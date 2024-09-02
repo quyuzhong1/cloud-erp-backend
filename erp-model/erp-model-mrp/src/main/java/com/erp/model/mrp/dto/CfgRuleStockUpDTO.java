@@ -230,42 +230,56 @@ public class CfgRuleStockUpDTO implements Serializable {
         * 采购审批天数（天）
         */
         @NotNull(message = "采购审批天数（天）不能为空")
+        @Min(value = 0,message = "采购审批天数（天）最小值为0")
+        @Max(value = 365,message = "采购审批天数（天）最大值为365")
         private Integer purchaseApproveDays;
 
         /**
         * 生产周期天数（天）
         */
         @NotNull(message = "生产周期天数（天）不能为空")
+        @Min(value = 0,message = "生产周期天数（天）最小值为0")
+        @Max(value = 365,message = "生产周期天数（天）最大值为365")
         private Integer productionDays;
 
         /**
         * 供应商发货天数（天）
         */
         @NotNull(message = "供应商发货天数（天）不能为空")
+        @Min(value = 0,message = "供应商发货天数（天）最小值为0")
+        @Max(value = 365,message = "供应商发货天数（天）最大值为365")
         private Integer supplierDeliveryDays;
 
         /**
         * 质检入库天数（天）
         */
         @NotNull(message = "质检入库天数（天）不能为空")
+        @Min(value = 0,message = "质检入库天数（天）最小值为0")
+        @Max(value = 365,message = "质检入库天数（天）最大值为365")
         private Integer qcDays;
 
         /**
         * 采购频率天数（天）
         */
         @NotNull(message = "采购频率天数（天）不能为空")
+        @Min(value = 0,message = "采购频率天数（天）最小值为0")
+        @Max(value = 365,message = "采购频率天数（天）最大值为365")
         private Integer purchaseCycleDays;
 
         /**
         * 安全天数（天）
         */
         @NotNull(message = "安全天数（天）不能为空")
+        @Min(value = 0,message = "安全天数（天）最小值为0")
+        @Max(value = 365,message = "安全天数（天）最大值为365")
         private Integer safeDays;
 
         /**
         * 入库天数（天）
         */
         @NotNull(message = "入库天数（天）不能为空")
+        @Min(value = 0,message = "入库天数（天）最小值为0")
+        @Max(value = 365,message = "入库天数（天）最大值为365")
         private Integer instockDays;
 
         /**

@@ -3,6 +3,8 @@ package com.erp.model.mrp.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -121,7 +123,9 @@ public class CfgRuleLogisticsDetailDTO implements Serializable {
         /**
          * 物流时效（天）
          */
-        @NotNull(message = "物流时效不能为空")
+        @NotNull(message = "物流时效（天）不能为空")
+        @Min(value = 0,message = "物流时效（天）最小值为0")
+        @Max(value = 365,message = "物流时效（天）最大值为365")
         private Integer logisticsDays;
     }
 }

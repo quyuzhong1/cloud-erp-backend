@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -75,7 +76,15 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isEmpty(salesQtyIdList)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(CfgRuleSalesDenoisingEntity::getSalesQtyId,salesQtyIdList).list();
+        List<CfgRuleSalesDenoisingEntity> list = lambdaQuery().in(CfgRuleSalesDenoisingEntity::getSalesQtyId, salesQtyIdList).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return  Collections.EMPTY_LIST;
+        }
+        for (CfgRuleSalesDenoisingEntity salesDenoisingEntity : list) {
+            //时间
+            salesDenoisingEntity.setDateList(Arrays.asList(salesDenoisingEntity.getStartDate(),salesDenoisingEntity.getEndDate()));
+        }
+        return list;
     }
 
     @Override
@@ -105,6 +114,19 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
             denoisingEntity.setSalesQtyId(salesQtyId);
             //排序
             denoisingEntity.setIndex(index);
+
+            //时间
+            List<LocalDate> dateList = denoisingEntity.getDateList();
+            if (CollectionUtils.isNotEmpty(dateList)) {
+                if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
+                    throw new ServiceException("时间区间不能为空");
+                }
+                if (dateList.get(0).isAfter(dateList.get(1))) {
+                    throw new ServiceException("开始时间不能大于结束时间");
+                }
+            }
+            denoisingEntity.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
+            denoisingEntity.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
             index ++;
         }
     }

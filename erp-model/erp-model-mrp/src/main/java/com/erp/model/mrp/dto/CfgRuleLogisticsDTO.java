@@ -4,9 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.util.List;
 
@@ -106,12 +104,16 @@ public class CfgRuleLogisticsDTO implements Serializable {
         * 物流时效（天）
         */
         @NotNull(message = "物流时效（天）不能为空")
+        @Min(value = 0,message = "物流时效（天）最小值为0")
+        @Max(value = 365,message = "物流时效（天）最大值为365")
         private Integer logisticsDays;
 
         /**
         * 发货频率（天）
         */
         @NotNull(message = "发货频率（天）不能为空")
+        @Min(value = 0,message = "发货频率（天）最小值为0")
+        @Max(value = 365,message = "发货频率（天）最大值为365")
         private Integer logisticsCycleDays;
 
         /**

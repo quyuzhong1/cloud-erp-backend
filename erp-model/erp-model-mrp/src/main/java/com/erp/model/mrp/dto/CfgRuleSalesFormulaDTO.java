@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import cn.hutool.core.util.ObjectUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -135,7 +136,7 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
          * 名称
          */
         @NotBlank(message = "名称不能为空")
-        @Size(max = 64,message = "名称最大长度不能超过64位")
+        @Size(max = 10,message = "名称最大长度不能超过10位")
         private String name;
 
         /**
@@ -168,7 +169,7 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
          * 名称
          */
         @NotBlank(message = "名称不能为空")
-        @Size(max = 64,message = "名称最大长度不能超过64位")
+        @Size(max = 10,message = "名称最大长度不能超过10位")
         private String name;
 
         /**
@@ -225,7 +226,7 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
         * 名称
         */
-        @Size(max = 64,message = "名称最大长度不能超过64位")
+        @Size(max = 10,message = "名称最大长度不能超过10位")
         private String name;
 
         /**
@@ -289,6 +290,21 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
          */
         private BigDecimal threeHandredSixtyDaysRatio;
 
+        /**
+         * 总百分比
+         */
+        public BigDecimal getTotalRatio () {
+            BigDecimal totalRatio = ObjectUtil.isEmpty(threeDaysRatio) ? BigDecimal.ZERO : threeDaysRatio
+                    .add(ObjectUtil.isEmpty(sevenDaysRatio) ? BigDecimal.ZERO : sevenDaysRatio)
+                    .add(ObjectUtil.isEmpty(fourteenDaysRatio) ? BigDecimal.ZERO : fourteenDaysRatio)
+                    .add(ObjectUtil.isEmpty(thirtyDaysRatio) ? BigDecimal.ZERO : thirtyDaysRatio)
+                    .add(ObjectUtil.isEmpty(sixtyDaysRatio) ? BigDecimal.ZERO : sixtyDaysRatio)
+                    .add(ObjectUtil.isEmpty(ninetyDaysRatio) ? BigDecimal.ZERO : ninetyDaysRatio)
+                    .add(ObjectUtil.isEmpty(oneHandredEightyDaysRatio) ? BigDecimal.ZERO : oneHandredEightyDaysRatio)
+                    .add(ObjectUtil.isEmpty(twoHandredSeventyDaysRatio) ? BigDecimal.ZERO : twoHandredSeventyDaysRatio)
+                    .add(ObjectUtil.isEmpty(threeHandredSixtyDaysRatio) ? BigDecimal.ZERO : threeHandredSixtyDaysRatio);
+            return totalRatio;
+        }
     }
 
 }

@@ -1,15 +1,13 @@
 package com.erp.model.mrp.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -49,14 +47,9 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
         private String name;
 
         /**
-        * 开始日期
-        */
-        private LocalDate startDate;
-
-        /**
-        * 结束日期
-        */
-        private LocalDate endDate;
+         * 时间
+         */
+        private List<LocalDate> dateList;
 
         /**
         * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪
@@ -66,13 +59,12 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
         /**
         * 有效值（去噪后的）
         */
-        private BigDecimal effectiveValue;
+        private Integer effectiveValue;
 
         /**
         * 销量表id（cfg_rule_sales_qty）
         */
         private String salesQtyId;
-
 
     }
 
@@ -108,18 +100,14 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
         * 名称
         */
         @NotBlank(message = "名称不能为空")
-        @Size(max = 64,message = "名称最大长度不能超过64位")
+        @Size(max = 10,message = "名称最大长度不能超过10位")
         private String name;
 
         /**
-        * 开始日期
-        */
-        private LocalDate startDate;
-
-        /**
-        * 结束日期
-        */
-        private LocalDate endDate;
+         * 时间
+         */
+        @NotEmpty(message = "时间区间不能为空")
+        private List<LocalDate> dateList;
 
         /**
         * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪
@@ -132,8 +120,9 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
         * 有效值（去噪后的）
         */
         @NotNull(message = "有效值（去噪后的）不能为空")
-        @Digits(integer = 32, fraction = 0, message = "有效值（去噪后的）最大长度不能超过32位")
-        private BigDecimal effectiveValue;
+        @Min(value = 1,message = "有效值（去噪后的）最小值为1")
+        @Max(value = 999999999,message = "有效值（去噪后的）最大值为999999999")
+        private Integer effectiveValue;
 
     }
 

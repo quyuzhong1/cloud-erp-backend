@@ -1,15 +1,15 @@
 package com.erp.model.mrp.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.List;
 
 
 /**
@@ -55,13 +55,18 @@ public class CfgRuleSalesDenoisingEntity extends BaseEntity<CfgRuleSalesDenoisin
     * 有效值（去噪后的）
     */
     @TableField("effective_value")
-    private BigDecimal effectiveValue;
+    private Integer effectiveValue;
     /**
     * 销量表id（cfg_rule_sales_qty）
     */
     @TableField("sales_qty_id")
     private String salesQtyId;
 
+    /**
+     * 时间
+     */
+    @TableField(exist = false)
+    private List<LocalDate> dateList;
 
     public static final String INDEX = "index";
 
