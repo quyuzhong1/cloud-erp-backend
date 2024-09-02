@@ -4,6 +4,7 @@ package com.erp.server.mrp.service.impl;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
 import com.erp.server.mrp.mapper.CfgRuleSalesDenoisingMapper;
@@ -99,9 +100,12 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        Integer index = MathUtil.ONE;
         for (CfgRuleSalesDenoisingEntity denoisingEntity : list) {
             denoisingEntity.setSalesQtyId(salesQtyId);
-
+            //排序
+            denoisingEntity.setIndex(index);
+            index ++;
         }
     }
 }

@@ -105,12 +105,6 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 序号
-        */
-        @NotNull(message = "序号不能为空")
-        private Integer index;
-
-        /**
         * 名称
         */
         @NotBlank(message = "名称不能为空")

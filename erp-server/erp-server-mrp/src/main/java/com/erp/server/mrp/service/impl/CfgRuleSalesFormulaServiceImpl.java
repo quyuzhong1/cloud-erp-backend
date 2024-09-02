@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 import com.erp.server.mrp.mapper.CfgRuleSalesFormulaMapper;
@@ -112,8 +113,11 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        Integer index = MathUtil.ONE;
         for (CfgRuleSalesFormulaEntity salesFormula : list) {
             salesFormula.setSalesQtyId(salesQtyId);
+            //排序
+            salesFormula.setIndex(index);
 
             //百分比json
             JSONObject percentJson = JSONUtil.parseObj(salesFormula.getPercentJsonDTO());
@@ -123,6 +127,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
             List<LocalDate> dateList = salesFormula.getDateList();
             salesFormula.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
             salesFormula.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
+            index ++;
         }
     }
 }

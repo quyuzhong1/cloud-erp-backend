@@ -131,13 +131,6 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
          * 主键id
          */
         private String id;
-
-        /**
-         * 排序字段
-         */
-        @NotNull(message = "排序字段不能为空")
-        private Integer index;
-
         /**
          * 名称
          */
@@ -170,12 +163,6 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
          * 主键id
          */
         private String id;
-
-        /**
-         * 排序字段
-         */
-        @NotNull(message = "排序字段不能为空")
-        private Integer index;
 
         /**
          * 名称
@@ -229,12 +216,6 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         */
         @Size(max = 32,message = "销量默认类型：dynamic=动态、fixed=固定最大长度不能超过32位")
         private String defaultType;
-
-        /**
-        * 排序字段
-        */
-        @NotNull(message = "排序字段不能为空")
-        private Integer index;
 
         /**
         * 优先级字段
