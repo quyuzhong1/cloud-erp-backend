@@ -159,7 +159,7 @@ public class ReplenishmentSuggestionController extends BaseController {
     /**
      * 断货报告数量
      */
-    @GetMapping("/outOfStockReport")
+    @GetMapping("/outOfStockReportTotal")
     public ApiResult<BigDecimal> outOfStockReportTotal(@RequestParam String detailId) {
         BigDecimal outOfStockReportTotal = replenishmentSuggestionService.outOfStockReportTotal(detailId);
         return success(outOfStockReportTotal);
