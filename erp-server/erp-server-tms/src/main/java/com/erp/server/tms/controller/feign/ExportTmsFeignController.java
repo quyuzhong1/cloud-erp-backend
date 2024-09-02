@@ -8,6 +8,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.server.tms.query.*;
 import com.erp.server.tms.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,6 +56,8 @@ public class ExportTmsFeignController {
     private LogisticsLastMileCostService logisticsLastMileCostService;
     @Resource
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
+    @Resource
+    private FirstMileCostAllocationService firstMileCostAllocationService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -225,5 +228,11 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
     public PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(@RequestBody PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto) {
         return tmsWarehouseMappingService.exportWarehouseMapping(dto);
+    }
+
+    @PostMapping("/exportFirstMileCostAllocation")
+    @WebAdvanceQuery(handler = FirstMileCostAllocationQueryHandler.class)
+    public PagingVO<FirstMileCostAllocationDTO.PagingVO> exportFirstMileCostAllocation(@RequestBody PagingDTO<FirstMileCostAllocationDTO.PagingParamDTO> params) {
+        return firstMileCostAllocationService.paging(params);
     }
 }
