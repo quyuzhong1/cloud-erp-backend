@@ -71,4 +71,6 @@ public interface PilotApplicationMapper extends BaseMapper<PilotApplicationEntit
      * @author: tanmujin
      */
     List<PilotApplicationDTO.ListDTO> listExportByIds(@Param("ids") List<String> ids);
+
+    IPage<PilotApplicationDTO.ListDTO> pagingByParam(Page query, @Param("params") PilotApplicationDTO.PagingParamDTO params);
 }

@@ -192,14 +192,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public PagingVO<PilotApplicationDTO.ListDTO> paging(PagingDTO<PilotApplicationDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        Optional<AdvanceQueryDTO> tab = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(item -> item.getField().equals("tab")).findFirst();
+        /*Optional<AdvanceQueryDTO> tab = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(item -> item.getField().equals("tab")).findFirst();
         if(!tab.isPresent()){
             throw new ServiceException("缺少tab参数");
         }
         IPage<PilotApplicationDTO.ListDTO> pageData = pagingQuery(query, pagingParamDTO, (String) tab.get().getValue());
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
-        }
+        }*/
+        IPage<PilotApplicationDTO.ListDTO> pageData = this.baseMapper.pagingByParam(query, pagingParamDTO.getParams());
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO(pageData);

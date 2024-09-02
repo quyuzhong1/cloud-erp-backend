@@ -183,5 +183,41 @@
         </if>
         pa.create_time DESC
     </select>
+    <select id="pagingByParam" resultType="com.erp.model.plm.dto.PilotApplicationDTO$ListDTO">
+        select  pa.id,
+                pa.code,
+                pa.approve_status approveStatus,
+                pa.order_status orderStatus,
+                pa.bill_date billDate,
+                pa.remark,
+                pa.approve_user_id approveUserId,
+                pa.create_user_id createUserId,
+                pa.create_user_name createUserName,
+                pa.create_time createTime,
+                pad.id detailId,
+                pad.type,
+                pad.sku_id skuId,
+                pad.sku_no skuNo,
+                pad.apply_qty appluQty,
+                pad.approve_qty approveQty,
+                pad.business_type businesType,
+                pad.main_supplier_id mainSupplierId,
+                pad.second_supplier_id secondSupplierId,
+                pad.expect_arrive_date expectArriveDate,
+                pad.remark detailRemark
+        from pilot_application pa
+        left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and pa.is_deleted = false
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pa.create_time DESC
+    </select>
 
 </mapper>
