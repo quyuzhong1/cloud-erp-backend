@@ -486,18 +486,4 @@ public class PilotApplicationController extends BaseController {
         List<ProductSearchDTO.SkuListDTO> list = pilotApplicationService.listSkuBySkuNos(skuParamDTO);
         return this.success(list);
     }
-
-    /**
-     * 产品信息-主页列表-查询
-     * @param pagingDTO pagingDTO
-     * @return
-     * @Author tanmujin
-     * @Date 2024-09-02
-     **/
-    @PostMapping("/listProduct")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
-    public ApiResult<PagingVO<ProductDetailShowDTO>> listProduct(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
-        PagingVO<ProductDetailShowDTO> paging = pilotApplicationService.listProduct(pagingDTO);
-        return this.success(paging);
-    }
 }

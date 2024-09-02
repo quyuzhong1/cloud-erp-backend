@@ -194,9 +194,4 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * sku快粘贴：根据sku编号查询
      */
     List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO);
-
-    /**
-     * 查询产品
-     */
-    PagingVO<ProductDetailShowDTO> listProduct(PagingDTO<ProductSkuDTO> pagingDTO);
 }
