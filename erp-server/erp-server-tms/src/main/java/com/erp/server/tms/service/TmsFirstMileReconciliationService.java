@@ -171,4 +171,10 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
     TmsFirstMileReconciliationEntity findByCycleAndSupplier(String supplier, String currency, LocalDate startDate, LocalDate endDate);
 
     TmsFirstMileReconciliationEntity getByCode(String code);
+
+    /**
+     * 更新对账单 兼容对1对多场景兼容
+     * @param dto
+     */
+    void updateReconciliation(TmsFirstMileReconciliationDTO.UpdateDTO dto);
 }

@@ -244,8 +244,8 @@
                lbc.actual_weight as weight,
                lbc.volume_weight as volumeWeight,
                lbc.weight_unit as weightUnit,
-               (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated') as estimatedFee,
-               (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'actual') as actualFee,
+               (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false where lbc.logistics_bill_id = lb.id and lbcd.TYPE = 'estimated') as estimatedFee,
+               (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false where lbc.logistics_bill_id = lb.id  and lbcd.TYPE = 'actual') as actualFee,
                lbc.currency as  currency,
                lb.order_time as orderTime,
                lbd.sign_time as  signTime,
@@ -254,14 +254,27 @@
                 else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
         from
             logistics_bill lb
-                inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
-                inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+            inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
+            left join (
+            select * from (
+                select
+                bill.id,
+                bill.logistics_bill_id,
+                bill.reconciliation_status,
+                bill.actual_weight,
+                bill.volume_weight,
+                bill.weight_logistics,
+                bill.volume_weight_logistics,
+                bill.weight_unit,
+                bill.currency,
+                ROW_NUMBER() OVER (PARTITION BY bill.logistics_bill_id ORDER BY bill.create_time) AS rn
+                from logistics_bill_cost bill left join tms_first_mile_reconciliation_detail tfmrd on bill.reconciliation_id = tfmrd.main_id and tfmrd.is_deleted = false and tfmrd."type" = 'actual' and tfmrd.reconciliation_count = 1 and bill.is_deleted = false
+        ) as detail where rn = 1
+                          ) lbc on lb.id = lbc.logistics_bill_id
         where
             ${params.sqlMap.default}
           and lb.order_type = #{params.orderType}
           and lb.is_deleted =false
-          and lbc.is_deleted = false
-          and lbd.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -293,9 +306,9 @@
         lbc.weight_logistics as actualWeight,
         lbc.volume_weight_logistics as actualVolumeWeight,
         lbc.weight_unit as weightUnit,
-        (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated') as estimatedFee,
+        (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false where lbc.logistics_bill_id = lb.id and lbcd.TYPE = 'estimated') as estimatedFee,
         lbc.currency as  currency,
-               lb.ship_time as shipTime,
+        lb.ship_time as shipTime,
         lb.order_time as orderTime,
         lbd.sign_time as  signTime,
         lb.remark,
@@ -303,12 +316,28 @@
                case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600) else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
         from
         logistics_bill lb
-        inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
-        inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+        inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
+        left join (
+            select
+                id,logistics_bill_id,reconciliation_status,actual_weight,volume_weight,weight_logistics,volume_weight_logistics,weight_unit,currency
+            from (
+                  select
+                      bill.id,
+                      bill.logistics_bill_id,
+                      bill.reconciliation_status,
+                      bill.actual_weight,
+                      bill.volume_weight,
+                      bill.weight_logistics,
+                      bill.volume_weight_logistics,
+                      bill.weight_unit,
+                      bill.currency,
+                      ROW_NUMBER() OVER (PARTITION BY bill.logistics_bill_id ORDER BY bill.create_time) AS rn
+                  from logistics_bill_cost bill left join tms_first_mile_reconciliation_detail tfmrd on bill.reconciliation_id = tfmrd.main_id and tfmrd.is_deleted = false and tfmrd."type" = 'actual' and tfmrd.reconciliation_count = 1 and bill.is_deleted = false
+                 ) as detail where rn = 1
+        ) lbc on lb.id = lbc.logistics_bill_id
         where lb.id = #{id}
         and lb.is_deleted =false
-        and lbc.is_deleted = false
-        and lbd.is_deleted = false
+        limit 1
     </select>
     <select id="firstMileTabList" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$TabListDTO">
         SELECT lbd.track_status as tabFlag,
@@ -484,6 +513,7 @@
                lbc.weight_logistics as weightLogistics,
                lbc.weight_unit as actualWeightUnit,
                lbc.currency as  currency,
+               lbc.reconciliation_id as  reconciliationId,
                lb.order_time as orderTime,
                lbd.track_no as trackNo,
                lbd.sign_time as receiveDate
@@ -551,6 +581,7 @@
             lbc.weight_unit as volumeWeightUnit,
             lbc.weight_unit as billingWeightUnit,
             lbc.currency as currency,
+            lbc.reconciliation_id as reconciliationId,
             lb.order_time as orderTime,
             lbd.track_no as trackNo,
             lbd.sign_time as receiveDate

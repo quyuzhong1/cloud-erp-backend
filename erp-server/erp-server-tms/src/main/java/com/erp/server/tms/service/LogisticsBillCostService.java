@@ -9,12 +9,15 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -166,4 +169,21 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     Boolean updateShopCharge(LogisticsBillCostDTO.UpdateShopChargeDTO dto);
 
     BigDecimal getActualLogisticCost(String soId);
+
+    /**
+     * 根据物流单和对账单id更新数据状态
+     * @param logisticsBillIds
+     * @param reconciliationId
+     * @param status
+     */
+    void updateStatusByLogisticsBillIdsAndReconciliationId(List<String> logisticsBillIds, String reconciliationId, String status);
+
+    /**
+     * 根据对账单重算费用清单
+     *
+     * @param mainEntity
+     * @param list
+     * @param actualMap
+     */
+    void updateLogisticsBillCost(TmsFirstMileReconciliationEntity mainEntity, List<TmsFirstMileReconciliationDetailEntity> list, Map<String, TmsFirstMileReconciliationDetailEntity> actualMap);
 }

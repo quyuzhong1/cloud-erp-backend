@@ -136,7 +136,13 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
 
     Map<String, TmsFirstMileReconciliationDetailEntity> handleUpdateData(List<TmsFirstMileReconciliationDetailEntity> list, String mainId, List<TmsFirstMileReconciliationDetailEntity> oldList);
 
-    void fillWaitReconciliationList(List<? extends TmsFirstMileReconciliationDetailDTO.ListDTO> records);
+    void fillWaitReconciliationList(List<? extends TmsFirstMileReconciliationDetailDTO.ListDTO> records, String mainId);
+
+    /**
+     * 分页数据填充
+     * @param records
+     */
+    void fillWaitReconciliationData(List<? extends TmsFirstMileReconciliationDetailDTO.ListDTO> records);
 
     CurrencyDTO.ViewDTO getCurrencyView(String currency);
 
@@ -180,4 +186,11 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @return
      */
     List<TmsFirstMileReconciliationDetailEntity> listByBusinessCodes(List<String> businessCodes, String status);
+
+    /**
+     * 更新对账明细
+     * @param detailList
+     * @param old
+     */
+    void updateReconciliationDetail(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity old);
 }

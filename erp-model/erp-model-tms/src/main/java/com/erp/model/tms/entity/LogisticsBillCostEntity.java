@@ -158,6 +158,13 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
      */
     @TableField(value = "confirm_user_name")
     private String confirmUserName;
+
+    /**
+     * 对账单id
+     */
+    @TableField(value = "reconciliation_id")
+    private String reconciliationId;
+
     /**
      * 费用编辑（导入数据返回）
      */

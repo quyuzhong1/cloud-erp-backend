@@ -141,7 +141,7 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private BigDecimal estimatedShippingCost;
         /**
-         * 预估报关费用
+         * 预估关税费用
          */
         private BigDecimal estimatedDeclareCost;
 

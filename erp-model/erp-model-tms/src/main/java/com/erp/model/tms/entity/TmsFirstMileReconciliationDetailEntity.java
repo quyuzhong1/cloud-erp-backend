@@ -34,7 +34,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("main_id")
     private String mainId;
     /**
-     * 来源id
+     * 来源id(物流单)
      */
     @TableField("source_id")
     private String sourceId;
