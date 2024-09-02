@@ -122,7 +122,10 @@ public class BaseDropDownDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class RemarkDTO extends CommonDTO {
-
+        /**
+         * id
+         */
+        private String id;
         /**
          * 备注
          */
