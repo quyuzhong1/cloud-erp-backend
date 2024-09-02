@@ -1069,9 +1069,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         //头程分摊金额
         if (CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstOtherFee())) {
-            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(allocationWeight, weightTotal,6), entity.getAmount(), 4));
+            entity.setAllocatedAmount(MathUtil.divide(MathUtil.multiply(allocationWeight, entity.getAmount(),6), weightTotal, 4));
         } else if (CostAllocationEnum.COST_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstOtherFee())) {
-            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(productTotalCost,skuTotalCost,6), entity.getAmount(), 4));
+            entity.setAllocatedAmount(MathUtil.divide(MathUtil.multiply(productTotalCost,entity.getAmount(),6), skuTotalCost, 4));
         }
         return entity;
     }
@@ -1105,9 +1105,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         //头程分摊金额
         if (CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstOtherTaxFee())) {
-            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(allocationWeight, weightTotal,6), entity.getAmount(), 4));
+            entity.setAllocatedAmount(MathUtil.divide(MathUtil.multiply(allocationWeight, entity.getAmount(),6), weightTotal, 4));
         } else if (CostAllocationEnum.COST_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstOtherTaxFee())) {
-            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(productTotalCost,skuTotalCost,6), entity.getAmount(), 4));
+            entity.setAllocatedAmount(MathUtil.divide(MathUtil.multiply(productTotalCost,entity.getAmount(),6), skuTotalCost, 4));
         }
         return entity;
     }
@@ -1141,9 +1141,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         //头程分摊金额
         if (CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstTariffFee())) {
-            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(allocationWeight, weightTotal,6), entity.getAmount(), 4));
+            entity.setAllocatedAmount(MathUtil.divide(MathUtil.multiply(allocationWeight, entity.getAmount(),6), weightTotal, 4));
         } else if (CostAllocationEnum.COST_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstTariffFee())) {
-            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(productTotalCost,skuTotalCost,6), entity.getAmount(), 4));
+            entity.setAllocatedAmount(MathUtil.divide(MathUtil.multiply(productTotalCost,entity.getAmount(),6), skuTotalCost, 4));
         }
         return entity;
     }
@@ -1183,9 +1183,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         //头程分摊金额
         if (CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())) {
-            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(allocationWeight, weightTotal,6), entity.getAmount()).setScale(4, RoundingMode.DOWN));
+            entity.setAllocatedAmount(MathUtil.divide(MathUtil.multiply(allocationWeight, entity.getAmount(),6), weightTotal).setScale(4, RoundingMode.DOWN));
         } else if (CostAllocationEnum.COST_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())) {
-            entity.setAllocatedAmount(MathUtil.multiply(MathUtil.divide(productTotalCost,skuTotalCost,6), entity.getAmount()).setScale(4, RoundingMode.DOWN));
+            entity.setAllocatedAmount(MathUtil.divide(MathUtil.multiply(productTotalCost,entity.getAmount(),6), skuTotalCost).setScale(4, RoundingMode.DOWN));
         }
         return entity;
     }
