@@ -23,5 +23,12 @@
         <result column="source_type" property="sourceType" />
         <result column="calc_version" property="calcVersion" />
     </resultMap>
+    <select id="estimatedDelivery" resultType="com.erp.model.mrp.vo.EstimatedDeliveryVO">
+        select status, qty, plan_arrival_date, type, source_id, source_code, source_type
+        from estimated_delivery_detail
+        where replenishment_detail_id = #{params.id}
+          and source_type = #{params.sourceType}
+          and is_deleted = false
+    </select>
 
 </mapper>

@@ -8,8 +8,8 @@ import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
 
-import java.math.BigDecimal;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -56,11 +56,6 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param params 明细id
      */
     PagingVO<EstimatedPurchaseVO> estimatedPurchase(PagingDTO<EstimatedPurchaseDTO> params);
-    /**
-     * 库存总数
-     * @param params 明细id
-     */
-    Integer inventoryTotal(InventoryTotalDTO params);
     /**
      * 店铺库存明细
      * @param params 明细id

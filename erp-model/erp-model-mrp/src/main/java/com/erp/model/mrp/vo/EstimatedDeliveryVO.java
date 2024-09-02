@@ -13,6 +13,10 @@ public class EstimatedDeliveryVO {
      * 状态
      */
     private String status;
+    /**
+     * 状态名称
+     */
+    private String statusName;
 
     /**
      * 数量

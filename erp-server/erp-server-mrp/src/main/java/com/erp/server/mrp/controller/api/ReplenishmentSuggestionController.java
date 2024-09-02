@@ -21,16 +21,13 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * <p>
  * 补货建议主表 前端控制器
- * </p>
- *
  * @author liaohui
  * @since 2024-08-28
  */
@@ -112,16 +109,6 @@ public class ReplenishmentSuggestionController extends BaseController {
     public ApiResult<PagingVO<EstimatedPurchaseVO>> estimatedPurchase(@RequestBody @Validated PagingDTO<EstimatedPurchaseDTO> params) {
         PagingVO<EstimatedPurchaseVO> paging = replenishmentSuggestionService.estimatedPurchase(params);
         return success(paging);
-    }
-
-    /**
-     * 数量统计
-     * @param params 明细id
-     */
-    @PostMapping("/inventoryTotal")
-    public ApiResult<Integer> inventoryTotal(@RequestBody @Validated InventoryTotalDTO params) {
-        Integer inventoryTotal = replenishmentSuggestionService.inventoryTotal(params);
-        return success(inventoryTotal);
     }
 
     /**

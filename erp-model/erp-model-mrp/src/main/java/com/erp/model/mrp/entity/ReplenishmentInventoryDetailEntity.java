@@ -3,11 +3,13 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.mrp.handler.ObjectToListStringHandler;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -62,8 +64,8 @@ public class ReplenishmentInventoryDetailEntity extends BaseEntity<Replenishment
     /**
      * 店铺id的json
      */
-    @TableField("channel_id_json")
-    private String channelIdJson;
+    @TableField(value = "channel_id_json", typeHandler = ObjectToListStringHandler.class)
+    private List<String> channelIdJson;
 
     /**
      * 库存分配类型

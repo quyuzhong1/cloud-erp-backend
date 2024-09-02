@@ -1,13 +1,15 @@
 package com.erp.server.mrp.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.EstimatedDeliveryDTO;
 import com.erp.model.mrp.entity.EstimatedDeliveryDetailEntity;
 import com.erp.model.mrp.vo.EstimatedDeliveryVO;
 import com.erp.server.mrp.mapper.EstimatedDeliveryDetailMapper;
 import com.erp.server.mrp.service.EstimatedDeliveryDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 /**
@@ -23,6 +25,10 @@ public class EstimatedDeliveryDetailServiceImpl extends SuperServiceImpl<Estimat
 
     @Override
     public PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<EstimatedDeliveryDTO> params) {
-        return null;
+        Page<EstimatedDeliveryVO> page = baseMapper.estimatedDelivery(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
+        for (EstimatedDeliveryVO vo : page.getRecords()) {
+                vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));
+        }
+        return new PagingVO<>(page);
     }
 }

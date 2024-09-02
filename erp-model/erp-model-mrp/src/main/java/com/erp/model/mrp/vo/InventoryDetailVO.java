@@ -1,5 +1,8 @@
 package com.erp.model.mrp.vo;
 
+import com.common.business.annotation.Dict;
+import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
+import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -37,11 +40,15 @@ public class InventoryDetailVO {
     /**
      * 店铺id的json
      */
-    private String channelIdJson;
+    private List<String> channelIdJson;
+
+
+    private List<String> channelName;
 
     /**
      * 库存分配类型
      */
+    @Dict(enumClass = CfgRuleInventoryAllocateTypeEnum.class)
     private String inventoryAllocateType;
 
     /**
@@ -68,5 +75,19 @@ public class InventoryDetailVO {
          * 数量
          */
         private Integer qty;
+    }
+    
+    
+    public static InventoryDetailVO buildInventoryDetailVO(ReplenishmentInventoryDetailEntity entity) {
+        InventoryDetailVO detailVO = new InventoryDetailVO();
+        detailVO.setInventoryType(entity.getInventoryType());
+        detailVO.setInventoryAllocateType(entity.getInventoryAllocateType());
+        detailVO.setChannelType(entity.getChannelType());
+        detailVO.setChannelIdJson(entity.getChannelIdJson());
+        detailVO.setTotalQty(entity.getTotalQty());
+        detailVO.setWarehouseId(entity.getWarehouseId());
+        detailVO.setWarehouseType(entity.getWarehouseType());
+        detailVO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
+        return detailVO;
     }
 }

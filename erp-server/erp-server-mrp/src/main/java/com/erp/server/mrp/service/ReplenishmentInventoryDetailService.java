@@ -1,7 +1,9 @@
 package com.erp.server.mrp.service;
 
+import com.erp.model.mrp.dto.InventoryTotalDTO;
 import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.mrp.vo.InventoryDetailVO;
 
 import java.util.List;
 
@@ -19,4 +21,6 @@ public interface ReplenishmentInventoryDetailService extends SuperService<Replen
      * 根据补货建议明细id查询库存明细
      */
     List<ReplenishmentInventoryDetailEntity> listByReplenishmentDetailIds(List<String> ids);
+
+    InventoryDetailVO inventoryDetail(InventoryTotalDTO params);
 }

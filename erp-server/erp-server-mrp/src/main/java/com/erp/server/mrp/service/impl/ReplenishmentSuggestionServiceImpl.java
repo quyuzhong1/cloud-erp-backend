@@ -158,14 +158,14 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             Map<String, RecentSuggestionDetailEntity> recentSuggestionDetailMap = suggestionDetails.stream().filter(v -> v.getReplenishmentDetailId().equals(view.getDetailId()))
                     .collect(Collectors.toMap(RecentSuggestionDetailEntity::getType, v -> v, (o1, o2) -> o1));
             // 最近断货日期
-            RecentSuggestionDetailEntity recentOutOfStock = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_OUT_OF_STOCK.getName());
+            RecentSuggestionDetailEntity recentOutOfStock = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_OUT_OF_STOCK.name());
             view.setOutOfStockDay(new ReplenishmentSuggestionVO.DateVO(recentOutOfStock.getMarkType(), recentOutOfStock.getDate(), recentOutOfStock.getDays()));
             // 最近断货日期
-            RecentSuggestionDetailEntity recentSuggestShipping = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_SUGGESTION_SHIPPING.getName());
+            RecentSuggestionDetailEntity recentSuggestShipping = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_SUGGESTION_SHIPPING.name());
             view.setSuggestShippingDate(new ReplenishmentSuggestionVO.DateVO(recentSuggestShipping.getMarkType(), recentSuggestShipping.getDate(), recentSuggestShipping.getDays()));
             view.setSuggestShippingQty(recentSuggestShipping.getQty());
             // 最近断货日期
-            RecentSuggestionDetailEntity recentSuggestPurchase = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_SUGGESTION_PURCHASE.getName());
+            RecentSuggestionDetailEntity recentSuggestPurchase = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_SUGGESTION_PURCHASE.name());
             view.setSuggestPurchaseDate(new ReplenishmentSuggestionVO.DateVO(recentSuggestPurchase.getMarkType(), recentSuggestPurchase.getDate(), recentSuggestPurchase.getDays()));
             view.setSuggestPurchaseQty(recentSuggestPurchase.getQty());
         }
@@ -217,13 +217,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public Integer inventoryTotal(InventoryTotalDTO params) {
-        return null;
-    }
-
-    @Override
     public InventoryDetailVO inventoryDetail(InventoryTotalDTO params) {
-        return null;
+        return replenishmentInventoryDetailService.inventoryDetail(params);
     }
 
     @Override
