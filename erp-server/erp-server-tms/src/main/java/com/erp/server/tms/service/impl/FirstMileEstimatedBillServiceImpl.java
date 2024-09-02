@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -268,7 +269,10 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             detailEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             detailEntity.setExchangeRate(BigDecimal.ONE);
             detailEntity.setCostValue(dto.getCostValue());
-            tmsCostDetailService.save(detailEntity);
+            LambdaQueryWrapper<TmsCostDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper<TmsCostDetailEntity>()
+                    .eq(TmsCostDetailEntity::getCfgCostId, detailEntity.getCfgCostId())
+                    .eq(TmsCostDetailEntity::getMainId, detailEntity.getMainId());
+            tmsCostDetailService.saveOrUpdate(detailEntity, lambdaQueryWrapper);
         }
         if(! errorList.isEmpty()){
             try {
@@ -280,7 +284,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 return Boolean.FALSE;
             }
         }
-        return false;
+        return true;
     }
 
     @Override
