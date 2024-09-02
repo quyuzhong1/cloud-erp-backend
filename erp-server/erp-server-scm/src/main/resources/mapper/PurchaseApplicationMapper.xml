@@ -124,7 +124,6 @@
             </foreach>
         </if>
         pa.id desc , pad.id asc
-        limit 50000
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">

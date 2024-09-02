@@ -18,11 +18,9 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
@@ -34,6 +32,7 @@ import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.tms.convert.TmsFirstMileReconciliationConverter;
@@ -48,12 +47,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION;
 
 /**
  * <p>
@@ -81,7 +81,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Lazy
     @Resource
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -198,25 +199,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     }
 
     @Override
-    public void exportList(TmsFirstMileReconciliationDTO.ExportDTO param, HttpServletResponse response) {
-        List<TmsFirstMileReconciliationDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if (CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        String excelPath = "excel/tmsFirstMileReconciliation.xlsx";
-        String name = "头程对账单导出";
-        try {
-            new ExcelPrintUtils().patchExport(list,
-                    response,
-                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
-                    excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(TmsFirstMileReconciliationDTO.ExportDTO param) {
+        downloadTaskFeign.saveDownloadTask("头程对账单导出", EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -728,5 +712,17 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsFirstMileReconciliationEntity, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), tmsFirstMileReconciliationEntity.getId(), msg);
+    }
+
+    @Override
+    public PagingVO<TmsFirstMileReconciliationDTO.ListDTO> exportFirstMileReconciliation(PagingDTO<TmsFirstMileReconciliationDTO.ExportDTO> dto) {
+
+        Page<TmsFirstMileReconciliationDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollUtil.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
+        }
+        // 数据处理
+        fillList(page.getRecords());
+        return new PagingVO<>(page);
     }
 }

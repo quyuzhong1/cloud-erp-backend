@@ -171,6 +171,7 @@
     <select id="listExport" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$ListDTO">
         SELECT
         ra.id,
+        rad.id as detailId,
         ra.code,
         ra.type,
         ra.channel_id AS channelId,
@@ -183,29 +184,31 @@
         rad.requisition_qty AS requisitionQty,
         rad.approve_qty AS approveQty,
         rad.picking_qty AS pickingQty,
+        rad.virtual_frozen_qty AS virtualFrozenQty,
         ra.requisition_warehouse_id AS requisitionWarehouseId,
         ra.requisition_warehouse_name AS requisitionWarehouseName,
         rad.from_warehouse_id AS fromWarehouseId,
         rad.from_warehouse_name AS fromWarehouseName,
         rad.from_virtual_warehouse_id AS fromVirtualWarehouseId,
-        vw.name AS fromVirtualWarehouseName,
+        rad.from_virtual_warehouse_name AS fromVirtualWarehouseName,
         rad.to_warehouse_id AS toWarehouseId,
         rad.to_warehouse_name AS toWarehouseName,
         ra.create_user_name AS createUserName,
         ra.handle_user_name AS handleUserName,
         ra.handle_time AS handleTime,
         ra.create_time AS createTime,
-        op.code AS provideCode,
         rad.platform_sku as thirdWarehouseSku,
         rad.platform_sku as platformSku,
         rad.platform_spu as platformProductId,
         rad.platform_fn_sku as platformFnSku,
-        ra.fba_shipment_code as fbaShipmentCode
+        ra.fba_shipment_code as fbaShipmentCode,
+        (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
+        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = rad.sku_id) as packingQty,
+        pt.packing_status as packingStatus,
+        (select id from fba_shipment fs where fs.is_deleted = false and fs.code = ra.fba_shipment_code limit 1) as shipmentId
         FROM requisition_application ra
-        LEFT JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
-        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = ra.channel_id and opw.is_deleted = false
-        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
-        left join virtual_warehouse vw on rad.from_virtual_warehouse_id = vw.id and vw.is_deleted = false
+        INNER JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
+        LEFT JOIN packing_task pt on pt.source_id = ra.id and pt.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and ra.is_deleted = FALSE

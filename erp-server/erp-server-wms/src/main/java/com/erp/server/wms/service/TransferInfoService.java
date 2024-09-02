@@ -9,7 +9,6 @@ import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.*;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -145,14 +144,13 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      */
     Boolean cancelProcess(List<String> ids);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/5/15 11:26
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(TransferInfoDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(TransferInfoDTO.SearchParamDTO dto);
     /**
      * @description: 根据来源ids查询
      * @author Will
@@ -250,4 +248,6 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return List<TransferInfoEntity>
      */
     List<TransferInfoEntity> listBySourceId(String sourceId);
+
+    PagingVO<TransferInfoDTO.ListDTO> exportTransferInfo(PagingDTO<TransferInfoDTO.SearchParamDTO> dto);
 }

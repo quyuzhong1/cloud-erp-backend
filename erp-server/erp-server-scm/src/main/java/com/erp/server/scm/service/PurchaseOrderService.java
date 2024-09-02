@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
@@ -122,14 +123,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     PurchaseOrderDetailDTO.ImportDTO importFile(ExcelImportDTO.purchaseOrderExcelImportDTO excelImportDTO, HttpServletResponse response);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/3/16 11:58
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PurchaseOrderDTO.SearchParamDTO dto);
     /**
      * @description: 提交
      * @author Will
@@ -296,11 +296,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      void updateCreatePoType(List<String> purchaseOrderIds);
     /**
      * 导出网采合同
+     *
+     * @param id
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/7/13 15:09
-     * @param id
-     * @param response
-     * @return java.lang.Boolean
      **/
     Boolean exportPurchaseContract(String id, HttpServletResponse response);
     /**
@@ -462,4 +462,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(PurchaseOrderDTO.SrmSearchParamDTO dto);
 
+    PagingVO<BomExportExcelVO> exportPurchaseOrderContract(PagingDTO<String> dto);
+
+    PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
 }

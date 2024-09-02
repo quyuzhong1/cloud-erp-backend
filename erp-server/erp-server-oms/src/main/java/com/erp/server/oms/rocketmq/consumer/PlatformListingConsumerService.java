@@ -102,9 +102,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 dto.setPlatformSkuNo("");
             }
             ListingInfoEntity oldEntity = null;
-            if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
-                    || OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())) {
-                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo());
+            if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
+                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo(), dto.getAuthId());
             } else {
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(dto.getPlatform());

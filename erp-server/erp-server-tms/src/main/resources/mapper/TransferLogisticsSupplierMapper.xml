@@ -136,6 +136,10 @@
                 #{item}
             </foreach>
         </if>
+        <!--tab-->
+        <if test="params.tabFlag!=null and params.tabFlag!=''">
+            AND ls.auth_status = #{params.tabFlag}
+        </if>
         <!--物流商-->
         <if test="params.name !=null and params.name!='' ">
             AND ls.supplier_name ILIKE concat('%',#{params.name}::text,'%')
@@ -184,7 +188,6 @@
             </foreach>
         </if>
         ls.create_time DESC
-        limit 50000
     </select>
 
     <!--获取所有授权信息-->

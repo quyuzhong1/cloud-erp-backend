@@ -31,13 +31,11 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -60,6 +58,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -87,8 +86,6 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -96,6 +93,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_INFO;
 
 /**
  * 直接调拨单主表
@@ -184,6 +183,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -984,23 +985,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
     @Override
-    public Boolean exportExcel(TransferInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<TransferInfoDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        doOpHandleData(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/transferInfo.xlsx";
-        String name = "直接调拨单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(TransferInfoDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("直接调拨单导出", EXPORT_WMS_TRANSFER_INFO.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -1623,6 +1609,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     public List<TransferInfoEntity> listBySourceId(String sourceId) {
         return lambdaQuery().eq(TransferInfoEntity::getSourceId,sourceId).list();
+    }
+
+    @Override
+    public PagingVO<TransferInfoDTO.ListDTO> exportTransferInfo(PagingDTO<TransferInfoDTO.SearchParamDTO> dto) {
+        Page<TransferInfoDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            doOpHandleData(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

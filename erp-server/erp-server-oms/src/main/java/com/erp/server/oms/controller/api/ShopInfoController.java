@@ -463,14 +463,9 @@ public class ShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出店铺")
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:shop:export",
-            serviceClass = ShopInfoService.class,
-            keyIdName = "id")
-    @WebAdvanceQuery(handler = ShopQueryHandler.class)
-    public void listExport(@RequestBody ShopDTO.ExportDTO dto, HttpServletResponse response) {
-        shopInfoService.listExport(dto,response);
+    public ApiResult<Boolean> listExport(@RequestBody ShopDTO.ExportDTO dto) {
+        shopInfoService.listExport(dto);
+        return success(true);
     }
 
     /**

@@ -47,6 +47,7 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.VwAllocationDirectionEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -75,6 +76,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_WAREHOUSE_ALLOCATION;
 import static java.util.stream.Collectors.groupingBy;
 
 /**
@@ -116,6 +118,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     private InventoryService inventoryService;
 
 
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     private static final int size = 2000;
     private static final String splitStr = "_&_";
 
@@ -334,26 +338,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      * 导出
      *
      * @param dto
-     * @param response
      */
     @Override
-    public void export(VirtualWarehouseAllocationDTO.ExportDTO dto, HttpServletResponse response) {
-        List<VirtualWarehouseAllocationDTO.ListDTO> list = baseMapper.listExport(dto);
-        if (CollectionUtils.isNotEmpty(list)) {
-            //填充数据
-            setInfo(list);
-        }
-        StringBuffer stringBuffer = new StringBuffer();
-        String excelPath = "excel/VirtualWarehouseAllocation.xlsx";
-        String name = "分货单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        stringBuffer.append(date);
-        stringBuffer.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, stringBuffer.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void export(VirtualWarehouseAllocationDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("分货单导出", EXPORT_WMS_VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), dto);
     }
 
     /**
@@ -869,6 +857,16 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 .set(VirtualWarehouseAllocationEntity::getRemark, updateRemarkDTO.getRemark())
                 .eq(VirtualWarehouseAllocationEntity::getId, updateRemarkDTO.getId())
                 .update();
+    }
+
+    @Override
+    public PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
+        Page<VirtualWarehouseAllocationDTO.ListDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (CollectionUtils.isNotEmpty(page.getRecords())) {
+            //填充数据
+            setInfo(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     @Override

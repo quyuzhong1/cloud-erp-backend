@@ -1,6 +1,5 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -8,10 +7,9 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
+import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -153,13 +151,12 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      */
     Boolean updateDetailRemark(List<String> ids, String remark);
     /**
+     * @param dto
      * @description:
      * @author Will
      * @date: 2023/10/18 16:30
-     * @param dto
-     * @param response
      */
-    void export(PurchasePriceChangeDTO.PagingParamDTO dto, HttpServletResponse response);
+    void export(PurchasePriceChangeDTO.PagingParamDTO dto);
 
     /**
      * 修复历史数据
@@ -177,4 +174,6 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return List<TabListDTO>
      */
     List<PurchasePriceChangeDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    PagingVO<PurchasePriceChangeExportExcelDTO> exportPurchasePriceChange(PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto);
 }

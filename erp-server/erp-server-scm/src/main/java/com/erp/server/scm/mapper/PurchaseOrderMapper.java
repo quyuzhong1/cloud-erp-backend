@@ -65,6 +65,7 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return List<PurchaseOrderDTO.ListDTO>
      */
     List<PurchaseOrderDTO.ListDTO> listExportExcel(@Param("params") PurchaseOrderDTO.SearchParamDTO params);
+    Page<PurchaseOrderDTO.ListDTO> listExportExcel(@Param("page") Page<PurchaseOrderDTO.ListDTO> page, @Param("params") PurchaseOrderDTO.SearchParamDTO params);
     /**
      * @description: 查询列表数量
      * @author Will

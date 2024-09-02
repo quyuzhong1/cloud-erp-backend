@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -73,13 +72,11 @@ public class DmpPushTaskController extends BaseController {
      * @author Will
      * @date: 2023/10/13 15:34
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody DmpPushTaskDTO.ParamDTO dto, HttpServletResponse response) {
-        Boolean flag = dmpPushTaskService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody DmpPushTaskDTO.ParamDTO dto) {
+        Boolean flag = dmpPushTaskService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

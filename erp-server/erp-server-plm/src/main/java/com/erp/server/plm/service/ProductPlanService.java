@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProductPlanEntity;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
@@ -56,14 +57,13 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
     /**
+     * @param productPlanSearchDTO
+     * @return Boolean
      * @description: 导出规划
      * @author Will
      * @date: 2023/2/21 10:30
-     * @param productPlanSearchDTO
-     * @param response
-     * @return Boolean
      */
-    Boolean exportProductPlan(ProductPlanSearchDTO productPlanSearchDTO, HttpServletResponse response);
+    Boolean exportProductPlan(ProductPlanSearchDTO productPlanSearchDTO);
     /**
      * @description: 新增备注
      * @author Will
@@ -213,4 +213,6 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @return void
      */
     void updateBatchPlanStatus(List<String> productIds, Integer finishState, Integer two);
+
+    PagingVO<ProductPlanExcelDTO> productPlan(PagingDTO<ProductPlanSearchDTO> dto);
 }

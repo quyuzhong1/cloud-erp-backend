@@ -12,7 +12,6 @@ import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -138,13 +137,13 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
 
     /**
      * 导出
+     *
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param dto dto
-     * @param response response
-     * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto);
 
 
     /**
@@ -378,4 +377,6 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
     void poReturnAutoConfirm();
 
     PurchaseReturnStatisticsDTO.StatusDTO confirmStatusCountBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
+
+    PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> exportPurchaseReturnOrder(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto);
 }

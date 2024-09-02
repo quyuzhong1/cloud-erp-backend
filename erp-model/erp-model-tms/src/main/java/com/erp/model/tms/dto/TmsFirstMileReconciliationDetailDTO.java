@@ -163,7 +163,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 计费重带单位
          */
-        private BigDecimal billingWeightWithUnit;
+        private String billingWeightWithUnit;
 
         /**
          * 对账次数 默认1

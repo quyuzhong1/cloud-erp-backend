@@ -51,13 +51,12 @@ public class ReportFormsManageController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/6/12 18:27
      * @param dto
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购业务汇总表")
     @PostMapping(value = "/exportExcelPurchaseBusiness")
-    public ApiResult exportExcelPurchaseBusiness(@RequestBody PurchaseBusinessGatherTableDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = reportFormsManageService.exportExcelPurchaseBusiness(dto, response);
+    public ApiResult exportExcelPurchaseBusiness(@RequestBody PurchaseBusinessGatherTableDTO.PagingParamDTO dto) {
+        Boolean flag = reportFormsManageService.exportExcelPurchaseBusiness(dto);
         return flag == true ? success() : failure();
     }
 }

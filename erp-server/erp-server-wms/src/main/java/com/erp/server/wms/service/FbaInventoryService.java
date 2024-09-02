@@ -1,12 +1,10 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -48,13 +46,13 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
 
     /**
      * 导出excel
+     *
+     * @param param
+     * @return void
      * @Author Luo_WG
      * @Date 2023/11/8 17:54
-     * @param param
-     * @param response
-     * @return void
      **/
-    void exportList(FbaInventoryDTO.ExportDTO param, HttpServletResponse response);
+    void exportList(FbaInventoryDTO.ExportDTO param);
 
     /**
      * 查询预售名称
@@ -97,4 +95,9 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * @Date 2023-11-23
      **/
     List<FbaInventoryEntity> findList(List<String> sellerSkuList);
+
+    /**
+     * 导出
+     */
+    PagingVO<FbaInventoryDTO.ListDTO> exportFbaInventory(PagingDTO<FbaInventoryDTO.ExportDTO> dto);
 }

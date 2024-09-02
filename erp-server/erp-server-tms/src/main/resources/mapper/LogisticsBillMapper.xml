@@ -152,7 +152,6 @@
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
         <include refid="pagingSql"/>
-         limit 50000
     </select>
 
     <select id="getBaseByTrackNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$BaseDTO">
@@ -442,7 +441,6 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        limit 50000
     </select>
     <select id="hasWarnPaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
         SELECT lb.id,

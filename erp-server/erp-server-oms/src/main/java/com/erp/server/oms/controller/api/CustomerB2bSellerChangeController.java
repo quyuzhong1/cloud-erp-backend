@@ -211,9 +211,8 @@ public class CustomerB2bSellerChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/export")
-    @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
-    public ApiResult export(@RequestBody @Validated CustomerB2bSellerChangeDTO.ParamDTO dto, HttpServletResponse response) {
-         customerB2bSellerChangeService.export(dto,response);
+    public ApiResult export(@RequestBody @Validated CustomerB2bSellerChangeDTO.ParamDTO dto) {
+         customerB2bSellerChangeService.export(dto);
         return success();
     }
 }

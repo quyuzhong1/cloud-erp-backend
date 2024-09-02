@@ -18,10 +18,8 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TransferInDTO;
@@ -38,6 +36,7 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferInMapper;
@@ -50,12 +49,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_IN;
 
 /**
  * <p>
@@ -95,7 +94,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public List<TransferInDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<TransferInDTO.TabListDTO> resultList = new ArrayList<>(4);
@@ -514,45 +514,13 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      * 导出数据
      *
      * @param dto
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-29 10:04
      */
     @Override
-    public Boolean exportExcel(TransferInDTO.ExportDTO dto, HttpServletResponse response) {
-        //获取导出数据
-        List<TransferInDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        List<String> skuIdList = list.stream().map(TransferInDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
-        for (TransferInDTO.PagingViewDTO item : list) {
-            ApproveStatusEnum approveStatus = item.getApproveStatus();
-            item.setApproveStatusName(approveStatus.getName());
-            TransferDirectionEnum transferDirection = item.getTransferDirection();
-            item.setTransferDirectionName(transferDirection.getName());
-            Boolean invalidStatus = item.getInvalidStatus();
-            String invalidStatusName = invalidStatus ? "已作废" : "未作废";
-            item.setInvalidStatusName(invalidStatusName);
-            String skuId = item.getSkuId();
-            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
-            item.setProductName(sku.getSkuName());
-            item.setUnit(sku.getUnitName());
-        }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/transferIn.xlsx";
-        String name = "分布式调入订单列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("分布式调入列表导出出错 {}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(TransferInDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("分布式调入订单列表", EXPORT_WMS_TRANSFER_IN.getCode(), dto);
         return Boolean.TRUE;
 
     }
@@ -698,6 +666,31 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                 .in(TransferInEntity::getSourceId, sourceIds)
                 .eq(TransferInEntity::getInvalidStatus, Boolean.FALSE)
                 .list();
+    }
+
+    @Override
+    public PagingVO<TransferInDTO.PagingViewDTO> exportTransferIn(PagingDTO<TransferInDTO.ExportDTO> dto) {
+        //获取导出数据
+        Page<TransferInDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        List<String> skuIdList = page.getRecords().stream().map(TransferInDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        for (TransferInDTO.PagingViewDTO item : page.getRecords()) {
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            TransferDirectionEnum transferDirection = item.getTransferDirection();
+            item.setTransferDirectionName(transferDirection.getName());
+            Boolean invalidStatus = item.getInvalidStatus();
+            String invalidStatusName = invalidStatus ? "已作废" : "未作废";
+            item.setInvalidStatusName(invalidStatusName);
+            String skuId = item.getSkuId();
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
+            item.setProductName(sku.getSkuName());
+            item.setUnit(sku.getUnitName());
+        }
+        return new PagingVO<>(page);
     }
 
     @Transactional(rollbackFor = Exception.class)

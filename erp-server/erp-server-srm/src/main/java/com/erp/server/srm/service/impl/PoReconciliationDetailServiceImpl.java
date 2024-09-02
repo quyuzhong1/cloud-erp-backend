@@ -13,6 +13,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
 import com.erp.server.srm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -23,10 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_DETAIL;
 
 /**
  * <p>
@@ -50,6 +54,8 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
 
     @Autowired
     private CommonService commonService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
     * 修改
@@ -101,7 +107,8 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
         //默认查询当前登录人的绑定的供应商数据
         SupplierEntity supplierEntity = commonService.getSupplierEntity();
         dto.setSupplierId(supplierEntity.getId());
-        poReconciliationDetailScmService.exportList(dto,response);
+//        downloadTaskFeign.saveDownloadTask("对账明细导出", EXPORT_SRM_PO_RECONCILIATION_DETAIL.getCode(), dto);
+        poReconciliationDetailScmService.exportList(dto, response);
     }
 
     /**

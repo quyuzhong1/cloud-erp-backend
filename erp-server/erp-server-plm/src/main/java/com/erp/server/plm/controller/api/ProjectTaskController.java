@@ -107,15 +107,14 @@ public class ProjectTaskController extends BaseController {
      * 导出任务【plm1.3】
      *
      * @param dto
-     * @param response
      * @return void
      * @author yl
      * @date 2023-06-25 11:55
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出任务")
     @PostMapping("/exportTask")
-    public ApiResult exportTask(@RequestBody @Validated TaskPagingDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result =taskService.exportTask(dto,response);
+    public ApiResult exportTask(@RequestBody @Validated TaskPagingDTO.ExportDTO dto) {
+        Boolean result =taskService.exportTask(dto);
         return result ? success() : failure();
 
     }

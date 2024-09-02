@@ -1,4 +1,5 @@
 package com.erp.server.tms.mapper;
+
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -49,6 +50,7 @@ public interface TransferLogisticsSupplierMapper extends BaseMapper<TransferLogi
      * @return java.util.List<com.erp.model.tms.dto.TransferLogisticsSupplierDTO.PagingViewDTO>
      **/
     List<TransferLogisticsSupplierDTO.PagingViewDTO> listExport(@Param("params") TransferLogisticsSupplierDTO.ExportDTO dto);
+    Page<TransferLogisticsSupplierDTO.PagingViewDTO> listExport(@Param("page") Page<TransferLogisticsSupplierDTO.PagingViewDTO> page, @Param("params") TransferLogisticsSupplierDTO.ExportDTO dto);
 
 
     /**

@@ -47,6 +47,7 @@ public interface OtherOutstockMapper extends BaseMapper<OtherOutstockEntity> {
      * @return List<ListDTO>
      */
     List<OtherOutstockDTO.ListDTO> listExportExcel(@Param("params") OtherOutstockDTO.SearchParamDTO params);
+    Page<OtherOutstockDTO.ListDTO> listExportExcel(@Param("page") Page<OtherOutstockDTO.ListDTO> page, @Param("params") OtherOutstockDTO.SearchParamDTO params);
 
     /**
      * PDA:分页查询

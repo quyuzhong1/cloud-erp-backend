@@ -323,19 +323,12 @@ public class TransferInfoController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出直接调拨单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:paging",
-            tableAlias = "ti"
-    )
-    @WebAdvanceQuery(handler = TransferInfoQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody TransferInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = transferInfoService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody TransferInfoDTO.SearchParamDTO dto) {
+        Boolean flag = transferInfoService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

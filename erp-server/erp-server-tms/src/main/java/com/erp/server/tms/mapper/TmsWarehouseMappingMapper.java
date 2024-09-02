@@ -38,4 +38,5 @@ public interface TmsWarehouseMappingMapper extends BaseMapper<TmsWarehouseMappin
      * @return List<ListDTO>
      */
     List<TmsWarehouseMappingDTO.ListDTO> listExportExcel(@Param("params") TmsWarehouseMappingDTO.PagingParamDTO params);
+    Page<TmsWarehouseMappingDTO.ListDTO> listExportExcel(@Param("page") Page<TmsWarehouseMappingDTO.ListDTO> page, @Param("params") TmsWarehouseMappingDTO.PagingParamDTO params);
 }

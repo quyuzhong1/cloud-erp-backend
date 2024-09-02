@@ -3,6 +3,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.*;
 import com.common.business.service.SuperService;
@@ -134,17 +135,17 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     /**
      * 导出装箱任务
+     *
      * @param dto
-     * @param response
      */
-    void exportPacking(PackingTaskDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportPacking(PackingTaskDTO.PagingParamDTO dto);
 
     /**
      * 导出装箱清单
+     *
      * @param dto
-     * @param response
      */
-    void exportPackingDetail(PackingTaskDTO.ExportDTO dto, HttpServletResponse response);
+    void exportPackingDetail(PackingTaskDTO.ExportDTO dto);
 
     /**
      * 删除装箱任务
@@ -271,4 +272,8 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     void addPackingByRequisition(RequisitionApplicationEntity entity);
 
     void updateDetailQty(Map<String, Integer> qtyMap);
+
+    PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
+
+    PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(PagingDTO<PackingTaskDTO.PagingParamDTO> dto);
 }

@@ -157,7 +157,6 @@
             </foreach>
         </if>
         la.create_time DESC
-        limit 50000
     </select>
     <!--根据渠道和类型查找地址-->
     <select id="listByTypeAndChannelId" resultType="com.erp.model.tms.entity.LogisticsAddressEntity">

@@ -37,6 +37,7 @@ import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.model.dmp.entity.BiShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
@@ -94,6 +95,9 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
 
     @Resource
     private BiDictService biDictService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
@@ -1446,6 +1450,13 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         }
         return list.stream()
                 .collect(Collectors.toMap(BiOrderInfoEntity::getSourcePlatform, Function.identity()));
+    }
+
+    @Override
+    public PagingVO<DmpOrderInfoExcelDTO> exportBiOrderInfo(PagingDTO<DmpOrderInfoSearchDTO> dto) {
+        //查询所有数据
+        Page<DmpOrderInfoExcelDTO> excelList = baseMapper.getAllDmpOrderInfo(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        return new PagingVO<>(excelList);
     }
 
 

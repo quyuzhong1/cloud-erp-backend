@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -7,27 +8,31 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.ProjectReportFormsDTO;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.enums.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.ProjectReportFormsMapper;
 import com.erp.server.plm.service.ProjectReportFormsService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PROJECT_REPORT_PURCHASE_BUSINESS;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PROJECT_REPORT_TASK_DETAIL;
 
 @Service
 public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectReportFormsMapper, ProductInfoEntity> implements ProjectReportFormsService {
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<List<ProjectReportFormsDTO.PagingView>> projectReportFormsPaging(PagingDTO<ProjectReportFormsDTO.PagingParam> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -84,25 +89,38 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
     }
 
     @Override
-    public Boolean exportExcelProjectReportForms(ProjectReportFormsDTO.PagingParam dto, HttpServletResponse response) {
+    public Boolean exportExcelProjectReportForms(ProjectReportFormsDTO.PagingParam dto) {
+        downloadTaskFeign.saveDownloadTask("项目报表", EXPORT_PLM_PROJECT_REPORT_PURCHASE_BUSINESS.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean exportExcelTaskDetail(ProjectReportFormsDTO.TaskDetailParam dto) {
+        downloadTaskFeign.saveDownloadTask("项目任务明细", EXPORT_PLM_PROJECT_REPORT_TASK_DETAIL.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<ProjectReportFormsDTO.PagingView> exportProductPurchaseBusiness(PagingDTO<ProjectReportFormsDTO.PagingParam> dto) {
+
         List<Integer> statusList = new ArrayList();
-        dto.setApprovalStatusList(statusList);
-        if (ProjectReportStatusEnum.NOTAPPROVAL.getCode().equals(dto.getApprovalStatus())) {
+        dto.getParams().setApprovalStatusList(statusList);
+        if (ProjectReportStatusEnum.NOTAPPROVAL.getCode().equals(dto.getParams().getApprovalStatus())) {
             List<Integer> statusCodeList = Arrays.asList(ApprovalStatusEnum.values()).stream().filter(req -> !ApprovalStatusEnum.APPROVAL.getCode().equals(req.getCode())).map(ApprovalStatusEnum::getCode).collect(Collectors.toList());
             statusList.addAll(statusCodeList);
-            dto.setApprovalStatusList(statusList);
+            dto.getParams().setApprovalStatusList(statusList);
         }
-        if (ProjectReportStatusEnum.APPROVAL.getCode().equals(dto.getApprovalStatus())) {
+        if (ProjectReportStatusEnum.APPROVAL.getCode().equals(dto.getParams().getApprovalStatus())) {
             statusList.add(ApprovalStatusEnum.APPROVAL.getCode());
-            dto.setProjectStatusList(statusList);
+            dto.getParams().setProjectStatusList(statusList);
         }
-        if (ProjectReportStatusEnum.FINISHED.getCode().equals(dto.getApprovalStatus())) {
+        if (ProjectReportStatusEnum.FINISHED.getCode().equals(dto.getParams().getApprovalStatus())) {
             statusList.add(ProjectStateEnum.FINISH.getState());
-            dto.setProjectStatusList(statusList);
+            dto.getParams().setProjectStatusList(statusList);
         }
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<ProjectReportFormsDTO.PagingView> pagingViewList = baseMapper.projectReportFormsExportExcel(dto);
-        for (ProjectReportFormsDTO.PagingView pagingView : pagingViewList) {
+        Page<ProjectReportFormsDTO.PagingView> page = baseMapper.projectReportFormsExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        for (ProjectReportFormsDTO.PagingView pagingView : page.getRecords()) {
             FindUserDTO findUserDTO = userList.stream().filter(req -> req.getUserId().equals(pagingView.getProjectChargeId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(findUserDTO)) {
                 pagingView.setProjectChargeName(findUserDTO.getUserName());
@@ -125,35 +143,18 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
             pagingView.setApprovalProgress(BigDecimal.valueOf(approvalProgress));
             pagingView.setProjectProgress(BigDecimal.valueOf(projectProgress));
         }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/exportExcelProjectReportForms.xlsx";
-        String name = "项目报表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(pagingViewList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return Boolean.TRUE;
+        return new PagingVO<>(page);
     }
 
     @Override
-    public Boolean exportExcelTaskDetail(ProjectReportFormsDTO.TaskDetailParam dto, HttpServletResponse response) {
-        List<ProjectReportFormsDTO.TaskDetail> pagingViewList = baseMapper.taskDetailView(dto);
-        pagingViewList.forEach(req -> req.setTaskStateName(TaskStateEnum.getName(req.getTaskState())));
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/exportExcelTaskDetail.xlsx";
-        String name = "项目任务明细";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(pagingViewList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            e.printStackTrace();
+    public PagingVO<ProjectReportFormsDTO.TaskDetail> exportProductTaskDetail(PagingDTO<ProjectReportFormsDTO.TaskDetailParam> dto) {
+
+        Page<ProjectReportFormsDTO.TaskDetail> page = this.baseMapper.taskDetailView(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollUtil.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
         }
-        return Boolean.TRUE;
+        // 数据处理
+        page.getRecords().forEach(req -> req.setTaskStateName(TaskStateEnum.getName(req.getTaskState())));
+        return new PagingVO<>(page);
     }
 }

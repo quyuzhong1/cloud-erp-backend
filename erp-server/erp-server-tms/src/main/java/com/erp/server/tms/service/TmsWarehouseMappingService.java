@@ -81,12 +81,13 @@ public interface TmsWarehouseMappingService extends SuperService<TmsWarehouseMap
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2024/3/19 12:06
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(TmsWarehouseMappingDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(TmsWarehouseMappingDTO.PagingParamDTO dto);
+
+    PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto);
 }

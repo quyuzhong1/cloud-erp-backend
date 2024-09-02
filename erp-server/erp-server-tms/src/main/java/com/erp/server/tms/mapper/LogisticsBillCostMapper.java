@@ -48,6 +48,7 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @return List<ListDTO>
      */
     List<LogisticsBillCostDTO.ListDTO> listByExportExcel(@Param("params") LogisticsBillCostDTO.PagingParamDTO params);
+    Page<LogisticsBillCostDTO.ListDTO> listByExportExcel(@Param("page") Page<LogisticsBillCostDTO.ListDTO> page, @Param("params") LogisticsBillCostDTO.PagingParamDTO params);
 
     /**
      * 根据销售出库单 获取销售出库单自发货费用列表

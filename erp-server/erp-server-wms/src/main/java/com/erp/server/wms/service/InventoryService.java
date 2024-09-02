@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -12,7 +13,6 @@ import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -195,9 +195,8 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * 导出即时库存Excel
      *
      * @param param    业务参数
-     * @param response Excel文件流信息
      */
-    void exportExcel(InventoryDTO.ExportSearchParamDTO param, HttpServletResponse response);
+    void exportExcel(InventoryDTO.ExportSearchParamDTO param);
 
     /**
      * 库龄计算表分页列表
@@ -211,9 +210,8 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * 库龄计算表导出
      *
      * @param paramDTO 查询参数
-     * @param response 响应信息(Excel文件流)
      */
-    void exportInventoryAge(InventoryReportDTO.ExportInventoryAgeSearchParamDTO paramDTO, HttpServletResponse response);
+    void exportInventoryAge(InventoryReportDTO.ExportInventoryAgeSearchParamDTO paramDTO);
 
     /**
      * 根据仓库id查询库存信息
@@ -342,6 +340,12 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     List<InventoryDTO.InventoryViewQtyDTO> getUsableQtyBySkuIdsAndWarehouseIds(InventoryDTO.ParamDTO paramDTO);
 
     /**
+     * 导出数据分页
+     * @param dto 导出条件
+     */
+    PagingVO<InventoryDTO.PagingViewDTO> getInventoryPageData(PagingDTO<InventoryDTO.ExportSearchParamDTO> dto);
+
+    /**
      * 根据sku获取库存列表
      * @param dto
      * @return
@@ -356,4 +360,6 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return                      库存信息
      */
     InventoryEntity getInventory(String skuId, String warehouseId, String warehouseLocation, String inventoryStatus);
+
+    PagingVO<DynamicExcelDTO> exportWmsInventoryAge(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto);
 }

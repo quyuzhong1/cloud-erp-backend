@@ -89,14 +89,13 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/11/13 16:20
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto);
 
     /**
      * @description: 分页数据处理
@@ -186,4 +185,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param actualMap
      */
     void updateLogisticsBillCost(TmsFirstMileReconciliationEntity mainEntity, List<TmsFirstMileReconciliationDetailEntity> list, Map<String, TmsFirstMileReconciliationDetailEntity> actualMap);
+
+    PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
+
 }

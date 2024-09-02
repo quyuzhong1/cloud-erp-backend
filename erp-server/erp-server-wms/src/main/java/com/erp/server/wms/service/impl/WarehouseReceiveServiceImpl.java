@@ -23,7 +23,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -49,6 +48,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -67,7 +67,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -75,6 +74,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE_RECEIVE;
 
 /**
  * <p>
@@ -139,7 +140,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     private CfgSettingService cfgSettingService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 /*
     @Autowired
     private SyncKingdeePoReceiveService syncKingdeePoReceiveService;*/
@@ -932,41 +934,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     /**
      * 导出
      *
-     * @param dto      dto
-     * @param response response
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      **/
     @Override
-    public Boolean exportExcel(WarehouseReceiveDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<WarehouseReceiveExcelDTO> warehouseReceiveExcelDTOS = baseMapper.warehouseReceiveExportExcel(dto);
-        //获取sku的id集合
-        List<String> skuIdList = warehouseReceiveExcelDTOS.stream().map(WarehouseReceiveExcelDTO::getSkuId).collect(Collectors.toList());
-        //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        List<WarehouseReceiveExportExcelDTO> exportExcelDTOS = new ArrayList<>();
-        warehouseReceiveExcelDTOS.forEach(obj -> {
-
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
-            }
-            obj.setProductName(productDetailEntity.getName());
-            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
-            obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-            WarehouseReceiveExportExcelDTO warehouseReceiveExportExcelDTO = new WarehouseReceiveExportExcelDTO();
-            BeanMapperUtils.copy(obj, warehouseReceiveExportExcelDTO);
-            exportExcelDTOS.add(warehouseReceiveExportExcelDTO);
-        });
-
-
-        String fileName = "仓库收货单";
-        try {
-            ExcelUtil.export(fileName, "仓库收货单", exportExcelDTOS, WarehouseReceiveExportExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(WarehouseReceiveDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("仓库收货单", EXPORT_WMS_WAREHOUSE_RECEIVE.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -1945,6 +1920,31 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 });
             });
         }
+    }
+
+    @Override
+    public PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
+
+        Page<WarehouseReceiveExcelDTO> page = baseMapper.warehouseReceiveExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        //获取sku的id集合
+        List<String> skuIdList = page.getRecords().stream().map(WarehouseReceiveExcelDTO::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<WarehouseReceiveExportExcelDTO> exportExcelDTOS = new ArrayList<>();
+        page.getRecords().forEach(obj -> {
+
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+            obj.setProductName(productDetailEntity.getName());
+            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+            WarehouseReceiveExportExcelDTO warehouseReceiveExportExcelDTO = new WarehouseReceiveExportExcelDTO();
+            BeanMapperUtils.copy(obj, warehouseReceiveExportExcelDTO);
+            exportExcelDTOS.add(warehouseReceiveExportExcelDTO);
+        });
+        return new PagingVO<>(exportExcelDTOS, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
 }

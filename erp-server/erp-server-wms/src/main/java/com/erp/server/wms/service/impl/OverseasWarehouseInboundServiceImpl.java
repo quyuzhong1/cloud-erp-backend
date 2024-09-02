@@ -5,41 +5,36 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.PlatformInboundDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.ImlDictCityEntity;
+import com.erp.model.sys.entity.DictThirdCity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -57,13 +52,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OVERSEAS_WAREHOUSE_INBOUND;
 
 /**
  * <p>
@@ -123,6 +119,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Resource
     private PackingTaskService packingTaskService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -532,18 +530,19 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 // 区
                 commonDTO.setDictDistrictName(dictCityEntityMap.get(commonDTO.getDictDistrictId()).getName());
                 // iml
-                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)) {
+                if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)
+                || OmsPlatformEnum.OMS_ANTU.getCode().equalsIgnoreCase(dictPlatform)) {
                     // 查询关联
-                    Map<String, ImlDictCityEntity> imlCityEntityMap = sysDictService.mapAndCheckImlCityIds(
+                    Map<String, DictThirdCity> thirdCityEntityMap = sysDictService.mapAndCheckThirdCityIds(
                             commonDTO.getDictProvinceId(),
                             commonDTO.getDictCityId(),
-                            commonDTO.getDictDistrictId());
+                            commonDTO.getDictDistrictId(),dictPlatform );
                     // 省
-                    commonDTO.setPlatformProvinceId(imlCityEntityMap.get(commonDTO.getDictProvinceId()).getRegionId());
+                    commonDTO.setPlatformProvinceId(thirdCityEntityMap.get(commonDTO.getDictProvinceId()).getRegionId());
                     // 市
-                    commonDTO.setPlatformCityId(imlCityEntityMap.get(commonDTO.getDictCityId()).getRegionId());
+                    commonDTO.setPlatformCityId(thirdCityEntityMap.get(commonDTO.getDictCityId()).getRegionId());
                     // 区
-                    commonDTO.setPlatformDistrictId(imlCityEntityMap.get(commonDTO.getDictDistrictId()).getRegionId());
+                    commonDTO.setPlatformDistrictId(thirdCityEntityMap.get(commonDTO.getDictDistrictId()).getRegionId());
 
                 }
 
@@ -628,7 +627,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
         List<OverseasWarehouseInboundDetailEntity> updateDetailEntityList = new ArrayList<>();
-        if (StringUtils.isNotBlank(entity.getDictPlatform())){
+        if (overseasProviderWarehouseService.isApiWarehouse(entity.getToWarehouseId())){
             //有平台对接的入库单，判断入库状态
             if(!OverseasInstockStatusEnum.SIGNED.getCode().equals(entity.getInstockStatus())){
                 throw new ServiceException("平台状态未签收完成，不能手动完结");
@@ -760,9 +759,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO cancel(String id) {
         OverseasWarehouseInboundEntity mainEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
-        // 只有待提交的单据允许撤销
-        if (!OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())) {
-            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL);
+        boolean isApi = overseasProviderWarehouseService.isApiWarehouse(mainEntity.getToWarehouseId());
+        if(isApi){
+            // 只有待提交的单据允许撤销
+            if (!OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())) {
+                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL);
+            }
+        }else{
+            // 无API对接的三方仓入库单，可以在“待签收”状态下，操作取消入库
+            if (!OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())
+             && !OverseasInstockStatusEnum.TO_BE_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())) {
+                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL);
+            }
         }
         // 更新状态
         mainEntity.setInstockStatus(OverseasInstockStatusEnum.CANCELED.getCode());
@@ -785,7 +793,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         String msg = StrUtil.format("用户【{}】取消了单据编号为【{}】的海外入库单", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "取消操作");
 
-        if (null != providerEntity){
+        if (isApi){
             if (StringUtils.isBlank(mainEntity.getCode())) {
                 throw new ServiceException("数据异常：历史入库单未有单号");
             }
@@ -826,20 +834,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     }
 
     @Override
-    public Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response) {
-        List<OverseasWarehouseInboundDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        //数据处理
-        fillList(list);
-        List<ExportOverseasWarehouseInboundExcelDTO> resultList = BeanMapperUtils.copyList(ExportOverseasWarehouseInboundExcelDTO.class, list);
-        String fileName = "海外入库单数据";
-        try {
-            ExcelUtil.export(fileName, "海外入库单数据", resultList, ExportOverseasWarehouseInboundExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("海外入库单数据", EXPORT_WMS_OVERSEAS_WAREHOUSE_INBOUND.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -1170,6 +1166,29 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             return Collections.emptyList();
         }
         return baseMapper.countReceiveQtyByParams(dto);
+    }
+
+    @Override
+    public List<BaseDropDownDTO.CommonDTO> getLogisticByTransferWarehouseId(String transferWarehouseId) {
+        OverseasTransferWarehouseEntity transferEntity = overseasTransferWarehouseService.getById(transferWarehouseId);
+        if (null == transferEntity){
+            return Collections.emptyList();
+        }
+        String warehouseCode = transferEntity.getPlatformWarehouseCode();
+        List<LogisticsSaleChannelEntity> list = FeignQuery.create(LogisticsSaleChannelEntity.class).eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode,warehouseCode).list();
+        return list.stream()
+                .map(e-> new BaseDropDownDTO.CommonDTO(e.getCode(), e.getCnName()+"["+e.getCode()+"]"))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public PagingVO<OverseasWarehouseInboundDTO.ListDTO> exportOverseasWarehouseInbound(PagingDTO<OverseasWarehouseInboundDTO.ExportDTO> dto) {
+        Page<OverseasWarehouseInboundDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            //数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

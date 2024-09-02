@@ -90,7 +90,7 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @author Jim
      * @date: 2024-03-25
      */
-    void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO dto);
 
 
     /**
@@ -193,4 +193,7 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @param old
      */
     void updateReconciliationDetail(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity old);
+
+    PagingVO<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> exportFirstMileReconciliationDetail(PagingDTO<TmsFirstMileReconciliationDetailDTO.ExportDTO> dto);
+
 }

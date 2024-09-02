@@ -86,7 +86,6 @@
             </foreach>
         </if>
         pp.create_time DESC,ppd.id DESC
-        limit 50000
     </select>
 
     <select id="listTemp" resultType="com.erp.model.scm.entity.PurchasePriceChangeDetailEntity">

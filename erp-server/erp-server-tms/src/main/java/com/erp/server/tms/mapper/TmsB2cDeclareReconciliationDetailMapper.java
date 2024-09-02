@@ -39,6 +39,7 @@ public interface TmsB2cDeclareReconciliationDetailMapper extends BaseMapper<TmsB
      * @return
      */
     List<TmsB2cDeclareReconciliationDetailDTO.ListDTO> listExport(@Param("params") TmsB2cDeclareReconciliationDetailDTO.ExportDTO params);
+    Page<TmsB2cDeclareReconciliationDetailDTO.ListDTO> listExport(@Param("page") Page<TmsB2cDeclareReconciliationDetailDTO.ListDTO> page, @Param("params") TmsB2cDeclareReconciliationDetailDTO.ExportDTO params);
     /**
      * @description: 查询币别
      * @author Will

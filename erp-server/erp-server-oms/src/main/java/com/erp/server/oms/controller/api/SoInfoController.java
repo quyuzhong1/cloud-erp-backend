@@ -442,9 +442,8 @@ public class SoInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售订单")
     @PostMapping("/export")
-    @WebAdvanceQuery(handler = SoInfoQueryHandler.class)
-    public ApiResult exportWarehouse(@RequestBody @Valid SoInfoDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportExcel(dto, response);
+    public ApiResult exportWarehouse(@RequestBody @Valid SoInfoDTO.ExportDTO dto) {
+        Boolean result = soInfoService.exportExcel(dto);
         return result ? success() : failure();
 
     }

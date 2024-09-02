@@ -23,12 +23,10 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
@@ -44,6 +42,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -60,10 +59,12 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUBCONTRACT_CHANGE_ORDER;
+
 /**
  * <p>
  * 委外变更单 服务实现类
@@ -110,7 +111,8 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpMqFeign dmpMqFeign;
 
@@ -173,25 +175,8 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     }
 
     @Override
-    public void exportList(SubcontractChangeDTO.PagingParamDTO param, HttpServletResponse response) {
-        List<SubcontractChangeDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/subcontractChangeOrder.xlsx";
-        String name = "委外变更单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(SubcontractChangeDTO.PagingParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("委外变更单导出", EXPORT_SCM_SUBCONTRACT_CHANGE_ORDER.getCode(), param);
     }
 
     @Override
@@ -395,6 +380,16 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         return lambdaQuery().in(SubcontractChangeEntity::getSourceId,ids)
                 .eq(SubcontractChangeEntity::getInvalidStatus,Boolean.FALSE)
                 .list();
+    }
+
+    @Override
+    public PagingVO<SubcontractChangeDTO.ListDTO> exportSubcontractChangeOrder(PagingDTO<SubcontractChangeDTO.PagingParamDTO> dto) {
+        Page<SubcontractChangeDTO.ListDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if(!CollUtil.isEmpty(page.getRecords())) {
+            // 数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

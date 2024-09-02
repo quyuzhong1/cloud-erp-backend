@@ -41,6 +41,7 @@ public interface ProductPlanMapper  extends BaseMapper<ProductPlanEntity> {
      * @return List<ProductPlanExcelDTO>
      */
     List<ProductPlanExcelDTO> listExportExcel(@Param("params") ProductPlanSearchDTO params);
+    Page<ProductPlanExcelDTO> listExportExcel(@Param("page") Page<ProductPlanExcelDTO> page, @Param("params") ProductPlanSearchDTO params);
     /**
      * @description: 查询指标数据数量
      * @author Will

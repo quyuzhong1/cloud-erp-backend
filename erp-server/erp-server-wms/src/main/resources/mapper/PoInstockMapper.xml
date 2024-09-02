@@ -153,7 +153,6 @@
             </foreach>
         </if>
         psi.create_time desc
-        limit 50000
     </select>
 
     <select id="viewGeneratePurchaseReturnOrder"

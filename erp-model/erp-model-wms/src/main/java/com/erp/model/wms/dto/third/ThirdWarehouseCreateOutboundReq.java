@@ -23,6 +23,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     private String referenceNo;
 
     /**
+     * 平台订单号
+     */
+    private String platformCode;
+
+    /**
      * 配送方式
      */
     private String shippingMethod;
@@ -60,6 +65,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String phone;
 
         /**
+         * 收件人邮箱
+         */
+        private String email;
+
+        /**
          * 收件人国家
          */
         private String countryCode;
@@ -73,6 +83,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          * 城市
          */
         private String city;
+
+        /**
+         * 区域
+         */
+        private String district;
 
         /**
          * 邮编
@@ -93,6 +108,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          * 地址3
          */
         private String address3;
+
+        /**
+         * 收件人税号
+         */
+        private String taxNumber;
 
         @Override
         public String getAddressFirst() {

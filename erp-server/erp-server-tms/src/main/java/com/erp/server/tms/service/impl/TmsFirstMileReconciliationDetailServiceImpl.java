@@ -21,10 +21,8 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -39,6 +37,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -72,6 +71,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION_DETAIL;
 
 /**
  * <p>
@@ -118,6 +119,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     @Lazy
     @Resource
     private LogisticsBillService logisticsBillService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -234,26 +237,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO param, HttpServletResponse response) {
-        List<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> list = this.baseMapper.listExport(param);
-        if (CollUtil.isEmpty(list)) {
-            return;
-        }
-
-        // 数据填充处理
-        fillExportInfo(list);
-
-        // 导出数据
-        String excelPath = "excel/tmsFirstMileReconciliationDetail.xlsx";
-        String name = "头程对账单明细导出";
-        try {
-            new ExcelPrintUtils().patchExport(list,
-                    response,
-                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
-                    excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO param) {
+        downloadTaskFeign.saveDownloadTask("头程对账单明细导出", EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION_DETAIL.getCode(), param);
     }
 
     private void fillExportInfo(List<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> list) {
@@ -1908,5 +1893,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         //根据明细进行更新物流费用记录
         logisticsBillCostService.updateLogisticsBillCost(mainEntity, detailEntityList, actualMap);
+    }
+
+    @Override
+    public PagingVO<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> exportFirstMileReconciliationDetail(PagingDTO<TmsFirstMileReconciliationDetailDTO.ExportDTO> dto) {
+        Page<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollUtil.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
+        }
+        // 数据填充处理
+        fillExportInfo(page.getRecords());
+        return new PagingVO<>(page);
     }
 }

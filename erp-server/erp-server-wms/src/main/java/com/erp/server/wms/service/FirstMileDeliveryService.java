@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
@@ -6,12 +7,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import org.apache.ibatis.annotations.Param;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -153,14 +152,14 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     BatchResultDTO cancelProcess(String id);
 
     /**
-    * 导出Excel
-    * @author Luo_WG
-    * @date: 2023-10-30
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(FirstMileDeliveryDTO.PagingParamDTO dto, HttpServletResponse response);
+     * 导出Excel
+     *
+     * @param dto
+     * @return
+     * @author Luo_WG
+     * @date: 2023-10-30
+     */
+    void exportList(FirstMileDeliveryDTO.PagingParamDTO dto);
 
     /**
     * 审核通过回调方法
@@ -327,4 +326,9 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@Param("ids") List<String> ids);
+
+    /**
+     * 导出
+     */
+    PagingVO<FirstMileDeliveryDTO.ListDTO> exportFbaDelivery(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto);
 }

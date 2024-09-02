@@ -27,7 +27,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -348,19 +347,12 @@ public class TransferApplicationController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出调拨申请单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
-            menuCode = "wms:transferApplication:paging",
-            tableAlias = "ta"
-    )
-    @WebAdvanceQuery(handler = TransferApplicationQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody TransferApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = transferApplicationService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody TransferApplicationDTO.SearchParamDTO dto) {
+        Boolean flag = transferApplicationService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

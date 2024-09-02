@@ -3,7 +3,6 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProjectReportFormsDTO;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -31,6 +30,7 @@ public interface ProjectReportFormsMapper extends BaseMapper<ProductInfoEntity> 
      * @return java.util.List<com.erp.model.plm.dto.ProjectReportFormsDTO.PagingView>
      **/
     List<ProjectReportFormsDTO.PagingView> projectReportFormsExportExcel(@Param("params") ProjectReportFormsDTO.PagingParam param);
+    Page<ProjectReportFormsDTO.PagingView> projectReportFormsExportExcel(@Param("page") Page<ProjectReportFormsDTO.PagingView> page,  @Param("params") ProjectReportFormsDTO.PagingParam param);
 
     /**
      * 任务详情
@@ -40,4 +40,5 @@ public interface ProjectReportFormsMapper extends BaseMapper<ProductInfoEntity> 
      * @return java.util.List<com.erp.model.plm.dto.ProjectReportFormsDTO.TaskDetailParam>
      **/
     List<ProjectReportFormsDTO.TaskDetail> taskDetailView(@Param("params") ProjectReportFormsDTO.TaskDetailParam dto);
+    Page<ProjectReportFormsDTO.TaskDetail> taskDetailView(@Param("page") Page<ProjectReportFormsDTO.TaskDetail> page, @Param("params") ProjectReportFormsDTO.TaskDetailParam dto);
 }

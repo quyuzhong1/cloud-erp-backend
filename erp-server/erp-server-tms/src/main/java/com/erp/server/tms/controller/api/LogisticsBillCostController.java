@@ -184,19 +184,12 @@ public class LogisticsBillCostController extends BaseController {
      * @author Will
      * @date: 2023/11/13 16:19
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:logisticsBillCost:paging",
-            tableAlias = "lbc"
-    )
-    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = logisticsBillCostService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
+        Boolean flag = logisticsBillCostService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

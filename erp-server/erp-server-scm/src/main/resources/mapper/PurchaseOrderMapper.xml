@@ -278,7 +278,6 @@
             </foreach>
         </if>
         po.create_time desc
-        limit 50000
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">

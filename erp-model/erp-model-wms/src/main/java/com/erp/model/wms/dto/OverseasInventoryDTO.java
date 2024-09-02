@@ -45,6 +45,10 @@ public class OverseasInventoryDTO implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+        /**
+         * ids
+         */
+        private List<String> ids;
 
         /**
          * 平台仓库编码
@@ -85,6 +89,8 @@ public class OverseasInventoryDTO implements Serializable {
          * 平台仓库代号列表
          */
         private List<String> platformWarehouseCodeList;
+
+        private Boolean sortFlag = false;
     }
 
 

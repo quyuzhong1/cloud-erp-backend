@@ -2,19 +2,15 @@ package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
-import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -82,9 +78,9 @@ public class BiSalesModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出sku销售额")
     @PostMapping("/exportSkuSales")
-    public ApiResult exportSkuSales(@RequestBody @Valid SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
-        Boolean result = salesOrderService.exportSkuSalesExcel(params, response);
-        return result ? success() : failure();
+    public ApiResult<String> exportSkuSales(@RequestBody @Valid SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
+        salesOrderService.exportSkuSalesExcel(params,response);
+        return success();
 
     }
 

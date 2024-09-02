@@ -2013,14 +2013,9 @@ public class SoB2cDTO implements Serializable {
         private String soId;
 
         /**
-         * 是否来自第三方仓
-         */
-        private boolean fromThirdWarehouseFlag = false ;
-
-        /**
          * 是否记录日志
          */
-        private boolean addOperationLog = true ;
+        private boolean addOperationLog = false ;
 
     }
 

@@ -1,9 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * 任务工时记录
@@ -54,13 +51,12 @@ public class ProjectTaskTimeRecordController extends BaseController {
     /**
      * 导出工时统计
      * @param dto
-     * @param response
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出工时统计")
     @PostMapping(value = "/export")
-    public ApiResult exportTaskTime(@RequestBody ProjectTaskTimeRecordDTO.PageRecordDto dto, HttpServletResponse response) {
-        Boolean flag = projectTaskTimeRecordService.exportTaskTimeList(dto, response);
+    public ApiResult exportTaskTime(@RequestBody ProjectTaskTimeRecordDTO.PageRecordDto dto) {
+        Boolean flag = projectTaskTimeRecordService.exportTaskTimeList(dto);
         return flag == true ? success() : failure();
     }
 

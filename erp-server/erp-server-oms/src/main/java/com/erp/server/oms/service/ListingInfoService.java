@@ -32,13 +32,15 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
 
     /**
      * 根据平台sku 获取到对应的list
+     *
+     * @param platform
+     * @param platformSkuNo
+     * @param authId
+     * @return com.erp.model.oms.entity.ListingInfoEntity
      * @author yl
      * @date 2023-08-21 11:57
-     * @param platformSkuNo
-     * @param platform
-     * @return com.erp.model.oms.entity.ListingInfoEntity
      */
-    ListingInfoEntity getByPlatformSkuNo(String platform,String platformSkuNo);
+    ListingInfoEntity getByPlatformSkuNo(String platform, String platformSkuNo, String authId);
     List<ListingInfoEntity> listByParam(String type,String platform,List<String> skuNoList);
     /**
      * 根据类型获取到对应数据

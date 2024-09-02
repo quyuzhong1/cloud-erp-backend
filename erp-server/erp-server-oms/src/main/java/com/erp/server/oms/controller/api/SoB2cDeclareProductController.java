@@ -2,35 +2,29 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
-import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.server.oms.service.SoB2cService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.context.annotation.Lazy;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.server.oms.service.SoB2cDeclareProductService;
+import com.erp.server.oms.service.SoB2cService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.SoB2cDeclareProductService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
-
+import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -141,12 +135,11 @@ public class SoB2cDeclareProductController extends BaseController {
      * @author zdy
      * @date: 2024/5/11 10 10:45
      * @param dto
-     * @param response
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "申报信息-导出")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody @Validated SoB2cDeclareProductDTO.ListDTO dto, HttpServletResponse response) {
-        Boolean flag = soB2cDeclareProductService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody @Validated SoB2cDeclareProductDTO.ListDTO dto) {
+        Boolean flag = soB2cDeclareProductService.exportExcel(dto);
         return flag ? success() : failure();
     }
 }
