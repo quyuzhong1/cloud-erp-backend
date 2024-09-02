@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
@@ -10,20 +11,25 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.plm.enums.SaleMethodEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.PurchaseApplicationFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.plm.mapper.PilotApplicationMapper;
+import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -31,6 +37,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,6 +96,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private WmsTaskFeign warehouseFeign;
     @Resource
     private SysLogService sysLogService;
+    @Resource
+    private ProductDetailMapper productDetailMapper;
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -786,5 +797,40 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public List<PilotApplicationRefTaskDTO.SimpleListDTO> listRefTask(String id) {
         List<PilotApplicationRefTaskEntity> list = pilotApplicationRefTaskService.lambdaQuery().eq(PilotApplicationRefTaskEntity::getMainId, id).list();
         return Collections.emptyList();
+    }
+
+    @Override
+    public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
+        //已存在数据
+        skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode(), ProductDetailStatusEnum.WAIT_COMMIT.getCode(), ProductDetailStatusEnum.WAIT_CONFIRM.getCode()));
+        List<String> saleMethodList = skuParamDTO.getSaleMethodList();
+        List<String> saleMethodParams = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            for (String saleMethod : saleMethodList) {
+                saleMethodParams.add(SaleMethodEnum.getNameByCode(Integer.valueOf(saleMethod)));
+            }
+            skuParamDTO.setSaleMethod(StringUtils.join(saleMethodParams, ","));
+        }
+        List<ProductSearchDTO.SkuListDTO> list = productDetailMapper.listSkuBySkuNos(skuParamDTO);
+
+        List<String> supplierIdList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplier())).map(ProductSearchDTO.SkuListDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        //供应商名称
+        List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+
+        List<ProductSearchDTO.SkuListDTO> resultList = new ArrayList<>();
+        for (String skuNo : skuParamDTO.getSkuNoList()) {
+            ProductSearchDTO.SkuListDTO skuListDTO = list.stream().filter(obj -> obj.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuListDTO)) {
+                skuListDTO = new ProductSearchDTO.SkuListDTO();
+            }
+            //sku状态名称
+            skuListDTO.setStatusName(ProductDetailStatusEnum.getName(skuListDTO.getStatus()));
+            //供应商名称
+            ProductSearchDTO.SkuListDTO finalSkuListDTO = skuListDTO;
+            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(finalSkuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            skuListDTO.setMainSupplierName(supplierName);
+            resultList.add(skuListDTO);
+        }
+        return resultList;
     }
 }

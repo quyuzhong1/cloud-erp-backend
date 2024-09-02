@@ -122,6 +122,7 @@ public class PilotApplicationDTO implements Serializable {
 
         /**
          * 下单类型：试产/量产
+         * /api/plm/common/enumDropDown?type=PilotApplicationType
          */
         private String type;
 

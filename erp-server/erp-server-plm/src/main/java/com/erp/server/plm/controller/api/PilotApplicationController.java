@@ -6,8 +6,10 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
+import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.query.PilotApplicationQueryHandler;
+import com.erp.server.plm.service.ProductDetailService;
 import com.sdk.wangdian.sdk.impl.Api;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,6 +52,8 @@ public class PilotApplicationController extends BaseController {
     private PilotApplicationService pilotApplicationService;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private ProductDetailService productDetailService;
 
     /**
     * 新增
@@ -468,5 +472,19 @@ public class PilotApplicationController extends BaseController {
     @GetMapping("/listRefTask")
     public ApiResult<List<PilotApplicationRefTaskDTO.SimpleListDTO>> listRefTask(@RequestParam String id){
         return success(pilotApplicationService.listRefTask(id));
+    }
+
+    /**
+     * 快粘贴：根据sku编号查询
+     * @param
+     * @return
+     * @date: 2024-09-02
+     * @author: tanmujin
+     */
+    @PostMapping("/listSkuBySkuNos")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    public ApiResult<List<ProductSearchDTO.SkuListDTO>> listSkuBySkuNos(@RequestBody ProductSearchDTO.SkuParamDTO skuParamDTO) {
+        List<ProductSearchDTO.SkuListDTO> list = pilotApplicationService.listSkuBySkuNos(skuParamDTO);
+        return this.success(list);
     }
 }
