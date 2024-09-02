@@ -33,6 +33,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     IML(OmsPlatformEnum.OMS_IML.getCode(), OmsPlatformEnum.OMS_IML.getName(), "艾姆勒", "","",""),
     BAO_HONG("BaoHong", "保宏", "保宏", "","Y","N"),
     BaTong("BaTong", "巴通", "巴通", "","",""),
+    ANTU(OmsPlatformEnum.OMS_ANTU.getCode(), OmsPlatformEnum.OMS_ANTU.getName(), "安兔", "","",""),
 
 
     ;

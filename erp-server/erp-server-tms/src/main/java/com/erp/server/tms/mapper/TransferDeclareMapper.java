@@ -1,11 +1,10 @@
 package com.erp.server.tms.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -59,6 +58,7 @@ public interface TransferDeclareMapper extends BaseMapper<TransferDeclareEntity>
      * @return java.util.List<com.erp.model.tms.dto.TransferDeclareDTO.ListDTO>
      **/
     List<TransferDeclareDTO.ExportListDTO> listExportExcel(@Param("params")TransferDeclareDTO.PagingParamDTO dto);
+    Page<TransferDeclareDTO.ExportListDTO> listExportExcel(@Param("page") Page<TransferDeclareDTO.ExportListDTO> page, @Param("params")TransferDeclareDTO.PagingParamDTO dto);
 
 
     /**

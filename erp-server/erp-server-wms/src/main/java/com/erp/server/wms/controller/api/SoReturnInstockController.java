@@ -9,9 +9,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
@@ -322,19 +322,12 @@ public class SoReturnInstockController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      * @param dto dto
-     * @param response response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售退货入库单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:paging",
-            tableAlias = "sri"
-    )
-    @WebAdvanceQuery(handler = SoReturnInstockQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody SoReturnInstockDTO.PagingParam dto, HttpServletResponse response) {
-        Boolean flag = soReturnInstockService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody SoReturnInstockDTO.PagingParam dto) {
+        Boolean flag = soReturnInstockService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

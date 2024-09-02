@@ -614,7 +614,6 @@
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>
-        limit 50000
     </select>
 
     <select id="getProductRelevanceList" resultType="com.erp.model.plm.dto.CountDTO">
@@ -953,7 +952,6 @@
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
-        limit 50000
     </select>
 
     <select id="listAllTaskExport" resultType="com.erp.model.plm.dto.excel.TaskExportDTO$ProductTaskExcelDTO">
@@ -1091,7 +1089,6 @@
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
-        limit 50000
     </select>
 
     <select id="listMyProjectExport" resultType="com.erp.model.plm.dto.ProductShowDTO">
@@ -1245,7 +1242,6 @@
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
-        limit 50000
     </select>
 
     <select id="listMyProjectTaskExport"
@@ -1382,7 +1378,6 @@
             </otherwise>
         </choose>
         ORDER BY pt.create_time DESC
-        limit 50000
     </select>
 
 
@@ -1539,7 +1534,6 @@
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
-        limit 50000
     </select>
 
     <select id="collectTaskExport" resultType="com.erp.model.plm.dto.excel.TaskExportDTO$ProductTaskExcelDTO">

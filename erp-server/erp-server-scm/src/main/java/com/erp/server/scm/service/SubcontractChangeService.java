@@ -8,7 +8,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.entity.SubcontractChangeEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -130,14 +129,14 @@ public interface SubcontractChangeService extends SuperService<SubcontractChange
     void cancelProcess(List<String> ids);
 
     /**
-    * 导出Excel
-    * @author will
-    * @date: 2023-06-08
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(SubcontractChangeDTO.PagingParamDTO dto, HttpServletResponse response);
+     * 导出Excel
+     *
+     * @param dto
+     * @return
+     * @author will
+     * @date: 2023-06-08
+     */
+    void exportList(SubcontractChangeDTO.PagingParamDTO dto);
     /**
      * @description: 作废
      * @author Will
@@ -165,4 +164,6 @@ public interface SubcontractChangeService extends SuperService<SubcontractChange
      * @return List<SubcontractChangeEntity>
      */
     List<SubcontractChangeEntity> listBySourceIds(List<String> ids);
+
+    PagingVO<SubcontractChangeDTO.ListDTO> exportSubcontractChangeOrder(PagingDTO<SubcontractChangeDTO.PagingParamDTO> dto);
 }

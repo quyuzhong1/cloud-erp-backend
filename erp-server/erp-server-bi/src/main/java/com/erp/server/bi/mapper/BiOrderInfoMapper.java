@@ -41,6 +41,14 @@ public interface BiOrderInfoMapper extends BaseMapper<BiOrderInfoEntity> {
      * @date: 2022/12/15 10:33
      */
     List<DmpOrderInfoExcelDTO> getAllDmpOrderInfo(@Param("params") DmpOrderInfoSearchDTO params);
+    /**
+     * @param params
+     * @return List<DmpOrderInfoExcelDTO>
+     * @description: 查询所有的订单数据
+     * @author Will
+     * @date: 2022/12/15 10:33
+     */
+    Page<DmpOrderInfoExcelDTO> getAllDmpOrderInfo(@Param("page") Page<DmpOrderInfoExcelDTO> page, @Param("params") DmpOrderInfoSearchDTO params);
 
 
     /**

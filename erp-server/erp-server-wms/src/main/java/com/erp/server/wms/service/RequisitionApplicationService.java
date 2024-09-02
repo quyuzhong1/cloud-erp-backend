@@ -135,10 +135,9 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @Author Luo_WG
      * @Date 2023/11/17 10:55
      * @param dto
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
-    void exportExcel(RequisitionApplicationDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportExcel(RequisitionApplicationDTO.PagingParamDTO dto);
 
     /**
      * 删除
@@ -206,4 +205,11 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     BatchResultDTO generatePackingTask(RequisitionApplicationEntity entity);
 
     List<RequisitionApplicationEntity> listByCodes(List<String> codes);
+
+    /**
+     * 导出要货申请
+     * @param dto
+     * @return
+     */
+    PagingVO<RequisitionApplicationDTO.ListDTO> exportRequisitionApplication(PagingDTO<RequisitionApplicationDTO.PagingParamDTO> dto);
 }

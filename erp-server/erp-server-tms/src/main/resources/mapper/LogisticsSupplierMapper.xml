@@ -82,9 +82,9 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
-          <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
-              and ${params.sqlMap.detail}
-          </if>
+        <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+            and ${params.sqlMap.detail}
+        </if>
 <!--        <if test="params.name !=null and params.name!='' ">-->
 <!--            AND ls.supplier_name ILIKE concat('%',#{params.name}::text,'%')-->
 <!--        </if>-->
@@ -166,37 +166,11 @@
                 </foreach>
             </when>
             <otherwise>
-                <if test="params.name !=null and params.name!='' ">
-                    AND ls.supplier_name ILIKE concat('%',#{params.name}::text,'%')
+                <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+                    and ${params.sqlMap.default}
                 </if>
-                <if test="params.type !=null and params.type!='' ">
-                    AND ls.type =#{params.type}
-                </if>
-                <!--授权状态-->
-                <if test="params.authStatusList!=null and params.authStatusList.size>0">
-                    AND ls.auth_status IN
-                    <foreach collection="params.authStatusList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--启用状态-->
-                <if test="params.disabledList!=null and params.disabledList.size>0">
-                    AND ls.disabled IN
-                    <foreach collection="params.disabledList" item="item" open="(" separator="," close=")">
-                        #{item}
-                    </foreach>
-                </if>
-                <!--创建时间-->
-                <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND ls.create_time >= #{params.createTimeList[0]} and
-                    (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > ls.create_time
-                </if>
-                <!--更新时间-->
-                <if test="params.updateTimeList !=null and params.updateTimeList.size>0">
-                    AND ls.update_time >= #{params.updateTimeList[0]} and
-                    (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > ls.update_time
+                <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+                    and ${params.sqlMap.detail}
                 </if>
             </otherwise>
         </choose>
@@ -211,7 +185,6 @@
             </foreach>
         </if>
         ls.create_time DESC
-        limit 50000
     </select>
     <select id="getLogisticsSupplierAuthById" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$AuthDTO">
         SELECT

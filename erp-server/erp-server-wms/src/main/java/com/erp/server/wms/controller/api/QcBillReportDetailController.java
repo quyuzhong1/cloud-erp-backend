@@ -55,13 +55,12 @@ public class QcBillReportDetailController extends BaseController {
      *
      * 质检列表导出质检报告
      * @param dto
-     * @param response
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "质检列表导出质检报告")
     @PostMapping("/exportReport")
-    public ApiResult exportReport(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        qcReportDetailService.exportReportByMainId(dto.getId(), response);
+    public ApiResult exportReport(@RequestBody @Valid BaseIdDTO dto) {
+        qcReportDetailService.exportReportByMainId(dto);
         return success();
     }
 

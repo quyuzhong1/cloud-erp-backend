@@ -20,12 +20,10 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
@@ -42,6 +40,7 @@ import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -63,7 +62,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -71,6 +69,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_PLATFORM_SKU;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_WAREHOUSE_SKU;
 
 /**
  * <p>
@@ -110,6 +111,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Resource
     private SkuMappingExtendService skuMappingExtendService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -260,37 +263,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      * 导出sku 对照表
      *
      * @param dto
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-30 9:35
      */
     @Override
-    public Boolean exportPlatformSku(SkuMappingDTO.ExportDTO dto, HttpServletResponse response) {
-        String tabFlag = dto.getTabFlag();
-        Boolean matchResult = null;
-        if (OmsConstant.ALREADY.equals(tabFlag)) {
-            matchResult = Boolean.TRUE;
-        }
-        if (OmsConstant.NOT.equals(tabFlag)) {
-            matchResult = Boolean.FALSE;
-        }
-        dto.setType(RuleTypeEnum.PLATFORM.getCode());
-        List<SkuMappingDTO.PagingViewDTO> list = baseMapper.listExport(dto, matchResult);
-
-        fillDb(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/PlatformSkuMapping.xlsx";
-        String name = "sku对照列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("sku对照表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportPlatformSku(SkuMappingDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("sku对照列表", EXPORT_OMS_PLATFORM_SKU.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -553,40 +532,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      * 导出库存sku 对照表
      *
      * @param dto
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-08-21 10:22
      */
     @Override
-    public Boolean exportWarehouseSku(SkuMappingDTO.ExportWarehouseSkuDTO dto, HttpServletResponse response) {
-        String tabFlag = dto.getTabFlag();
-        Boolean matchResult = null;
-        if (OmsConstant.ALREADY.equals(tabFlag)) {
-            matchResult = Boolean.TRUE;
-        }
-        if (OmsConstant.NOT.equals(tabFlag)) {
-            matchResult = Boolean.FALSE;
-        }
-        dto.setType(RuleTypeEnum.WAREHOUSE.getCode());
-        List<SkuMappingDTO.WarehousePagingViewDTO> list = baseMapper.listWarehouseExport(dto, matchResult);
-
-        fillWarehouseDb(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/WarehouseSkuMapping.xlsx";
-        String name = "sku对照列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("sku对照表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportWarehouseSku(SkuMappingDTO.ExportWarehouseSkuDTO dto) {
+        downloadTaskFeign.saveDownloadTask("sku对照列表", EXPORT_OMS_WAREHOUSE_SKU.getCode(), dto);
         return Boolean.TRUE;
-
-
     }
 
     /**
@@ -997,7 +950,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
-            item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
+            item.setMatchResultStr(Boolean.TRUE.equals(matchResult) ? "已匹配" : "未匹配");
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(item.getProductSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
@@ -1337,5 +1290,38 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return new ArrayList<>();
         }
         return baseMapper.listByWarehouseAndPlatformSku(warehouseId,platformSkuNoList);
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(PagingDTO<SkuMappingDTO.ExportDTO> dto) {
+        String tabFlag = dto.getParams().getTabFlag();
+        Boolean matchResult = null;
+        if (OmsConstant.ALREADY.equals(tabFlag)) {
+            matchResult = Boolean.TRUE;
+        }
+        if (OmsConstant.NOT.equals(tabFlag)) {
+            matchResult = Boolean.FALSE;
+        }
+        dto.getParams().setType(RuleTypeEnum.PLATFORM.getCode());
+        Page<SkuMappingDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), matchResult);
+
+        fillDb(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
+        String tabFlag =  dto.getParams().getTabFlag();
+        Boolean matchResult = null;
+        if (OmsConstant.ALREADY.equals(tabFlag)) {
+            matchResult = Boolean.TRUE;
+        }
+        if (OmsConstant.NOT.equals(tabFlag)) {
+            matchResult = Boolean.FALSE;
+        }
+        dto.getParams().setType(RuleTypeEnum.WAREHOUSE.getCode());
+        Page<SkuMappingDTO.WarehousePagingViewDTO> page = baseMapper.listWarehouseExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), matchResult);
+        fillWarehouseDb(page.getRecords());
+        return new PagingVO<>(page);
     }
 }

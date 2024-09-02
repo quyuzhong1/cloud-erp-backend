@@ -10,10 +10,12 @@ import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import com.erp.server.dmp.service.DmpPullTaskHistoryService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 
 /**
@@ -49,13 +51,11 @@ public class DmpPullTaskHistoryController extends BaseController {
      * @author Will
      * @date: 2023/10/13 15:34
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
-    public ApiResult<String> exportExcel(@RequestBody DmpPullTaskDTO.ParamDTO dto, HttpServletResponse response) {
-        Boolean flag = dmpPullTaskHistoryService.exportExcel(dto, response);
+    public ApiResult<String> exportExcel(@RequestBody DmpPullTaskDTO.ParamDTO dto) {
+        Boolean flag = dmpPullTaskHistoryService.exportExcel(dto);
         return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 

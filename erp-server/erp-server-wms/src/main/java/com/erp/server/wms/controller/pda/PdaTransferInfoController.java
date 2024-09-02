@@ -9,8 +9,8 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.wms.service.TransferInfoService;
@@ -20,7 +20,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -320,18 +319,12 @@ public class PdaTransferInfoController extends BaseController {
      * @author Luo_WG
      * @date: 2023/5/10 20:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出直接调拨单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaTransferInfo:paging",
-            tableAlias = "ti"
-    )
-    public ApiResult exportExcel(@RequestBody TransferInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = transferInfoService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody TransferInfoDTO.SearchParamDTO dto) {
+        Boolean flag = transferInfoService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

@@ -1,17 +1,15 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
-import com.erp.model.scm.entity.SalesDemandEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -139,13 +137,13 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     
     /**
      * 采购价目表导出
+     *
+     * @param dto
+     * @return void
      * @author yl
      * @date 2023-03-27 17:55
-     * @param dto
-     * @param response
-     * @return void
      */
-    void exportPurchasePrice(PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportPurchasePrice(PurchasePriceDTO.PagingParamDTO dto);
 
     /**
      * 删除供应商的时候后 看是否有关联 如果有就不能删除
@@ -225,4 +223,6 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @return List<TabListDTO>
      */
     List<PurchasePriceDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    PagingVO<PurchasePriceExportExcelDTO> exportPurchasePrice(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto);
 }

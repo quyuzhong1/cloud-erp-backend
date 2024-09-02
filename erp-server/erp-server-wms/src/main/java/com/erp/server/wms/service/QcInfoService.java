@@ -7,9 +7,9 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -54,13 +54,13 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
 
     /**
      * 导出
+     *
+     * @param dto
+     * @return void
      * @author yl
      * @date 2023-04-19 17:39
-     * @param dto
-     * @param response
-     * @return void
      */
-    void exportQcBill(QcInfoDTO.ExportDTO dto, HttpServletResponse response);
+    void exportQcBill(QcInfoDTO.ExportDTO dto);
 
     /**
      * 完成质检
@@ -271,10 +271,10 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
 
     /**
      * 导出质检日报Excel
+     *
      * @param dto
-     * @param response
      */
-    void exportDailyExcel(QcInfoDTO.ExportDTO dto, HttpServletResponse response);
+    void exportDailyExcel(QcInfoDTO.ExportDTO dto);
 
     /**
      * 获取质检用户
@@ -306,4 +306,11 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return Integer
      */
     Integer countTotalNotQc(QcEffectivenessDTO.CountQcParamDTO qcParamDTO);
+
+    /**
+     * 导出
+     */
+    PagingVO<QcInfoDTO.QcDailyReportDTO> exportDailyQcBill(PagingDTO<QcInfoDTO.ExportDTO> dto);
+
+    PagingVO<QcBillExportExcelDTO> exportQcBill(PagingDTO<QcInfoDTO.ExportDTO> dto);
 }

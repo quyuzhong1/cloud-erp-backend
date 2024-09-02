@@ -1,7 +1,6 @@
 package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,11 +11,8 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
@@ -26,6 +22,7 @@ import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
 import com.erp.model.sys.enums.KingdeeAssistDataTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.sys.mapper.DictGlobalAreaMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeGlobalAreaService;
@@ -40,9 +37,10 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_GLOBAL_AREA;
 
 /**
  * <p>
@@ -66,6 +64,8 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @Override
@@ -374,22 +374,14 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
     }
 
     @Override
-    public void exportList(DictGlobalAreaDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<DictGlobalAreaDTO.PagingViewDTO> list = this.baseMapper.listExport(dto);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/globalArea.xlsx";
-        String name = "区域Excel导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(DictGlobalAreaDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("区域Excel导出", EXPORT_SYS_GLOBAL_AREA.getCode(), dto);
+    }
+
+    @Override
+    public PagingVO<DictGlobalAreaDTO.PagingViewDTO> exportGlobalArea(PagingDTO<DictGlobalAreaDTO.PagingParamDTO> dto) {
+        Page<DictGlobalAreaDTO.PagingViewDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        return new PagingVO<>(page);
     }
 
 

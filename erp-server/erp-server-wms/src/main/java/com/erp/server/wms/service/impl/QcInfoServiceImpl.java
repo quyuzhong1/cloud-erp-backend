@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -44,6 +43,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -85,6 +85,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_DAILY_QC_BILL;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_BILL;
 
 /**
  * <p>
@@ -191,7 +194,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Resource
     private QcInfoQueryHandler qcInfoQueryHandler;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * 保存 质检单
@@ -439,81 +443,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * 导出质检单信息
      *
      * @param dto
-     * @param response
      * @return void
      * @author yl
      * @date 2023-04-19 18:38
      */
     @Override
-    public void exportQcBill(QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
-        List<QcInfoDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
-        List<QcBillExportExcelDTO> resultList = new ArrayList<>(viewList.size());
-        if (CollectionUtils.isNotEmpty(viewList)) {
-            List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
-            List<String> supplierIdList = viewList.stream().map(QcInfoDTO.PagingViewDTO::getSupplierId).collect(Collectors.toList());
-            List<String> skuIdList = viewList.stream().map(QcInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-            List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
-            List<String> warehouseIdList = viewList.stream().map(QcInfoDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
-            List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
-            List<String> billIdList = viewList.stream().map(QcInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
-            List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
-            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-            for (QcInfoDTO.PagingViewDTO item : viewList) {
-                QcBillExportExcelDTO excelDTO = new QcBillExportExcelDTO();
-                BeanMapper.copy(item, excelDTO);
-                BigDecimal qcGoodRate = item.getQcGoodRate();
-                excelDTO.setQcGoodRate(qcGoodRate != null ? qcGoodRate.toString() + "%" : "");
-
-                BigDecimal qcBadRate = item.getQcBadRate();
-                excelDTO.setQcBadRate(qcBadRate != null ? qcBadRate.toString() + "%" : "");
-                QcBillStatusEnum billStatusEnum = item.getQcStatus();
-                excelDTO.setQcStatusName(billStatusEnum != null ? billStatusEnum.getName() : "");
-                QcTypeEnum qcTypeEnum = item.getQcType();
-                excelDTO.setQcTypeName(qcTypeEnum != null ? qcTypeEnum.getName() : "");
-                String handleModeDict = item.getHandleModeDict();
-                String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                excelDTO.setHandleModeName(handleModeName);
-                QcResultEnum qcResultEnum = item.getQcResult();
-                excelDTO.setQcResultName(qcResultEnum != null ? qcResultEnum.getName() : "");
-                String skuId = item.getSkuId();
-                String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
-                excelDTO.setSkuName(skuName);
-
-                String skuNo = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
-                excelDTO.setSkuNo(skuNo);
-
-                String supplierId = item.getSupplierId();
-                String supplierName = supplierList.stream().filter(s -> s.getId().equals(supplierId)).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                excelDTO.setSupplierName(supplierName);
-                String warehouseId = item.getWarehouseId();
-                String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(warehouseId)).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                excelDTO.setWarehouseName(warehouseName);
-                String remark = billRemarkList.stream().filter(r -> r.getMainId().equals(item.getId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getRemark())).orElse("");
-                excelDTO.setRemark(remark);
-                //是否内检
-                Boolean isInside = item.getIsInside();
-                excelDTO.setInsideType(isInside != null && isInside ? "内部检验" : "外部检验");
-                excelDTO.setIsInsideQcName(Objects.equals(item.getIsInsideQc(), Boolean.TRUE) ? "是" : "否");
-                String qcSampleResult = QcReCheckResultEnum.getByCode(item.getQcSampleResult());
-                excelDTO.setQcSampleResultName(StrUtils.isNotEmpty(qcSampleResult) ? qcSampleResult : "-");
-                resultList.add(excelDTO);
-            }
-
-        }
-        String fileName = "质检单数据";
-        try {
-            ExcelUtil.export(fileName, "质检单数据", resultList, QcBillExportExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
-
-
+    public void exportQcBill(QcInfoDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("质检单数据", EXPORT_WMS_QC_BILL.getCode(), dto);
     }
 
 
@@ -2091,13 +2027,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     }
 
     @Override
-    public void exportDailyExcel(QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
-        // 查询数据
-        List<QcInfoDTO.DailyListDTO> dataList = baseMapper.getDailyExport(dto);
-        // 填充数据
-        List<QcInfoDTO.QcDailyReportDTO> resultList = fillQcDailyRptData(dataList);
-        // 导出Excel
-        generateDailyRptExcel(resultList, response);
+    public void exportDailyExcel(QcInfoDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("质检日报数据", EXPORT_WMS_DAILY_QC_BILL.getCode(), dto);
     }
 
     /**
@@ -2526,6 +2457,82 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     public Integer countTotalNotQc(QcEffectivenessDTO.CountQcParamDTO qcParamDTO) {
         return baseMapper.countTotalNotQc(qcParamDTO);
+    }
+
+    @Override
+    public PagingVO<QcInfoDTO.QcDailyReportDTO> exportDailyQcBill(PagingDTO<QcInfoDTO.ExportDTO> dto) {
+
+        // 查询数据
+        Page<QcInfoDTO.DailyListDTO> page = baseMapper.getDailyExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        // 填充数据
+        List<QcInfoDTO.QcDailyReportDTO> resultList = fillQcDailyRptData(page.getRecords());
+        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public PagingVO<QcBillExportExcelDTO> exportQcBill(PagingDTO<QcInfoDTO.ExportDTO> dto) {
+
+        Page<QcInfoDTO.PagingViewDTO> page = baseMapper.getExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        List<QcBillExportExcelDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(page.getRecords())) {
+            List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
+            List<String> supplierIdList = page.getRecords().stream().map(QcInfoDTO.PagingViewDTO::getSupplierId).collect(Collectors.toList());
+            List<String> skuIdList = page.getRecords().stream().map(QcInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+            List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+            List<String> warehouseIdList = page.getRecords().stream().map(QcInfoDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
+            List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+            List<String> billIdList = page.getRecords().stream().map(QcInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
+            List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+            for (QcInfoDTO.PagingViewDTO item : page.getRecords()) {
+                QcBillExportExcelDTO excelDTO = new QcBillExportExcelDTO();
+                BeanMapper.copy(item, excelDTO);
+                BigDecimal qcGoodRate = item.getQcGoodRate();
+                excelDTO.setQcGoodRate(qcGoodRate != null ? qcGoodRate.toString() + "%" : "");
+
+                BigDecimal qcBadRate = item.getQcBadRate();
+                excelDTO.setQcBadRate(qcBadRate != null ? qcBadRate.toString() + "%" : "");
+                QcBillStatusEnum billStatusEnum = item.getQcStatus();
+                excelDTO.setQcStatusName(billStatusEnum != null ? billStatusEnum.getName() : "");
+                QcTypeEnum qcTypeEnum = item.getQcType();
+                excelDTO.setQcTypeName(qcTypeEnum != null ? qcTypeEnum.getName() : "");
+                String handleModeDict = item.getHandleModeDict();
+                String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                excelDTO.setHandleModeName(handleModeName);
+                QcResultEnum qcResultEnum = item.getQcResult();
+                excelDTO.setQcResultName(qcResultEnum != null ? qcResultEnum.getName() : "");
+                String skuId = item.getSkuId();
+                String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+                excelDTO.setSkuName(skuName);
+
+                String skuNo = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+                excelDTO.setSkuNo(skuNo);
+
+                String supplierId = item.getSupplierId();
+                String supplierName = supplierList.stream().filter(s -> s.getId().equals(supplierId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                excelDTO.setSupplierName(supplierName);
+                String warehouseId = item.getWarehouseId();
+                String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(warehouseId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                excelDTO.setWarehouseName(warehouseName);
+                String remark = billRemarkList.stream().filter(r -> r.getMainId().equals(item.getId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getRemark())).orElse("");
+                excelDTO.setRemark(remark);
+                //是否内检
+                Boolean isInside = item.getIsInside();
+                excelDTO.setInsideType(isInside != null && isInside ? "内部检验" : "外部检验");
+                excelDTO.setIsInsideQcName(Objects.equals(item.getIsInsideQc(), Boolean.TRUE) ? "是" : "否");
+                String qcSampleResult = QcReCheckResultEnum.getByCode(item.getQcSampleResult());
+                excelDTO.setQcSampleResultName(StrUtils.isNotEmpty(qcSampleResult) ? qcSampleResult : "-");
+                resultList.add(excelDTO);
+            }
+
+        }
+        return new PagingVO<>(resultList, (int)page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
     /**

@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: erp-file
+  profiles:
+    active: dev
+server:
+  port: 9140
+
+logging:
+  config: classpath:logback-spring.xml
+  level:
+    com.alibaba.nacos.client.naming: WARN
+    com.alibaba.nacos.client.config.impl: WARN

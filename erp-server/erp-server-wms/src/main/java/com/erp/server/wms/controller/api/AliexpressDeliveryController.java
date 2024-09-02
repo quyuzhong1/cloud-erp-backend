@@ -62,19 +62,12 @@ public class AliexpressDeliveryController extends BaseController {
      * @Author Luo_WG
      * @Date 2024/1/26 16:51
      * @param dto
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出速卖通发货单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:aliexpressDelivery:paging",
-            tableAlias = "ad"
-    )
-    @WebAdvanceQuery(handler = AliexpressDeliveryQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody @Validated AliexpressDeliveryDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = aliexpressDeliveryService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody @Validated AliexpressDeliveryDTO.SearchParamDTO dto) {
+        Boolean flag = aliexpressDeliveryService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

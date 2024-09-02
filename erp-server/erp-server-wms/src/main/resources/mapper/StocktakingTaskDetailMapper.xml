@@ -43,7 +43,6 @@
         ON st.id=std.main_id AND st.is_deleted=FALSE
         WHERE std.is_deleted=FALSE
         AND std.main_id=#{mainId}
-        limit 50000
     </select>
 
 </mapper>

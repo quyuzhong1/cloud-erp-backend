@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletResponse;
-
 /**
  * 供应商报表
  * @CreateTime: 2023-06-12  17:17
@@ -44,13 +42,13 @@ public class SupplierReportController extends BaseController {
     /**
      * 供应商报表导出EXCEL
      * @param dto
-     * @param response
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "供应商报表导出")
     @PostMapping(value = "/exportExcel")
-    public void exportExcel(@RequestBody SupplierReportDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
-        supplierReportService.exportList(dto, response);
+    public ApiResult<Boolean> exportExcel(@RequestBody SupplierReportDTO.ExportSearchParamDTO dto) {
+        supplierReportService.exportList(dto);
+        return success(true);
     }
 
 }

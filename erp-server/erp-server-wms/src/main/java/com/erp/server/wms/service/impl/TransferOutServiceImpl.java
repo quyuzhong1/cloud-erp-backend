@@ -21,14 +21,16 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.ExportTransferOutExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
@@ -42,6 +44,7 @@ import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.TransitOwnerEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -58,12 +61,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_OUT;
 
 /**
  * <p>
@@ -112,7 +116,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
         return lambdaQuery()
@@ -162,19 +167,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     }
 
     @Override
-    public void exportList(TransferOutDTO.ExportDTO param, HttpServletResponse response) {
-        List<TransferOutDTO.PagingViewDTO> list = this.baseMapper.exportList(param);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        filling(list);
-        List<ExportTransferOutExcelDTO> resultList = BeanMapperUtils.copyList(ExportTransferOutExcelDTO.class, list);
-        String fileName = "分布式调出单导出数据";
-        try {
-            ExcelUtil.exportAdapt(fileName, "分布式调出单数据", resultList, ExportTransferOutExcelDTO.class, response, null);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(TransferOutDTO.ExportDTO param) {
+        downloadTaskFeign.saveDownloadTask("分布式调出订单", EXPORT_WMS_TRANSFER_OUT.getCode(), param);
     }
 
     @Override
@@ -523,6 +517,16 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Override
     public List<TransferOutEntity> findByCodes(List<String> codes) {
         return lambdaQuery().in(TransferOutEntity::getCode, codes).list();
+    }
+
+    @Override
+    public PagingVO<TransferOutDTO.PagingViewDTO> exportTransferOut(PagingDTO<TransferOutDTO.ExportDTO> dto) {
+
+        Page<TransferOutDTO.PagingViewDTO> page = this.baseMapper.exportList(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if(!CollUtil.isEmpty(page.getRecords())) {
+            filling(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

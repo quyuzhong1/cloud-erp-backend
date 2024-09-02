@@ -14,7 +14,6 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -127,7 +126,7 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      *@author yl
      *@date 2023-11-16
      */
-    Boolean exportExcel(LogisticsBillDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(LogisticsBillDTO.PagingParamDTO dto);
 
     /**
      * 生成物流单
@@ -244,4 +243,7 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(String logisticsCode);
 
     ApiResult<String> updateLogisticWeight(LogisticsBillDTO.UpdateWeight dto);
+
+    PagingVO<LogisticsBillDTO.PagingVO> exportLogisticsBill(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto);
+
 }

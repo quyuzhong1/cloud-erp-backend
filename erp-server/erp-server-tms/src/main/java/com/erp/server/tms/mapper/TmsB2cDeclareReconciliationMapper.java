@@ -35,6 +35,7 @@ public interface TmsB2cDeclareReconciliationMapper extends BaseMapper<TmsB2cDecl
     * @return
     */
     List<TmsB2cDeclareReconciliationDTO.ListDTO> listExport(@Param("params") TmsB2cDeclareReconciliationDTO.ExportDTO params);
+    Page<TmsB2cDeclareReconciliationDTO.ListDTO> listExport(@Param("page") Page<TmsB2cDeclareReconciliationDTO.ListDTO> page, @Param("params") TmsB2cDeclareReconciliationDTO.ExportDTO params);
 
 
     /**

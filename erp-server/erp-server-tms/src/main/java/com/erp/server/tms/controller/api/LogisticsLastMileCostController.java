@@ -187,19 +187,12 @@ public class LogisticsLastMileCostController extends BaseController {
      * @author Will
      * @date: 2023/11/13 16:19
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "shop_charge_id",
-            menuCode = "tms:logisticsLastMileCost:paging",
-            tableAlias = "lbc"
-    )
-    @WebAdvanceQuery(handler = LogisticsLastMileCostQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = logisticsLastMileCostService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
+        Boolean flag = logisticsLastMileCostService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

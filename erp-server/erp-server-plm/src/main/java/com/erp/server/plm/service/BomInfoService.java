@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
+import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
@@ -59,7 +60,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     void updateState(String sourceId, Integer state);
 
-    void exportExcel(SearchPagingDTO dto, HttpServletResponse response);
+    void exportExcel(SearchPagingDTO dto);
 
     void approvalNoPass(AuditParamDTO dto);
 
@@ -103,4 +104,9 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
      */
     PagingVO<List<BomSkuPageDTO.ListDTO>> skuPaging(PagingDTO<BomSkuPageDTO.PagingParamDTO> dto);
 
+    /**
+     * bom导出数据
+     * @param dto 分页条件
+     */
+    PagingVO<BomExportExcelVO> exportBom(PagingDTO<SearchPagingDTO> dto);
 }

@@ -46,7 +46,6 @@
             ${params.permissionSql}
         </if>
         ORDER BY ci.create_time DESC
-        limit 50000
     </select>
     <select id="listApproveCount" resultType="com.erp.model.oms.dto.CustomerDTO$ApproveCountDTO">
          SELECT

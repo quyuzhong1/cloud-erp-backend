@@ -40,6 +40,7 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
 
 
     List<SoInfoDTO.PagingViewDTO> listExport(@Param("params") SoInfoDTO.ExportDTO dto);
+    Page<SoInfoDTO.PagingViewDTO> listExport(@Param("page") Page<SoInfoDTO.PagingViewDTO> page, @Param("params") SoInfoDTO.ExportDTO dto);
     /**
      * @description: 下推备货申请单数据显示
      * @author Will

@@ -1,14 +1,13 @@
 package com.erp.server.tms.mapper;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-import org.apache.ibatis.annotations.Mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.apache.ibatis.annotations.Param;
-
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -44,6 +43,7 @@ public interface TmsFirstMileReconciliationMapper extends BaseMapper<TmsFirstMil
     * @return
     */
     List<TmsFirstMileReconciliationDTO.ListDTO> listExport(@Param("params") TmsFirstMileReconciliationDTO.ExportDTO params);
+    Page<TmsFirstMileReconciliationDTO.ListDTO> listExport(@Param("page") Page<TmsFirstMileReconciliationDTO.ListDTO> page, @Param("params") TmsFirstMileReconciliationDTO.ExportDTO params);
 
 
     /**

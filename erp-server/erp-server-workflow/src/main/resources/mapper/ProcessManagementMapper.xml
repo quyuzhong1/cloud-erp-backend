@@ -162,7 +162,6 @@
             </foreach>
         </if>
         order by ptm.create_time desc
-        limit 50000
     </select>
     <select id="listProcessTaskByIds"
             resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">

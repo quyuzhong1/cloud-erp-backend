@@ -5,13 +5,13 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
+import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -87,14 +87,13 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
                            List<WarehouseReceiveDetailEntity> receiveDetailEntityList);
 
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/3/16 12:13
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(PurchaseChangeDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PurchaseChangeDTO.SearchParamDTO dto);
     /**
      * @description: 提交
      * @author Will
@@ -147,4 +146,6 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @return List<PurchaseChangeEntity>
      */
     List<PurchaseChangeEntity> listByPoIds(List<String> ids);
+
+    PagingVO<PurchaseChangeExportExcelDTO> exportPurchaseChange(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto);
 }

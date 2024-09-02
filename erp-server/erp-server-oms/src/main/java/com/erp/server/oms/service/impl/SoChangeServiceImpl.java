@@ -20,10 +20,8 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
@@ -38,6 +36,7 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -57,11 +56,11 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_CHANGE;
 
 /**
  * <p>
@@ -116,6 +115,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     /**
@@ -500,58 +502,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * @date 2023-05-24 17:47
      */
     @Override
-    public Boolean exportExcel(SoChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
-
-        List<SoChangeDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        List<String> skuIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
-        //客户id
-        List<String> customerIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
-        List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
-        for (SoChangeDTO.PagingViewDTO item : list) {
-            BillTypeEnum orderType = item.getOrderType();
-            item.setOrderTypeName(orderType.getName());
-            ApproveStatusEnum approveStatus = item.getApproveStatus();
-            item.setApproveStatusName(approveStatus.getName());
-            //作废状态
-            Boolean invalidStatus = item.getInvalidStatus();
-            String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
-            item.setInvalidStatusName(invalidStatusName);
-            String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setCustomerName(customerName);
-            String skuId = item.getSkuId();
-            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
-            if (sku != null) {
-                item.setProductName(sku.getSkuName());
-                item.setUnit(sku.getUnitName());
-            }
-            BigDecimal amount = item.getAmount();
-            String currencySymbol = item.getCurrencySymbol();
-            item.setAmountStr(currencySymbol + amount);
-
-            BigDecimal oldAmount = item.getOldAmount();
-            String oldCurrencySymbol = item.getOldCurrencySymbol();
-            item.setOldAmountStr(oldCurrencySymbol + oldAmount);
-        }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/SoChange.xlsx";
-        String name = "销售变更单列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("销售变更单列表导出出错 {}", e);
-            return Boolean.FALSE;
-        }
-        return Boolean.TRUE;
-
-
+    public Boolean exportExcel(SoChangeDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("销售变更单列表",EXPORT_OMS_SO_CHANGE.getCode(), dto);
+        return true;
     }
 
 
@@ -799,6 +752,59 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 .set(StringUtils.isNotBlank(syncKingdeeId), SoChangeEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
 
+    }
+
+    @Override
+    public PagingVO<SoChangeDTO.PagingViewDTO> exportSoChange(PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
+        Page<SoChangeDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>(page);
+        }
+        List<String> skuIdList = page.getRecords().stream().map(SoChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        //客户id
+        List<String> customerIdList = page.getRecords().stream().map(SoChangeDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
+        List<String> ids = page.getRecords().stream().map(SoChangeDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        ids.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_CHANGE.getCode(), obj)));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        Integer code = listApiResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(new ApiResult<>(ApiError.Default.code,listApiResult.getMsg()));
+        }
+        for (SoChangeDTO.PagingViewDTO item : page.getRecords()) {
+            BillTypeEnum orderType = item.getOrderType();
+            item.setOrderTypeName(orderType.getName());
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            //作废状态
+            Boolean invalidStatus = item.getInvalidStatus();
+            String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
+            item.setInvalidStatusName(invalidStatusName);
+            String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setCustomerName(customerName);
+            String skuId = item.getSkuId();
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (sku != null) {
+                item.setProductName(sku.getSkuName());
+                item.setUnit(sku.getUnitName());
+            }
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
+            }
+            BigDecimal amount = item.getAmount();
+            String currencySymbol = item.getCurrencySymbol();
+            item.setAmountStr(currencySymbol + amount);
+
+            BigDecimal oldAmount = item.getOldAmount();
+            String oldCurrencySymbol = item.getOldCurrencySymbol();
+            item.setOldAmountStr(oldCurrencySymbol + oldAmount);
+        }
+        return new PagingVO<>(page);
     }
 
 

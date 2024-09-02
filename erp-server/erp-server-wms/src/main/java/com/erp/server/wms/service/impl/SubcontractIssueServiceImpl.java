@@ -19,12 +19,10 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -50,6 +48,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -62,11 +61,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SUBCONTRACT_ISSUE;
+
 /**
  * <p>
  * 委外发料单 服务实现类
@@ -114,6 +116,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
     @Autowired
     private PoInstockService poInstockService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -224,24 +228,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     }
 
     @Override
-    public void exportList(SubcontractIssueDTO.PagingParamDTO param, HttpServletResponse response) {
-        List<SubcontractIssueDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/subcontractIssue.xlsx";
-        String name = "委外发料单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(SubcontractIssueDTO.PagingParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("委外发料单导出", EXPORT_WMS_SUBCONTRACT_ISSUE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -585,6 +573,16 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                 .eq(SubcontractIssueEntity::getId, businessId)
                 .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractIssueEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
+    }
+
+    @Override
+    public PagingVO<SubcontractIssueDTO.ListDTO> exportSubcontractIssue(PagingDTO<SubcontractIssueDTO.PagingParamDTO> dto) {
+        Page<SubcontractIssueDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if(!CollUtil.isEmpty(page.getRecords())) {
+            // 数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     @Override

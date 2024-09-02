@@ -23,11 +23,9 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -46,6 +44,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -61,14 +60,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.rtfparserkit.rtf.Command.list;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_APPLICATION;
 
 /**
  * <p>
@@ -132,7 +131,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<TransferApplicationDTO.ListDTO> paging(PagingDTO<TransferApplicationDTO.SearchParamDTO> pagingDTO) {
         TransferApplicationDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -546,23 +546,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
-    public Boolean exportExcel(TransferApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<TransferApplicationDTO.ListDTO> list = baseMapper.listExportExcel(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        doOpHandleData(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/transferApplication.xlsx";
-        String name = "调拨申请单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(TransferApplicationDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("调拨申请单导出", EXPORT_WMS_TRANSFER_APPLICATION.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -861,6 +846,15 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             machineInfoService.add(addDTO);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<TransferApplicationDTO.ListDTO> exportTransferApplication(PagingDTO<TransferApplicationDTO.SearchParamDTO> dto) {
+        Page<TransferApplicationDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            doOpHandleData(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

@@ -5,7 +5,6 @@ import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
-import com.erp.model.wms.dto.TransferInfoDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -57,14 +56,13 @@ public interface ShippingTemplateService extends SuperService<ShippingTemplateEn
      */
     PagingVO<ShippingTemplateDTO.ListDTO> paging(PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/11/6 14:09
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(ShippingTemplateDTO.ExportExcelParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(ShippingTemplateDTO.ExportExcelParamDTO dto);
     /**
      * @description: 试算
      * @author Will
@@ -165,4 +163,6 @@ public interface ShippingTemplateService extends SuperService<ShippingTemplateEn
      * 根据渠道ID获取模板
      */
     List<ShippingTemplateEntity> getByChannelIds(List<String> channelIds);
+
+    PagingVO<ShippingTemplateDTO.ListDTO> exportShippingTemplate(PagingDTO<ShippingTemplateDTO.ExportExcelParamDTO> dto);
 }

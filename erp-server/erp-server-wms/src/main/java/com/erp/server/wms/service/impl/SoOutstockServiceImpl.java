@@ -57,6 +57,7 @@ import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
+import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -71,6 +72,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -110,7 +112,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -121,6 +122,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
+
+import static com.rtfparserkit.rtf.Command.list;
+import static com.rtfparserkit.rtf.Command.v;
 
 /**
  * <p>
@@ -250,6 +256,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @Override
@@ -765,18 +773,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(entity)) {
             return;
         }
-
-        List<InOutStockDTO> members = new ArrayList<>();
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        List<InOutStockDTO> members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
         if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())){
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
-            List<PickingListsDTO.SourceView> pickingLists = pickingListsService.listBySourceIds(Collections.singletonList(entity.getSourceId()));
-            for (PickingListsDTO.SourceView detail : pickingLists) {
-                InOutStockDTO stockDTO = InOutStockDTO.getInOutStockDTO(entity, detail.getSourceDetailId(), detail.getSkuId(),detail.getSkuNo(),detail.getWarehouseLocation(),detail.getQty());
-                members.add(stockDTO);
-            }
         }else {
-            members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK_USABLE.getCode());
         }
         for (InOutStockDTO member : members) {
@@ -1252,6 +1253,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
+    @Override
+    public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+        //获取导出数据
+        Page<SoOutstockDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        fillPaging(page.getRecords(),true);
+        return new PagingVO<>(page);
+    }
+
     /**
      * 作废
      *
@@ -1483,31 +1495,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * 导出销售出库单
      *
      * @param dto
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-22 11:41
      */
     @Override
-    public Boolean exportExcel(SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
-        //获取导出数据
-        List<SoOutstockDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        fillPaging(list,true);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/soOutstock.xlsx";
-        String name = "销售订单出库列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("销售订单出库导出出错 {}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(SoOutstockDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("销售订单出库列表", EXPORT_WMS_SO_OUT_STOCK.getCode(), dto);
         return Boolean.TRUE;
     }
 

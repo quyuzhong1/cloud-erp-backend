@@ -10,13 +10,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import com.erp.server.dmp.service.DmpPushTaskHistoryService;
-import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * 中台推送任务历史表
@@ -50,13 +51,11 @@ public class DmpPushTaskHistoryController extends BaseController {
      * @author Will
      * @date: 2023/10/13 15:34
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
-    public ApiResult<String> exportExcel(@RequestBody DmpPushTaskDTO.ParamDTO dto, HttpServletResponse response) {
-        Boolean flag = dmpPushTaskHistoryService.exportExcel(dto, response);
+    public ApiResult<String> exportExcel(@RequestBody DmpPushTaskDTO.ParamDTO dto) {
+        Boolean flag = dmpPushTaskHistoryService.exportExcel(dto);
         return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 

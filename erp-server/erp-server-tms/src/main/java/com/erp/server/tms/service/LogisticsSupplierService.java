@@ -6,7 +6,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -81,7 +80,7 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@author yl
      *@date 2023-11-15
      */
-    Boolean export(LogisticsSupplierDTO.ExportDTO dto, HttpServletResponse httpServletResponse);
+    Boolean export(LogisticsSupplierDTO.ExportDTO dto);
     /**
      * @description: 物流商下拉
      * @author Will
@@ -125,4 +124,7 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
     LogisticsSupplierDTO.ViewDTO detail(String id);
 
     List<LogisticsSupplierEntity> listByName(List<String> supplierNameList);
+
+    PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
+
 }

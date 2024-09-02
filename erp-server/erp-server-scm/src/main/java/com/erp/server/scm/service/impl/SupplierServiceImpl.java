@@ -41,6 +41,7 @@ import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -78,9 +79,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.rtfparserkit.rtf.Command.i;
-import static com.rtfparserkit.rtf.Command.list;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER;
 
 /**
  * <p>
@@ -158,7 +157,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private KingdeePaymentConditionService  kingdeePaymentConditionService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     /**
      * 保存供应商信息
      *
@@ -925,117 +925,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * 供应商导出
      *
      * @param dto
-     * @param response
      * @return void
      * @author yl
      * @date 2023-03-29 14:50
      */
     @Override
-    public void exportSupplier(SupplierDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<SupplierDTO.PagingViewDTO> list = baseMapper.getExportSupplier(dto);
-        List<SupplierExportExcelDTO> resultList = new ArrayList<>(list.size());
-        if (CollectionUtils.isNotEmpty(list)) {
-            List<String> keyList = new ArrayList<>(3);
-            keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
-            keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-            keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
-            //获取供应商等级
-            List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
-            //根据 key list 获取到对应数据
-            List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
-            //供应商id 集合
-            List<String> supplierIdList = list.stream().map(SupplierDTO.PagingViewDTO::getId).collect(Collectors.toList());
-            //获取供应商默认联系人信息
-            List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
-            //付款条件
-            List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
-            //获取到采购订单数据
-            List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
-
-            //获取供应商配置
-            List<SupplierConfigVO> supplierConfigVOS = srmCfgSettingFeign.getConfigList(supplierIdList);
-            Map<String, SupplierConfigVO> configVOMap = supplierConfigVOS.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
-            //最新审核人
-            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-            list.forEach(obj -> {
-                dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SUPPLIER.getCode(), obj.getId()));
-            });
-            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
-            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
-                listApiResult = workflowFeign.curApprover(dtoList);
-                Integer code = listApiResult.getCode();
-                if (200 != code) {
-                    throw new ServiceException(ApiError.ERROR_500);
-                }
-            }
-
-            for (SupplierDTO.PagingViewDTO item : list) {
-                String id = item.getId();
-                SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
-                exportExcel.setName(item.getName());
-                exportExcel.setCode(item.getCode());
-                //禁用状态 true 禁用
-                boolean disabled = Objects.nonNull(item.getDisabled()) ? item.getDisabled() : true;
-                exportExcel.setEnableStatus(disabled ? "停用" : "启用");
-                boolean srmDisabled = Objects.nonNull(item.getSrmDisabled()) ? item.getSrmDisabled() : true;
-                exportExcel.setSrmDisabled(srmDisabled ? "否" : "是");
-                SupplierConfigVO supplierConfigVO = configVOMap.get(id);
-                if (Objects.nonNull(supplierConfigVO)){
-                    exportExcel.setOrderAcceptRule(supplierConfigVO.getOrderAcceptRule());
-                    exportExcel.setReturnConfirmRule(supplierConfigVO.getReturnConfirmRule());
-                }
-                ApproveStatusEnum approveStatus = item.getApproveStatus();
-                exportExcel.setApproveStatusName(approveStatus.getName());
-                //阶段
-                SupplierPhaseEnum phaseEnum = item.getPhase();
-                exportExcel.setPhaseName(phaseEnum.getName());
-                //等级id
-                String gradeId = item.getGradeId();
-                String gradeName = supplierGradeList.stream().filter(g -> g.getId().equals(gradeId)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                exportExcel.setGradeName(gradeName);
-                //分类
-                String categoryId = item.getCategoryId();
-                String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                exportExcel.setCategoryName(categoryName);
-                //结算方式
-                String payMethodId = item.getPayMethodId();
-                String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                exportExcel.setPayMethodName(payMethodName);
-                //付款条件
-                String  paymentCondition = item.getPaymentCondition();
-                String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getId().equals(paymentCondition)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                exportExcel.setPaymentConditionName(paymentConditionName);
-                //采购员
-                exportExcel.setPurchaseUserName(item.getPurchaseUserName());
-                SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(item.getId())).findFirst().orElse(null);
-                if (contact != null) {
-                    exportExcel.setContactPerson(contact.getPerson());
-                    exportExcel.setContactTelNumber(contact.getTelNumber());
-                }
-                //采购次数
-                long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
-                exportExcel.setPurchasesCount((int) purchasesCount);
-                exportExcel.setCreateTime(item.getCreateTime());
-                exportExcel.setCreateUserName(item.getCreateUserName());
-                //最新审核人
-                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                    exportExcel.setApproveUserName(curApprove);
-                }
-                exportExcel.setApproveTime(item.getApproveTime());
-                resultList.add(exportExcel);
-
-            }
-            String fileName = "供应商数据";
-            try {
-                ExcelUtil.export(fileName, "供应商数据", resultList, SupplierExportExcelDTO.class, response);
-            } catch (Exception e) {
-                throw new ServiceException(ApiError.ERROR_1015);
-            }
-        }
+    public void exportSupplier(SupplierDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("供应商数据", EXPORT_SCM_SUPPLIER.getCode(), dto);
     }
 
     /**
@@ -1427,6 +1323,110 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<BaseDropDownDTO.RemarkDTO> list = records.stream().sorted(Comparator.comparing(BaseDropDownDTO.RemarkDTO::getDisabled)).collect(Collectors.toList());
         pagResult.setRecords(list);
         return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    public PagingVO<SupplierExportExcelDTO> exportSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
+        Page<SupplierDTO.PagingViewDTO> page = baseMapper.getExportSupplier(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        List<SupplierExportExcelDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
+        }
+        List<String> keyList = new ArrayList<>(3);
+        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
+        //获取供应商等级
+        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+        //根据 key list 获取到对应数据
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        //供应商id 集合
+        List<String> supplierIdList = page.getRecords().stream().map(SupplierDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        //获取供应商默认联系人信息
+        List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
+        //付款条件
+        List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
+        //获取到采购订单数据
+        List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
+
+        //获取供应商配置
+        List<SupplierConfigVO> supplierConfigVOS = srmCfgSettingFeign.getConfigList(supplierIdList);
+        Map<String, SupplierConfigVO> configVOMap = supplierConfigVOS.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        page.getRecords().forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SUPPLIER.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(ApiError.ERROR_500);
+            }
+        }
+
+        for (SupplierDTO.PagingViewDTO item : page.getRecords()) {
+            String id = item.getId();
+            SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
+            exportExcel.setName(item.getName());
+            exportExcel.setCode(item.getCode());
+            //禁用状态 true 禁用
+            boolean disabled = Objects.nonNull(item.getDisabled()) ? item.getDisabled() : true;
+            exportExcel.setEnableStatus(disabled ? "停用" : "启用");
+            boolean srmDisabled = Objects.nonNull(item.getSrmDisabled()) ? item.getSrmDisabled() : true;
+            exportExcel.setSrmDisabled(srmDisabled ? "否" : "是");
+            SupplierConfigVO supplierConfigVO = configVOMap.get(id);
+            if (Objects.nonNull(supplierConfigVO)) {
+                exportExcel.setOrderAcceptRule(supplierConfigVO.getOrderAcceptRule());
+                exportExcel.setReturnConfirmRule(supplierConfigVO.getReturnConfirmRule());
+            }
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            exportExcel.setApproveStatusName(approveStatus.getName());
+            //阶段
+            SupplierPhaseEnum phaseEnum = item.getPhase();
+            exportExcel.setPhaseName(phaseEnum.getName());
+            //等级id
+            String gradeId = item.getGradeId();
+            String gradeName = supplierGradeList.stream().filter(g -> g.getId().equals(gradeId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            exportExcel.setGradeName(gradeName);
+            //分类
+            String categoryId = item.getCategoryId();
+            String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            exportExcel.setCategoryName(categoryName);
+            //结算方式
+            String payMethodId = item.getPayMethodId();
+            String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            exportExcel.setPayMethodName(payMethodName);
+            //付款条件
+            String paymentCondition = item.getPaymentCondition();
+            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getId().equals(paymentCondition)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            exportExcel.setPaymentConditionName(paymentConditionName);
+            //采购员
+            exportExcel.setPurchaseUserName(item.getPurchaseUserName());
+            SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(item.getId())).findFirst().orElse(null);
+            if (contact != null) {
+                exportExcel.setContactPerson(contact.getPerson());
+                exportExcel.setContactTelNumber(contact.getTelNumber());
+            }
+            //采购次数
+            long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
+            exportExcel.setPurchasesCount((int) purchasesCount);
+            exportExcel.setCreateTime(item.getCreateTime());
+            exportExcel.setCreateUserName(item.getCreateUserName());
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                exportExcel.setApproveUserName(curApprove);
+            }
+            exportExcel.setApproveTime(item.getApproveTime());
+            resultList.add(exportExcel);
+
+        }
+        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
     /**

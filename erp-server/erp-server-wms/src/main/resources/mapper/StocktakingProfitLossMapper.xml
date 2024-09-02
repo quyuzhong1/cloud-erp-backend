@@ -114,7 +114,6 @@
                 </foreach>
             </if>
             spl.id DESC,spld.id DESC
-        limit 50000
     </select>
     <!--  获取到扣减库存所需的参数-->
     <select id="listInventoryInOut" resultType="com.erp.model.wms.dto.inventory.InOutStockDTO">

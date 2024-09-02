@@ -225,14 +225,13 @@ public interface WarehouseLocationMoveService extends SuperService<WarehouseLoca
      **/
     Boolean invalid(List<String> ids, String remark);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出列表
      * @author hyj
      * @date 2024/4/17 10:31
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    void listExport(WarehouseLocationMoveDTO.ExportDTO dto, HttpServletResponse response);
+    void listExport(WarehouseLocationMoveDTO.ExportDTO dto);
 
     /**
      * @description: 导入
@@ -255,4 +254,6 @@ public interface WarehouseLocationMoveService extends SuperService<WarehouseLoca
     String addAndApprove(WarehouseLocationMoveDTO.AddDTO dto);
 
     String updateAndApprove(WarehouseLocationMoveDTO.UpdateDTO dto);
+
+    PagingVO<WarehouseLocationMoveDTO.PdaPcListDTO> exportWarehouseLocationMoveInfo(PagingDTO<WarehouseLocationMoveDTO.ExportDTO> dto);
 }

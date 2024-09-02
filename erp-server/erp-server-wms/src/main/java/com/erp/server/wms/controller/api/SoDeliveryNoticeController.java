@@ -329,16 +329,14 @@ public class SoDeliveryNoticeController extends BaseController {
      * 导出
      *
      * @param dto      dto
-     * @param response response
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出发货通知单")
     @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery(handler = SoDeliveryNoticeQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody SoDeliveryNoticeDTO.PagingParam dto, HttpServletResponse response) {
-        Boolean flag = soDeliveryNoticeService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody SoDeliveryNoticeDTO.PagingParam dto) {
+        Boolean flag = soDeliveryNoticeService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

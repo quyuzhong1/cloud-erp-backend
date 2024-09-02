@@ -31,6 +31,7 @@ import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
@@ -51,6 +52,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -64,6 +66,8 @@ import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -204,6 +208,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private ProjectTaskProgressService projectTaskProgressService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Autowired
     private MQProducerService mQProducerService;
@@ -2083,7 +2089,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     /**
      * 批量立项
      *
-     * @param ProductInfoDTO.IdsDateDto
      * @return
      */
     @Override
@@ -2424,14 +2429,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * 导出数据
      *
      * @param
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-15 9:19
      */
     @Override
-    public Boolean allExport(ProductSearchDTO.ExportDTO params, HttpServletResponse response) {
-
+    public Boolean allExport(ProductSearchDTO.ExportDTO params) {
         /**
          * 导出数据 类型
          * 0，产品列表
@@ -2440,6 +2443,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<Integer> exportDataList = params.getExportDataList();
         int size = exportDataList.size();
         Integer flag = exportDataList.get(0);
+//        String name = size == 2 ? "产品列表" : ProductConstant.PRODUCT_EXPORT.equals(flag) ? "产品列表" : "任务列表";
+//        downloadTaskFeign.saveDownloadTask(name, EXPORT_PLM_PRODUCT_ALL.getCode(), params);
+
+
         params.setPermissionSql(params.getPermissionSql());
         //分类id
         String categoryId = params.getCategoryId();
@@ -2526,17 +2533,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * 我的项目导出
      *
      * @param params
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-15 10:02
      */
     @Override
-    public Boolean myProjectExport(ProductSearchDTO.ExportDTO params, HttpServletResponse response) {
-        //分类id
-        String categoryId = params.getCategoryId();
-        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-        String userId = UserContext.getDefaultLoginUser().getUid();
+    public Boolean myProjectExport(ProductSearchDTO.ExportDTO params) {
 
         /**
          * 导出数据 类型
@@ -2546,6 +2548,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<Integer> exportDataList = params.getExportDataList();
         int size = exportDataList.size();
         Integer flag = exportDataList.get(0);
+//        String name = size == 2 ? "产品列表" : ProductConstant.PRODUCT_EXPORT.equals(flag) ? "产品列表" : "任务列表";
+//        downloadTaskFeign.saveDownloadTask(name, EXPORT_PLM_PRODUCT_MY_PROJECT.getCode(), params);
+
+
+        //分类id
+        String categoryId = params.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        String userId = UserContext.getDefaultLoginUser().getUid();
+
+
         //部门处理
         Boolean isFlag = handlePagingDept(params);
         if (isFlag) {
@@ -2625,16 +2637,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * 收藏项目导出
      *
      * @param params
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-15 10:10
      */
     @Override
-    public Boolean collectExport(ProductSearchDTO.ExportDTO params, HttpServletResponse response) {
-        //分类id
-        String categoryId = params.getCategoryId();
-        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+    public Boolean collectExport(ProductSearchDTO.ExportDTO params) {
+
         /**
          * 导出数据 类型
          * 0，产品列表
@@ -2643,6 +2652,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<Integer> exportDataList = params.getExportDataList();
         int size = exportDataList.size();
         Integer flag = exportDataList.get(0);
+//        String name = size == 2 ? "产品列表" : ProductConstant.PRODUCT_EXPORT.equals(flag) ? "产品列表" : "任务列表";
+//        downloadTaskFeign.saveDownloadTask(name, EXPORT_PLM_PRODUCT_COLLECT.getCode(), params);
+
+        //分类id
+        String categoryId = params.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
 
         //部门处理
         Boolean isFlag = handlePagingDept(params);
