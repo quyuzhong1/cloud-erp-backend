@@ -15,6 +15,7 @@ import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
+import com.common.core.dto.FileExcelDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.*;
 import com.common.core.exception.ServiceException;
@@ -341,6 +342,27 @@ public class ExcelUtil {
         } catch (Exception e) {
             throw new ServiceException(ApiError.Default);
         }
+    }
+
+    /**
+     * 生成导出文件
+     * @author will
+     * @date 2024/9/3 15:00
+     * @param exportFileDTO
+     * @return File
+     */
+    public static File batchExportFile(FileExcelDTO.ExportFileDTO exportFileDTO) {
+        File tempDirectory = FileUtils.getTempDirectory();
+        File filePath = new File(tempDirectory,exportFileDTO.getFileName());
+        if (CollectionUtils.isEmpty(exportFileDTO.getSheetList())) {
+            throw new ServiceException("sheet数据不能为空");
+        }
+        for (FileExcelDTO.ExportFileSheetDTO sheetDTO :  exportFileDTO.getSheetList()) {
+            //生成本地文件
+            EasyExcel.write(filePath.getAbsolutePath(), sheetDTO.getClazz()).sheet(sheetDTO.getSheetName()).doWrite(sheetDTO.getDataResult());
+        }
+        return filePath;
+
     }
 
     /**

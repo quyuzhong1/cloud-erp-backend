@@ -523,4 +523,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                         ReplenishmentSuggestionEntity::getSkuNo,
                         ReplenishmentSuggestionEntity::getShopId));
     }
+
+    @Override
+    public List<ReplenishmentSuggestionEntity> listByUnique(List<String> platformCodeList, List<String> shopIdList, List<String> skuIdList) {
+        return baseMapper.listByUnique(platformCodeList,shopIdList,skuIdList);
+    }
 }

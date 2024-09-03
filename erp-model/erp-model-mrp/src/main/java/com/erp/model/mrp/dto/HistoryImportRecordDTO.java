@@ -1,6 +1,7 @@
 package com.erp.model.mrp.dto;
 
 import com.common.business.annotation.Dict;
+import com.common.core.dto.FileExcelDTO;
 import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +10,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * <p>
@@ -95,7 +95,14 @@ public class HistoryImportRecordDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 类型
+         * 业务id
+         */
+        @NotBlank(message = "业务id不能为空")
+        @Size(max = 19,message = "业务id最大长度不能超过19位")
+        private String businessId;
+
+        /**
+        * 类型,HistoryImportRecordTypeEnum枚举
         */
         @NotBlank(message = "类型不能为空")
         @Size(max = 32,message = "类型最大长度不能超过32位")
@@ -116,10 +123,10 @@ public class HistoryImportRecordDTO implements Serializable {
         private String name;
 
         /**
-         * 导入附件
+         * 导入数据
          */
-        @NotNull(message = "导入附件不能为空")
-        private List<Object> importList;
+        @NotNull(message = "导入数据不能为空")
+        private  FileExcelDTO.ExportFileDTO exportFileDTO;
     }
 
 

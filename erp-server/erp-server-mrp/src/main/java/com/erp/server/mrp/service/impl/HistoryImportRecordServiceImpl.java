@@ -14,7 +14,6 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.mrp.dto.HistoryImportRecordDTO;
 import com.erp.model.mrp.entity.HistoryImportRecordEntity;
-import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.server.mrp.mapper.HistoryImportRecordMapper;
 import com.erp.server.mrp.service.HistoryImportRecordService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -65,7 +64,7 @@ public class HistoryImportRecordServiceImpl extends SuperServiceImpl<HistoryImpo
      * 上传导入文件到fastdfs
      * @author will
      * @date 2024/8/29 10:32
-     * @param addDTO 
+     * @param addDTO
      * @return HistoryImportRecordEntity
      */
     private HistoryImportRecordEntity upLoadFile(HistoryImportRecordDTO.AddDTO addDTO) {
@@ -73,12 +72,11 @@ public class HistoryImportRecordServiceImpl extends SuperServiceImpl<HistoryImpo
         BeanMapperUtils.copy(addDTO,entity);
         //导入文件
         try {
-            String url = "";
-            String fileName = addDTO.getName();
-            File file = ExcelUtil.exportFile(fileName, "sheet", addDTO.getImportList(), PurchaseOrderImportExcelDTO.class);
-            if (file != null && !file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
+            File file = ExcelUtil.batchExportFile(addDTO.getExportFileDTO());
+            if (file == null || file.isDirectory()) {
+                throw new ServiceException("成功文件记录上传失败");
             }
+            String url = FastDFSClientUtil.uploadFile(file, addDTO.getExportFileDTO().getFileName());
             //url不能为空
             if (StrUtil.isBlank(url)) {
                 throw new ServiceException("导入失败！");

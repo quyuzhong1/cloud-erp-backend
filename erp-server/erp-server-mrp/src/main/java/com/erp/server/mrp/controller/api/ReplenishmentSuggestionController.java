@@ -467,14 +467,15 @@ public class ReplenishmentSuggestionController extends BaseController {
      * 导入补货规则
      * @author will
      * @date 2024/8/30 16:48
+     * @param id
      * @param excelFile
      * @param response
      * @return ApiResult<?>
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入补货规则")
     @PostMapping("/importRule")
-    public ApiResult<?> importRule(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        replenishmentSuggestionImportService.importRule(excelFile, response);
+    public ApiResult<?> importRule(@RequestParam(value = "id") String id,@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        replenishmentSuggestionImportService.importRule(id,excelFile, response);
         return success();
     }
 

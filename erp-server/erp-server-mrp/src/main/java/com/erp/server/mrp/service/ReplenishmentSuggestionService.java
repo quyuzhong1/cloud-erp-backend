@@ -167,4 +167,15 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * 获取所有sku和店铺
      */
     List<ReplenishmentSuggestionEntity> listAllSkuAndShop();
+
+    /**
+     * 根据唯一键查询（平台、店铺、sku）
+     * @author will
+     * @date 2024/9/3 16:36
+     * @param platformCodeList
+     * @param shopIdList
+     * @param skuIdList
+     * @return List<ReplenishmentSuggestionEntity>
+     */
+    List<ReplenishmentSuggestionEntity> listByUnique(List<String> platformCodeList, List<String> shopIdList, List<String> skuIdList);
 }

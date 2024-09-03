@@ -95,4 +95,9 @@
                  inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
     </select>
 
+    <!-- 根据唯一键查询（平台、店铺、sku） -->
+    <select id="listByUnique" resultType="com.erp.model.mrp.entity.ReplenishmentSuggestionEntity">
+
+    </select>
+
 </mapper>
