@@ -107,6 +107,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private BomSkuService bomSkuService;
     @Resource
     private ProductRefLabelService productRefLabelService;
+    @Resource
+    private ProductCostService productCostService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -126,6 +128,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if(!save) {
             throw new ServiceException("试产申请保存失败");
         }
+        sysLogService.addSysLogBySave("新增试产申请", "", pilotApplicationEntity.getId(), "");
 
         //保存产品明细
         saveProductDetail(addDTO, pilotApplicationEntity);
@@ -562,19 +565,34 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         Map<String, ProjectTaskDTO.SimpleViewDTO> taskMap = taskList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
         PilotApplicationDTO.ViewDTO view = BeanMapperUtils.map(PilotApplicationDTO.ViewDTO.class, pilotApplicationEntity);
+        view.setApproveStatusName(ApproveStatusEnum.getName(view.getApproveStatus()));
         List<PilotApplicationDetailDTO.ViewDTO> detailViewList = BeanMapper.copyList(productDetailList, PilotApplicationDetailDTO.ViewDTO.class);
         List<PilotApplicationRefTaskDTO.ViewDTO> taskViewList = BeanMapper.copyList(taskList, PilotApplicationRefTaskDTO.ViewDTO.class);
+        //供应商
+        List<String> supplierIds = detailViewList.stream().map(item -> item.getMainSupplierId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> secondSupplierIds = detailViewList.stream().map(item -> item.getSecondSupplierId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        supplierIds.addAll(secondSupplierIds);
+        List<SupplierEntity> supplierList = supplierFeign.listByCodes(supplierIds);
+        //产品费用
+        List<String> skuIds = detailViewList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
+        List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
         //处理产品明细
         for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList) {
-            detailDTO.setMainSupplierName("");
-            detailDTO.setSecondSupplierName("");
-            detailDTO.setTargetTaxCost(null);
-            detailDTO.setTargetNoTaxCost(null);
-            detailDTO.setActualTaxCost(null);
-            detailDTO.setActualNoTaxCost(null);
+            Optional<SupplierEntity> mainSupplier = supplierList.stream().filter(item -> item.getCode().equals(detailDTO.getMainSupplierId())).findFirst();
+            mainSupplier.ifPresent(item -> detailDTO.setMainSupplierName(item.getName()));
+            Optional<SupplierEntity> secondSupplier = supplierList.stream().filter(item -> item.getCode().equals(detailDTO.getSecondSupplierId())).findFirst();
+            secondSupplier.ifPresent(item -> detailDTO.setSecondSupplierName(item.getName()));
+            Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(detailDTO.getSkuId())).findFirst();
+            if(productCostEntityOptional.isPresent()){
+                ProductCostEntity productCostEntity = productCostEntityOptional.get();
+                detailDTO.setTargetTaxCost(productCostEntity.getTargetTaxCost());
+                detailDTO.setTargetNoTaxCost(productCostEntity.getTargetNoTaxCost());
+                detailDTO.setActualTaxCost(productCostEntity.getActualTaxCost());
+                detailDTO.setActualNoTaxCost(productCostEntity.getActualNoTaxCost());
+            }
         }
         //处理关联任务
-        for (PilotApplicationRefTaskDTO.ViewDTO taskDTO : taskViewList) {
+        /*for (PilotApplicationRefTaskDTO.ViewDTO taskDTO : taskViewList) {
             if(! taskMap.containsKey(taskDTO.getTaskId())){
                 log.error("试产量产单没有找到任务详情:{} {}",taskDTO.getId(), taskDTO.getTaskId());
                 continue;
@@ -592,18 +610,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             taskDTO.setSpuNo(entity.getSpuNo());
             taskDTO.setStatus(entity.getStatus());
             taskDTO.setStatusName(TaskStateEnum.getName(entity.getStatus()));
-        }
+        }*/
         view.setApproveStatusName(ApproveStatusEnum.getName(view.getApproveStatus()));
         view.setProductDetailList(detailViewList);
-        view.setTaskList(taskViewList);
-        //什么记录
-//        List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getProcessId());
-        view.setApproveFlowList(Collections.emptyList());
-        //操作日志
-        SysLogSelectDTO sysLogSelectDTO = new SysLogSelectDTO();
-        sysLogSelectDTO.setBusinessId(pilotApplicationEntity.getId());
-        List<SysLogShowDTO> sysLogShowList = sysLogService.listSysLog(sysLogSelectDTO);
-        view.setOperateLogList(sysLogShowList);
+//        view.setTaskList(taskViewList);
+        //审核记录
+        List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getId());
+        view.setApproveFlowList(approveHistoryList);
         return view;
     }
 
