@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +57,9 @@ public class AntuWarehouseInitHandler extends DmpInputInitHandler {
 			return Collections.emptyList();
 		}
 		for (OverseasProviderEntity overseasProviderEntity : overseasProviderEntityList) {
+			if (overseasProviderEntityList.get(0).getEnableDate().compareTo(LocalDate.now()) > 0) {
+				continue;
+			}
 			ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
 			while(true) {
 				antuGetProductReq.setPage(page);
