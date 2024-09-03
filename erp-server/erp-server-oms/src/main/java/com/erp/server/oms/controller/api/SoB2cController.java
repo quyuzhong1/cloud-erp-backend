@@ -644,7 +644,7 @@ public class SoB2cController extends BaseController {
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         if(dto.getIds().size()>100){
-            throw new ServiceException("批量提交发货数量不能超过100");
+            throw new ServiceException("批量提交发货数据条数不能超过100");
         }
         //订单自动预报 不影响提交发货流程
         try {
@@ -657,7 +657,7 @@ public class SoB2cController extends BaseController {
             try {
                 result = soB2cService.submitDelivery(id);
             } catch (Exception e) {
-                log.error("B2C销售订单提交发货失败", ExceptionUtil.stacktraceToString(e));
+                log.error("B2C销售订单提交发货失败,id:{}",id, e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交发货失败");
