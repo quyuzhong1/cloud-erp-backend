@@ -9,6 +9,8 @@ import com.erp.server.file.dto.FileTaskDTO;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 @RestController
@@ -22,9 +24,10 @@ public class DownloadTaskFeignController {
 
     @PostMapping
     String saveDownloadTask(@RequestParam String fileName, @RequestParam String event, @RequestBody Object params) {
-        //单据名称+年月日+流水号
+        //单据名称+年月日时分秒
 
-        String name = ExportUtil.getFileName(redisService, fileName);
-        return fileTaskContext.add(new FileTaskDTO(event,name, params));
+        fileName = fileName + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+
+        return fileTaskContext.add(new FileTaskDTO(event,fileName, params));
     }
 }
