@@ -63,11 +63,6 @@ public class PilotApplicationEntity extends BaseEntity<PilotApplicationEntity> {
     @TableField("bill_date")
     private LocalDate billDate;
     /**
-     * 流程实例ID
-     */
-    @TableField("process_id")
-    private String processId;
-    /**
      * 附件名称集合
      */
     @TableField("attach_name_list")

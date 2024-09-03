@@ -168,6 +168,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
         // 数据处理
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
+        pilotApplicationEntity.setId(updateDTO.getId());
         pilotApplicationEntity.setBillDate(updateDTO.getBillDate());
         pilotApplicationEntity.setRemark(updateDTO.getRemark());
         pilotApplicationEntity.setAttachNameList(String.join(",", updateDTO.getAttachNameList()));
@@ -491,7 +492,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         log.info("删除 开始删除试产申请主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
-        log.info("删除 开始删除试产申请日志数据，id：【{}】", id);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
