@@ -565,7 +565,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         Map<String, ProjectTaskDTO.SimpleViewDTO> taskMap = taskList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
         PilotApplicationDTO.ViewDTO view = BeanMapperUtils.map(PilotApplicationDTO.ViewDTO.class, pilotApplicationEntity);
-        view.setApproveStatusName(ApproveStatusEnum.getName(view.getApproveStatus()));
         List<PilotApplicationDetailDTO.ViewDTO> detailViewList = BeanMapper.copyList(productDetailList, PilotApplicationDetailDTO.ViewDTO.class);
         List<PilotApplicationRefTaskDTO.ViewDTO> taskViewList = BeanMapper.copyList(taskList, PilotApplicationRefTaskDTO.ViewDTO.class);
         //供应商
@@ -611,7 +610,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             taskDTO.setStatus(entity.getStatus());
             taskDTO.setStatusName(TaskStateEnum.getName(entity.getStatus()));
         }*/
-        view.setApproveStatusName(ApproveStatusEnum.getName(view.getApproveStatus()));
+        view.setApproveStatusName(view.getApproveStatus().getName());
         view.setProductDetailList(detailViewList);
 //        view.setTaskList(taskViewList);
         //审核记录
