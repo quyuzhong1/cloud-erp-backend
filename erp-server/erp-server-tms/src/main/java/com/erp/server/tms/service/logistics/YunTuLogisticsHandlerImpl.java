@@ -75,7 +75,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         YunTuCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYunTu(logisticsOrderVO);
-//        request.setTaxNumber(getTaxNumberByCountry(logisticsOrderVO.getCountry(), logisticsOrderVO.getVoecTaxNo()));
+        request.setTaxNumber(getTaxNumberByCountry(logisticsOrderVO.getCountry(), logisticsOrderVO.getVoecTaxNo(), request.getTaxNumber()));
         ValidatorUtil.validateEntity(request);
         try {
             YunTuResponse<List<YunTuCreateOrder>> yunTuResponse = yunTuService.createOrder(Collections.singletonList(request),logisticsOrderVO.getAuthMap());
@@ -116,15 +116,15 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param voecTaxNo
      * @return
      */
-    private String getTaxNumberByCountry(String country, String voecTaxNo) {
+    private String getTaxNumberByCountry(String country, String voecTaxNo, String receiverTaxNo) {
         if (StringUtils.isBlank(voecTaxNo) || StringUtils.isBlank(country)){
-            return null;
+            return receiverTaxNo;
         }
         //国家是挪威的时候推送，其他的时候不推送
         if ("NO".equals(country)){
             return voecTaxNo;
         }else {
-            return null;
+            return receiverTaxNo;
         }
     }
 
