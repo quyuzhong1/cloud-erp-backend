@@ -181,11 +181,13 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
 
     /**
      * 根据业务单号获取对账明细
+     *
      * @param businessCodes
      * @param status
+     * @param type
      * @return
      */
-    List<TmsFirstMileReconciliationDetailEntity> listByBusinessCodes(List<String> businessCodes, String status);
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIdsAndStatus(List<String> businessCodes, String status, String type);
 
     /**
      * 更新对账明细

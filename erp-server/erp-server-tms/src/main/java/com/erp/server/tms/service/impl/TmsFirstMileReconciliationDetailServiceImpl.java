@@ -1837,11 +1837,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     @Override
-    public List<TmsFirstMileReconciliationDetailEntity> listByBusinessCodes(List<String> businessCodes, String status) {
-        if (CollectionUtils.isEmpty(businessCodes) && StrUtil.isBlank(status)){
+    public List<TmsFirstMileReconciliationDetailEntity> listBySourceIdsAndStatus(List<String> sourceIds, String status, String type) {
+        if (CollectionUtils.isEmpty(sourceIds) && StrUtil.isBlank(status) && StrUtil.isBlank(type)){
             return Collections.emptyList();
         }
-        return baseMapper.listByBusinessCodes(businessCodes,status);
+        return baseMapper.listBySourceIdsAndStatus(sourceIds,status,type);
     }
 
     @Override

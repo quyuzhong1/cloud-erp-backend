@@ -774,6 +774,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 单个产品分摊金额【可排序】
          */
         private BigDecimal productAllocatedAmount;
+        /**
+         * 单个产品分摊金额【导出使用】
+         */
+        private String productAllocatedAmountStr;
 
         /**
          * 期初在途费用【可排序】

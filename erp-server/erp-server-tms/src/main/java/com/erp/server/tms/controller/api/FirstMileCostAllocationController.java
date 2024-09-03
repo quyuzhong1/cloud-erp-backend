@@ -159,9 +159,9 @@ public class FirstMileCostAllocationController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery(handler = FirstMileCostAllocationQueryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody @Valid FirstMileCostAllocationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        firstMileCostAllocationService.exportExcel(dto, response);
-        return success();
+    public ApiResult<Boolean> exportExcel(@RequestBody @Valid FirstMileCostAllocationDTO.PagingParamDTO dto) {
+        firstMileCostAllocationService.exportList(dto);
+        return success(Boolean.TRUE);
     }
 
     /**
