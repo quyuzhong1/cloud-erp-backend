@@ -67,4 +67,6 @@ public interface FirstMileCostAllocationMapper extends BaseMapper<FirstMileCostA
      * @author: tanmujin
      */
     List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> listLastedAllocationMonth(@Param("logisticsBillIds") List<String> logisticsBillIds);
+
+    List<FirstMileCostAllocationEntity> listBySourceIdsAndReportPeriodId(@Param("sourceIds") List<String> sourceIds,@Param("reportPeriodId")  String reportPeriodId);
 }

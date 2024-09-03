@@ -190,9 +190,7 @@ public class FirstMileCostAllocationController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单记录不存在"));
                 continue;
             }
-            List<FirstMileCostAllocationEntity> entityList1 = firstMileCostAllocationEntityList.stream().filter(v->v.getSourceId().equals(sourceId))
-                    .sorted(Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth)).collect(Collectors.toList());
-            if(CollectionUtils.isEmpty(entityList1)){
+            if(CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
                 resultDTOS.add(BatchResultDTO.fail(sourceId,firstMileDeliveryEntity.getCode(),"费用分摊记录不存在"));
                 continue;
             }
@@ -201,7 +199,7 @@ public class FirstMileCostAllocationController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(sourceId,firstMileDeliveryEntity.getCode(),"费用分摊发货单明细记录不存在"));
                 continue;
             }
-            for (FirstMileCostAllocationEntity entity : entityList1){
+            for (FirstMileCostAllocationEntity entity : firstMileCostAllocationEntityList){
                 try {
                     resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
                 }catch (Exception e){

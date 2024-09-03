@@ -333,6 +333,7 @@
             tfmrd.billing_weight_unit,
             tfmrd.shipping_cost,
             tfmrd.declare_cost,
+            tfmrd.other_tax_cost,
             tfmrd.other_cost,
             tfmrd.remark,
             tfmrd.status,

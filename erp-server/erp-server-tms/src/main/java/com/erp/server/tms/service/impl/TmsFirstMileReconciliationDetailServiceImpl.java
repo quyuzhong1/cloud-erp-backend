@@ -723,22 +723,22 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         // 查询对应物流单信息
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceList = tmsFirstMileLogisticService.listReconciliationByMainIds(new ArrayList<>(sourceDetailMap.keySet()));
         //兼容二次下推对账单场景
-        Map<String, TmsFirstMileReconciliationDetailDTO.ListDTO> sourceMap = sourceList
-                .stream().filter(e -> Objects.nonNull(e) && (Objects.equals(mainId, e.getReconciliationId()) || StrUtil.isBlank(e.getReconciliationId())))
-                .collect(Collectors.toMap(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId, Function.identity()));
+        Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceMap = sourceList
+                .stream().filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId));
         // 校验状态
         for (Map.Entry<String, List<TmsFirstMileReconciliationDetailEntity>> entry : sourceDetailMap.entrySet()) {
-            TmsFirstMileReconciliationDetailDTO.ListDTO listDTO = sourceMap.get(entry.getKey());
-            if (null == listDTO) {
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> listDTO = sourceMap.get(entry.getKey());
+            if (CollectionUtils.isEmpty(listDTO)) {
                 throw new ServiceException("物流单不存在,sourceId=" + entry.getKey());
             }
-            if (!FmLogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(listDTO.getTransportStatus())) {
-                throw new ServiceException("该物流单未签收完成,物流运单号=" + listDTO.getTransportNo());
+            if (!FmLogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(listDTO.get(0).getTransportStatus())) {
+                throw new ServiceException("该物流单未签收完成,物流运单号=" + listDTO.get(0).getTransportNo());
             }
             if (CollectionUtils.isEmpty(sourceListMap)) {
                 continue;
             }
-            if (sourceListMap.containsKey(listDTO.getSourceId())) {
+            if (sourceListMap.containsKey(listDTO.get(0).getSourceId())) {
 //                Map<String, TmsFirstMileReconciliationDetailEntity> oldEntityMap = sourceListMap.get(listDTO.getSourceId());
 //                if (!CollectionUtils.isEmpty(oldEntityMap)) {
 //                    // 数据库的明细
@@ -759,8 +759,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 //                }
                 continue;
             }
-            if (!ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(listDTO.getReconciliationStatus())) {
-                throw new ServiceException("该物流单已生成对账单,物流运单号=" + listDTO.getTransportNo());
+            if (!ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(listDTO.get(0).getReconciliationStatus())) {
+                throw new ServiceException("该物流单已生成对账单,物流运单号=" + listDTO.get(0).getTransportNo());
             }
         }
         // 补充基础信息
