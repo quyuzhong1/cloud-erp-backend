@@ -21,7 +21,4 @@ import java.util.List;
 @Mapper
 public interface DmpInputTaskMapper extends BaseMapper<DmpInputTaskEntity> {
 
-    List<DmpInputTaskDTO.TabListDTO> listStatusCount(String permissionSql);
-
-    IPage paging(Page query, DmpInputTaskDTO.PagingParamDTO params);
 }

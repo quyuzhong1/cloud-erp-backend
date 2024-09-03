@@ -70,30 +70,4 @@ public class DmpInputTaskController extends BaseController {
         dmpInputTaskService.update(dto);
         return success();
     }
-
-    /**
-     * 获取 tab列表
-     * @Author Luo_WG
-     * @Date 2024/9/3 15:15
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.dmp.dto.DmpInputTaskDTO.TabListDTO>>
-     **/
-    @PostMapping("/tabList")
-    public ApiResult<List<DmpInputTaskDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<DmpInputTaskDTO.TabListDTO> tabList = dmpInputTaskService.tabList(dto);
-        return success(tabList);
-    }
-
-    /**
-     * 推送任务列表分页查询
-     * @Author Luo_WG
-     * @Date 2024/9/3 14:28
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpInputTaskDTO.PagingDTO>>
-     **/
-    public ApiResult<PagingVO<DmpInputTaskDTO.PagingDTO>> paging(@RequestBody @Validated PagingDTO<DmpInputTaskDTO.PagingParamDTO> dto) {
-        PagingVO<DmpInputTaskDTO.PagingDTO> pagingVO = dmpInputTaskService.paging(dto);
-        return success(pagingVO);
-    }
-
 }

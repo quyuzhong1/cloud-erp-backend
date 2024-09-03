@@ -40,21 +40,4 @@ public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
 
     boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e);
 
-    /**
-     * 获取 tab列表
-     * @Author Luo_WG
-     * @Date 2024/9/3 15:48
-     * @param dto
-     * @return java.util.List<com.erp.model.dmp.dto.DmpInputTaskDTO.TabListDTO>
-     **/
-    List<DmpInputTaskDTO.TabListDTO> tabList(PermissionsDTO dto);
-
-    /**
-     * 推送任务列表分页查询
-     * @Author Luo_WG
-     * @Date 2024/9/3 15:48
-     * @param dto
-     * @return com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpInputTaskDTO.PagingDTO>
-     **/
-    PagingVO<DmpInputTaskDTO.PagingDTO> paging(PagingDTO<DmpInputTaskDTO.PagingParamDTO> dto);
 }
