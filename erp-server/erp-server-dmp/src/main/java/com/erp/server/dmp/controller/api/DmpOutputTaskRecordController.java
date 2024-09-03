@@ -97,4 +97,12 @@ public class DmpOutputTaskRecordController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 加入黑名单
+     */
+    @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "推送任务记录新增")
+    public ApiResult<BaseResultDTO.AddDTO> addOutputBlack(@RequestBody @Validated DmpOutputTaskRecordDTO.AddDTO dto) {
+        return success(dmpOutputTaskRecordService.add(dto));
+    }
 }
