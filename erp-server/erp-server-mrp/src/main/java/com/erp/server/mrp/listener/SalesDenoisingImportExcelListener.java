@@ -4,7 +4,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.mrp.dto.excel.StockUpImportExcelDTO;
+import com.erp.model.mrp.dto.excel.SalesDenoisingImportExcelDTO;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,26 +20,26 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class ReplenishmentRuleExcelListener extends AnalysisEventListener<StockUpImportExcelDTO> {
+public class SalesDenoisingImportExcelListener extends AnalysisEventListener<SalesDenoisingImportExcelDTO> {
 
 
     /**
      * 导入数据，用于判断导入是否为空
      */
-    private final List<StockUpImportExcelDTO> allList = new ArrayList<>();
+    private final List<SalesDenoisingImportExcelDTO> allList = new ArrayList<>();
 
     /**
      * 导入错误数据
      */
-    private final List<StockUpImportExcelDTO> errorList = new ArrayList<>();
+    private final List<SalesDenoisingImportExcelDTO> errorList = new ArrayList<>();
 
     /**
      * 导入正确数据
      */
-    private final List<StockUpImportExcelDTO> successList = new ArrayList<>();
+    private final List<SalesDenoisingImportExcelDTO> successList = new ArrayList<>();
 
     @Override
-    public void invoke(StockUpImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
+    public void invoke(SalesDenoisingImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
         //添加数据用于判断是否为空
         allList.add(importExcelDTO);
 

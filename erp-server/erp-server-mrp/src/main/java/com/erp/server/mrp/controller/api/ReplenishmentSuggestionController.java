@@ -15,6 +15,7 @@ import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
+import com.erp.server.mrp.service.ReplenishmentSuggestionImportService;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -39,6 +40,10 @@ public class ReplenishmentSuggestionController extends BaseController {
 
     @Resource
     private ReplenishmentSuggestionService replenishmentSuggestionService;
+
+    @Resource
+    private ReplenishmentSuggestionImportService replenishmentSuggestionImportService;
+
 
     /**
      * 补货建议列表
@@ -441,7 +446,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @GetMapping("/downloadRuleTemplate")
     public ApiResult<?> downloadRuleTemplate(HttpServletResponse response) {
-        replenishmentSuggestionService.downloadRuleTemplate(response);
+        replenishmentSuggestionImportService.downloadRuleTemplate(response);
         return success();
     }
 
@@ -456,7 +461,7 @@ public class ReplenishmentSuggestionController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入补货规则")
     @PostMapping("/importRule")
     public ApiResult<?> importRule(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        replenishmentSuggestionService.importRule(excelFile, response);
+        replenishmentSuggestionImportService.importRule(excelFile, response);
         return success();
     }
 
@@ -470,7 +475,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @GetMapping("/downloadSalesEstimateTemplate")
     public ApiResult<?> downloadSalesEstimateTemplate(HttpServletResponse response) {
-        replenishmentSuggestionService.downloadSalesEstimateTemplate(response);
+        replenishmentSuggestionImportService.downloadSalesEstimateTemplate(response);
         return success();
     }
 
@@ -485,7 +490,7 @@ public class ReplenishmentSuggestionController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入运营预估月销")
     @PostMapping("/importSalesEstimate")
     public ApiResult<?> importSalesEstimate(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        replenishmentSuggestionService.importSalesEstimate(excelFile, response);
+        replenishmentSuggestionImportService.importSalesEstimate(excelFile, response);
         return success();
     }
 }
