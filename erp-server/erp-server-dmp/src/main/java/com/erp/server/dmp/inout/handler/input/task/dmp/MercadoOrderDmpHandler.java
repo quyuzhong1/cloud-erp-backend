@@ -82,7 +82,6 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     List<Object> objectsList = (List<Object>) orders;
                     for (Object o : objectsList) {
                         Map<String, Object> map = (Map<String, Object>) o;
-                        dmpDataMap.put("thirdCode", map.get("fid"));
                         dmpDataMap.put("platformCode", map.get("fid"));
                     }
                 }
