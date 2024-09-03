@@ -1,6 +1,5 @@
 package com.erp.model.mrp.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -120,7 +119,7 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
         * 有效值（去噪后的）
         */
         @NotNull(message = "有效值（去噪后的）不能为空")
-        @Min(value = 1,message = "有效值（去噪后的）最小值为1")
+        @Min(value = 0,message = "有效值（去噪后的）最小值为0")
         @Max(value = 999999999,message = "有效值（去噪后的）最大值为999999999")
         private Integer effectiveValue;
 
