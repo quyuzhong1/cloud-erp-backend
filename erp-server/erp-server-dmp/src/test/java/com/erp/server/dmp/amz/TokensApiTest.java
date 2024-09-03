@@ -12,18 +12,15 @@
 
 package com.erp.server.dmp.amz;
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.api.TokensApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.client.LWAException;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.tokens.CreateRestrictedDataTokenRequest;
 import com.erp.sdk.oms.amz.spapi.model.tokens.CreateRestrictedDataTokenResponse;
-import com.erp.sdk.oms.amz.spapi.model.tokens.RestrictedResource;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.Test;
@@ -33,8 +30,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * API tests for TokensApi

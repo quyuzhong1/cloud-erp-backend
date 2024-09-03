@@ -29,6 +29,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentItemsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItem;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiRateLimitUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -83,7 +84,7 @@ public class AmazonFbaShipmentDetailHandler extends AbstractFbaShipmentDetailHan
             String marketplaceId = marketPlaceEnum.getMarketplaceId();
             String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getLastTime()).toString();
             String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(data.getNextTime()).toString();
-            FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO ,false);
+            FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
             ApiResponse<GetShipmentItemsResponse> respWithHttpInfo = api.getShipmentItemsWithHttpInfo(queryType, marketplaceId, lastUpdatedAfter, lastUpdatedBefore, null);
             List<String> limitArray = respWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
             rateLimitStr = limitArray.get(0);

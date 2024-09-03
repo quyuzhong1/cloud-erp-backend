@@ -1,4 +1,4 @@
-package com.erp.sdk.oms.amz.spapi.client;
+package com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA;
 
 import lombok.Getter;
 
