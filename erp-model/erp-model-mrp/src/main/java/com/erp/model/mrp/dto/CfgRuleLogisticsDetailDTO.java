@@ -58,6 +58,11 @@ public class CfgRuleLogisticsDetailDTO implements Serializable {
         private String shopIdJson;
 
         /**
+         * 店铺id集合
+         */
+        private List<String> shopIdList;
+
+        /**
         * 海外仓id
         */
         private String warehouseId;

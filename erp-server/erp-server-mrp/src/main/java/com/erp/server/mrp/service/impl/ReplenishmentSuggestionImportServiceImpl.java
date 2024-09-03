@@ -78,32 +78,85 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         }
     }
     /**
+     * 备货
+     */
+    private void importStockUp (MultipartFile excelFile) {
+        StockUpImportExcelListener excelListenerUtil = new StockUpImportExcelListener();
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), OtherOutStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<StockUpImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<StockUpImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<StockUpImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理校验导入成功数据
+        handleImportReplenishmentRule(successList, errorList);
+    }
+    /**
+     * 动态备货系数
+     */
+    private void importStockingRatio (MultipartFile excelFile ){
+        StockUpImportExcelListener excelListenerUtil = new StockUpImportExcelListener();
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), OtherOutStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<StockUpImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<StockUpImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<StockUpImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理校验导入成功数据
+        handleImportReplenishmentRule(successList, errorList);
+    }
+    /**
      * 导入默认日销量
      */
     private void importDefaultSalesQty () {
 
     }
     /**
-     * 导入
+     * 导入动态日销量
      */
     private void importDynamicSalesQty () {
 
     }
+    /**
+     * 导入固定日销量
+     */
     private void importFixedSalesQty () {
 
     }
-
+    /**
+     * 销量去噪
+     */
     private void importSalesDenoising () {
 
     }
 
-    private void importStockingRatio () {
 
-    }
-
-    private void importStockUp () {
-
-    }
 
     @Override
     public void downloadSalesEstimateTemplate(HttpServletResponse response) {

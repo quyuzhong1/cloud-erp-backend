@@ -1,7 +1,9 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -105,11 +107,15 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         for (CfgRuleLogisticsDTO.ViewDTO viewDTO : cfgLogisticsViewList) {
             List<CfgRuleLogisticsDetailEntity> detailList = cfgRuleLogisticsDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), viewDTO.getId())).collect(Collectors.toList());
             viewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(viewDTO.getLogisticsMethod()));
-            if (CollectionUtils.isEmpty(detailList)) {
-                continue;
+            if (CollectionUtils.isNotEmpty(detailList)) {
+                List<CfgRuleLogisticsDetailDTO.ViewDTO> cfgLogisticsDetailViewList = BeanMapperUtils.copyList(CfgRuleLogisticsDetailDTO.ViewDTO.class, detailList);
+                for (CfgRuleLogisticsDetailDTO.ViewDTO detailViewDTO : cfgLogisticsDetailViewList) {
+                    List<String> shopIdList = JSONUtil.parseArray(detailViewDTO.getShopIdJson()).stream().filter(obj -> ObjectUtil.isNotEmpty(obj))
+                            .map(obj -> obj.toString()).collect(Collectors.toList());
+                    detailViewDTO.setShopIdList(shopIdList);
+                }
+                viewDTO.setDetailList(cfgLogisticsDetailViewList);
             }
-            List<CfgRuleLogisticsDetailDTO.ViewDTO> cfgLogisticsDetailViewList = BeanMapperUtils.copyList(CfgRuleLogisticsDetailDTO.ViewDTO.class, detailList);
-            viewDTO.setDetailList(cfgLogisticsDetailViewList);
         }
         return cfgLogisticsViewList;
     }
