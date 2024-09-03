@@ -38,7 +38,6 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * sku类型
          */
-        @NotBlank(message = "sku类型不能为空")
         private String skuType;
         /**
          * 是否关注

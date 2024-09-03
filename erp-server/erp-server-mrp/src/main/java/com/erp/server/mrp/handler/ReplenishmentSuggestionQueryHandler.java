@@ -10,6 +10,10 @@ public class ReplenishmentSuggestionQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        if("label".equals(field)) {
+
+        }
+
         return null;
     }
 }

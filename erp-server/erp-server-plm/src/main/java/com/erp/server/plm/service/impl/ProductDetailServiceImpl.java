@@ -2392,6 +2392,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return this.queryByProductId(newProductId);
     }
 
+    @Override
+    public List<SkuVO> listApproveAndListingSku() {
+        return baseMapper.listApproveAndListingSku();
+    }
+
     private void customDataProcess(List<ProductDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)){
             return;

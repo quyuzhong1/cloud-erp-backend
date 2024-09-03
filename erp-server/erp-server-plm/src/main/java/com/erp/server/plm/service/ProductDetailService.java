@@ -805,4 +805,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<ProductDetailEntity> changeSkuBySpu(ChangeSkuToSpuDTO changeSkuToSpuDTO);
+
+    List<SkuVO> listApproveAndListingSku();
+
 }

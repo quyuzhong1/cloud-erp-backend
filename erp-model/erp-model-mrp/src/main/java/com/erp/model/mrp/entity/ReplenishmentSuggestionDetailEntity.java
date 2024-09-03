@@ -95,29 +95,29 @@ public class ReplenishmentSuggestionDetailEntity extends BaseEntity<Replenishmen
     @TableField("total_inventory_qty")
     private Integer totalInventoryQty;
 
-    /**
-     * 分时段销量  json
-     */
-    @TableField("sales_qty")
-    private String salesQty;
-
-    /**
-     * 分时段日均销  json
-     */
-    @TableField("avg_sales_qty")
-    private String avgSalesQty;
-
-    /**
-     * 预估销量 json
-     */
-    @TableField("sales_estimate_qty")
-    private String salesEstimateQty;
-
-    /**
-     * 预估日销量  json
-     */
-    @TableField("avg_sales_estimate_qty")
-    private String avgSalesEstimateQty;
+//    /**
+//     * 分时段销量  json
+//     */
+//    @TableField("sales_qty")
+//    private String salesQty;
+//
+//    /**
+//     * 分时段日均销  json
+//     */
+//    @TableField("avg_sales_qty")
+//    private String avgSalesQty;
+//
+//    /**
+//     * 预估销量 json
+//     */
+//    @TableField("sales_estimate_qty")
+//    private String salesEstimateQty;
+//
+//    /**
+//     * 预估日销量  json
+//     */
+//    @TableField("avg_sales_estimate_qty")
+//    private String avgSalesEstimateQty;
 
     /**
      * 采购审批天数（天）

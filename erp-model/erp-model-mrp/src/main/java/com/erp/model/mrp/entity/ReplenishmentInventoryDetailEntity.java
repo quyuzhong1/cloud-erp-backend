@@ -7,6 +7,7 @@ import com.erp.model.mrp.handler.ObjectToListStringHandler;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.util.List;
@@ -64,7 +65,7 @@ public class ReplenishmentInventoryDetailEntity extends BaseEntity<Replenishment
     /**
      * 店铺id的json
      */
-    @TableField(value = "channel_id_json", typeHandler = ObjectToListStringHandler.class)
+    @TableField(value = "channel_id_json",jdbcType = JdbcType.OTHER,typeHandler = ObjectToListStringHandler.class)
     private List<String> channelIdJson;
 
     /**

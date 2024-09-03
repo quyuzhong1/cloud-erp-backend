@@ -5,8 +5,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.MappedJdbcTypes;
+import org.apache.ibatis.type.MappedTypes;
 import org.postgresql.util.PGobject;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.sql.CallableStatement;
@@ -15,7 +16,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-@Component
+@MappedTypes(String.class)
+@MappedJdbcTypes(JdbcType.VARCHAR)
 public class ObjectToListStringHandler extends BaseTypeHandler<List<String>> {
     @Resource
     private ObjectMapper objectMapper;

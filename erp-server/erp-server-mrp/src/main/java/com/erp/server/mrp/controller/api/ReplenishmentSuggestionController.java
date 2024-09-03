@@ -128,7 +128,20 @@ public class ReplenishmentSuggestionController extends BaseController {
     }
 
 
+    /**
+     * 库存预测
+     * @param dto 参数
+     */
+    @PostMapping("/inventoryEstimation")
+    public ApiResult<?> inventoryEstimation(@RequestBody @Validated InventoryEstimationDTO dto) {
+        return null;
+    }
 
+    /**
+     * 库存预测明细
+     * @param dto 参数
+     */
+    @PostMapping("/inventoryEstimationDetail")
     public ApiResult<?> inventoryEstimationDetail(@RequestBody @Validated InventoryEstimationDTO dto) {
         return null;
     }

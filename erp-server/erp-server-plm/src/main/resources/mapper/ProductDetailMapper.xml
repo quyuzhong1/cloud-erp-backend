@@ -2206,4 +2206,16 @@
         pd.sku_no asc
         ) pds
     </select>
+    <select id="listApproveAndListingSku" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT pd.id AS skuId,
+               pd.sku_no
+        FROM product_detail pd
+                 LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+
+                 LEFT JOIN product_sale ps ON pd.id = ps.sku_id AND ps.is_deleted = FALSE
+        WHERE pd.status = 2
+          AND pi.property not IN ('费用', '服务')
+          AND pi.is_deleted = FALSE
+          AND ps.listing_time is not null
+    </select>
 </mapper>

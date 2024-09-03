@@ -163,4 +163,8 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      */
     BatchResultDTO cancelLabel(String id, List<String> labelIdList);
 
+    /**
+     * 获取所有sku和店铺
+     */
+    List<ReplenishmentSuggestionEntity> listAllSkuAndShop();
 }

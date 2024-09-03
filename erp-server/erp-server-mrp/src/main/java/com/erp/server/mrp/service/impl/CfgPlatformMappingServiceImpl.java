@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -100,6 +102,14 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         List<CfgPlatformMappingDTO.ListDTO> list = baseMapper.selectPlatformMapping(dto);
         handleSelectPaging(list);
         return list;
+    }
+
+    @Override
+    public List<CfgPlatformMappingEntity> listByEffective() {
+        return list(Wrappers.<CfgPlatformMappingEntity>lambdaQuery()
+                .eq(CfgPlatformMappingEntity::getDisabled, false)
+                .le(CfgPlatformMappingEntity::getEffectiveDate, LocalDate.now())
+        );
     }
 
 

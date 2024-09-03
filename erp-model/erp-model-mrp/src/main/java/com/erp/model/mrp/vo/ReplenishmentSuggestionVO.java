@@ -387,24 +387,24 @@ public class ReplenishmentSuggestionVO {
         /**
          * 分时段销量
          */
-        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        @TableField(jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
         private List<SalesVO> salesQty;
 
         /**
          * 分时段日均销
          */
-        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        @TableField(jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
         private List<SalesVO> avgSalesQty;
 
         /**
          * 预估销量
          */
-        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        @TableField(jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
         private List<SalesVO> salesEstimateQty;
         /**
          * 预估日销量
          */
-        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        @TableField(jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
         private List<SalesVO> avgSalesEstimateQty;
         /**
          * 采购审批天数（天）

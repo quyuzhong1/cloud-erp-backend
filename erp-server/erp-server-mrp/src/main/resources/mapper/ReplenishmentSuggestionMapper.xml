@@ -2,26 +2,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.mrp.mapper.ReplenishmentSuggestionMapper">
 
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.ReplenishmentSuggestionEntity">
-        <result column="id" property="id"/>
-        <result column="create_user_id" property="createUserId"/>
-        <result column="create_user_name" property="createUserName"/>
-        <result column="create_time" property="createTime"/>
-        <result column="update_user_id" property="updateUserId"/>
-        <result column="update_user_name" property="updateUserName"/>
-        <result column="update_time" property="updateTime"/>
-        <result column="version" property="version"/>
-        <result column="is_deleted" property="isDeleted"/>
-        <result column="platform_type" property="platformType"/>
-        <result column="sku_id" property="skuId"/>
-        <result column="sku_no" property="skuNo"/>
-        <result column="country" property="country"/>
-        <result column="shop_id" property="shopId"/>
-        <result column="platform" property="platform"/>
-        <result column="replenishment_type" property="replenishmentType"/>
-        <result column="remark" property="remark"/>
-    </resultMap>
 
     <select id="paging" resultType="com.erp.model.mrp.vo.ReplenishmentSuggestionVO$PagingView">
         select rs.id,
@@ -32,8 +12,6 @@
                rs.country,
                rs.shop_id,
                rs.platform,
-               rs.brand_id,
-               rs.category_id,
                rs.replenishment_type,
                rs.remark,
                rsd.id as detailId,

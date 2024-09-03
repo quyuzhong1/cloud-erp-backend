@@ -42,4 +42,7 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
      * @return List<ListDTO>
      */
     List<CfgPlatformMappingDTO.ListDTO> selectPlatformMapping(CfgPlatformMappingDTO.SelectDTO dto);
+
+    List<CfgPlatformMappingEntity> listByEffective();
+
 }

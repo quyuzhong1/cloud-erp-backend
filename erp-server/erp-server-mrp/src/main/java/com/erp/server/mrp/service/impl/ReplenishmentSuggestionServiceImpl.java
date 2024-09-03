@@ -31,6 +31,7 @@ import com.erp.server.mrp.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -130,6 +131,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             DictCountryEntity dictCountry = countryList.stream().filter(v -> v.getId().equals(view.getCountry())).findFirst().orElse(new DictCountryEntity());
             boolean favorite = favoriteList.stream().anyMatch(v -> v.getReplenishmentSuggestionId().equals(view.getId()) && v.getUserId().equals(user.getUid()));
             view.setFavorite(favorite);
+            view.setProductName(skuVO.getSkuName());
             view.setSkuImgUrl(skuVO.getSkuImagesUrl());
             view.setBrandName(skuVO.getBrandName());
             view.setCategoryName(skuVO.getCategoryName());
@@ -158,15 +160,21 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     .collect(Collectors.toMap(RecentSuggestionDetailEntity::getType, v -> v, (o1, o2) -> o1));
             // 最近断货日期
             RecentSuggestionDetailEntity recentOutOfStock = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_OUT_OF_STOCK.name());
-            view.setOutOfStockDay(new ReplenishmentSuggestionVO.DateVO(recentOutOfStock.getMarkType(), recentOutOfStock.getDate(), recentOutOfStock.getDays()));
-            // 最近断货日期
+            if (!ObjectUtils.isEmpty(recentOutOfStock)){
+                view.setOutOfStockDay(new ReplenishmentSuggestionVO.DateVO(recentOutOfStock.getMarkType(), recentOutOfStock.getDate(), recentOutOfStock.getDays()));
+            }
+            // 最近建议发货日期
             RecentSuggestionDetailEntity recentSuggestShipping = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_SUGGESTION_SHIPPING.name());
-            view.setSuggestShippingDate(new ReplenishmentSuggestionVO.DateVO(recentSuggestShipping.getMarkType(), recentSuggestShipping.getDate(), recentSuggestShipping.getDays()));
-            view.setSuggestShippingQty(recentSuggestShipping.getQty());
-            // 最近断货日期
+            if (!ObjectUtils.isEmpty(recentSuggestShipping)) {
+                view.setSuggestShippingDate(new ReplenishmentSuggestionVO.DateVO(recentSuggestShipping.getMarkType(), recentSuggestShipping.getDate(), recentSuggestShipping.getDays()));
+                view.setSuggestShippingQty(recentSuggestShipping.getQty());
+            }
+            // 最近建议采购日期
             RecentSuggestionDetailEntity recentSuggestPurchase = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_SUGGESTION_PURCHASE.name());
-            view.setSuggestPurchaseDate(new ReplenishmentSuggestionVO.DateVO(recentSuggestPurchase.getMarkType(), recentSuggestPurchase.getDate(), recentSuggestPurchase.getDays()));
-            view.setSuggestPurchaseQty(recentSuggestPurchase.getQty());
+            if (!ObjectUtils.isEmpty(recentSuggestPurchase)) {
+                view.setSuggestPurchaseDate(new ReplenishmentSuggestionVO.DateVO(recentSuggestPurchase.getMarkType(), recentSuggestPurchase.getDate(), recentSuggestPurchase.getDays()));
+                view.setSuggestPurchaseQty(recentSuggestPurchase.getQty());
+            }
         }
     }
 
@@ -507,5 +515,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .set(ReplenishmentSuggestionEntity::getReplenishmentRemark, replenishmentRemark)
                 .set(ReplenishmentSuggestionEntity::getReplenishmentType, replenishmentType)
                 .update();
+    }
+    @Override
+    public List<ReplenishmentSuggestionEntity> listAllSkuAndShop() {
+        return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
+                .select(ReplenishmentSuggestionEntity::getSkuId,
+                        ReplenishmentSuggestionEntity::getSkuNo,
+                        ReplenishmentSuggestionEntity::getShopId));
     }
 }
