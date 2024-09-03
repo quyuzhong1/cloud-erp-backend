@@ -383,15 +383,9 @@ public class PilotApplicationController extends BaseController {
      * @author tmj
      */
     @PostMapping("/pushPurchaseApplication")
-    public ApiResult<List<BatchResultDTO>> pushPurchaseApplication(@RequestBody @Validated List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList){
-        LoginUser loginUser = UserContext.getNonLoginUser();
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUserName()));
-        List<BatchResultDTO> resultList = new ArrayList<>(dtoList.size());
-        for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : dtoList) {
-            BatchResultDTO result = pilotApplicationService.pushPurchaseApplication(dto, userList.get(0));
-            resultList.add(result);
-        }
-        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
+    public ApiResult<BatchResultDTO> pushPurchaseApplication(@RequestBody @Validated List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList){
+        BatchResultDTO result = pilotApplicationService.pushPurchaseApplication(dtoList);
+        return result.getSuccess() ? success(result) : failure(result);
     }
 
     /**
@@ -399,15 +393,9 @@ public class PilotApplicationController extends BaseController {
      * @author tmj
      */
     @PostMapping("/pushAndSubmitPurchaseApplication")
-    public ApiResult<List<BatchResultDTO>> pushAndSubmitPurchaseApplication(@RequestBody @Validated List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList){
-        LoginUser loginUser = UserContext.getNonLoginUser();
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUserName()));
-        List<BatchResultDTO> resultList = new ArrayList<>(dtoList.size());
-        for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : dtoList) {
-            BatchResultDTO resultDTO = pilotApplicationService.pushAndSubmitPurchaseApplication(dto, userList.get(0));
-            resultList.add(resultDTO);
-        }
-        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
+    public ApiResult<BatchResultDTO> pushAndSubmitPurchaseApplication(@RequestBody @Validated List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList){
+        BatchResultDTO resultDTO = pilotApplicationService.pushAndSubmitPurchaseApplication(dtoList);
+        return resultDTO.getSuccess() ? success(resultDTO) : failure(resultDTO);
     }
 
     /**

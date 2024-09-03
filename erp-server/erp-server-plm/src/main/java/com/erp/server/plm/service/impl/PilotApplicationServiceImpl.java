@@ -12,7 +12,6 @@ import com.common.core.entity.BaseEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
-import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.SupplierDTO;
@@ -20,13 +19,9 @@ import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.PurchaseApplicationFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.rpc.wms.feign.SupplierFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.server.plm.mapper.PilotApplicationMapper;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
@@ -155,7 +150,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
         for (PilotApplicationDetailDTO.AddDTO detailDTO : addDTO.getProductDetailList()) {
             detailDTO.setMainId(pilotApplicationEntity.getId());
-            //todo skuID
         }
         List<PilotApplicationDetailEntity> entityList = BeanMapper.copyList(addDTO.getProductDetailList(), PilotApplicationDetailEntity.class);
         pilotApplicationDetailService.saveBatch(entityList);
@@ -372,6 +366,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录试产申请日志数据，id：【{}】", id);
+        this.addLog(entity.getId(), "审核操作", "审核操作", "审核状态", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -456,7 +451,19 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
+        this.addLog(id, "反审核", "反审核", "审核状态", entity.getApproveStatus().getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+    }
+
+    private void addLog(String id, String operation, String content, String field, String oldValue, String newValue){
+        SysLogEntity logEntity = new SysLogEntity();
+        logEntity.setBusinessId(id);
+        logEntity.setOperation(operation);
+        logEntity.setContent(content);
+        logEntity.setFieldName(field);
+        logEntity.setOldValue(oldValue);
+        logEntity.setNewValue(newValue);
+        sysLogService.addSysLogByOther(logEntity);
     }
 
     private Boolean validateDisApprove(PilotApplicationEntity entity) {
@@ -705,13 +712,49 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     @Override
-    public BatchResultDTO pushPurchaseApplication(PilotApplicationDTO.PushPurchaseApplicationDTO dto, FindUserDTO userInfo) {
-        PurchaseApplicationDTO.AddDTO paramDto = getPurchaseAddDTO(userInfo);
+    public BatchResultDTO pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
+        PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(applicationDTOList);
         return purchaseApplicationFeign.add(paramDto);
+    }
+
+    private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUserName()));
+        List<String> warehouseIds = applicationDTOList.stream().map(item -> item.getToWarehouseId()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseFeign.listWarehouseByIds(warehouseIds);
+
+        List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
+        for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : applicationDTOList) {
+            PurchaseApplicationDetailDTO.AddDTO purchaseDTO = new PurchaseApplicationDetailDTO.AddDTO();
+            purchaseDTO.setApplyQty(dto.getPurchaseApplyQty());
+            purchaseDTO.setDestWarehouseId(dto.getToWarehouseId());
+            Optional<WarehouseDTO.UpdateDTO> warehouseOptional = warehouseList.stream().filter(item -> item.getId().equals(dto.getToWarehouseId())).findFirst();
+            warehouseOptional.ifPresent(updateDTO -> purchaseDTO.setDestWarehouseName(updateDTO.getName()));
+            purchaseDTO.setIsUrgent(false);
+            purchaseDTO.setMoq(dto.getPurchaseApplyQty());
+            purchaseDTO.setPlanDeliveryDate(dto.getPlanDeliveryDate());
+            purchaseDTO.setProductName(dto.getProductName());
+            purchaseDTO.setPurchaseOrgId(dto.getPurchaseOrgId());
+            purchaseDTO.setPurchaseOrgName("");
+            purchaseDTO.setSkuId(dto.getSkuId());
+            purchaseDTO.setSkuNo(dto.getSkuNo());
+            purchaseDTO.setPurchaseApplicationId("");
+//            purchaseDTO.setUnitQty(0);
+//            purchaseDTO.setVariantProperty("");
+            detailList.add(purchaseDTO);
+        }
+        PurchaseApplicationDTO.AddDTO paramDto = new PurchaseApplicationDTO.AddDTO();
+        paramDto.setApplyDate(LocalDate.now());
+        paramDto.setApplyUserId(userList.get(0).getUserId());
+        paramDto.setApplyDeptId(userList.get(0).getDepartmentId());
+        paramDto.setIsFirstMassProduct(Boolean.TRUE);
+        paramDto.setDetails(detailList);
+        return paramDto;
     }
 
     private static PurchaseApplicationDTO.AddDTO getPurchaseAddDTO(FindUserDTO userInfo) {
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
+//        PurchaseApplicationDetailDTO.AddDTO
         //todo 补充明细
         PurchaseApplicationDTO.AddDTO paramDto = new PurchaseApplicationDTO.AddDTO();
         paramDto.setApplyDate(LocalDate.now());
@@ -767,12 +810,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     @Override
-    public BatchResultDTO pushAndSubmitPurchaseApplication(PilotApplicationDTO.PushPurchaseApplicationDTO dto, FindUserDTO findUserDTO) {
-        PurchaseApplicationDTO.AddDTO paramDto = getPurchaseAddDTO(findUserDTO);
-        return purchaseApplicationFeign.addAndSubmit(paramDto);
-    }
-
-    @Override
     public List<PilotApplicationDTO.WarehouseDTO> listWarehouse() {
         List<WarehouseDTO.UpdateDTO> list = warehouseFeign.listApproveWarehouse();
         List<PilotApplicationDTO.WarehouseDTO> resultList = new ArrayList<>(list.size());
@@ -817,6 +854,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Override
     public List<PilotApplicationRefTaskDTO.SimpleListDTO> listRefTask(String id) {
         List<PilotApplicationRefTaskEntity> list = pilotApplicationRefTaskService.lambdaQuery().eq(PilotApplicationRefTaskEntity::getMainId, id).list();
+        //todo 查询任务详情
         return Collections.emptyList();
     }
 
@@ -833,11 +871,14 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             skuParamDTO.setSaleMethod(StringUtils.join(saleMethodParams, ","));
         }
         List<ProductSearchDTO.SkuListDTO> list = productDetailMapper.listSkuBySkuNos(skuParamDTO);
+        Map<String, String> skuNo2IdMap = list.stream().collect(Collectors.toMap(item -> item.getSkuNo(), item2 -> item2.getSkuId()));
 
         List<String> supplierIdList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplier())).map(ProductSearchDTO.SkuListDTO::getMainSupplier).distinct().collect(Collectors.toList());
         //供应商名称
         List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
-
+        //产品费用
+        List<String> skuIds = list.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
+        List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
         List<ProductSearchDTO.SkuListDTO> resultList = new ArrayList<>();
         for (String skuNo : skuParamDTO.getSkuNoList()) {
             ProductSearchDTO.SkuListDTO skuListDTO = list.stream().filter(obj -> obj.getSkuNo().equals(skuNo)).findFirst().orElse(null);
@@ -850,12 +891,22 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             ProductSearchDTO.SkuListDTO finalSkuListDTO = skuListDTO;
             String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(finalSkuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             skuListDTO.setMainSupplierName(supplierName);
-//            skuListDTO.setTargetTaxCost();
-//            skuListDTO.setTargetNoTaxCost();
-//            skuListDTO.setActualTaxCost();
-//            skuListDTO.setActualNoTaxCost();
+            Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(skuNo2IdMap.get(skuNo))).findFirst();
+            if(productCostEntityOptional.isPresent()){
+                ProductCostEntity productCostEntity = productCostEntityOptional.get();
+                skuListDTO.setTargetTaxCost(productCostEntity.getTargetTaxCost());
+                skuListDTO.setTargetNoTaxCost(productCostEntity.getTargetNoTaxCost());
+                skuListDTO.setActualTaxCost(productCostEntity.getActualTaxCost());
+                skuListDTO.setActualNoTaxCost(productCostEntity.getActualNoTaxCost());
+            }
             resultList.add(skuListDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public BatchResultDTO pushAndSubmitPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList) {
+        PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(dtoList);
+        return purchaseApplicationFeign.addAndSubmit(paramDto);
     }
 }

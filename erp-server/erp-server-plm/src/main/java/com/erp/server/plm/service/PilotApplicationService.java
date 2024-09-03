@@ -147,17 +147,12 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
     /**
      * 下推采购申请
      */
-    BatchResultDTO pushPurchaseApplication(PilotApplicationDTO.PushPurchaseApplicationDTO dto, FindUserDTO userInfo);
+    BatchResultDTO pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList);
 
     /**
      * 预览采购申请
      */
     List<PilotApplicationDTO.PushPurchaseApplicationDTO> viewPurchaseApplication(PilotApplicationDTO.PurchaseApplicationParamDTO paramDTO);
-
-    /**
-     * 创建并提交采购申请
-     */
-    BatchResultDTO pushAndSubmitPurchaseApplication(PilotApplicationDTO.PushPurchaseApplicationDTO dto, FindUserDTO findUserDTO);
 
     /**
      * 查询仓库
@@ -194,4 +189,9 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * sku快粘贴：根据sku编号查询
      */
     List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO);
+
+    /**
+     * 下推并提交采购申请
+     */
+    BatchResultDTO pushAndSubmitPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList);
 }
