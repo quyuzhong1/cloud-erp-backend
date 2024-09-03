@@ -1,8 +1,9 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.entity.FbaShipmentPackingEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FbaShipmentPackingDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,15 +15,7 @@ import com.erp.model.wms.dto.FbaShipmentPackingDTO;
  */
 public interface FbaShipmentPackingService extends SuperService<FbaShipmentPackingEntity> {
 
-    /**
-    * 新增
-    * @author lrp
-    * @date: 2024-09-03
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(FbaShipmentPackingDTO.AddDTO dto);
+    void handle(FbaShipmentPackingDTO.PackingDTO data);
 
-
-    void handle(FbaShipmentPackingEntity data);
+    List<FbaShipmentPackingEntity> getByMainIdAndBoxNo(String mainId, String boxNo);
 }

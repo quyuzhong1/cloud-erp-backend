@@ -3,6 +3,7 @@ package com.erp.server.wms.rocketmq.consumer;
 import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.erp.model.wms.dto.FbaShipmentPackingDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.FbaShipmentPackingEntity;
 import com.erp.server.wms.service.FbaShipmentPackingService;
@@ -31,7 +32,7 @@ public class SyncFbaShipmentPackingConsumer extends AbstractNewPlatformConsumerH
 
     @Override
     public void handle(String data) {
-        FbaShipmentPackingEntity dto = JSONUtil.toBean(data, FbaShipmentPackingEntity.class);
+        FbaShipmentPackingDTO.PackingDTO dto = JSONUtil.toBean(data, FbaShipmentPackingDTO.PackingDTO.class);
         fbaShipmentPackingService.handle(dto);
     }
 }

@@ -65,12 +65,6 @@ public class FbaShipmentPackingEntity extends BaseEntity<FbaShipmentPackingEntit
     @TableField("qty")
     private Integer qty;
 
-    /**
-     * 货件号
-     */
-    @TableField(value = "fba_shipment_code",exist = false)
-    private String fbaShipmentCode;
-
     public static final String MAIN_ID = "main_id";
 
     public static final String BOX_NO = "box_no";
