@@ -44,6 +44,7 @@ public interface InitFirstMileAllocationDetailService extends SuperService<InitF
     /**
      * 根据来源单获取明细记录
      * @param sourceIds
+     * @param status
      * @return
      */
     List<InitFirstMileAllocationDetailEntity> listBySourceIds(List<String> sourceIds, String status);

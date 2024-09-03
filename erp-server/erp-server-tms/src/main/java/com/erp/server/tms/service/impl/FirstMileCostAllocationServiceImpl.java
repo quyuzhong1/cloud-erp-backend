@@ -287,17 +287,18 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (CollectionUtils.isEmpty(logisticsBillEntityList)) {
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(), firstMileDeliveryEntity.getCode(), "未下发物流单，无法分摊");
         }
+        List<String> logisticsBillIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList());
         LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(e -> StrUtil.isNotBlank(e.getLogisticsSupplierId())).findFirst().orElse(null);
         LogisticsSupplierEntity supplierEntity = null;
         if (Objects.nonNull(logisticsBillEntity) && StrUtil.isNotBlank(logisticsBillEntity.getLogisticsSupplierId())) {
             supplierEntity = logisticsSupplierService.getById(logisticsBillEntity.getLogisticsSupplierId());
         }
         //对账单明细 [已审核记录]
-        List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listByBusinessCodes(Collections.singletonList(firstMileDeliveryEntity.getCode()), ApproveStatusEnum.APPROVE.getStatus());
+        List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIdsAndStatus(logisticsBillIds, ApproveStatusEnum.APPROVE.getStatus(), DetailReconciliationTypeEnum.ACTUAL.getCode());
         //暂估账单 [已确认]
         List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList = null;
         try {
-            estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(logisticsBillEntityList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList()), ConfirmStatusEnum.CONFIRM.getCode());
+            estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(logisticsBillIds, ConfirmStatusEnum.CONFIRM.getCode());
         }catch (Exception e){
             log.error("processAllocationData: 暂估账单获取异常:{}", e.getMessage());
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(), firstMileDeliveryEntity.getCode(), "暂估账单获取异常" + e.getMessage());
@@ -375,7 +376,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
         if (!CollectionUtils.isEmpty(reconciliationDetailEntityList)) {
             //后面再进行考虑定时分摊计算，现在只考虑分摊重算
-            TmsFirstMileReconciliationDetailEntity oldReconciliationDetailEntity = reconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(entity.getReconciliationMonth()) && Objects.equals(e.getReconciliationMonth(), entity.getReconciliationMonth())).findFirst().orElse(null);
+            TmsFirstMileReconciliationDetailEntity oldReconciliationDetailEntity = reconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(entity.getReconciliationMonth()) && e.getReconciliationMonth().equals(entity.getReconciliationMonth())).findFirst().orElse(null);
             if (Objects.nonNull(oldReconciliationDetailEntity)) {
                 entity.setStatus(ConfirmStatusEnum.WAIT_CONFIRM.getCode());
                 entity.setReconciliationId(oldReconciliationDetailEntity.getId());
