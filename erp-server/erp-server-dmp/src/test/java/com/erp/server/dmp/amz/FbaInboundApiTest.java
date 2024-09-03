@@ -13,23 +13,21 @@
 package com.erp.server.dmp.amz;
 
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
-import com.erp.sdk.oms.amz.spapi.api.extend.FbaInboundExtendApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmazonFbaInboundPlanApiInitHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.junit.Ignore;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import org.junit.runner.RunWith;
@@ -42,12 +40,15 @@ import javax.annotation.Resource;
 /**
  * API tests for FbaInboundApi
  */
+@Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Profile("dev")
 public class FbaInboundApiTest {
     @Resource
     private CfgAppClientService cfgAppClientService;
+    @Resource
+    private DmpInputAmazonFbaInboundPlanApiInitHandler dmpInputAmazonFbaInboundPlanApiInitHandler;
 
     //private final FbaInboundApi api = new FbaInboundApi();
     private final FbaInboundApi api = null;
@@ -409,7 +410,7 @@ public class FbaInboundApiTest {
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
         String inboundPlanId = "wf04b6e5ea-8720-4906-8b2d-0d1d3b08001d";
-        Integer pageSize = null;
+        Integer pageSize = 1000;
         String paginationToken = null;
         ListInboundPlanBoxesResponse response = api.listInboundPlanBoxes(inboundPlanId, pageSize, paginationToken);
         System.out.println("入库计划装箱信息");
@@ -486,7 +487,6 @@ public class FbaInboundApiTest {
     public void allListInboundPlansTest() throws ApiException, LWAException {
         String shopId = "1735516266715680769";
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
-        FbaInboundExtendApi api = AmazonSpApiInitUtils.create(FbaInboundExtendApi.class, shopInfoDTO, false);
         // Value	Description
         //ACTIVE	An inbound plan that is being worked on.
         //VOIDED	An inbound plan with all shipment cancelled and can no longer be modified.
@@ -499,11 +499,36 @@ public class FbaInboundApiTest {
         // DESC	Descending order.
         String sortOrder = "DESC";
 //        ListInboundPlansResponse response = api.listInboundPlans(pageSize, paginationToken, status, sortBy, sortOrder);
-        List<InboundPlanSummary> list = api.allListInboundPlansWithHttpInfo(status, sortBy, sortOrder);
+
+        List<InboundPlanSummary> list = dmpInputAmazonFbaInboundPlanApiInitHandler.requestAmazonFbaInboundPlan(shopInfoDTO, "");
         System.out.println("入库计划列表");
         System.out.println(JSONUtil.toJsonStr(list));
 
         // TODO: test validations
+    }
+
+    @Test
+    public void listAndDetail(){
+        String shopId = "1735516266715680769";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+
+
+        List<InboundPlanSummary> list = dmpInputAmazonFbaInboundPlanApiInitHandler.requestAmazonFbaInboundPlan(shopInfoDTO, "{\"status\":\"ACTIVE\"}");
+        System.out.println("入库计划列表");
+        System.out.println(JSONUtil.toJsonStr(list));
+        // api
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        for (InboundPlanSummary inboundPlanSummary : list) {
+            String inboundPlanId = inboundPlanSummary.getInboundPlanId();
+            try {
+                InboundPlan sourceEntity = api.getInboundPlan(inboundPlanId);
+                System.out.println("入库计划明细");
+                System.out.println(JSONUtil.toJsonStr(sourceEntity));
+            } catch (ApiException | LWAException e) {
+                log.error("请求失败：inboundPlanId={}, error={}", inboundPlanId, ExceptionUtil.stacktraceToString(e));
+                continue;
+            }
+        }
     }
 
     /**
@@ -595,6 +620,9 @@ public class FbaInboundApiTest {
      */
     @Test
     public void listShipmentBoxesTest() throws ApiException, LWAException {
+        String shopId = "1735516266715680769";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+
         String inboundPlanId = null;
         String shipmentId = null;
         Integer pageSize = null;
@@ -629,13 +657,17 @@ public class FbaInboundApiTest {
      */
     @Test
     public void listShipmentItemsTest() throws ApiException, LWAException {
-        String inboundPlanId = null;
-        String shipmentId = null;
+        String shopId = "1735516266715680769";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        String inboundPlanId = "wf04b6e5ea-8720-4906-8b2d-0d1d3b08001d";
+        String shipmentId = "shd3d946cd-7ec6-4f34-b626-71318daa3e5f";
         Integer pageSize = null;
         String paginationToken = null;
         ListShipmentItemsResponse response = api.listShipmentItems(inboundPlanId, shipmentId, pageSize, paginationToken);
-
-// TODO: test validations
+        System.out.println("货件明细");
+        System.out.println(JSONUtil.toJsonStr(response));
+        // TODO: test validations
     }
 
     /**

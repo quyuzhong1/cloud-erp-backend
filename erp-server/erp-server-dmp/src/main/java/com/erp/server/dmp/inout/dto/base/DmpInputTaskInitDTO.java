@@ -30,4 +30,14 @@ public class DmpInputTaskInitDTO implements Serializable {
 	 * 内容形式
 	 */
 	private DmpInputTaskFileContentTypeEnum contentType = DmpInputTaskFileContentTypeEnum.JSON;
+
+
+	/**
+	 * 初始化响应
+	 */
+	public static DmpInputTaskInitDTO initMsg(String msg){
+		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+		dmpInputTaskInitDTO.setMsg(msg);
+		return dmpInputTaskInitDTO;
+	}
 }

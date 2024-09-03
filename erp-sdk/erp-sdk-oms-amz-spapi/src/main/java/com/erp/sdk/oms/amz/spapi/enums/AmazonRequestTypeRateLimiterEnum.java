@@ -30,6 +30,11 @@ public enum AmazonRequestTypeRateLimiterEnum {
     // 货件相关
     FBA_SHIPMENT("2", "30","fba_shipment","货件信息"),
     FBA_SHIPMENT_DETAIL("2", "30","fba_shipment_detail","货件详情信息"),
+    // 入库计划
+    FBA_INBOUND_PLAN("2", "6","fba_inbound_plan","FBA入库计划列表"),
+    FBA_INBOUND_PLAN_DETAIL("2", "6","fba_inbound_plan_detail","FBA入库计划信息"),
+    FBA_INBOUND_PLAN_BOXES("2", "6","fba_inbound_plan_boxes","FBA入库计划装箱信息"),
+    FBA_INBOUND_PLAN_SHIPMENT("2", "6","fba_inbound_plan_shipment","FBA入库计划货件信息"),
 
     // 报告相关
     REPORTS("0.0222", "10","reports","报告列表"),
