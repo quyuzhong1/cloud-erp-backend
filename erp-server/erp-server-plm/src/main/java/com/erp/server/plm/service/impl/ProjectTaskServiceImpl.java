@@ -5167,6 +5167,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Override
     public List<ProjectTaskDTO.SimpleViewDTO> listSimpleViewByIds(List<String> taskIds) {
+        if(taskIds.isEmpty()){
+            return Collections.EMPTY_LIST;
+        }
         List<ProjectTaskDTO.SimpleViewDTO> list = this.baseMapper.listByTaskIds(taskIds);
         List<String> spuNos = list.stream().map(item -> item.getSpuNo()).distinct().collect(Collectors.toList());
         if(!spuNos.isEmpty()){

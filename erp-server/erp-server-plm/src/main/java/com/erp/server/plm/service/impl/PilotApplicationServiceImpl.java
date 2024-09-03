@@ -526,11 +526,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Override
     public PilotApplicationDTO.ViewDTO view(String id) {
         PilotApplicationEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到试产申请数据"));
-        List<PilotApplicationDetailEntity> productDetailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id).list();
-        List<PilotApplicationRefTaskEntity> taskList = pilotApplicationRefTaskService.lambdaQuery().eq(PilotApplicationRefTaskEntity::getMainId, id).list();
 
         // 数据填充处理
-        PilotApplicationDTO.ViewDTO view = fillOne(entity, productDetailList, taskList);
+        PilotApplicationDTO.ViewDTO view = fillOne(entity);
         return view;
     }
     /**
@@ -555,12 +553,14 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
     }
 
-    private PilotApplicationDTO.ViewDTO fillOne(PilotApplicationEntity pilotApplicationEntity, List<PilotApplicationDetailEntity> productDetailList, List<PilotApplicationRefTaskEntity> refTaskList) {
+    private PilotApplicationDTO.ViewDTO fillOne(PilotApplicationEntity pilotApplicationEntity) {
         if (ObjectUtil.isEmpty(pilotApplicationEntity)) {
             return null;
         }
+        List<PilotApplicationRefTaskEntity> refTaskList = pilotApplicationRefTaskService.lambdaQuery().eq(PilotApplicationRefTaskEntity::getMainId, pilotApplicationEntity.getId()).list();
+        List<PilotApplicationDetailEntity> productDetailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, pilotApplicationEntity.getId()).list();
         //产品任务
-        List<String> taskIds = refTaskList.stream().map(item -> item.getTaskId()).distinct().collect(Collectors.toList());
+        List<String> taskIds = refTaskList.stream().map(item -> item.getTaskId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<ProjectTaskDTO.SimpleViewDTO> taskList = projectTaskService.listSimpleViewByIds(taskIds);
         Map<String, ProjectTaskDTO.SimpleViewDTO> taskMap = taskList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
@@ -591,7 +591,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             }
         }
         //处理关联任务
-        /*for (PilotApplicationRefTaskDTO.ViewDTO taskDTO : taskViewList) {
+        for (PilotApplicationRefTaskDTO.ViewDTO taskDTO : taskViewList) {
             if(! taskMap.containsKey(taskDTO.getTaskId())){
                 log.error("试产量产单没有找到任务详情:{} {}",taskDTO.getId(), taskDTO.getTaskId());
                 continue;
@@ -603,16 +603,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             taskDTO.setPhaseId(entity.getPhaseId());
             taskDTO.setPhaseName(entity.getPhaseName());
             taskDTO.setProductId(entity.getProductId());
-            //todo 填充关联任务信息
             taskDTO.setProductName(entity.getProductName());
             taskDTO.setSkuNo(entity.getSkuNoStr());
             taskDTO.setSpuNo(entity.getSpuNo());
             taskDTO.setStatus(entity.getStatus());
             taskDTO.setStatusName(TaskStateEnum.getName(entity.getStatus()));
-        }*/
+        }
         view.setApproveStatusName(view.getApproveStatus().getName());
         view.setProductDetailList(detailViewList);
-//        view.setTaskList(taskViewList);
+        view.setTaskList(taskViewList);
         //审核记录
         List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getId());
         view.setApproveFlowList(approveHistoryList);

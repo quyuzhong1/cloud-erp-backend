@@ -285,7 +285,7 @@ public class PilotApplicationDTO implements Serializable {
         /**
          * 关联任务
          */
-//        private List<PilotApplicationRefTaskDTO.ViewDTO> taskList;
+        private List<PilotApplicationRefTaskDTO.ViewDTO> taskList;
 
         /**
          * 审核记录
