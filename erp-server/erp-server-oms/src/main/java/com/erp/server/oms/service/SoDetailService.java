@@ -138,7 +138,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @author yl
      * @date 2023-05-17 16:00
      */
-    void updateSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList, boolean isChangeVirtual);
+    void updateSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList, SoInfoEntity old);
 
     /**
      * 根据主表ids 删除数据
@@ -327,7 +327,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param detailId
      * @return BatchResultDTO
      */
-    BatchResultDTO batchUnLockVirtualInventory(String detailId);
+    BatchResultDTO batchUnLockVirtualInventory(String detailId,SoInfoEntity old);
     /**
      * 扣减冻结数量
      * @author will
