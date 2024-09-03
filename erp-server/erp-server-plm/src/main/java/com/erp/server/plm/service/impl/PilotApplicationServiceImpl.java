@@ -579,8 +579,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setBillDate(pilotApplicationEntity.getBillDate());
         view.setRemark(pilotApplicationEntity.getRemark());
         view.setApproveStatus(pilotApplicationEntity.getApproveStatus());
-        view.setAttachNameList(Arrays.asList(pilotApplicationEntity.getAttachNameList()));
-        view.setAttachUrlList(Arrays.asList(pilotApplicationEntity.getAttachUrlList()));
+        view.setAttachNameList(Arrays.asList(pilotApplicationEntity.getAttachNameList().split(",")));
+        view.setAttachUrlList(Arrays.asList(pilotApplicationEntity.getAttachUrlList().split(",")));
         List<PilotApplicationDetailDTO.ViewDTO> detailViewList = BeanMapper.copyList(productDetailList, PilotApplicationDetailDTO.ViewDTO.class);
         List<PilotApplicationRefTaskDTO.ViewDTO> taskViewList = BeanMapper.copyList(taskList, PilotApplicationRefTaskDTO.ViewDTO.class);
         //供应商
