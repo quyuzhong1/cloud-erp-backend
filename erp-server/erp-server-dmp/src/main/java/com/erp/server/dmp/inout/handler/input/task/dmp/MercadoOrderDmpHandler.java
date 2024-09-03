@@ -77,15 +77,6 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     dmpDataMap.put("platformUpdateTime", offsetDateTime.toLocalDateTime());
                 }
 
-                Object orders = dmpDataMap.get("orders");
-                if (ObjectUtil.isNotEmpty(orders)) {
-                    List<Object> objectsList = (List<Object>) orders;
-                    for (Object o : objectsList) {
-                        Map<String, Object> map = (Map<String, Object>) o;
-                        dmpDataMap.put("platformCode", map.get("fid"));
-                    }
-                }
-
                 Map<String, Object> shipmentIdMap = (Map<String, Object>) dmpDataMap.get("shipping");
                 Object shipmentId = shipmentIdMap.get("fid");
                 if (shipmentId != null) {
