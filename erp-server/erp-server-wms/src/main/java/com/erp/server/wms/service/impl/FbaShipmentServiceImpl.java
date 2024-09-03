@@ -1776,4 +1776,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FbaShipmentDTO.ExportDTO> fillDTOList = fillReceive(exportDTOList);
         return new PagingVO<>(fillDTOList, (int) page.getTotal(),dto.getPageSize(), dto.getCurrPage());
     }
+
+    @Override
+    public boolean updatePackingStatus(String id) {
+        if(StringUtils.isBlank(id)){
+            return false;
+        }
+        return lambdaUpdate().eq(FbaShipmentEntity::getId,id).set(FbaShipmentEntity::getIsPackingDownload,true).update();
+    }
 }

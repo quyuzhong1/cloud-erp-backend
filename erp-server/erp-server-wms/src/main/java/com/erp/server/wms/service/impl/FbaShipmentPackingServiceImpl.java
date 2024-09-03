@@ -40,8 +40,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentPackingMapper, FbaShipmentPackingEntity> implements FbaShipmentPackingService {
-    @Autowired
-    private OperateLogService operateLogService;
 
     @Resource
     private FbaShipmentService fbaShipmentService;
@@ -90,6 +88,9 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         });
         if(CollectionUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
+            if(!fbaShipmentEntity.getIsPackingDownload()){
+                fbaShipmentService.updatePackingStatus(fbaShipmentEntity.getId());
+            }
         }
     }
 
