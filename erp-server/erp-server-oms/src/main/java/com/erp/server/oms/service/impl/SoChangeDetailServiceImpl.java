@@ -580,7 +580,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //释放明细库存
             List<String> idList = saveOrUpdateList.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(SoDetailEntity::getId).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(idList)) {
-                idList.forEach(obj -> soDetailService.batchUnLockVirtualInventory(obj));
+                idList.forEach(obj -> soDetailService.batchUnLockVirtualInventory(obj,null));
             }
         }
 

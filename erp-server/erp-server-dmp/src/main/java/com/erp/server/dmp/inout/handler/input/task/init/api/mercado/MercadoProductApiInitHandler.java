@@ -1,11 +1,13 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.mercado;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
@@ -54,30 +56,50 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
             return Collections.emptyList();
         }
 
-        //每次最多获取200条
-        Integer pageSize = 200;
+        //每次最多获取50条
+        Integer pageSize = 50;
         //当前页数
         Integer pageNo = 0;
-        //总页数
-        Integer pageCount = 1;
 
         //接口地址
         String url = MercadoConstant.URL;
         String path = dmpInputApiInitRequest.getApiType().replace("{userId}", shopInfoDTO.getUserId().toString());
-        while(pageNo < pageCount) {
+        Boolean nexflag = true;
+
+        while (nexflag) {
+            int offset = pageSize * pageNo;
 
             //入参
             HashMap<String, Object> params = new HashMap<>(2);
             params.put("limit", pageSize);
-            params.put("offset", pageNo);
+            params.put("offset", offset);
 
             //设置请求头
             Map<String, String> headerMap = new HashMap<>(1);
             headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 
             //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            ApiResult apiResult = new ApiResult();
+            Object data = null;
+            long sleepTime = 1000;
+            int count = 0;
+            while(ObjectUtil.isEmpty(data)) {
+                apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+                if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
+                    if(count == 10) {
+                        throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
+                    }
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {}
+                    sleepTime = sleepTime + 1000;
+                    count = count + 1;
+                }
+                data = apiResult.getData();
+            }
+
             if (!Objects.equals(apiResult.getCode(), 200)) {
+                nexflag = false;
                 log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
@@ -89,15 +111,16 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
             try {
                 listingDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingDTO.class);
             } catch (JsonProcessingException e) {
+                nexflag = false;
                 log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
             if (CollectionUtils.isEmpty(listingDTO.getResults())) {
+                nexflag = false;
                 break;
             }
-            pageCount = (listingDTO.getPaging().getTotal() + pageSize - 1) / pageSize;
             pageNo++;
 
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();

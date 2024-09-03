@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.core.anno.ParamData;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.PannoEnum;
@@ -96,7 +97,25 @@ public class MercadoOrdeCostInitHandler extends DmpInputInitHandler {
 			orderHeaderMap.put("x-format-new", "true");
 
 			//拉取数据
-			ApiResult shipmentResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+			ApiResult shipmentResult = new ApiResult();
+			Object data = null;
+			long sleepTime = 1000;
+			int count = 0;
+			while(ObjectUtil.isEmpty(data)) {
+				shipmentResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+				if(shipmentResult.getMsg().equalsIgnoreCase("Read timed out")) {
+					if(count == 10) {
+						throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
+					}
+					try {
+						Thread.sleep(sleepTime);
+					} catch (InterruptedException e) {}
+					sleepTime = sleepTime + 1000;
+					count = count + 1;
+				}
+				data = shipmentResult.getData();
+			}
+
 			if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
 				log.error("调用url={},入参params={}, 美客多费用明细数据失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 费用明细请求失败，返回值 responseMap={}",
