@@ -1,8 +1,13 @@
 package com.erp.server.dmp.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.dmp.dto.DmpInputTaskDTO;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +21,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface DmpInputTaskMapper extends BaseMapper<DmpInputTaskEntity> {
 
+    List<DmpInputTaskDTO.TabListDTO> listStatusCount(String permissionSql);
+
+    IPage paging(Page query, DmpInputTaskDTO.PagingParamDTO params);
 }

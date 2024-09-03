@@ -2,11 +2,24 @@ package com.erp.server.dmp.service.impl;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Resource;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.SyncStatusEnum;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.constant.DmpConstant;
+import com.erp.model.dmp.dto.DmpInputTaskDTO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -149,5 +162,75 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 		}
     	
 		return update;
+	}
+
+	@Override
+	public List<DmpInputTaskDTO.TabListDTO> tabList(PermissionsDTO dto) {
+    	//
+		List<DmpInputTaskDTO.TabListDTO> result = new ArrayList<>(4);
+		List<DmpInputTaskDTO.TabListDTO> countList = baseMapper.listStatusCount(dto.getPermissionSql());
+		//全部
+		int allCount = countList.stream().mapToInt(DmpInputTaskDTO.TabListDTO::getCount).sum();
+		DmpInputTaskDTO.TabListDTO all = new DmpInputTaskDTO.TabListDTO();
+		all.setCount(allCount);
+		all.setTabFlag(DmpConstant.ALL);
+		countList.add(all);
+
+		//同步成功
+		DmpInputTaskDTO.TabListDTO success = new DmpInputTaskDTO.TabListDTO();
+		success.setTabFlag(SyncStatusEnum.SUCCESS_SYNC.getCode());
+		int successCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpInputTaskStatusEnum.FINISH.getCode())).findFirst().
+				flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+		success.setCount(successCount);
+		result.add(success);
+
+		//同步失败
+		DmpInputTaskDTO.TabListDTO failed = new DmpInputTaskDTO.TabListDTO();
+		failed.setTabFlag(SyncStatusEnum.FAILED_SYNC.getCode());
+		int failedCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpInputTaskStatusEnum.ERROR.getCode())).findFirst().
+				flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+		failed.setCount(failedCount);
+		result.add(failed);
+
+		//同步中
+		DmpInputTaskDTO.TabListDTO syncIng = new DmpInputTaskDTO.TabListDTO();
+		syncIng.setTabFlag(SyncStatusEnum.IN_SYNC.getCode());
+		int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpInputTaskStatusEnum.INIT.getCode())
+				|| DmpInputTaskStatusEnum.FDS.getCode().equals(a.getTabFlag())
+				|| DmpInputTaskStatusEnum.MONGO.getCode().equals(a.getTabFlag())
+				|| DmpInputTaskStatusEnum.DMP.getCode().equals(a.getTabFlag())
+		).mapToInt(DmpInputTaskDTO.TabListDTO::getCount).sum();
+		syncIng.setCount(syncIngCount);
+		result.add(syncIng);
+
+		//无需同步
+		DmpInputTaskDTO.TabListDTO noNeedSync = new DmpInputTaskDTO.TabListDTO();
+		noNeedSync.setTabFlag(SyncStatusEnum.NO_NEED_SYNC.getCode());
+		int noNeedSyncCount = countList.stream().filter(a -> a.getTabFlag().equals(noNeedSync.getTabFlag())).findFirst().
+				flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+		noNeedSync.setCount(noNeedSyncCount);
+		result.add(noNeedSync);
+		return result;
+	}
+
+	@Override
+	public PagingVO<DmpInputTaskDTO.PagingDTO> paging(PagingDTO<DmpInputTaskDTO.PagingParamDTO> dto) {
+		DmpInputTaskDTO.PagingParamDTO params = dto.getParams();
+		params.setPermissionSql(dto.getPermissionSql());
+		Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+		IPage pageData = baseMapper.paging(query, params);
+		List<DmpInputTaskDTO.PagingDTO> records = pageData.getRecords();
+		//数据处理
+		doOpHandleDmpPushTask(records);
+		return new PagingVO<>(pageData);
+	}
+
+	private void doOpHandleDmpPushTask(List<DmpInputTaskDTO.PagingDTO> list) {
+		if (CollectionUtils.isEmpty(list)) {
+			return;
+		}
+		for (DmpInputTaskDTO.PagingDTO listDTO : list) {
+			listDTO.setSyncTypeName("推送");
+		}
 	}
 }

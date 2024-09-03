@@ -1,8 +1,21 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.SyncStatusEnum;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.constant.DmpConstant;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,5 +100,75 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     */
     private void handleData(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<DmpOutputTaskRecordDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<DmpOutputTaskRecordDTO.TabListDTO> result = new ArrayList<>(4);
+        List<DmpOutputTaskRecordDTO.TabListDTO> countList = baseMapper.listStatusCount(dto.getPermissionSql());
+        //全部
+        int allCount = countList.stream().mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
+        DmpOutputTaskRecordDTO.TabListDTO all = new DmpOutputTaskRecordDTO.TabListDTO();
+        all.setCount(allCount);
+        all.setTabFlag(DmpConstant.ALL);
+        countList.add(all);
+
+        //同步成功
+        DmpOutputTaskRecordDTO.TabListDTO success = new DmpOutputTaskRecordDTO.TabListDTO();
+        success.setTabFlag(SyncStatusEnum.SUCCESS_SYNC.getCode());
+        int successCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        success.setCount(successCount);
+        result.add(success);
+
+        //同步失败
+        DmpOutputTaskRecordDTO.TabListDTO failed = new DmpOutputTaskRecordDTO.TabListDTO();
+        failed.setTabFlag(SyncStatusEnum.FAILED_SYNC.getCode());
+        int failedCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+                || DmpOutputTaskRecordStatusEnum.MQERROR.getCode().equals(a.getTabFlag())
+                || DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode().equals(a.getTabFlag())
+        ).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        failed.setCount(failedCount);
+        result.add(failed);
+
+        //同步中
+        DmpOutputTaskRecordDTO.TabListDTO syncIng = new DmpOutputTaskRecordDTO.TabListDTO();
+        syncIng.setTabFlag(SyncStatusEnum.IN_SYNC.getCode());
+        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.INIT.getCode())
+                || DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode().equals(a.getTabFlag())
+        ).mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
+        syncIng.setCount(syncIngCount);
+        result.add(syncIng);
+
+        //无需同步
+        DmpOutputTaskRecordDTO.TabListDTO noNeedSync = new DmpOutputTaskRecordDTO.TabListDTO();
+        noNeedSync.setTabFlag(SyncStatusEnum.NO_NEED_SYNC.getCode());
+        int noNeedSyncCount = countList.stream().filter(a -> a.getTabFlag().equals(noNeedSync.getTabFlag())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        noNeedSync.setCount(noNeedSyncCount);
+        result.add(noNeedSync);
+        return result;
+    }
+
+    @Override
+    public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> paging(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
+        DmpOutputTaskRecordDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<DmpOutputTaskRecordDTO.PagingDTO> records = pageData.getRecords();
+        //数据处理
+        doOpHandleDmpPushTask(records);
+        return new PagingVO<>(pageData);
+    }
+
+    private void doOpHandleDmpPushTask(List<DmpOutputTaskRecordDTO.PagingDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (DmpOutputTaskRecordDTO.PagingDTO listDTO : list) {
+            listDTO.setSyncTypeName("推送");
+        }
     }
 }
