@@ -7,10 +7,11 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 其他出库单导入
- *
- * @author Jim
- * {@code @date:} 2024/03/22
+ * 动态销量
+ * @author will
+ * @date 2024/9/2 19:29
+ * @param null
+ * @return null
  */
 @Data
 public class DynamicSalesQtyImportExcelDTO implements Serializable {

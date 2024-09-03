@@ -7,12 +7,12 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 默认销量
+ * 固定销量
  * @author will
  * @date 2024/9/2 19:29
  */
 @Data
-public class DefaultSalesQtyImportExcelDTO implements Serializable {
+public class FixedSalesQtyImportExcelDTO implements Serializable {
 
 
     /**
