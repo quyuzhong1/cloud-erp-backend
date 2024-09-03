@@ -1,12 +1,14 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
+import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesDenoisingMapper;
 import com.erp.server.mrp.service.CfgRuleSalesDenoisingService;
 import com.erp.server.mrp.service.OperateLogService;
@@ -115,6 +117,12 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
             //排序
             denoisingEntity.setIndex(index);
 
+            boolean isCompare = (StrUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode())
+                    || StrUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.FIXED_VALUE.getCode()))
+                    && MathUtil.compareTo(denoisingEntity.getEffectiveValue(), MathUtil.ZERO) <= MathUtil.ZERO;
+            if (isCompare) {
+                throw new ServiceException("百分比去噪、固定值去噪数值不能小于1");
+            }
             //时间
             List<LocalDate> dateList = denoisingEntity.getDateList();
             if (CollectionUtils.isNotEmpty(dateList)) {

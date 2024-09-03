@@ -13,7 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2024-08-23 15:05:16
  */
 public enum CfgRuleSalesDenoisingDenoisingTypeEnum implements EnumMessage {
-	FIXEDVALUE("fixedValue", "固定值去噪"),
+    PERCENTAGE("percentage", "百分比去噪"),
+	FIXED_VALUE("fixedValue", "固定值去噪"),
 	COMPLETELY("completely", "完全去噪"),
     ;
     /**
