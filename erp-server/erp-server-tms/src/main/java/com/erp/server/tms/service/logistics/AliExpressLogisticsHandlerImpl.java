@@ -522,54 +522,56 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
+        ApiResult<List<LogisticsPrintLabelResponse>> label = this.getLabel(logisticsQueryVO);
+        return label;
         //组装查询订单详情列表
-        List<LogisticsQueryBaseVO> logisticsQueryVOList = new ArrayList<>(logisticsQueryVO.size());
-        logisticsQueryVO.forEach(logisticsGetLabelVO -> {
-            LogisticsQueryBaseVO logisticsQueryBaseVO = LogisticsQueryBaseVO.builder()
-                    .authMap(logisticsGetLabelVO.getAuthMap())
-                    .orderId(logisticsGetLabelVO.getOrderId())
-                    .deliveryNo(logisticsGetLabelVO.getDeliveryNo())
-                    .transportNo(logisticsGetLabelVO.getTransportNo())
-                    .trackNo(logisticsGetLabelVO.getTrackNo())
-                    .build();
-            logisticsQueryVOList.add(logisticsQueryBaseVO);
-        });
-        ApiResult<List<LogisticsOrderResponseVO>> queryOrderList = this.queryOrderList(logisticsQueryVOList);
+//        List<LogisticsQueryBaseVO> logisticsQueryVOList = new ArrayList<>(logisticsQueryVO.size());
+//        logisticsQueryVO.forEach(logisticsGetLabelVO -> {
+//            LogisticsQueryBaseVO logisticsQueryBaseVO = LogisticsQueryBaseVO.builder()
+//                    .authMap(logisticsGetLabelVO.getAuthMap())
+//                    .orderId(logisticsGetLabelVO.getOrderId())
+//                    .deliveryNo(logisticsGetLabelVO.getDeliveryNo())
+//                    .transportNo(logisticsGetLabelVO.getTransportNo())
+//                    .trackNo(logisticsGetLabelVO.getTrackNo())
+//                    .build();
+//            logisticsQueryVOList.add(logisticsQueryBaseVO);
+//        });
+//        ApiResult<List<LogisticsOrderResponseVO>> queryOrderList = this.queryOrderList(logisticsQueryVOList);
         //根据查询结果进行打印
-        if (queryOrderList.isSuccess() && CollectionUtils.isNotEmpty(queryOrderList.getData())){
-            List<LogisticsOrderResponseVO> data = queryOrderList.getData();
-            List<LogisticsBillDTO.TrackDTO> trackDTOS = new ArrayList<>(logisticsQueryVO.size());
-            logisticsQueryVO.forEach(logisticsGetLabelVO -> {
-                LogisticsOrderResponseVO vo = data.stream().filter(e -> e.getDeliveryNo().equals(logisticsGetLabelVO.getDeliveryNo()) &&  e.getTransportNo().equals(logisticsGetLabelVO.getTransportNo())).findFirst().orElse(null);
-                if (Objects.nonNull(vo) && !StringUtils.isBlank(vo.getTrackNo())){
-                    logisticsGetLabelVO.setTransportNo(vo.getTransportNo());
-                    logisticsGetLabelVO.setTrackNo(vo.getTrackNo());
-                    trackDTOS.add(LogisticsBillDTO.TrackDTO.builder().trackNo(vo.getTrackNo()).transportNo(vo.getTransportNo()).build());
-                }
-            });
-            if (CollectionUtils.isNotEmpty(trackDTOS)){
-                soB2cFeign.updateTrackNoByTransportNo(trackDTOS);
-            }
-            ApiResult<List<LogisticsPrintLabelResponse>> label = this.getLabel(logisticsQueryVO);
-            return label;
-        }else {
-            //对查询数据问题进行转换
-            List<LogisticsOrderResponseVO> data = queryOrderList.getData();
-            if (CollectionUtils.isNotEmpty(data)){
-                List<LogisticsPrintLabelResponse> responses = new ArrayList<>(data.size());
-                data.forEach(logisticsOrderResponseVO -> {
-                    LogisticsPrintLabelResponse build = LogisticsPrintLabelResponse.builder()
-                            .deliveryNoList(Collections.singletonList(logisticsOrderResponseVO.getDeliveryNo()))
-                            .transportNoList(Collections.singletonList(logisticsOrderResponseVO.getTransportNo()))
-                            .build();
-                    build.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), logisticsOrderResponseVO.getDeliveryNo(), logisticsOrderResponseVO.getMessage());
-                    responses.add(build);
-                });
-                return failure(responses);
-            }else {
-                return failure(queryOrderList.getMsg());
-            }
-        }
+//        if (queryOrderList.isSuccess() && CollectionUtils.isNotEmpty(queryOrderList.getData())){
+//            List<LogisticsOrderResponseVO> data = queryOrderList.getData();
+//            List<LogisticsBillDTO.TrackDTO> trackDTOS = new ArrayList<>(logisticsQueryVO.size());
+//            logisticsQueryVO.forEach(logisticsGetLabelVO -> {
+//                LogisticsOrderResponseVO vo = data.stream().filter(e -> e.getDeliveryNo().equals(logisticsGetLabelVO.getDeliveryNo()) &&  e.getTransportNo().equals(logisticsGetLabelVO.getTransportNo())).findFirst().orElse(null);
+//                if (Objects.nonNull(vo) && !StringUtils.isBlank(vo.getTrackNo())){
+//                    logisticsGetLabelVO.setTransportNo(vo.getTransportNo());
+//                    logisticsGetLabelVO.setTrackNo(vo.getTrackNo());
+//                    trackDTOS.add(LogisticsBillDTO.TrackDTO.builder().trackNo(vo.getTrackNo()).transportNo(vo.getTransportNo()).build());
+//                }
+//            });
+//            if (CollectionUtils.isNotEmpty(trackDTOS)){
+//                soB2cFeign.updateTrackNoByTransportNo(trackDTOS);
+//            }
+//            ApiResult<List<LogisticsPrintLabelResponse>> label = this.getLabel(logisticsQueryVO);
+//            return label;
+//        }else {
+//            //对查询数据问题进行转换
+//            List<LogisticsOrderResponseVO> data = queryOrderList.getData();
+//            if (CollectionUtils.isNotEmpty(data)){
+//                List<LogisticsPrintLabelResponse> responses = new ArrayList<>(data.size());
+//                data.forEach(logisticsOrderResponseVO -> {
+//                    LogisticsPrintLabelResponse build = LogisticsPrintLabelResponse.builder()
+//                            .deliveryNoList(Collections.singletonList(logisticsOrderResponseVO.getDeliveryNo()))
+//                            .transportNoList(Collections.singletonList(logisticsOrderResponseVO.getTransportNo()))
+//                            .build();
+//                    build.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), logisticsOrderResponseVO.getDeliveryNo(), logisticsOrderResponseVO.getMessage());
+//                    responses.add(build);
+//                });
+//                return failure(responses);
+//            }else {
+//                return failure(queryOrderList.getMsg());
+//            }
+//        }
     }
 
     /**
@@ -604,7 +606,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(iopResponse));
-                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), "all", iopResponse.getMessage());
+                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.joining(",")), iopResponse.getMessage());
                 responses.add(response);
                 return failure(responses);
             }
@@ -616,7 +618,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelList));
-                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), "all", Objects.isNull(labelResponse)?"速卖通获取物流单失败":labelResponse.getErrorDesc());
+                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.joining(",")), Objects.isNull(labelResponse)?"速卖通获取物流单失败":labelResponse.getErrorDesc());
                 responses.add(response);
                 return failure(responses);
             } else {
