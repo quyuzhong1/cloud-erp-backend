@@ -110,10 +110,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Override
     public BaseResultDTO.AddDTO add(PilotApplicationDTO.AddDTO addDTO) {
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
-        BeanMapperUtils.copy(addDTO, pilotApplicationEntity);
 
         // 数据处理
-        handleData(pilotApplicationEntity);
+        handleData(addDTO, pilotApplicationEntity);
 
         log.info("开始新增试产申请");
         // 生成单号
@@ -167,10 +166,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        PilotApplicationEntity pilotApplicationEntity =  BeanMapperUtils.map(PilotApplicationEntity.class, updateDTO);
-
         // 数据处理
-        handleData(pilotApplicationEntity);
+        PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
+        pilotApplicationEntity.setBillDate(updateDTO.getBillDate());
+        pilotApplicationEntity.setRemark(updateDTO.getRemark());
+        pilotApplicationEntity.setAttachNameList(String.join(",", updateDTO.getAttachNameList()));
+        pilotApplicationEntity.setAttachUrlList(String.join(",", updateDTO.getAttachUrlList()));
+
         log.info("编辑 开始修改试产申请数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(pilotApplicationEntity);
         if(!save) {
@@ -571,7 +573,14 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<ProjectTaskDTO.SimpleViewDTO> taskList = projectTaskService.listSimpleViewByIds(taskIds);
         Map<String, ProjectTaskDTO.SimpleViewDTO> taskMap = taskList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
-        PilotApplicationDTO.ViewDTO view = BeanMapperUtils.map(PilotApplicationDTO.ViewDTO.class, pilotApplicationEntity);
+        PilotApplicationDTO.ViewDTO view = new PilotApplicationDTO.ViewDTO();
+        view.setId(pilotApplicationEntity.getId());
+        view.setCode(pilotApplicationEntity.getCode());
+        view.setBillDate(pilotApplicationEntity.getBillDate());
+        view.setRemark(pilotApplicationEntity.getRemark());
+        view.setApproveStatus(pilotApplicationEntity.getApproveStatus());
+        view.setAttachNameList(Arrays.asList(pilotApplicationEntity.getAttachNameList()));
+        view.setAttachUrlList(Arrays.asList(pilotApplicationEntity.getAttachUrlList()));
         List<PilotApplicationDetailDTO.ViewDTO> detailViewList = BeanMapper.copyList(productDetailList, PilotApplicationDetailDTO.ViewDTO.class);
         List<PilotApplicationRefTaskDTO.ViewDTO> taskViewList = BeanMapper.copyList(taskList, PilotApplicationRefTaskDTO.ViewDTO.class);
         //供应商
@@ -619,6 +628,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setApproveStatusName(view.getApproveStatus().getName());
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
+        view.setAttachNameList(Arrays.asList(pilotApplicationEntity.getAttachNameList().split(",")));
+        view.setAttachUrlList(Arrays.asList(pilotApplicationEntity.getAttachUrlList().split(",")));
         //审核记录
         List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getId());
         view.setApproveFlowList(approveHistoryList);
@@ -707,8 +718,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     /**
     * 新增修改处理数据
     */
-    private void handleData(PilotApplicationEntity pilotApplicationEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(PilotApplicationDTO.AddDTO addDTO, PilotApplicationEntity entity) {
+        entity.setBillDate(addDTO.getBillDate());
+        entity.setRemark(addDTO.getRemark());
+        entity.setApproveStatus(addDTO.getApproveStatus());
+        entity.setAttachNameList(String.join(",", addDTO.getAttachNameList()));
+        entity.setAttachUrlList(String.join(",", addDTO.getAttachUrlList()));
     }
 
     @Override
@@ -861,7 +876,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Override
     public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
         //已存在数据
-        skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode(), ProductDetailStatusEnum.WAIT_COMMIT.getCode(), ProductDetailStatusEnum.WAIT_CONFIRM.getCode()));
         List<String> saleMethodList = skuParamDTO.getSaleMethodList();
         List<String> saleMethodParams = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(saleMethodList)) {
@@ -881,10 +895,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
         List<ProductSearchDTO.SkuListDTO> resultList = new ArrayList<>();
         for (String skuNo : skuParamDTO.getSkuNoList()) {
-            ProductSearchDTO.SkuListDTO skuListDTO = list.stream().filter(obj -> obj.getSkuNo().equals(skuNo)).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(skuListDTO)) {
-                skuListDTO = new ProductSearchDTO.SkuListDTO();
-            }
+            ProductSearchDTO.SkuListDTO skuListDTO = list.stream().filter(obj -> obj.getSkuNo().equals(skuNo)).findFirst().orElse(new ProductSearchDTO.SkuListDTO());
             //sku状态名称
             skuListDTO.setStatusName(ProductDetailStatusEnum.getName(skuListDTO.getStatus()));
             //供应商名称

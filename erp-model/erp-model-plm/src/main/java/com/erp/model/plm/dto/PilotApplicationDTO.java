@@ -291,6 +291,16 @@ public class PilotApplicationDTO implements Serializable {
          * 审核记录
          */
         private List<ApproveNodeRecordVO> approveFlowList;
+
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachUrlList;
     }
 
     /**
