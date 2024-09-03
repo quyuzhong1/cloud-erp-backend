@@ -1602,8 +1602,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public Boolean exportExcel(SoInfoDTO.ExportDTO dto) {
-        String fileName = StrUtil.format("销售订单{}.xlsx", System.currentTimeMillis());
-        downloadTaskFeign.saveDownloadTask(fileName, EXPORT_OMS_SO.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售订单", EXPORT_OMS_SO.getCode(), dto);
         return Boolean.TRUE;
     }
 
