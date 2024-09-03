@@ -154,6 +154,7 @@
                  left join tms_cfg_cost tcc on tcd.cfg_cost_id = tcc.id
         <where>
             tcc.dict_cost_attribution = 'firstMile'
+            and tcd.type = 'estimated'
             and fmeb.logistics_bill_id in
             <foreach collection="logisticsBillIds" item="id" open="(" separator="," close=")">
                 #{id}
