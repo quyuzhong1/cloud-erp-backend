@@ -463,6 +463,9 @@
                 <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
                     AND li.platform_sku_name ILIKE concat('%',#{params.warehouseProductName}::text,'%')
                 </if>
+                <if test="params.shortName !=null and params.shortName!=''">
+                    AND op.short_name  ILIKE concat('%',#{params.shortName}::text,'%')
+                </if>
                 <if test="params.productName !=null and params.productName!=''">
                     AND sm.product_name ILIKE concat('%',#{params.productName}::text,'%')
                 </if>
