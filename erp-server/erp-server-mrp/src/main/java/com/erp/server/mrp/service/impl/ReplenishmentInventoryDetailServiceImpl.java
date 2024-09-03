@@ -45,7 +45,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
     @Override
     public InventoryDetailVO inventoryDetail(InventoryTotalDTO params) {
         ReplenishmentInventoryDetailEntity inventoryDetail = getOne(Wrappers.<ReplenishmentInventoryDetailEntity>lambdaQuery()
-                .eq(ReplenishmentInventoryDetailEntity::getReplenishmentDetailId, params.getId())
+                .eq(ReplenishmentInventoryDetailEntity::getReplenishmentDetailId, params.getDetailId())
                 .eq(ReplenishmentInventoryDetailEntity::getInventoryType, params.getType())
         );
         InventoryDetailVO detailVO = InventoryDetailVO.buildInventoryDetailVO(inventoryDetail);

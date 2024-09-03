@@ -29,7 +29,7 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        private Map<String,String> sqlMap;
+        private Map<String, String> sqlMap;
         /**
          * 建议类型
          */
@@ -63,7 +63,7 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          */
         @NotBlank(message = "原因说明不能为空")
         private String replenishmentRemark;
-     }
+    }
 
     /**
      * 批量设置规则参数
@@ -111,11 +111,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         @Valid
         private CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO;
 
-       /**
-        * 销量设置
-        */
-       @Valid
-       private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
+        /**
+         * 销量设置
+         */
+        @Valid
+        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
 
     }
 
@@ -171,5 +171,16 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         @NotEmpty(message = "标签选项不能为空")
         private List<String> labelIdList;
 
+    }
+
+    @Getter
+    @Setter
+    public static class DetailParamDTO {
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
     }
 }

@@ -71,7 +71,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param params 明细id
      */
     @PostMapping("/fbaInTransitDetail")
-    public ApiResult<PagingVO<FbaInTransitDetailVO>> fbaInTransitDetail(@RequestBody @Validated PagingDTO<String> params) {
+    public ApiResult<PagingVO<FbaInTransitDetailVO>> fbaInTransitDetail(@RequestBody @Validated PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         PagingVO<FbaInTransitDetailVO> paging = replenishmentSuggestionService.fbaInTransitDetail(params);
         return success(paging);
     }
@@ -82,7 +82,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param params 明细id
      */
     @PostMapping("/overseasInTransitDetail")
-    public ApiResult<PagingVO<OverseasInTransitDetailVO>> overseasInTransitDetail(@RequestBody @Validated PagingDTO<String> params) {
+    public ApiResult<PagingVO<OverseasInTransitDetailVO>> overseasInTransitDetail(@RequestBody @Validated PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         PagingVO<OverseasInTransitDetailVO> paging = replenishmentSuggestionService.overseasInTransitDetail(params);
         return success(paging);
     }

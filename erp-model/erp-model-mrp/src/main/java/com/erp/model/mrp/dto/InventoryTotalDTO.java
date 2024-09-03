@@ -19,5 +19,5 @@ public class InventoryTotalDTO {
     /**
      * 详细id
      */
-    private String id;
+    private String detailId;
 }

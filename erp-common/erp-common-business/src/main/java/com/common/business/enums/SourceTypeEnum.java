@@ -194,6 +194,11 @@ public enum SourceTypeEnum {
 
     QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", "dmp_pull_task"),
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
+
+
+
+    //mrp
+    REPLENISHMENT_PLAN("replenishment_plan", "补货计划计划","replenishment_plan"),
     ;
 
     /**

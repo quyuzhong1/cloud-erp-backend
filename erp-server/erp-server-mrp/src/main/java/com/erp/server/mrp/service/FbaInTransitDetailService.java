@@ -2,6 +2,7 @@ package com.erp.server.mrp.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.FbaInTransitDetailEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.vo.FbaInTransitDetailVO;
@@ -16,5 +17,5 @@ import com.erp.model.mrp.vo.FbaInTransitDetailVO;
  */
 public interface FbaInTransitDetailService extends SuperService<FbaInTransitDetailEntity> {
 
-    PagingVO<FbaInTransitDetailVO> fbaInTransitDetail(PagingDTO<String> params);
+    PagingVO<FbaInTransitDetailVO> fbaInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
 }

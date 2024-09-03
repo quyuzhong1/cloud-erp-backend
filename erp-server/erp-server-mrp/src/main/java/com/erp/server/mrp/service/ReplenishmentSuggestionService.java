@@ -34,12 +34,12 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * fba在途明细明细
      * @param params 明细id
      */
-    PagingVO<FbaInTransitDetailVO> fbaInTransitDetail(PagingDTO<String> params);
+    PagingVO<FbaInTransitDetailVO> fbaInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
     /**
      * 海外仓在途明细
      * @param params 明细id
      */
-    PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<String> params);
+    PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
     /**
      * 本地仓在途明细
      * @param params 明细id
@@ -178,4 +178,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return List<ReplenishmentSuggestionEntity>
      */
     List<ReplenishmentSuggestionEntity> listByUnique(List<String> platformCodeList, List<String> shopIdList, List<String> skuIdList);
+
+    List<ReplenishmentSuggestionEntity> listCalculationData();
+
 }

@@ -199,12 +199,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public PagingVO<FbaInTransitDetailVO> fbaInTransitDetail(PagingDTO<String> params) {
+    public PagingVO<FbaInTransitDetailVO> fbaInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         return fbaInTransitDetailService.fbaInTransitDetail(params);
     }
 
     @Override
-    public PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<String> params) {
+    public PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         return overseasInTransitDetailService.overseasInTransitDetail(params);
     }
 
@@ -527,5 +527,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public List<ReplenishmentSuggestionEntity> listByUnique(List<String> platformCodeList, List<String> shopIdList, List<String> skuIdList) {
         return baseMapper.listByUnique(platformCodeList,shopIdList,skuIdList);
+    }
+
+    @Override
+    public List<ReplenishmentSuggestionEntity> listCalculationData() {
+        return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
+                .eq(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NORMAL.getCode())
+                .orderByAsc(ReplenishmentSuggestionEntity::getSkuId));
     }
 }

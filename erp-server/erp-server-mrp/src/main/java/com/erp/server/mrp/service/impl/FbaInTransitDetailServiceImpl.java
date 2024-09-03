@@ -6,6 +6,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.FbaInTransitDetailEntity;
 import com.erp.model.mrp.vo.FbaInTransitDetailVO;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
@@ -25,8 +26,8 @@ import org.springframework.stereotype.Service;
 public class FbaInTransitDetailServiceImpl extends SuperServiceImpl<FbaInTransitDetailMapper, FbaInTransitDetailEntity> implements FbaInTransitDetailService {
 
     @Override
-    public PagingVO<FbaInTransitDetailVO> fbaInTransitDetail(PagingDTO<String> params) {
-        Page<FbaInTransitDetailVO> page = baseMapper.fbaInTransitDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
+    public PagingVO<FbaInTransitDetailVO> fbaInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
+        Page<FbaInTransitDetailVO> page = baseMapper.fbaInTransitDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams().getDetailId());
         for (FbaInTransitDetailVO vo : page.getRecords()) {
             if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(vo.getSourceCode())) {
                 vo.setStatusName(FbaDeliveryStatusEnum.getName(vo.getStatus()));

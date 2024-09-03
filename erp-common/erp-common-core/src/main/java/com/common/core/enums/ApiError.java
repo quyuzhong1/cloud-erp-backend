@@ -1481,6 +1481,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_RESTOCKING_REPLENISHMENT(97001,"只有正常补货数据支持暂不补货"),
     ERROR_RESTORE_REPLENISHMENT(97002,"只有暂不补货数据支持恢复补货"),
     ERROR_CFG_RULE_STOCK_UP_NOT_EXIST(97003,"备货（规则配置）不存在"),
+    ERROR_CFG_RULE_SALES_NOT_EXIST(97004,"销量（{}规则配置）不存在"),
 
 
 

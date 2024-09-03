@@ -27,6 +27,7 @@
         select status, qty, plan_arrival_date, type, source_id, source_code, source_type
         from estimated_delivery_detail
         where replenishment_detail_id = #{params.id}
+          and type = #{type}
           and source_type = #{params.sourceType}
           and is_deleted = false
     </select>
