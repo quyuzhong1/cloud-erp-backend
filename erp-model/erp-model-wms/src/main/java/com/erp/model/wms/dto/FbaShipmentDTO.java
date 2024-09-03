@@ -578,6 +578,15 @@ public class FbaShipmentDTO implements Serializable {
          * 是否组合品 true 是
          */
         private Boolean isCombination;
+
+        /**
+         * 装箱清单（bool)
+         */
+        private Boolean isPackingDownload;
+        /**
+         * 装箱清单下载状态
+         */
+        private String packingDownload;
     }
 
     /**

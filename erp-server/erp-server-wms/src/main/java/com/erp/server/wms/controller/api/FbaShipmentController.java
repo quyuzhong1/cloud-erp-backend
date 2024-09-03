@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -11,23 +12,24 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.FbaShipmentPackingDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.server.wms.service.FbaShipmentPackingService;
+import com.erp.server.wms.service.FbaShipmentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogSystemModule;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.FbaShipmentService;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.FbaShipmentDTO;
-
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -44,6 +46,9 @@ public class FbaShipmentController extends BaseController {
 
     @Autowired
     private FbaShipmentService fbaShipmentService;
+
+    @Resource
+    private FbaShipmentPackingService fbaShipmentPackingService;
 
     /**
      * 列表查询
@@ -73,6 +78,17 @@ public class FbaShipmentController extends BaseController {
     @PostMapping("/export")
     public ApiResult export(@RequestBody @Validated FbaShipmentDTO.PagingParamDTO dto) {
         fbaShipmentService.export(dto);
+        return success();
+    }
+
+    /**
+     * 装箱清单导出
+     * @param dto
+     * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
+     */
+    @PostMapping("/packingExport")
+    public ApiResult packingExport(@RequestBody @Validated FbaShipmentDTO.PagingParamDTO dto) {
+        fbaShipmentPackingService.packingExport(dto);
         return success();
     }
 
@@ -357,5 +373,13 @@ public class FbaShipmentController extends BaseController {
             resultDTOS.add(deleteResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 查询装箱清单
+     */
+    @PostMapping("/getPacking")
+    public ApiResult<List<FbaShipmentPackingDTO.ViewDTO>> getPacking(@RequestBody @Validated BaseIdDTO dto) {
+        return success(fbaShipmentPackingService.listPacking(Arrays.asList(dto.getId())));
     }
 }

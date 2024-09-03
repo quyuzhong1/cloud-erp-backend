@@ -1,4 +1,7 @@
 package com.erp.server.wms.service;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaShipmentPackingEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.FbaShipmentPackingDTO;
@@ -18,4 +21,10 @@ public interface FbaShipmentPackingService extends SuperService<FbaShipmentPacki
     void handle(FbaShipmentPackingDTO.PackingDTO data);
 
     List<FbaShipmentPackingEntity> getByMainIdAndBoxNo(String mainId, String boxNo);
+
+    List<FbaShipmentPackingDTO.ViewDTO> listPacking(List<String> ids);
+
+    void packingExport(FbaShipmentDTO.PagingParamDTO dto);
+
+    PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
 }

@@ -191,4 +191,8 @@ public interface ExportWmsFeign {
 
     @PostMapping("/feign/export/inventoryAge")
     PagingVO<DynamicExcelDTO> exportWmsInventoryAge(@RequestBody PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto);
+
+    @PostMapping("/feign/export/fbaShipmentPacking")
+    PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
+
 }

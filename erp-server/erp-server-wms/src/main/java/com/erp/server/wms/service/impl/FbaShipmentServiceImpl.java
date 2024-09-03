@@ -731,6 +731,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (CollectionUtils.isNotEmpty(deliveryEntities)) {
                 record.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
             }
+            record.setPackingDownload(record.getIsPackingDownload()?"已下载":"未下载");
             //设置发货状态中文
             record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
 

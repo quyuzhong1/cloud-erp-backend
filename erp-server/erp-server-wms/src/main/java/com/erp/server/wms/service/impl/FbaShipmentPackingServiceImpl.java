@@ -1,26 +1,33 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FbaShipmentPackingDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentPackingEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.wms.convert.FbaShipmentPackingConverter;
 import com.erp.server.wms.mapper.FbaShipmentPackingMapper;
 import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
-import com.erp.server.wms.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +35,8 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_SHIPMENT_PACKING;
 
 /**
  * <p>
@@ -46,6 +55,9 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
 
     @Resource
     private SkuMappingFeign skuMappingFeign;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     @DataIdempotent(keyIdName = "data.boxNo")
@@ -100,5 +112,26 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
             return new ArrayList<>();
         }
         return lambdaQuery().eq(FbaShipmentPackingEntity::getMainId, mainId).eq(FbaShipmentPackingEntity::getBoxNo, boxNo).list();
+    }
+
+    @Override
+    public List<FbaShipmentPackingDTO.ViewDTO> listPacking(List<String> ids) {
+        List<FbaShipmentEntity> fbaShipmentEntity = fbaShipmentService.listByIds(ids);
+        List<String> errorCodes = fbaShipmentEntity.stream().filter(v->!v.getIsPackingDownload()).map(FbaShipmentEntity::getCode).collect(Collectors.toList());
+        if(CollectionUtil.isNotEmpty(errorCodes)){
+            throw new ServiceException(StrUtil.format("{}装箱清单未下载，无法查看",errorCodes));
+        }
+        return baseMapper.getPacking(ids);
+    }
+
+    @Override
+    public void packingExport(FbaShipmentDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("FBA货件装箱清单导出", EXPORT_WMS_FBA_SHIPMENT_PACKING.getCode(), dto);
+    }
+
+    @Override
+    public PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
+        Page<FbaShipmentPackingDTO.ViewDTO> page = baseMapper.exportFbaShipmentPacking(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        return new PagingVO<>(page.getRecords(), (int) page.getTotal(),dto.getPageSize(), dto.getCurrPage());
     }
 }

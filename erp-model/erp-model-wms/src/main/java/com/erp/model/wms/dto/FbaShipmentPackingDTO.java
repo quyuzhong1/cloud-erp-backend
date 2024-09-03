@@ -23,6 +23,32 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class FbaShipmentPackingDTO implements Serializable {
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+         * 货件号
+         */
+        private String code;
+
+        /**
+         * 货件箱号
+         */
+        private String boxNo;
+
+        /**
+         * 装箱平台sku
+         */
+        private String packingPlatformSku;
+
+        /**
+         * 装箱FNSKU
+         */
+        private String packingFnSku;
+    }
+
     @Data
     @NoArgsConstructor
     public static class PackingDTO {
