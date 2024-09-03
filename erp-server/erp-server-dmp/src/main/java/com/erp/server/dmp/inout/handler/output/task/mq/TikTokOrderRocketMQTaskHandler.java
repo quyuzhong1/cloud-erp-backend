@@ -151,7 +151,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
 
         //平台订单号
-        orderDTO.setPlatformCode(dmpSoInfoEntity.getThirdCode());
+        orderDTO.setPlatformCode(dmpSoInfoEntity.getPlatformCode());
 
         //销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.TIK_TOK.getCode());
