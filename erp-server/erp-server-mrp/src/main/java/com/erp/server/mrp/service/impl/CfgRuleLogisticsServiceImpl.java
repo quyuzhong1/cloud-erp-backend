@@ -104,12 +104,12 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         }
         for (CfgRuleLogisticsDTO.ViewDTO viewDTO : cfgLogisticsViewList) {
             List<CfgRuleLogisticsDetailEntity> detailList = cfgRuleLogisticsDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), viewDTO.getId())).collect(Collectors.toList());
+            viewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(viewDTO.getLogisticsMethod()));
             if (CollectionUtils.isEmpty(detailList)) {
                 continue;
             }
             List<CfgRuleLogisticsDetailDTO.ViewDTO> cfgLogisticsDetailViewList = BeanMapperUtils.copyList(CfgRuleLogisticsDetailDTO.ViewDTO.class, detailList);
             viewDTO.setDetailList(cfgLogisticsDetailViewList);
-            viewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(viewDTO.getLogisticsMethod()));
         }
         return cfgLogisticsViewList;
     }
