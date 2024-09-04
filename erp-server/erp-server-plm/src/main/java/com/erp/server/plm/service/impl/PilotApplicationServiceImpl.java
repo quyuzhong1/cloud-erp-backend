@@ -1,6 +1,9 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.BetweenFormatter;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUnit;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
@@ -19,6 +22,7 @@ import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
@@ -655,14 +659,46 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setApproveStatusName(view.getApproveStatus().getName());
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
-        List<String> attachNameList = attachmentList.stream().map(item -> item.getAttachName()).collect(Collectors.toList());
+        List<String> attachNameList = attachmentList.stream().map(PlmAttachmentEntity::getAttachName).collect(Collectors.toList());
         view.setAttachNameList(attachNameList);
-        List<String> attachUrlList = attachmentList.stream().map(item -> item.getAttachUrl()).collect(Collectors.toList());
+        List<String> attachUrlList = attachmentList.stream().map(PlmAttachmentEntity::getAttachUrl).collect(Collectors.toList());
         view.setAttachUrlList(attachUrlList);
         //审核记录
-        List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getId());
-        view.setApproveFlowList(approveHistoryList);
+        List<PilotApplicationDTO.AuditorHandleDTO> approveList = this.getApproveProcessList(pilotApplicationEntity);
+        view.setApproveFlowList(approveList);
         return view;
+    }
+
+    /**
+     * 获取审核记录
+     */
+    private List<PilotApplicationDTO.AuditorHandleDTO> getApproveProcessList(PilotApplicationEntity pilotApplicationEntity) {
+        List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getId());
+        List<PilotApplicationDTO.AuditorHandleDTO> approveList = new ArrayList<>();
+        for (ApproveNodeRecordVO vo : approveHistoryList) {
+            List<AuditorHandleDTO> auditorHandleList = vo.getAuditorHandleList();
+            for (AuditorHandleDTO handleDTO : auditorHandleList) {
+                PilotApplicationDTO.AuditorHandleDTO dto = new PilotApplicationDTO.AuditorHandleDTO();
+                dto.setUserId(handleDTO.getHandleUserId());
+                dto.setUserName(handleDTO.getHandleUserName());
+                dto.setResult(handleDTO.getHandContent());
+                dto.setComment(handleDTO.getComment());
+                dto.setTime(handleDTO.getEndTime());
+                Date now = new Date();
+                DateTime handleTime = cn.hutool.core.date.DateUtil.parse(handleDTO.getEndTime());
+                long betweenHour = cn.hutool.core.date.DateUtil.between(handleTime, now, DateUnit.HOUR);
+                if(betweenHour > 24){
+                    String desc = cn.hutool.core.date.DateUtil.formatBetween(handleTime, now, BetweenFormatter.Level.DAY);
+                    dto.setTimeDesc(desc);
+                }else {
+                    String desc = cn.hutool.core.date.DateUtil.formatBetween(handleTime, now, BetweenFormatter.Level.HOUR);
+                    dto.setTimeDesc(desc);
+                }
+                approveList.add(dto);
+            }
+        }
+        approveList.sort(Comparator.comparing(PilotApplicationDTO.AuditorHandleDTO::getTime).reversed());
+        return approveList;
     }
 
     /**

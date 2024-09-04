@@ -293,7 +293,7 @@ public class PilotApplicationDTO implements Serializable {
         /**
          * 审核记录
          */
-        private List<ApproveNodeRecordVO> approveFlowList;
+        private List<PilotApplicationDTO.AuditorHandleDTO> approveFlowList;
 
         /**
          * 附件名称集合
@@ -599,5 +599,52 @@ public class PilotApplicationDTO implements Serializable {
          */
         @NotEmpty(message = "产品明细ID不能为空")
         private List<String> productDetailIds;
+    }
+
+    /**
+     * 审批记录
+     */
+    @Data
+    public static class AuditorHandleDTO{
+
+        /**
+         * 审核人ID
+         */
+        private String userId;
+
+        /**
+         * 审核人名称
+         */
+        private String userName;
+
+        /**
+         * 审批结果
+         */
+        private String result;
+
+        /**
+         * 审批意见
+         */
+        private String comment;
+
+        /**
+         * 审批时间
+         */
+        private String time;
+
+        /**
+         * 审批时间描述
+         */
+        private String timeDesc;
+
+        /**
+         * 节点名称
+         */
+        private String activityName;
+
+        /**
+         * 节点类型
+         */
+        private String activityType;
     }
 }
