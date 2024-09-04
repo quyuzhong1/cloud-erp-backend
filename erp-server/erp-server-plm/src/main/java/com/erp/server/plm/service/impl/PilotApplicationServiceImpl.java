@@ -171,8 +171,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         pilotApplicationEntity.setId(updateDTO.getId());
         pilotApplicationEntity.setBillDate(updateDTO.getBillDate());
         pilotApplicationEntity.setRemark(updateDTO.getRemark());
-        pilotApplicationEntity.setAttachNameList(String.join(",", updateDTO.getAttachNameList()));
-        pilotApplicationEntity.setAttachUrlList(String.join(",", updateDTO.getAttachUrlList()));
+        pilotApplicationEntity.setAttachNameList(old.getAttachNameList() + "," + String.join(",", updateDTO.getAttachNameList()));
+        pilotApplicationEntity.setAttachUrlList(old.getAttachUrlList() + "," + String.join(",", updateDTO.getAttachUrlList()));
 
         log.info("编辑 开始修改试产申请数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(pilotApplicationEntity);
@@ -574,13 +574,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         Map<String, ProjectTaskDTO.SimpleViewDTO> taskMap = taskList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
         PilotApplicationDTO.ViewDTO view = new PilotApplicationDTO.ViewDTO();
-        view.setId(pilotApplicationEntity.getId());
-        view.setCode(pilotApplicationEntity.getCode());
-        view.setBillDate(pilotApplicationEntity.getBillDate());
-        view.setRemark(pilotApplicationEntity.getRemark());
-        view.setApproveStatus(pilotApplicationEntity.getApproveStatus());
-        view.setAttachNameList(Arrays.asList(pilotApplicationEntity.getAttachNameList().split(",")));
-        view.setAttachUrlList(Arrays.asList(pilotApplicationEntity.getAttachUrlList().split(",")));
         List<PilotApplicationDetailDTO.ViewDTO> detailViewList = BeanMapper.copyList(productDetailList, PilotApplicationDetailDTO.ViewDTO.class);
         List<PilotApplicationRefTaskDTO.ViewDTO> taskViewList = BeanMapper.copyList(taskList, PilotApplicationRefTaskDTO.ViewDTO.class);
         //供应商
@@ -591,12 +584,17 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //产品费用
         List<String> skuIds = detailViewList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
         List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
+        //产品明细
+        List<ProductDetailEntity> skuList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
         //处理产品明细
         for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList) {
+            //一级供应商名称
             Optional<SupplierEntity> mainSupplier = supplierList.stream().filter(item -> item.getCode().equals(detailDTO.getMainSupplierId())).findFirst();
             mainSupplier.ifPresent(item -> detailDTO.setMainSupplierName(item.getName()));
+            //二级供应商名称
             Optional<SupplierEntity> secondSupplier = supplierList.stream().filter(item -> item.getCode().equals(detailDTO.getSecondSupplierId())).findFirst();
             secondSupplier.ifPresent(item -> detailDTO.setSecondSupplierName(item.getName()));
+            //产品费用
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(detailDTO.getSkuId())).findFirst();
             if(productCostEntityOptional.isPresent()){
                 ProductCostEntity productCostEntity = productCostEntityOptional.get();
@@ -605,6 +603,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 detailDTO.setActualTaxCost(productCostEntity.getActualTaxCost());
                 detailDTO.setActualNoTaxCost(productCostEntity.getActualNoTaxCost());
             }
+            //产品名称
+            Optional<ProductDetailEntity> skuOptional = skuList.stream().filter(item -> item.getId().equals(detailDTO.getSkuId())).findFirst();
+            skuOptional.ifPresent(sku -> detailDTO.setProductName(sku.getName()));
         }
         //处理关联任务
         for (PilotApplicationRefTaskDTO.ViewDTO taskDTO : taskViewList) {
@@ -625,6 +626,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             taskDTO.setStatus(entity.getStatus());
             taskDTO.setStatusName(TaskStateEnum.getName(entity.getStatus()));
         }
+        view.setId(pilotApplicationEntity.getId());
+        view.setCode(pilotApplicationEntity.getCode());
+        view.setBillDate(pilotApplicationEntity.getBillDate());
+        view.setRemark(pilotApplicationEntity.getRemark());
+        view.setApproveStatus(pilotApplicationEntity.getApproveStatus());
+        view.setAttachNameList(Arrays.asList(pilotApplicationEntity.getAttachNameList().split(",")));
+        view.setAttachUrlList(Arrays.asList(pilotApplicationEntity.getAttachUrlList().split(",")));
         view.setApproveStatusName(view.getApproveStatus().getName());
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
@@ -734,7 +742,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
         LoginUser loginUser = UserContext.getNonLoginUser();
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUserName()));
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUid()));
         List<String> warehouseIds = applicationDTOList.stream().map(item -> item.getToWarehouseId()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseFeign.listWarehouseByIds(warehouseIds);
 

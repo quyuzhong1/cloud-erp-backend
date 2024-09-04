@@ -107,6 +107,10 @@ public class PilotApplicationDetailDTO implements Serializable {
         * 明细备注
         */
         private String remark;
+        /**
+         * 产品名称
+         */
+        private String productName;
     }
 
     /**
