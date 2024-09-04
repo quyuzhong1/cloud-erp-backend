@@ -149,6 +149,15 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         return lambdaQuery().eq(CfgRuleStockUpEntity::getRefId,refId).last("limit 1").one();
     }
 
+    @Override
+    public CfgRuleStockUpEntity getOneByStrategy(CfgRuleStockUpDTO.StrategyDTO dto) {
+        CfgRuleStockUpEntity cfgRuleStockUp = getByRefId(dto.getRefId());
+        if (ObjectUtil.isEmpty(cfgRuleStockUp)) {
+            cfgRuleStockUp = getDefaultByPlatformType(dto.getPlatformType());
+        }
+        return cfgRuleStockUp;
+    }
+
     /**
      * 根据平台类型查询
      * @author will

@@ -49,4 +49,11 @@ public interface CfgRuleStockingRatioService extends SuperService<CfgRuleStockin
      * @param stockUpId
      */
     void deleteByStockUpId(String stockUpId);
+
+    /**
+     * 根据备货主表id和sku类型查询
+     * @param id 备货主表id
+     * @param skuType sku类型
+     */
+    List<CfgRuleStockingRatioEntity> listByStockUpIdAndType(String id, String skuType);
 }

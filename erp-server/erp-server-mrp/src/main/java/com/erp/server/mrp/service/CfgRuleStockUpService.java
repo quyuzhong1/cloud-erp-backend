@@ -51,4 +51,9 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      * @return CfgRuleStockUpEntity
      */
     CfgRuleStockUpEntity getByRefId(String refId);
+
+    /**
+     * 获取备货基础数据 补货建议维度获取不到，则获取系统默认
+     */
+    CfgRuleStockUpEntity getOneByStrategy(CfgRuleStockUpDTO.StrategyDTO dto);
 }

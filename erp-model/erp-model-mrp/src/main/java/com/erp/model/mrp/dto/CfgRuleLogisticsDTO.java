@@ -1,7 +1,12 @@
 package com.erp.model.mrp.dto;
 
+import cn.hutool.json.JSONArray;
+import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
+import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -123,5 +128,54 @@ public class CfgRuleLogisticsDTO implements Serializable {
         private List<CfgRuleLogisticsDetailDTO.UpdateDTO> detailList;
     }
 
+
+    @Getter
+    @Setter
+    public static class LogisticsResultDTO {
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+        /**
+         * 发货频率（天）
+         */
+        private Integer logisticsCycleDays;
+        /**
+         * 区域
+         */
+        private String area;
+        /**
+         * 店铺类型（all全部店铺，part指定店铺）
+         */
+        private String type;
+        /**
+         * 店铺Idjson
+         */
+        private JSONArray shopIdJson;
+        /**
+         * 海外仓id
+         */
+        private String warehouseId;
+
+        public void buildLogisticsResult(CfgRuleLogisticsDetailEntity detail, CfgRuleLogisticsEntity logistics) {
+            this.setLogisticsDays(detail.getLogisticsDays());
+            this.setLogisticsMethod(logistics.getLogisticsMethod());
+            this.setArea(detail.getArea());
+            this.setType(detail.getType());
+            this.setLogisticsCycleDays(logistics.getLogisticsCycleDays());
+            this.setShopIdJson(detail.getShopIdJson());
+            this.setWarehouseId(detail.getWarehouseId());
+        }
+
+        public void buildLogisticsResult(CfgRuleLogisticsEntity logistics) {
+            this.setLogisticsDays(logistics.getLogisticsDays());
+            this.setLogisticsMethod(logistics.getLogisticsMethod());
+            this.setLogisticsCycleDays(logistics.getLogisticsCycleDays());
+        }
+    }
 
 }

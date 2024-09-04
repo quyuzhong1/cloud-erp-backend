@@ -4,13 +4,17 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
+import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
+import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.server.mrp.mapper.CfgRuleLogisticsMapper;
 import com.erp.server.mrp.service.CfgRuleLogisticsDetailService;
@@ -22,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -130,6 +135,45 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         //根据id删除
         List<String> idList = cfgRuleLogisticsList.stream().map(CfgRuleLogisticsEntity::getId).distinct().collect(Collectors.toList());
         deleteByIdList(idList);
+    }
+
+    @Override
+    public CfgRuleLogisticsDTO.LogisticsResultDTO getLogisticsMaxPriority(String stockUpId, CfgRuleStockUpDTO.StrategyDTO dto) {
+        // 获取外层最高优先级数据
+        CfgRuleLogisticsEntity entity = getOne(Wrappers.<CfgRuleLogisticsEntity>lambdaQuery()
+                .eq(CfgRuleLogisticsEntity::getStockUpId, stockUpId)
+                .orderByAsc(CfgRuleLogisticsEntity::getIndex)
+                .last("LIMIT 1")
+        );
+        if (ObjectUtil.isEmpty(entity)) {
+            return null;
+        }
+        //获取对应明细数据
+        List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails = cfgRuleLogisticsDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
+        CfgRuleLogisticsDetailEntity detail = null;
+        //amazon 取值店铺
+        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(dto.getPlatformType())) {
+            //先获取区域加店铺 获取不到则获取区域加全部店铺 再获取不到则取外层数据
+            detail = cfgRuleLogisticsDetails.stream()
+                    .filter(v -> v.getArea().equals(dto.getArea()))
+                    .filter(v -> v.getShopIdJson().contains(dto.getShopId()))
+                    .findFirst().orElseGet(() -> cfgRuleLogisticsDetails.stream().filter(v -> v.getArea().equals(dto.getArea()))
+                            .filter(v -> v.getType().equals(ShopAuthTypeEnum.ENUM_ALL.getCode()))
+                            .findFirst().orElse(null)
+                    );
+        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(dto.getPlatformType())) {
+            //先获取海外仓 再获取不到则取外层数据
+            detail = cfgRuleLogisticsDetails.stream()
+                    .filter(v -> v.getWarehouseId().equals(dto.getWarehouseId()))
+                    .findFirst().orElse(null);
+        }
+        CfgRuleLogisticsDTO.LogisticsResultDTO resultDTO = new CfgRuleLogisticsDTO.LogisticsResultDTO();
+        if (ObjectUtils.isEmpty(detail)) {
+            resultDTO.buildLogisticsResult(entity);
+        }else {
+            resultDTO.buildLogisticsResult(detail, entity);
+        }
+        return resultDTO;
     }
 
     /**

@@ -1,7 +1,9 @@
 package com.erp.model.mrp.dto;
 
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
@@ -123,5 +125,35 @@ public class CfgRuleStockingRatioDTO implements Serializable {
 
     }
 
+    @Getter
+    @Setter
+    public static class StockingRatioResultDTO {
+
+        /**
+         * 排序字段
+         */
+        private Integer index;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 开始时间
+         */
+        private LocalDate startDate;
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+        /**
+         * 备货系数
+         */
+        private BigDecimal stockingRatio;
+
+        /**
+         * 类型，conventional常规品，new新品
+         */
+        private String type;
+    }
 
 }

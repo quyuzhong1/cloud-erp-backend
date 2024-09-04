@@ -1,7 +1,12 @@
 package com.erp.model.mrp.dto;
 
+import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -317,5 +322,117 @@ public class CfgRuleStockUpDTO implements Serializable {
 
     }
 
+
+
+    @Getter
+    @Setter
+    public static class StrategyDTO {
+
+        /**
+         * 补货建议id
+         */
+        private String refId;
+        /**
+         * 平台类型
+         * @see CfgRulePlatformTypeEnum
+         */
+        private String platformType;
+        /**
+         * sku类型
+         * @see CfgRuleStockingRatioTypeEnum
+         */
+        private String skuType;
+        /**
+         * 区域
+         */
+        private String area;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 海外仓id
+         */
+        private String warehouseId;
+
+    }
+
+    @Getter
+    @Setter
+    public static class StrategyResultDTO {
+        /**
+         * 备货id
+         */
+        private String id;
+        /**
+         * 采购审批天数（天）
+         */
+        private Integer purchaseApproveDays;
+        /**
+         * 生产周期天数（天）
+         */
+        private Integer productionDays;
+        /**
+         * 供应商发货天数（天）
+         */
+        private Integer supplierDeliveryDays;
+        /**
+         * 质检入库天数（天）
+         */
+        private Integer qcDays;
+        /**
+         * 采购频率天数（天）
+         */
+        private Integer purchaseCycleDays;
+        /**
+         * 安全天数（天）
+         */
+        private Integer safeDays;
+        /**
+         * 入库天数（天）
+         */
+        private Integer instockDays;
+        /**
+         * 常规品备货系数
+         */
+        private BigDecimal stockingRatio;
+        /**
+         * 新品备货系数
+         */
+        private BigDecimal newStockingRatio;
+        /**
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
+        private String platformType;
+        /**
+         * 关联id
+         */
+        private String refId;
+        /**
+         * 物流时效
+         */
+        private CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult;
+        /**
+         * 备货明细系数
+         */
+        private List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults;
+
+
+        public void buildStrategyResultDTO(CfgRuleStockUpEntity entity, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult){
+            this.setId(entity.getId());
+            this.setPurchaseApproveDays(entity.getPurchaseApproveDays());
+            this.setSupplierDeliveryDays(entity.getSupplierDeliveryDays());
+            this.setQcDays(entity.getQcDays());
+            this.setPurchaseCycleDays(entity.getPurchaseCycleDays());
+            this.setSafeDays(entity.getSafeDays());
+            this.setInstockDays(entity.getInstockDays());
+            this.setStockingRatio(entity.getStockingRatio());
+            this.setNewStockingRatio(entity.getNewStockingRatio());
+            this.setPlatformType(entity.getPlatformType());
+            this.setRefId(entity.getRefId());
+            this.setLogisticsResult(logisticsResult);
+            this.setStockingRatioResults(stockingRatioResults);
+        }
+    }
 
 }

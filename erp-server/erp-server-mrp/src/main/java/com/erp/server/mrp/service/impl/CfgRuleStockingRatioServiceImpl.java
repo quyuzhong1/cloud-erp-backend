@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -98,6 +99,14 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
     @Override
     public void deleteByStockUpId(String stockUpId) {
        lambdaUpdate().eq(CfgRuleStockingRatioEntity::getStockUpId,stockUpId).remove();
+    }
+
+    @Override
+    public List<CfgRuleStockingRatioEntity> listByStockUpIdAndType(String id, String skuType) {
+        return list(Wrappers.<CfgRuleStockingRatioEntity>lambdaQuery()
+                .eq(CfgRuleStockingRatioEntity::getStockUpId, id)
+                .eq(CfgRuleStockingRatioEntity::getType, skuType)
+        );
     }
 
     /**

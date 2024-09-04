@@ -6,6 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.entity.*;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.mrp.enums.CfgSettingEnum;
 import com.erp.model.mrp.enums.ReplenishmentTypeEnum;
@@ -115,26 +116,35 @@ public class BasicReplenishmentDataService {
         for (List<ReplenishmentSuggestionEntity> list : partition) {
             CompletableFuture.runAsync(() -> {
                 for (ReplenishmentSuggestionEntity entity : list) {
-                    //计算是否新品
-                    ProductSaleEntity sale = productSaleList.stream().filter(v -> v.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(sale) || ObjectUtils.isEmpty(sale.getListingTime())) {
-                        continue;
-                    }
-                    ReplenishmentSuggestionDetailEntity detail = new ReplenishmentSuggestionDetailEntity();
-                    String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JSRQ);
-                    detail.setCalcVersion(code);
-                    detail.setMainId(entity.getId());
+                    try {
+                        //计算是否新品
+                        ProductSaleEntity sale = productSaleList.stream().filter(v -> v.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
+                        if (ObjectUtils.isEmpty(sale) || ObjectUtils.isEmpty(sale.getListingTime())) {
+                            continue;
+                        }
+                        ReplenishmentSuggestionDetailEntity detail = new ReplenishmentSuggestionDetailEntity();
+                        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JSRQ);
+                        detail.setCalcVersion(code);
+                        detail.setMainId(entity.getId());
+                        if (sale.getListingTime().plusDays(Long.parseLong(newDaysSetting.getDataJson())).isAfter(LocalDate.now())) {
+                            detail.setSkuType(CfgRuleStockingRatioTypeEnum.NEW.getCode());
+                        } else {
+                            detail.setSkuType(CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode());
+                        }
+                        //获取sku对应系统配置
+                        CfgRuleSalesQtyEntity cfgRuleSalesQty = cfgRuleSalesQtyList.stream()
+                                .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
+                                .filter(v -> v.getType().equals(detail.getSkuType()))
+                                .findFirst()
+                                .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST,
+                                        CfgRulePlatformTypeEnum.valueOf(entity.getPlatformType()).getName() + ":" + CfgRuleStockingRatioTypeEnum.getName(detail.getSkuType())));
+                        //判断是否需要补货
+//                        if (cfgRuleSalesQty.getSalesQtyType())
 
-                    if (sale.getListingTime().plusDays(Long.parseLong(newDaysSetting.getDataJson())).isAfter(LocalDate.now())) {
-                        detail.setSkuType(CfgRuleStockingRatioTypeEnum.NEW.getCode());
-                    } else {
-                        detail.setSkuType(CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode());
+                    } catch (Exception e) {
+                        entity.setRemark(e.getMessage());
+                        replenishmentSuggestionService.updateById(entity);
                     }
-                    CfgRuleSalesQtyEntity cfgRuleSalesQty = cfgRuleSalesQtyList.stream()
-                            .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
-                            .filter(v -> v.getType().equals(detail.getSkuType()))
-                            .findFirst()
-                            .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST, ""));
                 }
 
 
