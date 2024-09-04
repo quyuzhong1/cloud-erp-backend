@@ -86,12 +86,12 @@ public class PilotApplicationDTO implements Serializable {
         private String  id;
 
         /**
-        * 单据编码
+        * 单据编码【可排序】
         */
         private String code;
 
         /**
-        * 审核状态
+        * 审核状态【可排序】
         */
         private String approveStatus;
 
@@ -102,7 +102,7 @@ public class PilotApplicationDTO implements Serializable {
         private String approveStatusName;
 
         /**
-        * 订单状态
+        * 订单状态【可排序】
         */
         private String orderStatus;
 
@@ -113,6 +113,9 @@ public class PilotApplicationDTO implements Serializable {
 
         private String skuId;
 
+        /**
+         * skuNo【可排序】
+         */
         private String skuNo;
 
         /**
@@ -121,7 +124,7 @@ public class PilotApplicationDTO implements Serializable {
         private String productName;
 
         /**
-         * 下单类型：试产/量产
+         * 下单类型：试产/量产【可排序】
          * /api/plm/common/enumDropDown?type=PilotApplicationType
          */
         private String type;
@@ -138,12 +141,12 @@ public class PilotApplicationDTO implements Serializable {
         private String refTask;
 
         /**
-         * 申请数量
+         * 申请数量【可排序】
          */
         private int applyQty;
 
         /**
-         * 批准数量
+         * 批准数量【可排序】
          */
         private int approveQty;
 
@@ -163,7 +166,7 @@ public class PilotApplicationDTO implements Serializable {
         private String businessType;
 
         /**
-         * 一级供应商ID
+         * 一级供应商ID【可排序】
          */
         private String mainSupplierId;
 
@@ -193,7 +196,7 @@ public class PilotApplicationDTO implements Serializable {
         private String detailRemark;
 
         /**
-        * 最新审核人ID
+        * 最新审核人ID【可排序】
         */
         private String approveUserId;
 
