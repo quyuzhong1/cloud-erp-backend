@@ -79,6 +79,9 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                 }
 
                 Map<String, Object> shipmentIdMap = (Map<String, Object>) dmpDataMap.get("shipping");
+
+
+
                 Object shipmentId = shipmentIdMap.get("fid");
                 if (shipmentId != null) {
                     Map<String, Object> shipmentMap = dmpInputMongoChildList.stream().filter(req -> req.get("fid").equals(shipmentId)).findFirst().orElse(null);
@@ -87,6 +90,13 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     }
                     dmpDataMap.put("logisticsCode", shipmentMap.get("trackingNumber"));
                     lableMap.put("shipmentId", shipmentId);
+
+                    Object dateCreated = shipmentMap.get("dateCreated");
+                    if (ObjectUtil.isNotEmpty(dateCreated)) {
+                        //发货时间
+                        OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(dateCreated), formatter);
+                        dmpDataMap.put("deliveryTime", offsetDateTime.toLocalDateTime());
+                    }
 
                     //物流状态
                     Map<String, Object> logisticMap = (Map<String, Object>) shipmentMap.get("logistic");
