@@ -51,9 +51,6 @@
             <if test="type != null and type != ''">
                 and crc.type = #{type}
             </if>
-            <if test="isEnableOverseas != null and isEnableOverseas == false">
-                and  crc.remark != 'isEnableOverseas'
-            </if>
         </where>
         order by crc.index asc
     </select>
@@ -70,9 +67,6 @@
             </if>
             <if test="type != null and type != ''">
                 and crc.type = #{type}
-            </if>
-            <if test="isEnableOverseas != null and isEnableOverseas == false">
-                and  crc.remark != 'isEnableOverseas'
             </if>
         </where>
         order by crc.index asc

@@ -1,7 +1,6 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -9,7 +8,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.entity.CfgRuleCommonEntity;
-import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
 import com.erp.server.mrp.mapper.CfgRuleCommonMapper;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import com.erp.server.mrp.service.CfgRuleWarehouseService;
@@ -61,18 +59,11 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
 
     @Override
     public List<CfgRuleCommonDTO.ViewDTO> view(String platformType,String type) {
-        //是否存在海外仓
-        CfgRuleWarehouseEntity cfgRuleWarehouseEntity = cgRuleWarehouseService.getByPlatformType(platformType);
-        Boolean isEnableOverseas = Boolean.FALSE;
-        if (ObjectUtil.isNotEmpty(cfgRuleWarehouseEntity) && cfgRuleWarehouseEntity.getIsEnableOverseas()) {
-            isEnableOverseas = Boolean.TRUE;
-        }
-
         //查询已存在数据
-        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listRuleCommon(platformType,type, isEnableOverseas);
+        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listRuleCommon(platformType,type);
         if (CollectionUtils.isEmpty(viewList)) {
             //返回初始化数据
-           return this.listDefaultRuleCommonTree(platformType,type,isEnableOverseas);
+           return this.listDefaultRuleCommonTree(platformType,type);
         }
         //返回新增数据
         List<CfgRuleCommonDTO.ViewDTO> treeList = viewList.stream().filter(obj -> StrUtil.isBlank(obj.getParentId())).map(item -> {
@@ -88,11 +79,10 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
      * @author will
      * @date 2024/8/27 9:28
      * @param platformType
-     * @param isEnableOverseas
      * @return List<ViewDTO>
      */
-    private List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommonTree (String platformType,String type,Boolean isEnableOverseas) {
-        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listDefaultRuleCommon(platformType,type, isEnableOverseas);
+    private List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommonTree (String platformType,String type) {
+        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listDefaultRuleCommon(platformType,type);
         if (CollectionUtils.isEmpty(viewList)) {
             return Collections.EMPTY_LIST;
         }

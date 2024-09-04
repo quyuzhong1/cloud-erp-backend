@@ -45,4 +45,12 @@ public interface CfgRuleWarehouseService extends SuperService<CfgRuleWarehouseEn
      * @param platformType
      */
     void refreshVirtual(String platformType);
+    /**
+     * 查询是否启用海外仓
+     * @author will
+     * @date 2024/9/4 11:12
+     * @param platformType
+     * @return Boolean
+     */
+    Boolean getIsEnableOverseas(String platformType);
 }

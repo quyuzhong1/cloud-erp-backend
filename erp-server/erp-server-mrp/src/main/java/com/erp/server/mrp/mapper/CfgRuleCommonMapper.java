@@ -24,17 +24,15 @@ public interface CfgRuleCommonMapper extends BaseMapper<CfgRuleCommonEntity> {
      * @author will
      * @date 2024/8/26 9:46
      * @param platformType
-     * @param isEnableOverseas
      * @return List<ViewDTO>
      */
-    List<CfgRuleCommonDTO.ViewDTO> listRuleCommon(@Param("platformType") String platformType,@Param("type") String type,@Param("isEnableOverseas") Boolean isEnableOverseas);
+    List<CfgRuleCommonDTO.ViewDTO> listRuleCommon(@Param("platformType") String platformType,@Param("type") String type);
     /**
      * 
      * @author will
      * @date 2024/8/26 14:38
      * @param platformType
-     * @param isEnableOverseas
      * @return List<ViewDTO>
      */
-    List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommon(@Param("platformType")String platformType,@Param("type") String type,@Param("isEnableOverseas") Boolean isEnableOverseas);
+    List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommon(@Param("platformType")String platformType,@Param("type") String type);
 }

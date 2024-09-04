@@ -67,4 +67,17 @@ public class CfgRuleWarehouseController extends BaseController {
         cfgRuleWarehouseService.refreshVirtual(dto.getPlatformType());
         return success();
     }
+
+    /**
+     * 查询是否启用海外仓
+     * @author will
+     * @date 2024/9/4 11:11
+     * @param platformType
+     * @return ApiResult<?>
+     */
+    @GetMapping("/getIsEnableOverseas")
+    public ApiResult<?> getIsEnableOverseas(@RequestParam("platformType") String platformType) {
+        Boolean isEnableOverseas = cfgRuleWarehouseService.getIsEnableOverseas(platformType);
+        return success(isEnableOverseas);
+    }
 }
