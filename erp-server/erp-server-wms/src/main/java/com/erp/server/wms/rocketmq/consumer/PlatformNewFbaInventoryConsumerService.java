@@ -1,6 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
@@ -35,7 +35,8 @@ public class PlatformNewFbaInventoryConsumerService extends AbstractNewPlatformC
 
 	@Override
 	public void handle(String data) {
-		FbaInventoryEntity dto = JSONUtil.toBean(data, FbaInventoryEntity.class);
+//		FbaInventoryEntity dto = JSONUtil.toBean(data, FbaInventoryEntity.class);
+		FbaInventoryEntity dto = JSON.parseObject(data, FbaInventoryEntity.class);
 		fbaInventoryService.allBatchSave(Collections.singletonList(dto));
 	}
 
