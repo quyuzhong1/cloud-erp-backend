@@ -105,6 +105,10 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     BatchResultDTO approve(ApproveOneDTO dto);
 
+    //TODO 物流单
+//    @Async("saveLogisticsBill")
+    void saveLogisticsBill(SoOutstockEntity entity);
+
     /**
      * 反审核
      * @author yl
