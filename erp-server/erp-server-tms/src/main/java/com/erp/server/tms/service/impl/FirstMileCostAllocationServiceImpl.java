@@ -14,8 +14,6 @@ import com.common.business.enums.ConfirmStatusEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -45,12 +43,10 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -61,10 +57,8 @@ import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_COST_ALLOCATION;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_DELIVERY;
 
 /**
  * <p>
@@ -123,10 +117,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private LogisticsProductFeign logisticsProductFeign;
     @Resource
     private ReportPeriodMonthService reportPeriodMonthService;
+    @Lazy
     @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Lazy
     @Resource
     FirstMileSkuCostRefService firstMileSkuCostRefService;
     @Resource
@@ -379,7 +375,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             TmsFirstMileReconciliationDetailEntity oldReconciliationDetailEntity = reconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(entity.getReconciliationMonth()) && e.getReconciliationMonth().equals(entity.getReconciliationMonth())).findFirst().orElse(null);
             if (Objects.nonNull(oldReconciliationDetailEntity)) {
                 entity.setStatus(ConfirmStatusEnum.WAIT_CONFIRM.getCode());
-                entity.setReconciliationId(oldReconciliationDetailEntity.getId());
+                entity.setReconciliationId(oldReconciliationDetailEntity.getMainId());
                 entity.setReconciliationMonth(oldReconciliationDetailEntity.getReconciliationMonth());
                 //根据对账单分别记录费用分摊主表记录
                 return buildSkuAllocationByBill(null, oldReconciliationDetailEntity, entity, firstMileDeliveryDetailEntityList, skuCostAllocationEntityList, initFirstMileAllocationDetailEntityList, weightAllocationEntityList, allocationSettingDTO);
@@ -388,7 +384,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     //重置数据id 后面有回填动作，没有则是新增记录
                     entity.setId(null);
                     entity.setStatus(ConfirmStatusEnum.WAIT_CONFIRM.getCode());
-                    entity.setReconciliationId(reconciliationDetailEntity.getId());
+                    entity.setReconciliationId(reconciliationDetailEntity.getMainId());
                     entity.setReconciliationMonth(reconciliationDetailEntity.getReconciliationMonth());
                     //根据对账单分别记录费用分摊主表记录
                     buildSkuAllocationByBill(null, reconciliationDetailEntity, entity, firstMileDeliveryDetailEntityList, skuCostAllocationEntityList, initFirstMileAllocationDetailEntityList, weightAllocationEntityList, allocationSettingDTO);
@@ -1279,5 +1275,13 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         String msg = StrUtil.format("用户【{}】更新状态会计期间由【{}】改为【{}】，核算状态由【{}】改为【{}】", UserContext.getDefaultLoginUser().getUserName(),entity.getAccountPeriod(), accountPeriod, ConfirmStatusEnum.getName(entity.getStatus()), ConfirmStatusEnum.getName(status));
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.COST_ALLOCATION.getCode(), entity.getId(), "更新状态");
         return BatchResultDTO.success(entity.getId(), entity.getSourceCode(),"更新状态成功");
+    }
+
+    @Override
+    public List<FirstMileCostAllocationEntity> listByReconciliationIds(List<String> reconciliationIds) {
+        if (CollectionUtils.isEmpty(reconciliationIds)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FirstMileCostAllocationEntity::getReconciliationId, reconciliationIds).list();
     }
 }

@@ -106,4 +106,11 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @return
      */
     BatchResultDTO updateStatus(FirstMileCostAllocationEntity entity, String status, String accountPeriod);
+
+    /**
+     * 根据对账单id查询费用分摊记录
+     * @param reconciliationIds
+     * @return
+     */
+    List<FirstMileCostAllocationEntity> listByReconciliationIds(List<String> reconciliationIds);
 }

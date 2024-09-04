@@ -28,7 +28,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -57,7 +56,6 @@ import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
-import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -112,7 +110,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -124,9 +121,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
-
-import static com.rtfparserkit.rtf.Command.list;
-import static com.rtfparserkit.rtf.Command.v;
 
 /**
  * <p>
@@ -913,6 +907,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     //TODO 物流单
 //    @Async("saveLogisticsBill")
+    @Override
     public void saveLogisticsBill(SoOutstockEntity entity) {
             LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
             addDTO.setOutstockId(entity.getId());
