@@ -385,6 +385,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 return buildSkuAllocationByBill(null, oldReconciliationDetailEntity, entity, firstMileDeliveryDetailEntityList, skuCostAllocationEntityList, initFirstMileAllocationDetailEntityList, weightAllocationEntityList, allocationSettingDTO);
             } else {
                 for (TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity : reconciliationDetailEntityList) {
+                    //重置数据id 后面有回填动作，没有则是新增记录
+                    entity.setId(null);
                     entity.setStatus(ConfirmStatusEnum.WAIT_CONFIRM.getCode());
                     entity.setReconciliationId(reconciliationDetailEntity.getId());
                     entity.setReconciliationMonth(reconciliationDetailEntity.getReconciliationMonth());
@@ -662,18 +664,25 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         LocalDate reconciliationMonth = entity.getReconciliationMonth();
         LocalDate reportPeriodMonth = entity.getReportPeriodMonth();
         //获取发货单所有分摊记录(本核算之前的记录)
+        //前一个费用分摊是暂估时 根据核算月份比较  前一个时实际账单时 根据 核算月份+对账月份比较
         List<FirstMileCostAllocationDTO.PagingVO> beforeList = voList.stream().filter(e -> Objects.nonNull(e)
-                && Objects.nonNull(e.getReconciliationMonth())&& Objects.nonNull(reportPeriodMonth.getMonth()) && e.getReconciliationMonth().isBefore(reportPeriodMonth)).collect(Collectors.toList());
-        //存在对账单月份则获取对账前一个对账月份的分摊记录，不存在对账月份，则获取核算月份之前的记录(实际账单)
-        FirstMileCostAllocationDTO.PagingVO beforeVO = null;
-        if (Objects.isNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)) {
-            beforeVO = Collections.max(beforeList, Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
-        } else if (Objects.nonNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)) {
-            beforeVO = beforeList.stream().filter(e -> Objects.equals(e.getReconciliationMonth(), reconciliationMonth)).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);
-        }
+                && Objects.nonNull(e.getReportPeriodMonth()) && e.getReportPeriodMonth().isBefore(reportPeriodMonth)).collect(Collectors.toList());
+
         List<FirstMileSkuCostAllocationDetailEntity> beforeSkuDetailList = null;
         //判断是否存在账单
         FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO = judgeMonthReconciliationHasReconciliation(reportPeriodMonth, reconciliationMonth, voList, firstMileSkuCostAllocationEntityList);
+        //存在对账单月份则获取对账前一个对账月份的分摊记录，不存在对账月份，则获取核算月份之前的记录(实际账单)
+        FirstMileCostAllocationDTO.PagingVO beforeVO = null;
+        if (judgeReconciliationDTO.isCurrencyMonthReconciliation() && Objects.nonNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)) {
+            //本月开始有实际账单，则之前为暂估账单
+            beforeVO = Collections.max(beforeList, Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
+        } else if (judgeReconciliationDTO.isLastMonthReconciliation() && Objects.nonNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)) {
+            //上月开始有实际账单，则之前为实际账单
+            beforeVO = beforeList.stream().filter(e -> Objects.equals(e.getReconciliationMonth(), reconciliationMonth)).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);
+        }else {
+            //之前和本次都是暂估账单
+            beforeVO = Collections.max(beforeList, Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
+        }
         //如果上个费用分摊记录存在
         if (Objects.nonNull(beforeVO)) {
             beforeSkuDetailList = firstMileSkuCostAllocationDetailService.listByMainIds(Collections.singletonList(beforeVO.getId()));
@@ -1066,6 +1075,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         FirstMileSkuCostAllocationDetailEntity entity = new FirstMileSkuCostAllocationDetailEntity()
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
+                .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
                 .setFeeType(AllocationFeeTypeEnum.OTHER_COST.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstOtherFee());
         if (Objects.nonNull(reconciliationDetailEntity)) {
@@ -1102,6 +1112,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         FirstMileSkuCostAllocationDetailEntity entity = new FirstMileSkuCostAllocationDetailEntity()
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
+                .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
                 .setFeeType(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstOtherTaxFee());
         if (Objects.nonNull(reconciliationDetailEntity)) {
@@ -1138,6 +1149,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         FirstMileSkuCostAllocationDetailEntity entity = new FirstMileSkuCostAllocationDetailEntity()
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
+                .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
                 .setFeeType(AllocationFeeTypeEnum.DECLARE_COST.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstTariffFee());
         if (Objects.nonNull(reconciliationDetailEntity)) {
@@ -1179,6 +1191,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         FirstMileSkuCostAllocationDetailEntity entity = new FirstMileSkuCostAllocationDetailEntity()
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
+                .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
                 .setFeeType(AllocationFeeTypeEnum.SHIPPING_COST.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstShippingCost());
         if (Objects.nonNull(reconciliationDetailEntity)) {
