@@ -221,6 +221,10 @@ public class OverseasProviderWarehouseDTO implements Serializable {
          */
         @NotBlank(message = "平台编码不能为空")
         private String code;
+        /**
+         * 仓库简称
+         */
+        private String shortName;
 
         /**
          * 关键词
