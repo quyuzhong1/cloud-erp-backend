@@ -110,6 +110,12 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> paging(PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
         Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<FirstMileWeightAllocationDTO.ViewDTO> pageData = baseMapper.paging(query, dto.getParams());
+        //会有性能问题，待优化
+        List<String> logisticsBillIds = pageData.getRecords().stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
+        for (String logisticsBillId : logisticsBillIds) {
+            updateCostAllocationStatus(logisticsBillId);
+        }
+        pageData = baseMapper.paging(query, dto.getParams());
         fillData(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
@@ -202,7 +208,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         }
         costAllocationList.sort(Comparator.comparing(FirstMileWeightAllocationDTO.CostAllocationDTO::getReportPeriod).reversed());
         FirstMileWeightAllocationDTO.CostAllocationDTO costAllocationDTO = costAllocationList.get(0);
-        if(costAllocationDTO.getCostAllocationStatus().equals("waitConfirm") && costAllocationDTO.getBillSourceType().equals("actual") && costAllocationDTO.getEndPeriodTransitCost().equals(BigDecimal.ZERO)){
+        if(costAllocationDTO.getCostAllocationStatus().equals("waitConfirm")
+                && costAllocationDTO.getBillSourceType() != null && costAllocationDTO.getBillSourceType().equals("actual")
+                && costAllocationDTO.getEndPeriodTransitCost() != null && costAllocationDTO.getEndPeriodTransitCost().equals(BigDecimal.ZERO)){
             this.lambdaUpdate().set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.ALREADY.getCode()).eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).update();
             return;
         }

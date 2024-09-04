@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.NumberUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import cn.hutool.core.util.StrUtil;
@@ -212,11 +213,6 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         List<FirstMileEstimatedBillExcelDTO> successList = listener.getSuccessList();
         List<FirstMileEstimatedBillExcelDTO> errorList = listener.getErrorList();
         for (FirstMileEstimatedBillExcelDTO dto : successList) {
-            /*if(StringUtils.isBlank(dto.getBusinessCode()) && StringUtils.isBlank(dto.getTransportNo())){
-                dto.setErrorMsg("【业务单号】和【物流运单号】不能同时为空，");
-                errorList.add(dto);
-                continue;
-            }*/
             Optional<FirstMileEstimatedBillDTO.LogisticsInfoDTO> existBusinessCodeOptional = logisticsInfoList.stream().filter(item -> item.getBusinessCode().equals(dto.getBusinessCode())).findFirst();
             if(StringUtils.isNotBlank(dto.getBusinessCode()) && !existBusinessCodeOptional.isPresent()){
                 dto.setErrorMsg("该业务单号所在的物流单未下推暂估账单，");
@@ -277,7 +273,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         if(! errorList.isEmpty()){
             try {
                 String fileName = "头程暂估账单-导入错误" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                String excelPath = "excel/firstMileEstimatedBillExport.xlsx";
+                String excelPath = "excel/firstMileEstimatedBillImportError.xlsx";
                 new ExcelPrintUtils().patchExport(errorList, response, fileName, excelPath);
             } catch (IOException e) {
                 log.error("仓位安全库存导出错误：{}", e);
