@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -155,10 +156,13 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = overseasProviderService.listAllMatch();
 
         //获取库存sku信息
+        List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = new ArrayList<>();
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatformSkuNoList(plaformSkuNoList);
         paramDTO.setIsExpire(false);
-        List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
+        if(CollectionUtils.isNotEmpty(plaformSkuNoList)){
+            listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
+        }
 
         // 属性赋值
         for(OverseasInventoryDTO.ListDTO data : list) {

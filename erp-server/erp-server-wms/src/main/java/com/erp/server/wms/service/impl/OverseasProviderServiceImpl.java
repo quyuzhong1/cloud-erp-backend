@@ -203,7 +203,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         }
         OverseasProviderEntity existAccount = this.lambdaQuery().eq(OverseasProviderEntity::getPlatformAccount,dto.getPlatformAccount()).eq(OverseasProviderEntity::getCode,dto.getCode()).one();
         if(Objects.nonNull(existAccount)){
-            throw new ServiceException("已存在相同店铺");
+            throw new ServiceException("已存在相同账号");
         }
         OverseasProviderEntity add = BeanUtil.copyProperties(dto,OverseasProviderEntity.class);
         this.save(add);
@@ -228,6 +228,14 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             throw new ServiceException("海外仓为空");
         }
         BeanUtil.copyProperties(dto,entity);
+        OverseasProviderEntity existShortName = this.lambdaQuery().eq(OverseasProviderEntity::getShortName,dto.getShortName()).ne(OverseasProviderEntity::getId,entity.getId()).one();
+        if(Objects.nonNull(existShortName)){
+            throw new ServiceException("已存在相同仓库简称");
+        }
+        OverseasProviderEntity existAccount = this.lambdaQuery().eq(OverseasProviderEntity::getPlatformAccount,dto.getPlatformAccount()).eq(OverseasProviderEntity::getCode,entity.getCode()).ne(OverseasProviderEntity::getId,entity.getId()).one();
+        if(Objects.nonNull(existAccount)){
+            throw new ServiceException("已存在相同账号");
+        }
         boolean result = this.updateById(entity);
         if(result){
             String msg = StrUtil.format("用户【{}】编辑平台账号修改为【{}】,仓库简称修改为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), entity.getPlatformAccount(),entity.getShortName());
