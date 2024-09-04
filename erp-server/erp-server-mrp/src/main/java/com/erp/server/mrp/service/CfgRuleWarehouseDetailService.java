@@ -32,6 +32,15 @@ public interface CfgRuleWarehouseDetailService extends SuperService<CfgRuleWareh
      * @return List<CfgRuleWarehouseDetailEntity>
      */
     List<CfgRuleWarehouseDetailEntity> listByMainIdList(List<String> mainIdList);
+
+    /**
+     * 根据主表id集合和类型查询
+     * @author will
+     * @date 2024/8/24 15:54
+     * @param mainIdList
+     * @return List<CfgRuleWarehouseDetailEntity>
+     */
+    List<CfgRuleWarehouseDetailEntity> listByWarehouseType(Boolean isVirtual,List<String> mainIdList,String type);
     /**
      * 根据主表id集合查询详情数据
      * @author will

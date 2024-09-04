@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
@@ -82,9 +81,9 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         private String channelIdJsonName;
 
         /**
-         * 平台集合
+         * 平台
          */
-        private List<String> platformList;
+        private String dictPlatform;
 
         /**
          * 渠道(店铺)id的json
@@ -140,12 +139,6 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         private String warehouseId;
 
         /**
-        * 虚拟仓id
-        */
-        @Size(max = 19,message = "虚拟仓id最大长度不能超过19位")
-        private String virtualWarehouseId;
-
-        /**
         * 关联店铺类型，platform按平台，shop按店铺
         */
         @NotBlank(message = "关联店铺类型，platform按平台，shop按店铺不能为空")
@@ -155,15 +148,12 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         /**
         * 渠道(店铺)id的json
         */
-        @NotEmpty(message = "渠道id集合")
         private List<String> channelIdList;
 
         /**
-         * 平台集合
+         * 平台
          */
-        private List<String> platformList;
-
-
+        private String dictPlatform;
 
         /**
         * 库存分配类型
@@ -172,6 +162,11 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         @Size(max = 32,message = "库存分配类型最大长度不能超过32位")
         private String inventoryAllocateType;
 
+        /**
+         * 虚拟仓id
+         */
+        @Size(max = 19,message = "虚拟实体仓id最大长度不能超过19位")
+        private String virtualWarehouseId;
     }
 
 

@@ -64,6 +64,12 @@ public class CfgRuleWarehouseDetailEntity extends BaseEntity<CfgRuleWarehouseDet
     private String mainId;
 
     /**
+     * 平台
+     */
+    @TableField(exist = false)
+    private String dictPlatform;
+
+    /**
      * 渠道id集合
      */
     @TableField(exist = false)

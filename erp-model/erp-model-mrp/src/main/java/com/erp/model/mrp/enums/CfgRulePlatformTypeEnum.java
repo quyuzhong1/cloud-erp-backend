@@ -25,4 +25,14 @@ public enum CfgRulePlatformTypeEnum implements EnumMessage {
     public String getName() {
         return name;
     }
+
+    public static CfgRulePlatformTypeEnum getEnum(String code) {
+        for (CfgRulePlatformTypeEnum typeEnum : CfgRulePlatformTypeEnum.values()) {
+            if (typeEnum.getCode().equals(code)) {
+                return typeEnum;
+            }
+        }
+        return null;
+    }
+
 }
