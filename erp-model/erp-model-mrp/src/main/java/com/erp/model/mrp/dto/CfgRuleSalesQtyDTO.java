@@ -157,12 +157,6 @@ public class CfgRuleSalesQtyDTO implements Serializable {
     @NoArgsConstructor
     @Accessors(chain = true)
     public static class UpdateDetailDTO extends CommonDTO {
-
-        /**
-        * 主键id
-        */
-        private String id;
-
         /**
          * 是否是自定义
          */

@@ -151,7 +151,6 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * 标签选项
          */
-        @NotEmpty(message = "标签选项不能为空")
         private List<String> labelIdList;
 
     }
@@ -168,7 +167,6 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * 标签选项
          */
-        @NotEmpty(message = "标签选项不能为空")
         private List<String> labelIdList;
 
     }

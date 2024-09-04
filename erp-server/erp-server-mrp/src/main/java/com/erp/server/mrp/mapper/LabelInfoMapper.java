@@ -1,4 +1,5 @@
 package com.erp.server.mrp.mapper;
+import com.erp.model.mrp.dto.LabelInfoDTO;
 import com.erp.model.mrp.entity.LabelInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.mrp.vo.LabelVO;
@@ -21,4 +22,11 @@ import java.util.List;
 public interface LabelInfoMapper extends BaseMapper<LabelInfoEntity> {
 
     List<LabelVO> listLabelByReplenishmentIds(@Param("ids") List<String> ids);
+    /**
+     * 列表查询
+     * @author will
+     * @date 2024/9/4 16:37
+     * @return List<LabelInfoDTO.ListDTO>
+     */
+    List<LabelInfoDTO.ListDTO> listLabelInfo();
 }

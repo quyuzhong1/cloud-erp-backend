@@ -377,6 +377,19 @@ public class ReplenishmentSuggestionController extends BaseController {
     }
 
     /**
+     * 根据id查询标签
+     * @author will
+     * @date 2024/9/4 16:42
+     * @param id
+     * @return ApiResult<List<ViewDTO>>
+     */
+    @GetMapping("/listLabelInfoById")
+    public ApiResult<List<LabelInfoDTO.ViewDTO>> listLabelInfoById(@RequestParam("id") String id) {
+        List<LabelInfoDTO.ViewDTO> list = replenishmentSuggestionService.listLabelInfoById(id);
+        return success(list);
+    }
+
+    /**
      * 编辑标签（单个）
      * @author will
      * @date 2024/8/30 14:50

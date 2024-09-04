@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,7 +61,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     public Boolean update(CfgRuleStockUpDTO.UpdateDTO updateDTO) {
         CfgRuleStockUpEntity cfgRuleStockUpEntity =  BeanMapperUtils.map(CfgRuleStockUpEntity.class, updateDTO);
         //旧数据
-        CfgRuleStockUpEntity old = super.getById(updateDTO.getId());
+        CfgRuleStockUpEntity old = this.getByPlatformType(updateDTO.getPlatformType(),updateDTO.getRefId());
         if (ObjectUtil.isNotEmpty(old)) {
             cfgRuleStockUpEntity.setId(old.getId());
         }
@@ -133,8 +134,9 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     }
 
     @Override
-    public void customUpdate(CfgRuleStockUpDTO.UpdateDTO stockUpUpdateDTO) {
-        update();
+    public void customUpdate(CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO) {
+        CfgRuleStockUpDTO.UpdateDTO updateDTO = BeanMapperUtils.map(CfgRuleStockUpDTO.UpdateDTO.class, stockUpUpdateDTO);
+        this.update(updateDTO);
     }
 
     /**
@@ -147,6 +149,14 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Override
     public CfgRuleStockUpEntity getByRefId(String refId) {
         return lambdaQuery().eq(CfgRuleStockUpEntity::getRefId,refId).last("limit 1").one();
+    }
+
+    @Override
+    public List<CfgRuleStockUpEntity> listByRefIdList(List<String> refIdList) {
+        if (CollectionUtils.isEmpty(refIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(CfgRuleStockUpEntity::getRefId,refIdList).list();
     }
 
     @Override
@@ -172,6 +182,21 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
                 .one();
     }
 
+    /**
+     * 查询最新的备货信息
+     * @author will
+     * @date 2024/9/4 14:43
+     * @param platformType
+     * @param refId
+     * @return CfgRuleStockUpEntity
+     */
+    private CfgRuleStockUpEntity getByPlatformType (String platformType,String refId) {
+        return lambdaQuery().eq(CfgRuleStockUpEntity::getPlatformType,platformType)
+                .eq(StrUtil.isNotBlank(refId),CfgRuleStockUpEntity::getRefId,refId)
+                .eq(StrUtil.isBlank(refId),CfgRuleStockUpEntity::getRefId,"")
+                .last("limit 1")
+                .one();
+    }
 
     /**
     * 新增修改处理数据

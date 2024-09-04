@@ -15,10 +15,7 @@ import com.erp.model.mrp.entity.LabelInfoEntity;
 import com.erp.server.mrp.service.LabelInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -38,6 +35,17 @@ public class LabelInfoController extends BaseController {
 
     @Resource
     private LabelInfoService labelInfoService;
+
+    /**
+     * 列表查询
+     * @author will
+     * @date 2024/9/4 16:35
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @GetMapping("/listLabelInfo")
+    public ApiResult<List<LabelInfoDTO.ListDTO>> listLabelInfo() {
+        return success(labelInfoService.listLabelInfo());
+    }
 
     /**
     * 新增

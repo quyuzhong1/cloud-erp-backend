@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service;
 import com.common.business.service.SuperService;
+import com.erp.model.mrp.dto.LabelInfoDTO;
 import com.erp.model.mrp.dto.ReplenishmentRefLabelDTO;
 import com.erp.model.mrp.entity.ReplenishmentRefLabelEntity;
 
@@ -32,4 +33,12 @@ public interface ReplenishmentRefLabelService extends SuperService<Replenishment
      * @param id
      */
     void deleteLabel(List<String> labelIdList, String id);
+    /**
+     * 根据关联id查询
+     * @author will
+     * @date 2024/9/4 16:44
+     * @param refId
+     * @return List<ViewDTO>
+     */
+    List<LabelInfoDTO.ViewDTO> listLabelInfoByRefId(String refId);
 }

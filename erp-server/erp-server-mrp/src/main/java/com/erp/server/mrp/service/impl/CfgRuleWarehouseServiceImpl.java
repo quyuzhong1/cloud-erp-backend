@@ -64,7 +64,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
     public Boolean update(CfgRuleWarehouseDTO.UpdateDTO updateDTO) {
         CfgRuleWarehouseEntity cfgRuleWarehouseEntity =  BeanMapperUtils.map(CfgRuleWarehouseEntity.class, updateDTO);
         //旧数据
-        CfgRuleWarehouseEntity old = super.getById(updateDTO.getId());
+        CfgRuleWarehouseEntity old = this.getByPlatformType(updateDTO.getPlatformType());
         if (ObjectUtil.isNotEmpty(old)) {
             cfgRuleWarehouseEntity.setId(old.getId());
         }
@@ -107,7 +107,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         //本地仓设置(虚拟仓数据)
         List<CfgRuleWarehouseDetailDTO.ViewDTO> localVirtualWarehouseList = cfgRuleWarehouseDetailList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseType(), CfgRuleWarehouseTypeEnum.LOCAL.getCode()) && StrUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(localVirtualWarehouseList)) {
-            viewDTO.setCfgLocalWarehouseList(localVirtualWarehouseList);
+            viewDTO.setCfgLocalVirtualWarehouseList(localVirtualWarehouseList);
         }
 
         //海外仓设置
@@ -129,7 +129,9 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
      */
     @Override
     public CfgRuleWarehouseEntity getByPlatformType (String platformType) {
-        return lambdaQuery().eq(CfgRuleWarehouseEntity::getPlatformType,platformType).last("limit 1").one();
+        return lambdaQuery().eq(CfgRuleWarehouseEntity::getPlatformType,platformType)
+                .last("limit 1")
+                .one();
     }
 
     @Override

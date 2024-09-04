@@ -16,15 +16,6 @@
        <result column="color" property="color" />
        <result column="disabled" property="disabled" />
     </resultMap>
-    <select id="listLabelByReplenishmentIds" resultType="com.erp.model.mrp.vo.LabelVO">
-        select rrl.ref_id as replenishmentId, li.name, li.color
-        from label_info li
-        inner join replenishment_ref_label rrl on rrl.is_deleted = false and rrl.label_id = li.id
-        where li.disabled = false and rrl.ref_id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </select>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
@@ -39,6 +30,30 @@
         is_deleted,
         name, color, disabled
     </sql>
+
+
+    <select id="listLabelByReplenishmentIds" resultType="com.erp.model.mrp.vo.LabelVO">
+        select rrl.ref_id as replenishmentId, li.name, li.color
+        from label_info li
+        inner join replenishment_ref_label rrl on rrl.is_deleted = false and rrl.label_id = li.id
+        where li.disabled = false and rrl.ref_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- 列表查询 -->
+    <select id="listLabelInfo" resultType="com.erp.model.mrp.dto.LabelInfoDTO$ListDTO">
+        select
+               <include refid="Base_Column_List" />
+        from label_info li
+        <where>
+            li.is_deleted = false
+        </where>
+        order by li.id desc
+    </select>
+
+
 
 
 </mapper>

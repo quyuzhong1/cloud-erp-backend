@@ -91,7 +91,7 @@ public class StockUpImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "优先级（空运)", index = 0)
     @FieldValid(fieldName = "优先级（空运)", maxLength = 50)
-    private String onePriority;
+    private String oneIndex;
 
     /**
      * 物流时效（快递）
@@ -112,7 +112,7 @@ public class StockUpImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "优先级（快递)", index = 0)
     @FieldValid(fieldName = "优先级（快递)", maxLength = 50)
-    private String twoPriority;
+    private String twoIndex;
 
     /**
      * 物流时效（海运散装）
@@ -133,7 +133,7 @@ public class StockUpImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "优先级（海运散装)", index = 0)
     @FieldValid(fieldName = "优先级（海运散装)", maxLength = 50)
-    private String threePriority;
+    private String threeIndex;
 
     /**
      * 物流时效（海运整柜）
@@ -154,7 +154,7 @@ public class StockUpImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "优先级（海运整柜)", index = 0)
     @FieldValid(fieldName = "优先级（海运整柜)", maxLength = 50)
-    private String fourPriority;
+    private String fourIndex;
 
     /**
      * 物流时效（铁运散装）
@@ -175,7 +175,7 @@ public class StockUpImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "优先级（铁运散装)", index = 0)
     @FieldValid(fieldName = "优先级（铁运散装)", maxLength = 50)
-    private String fivePriority;
+    private String fiveIndex;
 
     /**
      * 物流时效（铁运整柜）
@@ -196,20 +196,20 @@ public class StockUpImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "优先级（铁运整柜)", index = 0)
     @FieldValid(fieldName = "优先级（铁运整柜)", maxLength = 50)
-    private String sixPriority;
+    private String sixIndex;
 
     /**
      * 安全天数
      */
     @ExcelProperty(value = "*安全天数", index = 0)
-    @FieldValid(fieldName = "安全天数", maxLength = 50)
+    @FieldValid(fieldName = "安全天数", isNotBlank = true, maxLength = 50)
     private String safeDays;
 
     /**
      * 默认备货系数
      */
     @ExcelProperty(value = "*默认备货系数", index = 0)
-    @FieldValid(fieldName = "默认备货系数", maxLength = 50)
+    @FieldValid(fieldName = "默认备货系数", isNotBlank = true, maxLength = 50)
     private String stockingRatio;
 
     /**

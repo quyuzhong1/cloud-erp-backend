@@ -3,6 +3,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 备货（规则设置） 服务类
@@ -42,7 +44,7 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      * @date 2024/8/30 9:26
      * @param stockUpUpdateDTO
      */
-    void customUpdate(CfgRuleStockUpDTO.UpdateDTO stockUpUpdateDTO);
+    void customUpdate(CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO);
     /**
      * 根据来源id查询
      * @author will
@@ -51,6 +53,14 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      * @return CfgRuleStockUpEntity
      */
     CfgRuleStockUpEntity getByRefId(String refId);
+    /**
+     * 根据来源id集合查询
+     * @author will
+     * @date 2024/9/4 15:40
+     * @param refIdList
+     * @return List<CfgRuleStockUpEntity>
+     */
+    List<CfgRuleStockUpEntity> listByRefIdList(List<String> refIdList);
 
     /**
      * 获取备货基础数据 补货建议维度获取不到，则获取系统默认

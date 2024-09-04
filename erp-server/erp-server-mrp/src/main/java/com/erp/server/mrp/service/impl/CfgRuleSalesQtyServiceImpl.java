@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -82,9 +83,9 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     public Boolean update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetailDTO) {
         CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity =  BeanMapperUtils.map(CfgRuleSalesQtyEntity.class, updateDetailDTO);
         //旧数据
-        CfgRuleSalesQtyEntity old = super.getById(updateDetailDTO.getId());
-        if (ObjectUtil.isNotEmpty(old)) {
-            cfgRuleSalesQtyEntity.setId(old.getId());
+        List<CfgRuleSalesQtyEntity> oldList = this.getByPlatformType(updateDetailDTO.getPlatformType(),updateDetailDTO.getRefId(),updateDetailDTO.getType());
+        if (CollectionUtils.isNotEmpty(oldList)) {
+            cfgRuleSalesQtyEntity.setId(oldList.get(0).getId());
         }
 
         // 数据处理
@@ -105,7 +106,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         // 记录主单操作日志
         log.info("编辑 开始记录销量（规则设置）日志数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleSalesQtyEntity.getId(), "销量（规则设置）");
-        operateLogService.addModuleOperateLogByObj(old, cfgRuleSalesQtyEntity, ModuleTypeEnum.CFG_RULE_COMMON.getCode(), cfgRuleSalesQtyEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(oldList.get(0), cfgRuleSalesQtyEntity, ModuleTypeEnum.CFG_RULE_COMMON.getCode(), cfgRuleSalesQtyEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -114,7 +115,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         CfgRuleSalesQtyDTO.ViewDTO viewDTO = new CfgRuleSalesQtyDTO.ViewDTO();
 
         //销量信息
-        List<CfgRuleSalesQtyEntity> list = this.getByPlatformType(platformType);
+        List<CfgRuleSalesQtyEntity> list = this.getByPlatformType(platformType,"","");
         if (CollectionUtils.isEmpty(list)) {
             return  viewDTO;
         }
@@ -192,6 +193,14 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
     }
 
+    @Override
+    public List<CfgRuleSalesQtyEntity> listByRefIdList(List<String> refIdList) {
+        if (CollectionUtils.isEmpty(refIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(CfgRuleSalesQtyEntity::getRefId,refIdList).list();
+    }
+
     /**
      * 根据来源id查询
      * @author will
@@ -238,8 +247,13 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
      * @param platformType
      * @return List<CfgRuleSalesQtyEntity>
      */
-    private List<CfgRuleSalesQtyEntity> getByPlatformType (String platformType) {
-       return lambdaQuery().eq(CfgRuleSalesQtyEntity::getPlatformType,platformType).list();
+    private List<CfgRuleSalesQtyEntity> getByPlatformType (String platformType,String refId,String type) {
+       return lambdaQuery()
+               .eq(CfgRuleSalesQtyEntity::getPlatformType,platformType)
+               .eq(StrUtil.isNotBlank(refId),CfgRuleSalesQtyEntity::getRefId,refId)
+               .eq(StrUtil.isBlank(refId),CfgRuleSalesQtyEntity::getRefId,"")
+               .eq(StrUtil.isNotBlank(type),CfgRuleSalesQtyEntity::getType,type)
+               .list();
     }
 
     /**

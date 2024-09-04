@@ -187,6 +187,25 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         @Size(max = 32,message = "关联类型最大长度不能超过32位")
         private String refType;
+
+        /**
+         * 物流信息
+         */
+        @NotEmpty(message = "物流信息配置不能为空")
+        @Valid
+        private List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList;
+
+        /**
+         * 常规品备货系数信息
+         */
+        @Valid
+        private List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList;
+
+        /**
+         * 新品备货系数信息
+         */
+        @Valid
+        private List<CfgRuleStockingRatioDTO.UpdateDTO> newStockingRatioList;
     }
 
     /**
@@ -195,12 +214,6 @@ public class CfgRuleStockUpDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
-
-        /**
-        * 主键id
-        */
-        private String id;
-
         /**
          * 是否是自定义
          */

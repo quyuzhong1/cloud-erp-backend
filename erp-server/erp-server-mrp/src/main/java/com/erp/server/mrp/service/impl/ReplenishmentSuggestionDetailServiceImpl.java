@@ -1,10 +1,14 @@
 package com.erp.server.mrp.service.impl;
 
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionDetailEntity;
 import com.erp.server.mrp.mapper.ReplenishmentSuggestionDetailMapper;
 import com.erp.server.mrp.service.ReplenishmentSuggestionDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +21,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class ReplenishmentSuggestionDetailServiceImpl extends SuperServiceImpl<ReplenishmentSuggestionDetailMapper, ReplenishmentSuggestionDetailEntity> implements ReplenishmentSuggestionDetailService {
 
+    @Override
+    public List<ReplenishmentSuggestionDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(ReplenishmentSuggestionDetailEntity::getMainId).list();
+    }
 }

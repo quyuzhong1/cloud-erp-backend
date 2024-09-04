@@ -12,24 +12,27 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
-import com.erp.model.mrp.dto.HistoryImportRecordDTO;
+import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.excel.*;
+import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
+import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
+import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
+import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.server.mrp.listener.*;
-import com.erp.server.mrp.service.CfgRuleStockUpService;
-import com.erp.server.mrp.service.HistoryImportRecordService;
-import com.erp.server.mrp.service.ReplenishmentSuggestionImportService;
-import com.erp.server.mrp.service.ReplenishmentSuggestionService;
+import com.erp.server.mrp.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -51,6 +54,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     private ReplenishmentSuggestionService replenishmentSuggestionService;
 
     @Resource
+    private CfgRuleStockingRatioService cfgRuleStockingRatioService;
+
+    @Resource
     private HistoryImportRecordService historyImportRecordService;
 
     @Resource
@@ -58,6 +64,19 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
     @Resource
     private CustomerFeign customerFeign;
+
+    @Resource
+    private CfgRuleStockUpService cfgRuleStockUpService;
+
+    @Resource
+    private CfgRuleSalesFormulaService cfgRuleSalesFormulaService;
+
+    @Resource
+    private CfgRuleSalesQtyService cfgRuleSalesQtyService;
+
+    @Resource
+    private CfgRuleSalesDenoisingService cfgRuleSalesDenoisingService;
+
     @Override
     public void downloadRuleTemplate(HttpServletResponse response) {
         String path = "classpath:excel/replenishmentRuleTemplate.xlsx";
@@ -212,12 +231,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         List<String> platformList = successList.stream().map(StockUpImportExcelDTO::getPlatform).distinct().collect(Collectors.toList());
         List<String> platformCodeList = platformViewList.stream().filter(obj -> platformList.contains(obj.getName())).map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
 
-
         //店铺
         List<String> shopNameList = successList.stream().map(StockUpImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
         List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
-
 
         //SKU
         List<String> skuNoList = successList.stream().map(StockUpImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -225,9 +242,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         List<String> skuIdList = productDetailList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
 
         //根据平台、店铺、skuId查询补货建议数据
-        replenishmentSuggestionService.listByUnique(platformCodeList,shopIdList,skuIdList);
+        List<ReplenishmentSuggestionEntity> replenishmentSuggestionList = replenishmentSuggestionService.listByUnique(platformCodeList, shopIdList, skuIdList);
 
         for (StockUpImportExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
             //平台信息
             String platformCode = platformViewList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
             //店铺信息
@@ -235,10 +253,132 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //SKU
             String skuId = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
 
-            CfgRuleStockUpDTO.UpdateDTO updateDTO = new CfgRuleStockUpDTO.UpdateDTO();
-            cgRuleStockUpService.update(updateDTO);
+            //物流信息
+            checkLogisticsData(excelDTO,errorMsgList);
+
+            //补货建议主表信息
+            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, excelDTO.getPlatform())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(entity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
+            CfgRuleStockUpDTO.CustomUpdateDTO customUpdateDTO = formatCfgRuleStockUpDTO(excelDTO,entity);
+            cgRuleStockUpService.customUpdate(customUpdateDTO);
         }
 
+    }
+
+    /**
+     * 验证 物流方式
+     * @author will
+     * @date 2024/9/4 15:07
+     * @param excelDTO
+     * @param errorMsgList
+     */
+    private void checkLogisticsData (StockUpImportExcelDTO excelDTO,List<String> errorMsgList) {
+        if ((StrUtil.isNotBlank(excelDTO.getOneLogisticsDays()) || StrUtil.isNotBlank(excelDTO.getOneLogisticsCycleDays()) || StrUtil.isNotBlank(excelDTO.getOneIndex()))
+                && (StrUtil.isBlank(excelDTO.getOneLogisticsDays()) || StrUtil.isBlank(excelDTO.getOneLogisticsCycleDays()) || StrUtil.isBlank(excelDTO.getOneIndex()))) {
+            errorMsgList.add("物流方式【空运】未设置完全");
+        }
+        if ((StrUtil.isNotBlank(excelDTO.getTwoLogisticsDays()) || StrUtil.isNotBlank(excelDTO.getTwoLogisticsCycleDays()) || StrUtil.isNotBlank(excelDTO.getTwoIndex()))
+                && (StrUtil.isBlank(excelDTO.getTwoLogisticsDays()) || StrUtil.isBlank(excelDTO.getTwoLogisticsCycleDays()) || StrUtil.isBlank(excelDTO.getTwoIndex()))) {
+            errorMsgList.add("物流方式【快递】未设置完全");
+        }
+        if ((StrUtil.isNotBlank(excelDTO.getThreeLogisticsDays()) || StrUtil.isNotBlank(excelDTO.getThreeLogisticsCycleDays()) || StrUtil.isNotBlank(excelDTO.getThreeIndex()))
+                && (StrUtil.isBlank(excelDTO.getThreeLogisticsDays()) || StrUtil.isBlank(excelDTO.getThreeLogisticsCycleDays()) || StrUtil.isBlank(excelDTO.getThreeIndex()))) {
+            errorMsgList.add("物流方式【海运散装】未设置完全");
+        }
+        if ((StrUtil.isNotBlank(excelDTO.getFourLogisticsDays()) || StrUtil.isNotBlank(excelDTO.getFourLogisticsCycleDays()) || StrUtil.isNotBlank(excelDTO.getFourIndex()))
+                && (StrUtil.isBlank(excelDTO.getFourLogisticsDays()) || StrUtil.isBlank(excelDTO.getFourLogisticsCycleDays()) || StrUtil.isBlank(excelDTO.getFourIndex()))) {
+            errorMsgList.add("物流方式【海运整柜】未设置完全");
+        }
+        if ((StrUtil.isNotBlank(excelDTO.getFiveLogisticsDays()) || StrUtil.isNotBlank(excelDTO.getFiveLogisticsCycleDays()) || StrUtil.isNotBlank(excelDTO.getFiveIndex()))
+                && (StrUtil.isBlank(excelDTO.getFiveLogisticsDays()) || StrUtil.isBlank(excelDTO.getFiveLogisticsCycleDays()) || StrUtil.isBlank(excelDTO.getFiveIndex()))) {
+            errorMsgList.add("物流方式【铁运散装】未设置完全");
+        }
+        if ((StrUtil.isNotBlank(excelDTO.getSixLogisticsDays()) || StrUtil.isNotBlank(excelDTO.getSixLogisticsCycleDays()) || StrUtil.isNotBlank(excelDTO.getSixIndex()))
+                && (StrUtil.isBlank(excelDTO.getSixLogisticsDays()) || StrUtil.isBlank(excelDTO.getSixLogisticsCycleDays()) || StrUtil.isBlank(excelDTO.getSixIndex()))) {
+            errorMsgList.add("物流方式【铁运整柜】未设置完全");
+        }
+    }
+
+    /**
+     * 备货数据格式化
+     * @author will
+     * @date 2024/9/4 14:44
+     * @param excelDTO
+     * @param entity
+     * @return CustomUpdateDTO
+     */
+    private CfgRuleStockUpDTO.CustomUpdateDTO formatCfgRuleStockUpDTO (StockUpImportExcelDTO excelDTO,ReplenishmentSuggestionEntity entity) {
+        CfgRuleStockUpDTO.CustomUpdateDTO resultDTO = new CfgRuleStockUpDTO.CustomUpdateDTO();
+        resultDTO.setRefId(entity.getId());
+        resultDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+        resultDTO.setPlatformType(entity.getPlatformType());
+        resultDTO.setProductionDays(Integer.valueOf(excelDTO.getProductionDays()));
+        resultDTO.setPurchaseApproveDays(Integer.valueOf(excelDTO.getPurchaseApproveDays()));
+        resultDTO.setSupplierDeliveryDays(Integer.valueOf(excelDTO.getSupplierDeliveryDays()));
+        resultDTO.setQcDays(Integer.valueOf(excelDTO.getQcDays()));
+        resultDTO.setPurchaseCycleDays(Integer.valueOf(excelDTO.getPurchaseCycleDays()));
+        resultDTO.setSafeDays(Integer.valueOf(excelDTO.getSafeDays()));
+        resultDTO.setStockingRatio(MathUtil.valueOf(excelDTO.getStockingRatio()));
+
+        //物流信息
+        List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList = new ArrayList<>();
+
+        //空运
+        CfgRuleLogisticsDTO.UpdateDTO oneUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+        oneUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.AIRFREIGHT.getCode());
+        oneUpdateDTO.setIndex(Integer.valueOf(excelDTO.getOneIndex()));
+        oneUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getOneLogisticsDays()));
+        oneUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getOneLogisticsCycleDays()));
+        cfgLogisticsList.add(oneUpdateDTO);
+
+        //快递
+        CfgRuleLogisticsDTO.UpdateDTO twoUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+        twoUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.EXPRESS.getCode());
+        twoUpdateDTO.setIndex(Integer.valueOf(excelDTO.getTwoIndex()));
+        twoUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getTwoLogisticsDays()));
+        twoUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getTwoLogisticsCycleDays()));
+        cfgLogisticsList.add(twoUpdateDTO);
+
+        //海运散装
+        CfgRuleLogisticsDTO.UpdateDTO threeUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+        threeUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.OCEAN_FREIGHT_BULK.getCode());
+        threeUpdateDTO.setIndex(Integer.valueOf(excelDTO.getThreeIndex()));
+        threeUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getThreeLogisticsDays()));
+        threeUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getThreeLogisticsCycleDays()));
+        cfgLogisticsList.add(threeUpdateDTO);
+
+        //海运整柜
+        CfgRuleLogisticsDTO.UpdateDTO fourUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+        fourUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.OCEAN_FREIGHT_FCL.getCode());
+        fourUpdateDTO.setIndex(Integer.valueOf(excelDTO.getFourIndex()));
+        fourUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getFourLogisticsDays()));
+        fourUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getFourLogisticsCycleDays()));
+        cfgLogisticsList.add(fourUpdateDTO);
+
+        //铁运散装
+        CfgRuleLogisticsDTO.UpdateDTO fiveUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+        fiveUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK.getCode());
+        fiveUpdateDTO.setIndex(Integer.valueOf(excelDTO.getFiveIndex()));
+        fiveUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getFiveLogisticsDays()));
+        fiveUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getFiveLogisticsCycleDays()));
+        cfgLogisticsList.add(fiveUpdateDTO);
+
+        //铁运散装
+        CfgRuleLogisticsDTO.UpdateDTO sixUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+        sixUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL.getCode());
+        sixUpdateDTO.setIndex(Integer.valueOf(excelDTO.getSixIndex()));
+        sixUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getSixLogisticsDays()));
+        sixUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getSixLogisticsCycleDays()));
+        cfgLogisticsList.add(sixUpdateDTO);
+        resultDTO.setCfgLogisticsList(cfgLogisticsList);
+        return resultDTO;
     }
 
     /**
@@ -277,7 +417,90 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param errorList
      */
     private void handleImportStockingRatio (List<StockingRatioImportExcelDTO> successList, List<StockingRatioImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+        //平台
+        List<String> platformList = successList.stream().map(StockingRatioImportExcelDTO::getPlatform).distinct().collect(Collectors.toList());
+        List<String> platformCodeList = platformViewList.stream().filter(obj -> platformList.contains(obj.getName())).map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
 
+        //店铺
+        List<String> shopNameList = successList.stream().map(StockingRatioImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+
+        //SKU
+        List<String> skuNoList = successList.stream().map(StockingRatioImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getSkuNo, skuNoList).list();
+        List<String> skuIdList = productDetailList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+
+        //根据平台、店铺、skuId查询补货建议数据
+        List<ReplenishmentSuggestionEntity> replenishmentSuggestionList = replenishmentSuggestionService.listByUnique(platformCodeList, shopIdList, skuIdList);
+
+        //查询备货信息
+        List<String> refIdList = replenishmentSuggestionList.stream().map(ReplenishmentSuggestionEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgRuleStockUpEntity> cfgRuleStockUpList = cfgRuleStockUpService.listByRefIdList(refIdList);
+
+        //查询备货系数
+        List<String> stockUpIdList = cfgRuleStockUpList.stream().map(CfgRuleStockUpEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(stockUpIdList);
+
+        Map<String, List<StockingRatioImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getPlatform().concat(obj.getShopName()).concat(obj.getSkuNo())));
+
+        for (Map.Entry<String, List<StockingRatioImportExcelDTO>> entry : map.entrySet()) {
+            List<StockingRatioImportExcelDTO> value = entry.getValue();
+
+            StockingRatioImportExcelDTO excelDTO = value.get(0);
+
+            List<String> errorMsgList = new ArrayList<>();
+            //平台信息
+            String platformCode = platformViewList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
+            //店铺信息
+            String shopId = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getShopName()) && StrUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            //SKU
+            String skuId = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
+
+            //补货建议主表信息
+            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, excelDTO.getPlatform())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(entity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            //备货信息
+            CfgRuleStockUpEntity cfgRuleStockUpEntity = cfgRuleStockUpList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), entity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的备货设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            //备货系数
+            Integer index = cfgRuleStockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), cfgRuleStockUpEntity.getId())).max(Comparator.comparingInt(obj -> obj.getIndex())).map(CfgRuleStockingRatioEntity::getIndex).orElse(MathUtil.ZERO);
+            List<CfgRuleStockingRatioDTO.UpdateDTO> updateDTOList = new ArrayList<>();
+            for (StockingRatioImportExcelDTO importExcelDTO: value) {
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(importExcelDTO);
+                    continue;
+                }
+                index ++;
+                CfgRuleStockingRatioDTO.UpdateDTO updateDTO = formatCfgRuleStockUpDTO(excelDTO, index);
+                updateDTOList.add(updateDTO);
+            }
+            cfgRuleStockingRatioService.update(updateDTOList,cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),Boolean.TRUE);
+        }
+    }
+
+    /**
+     * 格式化动态备货系数
+     * @author will
+     * @date 2024/9/4 16:07
+     * @param excelDTO
+     * @return List<UpdateDTO>
+     */
+    private CfgRuleStockingRatioDTO.UpdateDTO formatCfgRuleStockUpDTO (StockingRatioImportExcelDTO excelDTO, Integer index) {
+        CfgRuleStockingRatioDTO.UpdateDTO updateDTO = new CfgRuleStockingRatioDTO.UpdateDTO();
+        updateDTO.setIndex(index);
+        updateDTO.setName(excelDTO.getName());
+        updateDTO.setStockingRatio(MathUtil.valueOf(excelDTO.getStockingRatioStr()));
+        //日期
+        LocalDate startDate = LocalDateUtil.parseStrToLocalDate(excelDTO.getStartDateStr());
+        LocalDate endDate = LocalDateUtil.parseStrToLocalDate(excelDTO.getEndDateStr());
+        updateDTO.setDateList(Arrays.asList(startDate,endDate));
+        return updateDTO;
     }
 
     /**
@@ -316,7 +539,59 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param errorList
      */
     private void handleImportDefaultSalesQty (List<DefaultSalesQtyImportExcelDTO> successList, List<DefaultSalesQtyImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+        //平台
+        List<String> platformList = successList.stream().map(DefaultSalesQtyImportExcelDTO::getPlatform).distinct().collect(Collectors.toList());
+        List<String> platformCodeList = platformViewList.stream().filter(obj -> platformList.contains(obj.getName())).map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
 
+        //店铺
+        List<String> shopNameList = successList.stream().map(DefaultSalesQtyImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+
+        //SKU
+        List<String> skuNoList = successList.stream().map(DefaultSalesQtyImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getSkuNo, skuNoList).list();
+        List<String> skuIdList = productDetailList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+
+        //根据平台、店铺、skuId查询补货建议数据
+        List<ReplenishmentSuggestionEntity> replenishmentSuggestionList = replenishmentSuggestionService.listByUnique(platformCodeList, shopIdList, skuIdList);
+
+        //销量数据
+        List<String> refIdList = replenishmentSuggestionList.stream().map(ReplenishmentSuggestionEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList = cfgRuleSalesQtyService.listByRefIdList(refIdList);
+
+        for (DefaultSalesQtyImportExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            //平台信息
+            String platformCode = platformViewList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
+            //店铺信息
+            String shopId = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getShopName()) && StrUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            //SKU
+            String skuId = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
+
+            //补货建议主表信息
+            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, excelDTO.getPlatform())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(entity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            //销量数据
+            CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), entity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(salesQtyEntity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的销量设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
+            List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = formatDefaultSalesQty(excelDTO);
+            cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+        }
+    }
+
+    private List<CfgRuleSalesFormulaDTO.UpdateDTO>  formatDefaultSalesQty (DefaultSalesQtyImportExcelDTO excelDTO) {
+        CfgRuleSalesFormulaDTO.UpdateDTO updateDTO = new CfgRuleSalesFormulaDTO.UpdateDTO();
+        return Arrays.asList(updateDTO);
     }
 
     /**
@@ -356,7 +631,59 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param errorList
      */
     private void handleImportDynamicSalesQty (List<DynamicSalesQtyImportExcelDTO> successList, List<DynamicSalesQtyImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+        //平台
+        List<String> platformList = successList.stream().map(DynamicSalesQtyImportExcelDTO::getPlatform).distinct().collect(Collectors.toList());
+        List<String> platformCodeList = platformViewList.stream().filter(obj -> platformList.contains(obj.getName())).map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
 
+        //店铺
+        List<String> shopNameList = successList.stream().map(DynamicSalesQtyImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+
+        //SKU
+        List<String> skuNoList = successList.stream().map(DynamicSalesQtyImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getSkuNo, skuNoList).list();
+        List<String> skuIdList = productDetailList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+
+        //根据平台、店铺、skuId查询补货建议数据
+        List<ReplenishmentSuggestionEntity> replenishmentSuggestionList = replenishmentSuggestionService.listByUnique(platformCodeList, shopIdList, skuIdList);
+
+        //销量数据
+        List<String> refIdList = replenishmentSuggestionList.stream().map(ReplenishmentSuggestionEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList = cfgRuleSalesQtyService.listByRefIdList(refIdList);
+
+        for (DynamicSalesQtyImportExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            //平台信息
+            String platformCode = platformViewList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
+            //店铺信息
+            String shopId = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getShopName()) && StrUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            //SKU
+            String skuId = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
+
+            //补货建议主表信息
+            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, excelDTO.getPlatform())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(entity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            //销量数据
+            CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), entity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(salesQtyEntity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的销量设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
+            List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = formatDynamicSalesQty(excelDTO);
+            cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+        }
+    }
+
+    private List<CfgRuleSalesFormulaDTO.UpdateDTO>  formatDynamicSalesQty (DynamicSalesQtyImportExcelDTO excelDTO) {
+        CfgRuleSalesFormulaDTO.UpdateDTO updateDTO = new CfgRuleSalesFormulaDTO.UpdateDTO();
+        return Arrays.asList(updateDTO);
     }
 
     /**
@@ -396,7 +723,60 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param errorList
      */
     private void handleImportFixedSalesQty (List<FixedSalesQtyImportExcelDTO> successList, List<FixedSalesQtyImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+        //平台
+        List<String> platformList = successList.stream().map(FixedSalesQtyImportExcelDTO::getPlatform).distinct().collect(Collectors.toList());
+        List<String> platformCodeList = platformViewList.stream().filter(obj -> platformList.contains(obj.getName())).map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
 
+        //店铺
+        List<String> shopNameList = successList.stream().map(FixedSalesQtyImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+
+        //SKU
+        List<String> skuNoList = successList.stream().map(FixedSalesQtyImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getSkuNo, skuNoList).list();
+        List<String> skuIdList = productDetailList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+
+        //根据平台、店铺、skuId查询补货建议数据
+        List<ReplenishmentSuggestionEntity> replenishmentSuggestionList = replenishmentSuggestionService.listByUnique(platformCodeList, shopIdList, skuIdList);
+
+        //销量数据
+        List<String> refIdList = replenishmentSuggestionList.stream().map(ReplenishmentSuggestionEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList = cfgRuleSalesQtyService.listByRefIdList(refIdList);
+
+        for (FixedSalesQtyImportExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            //平台信息
+            String platformCode = platformViewList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
+            //店铺信息
+            String shopId = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getShopName()) && StrUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            //SKU
+            String skuId = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
+
+            //补货建议主表信息
+            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, excelDTO.getPlatform())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(entity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            //销量数据
+            CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), entity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(salesQtyEntity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的销量设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
+            List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = formatFixedSalesQty(excelDTO);
+            cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+        }
+    }
+
+    private List<CfgRuleSalesFormulaDTO.UpdateDTO>  formatFixedSalesQty (FixedSalesQtyImportExcelDTO excelDTO) {
+        CfgRuleSalesFormulaDTO.UpdateDTO updateDTO = new CfgRuleSalesFormulaDTO.UpdateDTO();
+        return Arrays.asList(updateDTO);
     }
 
     /**
@@ -436,8 +816,61 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param errorList
      */
     private void handleImportSalesDenoising (List<SalesDenoisingImportExcelDTO> successList, List<SalesDenoisingImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+        //平台
+        List<String> platformList = successList.stream().map(SalesDenoisingImportExcelDTO::getPlatform).distinct().collect(Collectors.toList());
+        List<String> platformCodeList = platformViewList.stream().filter(obj -> platformList.contains(obj.getName())).map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
 
+        //店铺
+        List<String> shopNameList = successList.stream().map(SalesDenoisingImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+
+        //SKU
+        List<String> skuNoList = successList.stream().map(SalesDenoisingImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getSkuNo, skuNoList).list();
+        List<String> skuIdList = productDetailList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+
+        //根据平台、店铺、skuId查询补货建议数据
+        List<ReplenishmentSuggestionEntity> replenishmentSuggestionList = replenishmentSuggestionService.listByUnique(platformCodeList, shopIdList, skuIdList);
+
+
+        //销量数据
+        List<String> refIdList = replenishmentSuggestionList.stream().map(ReplenishmentSuggestionEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList = cfgRuleSalesQtyService.listByRefIdList(refIdList);
+
+        for (SalesDenoisingImportExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            //平台信息
+            String platformCode = platformViewList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
+            //店铺信息
+            String shopId = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getShopName()) && StrUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            //SKU
+            String skuId = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
+
+            //补货建议主表信息
+            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, excelDTO.getPlatform())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(entity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            //销量数据
+            CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), entity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(salesQtyEntity)) {
+                errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的销量设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
+            List<CfgRuleSalesDenoisingDTO.UpdateDTO> updateDTOList = formatSalesDenoising(excelDTO);
+            cfgRuleSalesDenoisingService.update(updateDTOList,salesQtyEntity.getId(),Boolean.TRUE);
+        }
     }
+    private List<CfgRuleSalesDenoisingDTO.UpdateDTO>  formatSalesDenoising (SalesDenoisingImportExcelDTO excelDTO) {
+        CfgRuleSalesDenoisingDTO.UpdateDTO updateDTO = new CfgRuleSalesDenoisingDTO.UpdateDTO();
+        return Arrays.asList(updateDTO);
+    }
+
 
     @Override
     public void downloadSalesEstimateTemplate(HttpServletResponse response) {

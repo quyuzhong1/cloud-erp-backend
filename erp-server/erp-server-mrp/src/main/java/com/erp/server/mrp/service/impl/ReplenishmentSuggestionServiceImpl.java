@@ -535,4 +535,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .eq(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NORMAL.getCode())
                 .orderByAsc(ReplenishmentSuggestionEntity::getSkuId));
     }
+
+    @Override
+    public List<LabelInfoDTO.ViewDTO> listLabelInfoById(String id) {
+        return  replenishmentRefLabelService.listLabelInfoByRefId(id);
+    }
 }

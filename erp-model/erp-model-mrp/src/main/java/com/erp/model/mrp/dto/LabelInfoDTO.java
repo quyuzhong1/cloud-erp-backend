@@ -23,7 +23,33 @@ import java.util.List;
 public class LabelInfoDTO implements Serializable {
 
 
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
 
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 标签名字
+         */
+        private String name;
+
+        /**
+         * 颜色
+         */
+        private String color;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+    }
 
     /**
     * 详情

@@ -180,5 +180,12 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     List<ReplenishmentSuggestionEntity> listByUnique(List<String> platformCodeList, List<String> shopIdList, List<String> skuIdList);
 
     List<ReplenishmentSuggestionEntity> listCalculationData();
-
+    /**
+     * 根据id查询标签
+     * @author will
+     * @date 2024/9/4 16:43
+     * @param id
+     * @return List<ViewDTO>
+     */
+    List<LabelInfoDTO.ViewDTO> listLabelInfoById(String id);
 }

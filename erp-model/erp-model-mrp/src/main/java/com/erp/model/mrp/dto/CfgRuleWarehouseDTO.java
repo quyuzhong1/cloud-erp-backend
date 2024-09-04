@@ -99,11 +99,6 @@ public class CfgRuleWarehouseDTO implements Serializable {
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
-        private String id;
-
-        /**
          * 本地仓设置（实体仓设置）
          */
         @Valid

@@ -31,5 +31,20 @@
         ref_id, label_id, type
     </sql>
 
+    <!-- 根据关联id查询标签-->
+    <select id="listLabelInfoByRefId" resultType="com.erp.model.mrp.dto.LabelInfoDTO$ViewDTO">
+        select
+            li.id,
+            li.name,
+            li.color,
+            li.disabled
+        from  replenishment_ref_label rrl
+        left join label_info li on rrl.label_id = li.id and li.is_deleted =false
+        <where>
+            rrl.is_deleted = false and rrl.ref_id = #{refId}
+        </where>
+        order by rrl.id desc
+    </select>
+
 
 </mapper>

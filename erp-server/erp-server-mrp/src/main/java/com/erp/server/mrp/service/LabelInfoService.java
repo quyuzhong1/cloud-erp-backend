@@ -1,13 +1,13 @@
 package com.erp.server.mrp.service;
 
-import com.erp.model.mrp.entity.LabelInfoEntity;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
+import com.erp.model.mrp.dto.LabelInfoDTO;
 import com.erp.model.mrp.entity.LabelInfoEntity;
 import com.erp.model.mrp.vo.LabelVO;
 
 import java.util.List;
-import com.common.business.dto.base.*;
-import com.erp.model.mrp.dto.LabelInfoDTO;
 
 /**
  * <p>
@@ -62,4 +62,11 @@ public interface LabelInfoService extends SuperService<LabelInfoEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO updateDisabled(String id,Boolean disabled);
+    /**
+     * 列表查询
+     * @author will
+     * @date 2024/9/4 16:36
+     * @return List<LabelInfoEntity>
+     */
+    List<LabelInfoDTO.ListDTO> listLabelInfo();
 }

@@ -1,10 +1,13 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
 import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import com.erp.server.mrp.mapper.CfgRuleStockingRatioMapper;
@@ -131,7 +134,19 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        String names = list.stream().collect(Collectors.groupingBy(CfgRuleStockingRatioEntity::getName)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(names)) {
+            throw new ServiceException("备货系数名称【{}】唯一不能添加重复数据",names);
+        }
+        List<String> nameList = list.stream().map(CfgRuleStockingRatioEntity::getName).distinct().collect(Collectors.toList());
+        List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList = listByNameListAndType(nameList, type);
+
         for (CfgRuleStockingRatioEntity stockingRatioEntity : list) {
+            //存在相同名称时则赋值id
+            CfgRuleStockingRatioEntity entity = cfgRuleStockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getName(), stockingRatioEntity.getName())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(entity) && !StrUtil.equals(stockingRatioEntity.getId(),entity.getId())) {
+                stockingRatioEntity.setId(entity.getId());
+            }
             //主表id
             stockingRatioEntity.setStockUpId(stockUpId);
             //类型
@@ -141,5 +156,22 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             stockingRatioEntity.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
             stockingRatioEntity.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
         }
+    }
+
+    /**
+     * 根据名称id集合查询
+     * @author will
+     * @date 2024/9/4 15:53
+     * @param nameList
+     * @param type
+     * @return List<CfgRuleStockingRatioEntity>
+     */
+    private List<CfgRuleStockingRatioEntity> listByNameListAndType (List<String> nameList,String type) {
+        if (CollectionUtils.isEmpty(nameList)) {
+            return Collections.EMPTY_LIST;
+        }
+       return lambdaQuery().eq(CfgRuleStockingRatioEntity::getType,type)
+                .in(CfgRuleStockingRatioEntity::getName,nameList)
+                .list();
     }
 }

@@ -1,7 +1,5 @@
 package com.erp.server.mrp.service.impl;
 
-import com.common.business.service.impl.SuperServiceImpl;
-
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
@@ -27,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
-
 import java.util.Optional;
 /**
  * <p>
@@ -113,6 +110,11 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
         old.setDisabled(disabled);
         this.updateById(old);
         return BatchResultDTO.success(old.getId(), old.getName(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public List<LabelInfoDTO.ListDTO> listLabelInfo() {
+        return baseMapper.listLabelInfo();
     }
 
     /**

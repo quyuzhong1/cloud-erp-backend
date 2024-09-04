@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 销量（规则设置） 服务类
@@ -55,4 +57,12 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @param salesQtyUpdateDTO
      */
     void customUpdate(CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO);
+    /**
+     * 
+     * @author will
+     * @date 2024/9/4 16:34
+     * @param refIdList
+     * @return List<CfgRuleSalesQtyEntity>
+     */
+    List<CfgRuleSalesQtyEntity> listByRefIdList(List<String> refIdList);
 }
