@@ -171,7 +171,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         if (CollectionUtils.isEmpty(entityList)) {
             return null;
         }
-        List<String> mainIds = entityList.stream().map(OverseasProviderWarehouseEntity::getMainId).distinct().collect(Collectors.toList());
+        List<String> mainIds = entityList.stream().map(v->v.getMainId()).distinct().collect(Collectors.toList());
         List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.listByIds(mainIds);
         overseasProviderEntityList = overseasProviderEntityList.stream().filter(v->v.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())).collect(Collectors.toList());
         return CollectionUtils.isEmpty(overseasProviderEntityList)?null:overseasProviderEntityList.get(0);
