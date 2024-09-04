@@ -113,11 +113,6 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
     @TableField("bill_source_type")
     private String billSourceType;
     /**
-     * 物流单明细id
-     */
-    @TableField("logistics_bill_detail_id")
-    private String logisticsBillDetailId;
-    /**
      * 暂估账单id
      */
     @TableField("estimated_bill_id")
@@ -175,7 +170,6 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
 
     public static final String BILL_SOURCE_TYPE = "bill_source_type";
 
-    public static final String LOGISTICS_BILL_DETAIL_ID = "logistics_bill_detail_id";
 
     public static final String ESTIMATED_BILL_ID = "estimated_bill_id";
 

@@ -48,14 +48,14 @@
         update_time,
         version,
         is_deleted,
-        remark, reconciliation_id, logistics_bill_id, logistics_bill_detail_id, estimated_bill_id,
+        remark, reconciliation_id, logistics_bill_id, estimated_bill_id,
         sku_cost_id, sku_cost_detail_id, weight_allocation_id, report_period_id, account_period, status, supplier_id, supplier_name,
         business_code, business_type, transport_no, reconciliation_month, shop_id, shop_name, from_warehouse_id,
         from_warehouse_name, to_warehouse_id, to_warehouse_name,delivery_time,source_id,source_code,org_id,org_name
     </sql>
     <sql id="pageSql">
         SELECT
-        a.id,a.reconciliation_id, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
+        a.id,a.reconciliation_id, a.logistics_bill_id, ca.estimated_bill_id,
         ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
@@ -73,7 +73,7 @@
         FROM first_mile_cost_allocation a
         LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
         LEFT JOIN first_mile_sku_cost_allocation_detail cad ON cad.cost_main_id = ca.id AND cad.is_deleted = FALSE
-        LEFT JOIN logistics_bill_detail lbd ON lbd.id = ca.logistics_bill_detail_id AND lbd.is_deleted = FALSE
+        LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = a.logistics_bill_id AND lbd.is_deleted = FALSE
         LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
         <where>
             ${params.sqlMap.default}
@@ -109,7 +109,7 @@
     </select>
     <select id="listSkuBySourceCodes" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
         SELECT
-        a.id,a.reconciliation_id, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
+        a.id,a.reconciliation_id, a.logistics_bill_id, ca.estimated_bill_id,
         ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
@@ -121,7 +121,7 @@
         rpm.month as reportPeriodMonth,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr
         FROM first_mile_cost_allocation a
         LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
-        LEFT JOIN logistics_bill_detail lbd ON lbd.id = ca.logistics_bill_detail_id AND lbd.is_deleted = FALSE
+        LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = a.logistics_bill_id AND lbd.is_deleted = FALSE
         LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
         where a.is_deleted=false
         <if test="sourceCodes != null and sourceCodes.size > 0">
@@ -133,7 +133,7 @@
     </select>
     <select id="listBySourceIds" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
         SELECT
-        a.id,a.reconciliation_id, a.logistics_bill_id, ca.logistics_bill_detail_id, ca.estimated_bill_id,
+        a.id,a.reconciliation_id, a.logistics_bill_id, ca.estimated_bill_id,
         ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
@@ -145,7 +145,7 @@
         rpm.month as reportPeriodMonth,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr
         FROM first_mile_cost_allocation a
         LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
-        LEFT JOIN logistics_bill_detail lbd ON lbd.id = ca.logistics_bill_detail_id AND lbd.is_deleted = FALSE
+        LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = a.logistics_bill_id AND lbd.is_deleted = FALSE
         LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
         where a.is_deleted=false
         <if test="sourceIds != null and sourceIds.size > 0">
