@@ -55,6 +55,10 @@ public class MercadoReceiverDmpHandler extends DmpInputDoNextDmpHandler {
 
                     //地址
                     Map<String, Object> destinationMap = (Map<String, Object>) shipmentMap.get("destination");
+
+                    detail.put("receiverName", destinationMap.get("receiverName"));
+                    detail.put("receiverTelNumber", destinationMap.get("receiverPhone"));
+
                     Object shippingAddressObj = destinationMap.get("shippingAddress");
                     if (ObjectUtil.isNotEmpty(shippingAddressObj)) {
                         Map<String, Object> shippingAddressMap = (Map<String, Object>) shippingAddressObj;
@@ -62,12 +66,19 @@ public class MercadoReceiverDmpHandler extends DmpInputDoNextDmpHandler {
                         Map<String, Object> stateMap = (Map<String, Object>) shippingAddressMap.get("state");
                         Map<String, Object> cityMap = (Map<String, Object>) shippingAddressMap.get("city");
                         detail.put("country", countryMap.get("fid"));
+
+                        detail.put("postCode", countryMap.get("zipCode"));
                         detail.put("province", stateMap.get("name"));
                         detail.put("city", cityMap.get("name"));
                         detail.put("district", shippingAddressMap.get("addressLine"));
-                        detail.put("fullAddress", shippingAddressMap.get("comment"));
+
                         Map<String, Object> neighborhoodMap = (Map<String, Object>) shippingAddressMap.get("neighborhood");
                         Map<String, Object> municipalityMap = (Map<String, Object>) shippingAddressMap.get("municipality");
+
+                        detail.put("fullAddress", (ObjectUtil.isNotEmpty(neighborhoodMap.get("name")) ? neighborhoodMap.get("name") : "") + " "
+                                + (ObjectUtil.isNotEmpty(municipalityMap.get("name")) ? municipalityMap.get("name") : "") + " "
+                                + shippingAddressMap.get("comment"));
+
                         detail.put("mainStreet", (ObjectUtil.isNotEmpty(neighborhoodMap.get("name")) ? neighborhoodMap.get("name") : "") + " "
                                 + (ObjectUtil.isNotEmpty(municipalityMap.get("name")) ? municipalityMap.get("name") : "") + " "
                                 + shippingAddressMap.get("comment"));
