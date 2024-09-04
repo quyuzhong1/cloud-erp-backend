@@ -591,12 +591,17 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //产品费用
         List<String> skuIds = detailViewList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
         List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
+        //产品明细
+        List<ProductDetailEntity> skuList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
         //处理产品明细
         for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList) {
+            //一级供应商名称
             Optional<SupplierEntity> mainSupplier = supplierList.stream().filter(item -> item.getCode().equals(detailDTO.getMainSupplierId())).findFirst();
             mainSupplier.ifPresent(item -> detailDTO.setMainSupplierName(item.getName()));
+            //二级供应商名称
             Optional<SupplierEntity> secondSupplier = supplierList.stream().filter(item -> item.getCode().equals(detailDTO.getSecondSupplierId())).findFirst();
             secondSupplier.ifPresent(item -> detailDTO.setSecondSupplierName(item.getName()));
+            //产品费用
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(detailDTO.getSkuId())).findFirst();
             if(productCostEntityOptional.isPresent()){
                 ProductCostEntity productCostEntity = productCostEntityOptional.get();
@@ -605,6 +610,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 detailDTO.setActualTaxCost(productCostEntity.getActualTaxCost());
                 detailDTO.setActualNoTaxCost(productCostEntity.getActualNoTaxCost());
             }
+            //产品名称
+            Optional<ProductDetailEntity> skuOptional = skuList.stream().filter(item -> item.getId().equals(detailDTO.getSkuId())).findFirst();
+            skuOptional.ifPresent(sku -> detailDTO.setProductName(sku.getName()));
         }
         //处理关联任务
         for (PilotApplicationRefTaskDTO.ViewDTO taskDTO : taskViewList) {
