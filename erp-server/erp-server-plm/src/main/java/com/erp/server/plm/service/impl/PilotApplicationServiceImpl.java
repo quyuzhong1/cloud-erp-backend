@@ -104,6 +104,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private ProductRefLabelService productRefLabelService;
     @Resource
     private ProductCostService productCostService;
+    @Resource
+    private PlmAttachmentService plmAttachmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -122,6 +124,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if(!save) {
             throw new ServiceException("试产申请保存失败");
         }
+        addAttachment(addDTO, pilotApplicationEntity.getId());
         sysLogService.addSysLogBySave("新增试产申请", "", pilotApplicationEntity.getId(), "");
 
         //保存产品明细
@@ -138,6 +141,24 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
 
         return new BaseResultDTO.AddDTO(pilotApplicationEntity.getId(), code);
+    }
+
+    /**
+     * 新增附件，将附件名称和url保存到附件表
+     */
+    private <T extends PilotApplicationDTO.CommonDTO> void addAttachment(T commonDTO, String businessId) {
+        List<String> attachNameList = commonDTO.getAttachNameList();
+        List<String> attachUrlList = commonDTO.getAttachUrlList();
+        for (int i = 0; i < attachUrlList.size(); i++) {
+            String url = attachUrlList.get(i);
+            String name = attachNameList.get(i);
+            PlmAttachmentEntity entity = new PlmAttachmentEntity();
+            entity.setAttachName(name);
+            entity.setAttachUrl(url);
+            entity.setType("pilot_application");
+            entity.setBusinessId(businessId);
+            plmAttachmentService.save(entity);
+        }
     }
 
     /**
@@ -169,16 +190,14 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         // 数据处理
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
         pilotApplicationEntity.setId(updateDTO.getId());
-        pilotApplicationEntity.setBillDate(updateDTO.getBillDate());
         pilotApplicationEntity.setRemark(updateDTO.getRemark());
-        pilotApplicationEntity.setAttachNameList(old.getAttachNameList() + "," + String.join(",", updateDTO.getAttachNameList()));
-        pilotApplicationEntity.setAttachUrlList(old.getAttachUrlList() + "," + String.join(",", updateDTO.getAttachUrlList()));
 
         log.info("编辑 开始修改试产申请数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(pilotApplicationEntity);
         if(!save) {
             throw new ServiceException("试产申请保存失败");
         }
+        addAttachment(updateDTO, old.getId());
 
         //保存产品明细
         if(updateDTO.getProductDetailList().isEmpty()){
@@ -586,6 +605,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
         //产品明细
         List<ProductDetailEntity> skuList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
+        //附件
+        List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(Collections.singletonList(pilotApplicationEntity.getId()));
         //处理产品明细
         for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList) {
             //一级供应商名称
@@ -631,13 +652,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setBillDate(pilotApplicationEntity.getBillDate());
         view.setRemark(pilotApplicationEntity.getRemark());
         view.setApproveStatus(pilotApplicationEntity.getApproveStatus());
-        view.setAttachNameList(Arrays.asList(pilotApplicationEntity.getAttachNameList().split(",")));
-        view.setAttachUrlList(Arrays.asList(pilotApplicationEntity.getAttachUrlList().split(",")));
         view.setApproveStatusName(view.getApproveStatus().getName());
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
-        view.setAttachNameList(Arrays.asList(pilotApplicationEntity.getAttachNameList().split(",")));
-        view.setAttachUrlList(Arrays.asList(pilotApplicationEntity.getAttachUrlList().split(",")));
+        List<String> attachNameList = attachmentList.stream().map(item -> item.getAttachName()).collect(Collectors.toList());
+        view.setAttachNameList(attachNameList);
+        List<String> attachUrlList = attachmentList.stream().map(item -> item.getAttachUrl()).collect(Collectors.toList());
+        view.setAttachUrlList(attachUrlList);
         //审核记录
         List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getId());
         view.setApproveFlowList(approveHistoryList);
@@ -730,8 +751,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         entity.setBillDate(addDTO.getBillDate());
         entity.setRemark(addDTO.getRemark());
         entity.setApproveStatus(addDTO.getApproveStatus());
-        entity.setAttachNameList(String.join(",", addDTO.getAttachNameList()));
-        entity.setAttachUrlList(String.join(",", addDTO.getAttachUrlList()));
     }
 
     @Override

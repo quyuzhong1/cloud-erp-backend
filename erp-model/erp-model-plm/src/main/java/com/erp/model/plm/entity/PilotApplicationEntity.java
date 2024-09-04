@@ -62,17 +62,6 @@ public class PilotApplicationEntity extends BaseEntity<PilotApplicationEntity> {
      */
     @TableField("bill_date")
     private LocalDate billDate;
-    /**
-     * 附件名称集合
-     */
-    @TableField("attach_name_list")
-    private String attachNameList;
-    /**
-     * 附件URL集合
-     */
-    @TableField("attach_url_list")
-    private String attachUrlList;
-
 
     public static final String CODE = "code";
 
