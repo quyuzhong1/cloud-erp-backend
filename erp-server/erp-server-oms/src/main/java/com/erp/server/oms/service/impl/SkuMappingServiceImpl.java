@@ -40,8 +40,10 @@ import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
@@ -113,6 +115,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private SkuMappingExtendService skuMappingExtendService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private OverseasProviderFeign overseasProviderFeign;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -1093,10 +1098,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
-    public List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList, String dictPlatform, String type) {
+    public List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList, String dictPlatform, String type, String warehouseId) {
         List<String> skuIdList = listSkuParamList.stream().map(SkuMappingDTO.ListingSkuParamDTO::getSkuId).distinct().collect(Collectors.toList());
         List<String> warehouseIdList = listSkuParamList.stream().map(SkuMappingDTO.ListingSkuParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        List<SkuMappingEntity> skuMappingList = this.listByInfo(skuIdList, dictPlatform, type);
+        List<SkuMappingEntity> skuMappingList = this.listByInfo(skuIdList, dictPlatform, type,warehouseId);
         List<SkuMappingEntity> wantSkuMappingList = new ArrayList<>(skuMappingList.size());
         for (SkuMappingEntity skuMappingEntity : skuMappingList) {
             Boolean hasMappingAll = skuMappingEntity.getHasMappingAll();
@@ -1108,7 +1113,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 }
             }
         }
-
+        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByWarehouseId(warehouseId);
+        if(Objects.isNull(overseasProviderEntity)){
+            throw new ServiceException("海外仓授权信息为空");
+        }
         List<SkuMappingDTO.ListSkuResultDTO> resultList = new ArrayList<>(wantSkuMappingList.size());
         List<String> listingIdList = wantSkuMappingList.stream().map(SkuMappingEntity::getListingId).collect(Collectors.toList());
         List<ListingInfoEntity> listingInfoList = CollectionUtils.isNotEmpty(listingIdList) ? listingInfoService.listByIds(listingIdList) : Collections.emptyList();
@@ -1118,7 +1126,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             resultDTO.setSkuId(item.getProductSkuId());
             resultDTO.setSkuNo(item.getProductSkuNo());
             resultDTO.setListingId(listingId);
-            ListingInfoEntity listingEntity = listingInfoList.stream().filter(l -> l.getId().equals(listingId)).findFirst().orElse(null);
+            ListingInfoEntity listingEntity = listingInfoList.stream().filter(l -> l.getId().equals(listingId) && overseasProviderEntity.getId().equals(l.getAuthId())).findFirst().orElse(null);
             if (Objects.nonNull(listingEntity)) {
                 resultDTO.setType(listingEntity.getType());
                 resultDTO.setPlatformSkuNo(listingEntity.getPlatformSkuNo());
@@ -1198,13 +1206,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return baseMapper.advanceQuerySku(advanceQueryContainer);
     }
 
-    private List<SkuMappingEntity> listByInfo(List<String> skuIdList, String dictPlatform, String type) {
+    private List<SkuMappingEntity> listByInfo(List<String> skuIdList, String dictPlatform, String type,String warehouseId) {
         LocalDateTime now = LocalDateTime.now();
         return this.lambdaQuery().
                 ge(SkuMappingEntity::getExpireTime, now).
                 le(SkuMappingEntity::getEffectiveTime, now).
                 in(CollectionUtils.isNotEmpty(skuIdList), SkuMappingEntity::getProductSkuId, skuIdList).
                 eq(SkuMappingEntity::getDictPlatform, dictPlatform).
+                eq(SkuMappingEntity::getWarehouseId,warehouseId).
                 eq(SkuMappingEntity::getType, type).
                 list();
     }

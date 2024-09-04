@@ -206,14 +206,17 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      */
     BatchResultDTO delete(String id);
 
-    /**  获取到sku 对应的信息
-     * @description
+    /**
+     * 获取到sku 对应的信息
+     *
      * @param listSkuParamList
+     * @param warehouseId
+     * @return
+     * @description
      * @author Lambda
-     * @return 
      * @create 2023-12-25 15:47
      */
-    List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList,String dictPlatform,String type);
+    List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList, String dictPlatform, String type, String warehouseId);
 
     /**
      * 逻辑删除映射 SkuMappingEntity

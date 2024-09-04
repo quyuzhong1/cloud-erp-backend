@@ -264,11 +264,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Override
     public OverseasProviderEntity getByWarehouseId(String warehouseId) {
-        OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(warehouseId);
-        if(Objects.isNull(overseasProviderWarehouseEntity)){
-            return null;
-        }
-        return this.getById(overseasProviderWarehouseEntity.getMainId());
+        return overseasProviderWarehouseService.findPlatformByWarehouseId(warehouseId);
     }
 
     @Override
