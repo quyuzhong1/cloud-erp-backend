@@ -352,9 +352,10 @@ public class PilotApplicationDTO implements Serializable {
     /**
     * 新增
     */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
-    public static class AddDTO{
+    public static class AddDTO extends CommonDTO{
         /**
          * 单据日期
          */
@@ -364,23 +365,6 @@ public class PilotApplicationDTO implements Serializable {
          * 审核状态
          */
         private ApproveStatusEnum approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
-
-        /**
-         * 单据备注
-         */
-        private String remark;
-
-        /**
-         * 附件名称集合
-         */
-        @NotEmpty(message = "请上传试产/量产报告")
-        private List<String> attachNameList;
-
-        /**
-         * 附件URL集合
-         */
-        @NotEmpty(message = "请上传试产/量产报告")
-        private List<String> attachUrlList;
 
         /**
          * 产品明细集合
@@ -407,26 +391,6 @@ public class PilotApplicationDTO implements Serializable {
         private String id;
 
         /**
-         * 单据日期
-         */
-        private LocalDate BillDate;
-
-        /**
-         * 单据备注
-         */
-        private String remark;
-
-        /**
-         * 附件名称集合
-         */
-        private List<String> attachNameList;
-
-        /**
-         * 附件URL集合
-         */
-        private List<String> attachUrlList;
-
-        /**
          * 产品明细集合
          */
         private List<PilotApplicationDetailDTO.UpdateDTO> productDetailList;
@@ -449,6 +413,18 @@ public class PilotApplicationDTO implements Serializable {
         * 单据备注
         */
         private String remark;
+
+        /**
+         * 附件名称集合
+         */
+        @NotEmpty(message = "请上传试产/量产报告")
+        private List<String> attachNameList;
+
+        /**
+         * 附件URL集合
+         */
+        @NotEmpty(message = "请上传试产/量产报告")
+        private List<String> attachUrlList;
     }
 
     /**
