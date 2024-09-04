@@ -198,6 +198,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
      */
     private void updateCostAllocationStatus(String logisticsBillId){
         //更新费用分摊状态
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
         List<FirstMileWeightAllocationDTO.CostAllocationDTO> costAllocationList = baseMapper.listCostAllocation(logisticsBillId);
         if(costAllocationList.isEmpty()){
             this.lambdaUpdate()
@@ -211,10 +212,17 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         if(costAllocationDTO.getCostAllocationStatus().equals("waitConfirm")
                 && costAllocationDTO.getBillSourceType() != null && costAllocationDTO.getBillSourceType().equals("actual")
                 && costAllocationDTO.getEndPeriodTransitCost() != null && costAllocationDTO.getEndPeriodTransitCost().equals(BigDecimal.ZERO)){
-            this.lambdaUpdate().set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.ALREADY.getCode()).eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).update();
+            this.lambdaUpdate().set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.ALREADY.getCode())
+                    .set(FirstMileWeightAllocationEntity::getCalculateMonth, costAllocationDTO.getReportPeriod().format(formatter))
+                    .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
+                    .update();
             return;
         }
-        this.lambdaUpdate().set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.PART.getCode()).eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).update();
+        this.lambdaUpdate()
+                .set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.PART.getCode())
+                .set(FirstMileWeightAllocationEntity::getCalculateMonth, costAllocationDTO.getReportPeriod().format(formatter))
+                .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
+                .update();
     }
 
     @Override
