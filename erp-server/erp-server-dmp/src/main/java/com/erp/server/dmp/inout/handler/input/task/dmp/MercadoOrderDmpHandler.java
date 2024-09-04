@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.ParamData;
@@ -85,26 +86,26 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                         continue;
                     }
                     dmpDataMap.put("logisticsCode", shipmentMap.get("trackingNumber"));
+                    lableMap.put("shipmentId", shipmentId);
 
                     //物流状态
                     Map<String, Object> logisticMap = (Map<String, Object>) shipmentMap.get("logistic");
                     String logisticType = "";
-                    if (shipmentId != null) {
-                        String mode = String.valueOf(logisticMap.get("mode"));
-                        String type = String.valueOf(logisticMap.get("type"));
-
-                        if ("me2".equalsIgnoreCase(mode) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(type)) {
-                            //如果是平台仓，状态审核通过
-                            logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
-                        } else if ("me2".equalsIgnoreCase(mode)
-                                && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(type) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(type))
-                        ) {
-                            logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
-                        } else if ("me1".equalsIgnoreCase(mode)) {
-                            //自发货
-                            logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
-                        }
+                    String mode = String.valueOf(logisticMap.get("mode"));
+                    String type = String.valueOf(logisticMap.get("type"));
+                    lableMap.put("mode", mode);
+                    if ("me2".equalsIgnoreCase(mode) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(type)) {
+                        //如果是平台仓，状态审核通过
+                        logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+                    } else if ("me2".equalsIgnoreCase(mode)
+                            && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(type) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(type))
+                    ) {
+                        logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
+                    } else if ("me1".equalsIgnoreCase(mode)) {
+                        //自发货
+                        logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
                     }
+                    lableMap.put("logisticType", logisticType);
 
                     //作废状态
                     Object statusObj = shipmentMap.get("status");
@@ -210,6 +211,8 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
 
 
                     }
+
+                    //扩展字段
                     dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
                 }
             }
