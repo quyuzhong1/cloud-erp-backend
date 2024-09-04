@@ -1,7 +1,7 @@
 package com.erp.rpc.wms.feign;
 
-import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -37,6 +37,16 @@ public interface WmsVirtualWarehouseFeign {
      */
     @PostMapping("/getVirtualWarehouse")
     List<VirtualWarehouseRelationEntity> getVirtualWarehouse(@RequestBody @Valid VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
+
+    /**
+     * 根据平台查询虚拟仓配置信息
+     * @author will
+     * @date 2024/9/3 18:09
+     * @param platformList
+     * @return List<VirtualWarehouseDTO>
+     */
+    @PostMapping("/listCfgRuleVirtualWarehouse")
+    List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> listCfgRuleVirtualWarehouse(@RequestBody List<String> platformList);
 }
 
 

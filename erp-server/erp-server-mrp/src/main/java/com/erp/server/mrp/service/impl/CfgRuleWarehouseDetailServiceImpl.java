@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,7 +59,8 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         }
         List<CfgRuleWarehouseDetailEntity> list = BeanMapperUtils.copyList(CfgRuleWarehouseDetailEntity.class, cfgLocalWarehouseList);
         //原仓库配置明细
-        List<CfgRuleWarehouseDetailEntity> oldList = listByMainIdList(Collections.singletonList(mainId));
+        List<String> vitrualWarehouseIdList = cfgLocalWarehouseList.stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).map(CfgRuleWarehouseDetailDTO.UpdateDTO::getVirtualWarehouseId).collect(Collectors.toList());
+        List<CfgRuleWarehouseDetailEntity> oldList = listByWarehouseType(CollectionUtils.isNotEmpty(vitrualWarehouseIdList) ? Boolean.TRUE :Boolean.FALSE ,Collections.singletonList(mainId),type);
 
         //删除明细
         List<String> deleteIds = getDeleteIds(list, oldList);
@@ -94,6 +96,27 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
+        return list;
+    }
+
+    /**
+     * 根据主表id集合查询实体仓数据
+     * @author will
+     * @date 2024/8/24 15:04
+     * @param mainIdList
+     * @return List<CfgRuleWarehouseDetailEntity>
+     */
+    @Override
+    public List<CfgRuleWarehouseDetailEntity> listByWarehouseType(Boolean isVirtual,List<String> mainIdList,String type) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<CfgRuleWarehouseDetailEntity> list = lambdaQuery()
+                .in(CfgRuleWarehouseDetailEntity::getMainId, mainIdList)
+                .eq(CfgRuleWarehouseDetailEntity::getWarehouseType,type)
+                .eq(!isVirtual,CfgRuleWarehouseDetailEntity::getVirtualWarehouseId,"")
+                .ne(isVirtual,CfgRuleWarehouseDetailEntity::getVirtualWarehouseId,"")
+                .list();
         return list;
     }
 
@@ -145,7 +168,7 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
 
             //按平台
             if (StrUtil.equals(detailEntity.getChannelType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())) {
-                viewDTO.setPlatformList(channelIdList);
+                viewDTO.setDictPlatform(channelIdList.get(0));
             }
 
             //关联类型
@@ -181,7 +204,16 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        List<String> warehouseIdList = list.stream().map(CfgRuleWarehouseDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class,warehouseIdList);
+
         for (CfgRuleWarehouseDetailEntity warehouseDetailEntity : list) {
+            //数据验证
+            checkData(list,warehouseDetailEntity,warehouseEntityList);
+            //按平台
+            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(warehouseDetailEntity.getChannelType())) {
+                warehouseDetailEntity.setChannelIdList(Arrays.asList(warehouseDetailEntity.getDictPlatform()));
+            }
             //主表id
             warehouseDetailEntity.setMainId(mainId);
             //仓库类型
@@ -190,6 +222,38 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
             JSONArray channelIdJson = JSONUtil.parseArray(warehouseDetailEntity.getChannelIdList());
             warehouseDetailEntity.setChannelIdJson(channelIdJson);
         }
-
     }
+
+    /**
+     * 验证数据
+     */
+    private void checkData (List<CfgRuleWarehouseDetailEntity> list,CfgRuleWarehouseDetailEntity entity,List<WarehouseEntity> warehouseEntityList) {
+        List<CfgRuleWarehouseDetailEntity> detailList = list.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
+                && StrUtil.equals(obj.getWarehouseType(), entity.getWarehouseType())
+                && StrUtil.equals(obj.getDictPlatform(), entity.getDictPlatform())
+        ).collect(Collectors.toList());
+        //仓库名称
+        String warehouseName = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+        //既有按平台也有按店铺
+        long count = detailList.stream().map(CfgRuleWarehouseDetailEntity::getChannelType).distinct().count();
+        if (count > 1) {
+            throw new ServiceException(StrUtil.format("实体仓【{}】不能既按平台又按店铺分配",warehouseName));
+        }
+        long platformCount = detailList.stream().filter(obj -> StrUtil.equals(obj.getChannelType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())).map(CfgRuleWarehouseDetailEntity::getDictPlatform).count();
+        if (platformCount > 1) {
+            throw new ServiceException(StrUtil.format("实体仓【{}】不能按多个平台分配",warehouseName));
+        }
+        //店铺集合
+        List<String> channelIdList = entity.getChannelIdList();
+        if (CollectionUtils.isNotEmpty(channelIdList)) {
+            for (String channelId : channelIdList) {
+                long channelIdCount = detailList.stream().filter(obj -> StrUtil.equals(obj.getChannelType(), VitualWarehouseChannelTypeEnum.SHOP.getCode()) && obj.getChannelIdList().contains(channelId)).map(CfgRuleWarehouseDetailEntity::getDictPlatform).distinct().count();
+                if (channelIdCount > 1) {
+                    throw new ServiceException(StrUtil.format("实体仓【{}】存在重复店铺分配",warehouseName));
+                }
+            }
+        }
+    }
+
 }

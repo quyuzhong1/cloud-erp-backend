@@ -53,10 +53,16 @@ public class CfgRuleWarehouseDTO implements Serializable {
         private String platformType;
 
         /**
-         * 本地仓设置
+         * 本地仓设置（实体仓数据）
          */
         @Valid
         private List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgLocalWarehouseList;
+
+        /**
+         * 本地仓设置（虚拟仓数据）
+         */
+        @Valid
+        private List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgLocalVirtualWarehouseList;
 
         /**
          * 海外仓设置
@@ -98,7 +104,7 @@ public class CfgRuleWarehouseDTO implements Serializable {
         private String id;
 
         /**
-         * 本地仓设置
+         * 本地仓设置（实体仓设置）
          */
         @Valid
         private List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalWarehouseList;
@@ -136,5 +142,13 @@ public class CfgRuleWarehouseDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO {
+        /**
+         * 平台类型
+         */
+        private String platformType;
+    }
 
 }

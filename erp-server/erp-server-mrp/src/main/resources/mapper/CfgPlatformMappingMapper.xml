@@ -38,7 +38,7 @@
             <include refid="Base_Column_List" />
         from cfg_platform_mapping cpm
         <where>
-            cpm.is_deleted = false and now() > effective_date
+            cpm.is_deleted = false and cpm.disabled = false  and now() > effective_date
             <if test="params.searchKeyword != null and params.searchKeyword != ''">
                 and cpm.platform ilike concat('%', #{params.searchKeyword}::text ,'%')
             </if>

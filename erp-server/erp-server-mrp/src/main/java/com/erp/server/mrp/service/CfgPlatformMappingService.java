@@ -44,5 +44,12 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
     List<CfgPlatformMappingDTO.ListDTO> selectPlatformMapping(CfgPlatformMappingDTO.SelectDTO dto);
 
     List<CfgPlatformMappingEntity> listByEffective();
-
+    /**
+     * 根据平台类型查询
+     * @author will
+     * @date 2024/9/3 17:56
+     * @param platformType 
+     * @return List<CfgPlatformMappingEntity>
+     */
+    List<CfgPlatformMappingEntity> listByPlatformType(String platformType);
 }

@@ -112,6 +112,15 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         );
     }
 
+    @Override
+    public List<CfgPlatformMappingEntity> listByPlatformType(String platformType) {
+        List<CfgPlatformMappingEntity> list = lambdaQuery().eq(CfgPlatformMappingEntity::getDisabled, false)
+                .le(CfgPlatformMappingEntity::getEffectiveDate, LocalDate.now())
+                .eq(CfgPlatformMappingEntity::getType, platformType)
+                .list();
+        return list;
+    }
+
 
     /**
     * 新增修改处理数据

@@ -1,5 +1,4 @@
 package com.erp.server.mrp.service;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
@@ -39,4 +38,11 @@ public interface CfgRuleWarehouseService extends SuperService<CfgRuleWarehouseEn
      * @return CfgRuleWarehouseEntity
      */
     CfgRuleWarehouseEntity getByPlatformType(String platformType);
+    /**
+     * 刷新虚拟仓数据
+     * @author will
+     * @date 2024/9/3 17:28
+     * @param platformType
+     */
+    void refreshVirtual(String platformType);
 }

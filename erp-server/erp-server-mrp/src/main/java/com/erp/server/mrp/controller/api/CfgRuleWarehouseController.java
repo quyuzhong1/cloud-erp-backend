@@ -55,4 +55,16 @@ public class CfgRuleWarehouseController extends BaseController {
         return success(cfgRuleWarehouseService.view(platformType));
     }
 
+    /**
+     * 更新虚拟仓数据
+     * @author will
+     * @date 2024/9/3 17:26
+     * @param dto
+     * @return ApiResult<ViewDTO>
+     */
+    @PostMapping("/refreshVirtual")
+    public ApiResult<?> refreshVirtual(@RequestBody @Validated CfgRuleWarehouseDTO.ParamDTO dto) {
+        cfgRuleWarehouseService.refreshVirtual(dto.getPlatformType());
+        return success();
+    }
 }

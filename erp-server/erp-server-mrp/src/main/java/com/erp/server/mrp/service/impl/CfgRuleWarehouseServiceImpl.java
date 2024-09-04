@@ -9,10 +9,16 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDetailDTO;
+import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
+import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
+import com.erp.model.mrp.enums.PlatformMappingTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.mrp.mapper.CfgRuleWarehouseMapper;
+import com.erp.server.mrp.service.CfgPlatformMappingService;
 import com.erp.server.mrp.service.CfgRuleWarehouseDetailService;
 import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import com.erp.server.mrp.service.OperateLogService;
@@ -22,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,6 +49,12 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
 
     @Autowired
     private CfgRuleWarehouseDetailService cfgRuleWarehouseDetailService;
+
+    @Autowired
+    private CfgPlatformMappingService cfgPlatformMappingService;
+    
+    @Autowired
+    private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
 
     /**
     * 修改
@@ -86,11 +99,17 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         BeanMapperUtils.copy(oldEntity,viewDTO);
         //仓库设置明细
         List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listViewByMainIdList(Arrays.asList(oldEntity.getId()));
-        //本地仓设置
-        List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgLocalWarehouseList = cfgRuleWarehouseDetailList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseType(), CfgRuleWarehouseTypeEnum.LOCAL.getCode())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(cfgLocalWarehouseList)) {
-            viewDTO.setCfgLocalWarehouseList(cfgLocalWarehouseList);
+        //本地仓设置(实体仓数据)
+        List<CfgRuleWarehouseDetailDTO.ViewDTO> localWarehouseList = cfgRuleWarehouseDetailList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseType(), CfgRuleWarehouseTypeEnum.LOCAL.getCode()) && StrUtil.isBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(localWarehouseList)) {
+            viewDTO.setCfgLocalWarehouseList(localWarehouseList);
         }
+        //本地仓设置(虚拟仓数据)
+        List<CfgRuleWarehouseDetailDTO.ViewDTO> localVirtualWarehouseList = cfgRuleWarehouseDetailList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseType(), CfgRuleWarehouseTypeEnum.LOCAL.getCode()) && StrUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(localVirtualWarehouseList)) {
+            viewDTO.setCfgLocalWarehouseList(localVirtualWarehouseList);
+        }
+
         //海外仓设置
         List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgOverseasWarehouseList = cfgRuleWarehouseDetailList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseType(), CfgRuleWarehouseTypeEnum.OVERSEAS.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(cfgOverseasWarehouseList)) {
@@ -113,6 +132,46 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         return lambdaQuery().eq(CfgRuleWarehouseEntity::getPlatformType,platformType).last("limit 1").one();
     }
 
+    @Override
+    public void refreshVirtual(String platformType) {
+        CfgRuleWarehouseEntity ruleWarehouseEntity = getByPlatformType(platformType);
+        if (ObjectUtil.isEmpty(ruleWarehouseEntity)) {
+            throw new ServiceException("暂无仓库配置项，请先保存后配置虚拟仓");
+        }
+        List<CfgPlatformMappingEntity> platformMappingList = cfgPlatformMappingService.listByPlatformType(PlatformMappingTypeEnum.getByPlatformType(platformType));
+        if (CollectionUtils.isEmpty(platformMappingList)) {
+            throw new ServiceException("平台映射表未配置，不支持配置虚拟仓");
+        }
+        List<String> platformList = platformMappingList.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> list =  wmsVirtualWarehouseFeign.listCfgRuleVirtualWarehouse (platformList);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalWarehouseList = handleRefreshVirtual(list);
+        cfgRuleWarehouseDetailService.update(cfgLocalWarehouseList,ruleWarehouseEntity.getId(),CfgRuleWarehouseTypeEnum.LOCAL.getCode());
+    }
+
+    /**
+     * 虚拟仓数据刷新处理
+     * @author will
+     * @date 2024/9/3 19:34
+     * @param list
+     * @return List<UpdateDTO>
+     */
+    private List<CfgRuleWarehouseDetailDTO.UpdateDTO> handleRefreshVirtual(List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> list) {
+        List<CfgRuleWarehouseDetailDTO.UpdateDTO> resultList = new ArrayList<>();
+        for (VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO virtualWarehouseDTO : list) {
+            CfgRuleWarehouseDetailDTO.UpdateDTO updateDTO = new CfgRuleWarehouseDetailDTO.UpdateDTO();
+            updateDTO.setWarehouseId(virtualWarehouseDTO.getWarehouseId());
+            updateDTO.setVirtualWarehouseId(virtualWarehouseDTO.getVirtualWarehouseId());
+            updateDTO.setChannelType(virtualWarehouseDTO.getType());
+            updateDTO.setDictPlatform(virtualWarehouseDTO.getDictPlatform());
+            updateDTO.setChannelIdList(virtualWarehouseDTO.getRelationIdList());
+            updateDTO.setInventoryAllocateType(CfgRuleInventoryAllocateTypeEnum.AUTO_ALLOCATION.getCode());
+            resultList.add(updateDTO);
+        }
+        return resultList;
+    }
 
     /**
      * 处理仓库配置查看数据
