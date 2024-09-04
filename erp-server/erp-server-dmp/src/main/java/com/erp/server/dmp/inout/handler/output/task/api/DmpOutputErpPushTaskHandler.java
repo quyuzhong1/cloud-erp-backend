@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
@@ -26,6 +27,7 @@ import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushMsgEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
@@ -199,6 +201,16 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		}
 		try {
 			Object invoke = method.invoke(bean, dmpOutputTaskRecordEntity.getRequestData());
+			if(invoke instanceof ApiResult) {
+				ApiResult apiResult = (ApiResult)invoke;
+				if(!apiResult.isSuccess()) {
+					status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
+					responseData = apiResult.getMsg();
+					if(systemCode.equals(DmpBasicSystemCodeEnum.WDT.getCode()) && responseData != null && responseData.startsWith("单据推送成功，当前状态：")) {
+						return;
+					}
+				}
+			}
 			try {responseData = JSON.toJSONString(invoke);} catch (Exception e) {}
 		} catch (InvocationTargetException e) {
 			Throwable targetException = e.getTargetException();

@@ -95,18 +95,39 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         specList.setImgUrl(entity.getImagesUrl());
 //        specList.setUnitName(entity.getUnitName());
         dto.setSpecList(Collections.singletonList(specList));
-        //添加推送任务
-        DmpPushTaskFeignDTO taskEntity = new DmpPushTaskFeignDTO();
-        taskEntity.setSourceId(entity.getId());
-        taskEntity.setSourceCode(entity.getSkuNo());
-        taskEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
-        taskEntity.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
-        taskEntity.setMqTag(RocketMqTagEnum.WDT_PRODUCT_DETAIL_TAG.getName());
-        taskEntity.setMqData(JSONUtil.toJsonStr(dto));
-        taskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        taskEntity.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
-        taskEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
-        return dmpMqFeign.saveTask(taskEntity);
+        
+        SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.PRODUCT_DETAIL.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO taskEntity = new DmpPushTaskFeignDTO();
+            taskEntity.setSourceId(entity.getId());
+            taskEntity.setSourceCode(entity.getSkuNo());
+            taskEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+            taskEntity.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
+            taskEntity.setMqTag(RocketMqTagEnum.WDT_PRODUCT_DETAIL_TAG.getName());
+            taskEntity.setMqData(JSONUtil.toJsonStr(dto));
+            taskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskEntity.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
+            taskEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+            return dmpMqFeign.saveTask(taskEntity);
+        }
+        
+        PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceId(entity.getId());
+        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
+        plmPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+        plmPushMsgEntity.setPushData(JSON.toJSONString(dto));
+        
+        plmPushMsgService.save(plmPushMsgEntity);
+        
+        return null;
     }
 
     @Override
