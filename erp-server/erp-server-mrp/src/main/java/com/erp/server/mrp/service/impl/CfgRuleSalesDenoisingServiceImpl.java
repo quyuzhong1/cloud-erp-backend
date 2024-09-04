@@ -78,7 +78,7 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isEmpty(salesQtyIdList)) {
             return Collections.EMPTY_LIST;
         }
-        List<CfgRuleSalesDenoisingEntity> list = lambdaQuery().in(CfgRuleSalesDenoisingEntity::getSalesQtyId, salesQtyIdList).list();
+        List<CfgRuleSalesDenoisingEntity> list = lambdaQuery().in(CfgRuleSalesDenoisingEntity::getSalesQtyId, salesQtyIdList).orderByAsc(CfgRuleSalesDenoisingEntity::getIndex).list();
         if (CollectionUtils.isEmpty(list)) {
             return  Collections.EMPTY_LIST;
         }

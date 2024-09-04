@@ -75,7 +75,9 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         if (CollectionUtils.isEmpty(stockUpIdList)) {
             return Collections.EMPTY_LIST;
         }
-        List<CfgRuleStockingRatioEntity> list = lambdaQuery().in(CfgRuleStockingRatioEntity::getStockUpId, stockUpIdList).list();
+        List<CfgRuleStockingRatioEntity> list = lambdaQuery().in(CfgRuleStockingRatioEntity::getStockUpId, stockUpIdList)
+                .orderByAsc(CfgRuleStockingRatioEntity::getIndex)
+                .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
@@ -88,7 +90,10 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         if (CollectionUtils.isEmpty(stockUpIdList)) {
             return Collections.EMPTY_LIST;
         }
-        List<CfgRuleStockingRatioEntity> list = lambdaQuery().in(CfgRuleStockingRatioEntity::getStockUpId, stockUpIdList).eq(CfgRuleStockingRatioEntity::getType,type).list();
+        List<CfgRuleStockingRatioEntity> list = lambdaQuery().in(CfgRuleStockingRatioEntity::getStockUpId, stockUpIdList)
+                .eq(CfgRuleStockingRatioEntity::getType,type)
+                .orderByAsc(CfgRuleStockingRatioEntity::getIndex)
+                .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }

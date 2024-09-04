@@ -90,7 +90,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         if (CollectionUtils.isEmpty(stockUpIdList)) {
             return Collections.EMPTY_LIST;
         }
-       return lambdaQuery().in(CfgRuleLogisticsEntity::getStockUpId,stockUpIdList).list();
+       return lambdaQuery().in(CfgRuleLogisticsEntity::getStockUpId,stockUpIdList).orderByAsc(CfgRuleLogisticsEntity::getIndex).list();
     }
 
     @Override
@@ -98,7 +98,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         if (CollectionUtils.isEmpty(stockUpIdList)) {
             return Collections.EMPTY_LIST;
         }
-        List<CfgRuleLogisticsEntity> list = lambdaQuery().in(CfgRuleLogisticsEntity::getStockUpId, stockUpIdList).list();
+        List<CfgRuleLogisticsEntity> list = lambdaQuery().in(CfgRuleLogisticsEntity::getStockUpId, stockUpIdList).orderByAsc(CfgRuleLogisticsEntity::getIndex).list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
