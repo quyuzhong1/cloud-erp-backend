@@ -171,8 +171,6 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                     .filter(e -> this.checkMatch(e, data, listWithWarehouseDTOS))
                     .findFirst()
                     .orElse(new ListingInfoWithSkuMappingDTO());
-            data.setSkuId(view.getProductSkuId());
-            data.setSkuNo(view.getProductSkuNo());
             data.setPlatformSkuName(view.getPlatformSkuName());
         }
 
