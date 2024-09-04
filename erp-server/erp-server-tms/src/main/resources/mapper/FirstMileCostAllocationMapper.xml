@@ -177,6 +177,24 @@
         </where>
         group by wa.logistics_bill_id, ca.status, ca.report_period_id, sca.bill_source_type, scad.end_period_transit_cost
     </select>
+    <select id="listBySourceIdsAndReportPeriodId"
+            resultType="com.erp.model.tms.entity.FirstMileCostAllocationEntity">
+        select a.*,
+               rpm.month as reportPeriodMonth
+        FROM first_mile_cost_allocation a
+        LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
+        where a.is_deleted=false
+        <if test="sourceIds != null and sourceIds.size > 0">
+            and a.source_id in
+            <foreach collection="sourceIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="reportPeriodId != null and reportPeriodId != ''">
+            and a.report_period_id = #{reportPeriodId}
+        </if>
+        order by rpm.month
+    </select>
 
 
 </mapper>
