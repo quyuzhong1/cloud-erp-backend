@@ -171,8 +171,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         pilotApplicationEntity.setId(updateDTO.getId());
         pilotApplicationEntity.setBillDate(updateDTO.getBillDate());
         pilotApplicationEntity.setRemark(updateDTO.getRemark());
-        pilotApplicationEntity.setAttachNameList(String.join(",", updateDTO.getAttachNameList()));
-        pilotApplicationEntity.setAttachUrlList(String.join(",", updateDTO.getAttachUrlList()));
+        pilotApplicationEntity.setAttachNameList(old.getAttachNameList() + "," + String.join(",", updateDTO.getAttachNameList()));
+        pilotApplicationEntity.setAttachUrlList(old.getAttachUrlList() + "," + String.join(",", updateDTO.getAttachUrlList()));
 
         log.info("编辑 开始修改试产申请数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(pilotApplicationEntity);
