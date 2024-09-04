@@ -111,6 +111,14 @@ public class FirstMileSkuCostAllocationServiceImpl extends SuperServiceImpl<Firs
         return this.lambdaQuery().in(FirstMileSkuCostAllocationEntity::getInitFirstMileDetailId, initFirstMileDetailIds).list();
     }
 
+    @Override
+    public List<FirstMileSkuCostAllocationEntity> listByReconciliationDetailIds(List<String> detailIds) {
+        if (CollectionUtils.isEmpty(detailIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(FirstMileSkuCostAllocationEntity::getReconciliationDetailId,detailIds).list();
+    }
+
     /**
     * 新增修改处理数据
     */

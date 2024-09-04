@@ -53,4 +53,11 @@ public interface FirstMileSkuCostAllocationService extends SuperService<FirstMil
      * @return
      */
     List<FirstMileSkuCostAllocationEntity> listByInitFirstMileDetailIds(List<String> initFirstMileDetailIds);
+
+    /**
+     * 根据对账明细记录查询分摊记录
+     * @param detailIds
+     * @return
+     */
+    List<FirstMileSkuCostAllocationEntity> listByReconciliationDetailIds(List<String> detailIds);
 }

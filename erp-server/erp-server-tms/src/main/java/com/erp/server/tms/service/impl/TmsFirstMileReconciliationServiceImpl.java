@@ -26,9 +26,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -83,6 +81,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    @Lazy
+    private FirstMileCostAllocationService firstMileCostAllocationService;
+    @Resource
+    @Lazy
+    private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -328,6 +332,19 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
+        }
+        //对账单明细已进行费用分摊 不能进行反审核
+        List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByReconciliationIds(Collections.singletonList(entity.getId()));
+        if (!CollectionUtils.isEmpty(entityList)){
+            throw new ServiceException(ApiError.ERROR_92241);
+        }
+        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (!CollectionUtils.isEmpty(detailEntityList)){
+            List<String> detailIds = detailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getId).distinct().collect(Collectors.toList());
+            List<FirstMileSkuCostAllocationEntity> detailList = firstMileSkuCostAllocationService.listByReconciliationDetailIds(detailIds);
+            if(!CollectionUtils.isEmpty(detailList)){
+                throw new ServiceException(ApiError.ERROR_92241);
+            }
         }
         // 下游盘点计划单反审核
         return true;

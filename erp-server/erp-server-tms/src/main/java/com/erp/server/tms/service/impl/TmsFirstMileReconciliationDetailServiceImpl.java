@@ -709,6 +709,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
+    /**
+     *
+     * @param list 修改后
+     * @param mainId 对账单主表id
+     * @param oldList 修改前
+     * @return
+     */
     @Override
     public Map<String, TmsFirstMileReconciliationDetailEntity> handleUpdateData(List<TmsFirstMileReconciliationDetailEntity> list, String mainId, List<TmsFirstMileReconciliationDetailEntity> oldList) {
         // 当前已有的明细

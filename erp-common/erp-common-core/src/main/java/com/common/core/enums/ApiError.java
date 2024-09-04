@@ -1147,6 +1147,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
 
     ERROR_DETAIL_IS_ZERO(92240, "【{}】的明细条数为0"),
+    ERROR_92241(92241, "已进行费用分摊，不能进行反审核"),
 
 
     /**
