@@ -574,13 +574,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         Map<String, ProjectTaskDTO.SimpleViewDTO> taskMap = taskList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
 
         PilotApplicationDTO.ViewDTO view = new PilotApplicationDTO.ViewDTO();
-        view.setId(pilotApplicationEntity.getId());
-        view.setCode(pilotApplicationEntity.getCode());
-        view.setBillDate(pilotApplicationEntity.getBillDate());
-        view.setRemark(pilotApplicationEntity.getRemark());
-        view.setApproveStatus(pilotApplicationEntity.getApproveStatus());
-        view.setAttachNameList(Arrays.asList(pilotApplicationEntity.getAttachNameList().split(",")));
-        view.setAttachUrlList(Arrays.asList(pilotApplicationEntity.getAttachUrlList().split(",")));
         List<PilotApplicationDetailDTO.ViewDTO> detailViewList = BeanMapper.copyList(productDetailList, PilotApplicationDetailDTO.ViewDTO.class);
         List<PilotApplicationRefTaskDTO.ViewDTO> taskViewList = BeanMapper.copyList(taskList, PilotApplicationRefTaskDTO.ViewDTO.class);
         //供应商
@@ -633,6 +626,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             taskDTO.setStatus(entity.getStatus());
             taskDTO.setStatusName(TaskStateEnum.getName(entity.getStatus()));
         }
+        view.setId(pilotApplicationEntity.getId());
+        view.setCode(pilotApplicationEntity.getCode());
+        view.setBillDate(pilotApplicationEntity.getBillDate());
+        view.setRemark(pilotApplicationEntity.getRemark());
+        view.setApproveStatus(pilotApplicationEntity.getApproveStatus());
+        view.setAttachNameList(Arrays.asList(pilotApplicationEntity.getAttachNameList().split(",")));
+        view.setAttachUrlList(Arrays.asList(pilotApplicationEntity.getAttachUrlList().split(",")));
         view.setApproveStatusName(view.getApproveStatus().getName());
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
@@ -742,7 +742,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
         LoginUser loginUser = UserContext.getNonLoginUser();
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUserName()));
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUid()));
         List<String> warehouseIds = applicationDTOList.stream().map(item -> item.getToWarehouseId()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseFeign.listWarehouseByIds(warehouseIds);
 
