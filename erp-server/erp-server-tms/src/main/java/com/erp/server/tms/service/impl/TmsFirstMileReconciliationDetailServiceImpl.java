@@ -73,6 +73,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION_DETAIL;
+import static java.util.Arrays.stream;
 
 /**
  * <p>
@@ -786,12 +787,20 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .distinct()
                 .collect(Collectors.toList());
         // 物流费用
-        Map<String, String> billIdCostIdMap = logisticsBillCostService.listByLogisticsBillIdList(logisticsBillIds)
+        List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostService.listByLogisticsBillIdList(logisticsBillIds);
+        if (StrUtil.isBlank(mainId)){
+            logisticsBillCostEntityList = logisticsBillCostEntityList.stream().filter(e -> StrUtil.isBlank(e.getReconciliationId())).collect(Collectors.toList());
+        }else {
+            LogisticsBillCostEntity entity = logisticsBillCostEntityList.stream().filter(e -> StrUtil.isNotBlank(e.getReconciliationId()) && Objects.equals(mainId,e.getReconciliationId())).findFirst().orElse(null);
+            logisticsBillCostEntityList = Collections.singletonList(entity);
+        }
+        Map<String, String> billIdCostIdMap = logisticsBillCostEntityList
                 .stream().filter(e -> Objects.nonNull(e) && (Objects.equals(mainId, e.getReconciliationId()) || StrUtil.isBlank(e.getReconciliationId())))
                 .collect(Collectors.toMap(LogisticsBillCostEntity::getLogisticsBillId, BaseEntity::getId));
 
+        List<String> costBillIds = logisticsBillCostEntityList.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
         List<TmsCostDetailEntity> costList = tmsCostDetailService.sumCostByMainIdAndCostId(LogisticsBillCostTypeEnum.ESTIMATED.getCode(),
-                billIdCostIdMap.values(),
+                costBillIds,
                 null
         );
 

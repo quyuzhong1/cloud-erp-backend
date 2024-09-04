@@ -685,6 +685,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByIds(billIds);
         List<LogisticsBillCostEntity> updateBillList = new ArrayList<>();
         //根据物流单进行处理
+        detailEntityList = detailEntityList.stream().filter(e -> DetailReconciliationTypeEnum.ACTUAL.getCode().equals(e.getType())).collect(Collectors.toList());
         for (TmsFirstMileReconciliationDetailEntity detailEntity : detailEntityList){
             //获取费用记录
             LogisticsBillCostEntity entity = billEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(detailEntity.getSourceId(), e.getLogisticsBillId())

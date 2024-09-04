@@ -1054,7 +1054,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //单个产品费用分摊
             Integer qty = qtyMap.getOrDefault(e.getCostMainId(), MathUtil.ZERO);
             BigDecimal allocatedAmount = Objects.nonNull(e.getAllocatedAmount()) ? e.getAllocatedAmount() : BigDecimal.ZERO;
-            e.setProductAllocatedAmount(MathUtil.divide(allocatedAmount, new BigDecimal(qty), 6));
+            e.setProductAllocatedAmount(MathUtil.divide(allocatedAmount, new BigDecimal(qty), 8));
         });
     }
 
