@@ -393,6 +393,11 @@ public class ThirdWarehouseDTO implements Serializable {
         private String sysType;
 
         /**
+         * 仓库简称
+         */
+        private String shortName;
+
+        /**
          * 关键词
          */
         private String searchKeyword;

@@ -55,6 +55,9 @@
         <if test="params.shopId != null and params.shopId != ''">
             and sm.shop_id = #{params.shopId}
         </if>
+        <if test="params.authId != null and params.authId != ''">
+            and li.auth_id = #{params.authId}
+        </if>
         <if test="params.providerCode != null and params.providerCode != ''">
             and li.platform = #{params.providerCode}
             and ( sm.has_mapping_all = true or sm.warehouse_id = #{params.warehouseId})
