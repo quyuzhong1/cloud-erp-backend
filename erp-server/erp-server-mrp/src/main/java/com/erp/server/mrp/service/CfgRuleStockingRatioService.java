@@ -52,8 +52,9 @@ public interface CfgRuleStockingRatioService extends SuperService<CfgRuleStockin
 
     /**
      * 根据备货主表id和sku类型查询
-     * @param id 备货主表id
+     *
+     * @param id      备货主表id
      * @param skuType sku类型
      */
-    List<CfgRuleStockingRatioEntity> listByStockUpIdAndType(String id, String skuType);
+    List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> listByStockUpIdAndType(String id, String skuType);
 }

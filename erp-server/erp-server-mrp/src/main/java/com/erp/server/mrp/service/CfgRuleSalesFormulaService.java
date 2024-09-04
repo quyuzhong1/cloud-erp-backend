@@ -2,6 +2,7 @@ package com.erp.server.mrp.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
+import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 
 import java.util.List;
@@ -41,4 +42,10 @@ public interface CfgRuleSalesFormulaService extends SuperService<CfgRuleSalesFor
      * @param salesQtyId
      */
     void deleteBySalesQtyId(String salesQtyId);
+
+    /**
+     * 根据销量配置获取明细
+     * @param id 销量配置id
+     */
+    List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> listFormulaBySalesId(String id);
 }

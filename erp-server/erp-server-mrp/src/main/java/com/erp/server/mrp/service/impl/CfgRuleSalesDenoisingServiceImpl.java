@@ -2,11 +2,13 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
+import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
 import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesDenoisingMapper;
@@ -92,6 +94,12 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
     @Override
     public void deleteBySalesQtyId(String salesQtyId) {
         lambdaUpdate().eq(CfgRuleSalesDenoisingEntity::getSalesQtyId,salesQtyId).remove();
+    }
+
+    @Override
+    public List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> listDenoisingBySalesId(String id) {
+        List<CfgRuleSalesDenoisingEntity> list = list(Wrappers.<CfgRuleSalesDenoisingEntity>lambdaQuery().eq(CfgRuleSalesDenoisingEntity::getSalesQtyId, id));
+        return BeanMapperUtils.copyList(CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO.class, list);
     }
 
     /**

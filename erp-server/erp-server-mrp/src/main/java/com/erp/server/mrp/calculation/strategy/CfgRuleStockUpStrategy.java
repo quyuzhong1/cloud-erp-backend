@@ -1,16 +1,15 @@
 package com.erp.server.mrp.calculation.strategy;
 
-import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
-import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import com.erp.model.mrp.enums.CfgRuleSettingEnum;
 import com.erp.server.mrp.service.CfgRuleLogisticsService;
 import com.erp.server.mrp.service.CfgRuleStockUpService;
 import com.erp.server.mrp.service.CfgRuleStockingRatioService;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -34,12 +33,15 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
 
     @Override
     public CfgRuleStockUpDTO.StrategyResultDTO process(CfgRuleStockUpDTO.StrategyDTO dto) {
-        CfgRuleStockUpEntity cfgRuleStockUpEntity = cfgRuleStockUpService.getOneByStrategy(dto);
-        List<CfgRuleStockingRatioEntity> cfgRuleStockingRatios = cfgRuleStockingRatioService.listByStockUpIdAndType(cfgRuleStockUpEntity.getId(), dto.getSkuType());
-        List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResultDTOS = BeanMapperUtils.copyList(CfgRuleStockingRatioDTO.StockingRatioResultDTO.class, cfgRuleStockingRatios);
-        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = cfgRuleLogisticsService.getLogisticsMaxPriority(cfgRuleStockUpEntity.getId(), dto);
+        CfgRuleStockUpEntity cfgRuleStockUp = cfgRuleStockUpService.getByRefId(dto.getRefId());
+        if (ObjectUtils.isEmpty(cfgRuleStockUp)) {
+            //获取默认配置
+            cfgRuleStockUp = cfgRuleStockUpService.getDefaultCfgRuleStockUp(dto.getPlatformType());
+        }
+        List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> cfgRuleStockingRatios = cfgRuleStockingRatioService.listByStockUpIdAndType(cfgRuleStockUp.getId(), dto.getSkuType());
+        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = cfgRuleLogisticsService.getLogisticsMaxPriority(cfgRuleStockUp.getId(), dto.getPlatformType(), dto.getSkuType(), dto.getArea(), dto.getWarehouseId());
         CfgRuleStockUpDTO.StrategyResultDTO result = new CfgRuleStockUpDTO.StrategyResultDTO();
-        result.buildStrategyResultDTO(cfgRuleStockUpEntity, stockingRatioResultDTOS, logisticsResult);
+        result.buildStrategyResultDTO(cfgRuleStockUp, cfgRuleStockingRatios, logisticsResult);
         return result;
     }
 

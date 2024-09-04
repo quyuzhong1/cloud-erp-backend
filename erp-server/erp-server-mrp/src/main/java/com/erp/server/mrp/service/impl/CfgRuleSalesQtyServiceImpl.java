@@ -3,6 +3,7 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
@@ -25,6 +26,7 @@ import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -201,6 +203,15 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         return lambdaQuery().in(CfgRuleSalesQtyEntity::getRefId,refIdList).list();
     }
 
+    @Override
+    @Cacheable(cacheNames = "cache:mrp:getDefaultCfgRuleSalesQty",keyGenerator = "myKeyGenerator")
+    public CfgRuleSalesQtyDTO.StrategyResultDTO getDefaultCfgRuleSalesQty(String platformType, String type) {
+        CfgRuleSalesQtyEntity cfgRuleSalesQty = getByPlatformTypeAndType(platformType, type);
+        List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults = cfgRuleSalesFormulaService.listFormulaBySalesId(cfgRuleSalesQty.getId());
+        List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults = cfgRuleSalesDenoisingService.listDenoisingBySalesId(cfgRuleSalesQty.getId());
+        return CfgRuleSalesQtyDTO.StrategyResultDTO.buildStrategyResultDTO(cfgRuleSalesQty, formulaResults, denoisingResults);
+    }
+
     /**
      * 根据来源id查询
      * @author will
@@ -208,7 +219,8 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
      * @param refId
      * @return CfgRuleSalesQtyEntity
      */
-    private CfgRuleSalesQtyEntity getByRefId (String refId) {
+    @Override
+    public CfgRuleSalesQtyEntity getByRefId (String refId) {
        return lambdaQuery().eq(CfgRuleSalesQtyEntity::getRefId,refId).last("limit 1").one();
     }
 
@@ -256,6 +268,12 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
                .list();
     }
 
+    private CfgRuleSalesQtyEntity getByPlatformTypeAndType(String platformType, String type) {
+        return getOne(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery().eq(CfgRuleSalesQtyEntity::getPlatformType, platformType)
+                .eq(CfgRuleSalesQtyEntity::getType, type)
+                .last("LIMIT 1")
+        );
+    }
     /**
     * 新增修改处理数据
     */

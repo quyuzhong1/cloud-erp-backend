@@ -10,7 +10,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
-import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
@@ -24,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -138,7 +138,8 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     }
 
     @Override
-    public CfgRuleLogisticsDTO.LogisticsResultDTO getLogisticsMaxPriority(String stockUpId, CfgRuleStockUpDTO.StrategyDTO dto) {
+    @Cacheable(cacheNames = "cache:mrp:getLogisticsMaxPriority",keyGenerator = "myKeyGenerator")
+    public CfgRuleLogisticsDTO.LogisticsResultDTO getLogisticsMaxPriority(String stockUpId, String platformType, String area, String shopId, String warehouseId) {
         // 获取外层最高优先级数据
         CfgRuleLogisticsEntity entity = getOne(Wrappers.<CfgRuleLogisticsEntity>lambdaQuery()
                 .eq(CfgRuleLogisticsEntity::getStockUpId, stockUpId)
@@ -152,19 +153,19 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails = cfgRuleLogisticsDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
         CfgRuleLogisticsDetailEntity detail = null;
         //amazon 取值店铺
-        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(dto.getPlatformType())) {
+        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType)) {
             //先获取区域加店铺 获取不到则获取区域加全部店铺 再获取不到则取外层数据
             detail = cfgRuleLogisticsDetails.stream()
-                    .filter(v -> v.getArea().equals(dto.getArea()))
-                    .filter(v -> v.getShopIdJson().contains(dto.getShopId()))
-                    .findFirst().orElseGet(() -> cfgRuleLogisticsDetails.stream().filter(v -> v.getArea().equals(dto.getArea()))
+                    .filter(v -> v.getArea().equals(area))
+                    .filter(v -> v.getShopIdJson().contains(shopId))
+                    .findFirst().orElseGet(() -> cfgRuleLogisticsDetails.stream().filter(v -> v.getArea().equals(area))
                             .filter(v -> v.getType().equals(ShopAuthTypeEnum.ENUM_ALL.getCode()))
                             .findFirst().orElse(null)
                     );
-        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(dto.getPlatformType())) {
+        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(platformType)) {
             //先获取海外仓 再获取不到则取外层数据
             detail = cfgRuleLogisticsDetails.stream()
-                    .filter(v -> v.getWarehouseId().equals(dto.getWarehouseId()))
+                    .filter(v -> v.getWarehouseId().equals(warehouseId))
                     .findFirst().orElse(null);
         }
         CfgRuleLogisticsDTO.LogisticsResultDTO resultDTO = new CfgRuleLogisticsDTO.LogisticsResultDTO();

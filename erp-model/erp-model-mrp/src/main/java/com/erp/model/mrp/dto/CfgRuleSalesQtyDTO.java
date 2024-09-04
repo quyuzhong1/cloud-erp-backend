@@ -1,7 +1,10 @@
 package com.erp.model.mrp.dto;
 
+import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import javax.validation.Valid;
@@ -245,5 +248,89 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         private String type;
     }
 
+    @Getter
+    @Setter
+    public static class StrategyDTO {
+        /**
+         * 建议id
+         */
+        private String refId;
+        /**
+         * sku类型
+         */
+        private String skuType;
+        /**
+         * 平台类型
+         */
+        private String platformType;
+    }
+
+    @Getter
+    @Setter
+    public static class StrategyResultDTO {
+        /**
+         * 是否同常规品配置一致,true是，false否
+         */
+        private Boolean isCfgSame;
+        /**
+         * 断货数据是否从历史销量中排除,true是，false否
+         */
+        private Boolean isIgnoreOutOfStock;
+        /**
+         * sales_qty_type
+         * 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
+         */
+        private String salesQtyType;
+        /**
+         * 订单类型，all:全部，fba:FBA,fbm:FBM
+         */
+        private String orderType;
+        /**
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
+        private String platformType;
+        /**
+         * 关联id
+         */
+        private String refId;
+        /**
+         * 类型，new 新品、conventional常规品
+         */
+        private String type;
+        /**
+         * 降噪配置
+         */
+        private List<StrategyDenoisingResultDTO> denoisingResults;
+        /**
+         * 销量计算配置
+         */
+        private List<StrategyFormulaResultDTO> formulaResults;
+
+        public static StrategyResultDTO buildStrategyResultDTO(CfgRuleSalesQtyEntity cfgRuleSalesQty, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults, List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults) {
+            StrategyResultDTO resultDTO = new StrategyResultDTO();
+            resultDTO.setIsCfgSame(cfgRuleSalesQty.getIsCfgSame());
+            resultDTO.setIsIgnoreOutOfStock(cfgRuleSalesQty.getIsIgnoreOutOfStock());
+            resultDTO.setSalesQtyType(cfgRuleSalesQty.getSalesQtyType());
+            resultDTO.setOrderType(cfgRuleSalesQty.getOrderType());
+            resultDTO.setPlatformType(cfgRuleSalesQty.getPlatformType());
+            resultDTO.setRefId(cfgRuleSalesQty.getRefId());
+            resultDTO.setType(cfgRuleSalesQty.getType());
+            resultDTO.setFormulaResults(formulaResults);
+            resultDTO.setDenoisingResults(denoisingResults);
+            return resultDTO;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class StrategyDenoisingResultDTO {
+
+    }
+
+    @Getter
+    @Setter
+    public static class StrategyFormulaResultDTO {
+
+    }
 
 }

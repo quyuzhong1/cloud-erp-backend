@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -110,11 +111,13 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
     }
 
     @Override
-    public List<CfgRuleStockingRatioEntity> listByStockUpIdAndType(String id, String skuType) {
-        return list(Wrappers.<CfgRuleStockingRatioEntity>lambdaQuery()
+    @Cacheable(cacheNames = "cache:mrp:listByStockUpIdAndType",keyGenerator = "myKeyGenerator")
+    public List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> listByStockUpIdAndType(String id, String skuType) {
+        List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList = list(Wrappers.<CfgRuleStockingRatioEntity>lambdaQuery()
                 .eq(CfgRuleStockingRatioEntity::getStockUpId, id)
                 .eq(CfgRuleStockingRatioEntity::getType, skuType)
         );
+        return BeanMapperUtils.copyList(CfgRuleStockingRatioDTO.StockingRatioResultDTO.class, cfgRuleStockingRatioList);
     }
 
     /**

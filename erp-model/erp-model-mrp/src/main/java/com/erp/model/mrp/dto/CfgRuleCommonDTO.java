@@ -2,7 +2,9 @@ package com.erp.model.mrp.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -222,5 +224,93 @@ public class CfgRuleCommonDTO implements Serializable {
         List<UpdateDTO> childrenList;
     }
 
+    @Getter
+    @Setter
+    public static class StrategyDTO {
+        /**
+         * 平台类型
+         */
+        private String platformType;
+    }
+
+    @Getter
+    @Setter
+    public static class StrategyResultDTO {
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 序号
+         */
+        private String  index;
+
+
+        /**
+         * 主表id
+         */
+        private String  parentId;
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 值
+         */
+        private String value;
+
+        /**
+         * 类型，（inventory库存配置，suggest建议配置）
+         */
+        private String type;
+
+        /**
+         * 字段类型，single单选,multiple多选
+         */
+        private String fieldType;
+
+        /**
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
+        private String platformType;
+
+        /**
+         * 分类名称
+         */
+        private String categoryName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 是否默认
+         */
+        private Boolean isDefault;
+
+        /**
+         * 是否必填
+         */
+        private Boolean isRequired;
+
+        /**
+         * 是否变更
+         */
+        private Boolean isChange;
+
+        /**
+         * 子级信息
+         */
+        List<StrategyResultDTO> childrenList;
+    }
 
 }

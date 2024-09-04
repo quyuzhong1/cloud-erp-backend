@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service;
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
+import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
 
 import java.util.List;
@@ -39,4 +40,11 @@ public interface CfgRuleSalesDenoisingService extends SuperService<CfgRuleSalesD
      * @param salesQtyId
      */
     void deleteBySalesQtyId(String salesQtyId);
+
+    /**
+     * 根据销量配置id
+     * @param id
+     * @return
+     */
+    List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> listDenoisingBySalesId(String id);
 }

@@ -4,12 +4,14 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
+import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
@@ -104,6 +106,12 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
     @Override
     public void deleteBySalesQtyId(String salesQtyId) {
         lambdaUpdate().eq(CfgRuleSalesFormulaEntity::getSalesQtyId,salesQtyId).remove();
+    }
+
+    @Override
+    public List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> listFormulaBySalesId(String id) {
+        List<CfgRuleSalesFormulaEntity> list = list(Wrappers.<CfgRuleSalesFormulaEntity>lambdaQuery().eq(CfgRuleSalesFormulaEntity::getSalesQtyId, id));
+        return BeanMapperUtils.copyList(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO.class, list);
     }
 
     /**

@@ -1,7 +1,11 @@
 package com.erp.model.mrp.dto;
 
+import cn.hutool.json.JSONArray;
+import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -146,4 +150,85 @@ public class CfgRuleWarehouseDTO implements Serializable {
         private String platformType;
     }
 
+    @Getter
+    @Setter
+    public static class StrategyDTO {
+
+        /**
+         * 平台类型
+         */
+        private String platformType;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+    }
+
+    @Getter
+    @Setter
+    public static class StrategyResultDTO {
+        /**
+         * 本地仓
+         */
+        private List<StrategyDetailResultDTO> localWarehouseList;
+        /**
+         * 海外仓
+         */
+        private List<StrategyDetailResultDTO> overseasWarehouseList;
+
+    }
+
+    @Getter
+    @Setter
+    public static class StrategyDetailResultDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 仓库类型，local本地，overseas海外
+         */
+        private String warehouseType;
+        /**
+         * 关联店铺类型，platform按平台，shop按店铺
+         */
+        private String channelType;
+        /**
+         * 渠道（店铺）id的json
+         */
+        private JSONArray channelIdJson;
+        /**
+         * 库存分配类型
+         */
+        private String inventoryAllocateType;
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        public static StrategyDetailResultDTO buildStrategyDetailResultDTO(CfgRuleWarehouseDetailEntity entity) {
+            StrategyDetailResultDTO detailResultDTO = new StrategyDetailResultDTO();
+            detailResultDTO.setId(entity.getId());
+            detailResultDTO.setWarehouseId(entity.getWarehouseId());
+            detailResultDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
+            detailResultDTO.setWarehouseType(entity.getWarehouseType());
+            detailResultDTO.setChannelType(entity.getChannelType());
+            detailResultDTO.setChannelIdJson(entity.getChannelIdJson());
+            detailResultDTO.setInventoryAllocateType(entity.getInventoryAllocateType());
+            detailResultDTO.setMainId(entity.getMainId());
+            return detailResultDTO;
+        }
+    }
 }

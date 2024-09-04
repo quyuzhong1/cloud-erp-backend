@@ -73,6 +73,13 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         return treeList;
     }
 
+    @Override
+    public CfgRuleCommonDTO.StrategyResultDTO getCfgRuleCommon(String platformType, String type) {
+
+
+        return null;
+    }
+
 
     /**
      * 获取默认配置

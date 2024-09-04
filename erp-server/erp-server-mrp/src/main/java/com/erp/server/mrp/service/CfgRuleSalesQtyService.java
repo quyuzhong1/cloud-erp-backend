@@ -57,8 +57,22 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @param salesQtyUpdateDTO
      */
     void customUpdate(CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO);
+
     /**
-     * 
+     * 获取建议得配置
+     * @param refId 建议id
+     * @return
+     */
+    CfgRuleSalesQtyEntity getByRefId(String refId);
+
+    /**
+     * 获取默认销量配置
+     * @param platformType 平台类型
+     * @param type sku类型
+     */
+    CfgRuleSalesQtyDTO.StrategyResultDTO getDefaultCfgRuleSalesQty(String platformType, String type);
+    /**
+     *
      * @author will
      * @date 2024/9/4 16:34
      * @param refIdList

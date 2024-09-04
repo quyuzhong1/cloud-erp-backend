@@ -2,7 +2,6 @@ package com.erp.server.mrp.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
-import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 
 import java.util.List;
@@ -55,7 +54,6 @@ public interface CfgRuleLogisticsService extends SuperService<CfgRuleLogisticsEn
      * 获取最高优先级物流时效
      *
      * @param stockUpId 备货id
-     * @param dto 参数
      */
-    CfgRuleLogisticsDTO.LogisticsResultDTO getLogisticsMaxPriority(String stockUpId, CfgRuleStockUpDTO.StrategyDTO dto);
+    CfgRuleLogisticsDTO.LogisticsResultDTO getLogisticsMaxPriority(String stockUpId, String platformType, String area, String shopId, String warehouseId);
 }
