@@ -293,8 +293,11 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         detailDTO.setAdvicePrice(BigDecimal.ZERO);
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
+
+        List<String> thirdDetailIdList = soDetailEntityList.stream().map(req -> req.getThirdDetailId()).collect(Collectors.toList());
+
         // 来源明细id
-        detailDTO.setSourceDetailId(soDetailEntity.getThirdDetailId());
+        detailDTO.setSourceDetailId(String.join(",", thirdDetailIdList));
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id
