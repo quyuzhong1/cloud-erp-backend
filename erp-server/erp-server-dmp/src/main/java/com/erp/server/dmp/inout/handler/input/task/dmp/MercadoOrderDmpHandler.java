@@ -97,6 +97,7 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     if ("me2".equalsIgnoreCase(mode) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(type)) {
                         //如果是平台仓，状态审核通过
                         logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+                        lableMap.put("isPlatformWarehouseOrder", Boolean.TRUE);
                     } else if ("me2".equalsIgnoreCase(mode)
                             && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(type) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(type))
                     ) {
@@ -105,8 +106,8 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                         //自发货
                         logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
                     }
-                    lableMap.put("logisticType", logisticType);
-
+                    lableMap.put("logisticType", type);
+                    dmpDataMap.put("logisticType", logisticType);
                     //作废状态
                     Object statusObj = shipmentMap.get("status");
                     if (statusObj != null) {
@@ -162,15 +163,22 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                         dmpDataMap.put("buyerRemark", feedbackMap.get("purchase"));
 
                     }
+                    Object packId = dmpDataMap.get("platformCode");
+                    if (packId == null) {
+                        dmpDataMap.put("platformCode", dmpDataMap.get("thirdCode"));
+                    }
+
 
                     //支付信息
                     Object paymentsObj = dmpDataMap.get("payments");
                     if (paymentsObj != null) {
+
                         List<Map<String, Object>> feedbackList = (List<Map<String, Object>>) paymentsObj;
                         if (CollectionUtil.isNotEmpty(feedbackList)) {
                             OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(feedbackList.get(0).get("dateCreated")), formatter);
                             // 转换为 LocalDateTime
                             dmpDataMap.put("payTime", offsetDateTime.toLocalDateTime());
+
                             dmpDataMap.put("currencyCode", feedbackList.get(0).get("currencyId"));
                             BigDecimal totalPaidAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("totalPaidAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("payAmount", totalPaidAmount);
