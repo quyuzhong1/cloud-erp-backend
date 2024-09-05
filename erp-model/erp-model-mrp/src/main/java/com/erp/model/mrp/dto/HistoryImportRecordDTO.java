@@ -97,7 +97,6 @@ public class HistoryImportRecordDTO implements Serializable {
         /**
          * 业务id
          */
-        @NotBlank(message = "业务id不能为空")
         @Size(max = 19,message = "业务id最大长度不能超过19位")
         private String businessId;
 

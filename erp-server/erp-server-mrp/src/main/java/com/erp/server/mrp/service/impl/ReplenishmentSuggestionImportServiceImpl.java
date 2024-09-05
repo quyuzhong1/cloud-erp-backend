@@ -92,11 +92,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     }
 
     @Override
-    public void importRule(String id,MultipartFile excelFile, HttpServletResponse response) {
-        ReplenishmentSuggestionEntity suggestionEntity = replenishmentSuggestionService.getById(id);
-        if (ObjectUtil.isEmpty(suggestionEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"补货建议");
-        }
+    public void importRule(MultipartFile excelFile, HttpServletResponse response) {
         //平台信息
         List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
 
@@ -114,7 +110,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         Pair<List<SalesDenoisingImportExcelDTO>, List<SalesDenoisingImportExcelDTO>> salesDenoisingPair = importSalesDenoising(excelFile,platformViewList);
 
         //上传正确数据
-        upLoadSuccessExcel (suggestionEntity,stockUpPair.getKey(),stockingRatioPair.getKey(),defaultSalesQtyPair.getKey(),
+        upLoadSuccessExcel (stockUpPair.getKey(),stockingRatioPair.getKey(),defaultSalesQtyPair.getKey(),
                 dynamicSalesQtyPair.getKey(),fixedSalesQtyPair.getKey(),salesDenoisingPair.getKey());
         //导出错误数据
         exportErrorExcel (response,stockUpPair.getValue(),stockingRatioPair.getValue(),defaultSalesQtyPair.getValue(),
@@ -131,7 +127,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param fixedSalesQtyList
      * @param salesDenoisingList
      */
-    private void upLoadSuccessExcel (ReplenishmentSuggestionEntity suggestionEntity,List<StockUpImportExcelDTO> stockUpList,List<StockingRatioImportExcelDTO> stockingRatioList,List<DefaultSalesQtyImportExcelDTO> defaultSalesQtyList,
+    private void upLoadSuccessExcel (List<StockUpImportExcelDTO> stockUpList,List<StockingRatioImportExcelDTO> stockingRatioList,List<DefaultSalesQtyImportExcelDTO> defaultSalesQtyList,
                                    List<DynamicSalesQtyImportExcelDTO> dynamicSalesQtyList,List<FixedSalesQtyImportExcelDTO> fixedSalesQtyList,List<SalesDenoisingImportExcelDTO> salesDenoisingList) {
         //全部为空则无需处理
         if (CollectionUtils.isEmpty(stockUpList) && CollectionUtils.isEmpty(stockingRatioList)  && CollectionUtils.isEmpty(defaultSalesQtyList)
@@ -142,17 +138,16 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
         exportFileDTO.setFileName(fileName);
         List<FileExcelDTO.ExportFileSheetDTO> sheetList = new ArrayList<>();
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("销量",stockUpList,StockUpImportExcelDTO.class));
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("动态备货系数",stockingRatioList,StockingRatioImportExcelDTO.class));
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("默认日销量",defaultSalesQtyList,DefaultSalesQtyImportExcelDTO.class));
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("动态日销量",dynamicSalesQtyList,DynamicSalesQtyImportExcelDTO.class));
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("固定日销量",fixedSalesQtyList,FixedSalesQtyImportExcelDTO.class));
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("销量去噪",salesDenoisingList,SalesDenoisingImportExcelDTO.class));
+        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("销量",stockUpList,StockUpImportExcelDTO.class,null));
+        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("动态备货系数",stockingRatioList,StockingRatioImportExcelDTO.class,null));
+        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("默认日销量",defaultSalesQtyList,DefaultSalesQtyImportExcelDTO.class,null));
+        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("动态日销量",dynamicSalesQtyList,DynamicSalesQtyImportExcelDTO.class,null));
+        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("固定日销量",fixedSalesQtyList,FixedSalesQtyImportExcelDTO.class,null));
+        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("销量去噪",salesDenoisingList,SalesDenoisingImportExcelDTO.class,null));
         exportFileDTO.setSheetList(sheetList);
 
         //添加导入记录
         HistoryImportRecordDTO.AddDTO dto = new HistoryImportRecordDTO.AddDTO();
-        dto.setBusinessId(suggestionEntity.getId());
         dto.setName(fileName);
         dto.setModule(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
         dto.setType(HistoryImportRecordTypeEnum.CFG_RULE_REPLENISHMENT.getCode());
@@ -1066,19 +1061,52 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //处理校验导入成功数据
         handleImportSalesEstimate(successList, errorList,headList);
 
-        if (errorList.isEmpty()) {
-            return ;
+        //上传正确数据
+        upLoadSuccessExcel(successList,headList);
+
+        //导出错误数据
+        exportErrorExcel (errorList,headList,response);
+    }
+
+    /**
+     * 导出错误数据
+     * @author will
+     * @date 2024/9/5 18:40
+     * @param errorList
+     * @param headList
+     * @param response
+     */
+    private void exportErrorExcel (List<JSONObject> errorList,List<String> headList, HttpServletResponse response) {
+        String fileName = "运营月销预估";
+        ExcelUtil.customExportUtil(headList,errorList,fileName, response);
+    }
+
+    /**
+     * 上传成功excel
+     * @author will
+     * @date 2024/9/5 18:51
+     * @param successList
+     * @param headList
+     */
+    private void upLoadSuccessExcel (List<JSONObject> successList,List<String> headList) {
+        //全部为空则无需处理
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
         }
-        String excelPath = "excel/salesEstimateError.xlsx";
-        String name = "salesEstimateError";
-        try {
-            new ExcelPrintUtils().patchExport(errorList,
-                    response,
-                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
-                    excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_95125);
-        }
+        String fileName = "运营月销预估.xlsx";
+        FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
+        exportFileDTO.setFileName(fileName);
+        List<FileExcelDTO.ExportFileSheetDTO> sheetList = new ArrayList<>();
+        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("运营月销预估",successList,null,headList));
+        exportFileDTO.setSheetList(sheetList);
+
+        //添加导入记录
+        HistoryImportRecordDTO.AddDTO dto = new HistoryImportRecordDTO.AddDTO();
+        dto.setName(fileName);
+        dto.setModule(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+        dto.setType(HistoryImportRecordTypeEnum.SALES_ESTIMATE_MANUAL.getCode());
+        dto.setExportFileDTO(exportFileDTO);
+        historyImportRecordService.add(dto);
     }
 
     /**
@@ -1158,6 +1186,14 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         successList.addAll(wrongList);
     }
 
+    /**
+     * 格式化运营月销预估
+     * @author will
+     * @date 2024/9/5 18:51
+     * @param excelDTO
+     * @param entity
+     * @return UpdateDTO
+     */
     private SalesEstimateManualDTO.UpdateDTO formatSalesEstimateManual (SalesEstimateImportExcelDTO excelDTO,ReplenishmentSuggestionEntity entity ) {
         SalesEstimateManualDTO.UpdateDTO updateDTO = new SalesEstimateManualDTO.UpdateDTO();
         updateDTO.setReplenishmentId(entity.getId());

@@ -345,7 +345,7 @@ public class ExcelUtil {
     }
 
     /**
-     * 生成导出文件
+     * 批量生成导出文件
      * @author will
      * @date 2024/9/3 15:00
      * @param exportFileDTO
@@ -358,8 +358,17 @@ public class ExcelUtil {
             throw new ServiceException("sheet数据不能为空");
         }
         for (FileExcelDTO.ExportFileSheetDTO sheetDTO :  exportFileDTO.getSheetList()) {
-            //生成本地文件
-            EasyExcel.write(filePath.getAbsolutePath(), sheetDTO.getClazz()).sheet(sheetDTO.getSheetName()).doWrite(sheetDTO.getDataResult());
+            if (ObjectUtil.isNotEmpty(sheetDTO.getClazz())) {
+                //更加类生成文件
+                EasyExcel.write(filePath.getAbsolutePath(), sheetDTO.getClazz()).sheet(sheetDTO.getSheetName()).doWrite(sheetDTO.getDataResult());
+            } else if (ObjectUtil.isNotEmpty(sheetDTO.getHeads())) {
+                //根据表头生成文件
+                List<List<String>> hs = new ArrayList<>();
+                for (String s : sheetDTO.getHeads()) {
+                    hs.add(Arrays.asList(s));
+                }
+                EasyExcel.write(filePath).head(hs).sheet(sheetDTO.getSheetName()).doWrite(sheetDTO.getDataResult());
+            }
         }
         return filePath;
 

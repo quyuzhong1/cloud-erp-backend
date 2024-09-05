@@ -45,6 +45,11 @@ public class FileExcelDTO {
          * 数据类型
          */
         private Class<?> clazz;
+
+        /**
+         * 表头
+         */
+        List<String> heads;
     }
 
 }
