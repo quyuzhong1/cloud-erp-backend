@@ -289,4 +289,12 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 .in(TmsCostDetailEntity::getMainId, delActualCostIds)
                 .update();
     }
+
+    @Override
+    public void removeByMainIds(List<String> costIds) {
+        if (CollectionUtils.isEmpty(costIds)){
+            return;
+        }
+        this.lambdaUpdate().in(TmsCostDetailEntity::getMainId, costIds).remove();
+    }
 }
