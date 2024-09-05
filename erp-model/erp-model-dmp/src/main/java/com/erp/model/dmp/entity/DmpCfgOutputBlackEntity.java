@@ -61,7 +61,7 @@ public class DmpCfgOutputBlackEntity extends BaseEntity<DmpCfgOutputBlackEntity>
      * 备注
      */
     @TableField(value = "remark")
-    private Boolean remark;
+    private String remark;
 
     public static final String MAIN_ID = "main_id";
 

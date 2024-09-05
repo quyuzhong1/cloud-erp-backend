@@ -175,6 +175,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         /**
          * 同步状态中文
          */
+
         private String statusName;
 
         /**
@@ -186,6 +187,11 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          * 推送数据
          */
         private String pushData;
+
+        /**
+         * 是否需要同步
+         */
+        private Boolean isNeedSync;
 
     }
 
@@ -214,7 +220,8 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     @AllArgsConstructor
     public static class TabListDTO {
         /**
-         * 类型，all全部、0无需同步、同步中、2同步中、3同步成功、4同步失败
+         * 类型：/dmp/common/enumDropDown?type=DmpOutputTaskRecordStatus
+         * all全部、init:待推送、mqsuccess:mq推送成功、mqerror:mq推送失败、cosumererror:消费失败、finish:推送成功、error:推送失败
          */
         private String tabFlag;
 
@@ -227,18 +234,48 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class  AddOutputBlackDTO {
+    public static class AddOutputBlackDTO {
         /**
          * 输出任务id
          */
-        private String outputId;
+        private List<String> ids;
+
+        /**
+         * 定义条件
+         */
+        private List<CustomizeBlackParam> params;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CustomizeBlackParam {
+        /**
+         * 来源系统名称
+         *
+         */
+        private String sourcePlatformName;
+
+        /**
+         * 目标平台名称
+         */
+        private String targetPlatformName;
 
         /**
          * 单据编码
          */
-        private String billCode;
+        private String sourceCode;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public class ExpotParamDTO extends PagingParamDTO {
         /**
          * 主键id

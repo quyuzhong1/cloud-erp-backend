@@ -136,34 +136,6 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         all.setTabFlag(DmpConstant.ALL);
         countList.add(all);
 
-        //同步成功
-        DmpOutputTaskRecordDTO.TabListDTO success = new DmpOutputTaskRecordDTO.TabListDTO();
-        success.setTabFlag(SyncStatusEnum.SUCCESS_SYNC.getCode());
-        int successCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        success.setCount(successCount);
-        result.add(success);
-
-        //同步失败
-        DmpOutputTaskRecordDTO.TabListDTO failed = new DmpOutputTaskRecordDTO.TabListDTO();
-        failed.setTabFlag(SyncStatusEnum.FAILED_SYNC.getCode());
-        int failedCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())
-                || DmpOutputTaskRecordStatusEnum.MQERROR.getCode().equals(a.getTabFlag())
-                || DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode().equals(a.getTabFlag())
-        ).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        failed.setCount(failedCount);
-        result.add(failed);
-
-        //同步中
-        DmpOutputTaskRecordDTO.TabListDTO syncIng = new DmpOutputTaskRecordDTO.TabListDTO();
-        syncIng.setTabFlag(SyncStatusEnum.IN_SYNC.getCode());
-        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.INIT.getCode())
-                || DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode().equals(a.getTabFlag())
-        ).mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
-        syncIng.setCount(syncIngCount);
-        result.add(syncIng);
-
         //无需同步
         Integer count = this.lambdaQuery()
                 .eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
@@ -194,6 +166,12 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         }
         for (DmpOutputTaskRecordDTO.PagingDTO listDTO : list) {
             listDTO.setSyncTypeName("推送");
+
+            //如果是推送成功，可能是无需推送状态
+            if (DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(listDTO.getStatus()) && !listDTO.getIsNeedSync()) {
+                listDTO.setStatusName(SyncStatusEnum.NO_NEED_SYNC.getName());
+            }
+
         }
     }
 
