@@ -107,7 +107,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     Boolean invalidByLogisticsBillId(String logisticsBillId);
 
-    LogisticsBillCostEntity getByLogisticsBillId(String Id);
+    List<LogisticsBillCostEntity> getByLogisticsBillIds(List<String> ids);
     /**
      * @description: 查询详情
      * @author Will

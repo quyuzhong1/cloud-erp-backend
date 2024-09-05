@@ -55,10 +55,9 @@ public interface InitFirstMileAllocationService extends SuperService<InitFirstMi
     /**
      * 导出excel
      * @param dto
-     * @param response
      * @return
      */
-    void exportExcel(InitFirstMileAllocationDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportExcel(InitFirstMileAllocationDTO.PagingParamDTO dto);
 
     /**
      * 审核期初头程分摊

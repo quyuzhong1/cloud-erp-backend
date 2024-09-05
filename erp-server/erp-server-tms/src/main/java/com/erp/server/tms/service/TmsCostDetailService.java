@@ -45,7 +45,7 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
 
      * @return
      */
-    List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListById(String id);
+    List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListByIds(List<String> ids);
 
     /**
      * @description: 根据主表id集合查询
