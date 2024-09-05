@@ -150,14 +150,11 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      * 新增附件，将附件名称和url保存到附件表
      */
     private <T extends PilotApplicationDTO.CommonDTO> void addAttachment(T commonDTO, String businessId) {
-        List<String> attachNameList = commonDTO.getAttachNameList();
-        List<String> attachUrlList = commonDTO.getAttachUrlList();
-        for (int i = 0; i < attachUrlList.size(); i++) {
-            String url = attachUrlList.get(i);
-            String name = attachNameList.get(i);
+        List<PilotApplicationDTO.AttachmentDTO> attachmentList = commonDTO.getAttachmentList();
+        for (PilotApplicationDTO.AttachmentDTO attachmentDTO : attachmentList) {
             PlmAttachmentEntity entity = new PlmAttachmentEntity();
-            entity.setAttachName(name);
-            entity.setAttachUrl(url);
+            entity.setAttachName(attachmentDTO.getAttachName());
+            entity.setAttachUrl(attachmentDTO.getAttachUrl());
             entity.setType("pilot_application");
             entity.setBusinessId(businessId);
             plmAttachmentService.save(entity);
@@ -440,9 +437,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
         Map<String, Object> map = BeanUtil.beanToMap(entity);
-        map.put("attachNameList", baseApproveDTO.getAttachNameList());
-        map.put("attachUrlList", baseApproveDTO.getAttachUrlList());
-        map.put("approveType", dto.getType());
+        map.put("attachmentList", baseApproveDTO.getAttachmentList());
         approveDTO.setVariablesMap(map);
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
@@ -766,8 +761,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(v -> v.getSkuId().equals(item.getSkuId())).findFirst();
             if(productCostEntityOptional.isPresent()){
                 ProductCostEntity productCostEntity = productCostEntityOptional.get();
-                item.setTargetTaxCost(productCostEntity.getTargetTaxCost().toPlainString());
-                item.setActualTaxCost(productCostEntity.getActualTaxCost().toPlainString());
+                item.setTargetTaxCost(productCostEntity.getTargetTaxCost() != null ? productCostEntity.getTargetTaxCost().toPlainString() : "");
+                item.setActualTaxCost(productCostEntity.getActualTaxCost() != null ? productCostEntity.getActualTaxCost().toPlainString() : "");
             }
         }
     }
