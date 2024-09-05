@@ -76,12 +76,6 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
             StringBuffer sb = new StringBuffer();
             sb.append(url);
             sb.append(path);
-            sb.append("?");
-            //paid, cancelled, payment_required, confirmed
-            sb.append("limit=");//每页最大50条
-            sb.append(pageSize);
-            sb.append("&offset=");
-            sb.append(offset);
 
             //入参
             HashMap<String, Object> params = new HashMap<>(2);

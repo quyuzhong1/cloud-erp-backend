@@ -33,5 +33,43 @@
         input_status, storage_name, data_id, status, error_message
     </sql>
 
+    <!-- 根据状态分组查询数量 -->
+    <select id="listStatusCount" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$TabListDTO">
+        select
+        t.status as tabFlag,
+        count(t.id) as count
+        from dmp_output_task_record t
+        where t.is_deleted = false
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        group by t.status
+    </select>
 
+    <!--推送任务列表分页查询-->
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
+        SELECT
+        l."name" AS sourcePlatformName,
+        i.name AS targetPlatformName,
+        k.name AS sourceTypeName,
+        t.source_code AS sourceCode,
+        t.status AS status,
+        t.create_time,
+        t.update_time AS lastSyncTime,
+        t.request_data AS pushData,
+        t.response_data AS returnMsg
+        FROM dmp_output_task_record t
+        LEFT JOIN dmp_output_task g ON t.main_id = g.id
+        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+        LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+        LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>
