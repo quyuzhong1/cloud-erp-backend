@@ -6,8 +6,10 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
 
+import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -27,9 +29,10 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @param comment
      * @param activityId
      * @param managementEntity
+     * @param variablesMap
      * @return Boolean
      */
-    Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId, ProcessManagementEntity managementEntity);
+    Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId, ProcessManagementEntity managementEntity, @Nullable Map<String, Object> variablesMap);
 
     /**
      * 根据流程实例id查询历史任务
