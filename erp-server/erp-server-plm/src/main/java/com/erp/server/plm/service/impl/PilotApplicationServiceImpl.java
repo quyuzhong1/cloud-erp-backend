@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.BetweenFormatter;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
@@ -233,14 +232,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public PagingVO<PilotApplicationDTO.ListDTO> paging(PagingDTO<PilotApplicationDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        /*Optional<AdvanceQueryDTO> tab = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(item -> item.getField().equals("tab")).findFirst();
-        if(!tab.isPresent()){
-            throw new ServiceException("缺少tab参数");
-        }
-        IPage<PilotApplicationDTO.ListDTO> pageData = pagingQuery(query, pagingParamDTO, (String) tab.get().getValue());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
-        }*/
         IPage<PilotApplicationDTO.ListDTO> pageData = this.baseMapper.pagingByParam(query, pagingParamDTO.getParams());
         // 数据处理
         fillList(pageData.getRecords());
@@ -420,7 +411,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO approve(ApproveOneDTO dto) {
+    public BatchResultDTO approve(ApproveOneDTO dto, PilotApplicationDTO.ApproveDTO approveDTO) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
@@ -431,17 +422,19 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
-        approveProcess(entity, dto);
+        approveProcess(entity, dto, approveDTO);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
-    * 审核流程处理
-    * @param entity
-    * @param dto
-    */
-    private void approveProcess(PilotApplicationEntity entity, ApproveOneDTO dto) {
+     * 审核流程处理
+     *
+     * @param entity
+     * @param dto
+     * @param baseApproveDTO
+     */
+    private void approveProcess(PilotApplicationEntity entity, ApproveOneDTO dto, PilotApplicationDTO.ApproveDTO baseApproveDTO) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
@@ -449,7 +442,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = BeanUtil.beanToMap(entity);
+        map.put("attachNameList", baseApproveDTO.getAttachNameList());
+        map.put("attachUrlList", baseApproveDTO.getAttachUrlList());
+        approveDTO.setVariablesMap(map);
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -759,7 +755,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //供应商
         List<String> supplierIds = list.stream().map(item -> item.getMainSupplierId()).distinct().collect(Collectors.toList());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
-
+        //产品费用
+        List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
         for(PilotApplicationDTO.ListDTO item : list) {
             item.setApproveStatusName(ApproveStatusEnum.getName(item.getApproveStatus()));
             item.setOrderStatusName(PilotApplicationTabEnum.getName(item.getOrderStatus()));
@@ -767,6 +764,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             item.setMainSupplierName(supplierMap.containsKey(item.getMainSupplierId()) ? supplierMap.get(item.getMainSupplierId()).getName() : "");
             item.setApproveUserName(userMap.get(item.getApproveUserId()));
             item.setCreateUserName(userMap.get(item.getCreateUserId()));
+            Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(v -> v.getSkuId().equals(item.getSkuId())).findFirst();
+            if(productCostEntityOptional.isPresent()){
+                ProductCostEntity productCostEntity = productCostEntityOptional.get();
+                item.setTargetTaxCost(productCostEntity.getTargetTaxCost().toPlainString());
+                item.setActualTaxCost(productCostEntity.getActualTaxCost().toPlainString());
+            }
         }
     }
     /**
