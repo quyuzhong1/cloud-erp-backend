@@ -357,14 +357,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         //执行虚拟仓出库
         if (CollectionUtils.isNotEmpty(allocationParamList)) {
-            VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
-            allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
-            allocationDto.setParamList(allocationParamList);
-            virtualInventoryTransCoreService.approve(allocationDto);
-
-            List<RequisitionApplicationDTO.HandleListDTO> haveFromVwList = list.stream().filter(item -> StringUtils.isNotBlank(item.getFromVirtualWarehouseId())).collect(Collectors.toList());
-            List<RequisitionApplicationDetailEntity> detailEntityList = BeanMapperUtils.copyList(RequisitionApplicationDetailEntity.class, haveFromVwList);
-            Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap = detailEntityList.stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId));
+//            VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
+//            allocationDto.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
+//            allocationDto.setParamList(allocationParamList);
+//            virtualInventoryTransCoreService.approve(allocationDto);
+//
+//            List<RequisitionApplicationDTO.HandleListDTO> haveFromVwList = list.stream().filter(item -> StringUtils.isNotBlank(item.getFromVirtualWarehouseId())).collect(Collectors.toList());
+//            List<RequisitionApplicationDetailEntity> detailEntityList = BeanMapperUtils.copyList(RequisitionApplicationDetailEntity.class, haveFromVwList);
+//            Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap = detailEntityList.stream().collect(Collectors.groupingBy(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId));
 
             //创建旺店通虚拟仓订单
             //service.saveWdtOrder(fromVmIds, requisitionApplication, haveFromVwMap);
@@ -1727,7 +1727,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     .findFirst()
                     .orElse(new WarehouseDTO.UpdateDTO());
             requisitionApplicationDetailService.updateTransferWarehouse(handleListDTO.getFromWarehouseId(), fromWarehouse.getName(),
-                    handleListDTO.getFromVirtualWarehouseId(), handleListDTO.getRequisitionWarehouseName(),
+                    handleListDTO.getFromVirtualWarehouseId(), handleListDTO.getFromVirtualWarehouseName(),
                     handleListDTO.getToWarehouseId(), toWarehouse.getName(), handleListDTO.getApproveQty(), handleListDTO.getSourceDetailId());
         }
     }

@@ -65,6 +65,12 @@ public class FbaShipmentPackingEntity extends BaseEntity<FbaShipmentPackingEntit
     @TableField("qty")
     private Integer qty;
 
+    /**
+     * erp装箱id,关联wms_carton
+     */
+    @TableField("carton_id")
+    private String cartonId;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String BOX_NO = "box_no";

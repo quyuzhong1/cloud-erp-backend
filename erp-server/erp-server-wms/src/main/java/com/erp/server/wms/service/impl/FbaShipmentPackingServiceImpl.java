@@ -72,8 +72,12 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         }
         String mainId = fbaShipmentEntity.getId();
         List<FbaShipmentPackingEntity> existList = getByMainIdAndBoxNo(mainId, data.getBoxNo());
-        //已存在，删除后新增
+        //已存在，如果已关联erp装箱明细，不处理，否则删除后新增
         if(CollectionUtil.isNotEmpty(existList)){
+            FbaShipmentPackingEntity existEntity = existList.get(0);
+            if(StringUtils.isNotBlank(existEntity.getCartonId())){
+                return;
+            }
             List<String> removeIds = existList.stream().map(BaseEntity::getId).collect(Collectors.toList());
             log.error("删除装箱信息，idList:{}",removeIds);
             this.removeByIds(removeIds);

@@ -120,6 +120,8 @@
             rad.id AS sourceDetailId,
             ra.requisition_warehouse_id AS requisitionWarehouseId,
             ra.requisition_warehouse_name AS requisitionWarehouseName,
+            rad.from_virtual_warehouse_id as fromVirtualWarehouseId,
+        rad.from_virtual_warehouse_name as fromVirtualWarehouseName,
             ra.status AS status,
             rad.sku_id,
             rad.sku_no,
