@@ -132,7 +132,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     /**
      * 更新对账状态
      */
-    void updateReconciliation(List<String> mainIds, String status);
+    void updateReconciliation(List<String> mainIds, String status,String reconciliationId);
 
     /**
      * 查询周期内已签收未对账的物流单

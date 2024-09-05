@@ -1241,6 +1241,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(Objects.isNull(reconciliationEntity.getReconciliationMonth()) && Objects.nonNull(reconciliationEntity.getEndDate())){
             reconciliationEntity.setReconciliationMonth(reconciliationEntity.getEndDate().withDayOfMonth(1));
         }
+        if (StrUtil.isBlank(reconciliationEntity.getCurrency())){
+            reconciliationEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            reconciliationEntity.setExchangeRate(BigDecimal.ONE);
+        }
         // 保存头程对账单
         tmsFirstMileReconciliationService.saveOrUpdate(reconciliationEntity);
         //当前明细对账单次数
@@ -1288,21 +1292,22 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         // 更新已成功对账单
         List<String> sourceIds = Collections.singletonList(curListDTO.getSourceId());
-        this.updateReconciliation(sourceIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+        this.updateReconciliation(sourceIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), reconciliationId);
 
         return BatchResultDTO.success(id, curListDTO.getTransportNo(), OperationTypeEnum.ADD);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateReconciliation(List<String> mainId, String status) {
+    public void updateReconciliation(List<String> mainId, String status,String reconciliationId) {
+        if (CollectionUtils.isEmpty(mainId)){
+            return;
+        }
         boolean update = logisticsBillCostService.lambdaUpdate()
                 .set(LogisticsBillCostEntity::getReconciliationStatus, status)
                 .in(LogisticsBillCostEntity::getLogisticsBillId, mainId)
+                .eq(StrUtil.isNotBlank(reconciliationId), LogisticsBillCostEntity::getLogisticsBillId, reconciliationId)
                 .update();
-        if (!update){
-            throw new ServiceException("更新对账状态失败");
-        }
     }
 
     @Override

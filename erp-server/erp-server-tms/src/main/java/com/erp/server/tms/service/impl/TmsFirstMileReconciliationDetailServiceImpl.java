@@ -676,25 +676,42 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO,
             TmsFirstMileReconciliationDetailDTO.ListDTO diffListDTO
     ) {
+        BigDecimal actualShippingCost = Objects.nonNull(actualListDTO.getShippingCost())? actualListDTO.getShippingCost() : BigDecimal.ZERO;
+        BigDecimal actualDeclareCost = Objects.nonNull(actualListDTO.getDeclareCost()) ? actualListDTO.getDeclareCost():BigDecimal.ZERO;
+        BigDecimal actualOtherCost = Objects.nonNull(actualListDTO.getOtherCost()) ? actualListDTO.getOtherCost():BigDecimal.ZERO;
+        BigDecimal actualOtherTaxCost = Objects.nonNull(actualListDTO.getOtherTaxCost()) ? actualListDTO.getOtherTaxCost():BigDecimal.ZERO;
+        BigDecimal actualWeight = Objects.nonNull(actualListDTO.getActualWeight()) ? actualListDTO.getActualWeight():BigDecimal.ZERO;
+        BigDecimal actualVolumeWeight = Objects.nonNull(actualListDTO.getVolumeWeight()) ? actualListDTO.getVolumeWeight():BigDecimal.ZERO;
+        BigDecimal actualBillingWeight = Objects.nonNull(actualListDTO.getBillingWeight()) ? actualListDTO.getBillingWeight():BigDecimal.ZERO;
+
+        BigDecimal estimatedTotalLogisticsCost = Objects.nonNull(estimatedListDTO.getTotalLogisticsCost()) ? actualListDTO.getTotalLogisticsCost():BigDecimal.ZERO;
+        BigDecimal estimatedShippingCost = Objects.nonNull(estimatedListDTO.getShippingCost()) ? estimatedListDTO.getShippingCost():BigDecimal.ZERO;
+        BigDecimal estimatedDeclareCost = Objects.nonNull(estimatedListDTO.getDeclareCost()) ? estimatedListDTO.getDeclareCost():BigDecimal.ZERO;
+        BigDecimal estimatedOtherCost = Objects.nonNull(estimatedListDTO.getOtherCost()) ? estimatedListDTO.getOtherCost():BigDecimal.ZERO;
+        BigDecimal estimatedOtherTaxCost = Objects.nonNull(estimatedListDTO.getOtherTaxCost()) ? estimatedListDTO.getOtherTaxCost():BigDecimal.ZERO;
+        BigDecimal estimatedWeight = Objects.nonNull(estimatedListDTO.getActualWeight()) ? estimatedListDTO.getActualWeight():BigDecimal.ZERO;
+        BigDecimal estimatedVolumeWeight = Objects.nonNull(estimatedListDTO.getVolumeWeight()) ? estimatedListDTO.getVolumeWeight():BigDecimal.ZERO;
+        BigDecimal estimatedBillingWeight = Objects.nonNull(estimatedListDTO.getBillingWeight()) ? estimatedListDTO.getBillingWeight():BigDecimal.ZERO;
+
         // 重新计算实际总数
-        actualListDTO.setTotalLogisticsCost(actualListDTO.getShippingCost().add(actualListDTO.getDeclareCost()).add(actualListDTO.getOtherCost()).add(actualListDTO.getOtherTaxCost()));
+        actualListDTO.setTotalLogisticsCost(actualShippingCost.add(actualDeclareCost).add(actualOtherCost).add(actualOtherTaxCost));
         // 重新计算差异值
         // 总物流费用
-        diffListDTO.setTotalLogisticsCost(actualListDTO.getTotalLogisticsCost().subtract(estimatedListDTO.getTotalLogisticsCost()));
+        diffListDTO.setTotalLogisticsCost(actualListDTO.getTotalLogisticsCost().subtract(estimatedTotalLogisticsCost));
         // 实际重量【箱包装重量】
-        diffListDTO.setActualWeight(actualListDTO.getActualWeight().subtract(estimatedListDTO.getActualWeight()));
+        diffListDTO.setActualWeight(actualWeight.subtract(estimatedWeight));
         // 体积重
-        diffListDTO.setVolumeWeight(actualListDTO.getVolumeWeight().subtract(estimatedListDTO.getVolumeWeight()));
+        diffListDTO.setVolumeWeight(actualVolumeWeight.subtract(estimatedVolumeWeight));
         // 计费重
-        diffListDTO.setBillingWeight(actualListDTO.getBillingWeight().subtract(estimatedListDTO.getBillingWeight()));
+        diffListDTO.setBillingWeight(actualBillingWeight.subtract(estimatedBillingWeight));
         // 物流运费用【预计物流费用】
-        diffListDTO.setShippingCost(actualListDTO.getShippingCost().subtract(estimatedListDTO.getShippingCost()));
+        diffListDTO.setShippingCost(actualShippingCost.subtract(estimatedShippingCost));
         // 报关费用【预计报关费用】
-        diffListDTO.setDeclareCost(actualListDTO.getDeclareCost().subtract(estimatedListDTO.getDeclareCost()));
+        diffListDTO.setDeclareCost(actualDeclareCost.subtract(estimatedDeclareCost));
         // 其他费用【预计其他费用】
-        diffListDTO.setOtherCost(actualListDTO.getOtherCost().subtract(estimatedListDTO.getOtherCost()));
+        diffListDTO.setOtherCost(actualOtherCost.subtract(estimatedOtherCost));
         //其他税费
-        diffListDTO.setOtherTaxCost(actualListDTO.getOtherTaxCost().subtract(estimatedListDTO.getOtherTaxCost()));
+        diffListDTO.setOtherTaxCost(actualOtherTaxCost.subtract(estimatedOtherTaxCost));
     }
 
 
@@ -1324,25 +1341,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         });
         this.lambdaUpdate().eq(TmsFirstMileReconciliationDetailEntity::getMainId, id).remove();
         List<String> mainIds = detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-
-        List<String> sourceIds = detailEntityList.stream()
-                .map(TmsFirstMileReconciliationDetailEntity::getSourceId)
-                .distinct()
-                .collect(Collectors.toList());
-        this.changeLogisticsBillCost(sourceIds, ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
-
-        // 移除实际明细
-        List<TmsCostDetailEntity> tmsCostDetailList = tmsCostDetailService.lambdaQuery().in(TmsCostDetailEntity::getMainId, mainIds)
-                .eq(TmsCostDetailEntity::getType, LogisticsBillCostTypeEnum.ACTUAL.getCode())
-                .list();
-        if (CollectionUtils.isEmpty(tmsCostDetailList)) {
-            return;
-        }
-        tmsCostDetailList.forEach(e -> e.setIsDeleted(true));
-        if (!tmsCostDetailService.updateBatchById(tmsCostDetailList)) {
-            throw new ServiceException("批量删除费用明细失败, 请重试");
-        }
-
+        //删除下推对账单费用数据
+        logisticsBillCostService.removeByReconciliationIds(Collections.singletonList(id));
     }
 
     @Override
@@ -1817,7 +1817,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId)
                     .distinct()
                     .collect(Collectors.toList());
-            tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+            tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(),reconciliationEntity.getId());
         }
     }
 

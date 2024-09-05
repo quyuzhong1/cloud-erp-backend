@@ -910,6 +910,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return new PagingVO<>(page);
     }
 
+    @Override
+    public void removeByReconciliationIds(List<String> reconciliationIds) {
+        if (CollectionUtils.isEmpty(reconciliationIds)){
+            return;
+        }
+        List<LogisticsBillCostEntity> list = this.lambdaQuery().in(LogisticsBillCostEntity::getReconciliationId, reconciliationIds).list();
+        if (CollectionUtils.isNotEmpty(list)){
+            List<String> costIds = list.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
+            this.tmsCostDetailService.removeByMainIds(costIds);
+            this.removeByIds(costIds);
+        }
+    }
+
 
     /**
      * @description: 更新店铺负责人

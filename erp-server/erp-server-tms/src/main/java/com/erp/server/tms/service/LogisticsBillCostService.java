@@ -188,4 +188,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
 
+    /**
+     * 根据对账id删除已生成对账单产生的费用明细
+     * @param reconciliationIds
+     */
+    void removeByReconciliationIds(List<String> reconciliationIds);
 }

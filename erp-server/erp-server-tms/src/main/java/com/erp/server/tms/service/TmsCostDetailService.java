@@ -85,4 +85,10 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
     List<TmsCostDetailEntity> listByCfgCostIdList(List<String> cfgCostIdList);
 
     boolean updateActual0ByMainId(List<String> delActualCostIds);
+
+    /**
+     * 根据主键删除费用记录明细
+     * @param costIds
+     */
+    void removeByMainIds(List<String> costIds);
 }
