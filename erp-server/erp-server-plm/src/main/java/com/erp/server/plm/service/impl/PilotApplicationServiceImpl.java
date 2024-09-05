@@ -294,9 +294,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         int orderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.ORDER.getCode(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.ORDER.getCode(), PilotApplicationTabEnum.ORDER.getName(), orderCount));
 
-        int stockInCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.STOCK_IN.getCode(), null);
-        list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.STOCK_IN.getCode(), PilotApplicationTabEnum.STOCK_IN.getName(), stockInCount));
-
         return list;
     }
 
