@@ -1,5 +1,4 @@
 package com.erp.server.plm.service;
-import com.common.business.dto.FindUserDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.common.business.service.SuperService;
@@ -91,13 +90,15 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
     BatchResultDTO submit(String id);
 
     /**
-    * 审核
-    * @author tmj
-    * @date: 2024-08-27
-    * @param dto
-    * @return
-    */
-    BatchResultDTO approve(ApproveOneDTO dto);
+     * 审核
+     *
+     * @param dto
+     * @param approveDTO
+     * @return
+     * @author tmj
+     * @date: 2024-08-27
+     */
+    BatchResultDTO approve(ApproveOneDTO dto, PilotApplicationDTO.ApproveDTO approveDTO);
 
     /**
     * 反审核
