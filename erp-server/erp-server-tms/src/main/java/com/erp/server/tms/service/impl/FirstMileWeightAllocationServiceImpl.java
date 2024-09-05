@@ -210,9 +210,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         }
         costAllocationList.sort(Comparator.comparing(FirstMileWeightAllocationDTO.CostAllocationDTO::getReportPeriod).reversed());
         FirstMileWeightAllocationDTO.CostAllocationDTO costAllocationDTO = costAllocationList.get(0);
-        if(costAllocationDTO.getCostAllocationStatus().equals("waitConfirm")
+        if(costAllocationDTO.getCostAllocationStatus().equals("confirm")
                 && costAllocationDTO.getBillSourceType() != null && costAllocationDTO.getBillSourceType().equals("actual")
-                && costAllocationDTO.getEndPeriodTransitCost() != null && costAllocationDTO.getEndPeriodTransitCost().equals(BigDecimal.ZERO)){
+                && costAllocationDTO.getEndPeriodTransitCost() != null && costAllocationDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) == 0){
             this.lambdaUpdate().set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.ALREADY.getCode())
                     .set(FirstMileWeightAllocationEntity::getCalculateMonth, costAllocationDTO.getReportPeriod().format(formatter))
                     .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
@@ -233,7 +233,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         List<FirstMileWeightAllocationEntity> list = this.lambdaQuery().eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).list();
         boolean allMatch = list.stream().allMatch(item -> item.getCostAllocationStatus().equals(CostAllocationStatusEnum.NOT.getCode()));
         if(!allMatch){
-            throw new ServiceException("只能对未分摊的数据进行重量重算");
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillId, "只能对未分摊的数据进行重量重算");
         }
 
         FirstMileWeightAllocationDTO.LogisticsBillInfoDTO logisticsBillInfo = baseMapper.getLogisticsBillInfo(logisticsBillId);
