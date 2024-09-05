@@ -1,25 +1,27 @@
 package com.erp.server.mrp.calculation.handler;
 
+import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
 @Component
-public class StockingTimeHandler<T> implements SkuCalculationHandler<T> {
+public class StockingTimeHandler extends AbstractSkuCalculationHandler {
     @Resource
-    private SellableDaysHandler<T> sellableDaysHandler;
+    private SellableDaysHandler sellableDaysHandler;
     @Override
-    public SkuCalculationHandler<T> getNextHandler(T t) {
+    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
         return sellableDaysHandler;
     }
 
     @Override
-    public boolean shouldHandle(T t) {
-        return false;
+    public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+        return true;
     }
 
     @Override
-    public boolean doHandle(T t) {
+    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
         return false;
     }
 }

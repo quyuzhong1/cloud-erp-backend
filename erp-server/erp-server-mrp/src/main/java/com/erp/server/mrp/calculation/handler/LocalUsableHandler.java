@@ -1,25 +1,27 @@
 package com.erp.server.mrp.calculation.handler;
 
+import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
 @Component
-public class LocalUsableHandler<T> implements SkuCalculationHandler<T> {
+public class LocalUsableHandler extends AbstractSkuCalculationHandler {
     @Resource
-    private LocalInTransitHandler<T> localInTransitHandler;
+    private LocalInTransitHandler localInTransitHandler;
     @Override
-    public SkuCalculationHandler<T> getNextHandler(T t) {
+    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
         return localInTransitHandler;
     }
 
     @Override
-    public boolean shouldHandle(T t) {
-        return false;
+    public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+        return true;
     }
 
     @Override
-    public boolean doHandle(T t) {
-        return false;
+    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+        return true;
     }
 }

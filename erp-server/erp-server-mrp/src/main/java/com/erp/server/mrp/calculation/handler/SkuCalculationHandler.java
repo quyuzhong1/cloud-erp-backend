@@ -1,36 +1,22 @@
 package com.erp.server.mrp.calculation.handler;
 
-public interface SkuCalculationHandler<T> {
+import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 
-    default void handle(T t) {
-        if (shouldHandle(t)) {
-            // 处理当前逻辑
-            if (doHandle(t)) {
-                // 动态获取下一个处理器
-                SkuCalculationHandler<T> nextHandler = getNextHandler(t);
-                if (nextHandler != null) {
-                    nextHandler.handle(t);
-                }
-            }
-        } else {
-            // 动态获取下一个处理器
-            SkuCalculationHandler<T> nextHandler = getNextHandler(t);
-            if (nextHandler != null) {
-                nextHandler.handle(t);
-            }
-        }
-    }
+public interface SkuCalculationHandler {
+
+    void handle(CfgRuleStrategyDTO t, ReplenishmentResultDTO r);
 
     /**
      * 获取下个责任链
      */
-    SkuCalculationHandler<T> getNextHandler(T t);
+    SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO t, ReplenishmentResultDTO r);
 
     // 判断是否需要处理当前请求
-    boolean shouldHandle(T t);
+    boolean shouldHandle(CfgRuleStrategyDTO t, ReplenishmentResultDTO r);
 
     /**
      * 执行具体的处理逻辑
      */
-    boolean doHandle(T t);
+    void doHandle(CfgRuleStrategyDTO t, ReplenishmentResultDTO r);
 }

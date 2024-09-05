@@ -246,7 +246,6 @@ public class CfgRuleCommonDTO implements Serializable {
          */
         private String  index;
 
-
         /**
          * 主表id
          */

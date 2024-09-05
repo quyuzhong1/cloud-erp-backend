@@ -4,10 +4,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -1153,5 +1150,24 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 收货地址
          */
         private String receiveToAddress;
+    }
+
+
+    @Getter
+    @Setter
+    public static class FbaShipmentDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * FBA货件编码
+         */
+        private String fbaShipmentCode;
     }
 }
