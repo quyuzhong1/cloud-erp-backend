@@ -415,16 +415,10 @@ public class PilotApplicationDTO implements Serializable {
         private String remark;
 
         /**
-         * 附件名称集合
+         * 附件
          */
         @NotEmpty(message = "请上传试产/量产报告")
-        private List<String> attachNameList;
-
-        /**
-         * 附件URL集合
-         */
-        @NotEmpty(message = "请上传试产/量产报告")
-        private List<String> attachUrlList;
+        private List<AttachmentDTO> attachmentList;
     }
 
     /**
@@ -506,13 +500,9 @@ public class PilotApplicationDTO implements Serializable {
     @Data
     public static class ApproveDTO extends BaseApproveParamDTO {
         /**
-         * 附件名称集合
+         * 附件
          */
-        private List<String> attachNameList;
-        /**
-         * 附件URL集合
-         */
-        private List<String> attachUrlList;
+        private List<AttachmentDTO> attachmentList;
         /**
          * 产品明细
          */
@@ -646,5 +636,19 @@ public class PilotApplicationDTO implements Serializable {
          * 节点类型
          */
         private String activityType;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AttachmentDTO{
+        /**
+         * 文件名称
+         */
+        private String attachName;
+        /**
+         * 文件url
+         */
+        private String attachUrl;
     }
 }
