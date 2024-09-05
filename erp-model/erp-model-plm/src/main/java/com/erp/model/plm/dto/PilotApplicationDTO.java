@@ -8,6 +8,8 @@ import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.plm.entity.PlmAttachmentEntity;
+import com.erp.model.workflow.dto.ProcessTaskManagementAttachmentDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -296,14 +298,9 @@ public class PilotApplicationDTO implements Serializable {
         private List<PilotApplicationDTO.AuditorHandleDTO> approveFlowList;
 
         /**
-         * 附件名称集合
+         * 附件
          */
-        private List<String> attachNameList;
-
-        /**
-         * 附件URL集合
-         */
-        private List<String> attachUrlList;
+        private List<PlmAttachmentEntity> attachmentList;
     }
 
     /**
@@ -613,6 +610,11 @@ public class PilotApplicationDTO implements Serializable {
         private String result;
 
         /**
+         * 审批结果名称
+         */
+        private String resultName;
+
+        /**
          * 审批意见
          */
         private String comment;
@@ -628,14 +630,9 @@ public class PilotApplicationDTO implements Serializable {
         private String timeDesc;
 
         /**
-         * 节点名称
+         * 附件
          */
-        private String activityName;
-
-        /**
-         * 节点类型
-         */
-        private String activityType;
+        private List<ProcessTaskManagementAttachmentDTO.CommonDTO> attachmentList;
     }
 
     @Data

@@ -7,6 +7,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.ProcessTaskManagementAttachmentDTO;
+import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementAttachmentEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -17,6 +18,7 @@ import com.erp.server.workflow.service.ProcessTaskManagementAttachmentService;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,10 +26,7 @@ import javax.annotation.Nullable;
 import javax.annotation.Resource;
 import javax.validation.constraints.Null;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -217,6 +216,29 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
     @Override
     public List<ProcessTaskManagementEntity> listPreActivityTask(String taskManagementId, String processInstanceId) {
         return baseMapper.listPreActivityTask(taskManagementId, processInstanceId);
+    }
+
+    @Override
+    public List<ProcessTaskManagementDTO.ApproveHistoryDTO> listApproveHistory(String businessId) {
+        if(StringUtils.isBlank(businessId)){
+            return Collections.emptyList();
+        }
+        List<ProcessTaskManagementDTO.ApproveHistoryDTO> resultList = baseMapper.listApproveHistory(businessId);
+        if(resultList.isEmpty()){
+            return Collections.emptyList();
+        }
+        List<String> taskIds = resultList.stream().map(item -> item.getTaskId()).distinct().collect(Collectors.toList());
+        List<ProcessTaskManagementAttachmentEntity> attachmentEntityList = attachmentService.lambdaQuery().in(ProcessTaskManagementAttachmentEntity::getMainId, taskIds).list();
+        Map<String, List<ProcessTaskManagementAttachmentEntity>> groupByTaskId = attachmentEntityList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
+        for (ProcessTaskManagementDTO.ApproveHistoryDTO taskDTO : resultList) {
+            List<ProcessTaskManagementAttachmentEntity> attachmentList = groupByTaskId.get(taskDTO.getTaskId());
+            if(attachmentList != null && !attachmentList.isEmpty()) {
+                List<ProcessTaskManagementAttachmentDTO.CommonDTO> attachCommonDTOList = new ArrayList<>();
+                attachmentList.forEach(item -> attachCommonDTOList.add(new ProcessTaskManagementAttachmentDTO.CommonDTO(item.getAttachUrl(), item.getAttachName())));
+                taskDTO.setAttachmentList(attachCommonDTOList);
+            }
+        }
+        return resultList;
     }
 
 }

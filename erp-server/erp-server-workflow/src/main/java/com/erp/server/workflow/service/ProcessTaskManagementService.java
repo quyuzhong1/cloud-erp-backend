@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service;
 
 import com.common.business.enums.ApproveTypeEnum;
+import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.common.business.service.SuperService;
@@ -93,4 +94,9 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @return
      */
     List<ProcessTaskManagementEntity> listPreActivityTask(String taskManagementId, String processInstanceId);
+
+    /**
+     * 根据业务ID查询审核记录
+     */
+    List<ProcessTaskManagementDTO.ApproveHistoryDTO> listApproveHistory(String businessId);
 }

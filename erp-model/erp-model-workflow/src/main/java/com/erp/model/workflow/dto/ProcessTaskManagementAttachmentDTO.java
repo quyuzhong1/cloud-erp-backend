@@ -76,6 +76,7 @@ public class ProcessTaskManagementAttachmentDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class CommonDTO {
 
         /**
@@ -87,8 +88,6 @@ public class ProcessTaskManagementAttachmentDTO implements Serializable {
         * 文件名称
         */
         private String attachName;
-
-
     }
 
 

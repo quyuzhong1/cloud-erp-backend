@@ -22,9 +22,11 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
+import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
+import com.erp.rpc.workflow.ProcessTaskManagementFeign;
 import com.erp.server.plm.mapper.PilotApplicationMapper;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
@@ -56,6 +58,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -109,6 +112,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private ProductCostService productCostService;
     @Resource
     private PlmAttachmentService plmAttachmentService;
+    @Resource
+    private ProcessTaskManagementFeign processTaskManagementFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -648,10 +653,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setApproveStatusName(view.getApproveStatus().getName());
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
-        List<String> attachNameList = attachmentList.stream().map(PlmAttachmentEntity::getAttachName).collect(Collectors.toList());
-        view.setAttachNameList(attachNameList);
-        List<String> attachUrlList = attachmentList.stream().map(PlmAttachmentEntity::getAttachUrl).collect(Collectors.toList());
-        view.setAttachUrlList(attachUrlList);
+        view.setAttachmentList(attachmentList);
         //审核记录
         List<PilotApplicationDTO.AuditorHandleDTO> approveList = this.getApproveProcessList(pilotApplicationEntity);
         view.setApproveFlowList(approveList);
@@ -662,32 +664,39 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      * 获取审核记录
      */
     private List<PilotApplicationDTO.AuditorHandleDTO> getApproveProcessList(PilotApplicationEntity pilotApplicationEntity) {
-        List<ApproveNodeRecordVO> approveHistoryList = workflowFeign.listHistoryTaskByProcessId(pilotApplicationEntity.getId());
-        List<PilotApplicationDTO.AuditorHandleDTO> approveList = new ArrayList<>();
-        for (ApproveNodeRecordVO vo : approveHistoryList) {
-            List<AuditorHandleDTO> auditorHandleList = vo.getAuditorHandleList();
-            for (AuditorHandleDTO handleDTO : auditorHandleList) {
-                PilotApplicationDTO.AuditorHandleDTO dto = new PilotApplicationDTO.AuditorHandleDTO();
-                dto.setUserId(handleDTO.getHandleUserId());
-                dto.setUserName(handleDTO.getHandleUserName());
-                dto.setResult(handleDTO.getHandContent());
-                dto.setComment(handleDTO.getComment());
-                dto.setTime(handleDTO.getEndTime());
-                Date now = new Date();
-                DateTime handleTime = cn.hutool.core.date.DateUtil.parse(handleDTO.getEndTime());
-                long betweenHour = cn.hutool.core.date.DateUtil.between(handleTime, now, DateUnit.HOUR);
-                if(betweenHour > 24){
-                    String desc = cn.hutool.core.date.DateUtil.formatBetween(handleTime, now, BetweenFormatter.Level.DAY);
-                    dto.setTimeDesc(desc);
-                }else {
-                    String desc = cn.hutool.core.date.DateUtil.formatBetween(handleTime, now, BetweenFormatter.Level.HOUR);
-                    dto.setTimeDesc(desc);
-                }
-                approveList.add(dto);
+        List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(pilotApplicationEntity.getId());
+        approveHistoryList.sort(Comparator.comparing(ProcessTaskManagementDTO.CommonDTO::getApproveTime).reversed());
+        List<PilotApplicationDTO.AuditorHandleDTO> resultList = new ArrayList<>();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        for (ProcessTaskManagementDTO.ApproveHistoryDTO historyDTO : approveHistoryList) {
+            PilotApplicationDTO.AuditorHandleDTO auditorHandleDTO = new PilotApplicationDTO.AuditorHandleDTO();
+            auditorHandleDTO.setUserId(historyDTO.getApproveUserId());
+            auditorHandleDTO.setUserName(historyDTO.getApproveUserName());
+            auditorHandleDTO.setResult(historyDTO.getApproveStatus());
+            auditorHandleDTO.setResultName(ApproveStatusEnum.getName(historyDTO.getApproveStatus()));
+            if(historyDTO.getApproveTime() != null){
+                auditorHandleDTO.setTime(historyDTO.getApproveTime().format(dateTimeFormatter));
+                String desc = getTimeDesc(auditorHandleDTO);
+                auditorHandleDTO.setTimeDesc(desc);
             }
+            auditorHandleDTO.setComment(historyDTO.getRemark());
+            auditorHandleDTO.setAttachmentList(historyDTO.getAttachmentList());
+            resultList.add(auditorHandleDTO);
         }
-        approveList.sort(Comparator.comparing(PilotApplicationDTO.AuditorHandleDTO::getTime).reversed());
-        return approveList;
+        return resultList;
+    }
+
+    private static String getTimeDesc(PilotApplicationDTO.AuditorHandleDTO auditorHandleDTO) {
+        Date now = new Date();
+        DateTime handleTime = cn.hutool.core.date.DateUtil.parse(auditorHandleDTO.getTime());
+        long betweenHour = cn.hutool.core.date.DateUtil.between(handleTime, now, DateUnit.HOUR);
+        String desc;
+        if(betweenHour > 24){
+            desc = cn.hutool.core.date.DateUtil.formatBetween(handleTime, now, BetweenFormatter.Level.DAY);
+        }else {
+            desc = cn.hutool.core.date.DateUtil.formatBetween(handleTime, now, BetweenFormatter.Level.HOUR);
+        }
+        return desc + "前";
     }
 
     /**
