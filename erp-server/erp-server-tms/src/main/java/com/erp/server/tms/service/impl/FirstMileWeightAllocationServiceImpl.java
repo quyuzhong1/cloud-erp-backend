@@ -132,7 +132,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         //费用分摊
         List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
         List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> lastedAllocationMonthList =  costAllocationService.listLastedAllocationMonth(logisticsBillIds);
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         for (FirstMileWeightAllocationDTO.ViewDTO item : records) {
             if(StringUtils.isBlank(item.getCostAllocationStatus())){
                 item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
@@ -145,8 +144,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             }
             item.setBoxSizeStr(item.getBoxLength() + "*" + item.getBoxWidth() + "*" + item.getBoxHeight() + " " + item.getBoxSizeUnit());
             item.setCreateTimeStr(item.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            item.setLatestCostAllocationMonth(LocalDate.parse(item.getCalculateMonth() + "-01"));
-            item.setLatestCostAllocationMonthStr(item.getCalculateMonth());
+            if(StringUtils.isNotBlank(item.getCalculateMonth())){
+                item.setLatestCostAllocationMonth(LocalDate.parse(item.getCalculateMonth() + "-01"));
+                item.setLatestCostAllocationMonthStr(item.getCalculateMonth());
+            }
             /*FirstMileCostAllocationDTO.LastedAllocMonthDTO lastedAllocMonthDTO = lastedAllocationMonthList.stream().filter(v -> v.getLogisticsBillId().equals(item.getLogisticsBillId())).findFirst().orElse(null);
             if(lastedAllocMonthDTO != null){
                 item.setCalculatePeriodId(lastedAllocMonthDTO.getReportPeriodId());
