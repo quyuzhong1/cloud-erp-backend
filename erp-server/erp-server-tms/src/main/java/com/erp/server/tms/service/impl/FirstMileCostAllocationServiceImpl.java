@@ -848,7 +848,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         //本月为实际账单 上月为预估账单 则本月开始有账单
         //上月时间
-        LocalDate lastMonth = reportPeriodMonth.with(TemporalAdjusters.lastDayOfMonth()).withDayOfMonth(1);
+        LocalDate lastMonth = reportPeriodMonth.minusMonths(1).withDayOfMonth(1);
         FirstMileCostAllocationDTO.PagingVO pagingVO = voList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(lastMonth, e.getReportPeriodMonth())
                 && Objects.equals(ReconciliationBillTypeEnum.ACTUAL.getCode(), e.getBillSourceType())).findFirst().orElse(null);
         if (Objects.nonNull(pagingVO)) {
