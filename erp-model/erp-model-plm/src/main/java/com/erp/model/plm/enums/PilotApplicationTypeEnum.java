@@ -17,4 +17,13 @@ public enum PilotApplicationTypeEnum implements EnumMessage {
 
     private String code;
     private String name;
+
+    public static String getName(String code){
+        for (PilotApplicationTypeEnum typeEnum : values()) {
+            if(typeEnum.getCode().equals(code)){
+                return typeEnum.getName();
+            }
+        }
+        return "";
+    }
 }

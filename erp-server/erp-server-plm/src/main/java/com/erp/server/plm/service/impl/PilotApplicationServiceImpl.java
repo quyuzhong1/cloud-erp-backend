@@ -445,6 +445,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         Map<String, Object> map = BeanUtil.beanToMap(entity);
         map.put("attachNameList", baseApproveDTO.getAttachNameList());
         map.put("attachUrlList", baseApproveDTO.getAttachUrlList());
+        map.put("approveType", dto.getType());
         approveDTO.setVariablesMap(map);
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
@@ -764,6 +765,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             item.setMainSupplierName(supplierMap.containsKey(item.getMainSupplierId()) ? supplierMap.get(item.getMainSupplierId()).getName() : "");
             item.setApproveUserName(userMap.get(item.getApproveUserId()));
             item.setCreateUserName(userMap.get(item.getCreateUserId()));
+            item.setTypeName(PilotApplicationTypeEnum.getName(item.getType()));
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(v -> v.getSkuId().equals(item.getSkuId())).findFirst();
             if(productCostEntityOptional.isPresent()){
                 ProductCostEntity productCostEntity = productCostEntityOptional.get();
