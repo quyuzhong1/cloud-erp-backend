@@ -205,20 +205,17 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
         * 断货数据是否从历史销量中排除,true是，false否
         */
-        @NotNull(message = "断货数据是否从历史销量中排除,true是，false否不能为空")
         private Boolean isIgnoreOutOfStock;
 
         /**
         * sales_qty_type
         * 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
         */
-        @NotBlank(message = "sales_qty_type")
         private String salesQtyType;
 
         /**
         * 订单类型，all:全部，fba:FBA,fbm:FBM
         */
-        @NotBlank(message = "订单类型，all:全部，fba:FBA,fbm:FBM不能为空")
         @Size(max = 32,message = "订单类型，all:全部，fba:FBA,fbm:FBM最大长度不能超过32位")
         private String orderType;
 

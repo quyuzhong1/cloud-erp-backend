@@ -52,6 +52,20 @@ public class CfgRuleStockUpController extends BaseController {
     @GetMapping("/view")
     @LogViewService
     public ApiResult<CfgRuleStockUpDTO.ViewDTO> view(@RequestParam("platformType") String platformType) {
-        return success(cfgRuleStockUpService.view(platformType));
+        return success(cfgRuleStockUpService.view(platformType,""));
+    }
+
+    /**
+     * 根据关联id和平台类型查询
+     * @author will
+     * @date 2024/9/5 17:58
+     * @param platformType
+     * @param refId
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/viewByRefId")
+    @LogViewService
+    public ApiResult<CfgRuleStockUpDTO.ViewDTO> view(@RequestParam("platformType") String platformType,@RequestParam("refId") String refId) {
+        return success(cfgRuleStockUpService.view(platformType,refId));
     }
 }

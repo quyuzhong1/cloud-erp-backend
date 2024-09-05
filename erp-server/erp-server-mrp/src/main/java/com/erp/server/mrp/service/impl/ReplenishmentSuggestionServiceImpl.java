@@ -388,7 +388,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
 
         //更新备货信息
-        if (ObjectUtil.isEmpty(stockUpUpdateDTO)) {
+        if (ObjectUtil.isNotEmpty(stockUpUpdateDTO)) {
             CfgRuleStockUpEntity ruleStockUpEntity = cfgRuleStockUpService.getByRefId(id);
             if (ObjectUtil.isNotEmpty(ruleStockUpEntity)) {
                 stockUpUpdateDTO.setId(ruleStockUpEntity.getId());
@@ -399,7 +399,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             cfgRuleStockUpService.update(updateDTO);
         }
         //更新销量信息
-        if (ObjectUtil.isEmpty(salesQtyUpdateDTO)) {
+        if (ObjectUtil.isNotEmpty(salesQtyUpdateDTO)) {
             salesQtyUpdateDTO.setRefId(id);
             salesQtyUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
             stockUpUpdateDTO.setIsCustom(Boolean.TRUE);

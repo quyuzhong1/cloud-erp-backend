@@ -30,7 +30,7 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      * @param platformType
      * @return ViewDTO
      */
-    CfgRuleStockUpDTO.ViewDTO view(String platformType);
+    CfgRuleStockUpDTO.ViewDTO view(String platformType,String refId);
     /**
      * 根据来源id删除
      * @author will

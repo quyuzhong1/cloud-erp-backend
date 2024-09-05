@@ -1,7 +1,8 @@
 package com.erp.server.mrp.service;
 
-import com.erp.model.mrp.entity.SalesEstimateManualEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.mrp.dto.SalesEstimateManualDTO;
+import com.erp.model.mrp.entity.SalesEstimateManualEntity;
 
 import java.util.List;
 
@@ -10,8 +11,8 @@ import java.util.List;
  * 运营销量预估 服务类
  * </p>
  *
- * @author liaohui
- * @since 2024-08-28
+ * @author will
+ * @since 2024-09-05
  */
 public interface SalesEstimateManualService extends SuperService<SalesEstimateManualEntity> {
 
@@ -20,4 +21,15 @@ public interface SalesEstimateManualService extends SuperService<SalesEstimateMa
      * @param detailIds 补货建议明细id
      */
     List<SalesEstimateManualEntity> listByReplenishmentDetailIds(List<String> detailIds);
+
+    /**
+    * 修改
+    * @author will
+    * @date: 2024-09-05
+    * @param dto
+    * @return
+    */
+    Boolean update(SalesEstimateManualDTO.UpdateDTO dto,String replenishmentSuggestionId);
+
+
 }

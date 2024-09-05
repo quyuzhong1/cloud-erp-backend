@@ -82,7 +82,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     private CfgRuleSalesDenoisingService cfgRuleSalesDenoisingService;
 
     @Resource
-    private SalesEstimateService salesEstimateService;
+    private SalesEstimateManualService salesEstimateManualService;
 
     @Override
     public void downloadRuleTemplate(HttpServletResponse response) {
@@ -1152,8 +1152,17 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 errorList.add(jsonObject);
                 continue;
             }
-            //List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = formatSalesEstimate(excelDTO);
-            //salesEstimateService.update(salesFormulaList,entity.getId(),Boolean.TRUE);
+            SalesEstimateManualDTO.UpdateDTO salesEstimateManualList = formatSalesEstimateManual(excelDTO,entity);
+            salesEstimateManualService.update(salesEstimateManualList,entity.getId());
         }
+        successList.addAll(wrongList);
+    }
+
+    private SalesEstimateManualDTO.UpdateDTO formatSalesEstimateManual (SalesEstimateImportExcelDTO excelDTO,ReplenishmentSuggestionEntity entity ) {
+        SalesEstimateManualDTO.UpdateDTO updateDTO = new SalesEstimateManualDTO.UpdateDTO();
+        updateDTO.setReplenishmentId(entity.getId());
+        updateDTO.setCurrentMonthSalesQty(MathUtil.valueOf(excelDTO.getCurrentMonthSalesQty()));
+        updateDTO.setNextMonthSales(MathUtil.valueOf(excelDTO.getNextMonthSales()));
+        return updateDTO;
     }
 }

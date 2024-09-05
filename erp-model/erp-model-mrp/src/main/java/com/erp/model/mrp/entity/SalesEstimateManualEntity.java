@@ -3,55 +3,53 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+
 
 /**
  * <p>
  * 运营销量预估
  * </p>
  *
- * @author liaohui
- * @since 2024-08-28
- */
-@Getter
-@Setter
+ * @author will
+ * @since 2024-09-05
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sales_estimate_manual")
 public class SalesEstimateManualEntity extends BaseEntity<SalesEstimateManualEntity> {
 
     /**
-     * 补货建议id
-     */
+    * 补货建议id
+    */
     @TableField("replenishment_id")
     private String replenishmentId;
-
     /**
-     * 当月销量预估
-     */
+    * 当月销量预估
+    */
     @TableField("current_month_sales_qty")
-    private Integer currentMonthSalesQty;
-
+    private BigDecimal currentMonthSalesQty;
     /**
-     * 当月销量剩余预估
-     */
+    * 当月销量剩余预估
+    */
     @TableField("current_month_surplus_sales_qty")
-    private Integer currentMonthSurplusSalesQty;
-
+    private BigDecimal currentMonthSurplusSalesQty;
     /**
-     * 下月销量预估
-     */
+    * 下月销量预估
+    */
     @TableField("next_month_sales")
-    private String nextMonthSales;
-
+    private BigDecimal nextMonthSales;
     /**
-     * 后月销量预估
-     */
+    * 后月销量预估
+    */
     @TableField("following_month_sales")
-    private String followingMonthSales;
+    private BigDecimal followingMonthSales;
 
 
     public static final String REPLENISHMENT_ID = "replenishment_id";
