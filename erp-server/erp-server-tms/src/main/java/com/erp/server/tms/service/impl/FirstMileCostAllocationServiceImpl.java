@@ -591,18 +591,39 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      * @return
      */
     private BatchResultDTO checkCostAllocationExist(FirstMileCostAllocationEntity entity) {
+        String reconciliationId = entity.getReconciliationId();
         //已存在 则重置id 已核算则返回异常
         List<FirstMileCostAllocationEntity> list = this.listBySourceIds(Collections.singletonList(entity.getSourceId()),entity.getReportPeriodId());
         if (CollectionUtils.isEmpty(list)){
             return BatchResultDTO.success();
         }else {
-            FirstMileCostAllocationEntity entity1 = list.stream().filter(e -> Objects.equals(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), e.getStatus())
-            && Objects.equals(e.getReportPeriodId(),entity.getReportPeriodId())).findFirst().orElse(null);
+            //未确认对象
+            FirstMileCostAllocationEntity entity1 = null;
+            //已确认对象
+            FirstMileCostAllocationEntity entity2 = null;
+            if (StrUtil.isBlank(reconciliationId)){
+                entity1 = list.stream().filter(e -> Objects.equals(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), e.getStatus())
+                        && Objects.equals(e.getReportPeriodId(),entity.getReportPeriodId())).findFirst().orElse(null);
+            }else {
+                entity1 = list.stream().filter(e -> Objects.equals(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), e.getStatus())
+                        && Objects.equals(e.getReportPeriodId(),entity.getReportPeriodId()) && Objects.equals(reconciliationId, e.getReconciliationId())).findFirst().orElse(null);
+            }
             if (Objects.nonNull(entity1)){
                 entity.setId(entity1.getId());
                 return BatchResultDTO.success();
             }else {
-                return BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),StrUtil.format("发货单【{}】核算期间【{}】对账期间【{}】已确认不能重新审核", entity.getSourceCode(),entity.getReportPeriodMonth(),entity.getReconciliationMonth()));
+                //判断是否已存在已确认对账单
+                if (StrUtil.isBlank(reconciliationId)){
+                    entity2 = list.stream().filter(e -> Objects.equals(ConfirmStatusEnum.CONFIRM.getCode(), e.getStatus())
+                            && Objects.equals(e.getReportPeriodId(),entity.getReportPeriodId())).findFirst().orElse(null);
+                }else {
+                    entity2 = list.stream().filter(e -> Objects.equals(ConfirmStatusEnum.CONFIRM.getCode(), e.getStatus())
+                            && Objects.equals(e.getReportPeriodId(),entity.getReportPeriodId()) && Objects.equals(reconciliationId, e.getReconciliationId())).findFirst().orElse(null);
+                }
+                if (Objects.nonNull(entity2)){
+                    return BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),StrUtil.format("发货单【{}】核算期间【{}】对账期间【{}】已确认不能重新审核", entity.getSourceCode(),entity.getReportPeriodMonth(),entity.getReconciliationMonth()));
+                }
+                return BatchResultDTO.success();
             }
         }
     }
