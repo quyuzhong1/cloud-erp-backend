@@ -728,7 +728,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 entity.setUpdateList(updateList);
             }else {
                 //如果费用明细为空，则判断对账单次数是否大于1 大于1则创建费用明细
-                if (Objects.equals(DetailReconciliationTypeEnum.ACTUAL.getCode(), detailEntity.getType())){
+                if (Objects.equals(DetailReconciliationTypeEnum.ACTUAL.getCode(), detailEntity.getType()) || Objects.equals(DetailReconciliationTypeEnum.ESTIMATED.getCode(), detailEntity.getType())){
                     buildFirstMileCostDetail(detailEntity,entity);
                 }
             }
@@ -798,14 +798,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 String cfgCostEntityId = tmsCfgCostEntity.getId();
                 //检查是否存在记录
                 if (CollectionUtils.isNotEmpty(tmsCostDetailEntities)){
-                    TmsCostDetailEntity tmsCostDetailEntity = tmsCostDetailEntities.stream().filter(e -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(e.getType())
+                    TmsCostDetailEntity tmsCostDetailEntity = tmsCostDetailEntities.stream().filter(e -> detailEntity.getType().equals(e.getType())
                             && SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode().equals(e.getSourceType())
                             && cfgCostEntityId.equals(e.getCfgCostId())).findFirst().orElse(null);
                     if (Objects.nonNull(tmsCostDetailEntity)){
                         updateDTO.setId(tmsCostDetailEntity.getId());
                     }
                 }
-                updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                updateDTO.setType(detailEntity.getType());
                 updateDTO.setCfgCostId(cfgCostEntityId);
                 updateDTO.setCostValue(shippingCost);
                 updateDTO.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());
@@ -828,14 +828,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 String cfgCostEntityId = tmsCfgCostEntity.getId();
                 //检查是否存在记录
                 if (CollectionUtils.isNotEmpty(tmsCostDetailEntities)){
-                    TmsCostDetailEntity tmsCostDetailEntity = tmsCostDetailEntities.stream().filter(e -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(e.getType())
+                    TmsCostDetailEntity tmsCostDetailEntity = tmsCostDetailEntities.stream().filter(e -> detailEntity.getType().equals(e.getType())
                             && SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode().equals(e.getSourceType())
                             && cfgCostEntityId.equals(e.getCfgCostId())).findFirst().orElse(null);
                     if (Objects.nonNull(tmsCostDetailEntity)){
                         updateDTO.setId(tmsCostDetailEntity.getId());
                     }
                 }
-                updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                updateDTO.setType(detailEntity.getType());
                 updateDTO.setCfgCostId(cfgCostEntityId);
                 updateDTO.setCostValue(declareCost);
                 updateDTO.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());
@@ -858,14 +858,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 String cfgCostEntityId = tmsCfgCostEntity.getId();
                 //检查是否存在记录
                 if (CollectionUtils.isNotEmpty(tmsCostDetailEntities)){
-                    TmsCostDetailEntity tmsCostDetailEntity = tmsCostDetailEntities.stream().filter(e -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(e.getType())
+                    TmsCostDetailEntity tmsCostDetailEntity = tmsCostDetailEntities.stream().filter(e -> detailEntity.getType().equals(e.getType())
                             && SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode().equals(e.getSourceType())
                             && cfgCostEntityId.equals(e.getCfgCostId())).findFirst().orElse(null);
                     if (Objects.nonNull(tmsCostDetailEntity)){
                         updateDTO.setId(tmsCostDetailEntity.getId());
                     }
                 }
-                updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                updateDTO.setType(detailEntity.getType());
                 updateDTO.setCfgCostId(cfgCostEntityId);
                 updateDTO.setCostValue(otherCost);
                 updateDTO.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());
@@ -888,14 +888,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 String cfgCostEntityId = tmsCfgCostEntity.getId();
                 //检查是否存在记录
                 if (CollectionUtils.isNotEmpty(tmsCostDetailEntities)){
-                    TmsCostDetailEntity tmsCostDetailEntity = tmsCostDetailEntities.stream().filter(e -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(e.getType())
+                    TmsCostDetailEntity tmsCostDetailEntity = tmsCostDetailEntities.stream().filter(e -> detailEntity.getType().equals(e.getType())
                             && SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode().equals(e.getSourceType())
                             && cfgCostEntityId.equals(e.getCfgCostId())).findFirst().orElse(null);
                     if (Objects.nonNull(tmsCostDetailEntity)){
                         updateDTO.setId(tmsCostDetailEntity.getId());
                     }
                 }
-                updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+                updateDTO.setType(detailEntity.getType());
                 updateDTO.setCfgCostId(cfgCostEntityId);
                 updateDTO.setCostValue(otherTaxCost);
                 updateDTO.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());

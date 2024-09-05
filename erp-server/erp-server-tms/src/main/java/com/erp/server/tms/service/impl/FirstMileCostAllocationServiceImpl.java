@@ -230,7 +230,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO calcAllocatedCost(FirstMileCostAllocationEntity entity, FirstMileDeliveryEntity firstMileDeliveryEntity, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
         if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "费用分摊已确认，无法重新分摊");
+            return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "核算状态已确认，不可重新分摊");
         }
         if (StrUtil.isBlank(entity.getSourceId())) {
             return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "发货单不能为空");

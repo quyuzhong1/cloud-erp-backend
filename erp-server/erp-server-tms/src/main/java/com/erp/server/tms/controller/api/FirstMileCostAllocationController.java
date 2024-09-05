@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
@@ -179,33 +180,34 @@ public class FirstMileCostAllocationController extends BaseController {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByIds(ids);
-        List<String> sourceIds = entityList.stream().map(FirstMileCostAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(entityList)){
+            resultDTOS.add(BatchResultDTO.fail(String.join(",",ids),"","费用分摊记录不存在"));
+            return failure(resultDTOS);
+        }
+        List<String> sourceIds = entityList.stream().filter(e -> ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())).map(FirstMileCostAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
-        //根据发货单获取费用分摊记录
-        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null);
-        for (String sourceId : sourceIds) {
-            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
-            if(Objects.isNull(firstMileDeliveryEntity)){
-                resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单记录不存在"));
+        for (FirstMileCostAllocationEntity entity : entityList) {
+            if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())){
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"核算状态已确认，不可重新分摊"));
                 continue;
             }
-            if(CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
-                resultDTOS.add(BatchResultDTO.fail(sourceId,firstMileDeliveryEntity.getCode(),"费用分摊记录不存在"));
+            String sourceId = entity.getSourceId();
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
+            if(Objects.isNull(firstMileDeliveryEntity)){
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"费用分摊发货单记录不存在"));
                 continue;
             }
             List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
-                resultDTOS.add(BatchResultDTO.fail(sourceId,firstMileDeliveryEntity.getCode(),"费用分摊发货单明细记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"费用分摊发货单明细记录不存在"));
                 continue;
             }
-            for (FirstMileCostAllocationEntity entity : firstMileCostAllocationEntityList){
-                try {
-                    resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
-                }catch (Exception e){
-                    log.error("费用分摊记录删除失败",e);
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
-                }
+            try {
+                resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
+            }catch (Exception e){
+                log.error("费用分摊记录删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

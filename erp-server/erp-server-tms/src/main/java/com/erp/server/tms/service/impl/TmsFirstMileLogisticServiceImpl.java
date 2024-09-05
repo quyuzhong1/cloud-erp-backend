@@ -692,6 +692,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                     dto.setTotalEstimatedFee(totalEstimatedFee.multiply(rate));
                 }
             }
+        }else {
+            dto.setLogisticFeeList(Collections.emptyList());
         }
 
         //处理时间线
