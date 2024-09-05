@@ -845,6 +845,8 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private boolean lastMonthReconciliation = false;
         //本月有实际账单
         private boolean currencyReconciliation = false;
+        //同一个核算期间内是否有其他对账月份的对账单
+        private boolean hasOtherReconciliation = false;
     }
 
     @Data
