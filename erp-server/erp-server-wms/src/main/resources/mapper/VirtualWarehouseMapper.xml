@@ -109,7 +109,7 @@
         vw.disabled
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$SelectDTO">
-        SELECT * from virtual_warehouse vw
+        SELECT  DISTINCT vw.id,vw.name,vw.code ,vw.disabled from virtual_warehouse vw
                           left join virtual_warehouse_relation vwr on vw.id = vwr.virtual_warehouse_id and vwr.is_deleted = false
                           left join virtual_warehouse_channel vwc on vwc.virtual_warehouse_id = vw.id and vwc.is_deleted = false
         where vw.is_deleted = false
