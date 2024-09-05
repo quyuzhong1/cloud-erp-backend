@@ -540,4 +540,13 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     public List<LabelInfoDTO.ViewDTO> listLabelInfoById(String id) {
         return  replenishmentRefLabelService.listLabelInfoByRefId(id);
     }
+
+    @Override
+    public List<String> listLabelIdById(String id) {
+        List<LabelInfoDTO.ViewDTO> list = replenishmentRefLabelService.listLabelInfoByRefId(id);
+        if (CollectionUtils.isEmpty(list)) {
+            return  Collections.EMPTY_LIST;
+        }
+        return list.stream().map(LabelInfoDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
+    }
 }

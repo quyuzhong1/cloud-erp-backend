@@ -55,7 +55,7 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * 主键ids
          */
-        @NotBlank(message = "主键ids不能为空")
+        @NotEmpty(message = "主键ids不能为空")
         private List<String> ids;
 
         /**

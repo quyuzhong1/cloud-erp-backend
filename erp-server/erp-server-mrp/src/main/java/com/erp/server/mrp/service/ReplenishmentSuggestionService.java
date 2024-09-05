@@ -188,4 +188,12 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return List<ViewDTO>
      */
     List<LabelInfoDTO.ViewDTO> listLabelInfoById(String id);
+    /**
+     * 根据id查询标签id集合
+     * @author will
+     * @date 2024/9/5 11:17
+     * @param id
+     * @return List<String>
+     */
+    List<String> listLabelIdById(String id);
 }

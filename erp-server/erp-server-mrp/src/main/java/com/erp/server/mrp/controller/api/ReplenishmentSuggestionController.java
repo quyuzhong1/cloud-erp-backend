@@ -390,6 +390,19 @@ public class ReplenishmentSuggestionController extends BaseController {
     }
 
     /**
+     * 根据id查询标签id集合
+     * @author will
+     * @date 2024/9/5 11:16
+     * @param id
+     * @return ApiResult<List<String>>
+     */
+    @GetMapping("/listLabelIdById")
+    public ApiResult<List<String>> listLabelIdById(@RequestParam("id") String id) {
+        List<String> list = replenishmentSuggestionService.listLabelIdById(id);
+        return success(list);
+    }
+
+    /**
      * 编辑标签（单个）
      * @author will
      * @date 2024/8/30 14:50

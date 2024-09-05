@@ -64,7 +64,7 @@ public class SalesDenoisingImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "*去噪类型", index = 0)
     @FieldValid(fieldName = "去噪类型", isNotBlank = true, maxLength = 50)
-    private String denoisingType;
+    private String denoisingTypeName;
 
     /**
      * 百分比去噪（%）

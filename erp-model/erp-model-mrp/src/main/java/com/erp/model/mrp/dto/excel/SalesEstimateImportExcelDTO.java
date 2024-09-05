@@ -7,10 +7,9 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 其他出库单导入
- *
- * @author Jim
- * {@code @date:} 2024/03/22
+ * 运营销量预估
+ * @author will
+ * @date 2024/9/5 10:46
  */
 @Data
 public class SalesEstimateImportExcelDTO implements Serializable {
@@ -37,6 +36,27 @@ public class SalesEstimateImportExcelDTO implements Serializable {
     private String shopName;
 
 
+    /**
+     * 当月销量预估
+     */
+    @ExcelProperty(value = "当月销量预估", index = 0)
+    @FieldValid(fieldName = "当月销量预估",  maxLength = 50)
+    private String currentMonthSalesQty;
+
+
+    /**
+     * 下月销量预估
+     */
+    @ExcelProperty(value = "下月销量预估", index = 0)
+    @FieldValid(fieldName = "下月销量预估", maxLength = 50)
+    private String nextMonthSales;
+
+    /**
+     * 后月销量预估
+     */
+    @ExcelProperty(value = "后月销量预估", index = 0)
+    @FieldValid(fieldName = "后月销量预估",  maxLength = 50)
+    private String followingMonthSales;
 
     /**
      * 错误数据
