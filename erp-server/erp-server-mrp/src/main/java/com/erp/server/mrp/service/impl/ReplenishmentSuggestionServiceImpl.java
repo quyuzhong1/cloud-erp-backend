@@ -549,4 +549,18 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         return list.stream().map(LabelInfoDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
     }
+
+    @Override
+    public BatchResultDTO updateRemark(String id, String remark) {
+        ReplenishmentSuggestionEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        //新建对象
+        ReplenishmentSuggestionEntity entity = new ReplenishmentSuggestionEntity();
+        BeanMapperUtils.copy(old,entity);
+        entity.setRemark(remark);
+        this.updateById(entity);
+        // 操作日志
+        String msg = StrUtil.format("编辑了备注：从【{}】修改为【{}】",old.getRemark(),remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), old.getId(), "编辑备货");
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
+    }
 }

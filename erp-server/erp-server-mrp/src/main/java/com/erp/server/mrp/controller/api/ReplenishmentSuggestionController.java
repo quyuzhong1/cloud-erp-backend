@@ -533,4 +533,34 @@ public class ReplenishmentSuggestionController extends BaseController {
         replenishmentSuggestionImportService.importSalesEstimate(excelFile, response);
         return success();
     }
+
+    /**
+     * 编辑备注
+     * @author will
+     * @date 2024/9/5 11:34
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/updateRemark")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "编辑备注")
+    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = replenishmentSuggestionService.updateRemark(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("补货建议编辑备注",e);
+                ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "补货建议不存在, 补货建议编辑备注失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

@@ -196,4 +196,13 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return List<String>
      */
     List<String> listLabelIdById(String id);
+    /**
+     * 更新备注
+     * @author will
+     * @date 2024/9/5 11:28
+     * @param id
+     * @param remark
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateRemark(String id, String remark);
 }
