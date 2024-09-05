@@ -786,27 +786,33 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     if (Objects.nonNull(initEntity) && (BigDecimal.ZERO.compareTo(initEntity.getInitTransitCost()) != 0 || BigDecimal.ZERO.compareTo(initEntity.getInitTransitTariff()) != 0)) {
                         detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(currentMonthReceiveQty), 4));
                     } else {
-                        detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(asCurrentMonthReceiveQty), 4));
+                        if (judgeReconciliationDTO.isHasOtherReconciliation()){
+                            detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(currentMonthReceiveQty), 4));
+                        }else {
+                            detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(asCurrentMonthReceiveQty), 4));
+                        }
                     }
                 } else {
                     detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(deliveryQty), 4));
                 }
 
-            } else if (judgeReconciliationDTO.isLastMonthReconciliation()) {
-                //上月开始有实际账单-实际账单来源
-                if (receiveQty <= deliveryQty) {
-                    detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(currentMonthReceiveQty), 4));
-                } else {
-                    //若累计签收数量>发货数量：(发货数量-截止上月累计签收数量)*单产品分摊
-                    //[累计签收数量>发货数量小于0不计算]
-                    int qty = deliveryQty - asLastMonthReceiveQty;
-                    if (qty <= 0) {
-                        detailEntity.setCurrentPeriodAllocatedCost(BigDecimal.ZERO);
-                    } else {
-                        detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(qty), 4));
-                    }
-                }
-            } else {
+            }
+//            else if (judgeReconciliationDTO.isLastMonthReconciliation()) {
+//                //上月开始有实际账单-实际账单来源
+//                if (receiveQty <= deliveryQty) {
+//                    detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(currentMonthReceiveQty), 4));
+//                } else {
+//                    //若累计签收数量>发货数量：(发货数量-截止上月累计签收数量)*单产品分摊
+//                    //[累计签收数量>发货数量小于0不计算]
+//                    int qty = deliveryQty - asLastMonthReceiveQty;
+//                    if (qty <= 0) {
+//                        detailEntity.setCurrentPeriodAllocatedCost(BigDecimal.ZERO);
+//                    } else {
+//                        detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(qty), 4));
+//                    }
+//                }
+//            }
+            else {
                 detailEntity.setCurrentPeriodAllocatedCost(BigDecimal.ZERO);
             }
             //期末在途费用 计算
@@ -857,6 +863,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (Objects.isNull(reconciliationMonth)) {
             return judgeReconciliationDTO;
         }
+        //同一个核算期间内是否有其他对账月份的对账单
+        boolean hasOtherReconciliation = false;
         //本月有实际账单
         boolean currencyReconciliation = false;
         //上月有实际账单
@@ -894,6 +902,13 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         //本月有实际账单
         judgeReconciliationDTO.setCurrencyReconciliation(currencyReconciliation);
+        //同一个核算期间内是否有其他对账月份的对账单
+        FirstMileCostAllocationDTO.PagingVO pagingVO2 = voList.stream().filter(e -> Objects.nonNull(e)
+                && Objects.equals(reportPeriodMonth, e.getReportPeriodMonth()) && !Objects.equals(reconciliationMonth, e.getReconciliationMonth())
+                && Objects.equals(ReconciliationBillTypeEnum.ACTUAL.getCode(), e.getBillSourceType())).findFirst().orElse(null);
+        if (Objects.nonNull(pagingVO2)){
+            judgeReconciliationDTO.setHasOtherReconciliation(Boolean.TRUE);
+        }
         return judgeReconciliationDTO;
     }
 
