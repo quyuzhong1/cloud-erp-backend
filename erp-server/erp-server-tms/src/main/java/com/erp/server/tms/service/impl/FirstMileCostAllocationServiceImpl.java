@@ -871,7 +871,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //本月为实际账单 上月为预估账单 则本月开始有账单
         //上月时间
         LocalDate lastMonth = reportPeriodMonth.minusMonths(1).withDayOfMonth(1);
-        FirstMileCostAllocationDTO.PagingVO pagingVO = voList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(lastMonth, e.getReportPeriodMonth())
+        FirstMileCostAllocationDTO.PagingVO pagingVO = voList.stream().filter(e -> Objects.nonNull(e)
+                && Objects.equals(lastMonth, e.getReportPeriodMonth()) && Objects.equals(reconciliationMonth, e.getReconciliationMonth())
                 && Objects.equals(ReconciliationBillTypeEnum.ACTUAL.getCode(), e.getBillSourceType())).findFirst().orElse(null);
         if (Objects.nonNull(pagingVO)) {
             lastReconciliation = true;
@@ -879,7 +880,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //本月为实际账单 上月为实际账单 上上个月为预估账单 则上月开始有账单
         //上上月时间
         LocalDate beforeLastMonth = reportPeriodMonth.minusMonths(2).withDayOfMonth(1);
-        FirstMileCostAllocationDTO.PagingVO pagingVO1 = voList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(beforeLastMonth, e.getReportPeriodMonth())
+        FirstMileCostAllocationDTO.PagingVO pagingVO1 = voList.stream().filter(e -> Objects.nonNull(e)
+                && Objects.equals(beforeLastMonth, e.getReportPeriodMonth()) && Objects.equals(reconciliationMonth, e.getReconciliationMonth())
                 && Objects.equals(ReconciliationBillTypeEnum.ACTUAL.getCode(), e.getBillSourceType())).findFirst().orElse(null);
         if (Objects.nonNull(pagingVO1)) {
             beforeLastReconciliation = true;
