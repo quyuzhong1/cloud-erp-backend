@@ -47,6 +47,11 @@
                 #{item}
             </foreach>
         </if>
+        GROUP BY
+            rpm.id,
+            rpm.org_id,
+            rpm.org_name,reportPeriodMonth,reportPeriodStr
+        ORDER BY reportPeriodMonth
     </select>
     <select id="listLocalDate" resultType="com.erp.model.tms.dto.ReportPeriodMonthDTO$ListDTO">
         select
