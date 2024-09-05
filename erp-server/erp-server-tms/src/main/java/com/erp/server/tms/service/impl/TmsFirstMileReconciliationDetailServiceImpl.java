@@ -799,13 +799,15 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             logisticsBillCostEntityList = logisticsBillCostEntityList.stream().filter(e -> StrUtil.isBlank(e.getReconciliationId())).collect(Collectors.toList());
         }else {
             LogisticsBillCostEntity entity = logisticsBillCostEntityList.stream().filter(e -> StrUtil.isNotBlank(e.getReconciliationId()) && Objects.equals(mainId,e.getReconciliationId())).findFirst().orElse(null);
-            logisticsBillCostEntityList = Collections.singletonList(entity);
+            if (Objects.nonNull(entity)){
+                logisticsBillCostEntityList = Collections.singletonList(entity);
+            }
         }
         Map<String, String> billIdCostIdMap = logisticsBillCostEntityList
                 .stream().filter(e -> Objects.nonNull(e) && (Objects.equals(mainId, e.getReconciliationId()) || StrUtil.isBlank(e.getReconciliationId())))
                 .collect(Collectors.toMap(LogisticsBillCostEntity::getLogisticsBillId, BaseEntity::getId));
 
-        List<String> costBillIds = logisticsBillCostEntityList.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
+        List<String> costBillIds = logisticsBillCostEntityList.stream().filter(Objects::nonNull).map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
         List<TmsCostDetailEntity> costList = tmsCostDetailService.sumCostByMainIdAndCostId(LogisticsBillCostTypeEnum.ESTIMATED.getCode(),
                 costBillIds,
                 null
