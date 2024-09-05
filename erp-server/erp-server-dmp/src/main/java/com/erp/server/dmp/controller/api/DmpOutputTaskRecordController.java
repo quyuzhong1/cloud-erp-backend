@@ -1,8 +1,12 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
+import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -71,7 +75,6 @@ public class DmpOutputTaskRecordController extends BaseController {
         return success();
     }
 
-
     /**
      * 获取 tab列表
      * @Author Luo_WG
@@ -92,17 +95,52 @@ public class DmpOutputTaskRecordController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpOutputTaskDTO.PagingDTO>>
      **/
+    @PostMapping("/paging")
+    @WebAdvanceQuery(handler = DmpOutputTaskRecordQueryHandler.class)
     public ApiResult<PagingVO<DmpOutputTaskRecordDTO.PagingDTO>> paging(@RequestBody @Validated PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
         PagingVO<DmpOutputTaskRecordDTO.PagingDTO> pagingVO = dmpOutputTaskRecordService.paging(dto);
         return success(pagingVO);
     }
 
     /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2024/9/5 17:30
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/exportExcel")
+    public ApiResult exportExcel(@RequestBody DmpOutputTaskRecordDTO.ExpotParamDTO dto) {
+        Boolean flag = dmpOutputTaskRecordService.exportExcel(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 无需同步
+     * @Author Luo_WG
+     * @Date 2024/9/5 16:29
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "修改为无需同步")
+    @PostMapping(value = "/batchNoNeedSync")
+    public ApiResult batchNoNeedSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = dmpOutputTaskRecordService.batchNoNeedSync(dto.getIds());
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 加入黑名单
-     */
-    @PostMapping("/test")
-    @LogAction(value = LogActionEnum.INSERT, desc = "推送任务记录新增")
-    public ApiResult<BaseResultDTO.AddDTO> addOutputBlack(@RequestBody @Validated DmpOutputTaskRecordDTO.AddDTO dto) {
-        return success(dmpOutputTaskRecordService.add(dto));
+     * @Author Luo_WG
+     * @Date 2024/9/5 16:27
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.dto.base.BaseResultDTO.AddDTO>
+     **/
+    @PostMapping("/addOutputBlack")
+    @LogAction(value = LogActionEnum.INSERT, desc = "加入黑名单")
+    public ApiResult<BaseResultDTO.AddDTO> addOutputBlack(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = dmpOutputTaskRecordService.addOutputBlack(dto);
+        return flag ? success() : failure();
     }
 }

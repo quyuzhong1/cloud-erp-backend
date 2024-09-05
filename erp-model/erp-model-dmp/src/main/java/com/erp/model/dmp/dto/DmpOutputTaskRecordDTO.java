@@ -124,6 +124,10 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     @NoArgsConstructor
     public class PagingDTO {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * 来源系统名称
          */
         private String sourcePlatformName;
@@ -218,5 +222,27 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class  AddOutputBlackDTO {
+        /**
+         * 输出任务id
+         */
+        private String outputId;
+
+        /**
+         * 单据编码
+         */
+        private String billCode;
+    }
+
+    public class ExpotParamDTO extends PagingParamDTO {
+        /**
+         * 主键id
+         */
+        private List<String> ids;
     }
 }

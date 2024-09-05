@@ -126,6 +126,11 @@ public class DmpCfgOutputBlackDTO implements Serializable {
         */
         private String fieldValue;
 
+        /**
+         * 备注
+         */
+        private String remark;
+
 
     }
 
