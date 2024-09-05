@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -19,6 +21,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+
+import java.util.List;
 
 /**
  * 推送任务记录
@@ -68,5 +72,37 @@ public class DmpOutputTaskRecordController extends BaseController {
     }
 
 
+    /**
+     * 获取 tab列表
+     * @Author Luo_WG
+     * @Date 2024/9/3 15:15
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.dmp.dto.DmpOutputTaskDTO.TabListDTO>>
+     **/
+    @PostMapping("/tabList")
+    public ApiResult<List<DmpOutputTaskRecordDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<DmpOutputTaskRecordDTO.TabListDTO> tabList = dmpOutputTaskRecordService.tabList(dto);
+        return success(tabList);
+    }
 
+    /**
+     * 推送任务列表分页查询
+     * @Author Luo_WG
+     * @Date 2024/9/3 14:28
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpOutputTaskDTO.PagingDTO>>
+     **/
+    public ApiResult<PagingVO<DmpOutputTaskRecordDTO.PagingDTO>> paging(@RequestBody @Validated PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
+        PagingVO<DmpOutputTaskRecordDTO.PagingDTO> pagingVO = dmpOutputTaskRecordService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 加入黑名单
+     */
+    @PostMapping("/test")
+    @LogAction(value = LogActionEnum.INSERT, desc = "推送任务记录新增")
+    public ApiResult<BaseResultDTO.AddDTO> addOutputBlack(@RequestBody @Validated DmpOutputTaskRecordDTO.AddDTO dto) {
+        return success(dmpOutputTaskRecordService.add(dto));
+    }
 }

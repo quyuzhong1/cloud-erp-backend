@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -19,6 +21,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpInputTaskDTO;
+
+import java.util.List;
 
 /**
  * 拉取任务
@@ -66,7 +70,4 @@ public class DmpInputTaskController extends BaseController {
         dmpInputTaskService.update(dto);
         return success();
     }
-
-
-
 }
