@@ -19,6 +19,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -113,6 +114,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     private FbaShipmentService fbaShipmentService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -635,7 +639,12 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         //根据仓库id查询仓库信息
         List<String> requisitionWarehouseIds = list.stream().map(req -> req.getRequisitionWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(requisitionWarehouseIds);
-
+        List<String> fromVirtualWarehouseIdList = list.stream().map(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String,String> virtualWarehouseNameMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(fromVirtualWarehouseIdList)){
+            List<VirtualWarehouseEntity> virtualWarehouseEntities = virtualWarehouseService.listByIds(fromVirtualWarehouseIdList);
+            virtualWarehouseNameMap = virtualWarehouseEntities.stream().collect(Collectors.toMap(BaseEntity::getId, VirtualWarehouseEntity::getName));
+        }
         for (Map.Entry<String, List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> entry : map.entrySet()) {
             List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> value = entry.getValue();
             //映射主表信息
@@ -649,6 +658,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             for (WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : value) {
 
                 RequisitionApplicationDetailDTO.AddDTO detailAddDto = DeliveryPlanConverter.INSTANCE.DeliveryPlanDetailGRA(viewDTO);
+                detailAddDto.setFromVirtualWarehouseName(virtualWarehouseNameMap.get(detailAddDto.getFromVirtualWarehouseId()));
 
                 detailAddList.add(detailAddDto);
             }

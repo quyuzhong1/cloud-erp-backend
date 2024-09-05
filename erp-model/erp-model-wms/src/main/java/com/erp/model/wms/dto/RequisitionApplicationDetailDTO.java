@@ -209,7 +209,14 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         */
         private String requisitionWarehouseLocation;
 
-
+        /**
+         * 虚拟仓id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 虚拟仓name
+         */
+        private String fromVirtualWarehouseName;
     }
 
 
