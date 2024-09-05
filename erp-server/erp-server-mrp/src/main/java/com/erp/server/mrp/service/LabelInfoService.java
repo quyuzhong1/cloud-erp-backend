@@ -1,6 +1,5 @@
 package com.erp.server.mrp.service;
 
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.LabelInfoDTO;
@@ -20,22 +19,13 @@ import java.util.List;
 public interface LabelInfoService extends SuperService<LabelInfoEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-08-30
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(LabelInfoDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author will
     * @date: 2024-08-30
-    * @param dto
+    * @param list
     * @return
     */
-    Boolean update(LabelInfoDTO.UpdateDTO dto);
+    Boolean update(List<LabelInfoDTO.UpdateDTO> list);
 
 
     /**

@@ -3,7 +3,6 @@ package com.erp.server.mrp.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -47,29 +46,17 @@ public class LabelInfoController extends BaseController {
         return success(labelInfoService.listLabelInfo());
     }
 
-    /**
-    * 新增
-    * @author will
-    * @date:  2024-08-30
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "标签信息表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LabelInfoDTO.AddDTO dto) {
-        return success(labelInfoService.add(dto));
-    }
 
     /**
     * 修改
     * @author will
     * @date:  2024-08-30
-    * @param dto
+    * @param list
     * @return ApiResult
     */
     @PostMapping("/update")
-    public ApiResult<?> update(@RequestBody @Validated LabelInfoDTO.UpdateDTO dto) {
-        labelInfoService.update(dto);
+    public ApiResult<?> update(@RequestBody @Validated List<LabelInfoDTO.UpdateDTO> list) {
+        labelInfoService.update(list);
         return success();
     }
 

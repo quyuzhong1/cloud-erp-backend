@@ -1,24 +1,22 @@
 package com.erp.server.mrp.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.LabelInfoDTO;
 import com.erp.model.mrp.entity.LabelInfoEntity;
 import com.erp.model.mrp.vo.LabelVO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.LabelInfoMapper;
 import com.erp.server.mrp.service.LabelInfoService;
 import com.erp.server.mrp.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 标签信息表 服务实现类
@@ -40,50 +40,33 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(LabelInfoDTO.AddDTO addDTO) {
-        LabelInfoEntity labelInfoEntity = new LabelInfoEntity();
-        BeanMapperUtils.copy(addDTO, labelInfoEntity);
-
-        // 数据处理
-        checkData(labelInfoEntity);
-
-        log.info("开始新增标签信息单");
-        boolean save = super.save(labelInfoEntity);
-        if(!save) {
-            throw new ServiceException("标签信息单保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "标签信息单" , labelInfoEntity.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LABEL_INFO.getCode(), labelInfoEntity.getId(), "新增操作");
-        return new BaseResultDTO.AddDTO(labelInfoEntity.getId(), labelInfoEntity.getId());
-    }
-
     /**
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(LabelInfoDTO.UpdateDTO updateDTO) {
-        LabelInfoEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "标签信息单"));
-        LabelInfoEntity labelInfoEntity =  BeanMapperUtils.map(LabelInfoEntity.class, updateDTO);
-
+    public Boolean update(List<LabelInfoDTO.UpdateDTO> updateList) {
+        if (CollectionUtils.isEmpty(updateList)) {
+            updateList = Collections.EMPTY_LIST;
+        }
+        List<LabelInfoEntity> list = BeanMapperUtils.copyList(LabelInfoEntity.class, updateList);
+        //原标签数据
+        List<LabelInfoEntity> oldList = this.list();
+        //删除明细
+        List<String> deleteIds = getDeleteIds(list, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            this.removeByIds(deleteIds);
+        }
+        if (CollectionUtils.isEmpty(list)) {
+            return  Boolean.TRUE;
+        }
         // 数据处理
-        checkData(labelInfoEntity);
-        log.info("编辑 开始修改标签信息单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(labelInfoEntity);
+        checkData(list);
+        log.info("编辑 开始修改标签信息单数据");
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("标签信息单保存失败");
         }
-
-        // 记录主单操作日志
-        log.info("编辑 开始记录标签信息单日志数据，id：【{}】", labelInfoEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), labelInfoEntity.getId(), "标签信息单");
-        operateLogService.addModuleOperateLogByObj(old, labelInfoEntity, ModuleTypeEnum.LABEL_INFO.getCode(), labelInfoEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -118,6 +101,16 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
     }
 
     /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<LabelInfoEntity> newList, List<LabelInfoEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(LabelInfoEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(LabelInfoEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
      * 根据名称查询
      * @author will
      * @date 2024/8/30 11:45
@@ -131,13 +124,14 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
     /**
     * 新增修改处理数据
     */
-    private void checkData(LabelInfoEntity labelInfoEntity) {
-        //根据名称查询标签
-        LabelInfoEntity old = this.getByName(labelInfoEntity.getName());
-        if (ObjectUtil.isNotEmpty(old) && !StrUtil.equals(labelInfoEntity.getId(),old.getId())) {
-            throw new ServiceException("标签名称重复，不支持新增");
+    private void checkData(List<LabelInfoEntity> list) {
+       if (CollectionUtils.isEmpty(list)) {
+           return;
+       }
+        String names = list.stream().collect(Collectors.groupingBy(LabelInfoEntity::getName)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(names)) {
+            throw new ServiceException(StrUtil.format("标签名称【{}】重复，不支持新增",names));
         }
-
     }
     @Override
     public List<LabelVO> listLabelByReplenishmentIds(List<String> ids) {
