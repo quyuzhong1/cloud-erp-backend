@@ -776,7 +776,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<TmsCostDetailDTO.UpdateDTO> updateList = new ArrayList<>();
         //物流费用
         BigDecimal shippingCost = Objects.nonNull(detailEntity.getShippingCost()) ? detailEntity.getShippingCost() : BigDecimal.ZERO;
-        if (!Objects.equals(BigDecimal.ZERO, shippingCost)){
+        if (BigDecimal.ZERO.compareTo(shippingCost) != 0){
             TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
                     && Objects.equals(DictCostCategoryEnum.SHIPPING_COST.getCode(), e.getDictCostCategory()) && e.getIsDefault()).findFirst().orElse(null);
             //不存在默认配置时，取第一个配置
@@ -806,7 +806,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         //报关费用
         BigDecimal declareCost = Objects.nonNull(detailEntity.getDeclareCost()) ? detailEntity.getDeclareCost() : BigDecimal.ZERO;
-        if (!Objects.equals(BigDecimal.ZERO, declareCost)){
+        if (BigDecimal.ZERO.compareTo(declareCost) != 0){
             TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
                     && Objects.equals(DictCostCategoryEnum.DECLARE_COST.getCode(), e.getDictCostCategory()) && e.getIsDefault()).findFirst().orElse(null);
             //不存在默认配置时，取第一个配置
@@ -836,7 +836,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         //其他费用
         BigDecimal otherCost = Objects.nonNull(detailEntity.getOtherCost()) ? detailEntity.getOtherCost() : BigDecimal.ZERO;
-        if (!Objects.equals(BigDecimal.ZERO, declareCost)){
+        if (BigDecimal.ZERO.compareTo(otherCost) != 0){
             TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
                     && Objects.equals(DictCostCategoryEnum.OTHER_COST.getCode(), e.getDictCostCategory()) && e.getIsDefault()).findFirst().orElse(null);
             //不存在默认配置时，取第一个配置
@@ -866,7 +866,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         //其他税费
         BigDecimal otherTaxCost = Objects.nonNull(detailEntity.getOtherTaxCost()) ? detailEntity.getOtherTaxCost() : BigDecimal.ZERO;
-        if (!Objects.equals(BigDecimal.ZERO, declareCost)){
+        if (BigDecimal.ZERO.compareTo(otherTaxCost) != 0){
             TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> Objects.equals(DictCostAttributionEnum.FIRST_MILE.getCode(), e.getDictCostAttribution())
                     && Objects.equals(DictCostCategoryEnum.OTHER_TAX_FEE.getCode(), e.getDictCostCategory()) && e.getIsDefault()).findFirst().orElse(null);
             //不存在默认配置时，取第一个配置

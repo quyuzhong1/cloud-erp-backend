@@ -256,7 +256,7 @@
             logistics_bill lb
             inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
             left join (
-            select * from (
+            select id,logistics_bill_id,reconciliation_status,actual_weight,volume_weight,weight_logistics,volume_weight_logistics,weight_unit,currency,rn from (
                 select
                 bill.id,
                 bill.logistics_bill_id,
