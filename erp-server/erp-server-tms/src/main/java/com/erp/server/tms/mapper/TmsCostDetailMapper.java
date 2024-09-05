@@ -20,7 +20,7 @@ import java.util.List;
 @Mapper
 public interface TmsCostDetailMapper extends BaseMapper<TmsCostDetailEntity> {
 
-    List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListById(String id);
+    List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListByIds(@Param("ids") List<String> ids);
     /**
      * @description: 查询费用
      * @author Will

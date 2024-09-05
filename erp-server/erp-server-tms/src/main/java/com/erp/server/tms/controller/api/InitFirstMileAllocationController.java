@@ -315,9 +315,9 @@ public class InitFirstMileAllocationController extends BaseController {
 //            tableAlias = "a"
 //    )
     @WebAdvanceQuery(handler = InitFirstMileAllocationQueryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        initFirstMileAllocationService.exportExcel(dto, response);
-        return success();
+    public ApiResult<?> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto) {
+        initFirstMileAllocationService.exportExcel(dto);
+        return success(Boolean.TRUE);
     }
     /**
      * 下载模板

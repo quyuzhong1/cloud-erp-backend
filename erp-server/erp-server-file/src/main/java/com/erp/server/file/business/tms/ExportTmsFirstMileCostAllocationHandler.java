@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_COST_ALLOCATION;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION_DETAIL;
 
 @Component
@@ -30,7 +31,7 @@ public class ExportTmsFirstMileCostAllocationHandler extends AbstractPageFileEve
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION_DETAIL;
+        return EXPORT_TMS_FIRST_MILE_COST_ALLOCATION;
     }
 
     @Override

@@ -84,7 +84,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         List<TmsCostDetailEntity> list = BeanMapperUtils.copyList(TmsCostDetailEntity.class, costDetailList);
 
         //自发货要根据id判断删除
-        if (DictCostAttributionEnum.SELF_DELIVER.equals(dictCostAttributionEnum) && !isImport) {
+        if ((DictCostAttributionEnum.SELF_DELIVER.equals(dictCostAttributionEnum) || DictCostAttributionEnum.FIRST_MILE.equals(dictCostAttributionEnum)) && !isImport) {
             List<TmsCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
 
             List<String> deleteIds = getDeleteIds(list, oldList);
@@ -146,11 +146,11 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     }
 
     @Override
-    public List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListById(String id) {
-        if(StringUtils.isBlank(id)){
+    public List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListByIds(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
             return new ArrayList<>();
         }
-        List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = baseMapper.getCostCompareListById(id);
+        List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = baseMapper.getCostCompareListByIds(ids);
         costCompareDTOList.forEach(v->{
             if(Objects.nonNull(v.getActualFee()) && Objects.nonNull(v.getEstimatedFee())){
                 v.setFeeDifference(v.getActualFee().subtract(v.getEstimatedFee()));

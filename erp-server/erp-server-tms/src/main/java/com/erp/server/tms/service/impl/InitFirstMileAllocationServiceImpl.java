@@ -25,6 +25,7 @@ import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.ReconciliationTypeEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.convert.InitFirstMileAllocationConverter;
 import com.erp.server.tms.listener.InitFirstMileAllocationDetailExcelListener;
@@ -61,6 +62,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_COST_ALLOCATION;
+
 /**
  * <p>
  * 期初头程分摊 服务实现类
@@ -87,7 +90,8 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     @Lazy
     @Resource
     private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(InitFirstMileAllocationDTO.AddDTO addDTO) {
@@ -170,29 +174,29 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
      * 导出excel
      *
      * @param dto
-     * @param response
      * @return
      */
     @Override
-    public void exportExcel(InitFirstMileAllocationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        dto.setPermissionSql(dto.getPermissionSql());
-        List<InitFirstMileAllocationDTO.PagingVO> list = baseMapper.exportList(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        // 填充字段值
-        fillPagingDb(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/initFirstMileAllocationExport.xlsx";
-        String name = "期初头程分摊导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportExcel(InitFirstMileAllocationDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("费用分摊明细导出", EXPORT_TMS_FIRST_MILE_COST_ALLOCATION.getCode(), dto);
+//        dto.setPermissionSql(dto.getPermissionSql());
+//        List<InitFirstMileAllocationDTO.PagingVO> list = baseMapper.exportList(dto);
+//        if (CollectionUtils.isEmpty(list)) {
+//            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+//        }
+//        // 填充字段值
+//        fillPagingDb(list);
+//        StringBuffer sb = new StringBuffer();
+//        String excelPath = "excel/initFirstMileAllocationExport.xlsx";
+//        String name = "期初头程分摊导出";
+//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//        sb.append(date);
+//        sb.append(name);
+//        try {
+//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+//        } catch (IOException e) {
+//            throw new ServiceException(ApiError.ERROR_1015);
+//        }
     }
 
     @Override

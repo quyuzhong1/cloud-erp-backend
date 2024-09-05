@@ -4,7 +4,6 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
@@ -28,7 +27,6 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
@@ -48,10 +46,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
-import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
-import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -74,7 +69,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.poi.ss.formula.udf.IndexedUDFFinder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -434,9 +428,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Collections.singletonList(old.getId()));
         LogisticsBillDetailEntity billDetailEntity = CollectionUtils.isEmpty(detailEntityList)?new LogisticsBillDetailEntity():detailEntityList.get(0);
         //更新物流单费用及明细
-        LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getByLogisticsBillId(old.getId());
-        Optional.ofNullable(logisticsBillCostEntity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流费用单"));
-        LogisticsBillCostDTO.UpdateDTO updateCostDTO = this.packCostUpdateDTO(generateLogisticDTO,updateDTO,logisticsBillCostEntity);
+        List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostService.getByLogisticsBillIds(Collections.singletonList(old.getId()));
+        Optional.ofNullable(logisticsBillCostEntityList).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流费用单"));
+        LogisticsBillCostDTO.UpdateDTO updateCostDTO = this.packCostUpdateDTO(generateLogisticDTO,updateDTO,logisticsBillCostEntityList.get(0));
         updateCostDTO.setLogisticsBillDetailId(billDetailEntity.getId());
         updateCostDTO.setTrackNo(old.getCounterNo());
         List<TmsFirstMileLogisticDTO.LogisticFee> logisticFeeList = CollectionUtil.isEmpty(updateDTO.getLogisticFeeList())?new ArrayList<>():updateDTO.getLogisticFeeList();
@@ -683,16 +677,17 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
         }
         //处理费用信息
-        LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getByLogisticsBillId(dto.getId());
-        if(Objects.nonNull(logisticsBillCostEntity)){
-            List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListById(logisticsBillCostEntity.getId());
+        List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostService.getByLogisticsBillIds(Collections.singletonList(dto.getId()));
+        if(CollectionUtils.isNotEmpty(logisticsBillCostEntityList)){
+            List<String> ids = logisticsBillCostEntityList.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
+            List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListByIds(ids);
             dto.setLogisticFeeList( BeanUtil.copyToList(costCompareDTOList,TmsFirstMileLogisticDTO.FeeViewDTO.class));
             BigDecimal totalEstimatedFee = costCompareDTOList.stream().filter(e -> Objects.nonNull(e.getEstimatedFee())).map(TmsCostDetailDTO.CostCompareDTO::getEstimatedFee).reduce(BigDecimal.ZERO,BigDecimal::add);
             if(dto.getCurrency().equals(CurrencyEnum.CNY.getCurrencyCode())){
                 dto.setTotalEstimatedFee(totalEstimatedFee);
             }else{
                 //查询汇率
-                BigDecimal rate = StrUtil.isBlank(dto.getCurrency()) ? null : dmpTaskFeign.getRate(logisticsBillCostEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
+                BigDecimal rate = StrUtil.isBlank(dto.getCurrency()) ? null : dmpTaskFeign.getRate(logisticsBillCostEntityList.get(0).getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
                 if(Objects.nonNull(rate)){
                     dto.setTotalEstimatedFee(totalEstimatedFee.multiply(rate));
                 }

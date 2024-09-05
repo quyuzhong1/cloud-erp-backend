@@ -332,8 +332,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public LogisticsBillCostEntity getByLogisticsBillId(String Id) {
-        return lambdaQuery().eq(LogisticsBillCostEntity::getLogisticsBillId, Id).last("LIMIT 1").one();
+    public List<LogisticsBillCostEntity> getByLogisticsBillIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(LogisticsBillCostEntity::getLogisticsBillId, ids).list();
     }
 
     @Override
@@ -740,6 +743,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             this.saveOrUpdateBatch(updateBillList);
             // 更新明细信息
             List<String> delActualCostIds = new LinkedList<>();
+            List<String> delActualCostDetailIds = new LinkedList<>();
             for (LogisticsBillCostEntity costEntity : updateBillList) {
                 // 检查历史明细是否需要移除
                 if (ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(costEntity.getReconciliationStatus())){
@@ -748,6 +752,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
                 List<TmsCostDetailDTO.UpdateDTO> updateList = costEntity.getUpdateList();
                 if (CollectionUtils.isEmpty(updateList)) {
+                    delActualCostDetailIds.add(costEntity.getId());
                     continue;
                 }
                 tmsCostDetailService.batchUpdate(updateList, costEntity.getId(), DictCostAttributionEnum.FIRST_MILE,Boolean.FALSE);
@@ -755,6 +760,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             // 移除实际费用
             if (!CollectionUtils.isEmpty(delActualCostIds)){
                 tmsCostDetailService.updateActual0ByMainId(delActualCostIds);
+            }
+            //移除实际费用明细
+            if (!CollectionUtils.isEmpty(delActualCostDetailIds)){
+                tmsCostDetailService.updateActual0ByMainId(delActualCostDetailIds);
             }
         }
     }
