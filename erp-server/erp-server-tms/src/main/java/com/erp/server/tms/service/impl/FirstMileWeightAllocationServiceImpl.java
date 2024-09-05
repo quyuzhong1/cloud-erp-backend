@@ -41,6 +41,7 @@ import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -131,10 +132,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         //费用分摊
         List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
         List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> lastedAllocationMonthList =  costAllocationService.listLastedAllocationMonth(logisticsBillIds);
-        //国家
-//        List<String> countryCodeList = records.stream().map(item -> item.getToCountry()).distinct().collect(Collectors.toList());
-//        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryCodeList);
-//        Map<String, String> countryNameMap = countryList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getNameCn()));
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         for (FirstMileWeightAllocationDTO.ViewDTO item : records) {
             if(StringUtils.isBlank(item.getCostAllocationStatus())){
                 item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
@@ -147,7 +145,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             }
             item.setBoxSizeStr(item.getBoxLength() + "*" + item.getBoxWidth() + "*" + item.getBoxHeight() + " " + item.getBoxSizeUnit());
             item.setCreateTimeStr(item.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            FirstMileCostAllocationDTO.LastedAllocMonthDTO lastedAllocMonthDTO = lastedAllocationMonthList.stream().filter(v -> v.getLogisticsBillId().equals(item.getLogisticsBillId())).findFirst().orElse(null);
+            item.setLatestCostAllocationMonth(LocalDate.parse(item.getCalculateMonth() + "-01"));
+            item.setLatestCostAllocationMonthStr(item.getCalculateMonth());
+            /*FirstMileCostAllocationDTO.LastedAllocMonthDTO lastedAllocMonthDTO = lastedAllocationMonthList.stream().filter(v -> v.getLogisticsBillId().equals(item.getLogisticsBillId())).findFirst().orElse(null);
             if(lastedAllocMonthDTO != null){
                 item.setCalculatePeriodId(lastedAllocMonthDTO.getReportPeriodId());
                 item.setLatestCostAllocationMonth(lastedAllocMonthDTO.getLatestMonth());
@@ -165,7 +165,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 }
             }else {
                 item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
-            }
+            }*/
         }
     }
 
