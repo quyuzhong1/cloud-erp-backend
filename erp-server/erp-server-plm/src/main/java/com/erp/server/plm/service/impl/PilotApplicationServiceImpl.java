@@ -620,7 +620,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<String> supplierIds = detailViewList.stream().map(item -> item.getMainSupplierId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<String> secondSupplierIds = detailViewList.stream().map(item -> item.getSecondSupplierId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         supplierIds.addAll(secondSupplierIds);
-        List<SupplierEntity> supplierList = supplierFeign.listByCodes(supplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
         //产品费用
         List<String> skuIds = detailViewList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
         List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
@@ -631,11 +631,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //处理产品明细
         for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList) {
             //一级供应商名称
-            Optional<SupplierEntity> mainSupplier = supplierList.stream().filter(item -> item.getCode().equals(detailDTO.getMainSupplierId())).findFirst();
-            mainSupplier.ifPresent(item -> detailDTO.setMainSupplierName(item.getName()));
+            detailDTO.setMainSupplierName(supplierMap.containsKey(detailDTO.getMainSupplierId()) ? supplierMap.get(detailDTO.getMainSupplierId()).getName() : "");
             //二级供应商名称
-            Optional<SupplierEntity> secondSupplier = supplierList.stream().filter(item -> item.getCode().equals(detailDTO.getSecondSupplierId())).findFirst();
-            secondSupplier.ifPresent(item -> detailDTO.setSecondSupplierName(item.getName()));
+            detailDTO.setSecondSupplierName(supplierMap.containsKey(detailDTO.getSecondSupplierId()) ? supplierMap.get(detailDTO.getSecondSupplierId()).getName() : "");
             //产品费用
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(detailDTO.getSkuId())).findFirst();
             if(productCostEntityOptional.isPresent()){
@@ -688,7 +686,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      */
     private List<PilotApplicationDTO.AuditorHandleDTO> getApproveProcessList(PilotApplicationEntity pilotApplicationEntity) {
         List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(pilotApplicationEntity.getId());
-        approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveTime() != null).collect(Collectors.toList());
+        approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveTime() != null).filter(item -> !item.getRemark().contains("已将任务转移给")).collect(Collectors.toList());
         approveHistoryList.sort(Comparator.comparing(ProcessTaskManagementDTO.CommonDTO::getApproveTime).reversed());
         List<PilotApplicationDTO.AuditorHandleDTO> resultList = new ArrayList<>();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -697,7 +695,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             auditorHandleDTO.setUserId(historyDTO.getApproveUserId());
             auditorHandleDTO.setUserName(historyDTO.getApproveUserName());
             auditorHandleDTO.setResult(historyDTO.getApproveStatus());
-            auditorHandleDTO.setResultName(ApproveStatusEnum.getName(historyDTO.getApproveStatus()));
+            auditorHandleDTO.setResultName(PilotApplicatonApproveHistoryEnum.getName(historyDTO.getApproveStatus()));
             if(historyDTO.getApproveTime() != null){
                 auditorHandleDTO.setTime(historyDTO.getApproveTime().format(dateTimeFormatter));
                 String desc = getTimeDesc(auditorHandleDTO);
@@ -820,12 +818,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
         PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(applicationDTOList);
         return purchaseApplicationFeign.add(paramDto);
     }
 
     private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
+        List<String> ids = applicationDTOList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+        this.lambdaUpdate().set(PilotApplicationEntity::getOrderStatus, "order").in(PilotApplicationEntity::getId, ids);
+
         LoginUser loginUser = UserContext.getNonLoginUser();
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUid()));
         List<String> warehouseIds = applicationDTOList.stream().map(item -> item.getToWarehouseId()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -1009,6 +1011,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO pushAndSubmitPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList) {
         PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(dtoList);
         return purchaseApplicationFeign.addAndSubmit(paramDto);
