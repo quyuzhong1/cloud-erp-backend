@@ -3,6 +3,8 @@ package com.erp.server.dmp.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.QueryParam;
+import com.common.business.wrapper.QueryTypeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
@@ -26,6 +28,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -143,4 +146,5 @@ public class DmpOutputTaskRecordController extends BaseController {
         Boolean flag = dmpOutputTaskRecordService.addOutputBlack(dto);
         return flag ? success() : failure();
     }
+
 }
