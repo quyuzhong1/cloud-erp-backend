@@ -8,6 +8,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -118,6 +120,18 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @param isSyncKingDee
      */
     BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess,Boolean isSyncKingDee);
+    /**
+     * 审核结束
+     * @Author Luo_WG
+     * @Date 2024/9/6 16:57
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isSyncKingDee
+     * @return java.lang.Boolean
+     **/
+    Boolean approveEnd(TransferInfoEntity entity, String type, String comment, Boolean isSyncKingDee);
+
     /**
      * 虚拟仓库存扣减处理
      * @author will
