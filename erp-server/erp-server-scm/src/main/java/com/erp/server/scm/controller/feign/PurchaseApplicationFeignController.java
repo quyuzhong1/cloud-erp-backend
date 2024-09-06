@@ -54,7 +54,7 @@ public class PurchaseApplicationFeignController {
      * @author: tanmujin
      */
     @PostMapping("/listBySourceIds")
-    List<PurchaseApplicationEntity> listBySourceIds(List<String> sourceIds){
+    List<PurchaseApplicationEntity> listBySourceIds(@RequestBody List<String> sourceIds){
         return purchaseApplicationService.lambdaQuery().in(PurchaseApplicationEntity::getSourceId, sourceIds).list();
     }
 
