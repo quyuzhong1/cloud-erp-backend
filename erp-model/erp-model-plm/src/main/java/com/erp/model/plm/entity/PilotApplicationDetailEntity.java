@@ -73,6 +73,11 @@ public class PilotApplicationDetailEntity extends BaseEntity<PilotApplicationDet
     */
     @TableField("remark")
     private String remark;
+    /**
+     * 采购申请数量
+     */
+    @TableField("purchase_apply_qty")
+    private int purchaseApplyQty;
 
 
     public static final String MAIN_ID = "main_id";

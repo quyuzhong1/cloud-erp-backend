@@ -372,6 +372,12 @@ public class PilotApplicationDTO implements Serializable {
          * 关联的任务集合
          */
         private List<PilotApplicationRefTaskDTO.AddDTO> taskList;
+
+        /**
+         * 附件
+         */
+        @NotEmpty(message = "请上传试产/量产报告")
+        private List<AttachmentDTO> attachmentList;
     }
 
     /**
@@ -396,6 +402,10 @@ public class PilotApplicationDTO implements Serializable {
          * 关联的任务集合
          */
         private List<PilotApplicationRefTaskDTO.UpdateDTO> taskList;
+        /**
+         * 附件
+         */
+        private List<AttachmentDTO> attachmentList;
     }
 
     @Data
@@ -410,12 +420,6 @@ public class PilotApplicationDTO implements Serializable {
         * 单据备注
         */
         private String remark;
-
-        /**
-         * 附件
-         */
-        @NotEmpty(message = "请上传试产/量产报告")
-        private List<AttachmentDTO> attachmentList;
     }
 
     /**
