@@ -440,7 +440,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         approveDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
-        approveDTO.setUserId(userInfo.getUid());
+//        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setUserId("121");
         Map<String, Object> map = BeanUtil.beanToMap(entity);
         map.put("attachmentList", baseApproveDTO.getAttachmentList());
         approveDTO.setVariablesMap(map);
@@ -665,6 +666,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      */
     private List<PilotApplicationDTO.AuditorHandleDTO> getApproveProcessList(PilotApplicationEntity pilotApplicationEntity) {
         List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(pilotApplicationEntity.getId());
+        approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveTime() != null).collect(Collectors.toList());
         approveHistoryList.sort(Comparator.comparing(ProcessTaskManagementDTO.CommonDTO::getApproveTime).reversed());
         List<PilotApplicationDTO.AuditorHandleDTO> resultList = new ArrayList<>();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

@@ -2,6 +2,8 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.enums.ApiError;
@@ -76,7 +78,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
 
             // 保存附件
             if(variablesMap != null){
-                List<ProcessTaskManagementAttachmentDTO.CommonDTO> attachmentList = (List<ProcessTaskManagementAttachmentDTO.CommonDTO>) variablesMap.get("attachmentList");
+                List<ProcessTaskManagementAttachmentDTO.CommonDTO> attachmentList = JSON.parseArray(JSON.toJSONString(variablesMap.get("attachmentList")), ProcessTaskManagementAttachmentDTO.CommonDTO.class);
                 if(attachmentList != null && !attachmentList.isEmpty()){
                     List<ProcessTaskManagementAttachmentEntity> saveList = new ArrayList<>(attachmentList.size());
                     for (ProcessTaskManagementAttachmentDTO.CommonDTO attachmentDTO : attachmentList) {
