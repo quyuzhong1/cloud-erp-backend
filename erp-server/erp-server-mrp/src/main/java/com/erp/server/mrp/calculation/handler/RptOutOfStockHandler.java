@@ -9,10 +9,10 @@ import javax.annotation.Resource;
 @Component
 public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
     @Resource
-    private DeliverySuggestHandler deliverySuggestHandler;
+    private RealSellableDaysHandler realSellableDaysHandler;
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
-        return deliverySuggestHandler;
+        return realSellableDaysHandler;
     }
 
     @Override

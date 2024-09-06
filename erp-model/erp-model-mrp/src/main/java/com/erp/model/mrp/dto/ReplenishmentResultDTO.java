@@ -3,12 +3,13 @@ package com.erp.model.mrp.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 @Getter
 @Setter
-public class ReplenishmentResultDTO{
+public class ReplenishmentResultDTO {
     /**
      * 补货主表数据
      */
@@ -21,6 +22,15 @@ public class ReplenishmentResultDTO{
      * FBA在途明细
      */
     private List<FbaInTransitDetailDTO> fbaInTransitDetails;
+    /**
+     * 备货期
+     */
+    private List<AvgSalesEstimateDTO> avgSalesEstimates;
+
+    /**
+     * 断货报告
+     */
+    private List<RptOutOfStockDTO> rptOutOfStocks;
 
 
     @Getter
@@ -285,5 +295,44 @@ public class ReplenishmentResultDTO{
          */
         private String calcVersion;
 
+    }
+
+    @Getter
+    @Setter
+    public static class AvgSalesEstimateDTO {
+
+        private String type;
+
+        private String qty;
+    }
+
+    @Getter
+    @Setter
+    public static class RptOutOfStockDTO {
+
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        /**
+         * 断货开始日期
+         */
+        private LocalDate startDate;
+
+        /**
+         * 断货结束日期
+         */
+        private LocalDate endDate;
+
+        /**
+         * 销量
+         */
+        private Integer salesQty;
+
+        /**
+         * 金额
+         */
+        private BigDecimal amount;
     }
 }
