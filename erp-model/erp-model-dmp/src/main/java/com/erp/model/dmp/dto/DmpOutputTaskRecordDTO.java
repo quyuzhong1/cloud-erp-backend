@@ -171,7 +171,6 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         /**
          * 同步状态
          */
-        @Dict(enumClass = DmpOutputTaskRecordStatusEnum.class)
         private String status;
 
         /**
