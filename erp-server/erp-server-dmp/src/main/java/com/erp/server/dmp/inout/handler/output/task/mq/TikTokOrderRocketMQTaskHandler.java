@@ -294,7 +294,10 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
 
-        List<String> thirdDetailIdList = soDetailEntityList.stream().map(req -> req.getThirdDetailId()).collect(Collectors.toList());
+        List<String> thirdDetailIdList = soDetailEntityList.stream()
+                .map(DmpSoDetailEntity::getThirdDetailId)
+                .sorted()
+                .collect(Collectors.toList());
 
         // 来源明细id
         detailDTO.setSourceDetailId(String.join(",", thirdDetailIdList));
