@@ -39,9 +39,11 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
             cfgRuleStockUp = cfgRuleStockUpService.getDefaultCfgRuleStockUp(dto.getPlatformType());
         }
         List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> cfgRuleStockingRatios = cfgRuleStockingRatioService.listByStockUpIdAndType(cfgRuleStockUp.getId(), dto.getSkuType());
-        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = cfgRuleLogisticsService.getLogisticsMaxPriority(cfgRuleStockUp.getId(), dto.getPlatformType(), dto.getSkuType(), dto.getArea(), dto.getWarehouseId());
+        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = cfgRuleLogisticsService.getLogisticsMaxPriority(cfgRuleStockUp.getId(), dto.getPlatformType(), dto.getArea(), dto.getShopId(), dto.getWarehouseId());
+        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult = cfgRuleLogisticsService.getMinLogistics(cfgRuleStockUp.getId(), dto.getPlatformType(), dto.getArea(), dto.getShopId(), dto.getWarehouseId());
+        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult = cfgRuleLogisticsService.getMaxLogistics(cfgRuleStockUp.getId(), dto.getPlatformType(), dto.getArea(), dto.getShopId(), dto.getWarehouseId());
         CfgRuleStockUpDTO.StrategyResultDTO result = new CfgRuleStockUpDTO.StrategyResultDTO();
-        result.buildStrategyResultDTO(cfgRuleStockUp, cfgRuleStockingRatios, logisticsResult);
+        result.buildStrategyResultDTO(cfgRuleStockUp, cfgRuleStockingRatios, logisticsResult, logisticsMaxResult, logisticsMinResult);
         return result;
     }
 

@@ -426,12 +426,23 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         private CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult;
         /**
+         * 物流最大时效
+         */
+        private CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult;
+        /**
+         * 物流最小时效
+         */
+        private CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult;
+        /**
          * 备货明细系数
          */
         private List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults;
 
 
-        public void buildStrategyResultDTO(CfgRuleStockUpEntity entity, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult){
+        public void buildStrategyResultDTO(CfgRuleStockUpEntity entity, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult,
+                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult,
+                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult
+        ){
             this.setId(entity.getId());
             this.setPurchaseApproveDays(entity.getPurchaseApproveDays());
             this.setSupplierDeliveryDays(entity.getSupplierDeliveryDays());
@@ -444,6 +455,8 @@ public class CfgRuleStockUpDTO implements Serializable {
             this.setPlatformType(entity.getPlatformType());
             this.setRefId(entity.getRefId());
             this.setLogisticsResult(logisticsResult);
+            this.setLogisticsMinResult(logisticsMinResult);
+            this.setLogisticsMaxResult(logisticsMaxResult);
             this.setStockingRatioResults(stockingRatioResults);
         }
     }

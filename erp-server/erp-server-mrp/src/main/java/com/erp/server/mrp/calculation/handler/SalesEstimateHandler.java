@@ -10,6 +10,7 @@ import javax.annotation.Resource;
 public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
     @Resource
     private StockingTimeHandler stockingTimeHandler;
+
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
         return stockingTimeHandler;

@@ -8,7 +8,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum CfgSettingEnum implements EnumMessage {
     NEW_DAYS("newDays", "新品天数"),
-    REPLENISHMENT_DAYS("replenishment_days","补货天数")
+    REPLENISHMENT_DAYS("replenishment_days","补货天数"),
+    CALCULATION_DAYS("CALCULATION_DAYS","计算天数"),
     ;
 
     /**
