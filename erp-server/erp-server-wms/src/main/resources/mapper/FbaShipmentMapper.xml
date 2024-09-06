@@ -157,6 +157,9 @@
         <if test="params.id!=null and params.id!=''">
             and fs.id = #{params.id}
         </if>
+        <if test="params.shopId!=null and params.shopId!=''">
+            and fs.shop_id = #{params.shopId}
+        </if>
     </select>
 
     <sql id="FbaDataCompareByCondition">

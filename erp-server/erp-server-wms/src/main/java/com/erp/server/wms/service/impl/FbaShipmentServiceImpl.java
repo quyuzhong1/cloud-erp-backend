@@ -1785,4 +1785,23 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         return lambdaUpdate().eq(FbaShipmentEntity::getId,id).set(FbaShipmentEntity::getIsPackingDownload,true).update();
     }
+
+    @Override
+    public PagingVO<FbaShipmentDTO.SearchResultDTO> searchByCodeWithRequisition(PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        FbaShipmentDTO.SearchDTO searchDTO = dto.getParams();
+        if(StringUtils.isBlank(searchDTO.getRequisitionId())){
+            throw new ServiceException("要货申请不能为空");
+        }
+        if(StringUtils.isBlank(searchDTO.getCode())){
+            throw new ServiceException("单号不能为空");
+        }
+        RequisitionApplicationEntity requisitionApplicationEntity = Optional.ofNullable(requisitionApplicationService.getById(searchDTO.getRequisitionId())).orElseThrow(()->new ServiceException("要货申请为空"));
+        searchDTO.setShopId(requisitionApplicationEntity.getChannelId());
+        IPage<FbaShipmentDTO.SearchResultDTO> searchData = this.baseMapper.search(query, dto.getParams());
+        if (CollUtil.isEmpty(searchData.getRecords())) {
+            return new PagingVO(searchData);
+        }
+        return new PagingVO(searchData);
+    }
 }

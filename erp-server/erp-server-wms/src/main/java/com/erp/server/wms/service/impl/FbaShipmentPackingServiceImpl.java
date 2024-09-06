@@ -112,10 +112,10 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
 
     @Override
     public List<FbaShipmentPackingEntity> getByMainIdAndBoxNo(String mainId, String boxNo) {
-        if(StringUtils.isBlank(mainId) || StringUtils.isBlank(boxNo)){
+        if(StringUtils.isBlank(mainId)){
             return new ArrayList<>();
         }
-        return lambdaQuery().eq(FbaShipmentPackingEntity::getMainId, mainId).eq(FbaShipmentPackingEntity::getBoxNo, boxNo).list();
+        return lambdaQuery().eq(FbaShipmentPackingEntity::getMainId, mainId).eq(StringUtils.isNotBlank(boxNo),FbaShipmentPackingEntity::getBoxNo, boxNo).list();
     }
 
     @Override

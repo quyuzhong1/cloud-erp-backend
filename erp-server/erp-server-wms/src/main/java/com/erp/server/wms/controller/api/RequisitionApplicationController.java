@@ -491,4 +491,29 @@ public class RequisitionApplicationController extends BaseController {
         }
         return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
     }
+
+
+    /**
+     * 下推发货单绑定货件页面
+     **/
+    @PostMapping("/fbaBindShipmentView")
+    public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentViewDTO>> fbaBindShipmentView(@RequestBody @Validated BaseIdDTO dto) {
+        return success(requisitionApplicationService.fbaBindShipmentView(dto.getId()));
+    }
+
+    /**
+     * 下推发货单绑定货件页面 --模糊匹配货件单号
+     **/
+    @PostMapping("/fbaBindShipmentMatching")
+    public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentViewDTO>> fbaBindShipmentMatching(@RequestBody @Validated RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto) {
+        return success(requisitionApplicationService.fbaBindShipmentMatching(dto));
+    }
+
+    /**
+     * 下推发货单绑定货件页面 --点击货件号显示详情
+     **/
+    @PostMapping("/fbaBindShipmentDetailView")
+    public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO>> fbaBindShipmentDetailView(@RequestBody @Validated RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto) {
+        return success(requisitionApplicationService.fbaBindShipmentDetailView(dto));
+    }
 }

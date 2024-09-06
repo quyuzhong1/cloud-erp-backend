@@ -29,6 +29,173 @@ import java.util.Map;
 public class RequisitionApplicationDTO implements Serializable {
 
     /**
+     * fba下推发货单绑定货件View
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaBindShipmentDetailViewDTO {
+
+        /**
+         * fba货件Id
+         */
+        private String fbaShipmentId;
+
+
+        /**
+         * ASIN
+         */
+        private String asin;
+
+        /**
+         * MSKU
+         */
+        private String msku;
+
+        /**
+         * fnSku
+         */
+        private String fnSku;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 申报数量
+         */
+        private String declareQty;
+
+        /**
+         * 关联发货数量
+         */
+        private String associatedDeliveryQty;
+
+        /**
+         * 差异
+         */
+        private String diffQty;
+    }
+
+    /**
+     * fba下推发货单绑定货件 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaBindShipmentDetailDTO {
+        /**
+         * fba货件Id
+         */
+        @NotBlank(message = "fba货件不能为空")
+        private String fbaShipmentId;
+
+        /**
+         * 匹配的装箱Id
+         */
+        @NotNull(message = "装箱不能为空")
+        private List<String> matchedCartonIds;
+
+    }
+
+    /**
+     * fba下推发货单绑定货件View
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaBindShipmentMatchingDTO {
+        /**
+         * fba货件Id
+         */
+        @NotBlank(message = "fba货件不能为空")
+        private String fbaShipmentId;
+
+        /**
+         * 未匹配的装箱信息
+         */
+        @NotNull(message = "待匹配装箱信息不能为空")
+        private List<FbaBindShipmentViewDTO> fbaBindShipmentViewDTOList;
+    }
+
+    /**
+     * fba下推发货单绑定货件View
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaBindShipmentViewDTO {
+
+        /**
+         * 要货申请id
+         */
+        private String id;
+
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+
+        /**
+         * 装箱Id
+         */
+        private String cartonId;
+
+        /**
+         * 装箱箱号
+         */
+        private String boxNo;
+
+        /**
+         * 装箱sku
+         */
+        private String packingSku;
+
+        /**
+         * 装箱Fnsku
+         */
+        private String packingFnSku;
+
+        /**
+         * Fba货件Id
+         */
+        private String fbaShipmentId;
+
+        /**
+         * Fba货件号
+         */
+        private String fbaShipmentCode;
+
+        /**
+         * Fba货件箱号
+         */
+        private String fbaBoxNo;
+
+        /**
+         * fba装箱sku
+         */
+        private String fbaPackingSku;
+
+        /**
+         * fba装箱Fnsku
+         */
+        private String fbaPackingFnSku;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+    }
+
+    /**
      * 详情
      */
     @Data

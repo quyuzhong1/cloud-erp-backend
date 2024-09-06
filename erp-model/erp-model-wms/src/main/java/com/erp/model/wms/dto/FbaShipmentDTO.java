@@ -469,6 +469,12 @@ public class FbaShipmentDTO implements Serializable {
     public static class SearchDTO {
         private String code;
         private String id;
+
+        /**
+         * 要货申请id
+         */
+        private String requisitionId;
+        private String shopId;
     }
 
     /**

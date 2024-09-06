@@ -19,6 +19,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -35,13 +36,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.*;
-import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
-import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
-import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
@@ -162,6 +156,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private CfgRuleOutService cfgRuleOutService;
+
+    @Resource
+    private WmsCartonService cartonService;
+
+    @Resource
+    private FbaShipmentPackingService fbaShipmentPackingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1079,6 +1079,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_99104);
         }
+        if(list.stream().anyMatch(v->RequisitionApplicationTypeEnum.FBA.getCode().equals(v.getType()))){
+            throw new ServiceException("FBA下推发货单请选择绑定货件");
+        }
         List<FirstMileDeliveryEntity> entities = firstMileDeliveryService.listBySourceIds(ids);
         boolean invalidStatus = entities.stream().anyMatch(FirstMileDeliveryEntity::getInvalidStatus);
         if (CollectionUtils.isNotEmpty(entities) && Boolean.FALSE.equals(invalidStatus)) {
@@ -1171,6 +1174,86 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 数据处理
         fillList(page.getRecords());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentView(String id) {
+        RequisitionApplicationEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(()-> new ServiceException("要货申请不存在"));
+        if(!entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
+            throw new ServiceException("非FBA来源无法绑定货件");
+        }
+
+        PackingTaskEntity packingTaskEntity = Optional.ofNullable(packingTaskService.getBySourceCode(entity.getCode())).orElseThrow(()-> new ServiceException("未生成装箱任务"));
+        List<WmsCartonEntity> cartonEntityList = Optional.ofNullable(cartonService.listByTaskIds(Arrays.asList(packingTaskEntity.getId()))).filter(list -> !list.isEmpty())
+                .orElseThrow(() -> new ServiceException("装箱数据为空"));
+
+        List<String> cartonIds = cartonEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+        List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> resultList = baseMapper.fbaBindShipmentView(cartonIds);
+        resultList.forEach(v->v.setId(id));
+        if(resultList.stream().noneMatch(v->StringUtils.isBlank(v.getFbaShipmentId()))){
+            throw new ServiceException("要货申请所有装箱已关联货件，无法再次绑定");
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentMatching(RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto) {
+        List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> waitMatchList = dto.getFbaBindShipmentViewDTOList();
+        waitMatchList = waitMatchList.stream().filter(v->StringUtils.isBlank(v.getFbaShipmentId())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(waitMatchList)){
+            throw new ServiceException("待匹配数据为空");
+        }
+        FbaShipmentEntity fbaShipmentEntity = Optional.ofNullable(fbaShipmentService.getById(dto.getFbaShipmentId())).orElseThrow(()-> new ServiceException("FBA货件不存在"));
+        if(!fbaShipmentEntity.getIsPackingDownload()){
+            throw new ServiceException("{}货件装箱还未下载，无法绑定",fbaShipmentEntity.getCode());
+        }
+        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.getByMainIdAndBoxNo(fbaShipmentEntity.getId(),null);
+        if(CollectionUtils.isEmpty(fbaShipmentPackingEntityList)){
+            throw new ServiceException("{}货件装箱信息为空",fbaShipmentEntity.getCode());
+        }
+        if(fbaShipmentPackingEntityList.stream().anyMatch(v->StringUtils.isNotBlank(v.getCartonId()))){
+            throw new ServiceException("{}货件装箱已绑定，无法重复绑定",fbaShipmentEntity.getCode());
+        }
+        //箱号分组，组成sku*qty 匹配
+        Map<String,List<FbaShipmentPackingEntity>> fbaPackingMap = fbaShipmentPackingEntityList.stream().collect(Collectors.groupingBy(FbaShipmentPackingEntity::getBoxNo));
+        for(Map.Entry<String, List<FbaShipmentPackingEntity>> entry : fbaPackingMap.entrySet()) {
+            String fbaBoxNo = entry.getKey();
+            List<FbaShipmentPackingEntity> entityList = entry.getValue();
+            List<String> fbaPackingList = entityList.stream().map(v->v.getSkuNo()+"*"+v.getQty()).collect(Collectors.toList());
+            List<String> fbaFnPackingList = entityList.stream().map(v->v.getFnSku()+"*"+v.getQty()).collect(Collectors.toList());
+            boolean matchResult = false;
+            for (RequisitionApplicationDTO.FbaBindShipmentViewDTO fbaBindShipmentViewDTO : waitMatchList) {
+                List<String> packingSkuArr = Arrays.asList(fbaBindShipmentViewDTO.getPackingSku().split(";"));
+                if(com.common.business.utils.CollectionUtils.areListsEqualWithFrequency(fbaPackingList,packingSkuArr)){
+                    matchResult = true;
+                    fbaBindShipmentViewDTO.setFbaShipmentId(fbaShipmentEntity.getId());
+                    fbaBindShipmentViewDTO.setFbaShipmentCode(fbaShipmentEntity.getCode());
+                    fbaBindShipmentViewDTO.setFbaBoxNo(fbaBoxNo);
+                    fbaBindShipmentViewDTO.setFbaPackingSku(String.join(";", fbaPackingList));
+                    fbaBindShipmentViewDTO.setFbaPackingFnSku(String.join(";", fbaFnPackingList));
+                }
+            }
+            if(!matchResult){
+                throw new ServiceException("【{}】的装箱信息无法匹配系统装箱，请核对要货申请是否对应该货件发货",fbaBoxNo);
+            }
+        }
+        return waitMatchList;
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO> fbaBindShipmentDetailView(RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto) {
+        List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO> fbaBindShipmentDetailViewDTOList = baseMapper.fbaBindShipmentDetailView(dto);
+        //查询产品信息
+        List<String> skuIdList = fbaBindShipmentDetailViewDTOList.stream().map(RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+
+        fbaBindShipmentDetailViewDTOList.forEach(v->{
+            //产品信息
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(v.getSkuId())).findFirst().orElse(new SkuVO());
+            v.setProductName(skuVO.getSkuName());
+        });
+        return fbaBindShipmentDetailViewDTOList;
     }
 
     /**

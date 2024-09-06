@@ -382,4 +382,14 @@ public class FbaShipmentController extends BaseController {
     public ApiResult<List<FbaShipmentPackingDTO.ViewDTO>> getPacking(@RequestBody @Validated BaseIdDTO dto) {
         return success(fbaShipmentPackingService.listPacking(Arrays.asList(dto.getId())));
     }
+
+    /**
+     * 单号搜索(按要货申请)
+     **/
+    @PostMapping("/searchByCodeWithRequisition")
+    public ApiResult<PagingVO<FbaShipmentDTO.SearchResultDTO>> searchByCodeWithRequisition(@RequestBody @Validated PagingDTO<FbaShipmentDTO.SearchDTO> dto) {
+        PagingVO<FbaShipmentDTO.SearchResultDTO> pagingVO = fbaShipmentService.searchByCodeWithRequisition(dto);
+        return success(pagingVO);
+    }
+
 }
