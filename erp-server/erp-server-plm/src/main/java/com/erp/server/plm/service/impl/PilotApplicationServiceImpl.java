@@ -16,6 +16,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -114,6 +115,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private PlmAttachmentService plmAttachmentService;
     @Resource
     private ProcessTaskManagementFeign processTaskManagementFeign;
+    @Resource
+    private PurchasePriceDetailFeign purchasePriceDetailFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -161,13 +164,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     /**
-     * 新增附件，将附件名称和url保存到附件表
-     */
-    private <T extends PilotApplicationDTO.CommonDTO> void addAttachment(T commonDTO, String businessId) {
-
-    }
-
-    /**
      * 保存产品明细
      */
     private void saveProductDetail(PilotApplicationDTO.AddDTO addDTO, PilotApplicationEntity pilotApplicationEntity) {
@@ -175,6 +171,29 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             throw new ServiceException("产品明细不能为空");
         }
         for (PilotApplicationDetailDTO.AddDTO detailDTO : addDTO.getProductDetailList()) {
+            if(StringUtils.isBlank(detailDTO.getMainSupplierId())){
+                throw new ServiceException("一级供应商不能为空");
+            }
+            //校验主供应商的采购价目表
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            priceSearchDTO.setSkuId(detailDTO.getSkuId());
+            priceSearchDTO.setSkuNo(detailDTO.getSkuNo());
+            priceSearchDTO.setSupplierId(detailDTO.getMainSupplierId());
+            priceSearchDTO.setPurchaseQty(detailDTO.getApplyQty());
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPrice = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
+            detailDTO.setMainId(pilotApplicationEntity.getId());
+        }
+        for (PilotApplicationDetailDTO.AddDTO detailDTO : addDTO.getProductDetailList()) {
+            if(StringUtils.isBlank(detailDTO.getSecondSupplierId())){
+                continue;
+            }
+            //校验二级供应商的采购价目表
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            priceSearchDTO.setSkuId(detailDTO.getSkuId());
+            priceSearchDTO.setSkuNo(detailDTO.getSkuNo());
+            priceSearchDTO.setSupplierId(detailDTO.getSecondSupplierId());
+            priceSearchDTO.setPurchaseQty(detailDTO.getApplyQty());
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPrice = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
             detailDTO.setMainId(pilotApplicationEntity.getId());
         }
         List<PilotApplicationDetailEntity> entityList = BeanMapper.copyList(addDTO.getProductDetailList(), PilotApplicationDetailEntity.class);
