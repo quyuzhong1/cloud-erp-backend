@@ -180,6 +180,8 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             //如果是推送成功，可能是无需推送状态
             if (DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(listDTO.getStatus()) && !listDTO.getIsNeedSync()) {
                 listDTO.setStatusName(SyncStatusEnum.NO_NEED_SYNC.getName());
+            } else {
+                listDTO.setStatusName(DmpOutputTaskRecordStatusEnum.getName(listDTO.getStatus()));
             }
 
         }
@@ -264,7 +266,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                 try {
                     // 使用反射获取 getSourceCodeKeys 方法
                     Method method = bean.getClass().getDeclaredMethod("getSourceCodeKeys");
-
+                    method.setAccessible(Boolean.TRUE);
                     // 调用方法并获取返回值
                     Object result = method.invoke(bean);
 
@@ -293,8 +295,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         List<DmpOutputTaskRecordEntity> recordEntityList = this.lambdaQuery().in(DmpOutputTaskRecordEntity::getId, dto.getIds()).list();
 
         //根据输出任务记录id获取cfgOutputId
+        List<String> dmpOutputTaskIds = recordEntityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
         List<DmpOutputTaskEntity> dmpOutputTaskEntityList = dmpOutputTaskService.lambdaQuery()
-                .in(DmpOutputTaskEntity::getId, dto.getIds())
+                .in(DmpOutputTaskEntity::getId, dmpOutputTaskIds)
                 .list();
 
         //获取输出配置
@@ -325,6 +328,16 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                     .filter(req -> req.getMainId().equals(outputTaskGroupMap.getKey()))
                     .map(DmpOutputTaskRecordEntity::getSourceCode)
                     .collect(Collectors.toList());
+
+            //查询黑名单用于校验是否存在，避免重复添加
+            List<DmpCfgOutputBlackEntity> list = dmpCfgOutputBlackService.lambdaQuery()
+                    .eq(DmpCfgOutputBlackEntity::getMainId, cfgOutputId)
+                    .eq(DmpCfgOutputBlackEntity::getFieldName, sourceCodeKeys.get(0))
+                    .eq(DmpCfgOutputBlackEntity::getFieldValue, String.join(",", sourceCodeList))
+                    .list();
+            if (CollectionUtils.isNotEmpty(list)) {
+                throw new ServiceException("数据已在黑名单存在，请不要重复添加！");
+            }
 
             //添加黑名单
             DmpCfgOutputBlackDTO.AddDTO addDTO = new DmpCfgOutputBlackDTO.AddDTO();

@@ -1,8 +1,11 @@
 package com.erp.model.dmp.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -168,12 +171,12 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         /**
          * 同步状态
          */
+        @Dict(enumClass = DmpOutputTaskRecordStatusEnum.class)
         private String status;
 
         /**
          * 同步状态中文
          */
-
         private String statusName;
 
         /**

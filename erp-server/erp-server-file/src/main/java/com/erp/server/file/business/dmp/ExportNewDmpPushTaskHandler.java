@@ -43,6 +43,6 @@ public class ExportNewDmpPushTaskHandler extends AbstractPageFileEventHandler<Dm
 
     @Override
     public String getExcelPath() {
-        return "excel/dmp/dmpPushTask.xlsx";
+        return "excel/dmp/newDmpPushTask.xlsx";
     }
 }
