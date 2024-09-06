@@ -65,6 +65,12 @@ public class DmpOutputTaskRecordEntity extends BaseEntity<DmpOutputTaskRecordEnt
       @TableField("error_count")
       private Integer errorCount;
 
+     /**
+      * 是否需要同步 true 同步 false 无需同步
+      */
+      @TableField("is_need_sync")
+      private Boolean isNeedSync;
+
 
     public static final String INPUT_STATUS = "input_status";
 

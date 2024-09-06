@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,5 +97,10 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
     */
     private void handleData(DmpCfgInputEntity dmpCfgInputEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<DmpCfgInputDTO.ListDmpCfgInputDTO> listDmpCfgInput(String id) {
+        return baseMapper.listDmpCfgInput(id);
     }
 }

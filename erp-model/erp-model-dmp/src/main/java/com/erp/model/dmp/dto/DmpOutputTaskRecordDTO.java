@@ -124,6 +124,10 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     @NoArgsConstructor
     public class PagingDTO {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * 来源系统名称
          */
         private String sourcePlatformName;
@@ -171,6 +175,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         /**
          * 同步状态中文
          */
+
         private String statusName;
 
         /**
@@ -182,6 +187,11 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          * 推送数据
          */
         private String pushData;
+
+        /**
+         * 是否需要同步
+         */
+        private Boolean isNeedSync;
 
     }
 
@@ -210,7 +220,8 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     @AllArgsConstructor
     public static class TabListDTO {
         /**
-         * 类型，all全部、0无需同步、同步中、2同步中、3同步成功、4同步失败
+         * 类型：/dmp/common/enumDropDown?type=DmpOutputTaskRecordStatus
+         * all全部、init:待推送、mqsuccess:mq推送成功、mqerror:mq推送失败、cosumererror:消费失败、finish:推送成功、error:推送失败
          */
         private String tabFlag;
 
@@ -218,5 +229,64 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddOutputBlackDTO {
+        /**
+         * 输出任务id
+         */
+        private List<String> ids;
+
+        /**
+         * 定义条件
+         */
+        private CustomizeBlackParam params;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CustomizeBlackParam {
+        /**
+         * 来源系统
+         * 接口：/dmp/dmpBasicSystem/listDmpBasicSystem
+         */
+        private String sourcePlatformCode;
+        /**
+         * 单据类型（级联）
+         * 接口：/dmp/dmpCfgInput/listDmpCfgInput?id = 来源系统code
+         * 接口入参：来源系统code 或者 目标平台code
+         */
+        private String billTypeId;
+
+        /**
+         * 目标平台
+         * 接口：/dmp/dmpBasicSystem/listDmpBasicSystem
+         */
+        private String targetPlatformCode;
+
+        /**
+         * 单据编码
+         */
+        private List<String> sourceCodeList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public class ExpotParamDTO extends PagingParamDTO {
+        /**
+         * 主键id
+         */
+        private List<String> ids;
     }
 }

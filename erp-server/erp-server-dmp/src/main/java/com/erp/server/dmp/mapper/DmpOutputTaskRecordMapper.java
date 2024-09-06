@@ -41,4 +41,14 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
      * @return com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.PagingDTO>
      **/
     IPage<DmpOutputTaskRecordDTO.PagingDTO> paging(Page query, @Param("params") DmpOutputTaskRecordDTO.PagingParamDTO params);
+
+    /**
+     * 导出数据查询
+     * @Author Luo_WG
+     * @Date 2024/9/5 17:40
+     * @param objectPage
+     * @param params
+     * @return com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.PagingDTO>
+     **/
+    Page<DmpOutputTaskRecordDTO.PagingDTO> listExportExcel(Page<Object> objectPage, @Param("params") DmpOutputTaskRecordDTO.ExpotParamDTO params);
 }
