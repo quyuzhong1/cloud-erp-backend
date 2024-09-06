@@ -620,7 +620,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<String> supplierIds = detailViewList.stream().map(item -> item.getMainSupplierId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<String> secondSupplierIds = detailViewList.stream().map(item -> item.getSecondSupplierId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         supplierIds.addAll(secondSupplierIds);
-        List<SupplierEntity> supplierList = supplierFeign.listByCodes(supplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
         //产品费用
         List<String> skuIds = detailViewList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
         List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
@@ -631,11 +631,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //处理产品明细
         for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList) {
             //一级供应商名称
-            Optional<SupplierEntity> mainSupplier = supplierList.stream().filter(item -> item.getCode().equals(detailDTO.getMainSupplierId())).findFirst();
-            mainSupplier.ifPresent(item -> detailDTO.setMainSupplierName(item.getName()));
+            detailDTO.setMainSupplierName(supplierMap.containsKey(detailDTO.getMainSupplierId()) ? supplierMap.get(detailDTO.getMainSupplierId()).getName() : "");
             //二级供应商名称
-            Optional<SupplierEntity> secondSupplier = supplierList.stream().filter(item -> item.getCode().equals(detailDTO.getSecondSupplierId())).findFirst();
-            secondSupplier.ifPresent(item -> detailDTO.setSecondSupplierName(item.getName()));
+            detailDTO.setSecondSupplierName(supplierMap.containsKey(detailDTO.getSecondSupplierId()) ? supplierMap.get(detailDTO.getSecondSupplierId()).getName() : "");
             //产品费用
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(detailDTO.getSkuId())).findFirst();
             if(productCostEntityOptional.isPresent()){
