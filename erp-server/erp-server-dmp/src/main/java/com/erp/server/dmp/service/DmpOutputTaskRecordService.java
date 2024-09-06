@@ -81,7 +81,7 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @param dto
      * @return java.lang.Object
      **/
-    Boolean addOutputBlack(BaseIdsDTO.RemarkDTO dto);
+    Boolean addOutputBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto);
 
     /**
      * 导出Excel数据解析

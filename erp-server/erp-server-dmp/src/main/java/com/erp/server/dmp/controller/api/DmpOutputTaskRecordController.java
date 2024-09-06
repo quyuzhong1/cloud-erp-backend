@@ -139,7 +139,7 @@ public class DmpOutputTaskRecordController extends BaseController {
      **/
     @PostMapping("/addOutputBlack")
     @LogAction(value = LogActionEnum.INSERT, desc = "加入黑名单")
-    public ApiResult<BaseResultDTO.AddDTO> addOutputBlack(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> addOutputBlack(@RequestBody @Validated DmpOutputTaskRecordDTO.AddOutputBlackDTO dto) {
         Boolean flag = dmpOutputTaskRecordService.addOutputBlack(dto);
         return flag ? success() : failure();
     }

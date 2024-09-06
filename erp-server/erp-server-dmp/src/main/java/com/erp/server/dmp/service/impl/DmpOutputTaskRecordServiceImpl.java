@@ -17,13 +17,11 @@ import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
-import com.erp.model.dmp.entity.DmpOutputTaskEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpCfgOutputBlackDataTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.dmp.service.DmpCfgOutputBlackService;
-import com.erp.server.dmp.service.DmpCfgOutputService;
-import com.erp.server.dmp.service.DmpOutputTaskService;
+import com.erp.server.dmp.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,9 +33,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
-import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.server.dmp.mapper.DmpOutputTaskRecordMapper;
-import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -66,6 +62,15 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private DmpCfgInputService dmpCfgInputService;
+
+    @Resource
+    private DmpCfgInputConvertService dmpCfgInputConvertService;
+
+    @Resource
+    private DmpCfgOutputService dmpCfgOutputService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -195,7 +200,50 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
     @Override
-    public Boolean addOutputBlack(BaseIdsDTO.RemarkDTO dto) {
+    public Boolean addOutputBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto) {
+        //勾选方式添加黑名单
+        if (CollectionUtils.isNotEmpty(dto.getIds())) {
+            checkAddBlack(dto);
+        }
+
+        //自定义条件方式添加黑名称
+        if (ObjectUtil.isNotEmpty(dto.getParams())) {
+            customizeBlack(dto);
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 自定义条件方式添加黑名称
+     * @param dto
+     */
+    private void customizeBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto) {
+        DmpOutputTaskRecordDTO.CustomizeBlackParam params = dto.getParams();
+
+        //根据dmp_cfg_input表id查询输入配置转换表
+        List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
+                .eq(DmpCfgInputConvertEntity::getMainId, params.getBillTypeId())
+                .list();
+
+
+        //查询输出任务
+        List<DmpCfgOutputEntity> dmpCfgOutputEntityList = dmpCfgOutputService.lambdaQuery()
+                .eq(DmpCfgOutputEntity::getSystemId, params.getTargetPlatformCode())
+                .list();
+
+        for (DmpCfgOutputEntity dmpCfgOutputEntity : dmpCfgOutputEntityList) {
+            //匹配对应的输出任务
+//            dmpCfgInputConvertEntityList.stream().filter(DmpCfgInputConvertEntity::get)
+
+        }
+
+    }
+
+    /**
+     * 勾选添加黑名单
+     * @param dto
+     */
+    private void checkAddBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto) {
         //获取到需要加入黑名单的任务记录
         List<DmpOutputTaskRecordEntity> recordEntityList = this.lambdaQuery().in(DmpOutputTaskRecordEntity::getId, dto.getIds()).list();
 
@@ -224,8 +272,6 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             addDTO.setRemark(dto.getRemark());
             dmpCfgOutputBlackService.add(addDTO);
         }
-
-        return Boolean.TRUE;
     }
 
     @Override

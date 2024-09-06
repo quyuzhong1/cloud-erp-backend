@@ -20,6 +20,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpCfgInputDTO;
 
+import java.util.List;
+
 /**
  * 输入信息
  *
@@ -67,6 +69,18 @@ public class DmpCfgInputController extends BaseController {
         return success();
     }
 
+    /**
+     * 查询系统单据
+     * @Author Luo_WG
+     * @Date 2024/9/5 19:28
+     * @param id 系统id
+     * @return com.common.core.controller.vo.ApiResult<?>
+     **/
+    @GetMapping("/listDmpCfgInput")
+    public ApiResult<List<DmpCfgInputDTO.ListDmpCfgInputDTO>> listDmpCfgInput(@RequestParam("id") String id) {
+        List<DmpCfgInputDTO.ListDmpCfgInputDTO> resultList = dmpCfgInputService.listDmpCfgInput(id);
+        return success(resultList);
+    }
 
 
 }

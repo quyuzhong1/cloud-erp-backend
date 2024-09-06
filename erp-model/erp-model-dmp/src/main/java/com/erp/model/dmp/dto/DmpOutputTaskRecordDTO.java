@@ -243,7 +243,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         /**
          * 定义条件
          */
-        private List<CustomizeBlackParam> params;
+        private CustomizeBlackParam params;
 
         /**
          * 备注
@@ -257,20 +257,27 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     @AllArgsConstructor
     public static class CustomizeBlackParam {
         /**
-         * 来源系统名称
-         *
+         * 来源系统
+         * 接口：/dmp/dmpBasicSystem/listDmpBasicSystem
          */
-        private String sourcePlatformName;
+        private String sourcePlatformCode;
+        /**
+         * 单据类型（级联）
+         * 接口：/dmp/dmpCfgInput/listDmpCfgInput?id = 来源系统code
+         * 接口入参：来源系统code 或者 目标平台code
+         */
+        private String billTypeId;
 
         /**
-         * 目标平台名称
+         * 目标平台
+         * 接口：/dmp/dmpBasicSystem/listDmpBasicSystem
          */
-        private String targetPlatformName;
+        private String targetPlatformCode;
 
         /**
          * 单据编码
          */
-        private String sourceCode;
+        private List<String> sourceCodeList;
     }
 
     @Data
