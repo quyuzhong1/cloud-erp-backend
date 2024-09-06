@@ -132,7 +132,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if(!save) {
             throw new ServiceException("试产申请保存失败");
         }
-        addAttachment(addDTO, pilotApplicationEntity.getId());
+        //保存附件
+        List<PilotApplicationDTO.AttachmentDTO> attachmentList = addDTO.getAttachmentList();
+        for (PilotApplicationDTO.AttachmentDTO attachmentDTO : attachmentList) {
+            PlmAttachmentEntity entity = new PlmAttachmentEntity();
+            entity.setAttachName(attachmentDTO.getAttachName());
+            entity.setAttachUrl(attachmentDTO.getAttachUrl());
+            entity.setType("pilot_application");
+            entity.setBusinessId(pilotApplicationEntity.getId());
+            plmAttachmentService.save(entity);
+        }
         sysLogService.addSysLogBySave("新增试产申请", "", pilotApplicationEntity.getId(), "");
 
         //保存产品明细
@@ -155,15 +164,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      * 新增附件，将附件名称和url保存到附件表
      */
     private <T extends PilotApplicationDTO.CommonDTO> void addAttachment(T commonDTO, String businessId) {
-        List<PilotApplicationDTO.AttachmentDTO> attachmentList = commonDTO.getAttachmentList();
-        for (PilotApplicationDTO.AttachmentDTO attachmentDTO : attachmentList) {
-            PlmAttachmentEntity entity = new PlmAttachmentEntity();
-            entity.setAttachName(attachmentDTO.getAttachName());
-            entity.setAttachUrl(attachmentDTO.getAttachUrl());
-            entity.setType("pilot_application");
-            entity.setBusinessId(businessId);
-            plmAttachmentService.save(entity);
-        }
+
     }
 
     /**
@@ -202,7 +203,18 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if(!save) {
             throw new ServiceException("试产申请保存失败");
         }
-        addAttachment(updateDTO, old.getId());
+        //保存附件
+        if(!updateDTO.getAttachmentList().isEmpty()){
+            List<PilotApplicationDTO.AttachmentDTO> attachmentList = updateDTO.getAttachmentList();
+            for (PilotApplicationDTO.AttachmentDTO attachmentDTO : attachmentList) {
+                PlmAttachmentEntity entity = new PlmAttachmentEntity();
+                entity.setAttachName(attachmentDTO.getAttachName());
+                entity.setAttachUrl(attachmentDTO.getAttachUrl());
+                entity.setType("pilot_application");
+                entity.setBusinessId(updateDTO.getId());
+                plmAttachmentService.save(entity);
+            }
+        }
 
         //保存产品明细
         if(updateDTO.getProductDetailList().isEmpty()){
@@ -420,6 +432,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        //保存数据
+        List<PilotApplicationDTO.ApproveProductDTO> productDetailList = approveDTO.getProductDetailList();
+        for (PilotApplicationDTO.ApproveProductDTO productDTO : productDetailList) {
+            pilotApplicationDetailService.lambdaUpdate()
+                    .set(PilotApplicationDetailEntity::getApproveQty, productDTO.getQty())
+                    .eq(PilotApplicationDetailEntity::getSkuId, productDTO.getSkuId())
+                    .eq(PilotApplicationDetailEntity::getMainId, entity.getId())
+                    .update();
+        }
+
         // 调用流程审核
         approveProcess(entity, dto, approveDTO);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
@@ -440,7 +462,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         approveDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
-        approveDTO.setUserId(userInfo.getUid());
+//        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setUserId("121");
         Map<String, Object> map = BeanUtil.beanToMap(entity);
         map.put("attachmentList", baseApproveDTO.getAttachmentList());
         approveDTO.setVariablesMap(map);
@@ -665,6 +688,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      */
     private List<PilotApplicationDTO.AuditorHandleDTO> getApproveProcessList(PilotApplicationEntity pilotApplicationEntity) {
         List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(pilotApplicationEntity.getId());
+        approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveTime() != null).collect(Collectors.toList());
         approveHistoryList.sort(Comparator.comparing(ProcessTaskManagementDTO.CommonDTO::getApproveTime).reversed());
         List<PilotApplicationDTO.AuditorHandleDTO> resultList = new ArrayList<>();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -823,9 +847,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             purchaseDTO.setSkuId(dto.getSkuId());
             purchaseDTO.setSkuNo(dto.getSkuNo());
             purchaseDTO.setPurchaseApplicationId("");
-//            purchaseDTO.setUnitQty(0);
-//            purchaseDTO.setVariantProperty("");
             detailList.add(purchaseDTO);
+            //更新采购申请数量
+            pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getPurchaseApplyQty, dto.getPurchaseApplyQty()).eq(PilotApplicationDetailEntity::getId, dto.getDetailId());
         }
         PurchaseApplicationDTO.AddDTO paramDto = new PurchaseApplicationDTO.AddDTO();
         paramDto.setApplyDate(LocalDate.now());
