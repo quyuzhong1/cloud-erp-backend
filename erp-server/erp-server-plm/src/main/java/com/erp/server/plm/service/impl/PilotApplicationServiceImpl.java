@@ -433,13 +433,21 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //保存数据
-        List<PilotApplicationDTO.ApproveProductDTO> productDetailList = approveDTO.getProductDetailList();
-        for (PilotApplicationDTO.ApproveProductDTO productDTO : productDetailList) {
-            pilotApplicationDetailService.lambdaUpdate()
-                    .set(PilotApplicationDetailEntity::getApproveQty, productDTO.getQty())
-                    .eq(PilotApplicationDetailEntity::getSkuId, productDTO.getSkuId())
-                    .eq(PilotApplicationDetailEntity::getMainId, entity.getId())
-                    .update();
+        if(approveDTO.getProductDetailList() != null && !approveDTO.getProductDetailList().isEmpty()){
+            List<PilotApplicationDetailDTO.ViewDTO> productDetailList = approveDTO.getProductDetailList();
+            for (PilotApplicationDetailDTO.ViewDTO productDTO : productDetailList) {
+                if(productDTO.getApproveQty() > productDTO.getApplyQty()){
+                    throw new ServiceException("产品审核数量不能大于申请数量：" + productDTO.getSkuNo());
+                }
+                pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getApproveQty, productDTO.getApproveQty()).eq(PilotApplicationDetailEntity::getId, productDTO.getId()).update();
+            }
+        }else {
+            List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, approveDTO.getIds()).list();
+            for (PilotApplicationDetailEntity detailEntity : detailList) {
+                Integer applyQty = detailEntity.getApplyQty();
+                Integer approveQty = detailEntity.getApproveQty();
+                pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getApproveQty, approveQty == 0 ? applyQty : approveQty).eq(PilotApplicationDetailEntity::getId, detailEntity.getId()).update();
+            }
         }
 
         // 调用流程审核

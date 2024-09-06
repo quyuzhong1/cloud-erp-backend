@@ -507,7 +507,7 @@ public class PilotApplicationDTO implements Serializable {
         /**
          * 产品明细
          */
-        private List<ApproveProductDTO> productDetailList;
+        private List<PilotApplicationDetailDTO.ViewDTO> productDetailList;
     }
 
     @Data

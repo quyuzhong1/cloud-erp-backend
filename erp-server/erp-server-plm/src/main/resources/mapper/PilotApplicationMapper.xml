@@ -207,7 +207,8 @@
                 pad.remark detailRemark,
                 pad.apply_qty applyQty,
                 pad.approve_qty approveQty,
-                pad.purchase_apply_qty purchaseApplyQty
+                pad.purchase_apply_qty purchaseApplyQty,
+                pad.business_type businessType
         from pilot_application pa
         left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
         <where>
