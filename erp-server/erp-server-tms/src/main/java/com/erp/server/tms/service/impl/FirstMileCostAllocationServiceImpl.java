@@ -621,8 +621,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 entity1 = list.stream().filter(e -> Objects.equals(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), e.getStatus())
                         && Objects.equals(e.getReportPeriodId(), entity.getReportPeriodId())).findFirst().orElse(null);
             } else {
+                //有实际账单或者暂估账单
                 entity1 = list.stream().filter(e -> Objects.equals(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), e.getStatus())
-                        && Objects.equals(e.getReportPeriodId(), entity.getReportPeriodId()) && Objects.equals(reconciliationId, e.getReconciliationId())).findFirst().orElse(null);
+                        && Objects.equals(e.getReportPeriodId(), entity.getReportPeriodId())
+                        && (Objects.equals(reconciliationId, e.getReconciliationId()) || StrUtil.isBlank(e.getReconciliationId()))).findFirst().orElse(null);
             }
             if (Objects.nonNull(entity1)) {
                 entity.setId(entity1.getId());
