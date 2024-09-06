@@ -57,7 +57,6 @@
         t.status AS status,
         t.create_time,
         t.update_time AS lastSyncTime,
-        t.request_data AS pushData,
         t.response_data AS returnMsg,
         t.is_need_sync AS isNeedSync
         FROM dmp_output_task_record t
@@ -85,8 +84,8 @@
         t.status AS status,
         t.create_time,
         t.update_time AS lastSyncTime,
-        t.request_data AS pushData,
-        t.response_data AS returnMsg
+        t.response_data AS returnMsg,
+        t.is_need_sync AS isNeedSync
         FROM dmp_output_task_record t
         LEFT JOIN dmp_output_task g ON t.main_id = g.id
         LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
