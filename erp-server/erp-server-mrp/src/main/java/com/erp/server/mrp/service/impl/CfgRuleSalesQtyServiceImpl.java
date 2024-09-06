@@ -325,18 +325,19 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
      * @return CfgRuleStockUpEntity
      */
     private CfgRuleSalesQtyEntity getRefByPlatformType (String platformType, String refId, String type) {
-        //查询建议明细
-        List<ReplenishmentSuggestionDetailEntity> replenishmentSuggestionDetailList = replenishmentSuggestionDetailService.listByMainIdList(Arrays.asList(refId));
-        if (CollectionUtils.isEmpty(replenishmentSuggestionDetailList)) {
-            throw new ServiceException("补货建议明细未找到");
-        }
+
         List<CfgRuleSalesQtyEntity> refEntityList = getDefaultByPlatformType(platformType, refId,type);
         if (CollectionUtils.isNotEmpty(refEntityList)) {
-            return refEntityList.get(0);
+            return refEntityList.stream().filter(obj -> StrUtil.equals(obj.getType(),CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())).findFirst().orElse(new CfgRuleSalesQtyEntity());
         }
         List<CfgRuleSalesQtyEntity> defaultList = getDefaultByPlatformType(platformType, "", type);
         if (CollectionUtils.isEmpty(defaultList)) {
             return new CfgRuleSalesQtyEntity();
+        }
+        //查询建议明细
+        List<ReplenishmentSuggestionDetailEntity> replenishmentSuggestionDetailList = replenishmentSuggestionDetailService.listByMainIdList(Arrays.asList(refId));
+        if (CollectionUtils.isEmpty(replenishmentSuggestionDetailList)) {
+            throw new ServiceException("补货建议明细未找到");
         }
         return defaultList.stream().filter(obj -> StrUtil.equals(obj.getType(),replenishmentSuggestionDetailList.get(0).getSkuType())).findFirst().orElse(new CfgRuleSalesQtyEntity());
     }

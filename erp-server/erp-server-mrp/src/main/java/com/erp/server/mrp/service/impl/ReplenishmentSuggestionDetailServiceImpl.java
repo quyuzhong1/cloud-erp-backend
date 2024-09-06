@@ -26,6 +26,6 @@ public class ReplenishmentSuggestionDetailServiceImpl extends SuperServiceImpl<R
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(ReplenishmentSuggestionDetailEntity::getMainId).list();
+        return lambdaQuery().in(ReplenishmentSuggestionDetailEntity::getMainId,mainIdList).list();
     }
 }
