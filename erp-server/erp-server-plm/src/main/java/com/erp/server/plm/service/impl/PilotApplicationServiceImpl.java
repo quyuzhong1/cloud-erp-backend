@@ -456,14 +456,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      * @param baseApproveDTO
      */
     private void approveProcess(PilotApplicationEntity entity, ApproveOneDTO dto, PilotApplicationDTO.ApproveDTO baseApproveDTO) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = UserContext.getNonLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
-//        approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setUserId("121");
+        approveDTO.setUserId(userInfo.getUid());
         Map<String, Object> map = BeanUtil.beanToMap(entity);
         map.put("attachmentList", baseApproveDTO.getAttachmentList());
         approveDTO.setVariablesMap(map);
@@ -511,7 +510,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     private Boolean validateDisApprove(PilotApplicationEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if(entity.getApproveStatus().compareTo(ApproveStatusEnum.APPROVE) != 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         // TODO 下游盘点计划单反审核
@@ -544,7 +543,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public BatchResultDTO cancelProcess(String id) {
         PilotApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到试产申请数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (entity.getApproveStatus().compareTo(ApproveStatusEnum.APPROVE_ING) != 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -556,7 +555,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
-        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        revokeDTO.setUserId(UserContext.getNonLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
