@@ -193,5 +193,9 @@ public class PilotApplicationDetailDTO implements Serializable {
         * 明细备注
         */
         private String remark;
+        /**
+         * 实际含税单价
+         */
+        private BigDecimal actualTaxCost;
     }
 }

@@ -54,6 +54,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
@@ -172,26 +173,27 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             if(StringUtils.isBlank(detailDTO.getMainSupplierId())){
                 throw new ServiceException("一级供应商不能为空");
             }
-            //校验主供应商的采购价目表
+            //实际含税单价
             PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
             priceSearchDTO.setSkuId(detailDTO.getSkuId());
             priceSearchDTO.setSkuNo(detailDTO.getSkuNo());
             priceSearchDTO.setSupplierId(detailDTO.getMainSupplierId());
             priceSearchDTO.setPurchaseQty(detailDTO.getApplyQty());
-            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPrice = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
-            detailDTO.setMainId(pilotApplicationEntity.getId());
-        }
-        for (PilotApplicationDetailDTO.AddDTO detailDTO : addDTO.getProductDetailList()) {
-            if(StringUtils.isBlank(detailDTO.getSecondSupplierId())){
-                continue;
+            try{
+                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
+                for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+                    if(detailDTO.getApproveQty() >= priceViewDTO.getMinQty() && detailDTO.getApproveQty() <= priceViewDTO.getMaxQty()){
+                        detailDTO.setActualTaxCost(priceViewDTO.getTaxPrice());
+                        break;
+                    }
+                }
+            }catch (Exception e){
+                detailDTO.setActualTaxCost(BigDecimal.ZERO);
             }
-            //校验二级供应商的采购价目表
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-            priceSearchDTO.setSkuId(detailDTO.getSkuId());
-            priceSearchDTO.setSkuNo(detailDTO.getSkuNo());
-            priceSearchDTO.setSupplierId(detailDTO.getSecondSupplierId());
-            priceSearchDTO.setPurchaseQty(detailDTO.getApplyQty());
-            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPrice = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
+            if(detailDTO.getActualTaxCost() == null){
+                detailDTO.setActualTaxCost(BigDecimal.ZERO);
+            }
+
             detailDTO.setMainId(pilotApplicationEntity.getId());
         }
         List<PilotApplicationDetailEntity> entityList = BeanMapper.copyList(addDTO.getProductDetailList(), PilotApplicationDetailEntity.class);
@@ -817,7 +819,26 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             if(productCostEntityOptional.isPresent()){
                 ProductCostEntity productCostEntity = productCostEntityOptional.get();
                 item.setTargetTaxCost(productCostEntity.getTargetTaxCost() != null ? productCostEntity.getTargetTaxCost().toPlainString() : "");
-                item.setActualTaxCost(productCostEntity.getActualTaxCost() != null ? productCostEntity.getActualTaxCost().toPlainString() : "");
+            }
+            //一级供应商的价目表
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            searchDTO.setPurchaseQty(item.getApplyQty());
+            searchDTO.setSupplierId(item.getMainSupplierId());
+            searchDTO.setSkuId(item.getSkuId());
+            searchDTO.setSkuNo(item.getSkuNo());
+            try{
+                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailFeign.getTaxPrice(searchDTO);
+                for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+                    if(item.getApplyQty() >= priceViewDTO.getMinQty() && item.getApplyQty() <= priceViewDTO.getMaxQty()){
+                        item.setActualTaxCost(priceViewDTO.getTaxPrice().toPlainString());
+                        break;
+                    }
+                }
+                if(StringUtils.isBlank(item.getActualTaxCost())){
+                    item.setActualTaxCost("无价目表");
+                }
+            }catch (Exception e){
+                item.setActualTaxCost("无价目表");
             }
         }
     }
@@ -829,7 +850,31 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        return;
+        //校验是否有采购价目表
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        for (PilotApplicationDetailEntity detailEntity : detailList) {
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            priceSearchDTO.setSkuId(detailEntity.getSkuId());
+            priceSearchDTO.setSkuNo(detailEntity.getSkuNo());
+            priceSearchDTO.setSupplierId(detailEntity.getMainSupplierId());
+            priceSearchDTO.setPurchaseQty(detailEntity.getApplyQty());
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList;
+            try{
+                taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
+            }catch (Exception e){
+                throw new ServiceException("尚未提交供应商采购价目表，请联系采购开发提交后提审: sku：{}，数量：{}", detailEntity.getSkuNo(), detailEntity.getApplyQty());
+            }
+            boolean flag = false;
+            for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+                if(detailEntity.getApplyQty() >= priceViewDTO.getMinQty() && detailEntity.getApplyQty() <= priceViewDTO.getMaxQty()){
+                    flag = true;
+                    break;
+                }
+            }
+            if(!flag){
+                throw new ServiceException("尚未提交供应商采购价目表，请联系采购开发提交后提审: sku：{}，数量：{}", detailEntity.getSkuNo(), detailEntity.getApplyQty());
+            }
+        }
     }
 
     /**
