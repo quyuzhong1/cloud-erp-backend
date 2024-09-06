@@ -113,13 +113,9 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         Set<String> userIds = dto.getUserIds();
         String departmentId = dto.getDepartmentId();
 
-        List<SysDepartmentUserEntity> dbList = this.listByDepartmentIds(Arrays.asList(departmentId));
+        List<SysDepartmentUserEntity> dbList = lambdaQuery().eq(SysDepartmentUserEntity::getDepartmentId, departmentId).in(SysDepartmentUserEntity::getUserId, userIds).list();
         List<String> existUserIdList=dbList.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
-        List<String> removeIdList = dbList.stream().filter(d -> !userIds.contains(d.getUserId())).
-                map(SysDepartmentUserEntity::getId).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(removeIdList)){
-             this.removeByIds(removeIdList);
-        }
+        
         List<String> addUserList=userIds.stream().filter(a->!existUserIdList.contains(a)).collect(Collectors.toList());
         //在添加
         List<SysDepartmentUserEntity> addList = new LinkedList<>();
@@ -132,7 +128,7 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         if (CollectionUtils.isNotEmpty(addList)) {
             return this.saveBatch(addList);
         }
-        return false;
+        return true;
     }
 
     @Override
