@@ -686,7 +686,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      */
     private List<PilotApplicationDTO.AuditorHandleDTO> getApproveProcessList(PilotApplicationEntity pilotApplicationEntity) {
         List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(pilotApplicationEntity.getId());
-        approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveTime() != null).collect(Collectors.toList());
+        approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveTime() != null).filter(item -> !item.getRemark().contains("已将任务转移给")).collect(Collectors.toList());
         approveHistoryList.sort(Comparator.comparing(ProcessTaskManagementDTO.CommonDTO::getApproveTime).reversed());
         List<PilotApplicationDTO.AuditorHandleDTO> resultList = new ArrayList<>();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -695,7 +695,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             auditorHandleDTO.setUserId(historyDTO.getApproveUserId());
             auditorHandleDTO.setUserName(historyDTO.getApproveUserName());
             auditorHandleDTO.setResult(historyDTO.getApproveStatus());
-            auditorHandleDTO.setResultName(ApproveStatusEnum.getName(historyDTO.getApproveStatus()));
+            auditorHandleDTO.setResultName(PilotApplicatonApproveHistoryEnum.getName(historyDTO.getApproveStatus()));
             if(historyDTO.getApproveTime() != null){
                 auditorHandleDTO.setTime(historyDTO.getApproveTime().format(dateTimeFormatter));
                 String desc = getTimeDesc(auditorHandleDTO);
