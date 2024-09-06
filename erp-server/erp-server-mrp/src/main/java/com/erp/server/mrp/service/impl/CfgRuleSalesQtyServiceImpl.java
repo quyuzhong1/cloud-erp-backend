@@ -15,14 +15,12 @@ import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionDetailEntity;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesQtyMapper;
-import com.erp.server.mrp.service.CfgRuleSalesDenoisingService;
-import com.erp.server.mrp.service.CfgRuleSalesFormulaService;
-import com.erp.server.mrp.service.CfgRuleSalesQtyService;
-import com.erp.server.mrp.service.OperateLogService;
+import com.erp.server.mrp.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +54,8 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     @Autowired
     private CfgRuleSalesDenoisingService cfgRuleSalesDenoisingService;
 
+    @Autowired
+    private ReplenishmentSuggestionDetailService replenishmentSuggestionDetailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -326,7 +326,10 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
      */
     private CfgRuleSalesQtyEntity getRefByPlatformType (String platformType, String refId, String type) {
         //查询建议明细
-
+        List<ReplenishmentSuggestionDetailEntity> replenishmentSuggestionDetailList = replenishmentSuggestionDetailService.listByMainIdList(Arrays.asList(refId));
+        if (CollectionUtils.isEmpty(replenishmentSuggestionDetailList)) {
+            throw new ServiceException("补货建议明细未找到");
+        }
         List<CfgRuleSalesQtyEntity> refEntityList = getDefaultByPlatformType(platformType, refId,type);
         if (CollectionUtils.isNotEmpty(refEntityList)) {
             return refEntityList.get(0);
@@ -335,7 +338,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         if (CollectionUtils.isEmpty(defaultList)) {
             return new CfgRuleSalesQtyEntity();
         }
-        return null;
+        return defaultList.stream().filter(obj -> StrUtil.equals(obj.getType(),replenishmentSuggestionDetailList.get(0).getSkuType())).findFirst().orElse(new CfgRuleSalesQtyEntity());
     }
 
 

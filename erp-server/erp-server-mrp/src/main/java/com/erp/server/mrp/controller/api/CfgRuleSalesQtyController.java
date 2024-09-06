@@ -54,6 +54,14 @@ public class CfgRuleSalesQtyController extends BaseController {
         return success(cfgRuleSalesQtyService.view(platformType));
     }
 
+    /**
+     * 补货建议查询销量详情
+     * @author will
+     * @date 2024/9/6 12:21
+     * @param platformType
+     * @param refId
+     * @return ApiResult<ViewDetailDTO>
+     */
     @GetMapping("/viewDetail")
     @LogViewService
     public ApiResult<CfgRuleSalesQtyDTO.ViewDetailDTO> view(@RequestParam("platformType") String platformType,@RequestParam("refId") String refId) {
