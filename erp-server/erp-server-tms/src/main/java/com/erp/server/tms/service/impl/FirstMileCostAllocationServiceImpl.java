@@ -791,43 +791,41 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                         detailEntity.setMidPeriodTransitCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(qty), 4));
                     }
                 }
+            } else if (judgeReconciliationDTO.isCurrencyMonthReconciliation() && Objects.nonNull(initEntity) && (BigDecimal.ZERO.compareTo(initEntity.getInitTransitCost()) != 0 || BigDecimal.ZERO.compareTo(initEntity.getInitTransitTariff()) != 0)){
+                //当月开始有实际账单 并且期初在途费用不为0
+                //若累计签收数量<发货数量：本月签收数量*单产品分摊
+                if (receiveQty <= deliveryQty) {
+                    detailEntity.setMidPeriodTransitCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(currentMonthReceiveQty), 4));
+                } else {
+                    //若累计签收数量>发货数量：(发货数量-截止上月累计签收数量)*单产品分摊
+                    //[累计签收数量>发货数量小于0不计算]
+                    int qty = deliveryQty - asLastMonthReceiveQty;
+                    if (qty <= 0) {
+                        detailEntity.setMidPeriodTransitCost(BigDecimal.ZERO);
+                    } else {
+                        detailEntity.setMidPeriodTransitCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(qty), 4));
+                    }
+                }
             } else {
                 detailEntity.setMidPeriodTransitCost(BigDecimal.ZERO);
             }
             //本期分摊费用 本月开始有账单-上月暂估账单
-            if (judgeReconciliationDTO.isCurrencyMonthReconciliation()) {
+            if (judgeReconciliationDTO.isCurrencyMonthReconciliation() && Objects.nonNull(initEntity) && (BigDecimal.ZERO.compareTo(initEntity.getInitTransitCost()) != 0 || BigDecimal.ZERO.compareTo(initEntity.getInitTransitTariff()) != 0)) {
+                detailEntity.setCurrentPeriodAllocatedCost(BigDecimal.ZERO);
+            } else if (judgeReconciliationDTO.isCurrencyMonthReconciliation()) {
+                //期初为暂估费用 且当月开始有实际账单
                 if (receiveQty <= deliveryQty) {
                     //期初费用分摊是实际还是暂估 实际时计算使用本月签收 暂估时使用累计签收
-                    if (Objects.nonNull(initEntity) && (BigDecimal.ZERO.compareTo(initEntity.getInitTransitCost()) != 0 || BigDecimal.ZERO.compareTo(initEntity.getInitTransitTariff()) != 0)) {
+                    if (judgeReconciliationDTO.isHasOtherReconciliation()){
                         detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(currentMonthReceiveQty), 4));
-                    } else {
-                        if (judgeReconciliationDTO.isHasOtherReconciliation()){
-                            detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(currentMonthReceiveQty), 4));
-                        }else {
-                            detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(asCurrentMonthReceiveQty), 4));
-                        }
+                    }else {
+                        detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(asCurrentMonthReceiveQty), 4));
                     }
                 } else {
                     detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(deliveryQty), 4));
                 }
 
-            }
-//            else if (judgeReconciliationDTO.isLastMonthReconciliation()) {
-//                //上月开始有实际账单-实际账单来源
-//                if (receiveQty <= deliveryQty) {
-//                    detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(currentMonthReceiveQty), 4));
-//                } else {
-//                    //若累计签收数量>发货数量：(发货数量-截止上月累计签收数量)*单产品分摊
-//                    //[累计签收数量>发货数量小于0不计算]
-//                    int qty = deliveryQty - asLastMonthReceiveQty;
-//                    if (qty <= 0) {
-//                        detailEntity.setCurrentPeriodAllocatedCost(BigDecimal.ZERO);
-//                    } else {
-//                        detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(qty), 4));
-//                    }
-//                }
-//            }
-            else {
+            } else {
                 detailEntity.setCurrentPeriodAllocatedCost(BigDecimal.ZERO);
             }
             //期末在途费用 计算

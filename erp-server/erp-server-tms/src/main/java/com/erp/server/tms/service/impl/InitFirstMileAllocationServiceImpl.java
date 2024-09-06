@@ -229,11 +229,30 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98014.msg);
         }
         log.info("期初头程分摊记录反审核，code=【{}】", entity.getCode());
+        //数据是否已经被引用
+        BatchResultDTO batchResultDTO = checkHasUseData(entity);
+        if (!batchResultDTO.getSuccess()){
+            return batchResultDTO;
+        }
         //更新单据为待提交
         updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         operateLogService.addModuleOperateLog(String.format("反审核了一个期初头程分摊记录【%s】", entity.getCode()), ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "反审核操作成功");
+    }
+
+    private BatchResultDTO checkHasUseData(InitFirstMileAllocationEntity entity) {
+        List<InitFirstMileAllocationDetailEntity> detailEntityList = initFirstMileAllocationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isEmpty(detailEntityList)){
+            return BatchResultDTO.success();
+        }
+        List<String> detailIds = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList = firstMileSkuCostAllocationService.listByInitFirstMileDetailIds(detailIds);
+        if (CollectionUtils.isEmpty(firstMileSkuCostAllocationEntityList)){
+            return BatchResultDTO.success();
+        }else {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"期初分摊数据已引用,不能进行反审核");
+        }
     }
 
     @Override

@@ -51,14 +51,14 @@
             rpm.id,
             rpm.org_id,
             rpm.org_name,reportPeriodMonth,reportPeriodStr
-        ORDER BY reportPeriodMonth
+        ORDER BY reportPeriodMonth desc
     </select>
     <select id="listLocalDate" resultType="com.erp.model.tms.dto.ReportPeriodMonthDTO$ListDTO">
         select
             to_char(month, 'YYYY-MM') AS reportPeriodStr
         FROM report_period_month
         where is_deleted = FALSE
-        group by month order by month desc
+        group by reportPeriodStr order by reportPeriodStr desc
     </select>
 
 
