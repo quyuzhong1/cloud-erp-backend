@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.erp.model.plm.dto.DictControllerDTO;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -19,6 +21,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpBasicSystemDTO;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 外部系统
@@ -67,6 +72,17 @@ public class DmpBasicSystemController extends BaseController {
         return success();
     }
 
+    /**
+     * 系统下拉
+     * @Author Luo_WG
+     * @Date 2024/9/5 18:42
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.dto.DictControllerDTO.DictDropDownDTO>>
+     **/
+    @GetMapping("/listDmpBasicSystem")
+    public ApiResult<List<DictControllerDTO.DictDropDownDTO>> listDmpBasicSystem(){
+        List<DictControllerDTO.DictDropDownDTO> result = dmpBasicSystemService.listDmpBasicSystem();
+        return success(result);
+    }
 
 
 }

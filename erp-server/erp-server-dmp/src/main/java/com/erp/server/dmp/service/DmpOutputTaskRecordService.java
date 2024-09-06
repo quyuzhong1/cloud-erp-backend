@@ -56,4 +56,39 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      **/
     PagingVO<DmpOutputTaskRecordDTO.PagingDTO> paging(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
 
+    /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2024/9/5 17:30
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean exportExcel(DmpOutputTaskRecordDTO.ExpotParamDTO dto);
+
+    /**
+     * 无需同步
+     * @Author Luo_WG
+     * @Date 2024/9/5 16:30
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean batchNoNeedSync(List<String> ids);
+
+    /**
+     * 加入黑名单
+     * @Author Luo_WG
+     * @Date 2024/9/5 11:36
+     * @param dto
+     * @return java.lang.Object
+     **/
+    Boolean addOutputBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto);
+
+    /**
+     * 导出Excel数据解析
+     * @Author Luo_WG
+     * @Date 2024/9/5 17:39
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.PagingDTO>
+     **/
+    PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportNewDmpPushTask(PagingDTO<DmpOutputTaskRecordDTO.ExpotParamDTO> dto);
 }

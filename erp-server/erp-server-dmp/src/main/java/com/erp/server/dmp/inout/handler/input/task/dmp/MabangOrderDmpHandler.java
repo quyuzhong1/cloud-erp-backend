@@ -36,9 +36,7 @@ public class MabangOrderDmpHandler extends MabangDmpHandler {
                     if (platformEnum == null) {
                         platformEnum = MabangSourcePlatformEnum.getByName(platform);
                     }
-                    if (platformEnum != null) {
-                        dmpDataMap.put("sourcePlatform", platformEnum.getErpPlatformCode());
-                    }
+                    dmpDataMap.put("sourcePlatform", platformEnum.getErpPlatformCode() == null ? platform : platformEnum.getErpPlatformCode());
                 }
                 //平台单号
                 Object thirdCodeObj = dmpDataMap.get("thirdCode");
