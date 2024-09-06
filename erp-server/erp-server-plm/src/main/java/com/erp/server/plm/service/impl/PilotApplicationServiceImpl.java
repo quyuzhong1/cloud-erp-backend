@@ -820,12 +820,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
         PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(applicationDTOList);
         return purchaseApplicationFeign.add(paramDto);
     }
 
     private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
+        List<String> ids = applicationDTOList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+        this.lambdaUpdate().set(PilotApplicationEntity::getOrderStatus, "order").in(PilotApplicationEntity::getId, ids);
+
         LoginUser loginUser = UserContext.getNonLoginUser();
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUid()));
         List<String> warehouseIds = applicationDTOList.stream().map(item -> item.getToWarehouseId()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -1009,6 +1013,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO pushAndSubmitPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList) {
         PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(dtoList);
         return purchaseApplicationFeign.addAndSubmit(paramDto);
