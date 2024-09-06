@@ -102,7 +102,7 @@ public class DmpOutputTaskRecordController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:dmpOutputTaskRecord:paging",
+            menuCode = "dmp:dmpOutputTaskRecord:paging",
             tableAlias = "t"
     )
     @WebAdvanceQuery(handler = DmpOutputTaskRecordQueryHandler.class)
