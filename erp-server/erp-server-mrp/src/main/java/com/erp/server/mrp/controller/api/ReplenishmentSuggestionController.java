@@ -562,4 +562,46 @@ public class ReplenishmentSuggestionController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 导出补货规则
+     * @author will
+     * @date 2024/9/5 19:25
+     * @param pagingParamDTO
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货规则")
+    @PostMapping(value = "/exportReplenishmentRule")
+    public ApiResult exportExcel(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
+        Boolean flag = replenishmentSuggestionService.exportReplenishmentRule(pagingParamDTO);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 导出历史销量
+     * @author will
+     * @date 2024/9/5 19:36
+     * @param pagingParamDTO
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出历史销量")
+    @PostMapping(value = "/exportHistorySalesQty")
+    public ApiResult exportHistorySalesQty(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
+        Boolean flag = replenishmentSuggestionService.exportHistorySalesQty(pagingParamDTO);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 导出补货计划_采购建议
+     * @author will
+     * @date 2024/9/5 19:40
+     * @param pagingParamDTO
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货计划_采购建议")
+    @PostMapping(value = "/exportPurchaseSuggestion")
+    public ApiResult exportPurchaseSuggestion(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
+        Boolean flag = replenishmentSuggestionService.exportPurchaseSuggestion(pagingParamDTO);
+        return flag == true ? success() : failure();
+    }
 }

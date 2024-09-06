@@ -181,4 +181,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         @NotBlank(message = "明细id不能为空")
         private String detailId;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class HistorySalesQtyDTO {
+
+    }
+
 }

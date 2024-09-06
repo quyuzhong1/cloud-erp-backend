@@ -205,4 +205,28 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return BatchResultDTO
      */
     BatchResultDTO updateRemark(String id, String remark);
+    /**
+     *导出补货规则
+     * @author will
+     * @date 2024/9/5 19:25
+     * @param pagingParamDTO
+     * @return Boolean
+     */
+    Boolean exportReplenishmentRule(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO);
+    /**
+     * 导出历史销量
+     * @author will
+     * @date 2024/9/5 19:36
+     * @param pagingParamDTO
+     * @return Boolean
+     */
+    Boolean exportHistorySalesQty(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO);
+    /**
+     * 导出补货计划采购建议
+     * @author will
+     * @date 2024/9/5 19:40
+     * @param pagingParamDTO
+     * @return Boolean
+     */
+    Boolean exportPurchaseSuggestion(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO);
 }
