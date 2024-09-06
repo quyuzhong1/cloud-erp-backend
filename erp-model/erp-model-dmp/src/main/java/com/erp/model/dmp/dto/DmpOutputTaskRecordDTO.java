@@ -218,7 +218,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     public static class TabListDTO {
         /**
          * 类型：/dmp/common/enumDropDown?type=DmpOutputTaskRecordStatus
-         * all全部、init:待推送、mqsuccess:mq推送成功、mqerror:mq推送失败、cosumererror:消费失败、finish:推送成功、error:推送失败
+         * all全部、init:待推送、mqsuccess:mq推送成功、mqerror:mq推送失败、cosumererror:消费失败、finish:推送成功、error:推送失败、0:无需同步
          */
         private String tabFlag;
 
