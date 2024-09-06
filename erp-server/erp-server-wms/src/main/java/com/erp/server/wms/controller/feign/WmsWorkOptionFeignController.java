@@ -58,6 +58,9 @@ public class WmsWorkOptionFeignController {
     @Resource
     private WmsDeliveryPlanService wmsDeliveryPlanService;
 
+    @Resource
+    private TransferInfoService transferInfoService;
+
     /**
      * 根据入参查询单据数量
      *
@@ -235,5 +238,30 @@ public class WmsWorkOptionFeignController {
         oneDto.setId(id);
         wmsDeliveryPlanService.approve(oneDto);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 直接调拨单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/transferInfoApprove")
+    public List<BatchResultDTO> transferInfoApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferInfoEntity> entityList = transferInfoService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"直接调拨单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInfoService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess(),Boolean.TRUE));
+            }catch (Exception e){
+                log.error("直接调拨单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 }
