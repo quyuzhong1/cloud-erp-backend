@@ -97,6 +97,8 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto);
 
+    void handleData(LogisticsBillCostEntity entity);
+
     /**
      * @description: 分页数据处理
      * @author Will
