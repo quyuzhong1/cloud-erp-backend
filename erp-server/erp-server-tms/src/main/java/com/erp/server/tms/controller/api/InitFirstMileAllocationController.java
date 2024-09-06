@@ -309,11 +309,6 @@ public class InitFirstMileAllocationController extends BaseController {
      * @date 2024-8-15 10:54
      */
     @PostMapping("/exportExcel")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "tms:initFirstMileAllocation:exportExcel",
-//            tableAlias = "a"
-//    )
     @WebAdvanceQuery(handler = InitFirstMileAllocationQueryHandler.class)
     public ApiResult<?> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto) {
         initFirstMileAllocationService.exportExcel(dto);

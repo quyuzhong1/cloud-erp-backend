@@ -54,4 +54,8 @@ public interface ExportTmsFeign {
     PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(@RequestBody PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportFirstMileCostAllocation")
     PagingVO<FirstMileCostAllocationDTO.PagingVO> exportFirstMileCostAllocation(@RequestBody PagingDTO<FirstMileCostAllocationDTO.PagingParamDTO> params);
+    @PostMapping("/feign/export/exportInitFirstMileAllocation")
+    PagingVO<InitFirstMileAllocationDTO.PagingVO> exportInitFirstMileAllocation(@RequestBody PagingDTO<InitFirstMileAllocationDTO.PagingParamDTO> params);
+    @PostMapping("/feign/export/exportInventorySkuCost")
+    PagingVO<InventorySkuCostDTO.PagingVO> exportInventorySkuCost(@RequestBody PagingDTO<InventorySkuCostDTO.PagingParamDTO> params);
 }

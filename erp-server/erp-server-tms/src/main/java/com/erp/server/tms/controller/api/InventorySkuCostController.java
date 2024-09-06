@@ -295,15 +295,10 @@ public class InventorySkuCostController extends BaseController {
      * @date 2024-8-15 10:54
      */
     @PostMapping("/exportExcel")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "tms:inventorySkuCost:exportExcel",
-//            tableAlias = "a"
-//    )
     @WebAdvanceQuery(handler = InventorySkuCostQueryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody @Valid InventorySkuCostDTO.PagingParamDTO dto, HttpServletResponse response) {
-        inventorySkuCostService.exportExcel(dto, response);
-        return success();
+    public ApiResult<?> exportExcel(@RequestBody @Valid InventorySkuCostDTO.PagingParamDTO dto) {
+        inventorySkuCostService.exportExcel(dto);
+        return success(Boolean.TRUE);
     }
     /**
      * 下载模板

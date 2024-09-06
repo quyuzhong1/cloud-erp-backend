@@ -17,8 +17,6 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.TabApproveStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -27,6 +25,7 @@ import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.convert.InventorySkuCostConverter;
@@ -66,6 +65,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_INVENTORY_SKU_COST;
+
 /**
  * <p>
  * SKU成本 服务实现类
@@ -97,6 +98,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
     @Resource
     private FirstMileSkuCostRefService firstMileSkuCostRefService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -284,25 +287,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     }
 
     @Override
-    public void exportExcel(InventorySkuCostDTO.PagingParamDTO dto, HttpServletResponse response) {
-        dto.setPermissionSql(dto.getPermissionSql());
-        List<InventorySkuCostDTO.PagingVO> list = baseMapper.exportList(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        // 填充字段值
-        fillPagingDb(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/inventorySkuCostExport.xlsx";
-        String name = "SKU成本导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportExcel(InventorySkuCostDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("SKU成本导出", EXPORT_TMS_INVENTORY_SKU_COST.getCode(), dto);
     }
 
     @Override

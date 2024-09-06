@@ -58,6 +58,10 @@ public class ExportTmsFeignController {
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
+    @Resource
+    private InitFirstMileAllocationService initFirstMileAllocationService;
+    @Resource
+    private InventorySkuCostService inventorySkuCostService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -230,9 +234,34 @@ public class ExportTmsFeignController {
         return tmsWarehouseMappingService.exportWarehouseMapping(dto);
     }
 
+    /**
+     * 费用分摊
+     * @param params
+     * @return
+     */
     @PostMapping("/exportFirstMileCostAllocation")
     @WebAdvanceQuery(handler = FirstMileCostAllocationQueryHandler.class)
     public PagingVO<FirstMileCostAllocationDTO.PagingVO> exportFirstMileCostAllocation(@RequestBody PagingDTO<FirstMileCostAllocationDTO.PagingParamDTO> params) {
         return firstMileCostAllocationService.paging(params);
+    }
+
+    /**
+     * 期初头程分摊
+     * @param params
+     * @return
+     */
+    @PostMapping("/exportInitFirstMileAllocation")
+    PagingVO<InitFirstMileAllocationDTO.PagingVO> exportInitFirstMileAllocation(@RequestBody PagingDTO<InitFirstMileAllocationDTO.PagingParamDTO> params){
+        return initFirstMileAllocationService.paging(params);
+    }
+
+    /**
+     * sku成本
+     * @param params
+     * @return
+     */
+    @PostMapping("/exportInventorySkuCost")
+    PagingVO<InventorySkuCostDTO.PagingVO> exportInventorySkuCost(@RequestBody PagingDTO<InventorySkuCostDTO.PagingParamDTO> params){
+        return inventorySkuCostService.paging(params);
     }
 }
