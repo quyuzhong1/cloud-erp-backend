@@ -11,6 +11,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
+import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -84,9 +85,22 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         List<TmsCostDetailEntity> list = BeanMapperUtils.copyList(TmsCostDetailEntity.class, costDetailList);
 
         //自发货要根据id判断删除
-        if ((DictCostAttributionEnum.SELF_DELIVER.equals(dictCostAttributionEnum) || DictCostAttributionEnum.FIRST_MILE.equals(dictCostAttributionEnum)) && !isImport) {
+        if (DictCostAttributionEnum.SELF_DELIVER.equals(dictCostAttributionEnum) && !isImport) {
             List<TmsCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
 
+            List<String> deleteIds = getDeleteIds(list, oldList);
+            if (CollectionUtils.isNotEmpty(deleteIds)) {
+                List<TmsCostDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+                //操作日志
+                List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCfgCostId())).collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("删除了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
+                this.removeByIds(deleteIds);
+            }
+        }
+        //头程要根据id判断删除
+        if (DictCostAttributionEnum.FIRST_MILE.equals(dictCostAttributionEnum)) {
+            List<TmsCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
+            oldList = oldList.stream().filter(e -> DetailReconciliationTypeEnum.ACTUAL.getCode().equals(e.getType())).collect(Collectors.toList());
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
                 List<TmsCostDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
