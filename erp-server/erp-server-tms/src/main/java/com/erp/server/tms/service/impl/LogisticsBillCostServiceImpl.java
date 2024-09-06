@@ -418,7 +418,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     /**
     * 新增修改处理数据
     */
-    private void handleData(LogisticsBillCostEntity entity) {
+    @Override
+    public void handleData(LogisticsBillCostEntity entity) {
 
         //物流单号
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
