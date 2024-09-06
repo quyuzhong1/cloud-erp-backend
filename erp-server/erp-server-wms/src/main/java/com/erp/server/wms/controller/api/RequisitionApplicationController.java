@@ -25,6 +25,7 @@ import com.erp.server.wms.service.PickingListsService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import com.erp.server.wms.service.impl.PackingTaskServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -515,5 +516,14 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/fbaBindShipmentDetailView")
     public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO>> fbaBindShipmentDetailView(@RequestBody @Validated RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto) {
         return success(requisitionApplicationService.fbaBindShipmentDetailView(dto));
+    }
+
+    /**
+     * 要货申请fba 来源生成发货单
+     **/
+    @PostMapping("/generateDeliveryWithFba")
+    public ApiResult<T> generateDeliveryWithFba(@RequestBody @Validated RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto) {
+        requisitionApplicationService.generateDeliveryWithFba(dto);
+        return success();
     }
 }

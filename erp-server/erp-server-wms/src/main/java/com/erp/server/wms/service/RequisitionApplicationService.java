@@ -218,4 +218,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentMatching(RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto);
 
     List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO> fbaBindShipmentDetailView(RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto);
+
+    void generateDeliveryWithFba(RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto);
 }

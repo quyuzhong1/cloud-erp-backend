@@ -22,9 +22,13 @@ public interface FbaShipmentPackingService extends SuperService<FbaShipmentPacki
 
     List<FbaShipmentPackingEntity> getByMainIdAndBoxNo(String mainId, String boxNo);
 
+    List<FbaShipmentPackingEntity> listByMains(List<String> mainIds);
+
     List<FbaShipmentPackingDTO.ViewDTO> listPacking(List<String> ids);
 
     void packingExport(FbaShipmentDTO.PagingParamDTO dto);
 
     PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
+
+    void updateCartonId(String cartonId, String fbaShipmentId, String fbaBoxNo);
 }

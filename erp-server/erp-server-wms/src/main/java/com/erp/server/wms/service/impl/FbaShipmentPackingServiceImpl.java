@@ -119,6 +119,14 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
     }
 
     @Override
+    public List<FbaShipmentPackingEntity> listByMains(List<String> mainIds) {
+        if(CollectionUtil.isEmpty(mainIds)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(FbaShipmentPackingEntity::getMainId,mainIds).list();
+    }
+
+    @Override
     public List<FbaShipmentPackingDTO.ViewDTO> listPacking(List<String> ids) {
         List<FbaShipmentEntity> fbaShipmentEntity = fbaShipmentService.listByIds(ids);
         List<String> errorCodes = fbaShipmentEntity.stream().filter(v->!v.getIsPackingDownload()).map(FbaShipmentEntity::getCode).collect(Collectors.toList());
@@ -137,5 +145,10 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
     public PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
         Page<FbaShipmentPackingDTO.ViewDTO> page = baseMapper.exportFbaShipmentPacking(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         return new PagingVO<>(page.getRecords(), (int) page.getTotal(),dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public void updateCartonId(String cartonId, String fbaShipmentId, String fbaBoxNo) {
+        this.lambdaUpdate().set(FbaShipmentPackingEntity::getCartonId,cartonId).eq(FbaShipmentPackingEntity::getMainId,fbaShipmentId).eq(FbaShipmentPackingEntity::getBoxNo,fbaBoxNo).update();
     }
 }

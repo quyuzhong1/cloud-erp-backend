@@ -33,6 +33,17 @@ public class RequisitionApplicationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    public static class GenerateDeliveryWithFbaDTO {
+
+        @NotEmpty(message = "详情不能为空")
+        @Valid
+        private List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentViewDTOS;;
+    }
+    /**
+     * fba下推发货单绑定货件View
+     */
+    @Data
+    @NoArgsConstructor
     public static class FbaBindShipmentDetailViewDTO {
 
         /**
@@ -102,7 +113,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 匹配的装箱Id
          */
-        @NotNull(message = "装箱不能为空")
+        @NotEmpty(message = "装箱不能为空")
         private List<String> matchedCartonIds;
 
     }
@@ -122,7 +133,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 未匹配的装箱信息
          */
-        @NotNull(message = "待匹配装箱信息不能为空")
+        @NotEmpty(message = "待匹配装箱信息不能为空")
         private List<FbaBindShipmentViewDTO> fbaBindShipmentViewDTOList;
     }
 
@@ -136,6 +147,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 要货申请id
          */
+        @NotBlank(message = "要货申请不能为空")
         private String id;
 
         /**
