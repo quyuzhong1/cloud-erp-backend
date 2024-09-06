@@ -859,9 +859,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : applicationDTOList) {
-            if(dto.getPurchaseApplyQty() > dto.getSpareApplyQty()){
+            /*if(dto.getPurchaseApplyQty() > dto.getSpareApplyQty()){
                 throw new ServiceException("采购申请量不能大于审核数量");
-            }
+            }*/
 
             PurchaseApplicationDetailDTO.AddDTO purchaseDTO = new PurchaseApplicationDetailDTO.AddDTO();
             purchaseDTO.setApplyQty(dto.getPurchaseApplyQty());
