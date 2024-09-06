@@ -1352,7 +1352,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
         List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
         List<String> paperSizeList = channelInfoList.stream().map(req -> req.getPaperSize()).distinct().collect(Collectors.toList());
-        if (paperSizeList.size() > 1) {
+        //打印配货单默认100*100不校验
+        if (paperSizeList.size() > 1 && !SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(param.getPrintType())) {
             throw new ServiceException(ApiError.PAPER_SIZE_INCONSISTENT_NOT_PRINT);
         }
 
