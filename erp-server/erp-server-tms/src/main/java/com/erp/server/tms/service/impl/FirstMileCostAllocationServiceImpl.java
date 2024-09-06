@@ -238,6 +238,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)) {
             return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "发货单明细不能为空");
         }
+        if (Objects.nonNull(entity.getReportPeriodMonth())){
+            //重置核算区间时间
+            entity.setReportPeriodMonth(entity.getReportPeriodMonth().withDayOfMonth(1));
+        }
         //检查除当前费用分摊 核算月份外是否还存在未确认分摊数据
         List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = listBySourceIds(Collections.singletonList(entity.getSourceId()), null);
         if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
