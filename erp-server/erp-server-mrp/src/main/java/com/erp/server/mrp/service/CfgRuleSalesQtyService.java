@@ -42,7 +42,7 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @param platformType
      * @return ViewDTO
      */
-    CfgRuleSalesQtyDTO.ViewDTO view(String platformType);
+    CfgRuleSalesQtyDTO.ViewDTO view(String platformType,String refId);
     /**
      * 根据来源id删除
      * @author will

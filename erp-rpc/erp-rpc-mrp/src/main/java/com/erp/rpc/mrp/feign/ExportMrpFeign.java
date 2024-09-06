@@ -10,8 +10,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = "erp-mrp", contextId = "exportMrpFeign", configuration = ExportFeignConfig.class)
 public interface ExportMrpFeign {
-
+    /**
+     * 导出历史销量（补货建议）
+     */
     @PostMapping("/feign/export/exportHistorySalesQty")
     PagingVO<ReplenishmentSuggestionDTO.HistorySalesQtyDTO> exportHistorySalesQty(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
-
+    /**
+     * 导出采购建议（补货建议）
+     */
+    @PostMapping("/feign/export/exportPurchaseSuggestion")
+    PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> exportPurchaseSuggestion(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
+    /**
+     * 导出补货规则（补货建议）
+     */
+    @PostMapping("/feign/export/exportReplenishmentRule")
+    PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleDTO> exportReplenishmentRule(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
 }

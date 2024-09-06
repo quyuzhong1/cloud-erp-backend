@@ -188,4 +188,16 @@ public class ReplenishmentSuggestionDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseSuggestionDTO {
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ReplenishmentRuleDTO {
+
+    }
+
 }

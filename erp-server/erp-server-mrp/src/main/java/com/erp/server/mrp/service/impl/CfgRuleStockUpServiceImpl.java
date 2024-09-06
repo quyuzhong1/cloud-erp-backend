@@ -91,7 +91,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Override
     public CfgRuleStockUpDTO.ViewDTO  view(String platformType,String refId) {
         CfgRuleStockUpDTO.ViewDTO viewDTO = new CfgRuleStockUpDTO.ViewDTO();
-        CfgRuleStockUpEntity oldEntity = this.getDefaultByPlatformType(platformType);
+        CfgRuleStockUpEntity oldEntity = this.getByPlatformType(platformType,refId);
         if (ObjectUtil.isEmpty(oldEntity)) {
             return viewDTO;
         }

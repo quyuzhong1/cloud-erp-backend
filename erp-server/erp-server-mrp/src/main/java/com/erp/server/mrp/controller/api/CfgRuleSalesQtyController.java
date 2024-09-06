@@ -50,7 +50,7 @@ public class CfgRuleSalesQtyController extends BaseController {
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<CfgRuleSalesQtyDTO.ViewDTO> view(@RequestParam("platformType") String platformType) {
-        return success(cfgRuleSalesQtyService.view(platformType));
+    public ApiResult<CfgRuleSalesQtyDTO.ViewDTO> view(@RequestParam("platformType") String platformType,@RequestParam("refId") String refId) {
+        return success(cfgRuleSalesQtyService.view(platformType,refId));
     }
 }

@@ -113,11 +113,11 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     }
 
     @Override
-    public CfgRuleSalesQtyDTO.ViewDTO view(String platformType) {
+    public CfgRuleSalesQtyDTO.ViewDTO view(String platformType,String refId) {
         CfgRuleSalesQtyDTO.ViewDTO viewDTO = new CfgRuleSalesQtyDTO.ViewDTO();
 
         //销量信息
-        List<CfgRuleSalesQtyEntity> list = this.getByPlatformType(platformType,"","");
+        List<CfgRuleSalesQtyEntity> list = this.getByPlatformType(platformType,refId,"");
         if (CollectionUtils.isEmpty(list)) {
             return  viewDTO;
         }
