@@ -62,7 +62,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     public Boolean update(CfgRuleStockUpDTO.UpdateDTO updateDTO) {
         CfgRuleStockUpEntity cfgRuleStockUpEntity =  BeanMapperUtils.map(CfgRuleStockUpEntity.class, updateDTO);
         //旧数据
-        CfgRuleStockUpEntity old = this.getByPlatformType(updateDTO.getPlatformType(),updateDTO.getRefId());
+        CfgRuleStockUpEntity old = this.getDefaultByPlatformType(updateDTO.getPlatformType(),updateDTO.getRefId());
         if (ObjectUtil.isNotEmpty(old)) {
             cfgRuleStockUpEntity.setId(old.getId());
         }
@@ -91,7 +91,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Override
     public CfgRuleStockUpDTO.ViewDTO  view(String platformType,String refId) {
         CfgRuleStockUpDTO.ViewDTO viewDTO = new CfgRuleStockUpDTO.ViewDTO();
-        CfgRuleStockUpEntity oldEntity = this.getByPlatformType(platformType,refId);
+        CfgRuleStockUpEntity oldEntity = this.getRefByPlatformType(platformType,refId);
         if (ObjectUtil.isEmpty(oldEntity)) {
             return viewDTO;
         }
@@ -163,7 +163,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Override
     @Cacheable(cacheNames = "cache:mrp:getDefaultCfgRuleStockUp",keyGenerator = "myKeyGenerator")
     public CfgRuleStockUpEntity getDefaultCfgRuleStockUp(String platformType) {
-        return getDefaultByPlatformType(platformType);
+        return getDefaultByPlatformType(platformType,"");
     }
 
     /**
@@ -173,27 +173,28 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
      * @param platformType
      * @return CfgRuleStockUpEntity
      */
-    private CfgRuleStockUpEntity getDefaultByPlatformType (String platformType) {
-        return lambdaQuery().eq(CfgRuleStockUpEntity::getPlatformType,platformType)
-                .eq(CfgRuleStockUpEntity::getRefId,"")
-                .last("limit 1")
-                .one();
-    }
-
-    /**
-     * 查询最新的备货信息
-     * @author will
-     * @date 2024/9/4 14:43
-     * @param platformType
-     * @param refId
-     * @return CfgRuleStockUpEntity
-     */
-    private CfgRuleStockUpEntity getByPlatformType (String platformType,String refId) {
+    private CfgRuleStockUpEntity getDefaultByPlatformType (String platformType,String refId) {
         return lambdaQuery().eq(CfgRuleStockUpEntity::getPlatformType,platformType)
                 .eq(StrUtil.isNotBlank(refId),CfgRuleStockUpEntity::getRefId,refId)
                 .eq(StrUtil.isBlank(refId),CfgRuleStockUpEntity::getRefId,"")
                 .last("limit 1")
                 .one();
+    }
+
+    /**
+     * 查询来源查询
+     * @author will
+     * @date 2024/9/6 11:41
+     * @param platformType
+     * @param refId
+     * @return CfgRuleStockUpEntity
+     */
+    private CfgRuleStockUpEntity getRefByPlatformType (String platformType,String refId) {
+        CfgRuleStockUpEntity refEntity = getDefaultByPlatformType(platformType, refId);
+        if (ObjectUtil.isNotEmpty(refEntity)) {
+            return refEntity;
+        }
+        return getDefaultByPlatformType(platformType,"");
     }
 
     /**

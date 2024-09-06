@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -85,7 +86,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     public Boolean update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetailDTO) {
         CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity =  BeanMapperUtils.map(CfgRuleSalesQtyEntity.class, updateDetailDTO);
         //旧数据
-        List<CfgRuleSalesQtyEntity> oldList = this.getByPlatformType(updateDetailDTO.getPlatformType(),updateDetailDTO.getRefId(),updateDetailDTO.getType());
+        List<CfgRuleSalesQtyEntity> oldList = this.getDefaultByPlatformType(updateDetailDTO.getPlatformType(),updateDetailDTO.getRefId(),updateDetailDTO.getType());
         if (CollectionUtils.isNotEmpty(oldList)) {
             cfgRuleSalesQtyEntity.setId(oldList.get(0).getId());
         }
@@ -113,11 +114,11 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     }
 
     @Override
-    public CfgRuleSalesQtyDTO.ViewDTO view(String platformType,String refId) {
+    public CfgRuleSalesQtyDTO.ViewDTO view(String platformType) {
         CfgRuleSalesQtyDTO.ViewDTO viewDTO = new CfgRuleSalesQtyDTO.ViewDTO();
 
         //销量信息
-        List<CfgRuleSalesQtyEntity> list = this.getByPlatformType(platformType,refId,"");
+        List<CfgRuleSalesQtyEntity> list = this.getDefaultByPlatformType(platformType,"","");
         if (CollectionUtils.isEmpty(list)) {
             return  viewDTO;
         }
@@ -174,6 +175,51 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     }
 
     @Override
+    public CfgRuleSalesQtyDTO.ViewDetailDTO viewDetail(String platformType, String refId) {
+
+        //销量信息
+        CfgRuleSalesQtyEntity entity = this.getRefByPlatformType(platformType,refId,"");
+        //日销量数据
+        List<CfgRuleSalesFormulaEntity> salesFormulaList = cfgRuleSalesFormulaService.listBySalesQtyIdList(Arrays.asList(entity.getId()));
+        //销量去噪
+        List<CfgRuleSalesDenoisingEntity> salesDenoisingList = cfgRuleSalesDenoisingService.listBySalesQtyIdList(Arrays.asList(entity.getId()));
+
+        CfgRuleSalesQtyDTO.ViewDetailDTO viewDetailDTO = new CfgRuleSalesQtyDTO.ViewDetailDTO();
+        BeanMapperUtils.copy(entity,viewDetailDTO);
+        //默认日销量
+        CfgRuleSalesFormulaEntity defaultSalesFormula = salesFormulaList.stream().filter(obj ->
+                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) && StrUtil.equals(obj.getSalesQtyId(),entity.getId())
+        ).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(defaultSalesFormula)) {
+            CfgRuleSalesFormulaDTO.ViewDTO defaultViewDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.ViewDTO.class, defaultSalesFormula);
+            viewDetailDTO.setDefaultSalesQtyDTO(defaultViewDTO);
+        }
+        //动态日销量
+        List<CfgRuleSalesFormulaEntity> dynamicSalesFormulaList = salesFormulaList.stream().filter(obj ->
+                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode()) && StrUtil.equals(obj.getSalesQtyId(),entity.getId())
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(dynamicSalesFormulaList)) {
+            List<CfgRuleSalesFormulaDTO.ViewDTO> dynamicViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.ViewDTO.class, dynamicSalesFormulaList);
+            viewDetailDTO.setDynamicSalesQtyList(dynamicViewList);
+        }
+        //固定日销量
+        List<CfgRuleSalesFormulaEntity> fixedSalesFormulaList = salesFormulaList.stream().filter(obj ->
+                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) && StrUtil.equals(obj.getSalesQtyId(),entity.getId())
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(fixedSalesFormulaList)) {
+            List<CfgRuleSalesFormulaDTO.ViewDTO> fixedViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.ViewDTO.class, fixedSalesFormulaList);
+            viewDetailDTO.setFixedSalesQtyList(fixedViewList);
+        }
+        //去噪信息
+        List<CfgRuleSalesDenoisingEntity> denoisingList = salesDenoisingList.stream().filter(obj -> StrUtil.equals(obj.getSalesQtyId(), entity.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(denoisingList)) {
+            List<CfgRuleSalesDenoisingDTO.ViewDTO> salesDenoisingViewList = BeanMapperUtils.copyList(CfgRuleSalesDenoisingDTO.ViewDTO.class, denoisingList);
+            viewDetailDTO.setSalesDenoisingList(salesDenoisingViewList);
+        }
+        return viewDetailDTO;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteByRefId(String refId) {
         //销量数据
@@ -202,6 +248,8 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         }
         return lambdaQuery().in(CfgRuleSalesQtyEntity::getRefId,refIdList).list();
     }
+
+
 
     @Override
     @Cacheable(cacheNames = "cache:mrp:getDefaultCfgRuleSalesQty",keyGenerator = "myKeyGenerator")
@@ -259,7 +307,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
      * @param platformType
      * @return List<CfgRuleSalesQtyEntity>
      */
-    private List<CfgRuleSalesQtyEntity> getByPlatformType (String platformType,String refId,String type) {
+    private List<CfgRuleSalesQtyEntity> getDefaultByPlatformType(String platformType, String refId, String type) {
        return lambdaQuery()
                .eq(CfgRuleSalesQtyEntity::getPlatformType,platformType)
                .eq(StrUtil.isNotBlank(refId),CfgRuleSalesQtyEntity::getRefId,refId)
@@ -267,6 +315,29 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
                .eq(StrUtil.isNotBlank(type),CfgRuleSalesQtyEntity::getType,type)
                .list();
     }
+
+    /**
+     * 查询来源查询
+     * @author will
+     * @date 2024/9/6 11:41
+     * @param platformType
+     * @param refId
+     * @return CfgRuleStockUpEntity
+     */
+    private CfgRuleSalesQtyEntity getRefByPlatformType (String platformType, String refId, String type) {
+        //查询建议明细
+
+        List<CfgRuleSalesQtyEntity> refEntityList = getDefaultByPlatformType(platformType, refId,type);
+        if (CollectionUtils.isNotEmpty(refEntityList)) {
+            return refEntityList.get(0);
+        }
+        List<CfgRuleSalesQtyEntity> defaultList = getDefaultByPlatformType(platformType, "", type);
+        if (CollectionUtils.isEmpty(defaultList)) {
+            return new CfgRuleSalesQtyEntity();
+        }
+        return null;
+    }
+
 
     private CfgRuleSalesQtyEntity getByPlatformTypeAndType(String platformType, String type) {
         return getOne(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery().eq(CfgRuleSalesQtyEntity::getPlatformType, platformType)

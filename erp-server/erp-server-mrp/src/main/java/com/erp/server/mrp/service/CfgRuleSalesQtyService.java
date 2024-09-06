@@ -42,7 +42,7 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @param platformType
      * @return ViewDTO
      */
-    CfgRuleSalesQtyDTO.ViewDTO view(String platformType,String refId);
+    CfgRuleSalesQtyDTO.ViewDTO view(String platformType);
     /**
      * 根据来源id删除
      * @author will
@@ -79,4 +79,13 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @return List<CfgRuleSalesQtyEntity>
      */
     List<CfgRuleSalesQtyEntity> listByRefIdList(List<String> refIdList);
+    /**
+     * 根据来源id查询
+     * @author will
+     * @date 2024/9/6 11:47
+     * @param platformType
+     * @param refId
+     * @return ViewDetailDTO
+     */
+    CfgRuleSalesQtyDTO.ViewDetailDTO viewDetail(String platformType, String refId);
 }
