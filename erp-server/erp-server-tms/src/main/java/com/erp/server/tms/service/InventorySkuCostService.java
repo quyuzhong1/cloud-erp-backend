@@ -100,9 +100,8 @@ public interface InventorySkuCostService extends SuperService<InventorySkuCostEn
     /**
      * 导出excel
      * @param dto
-     * @param response
      */
-    void exportExcel(InventorySkuCostDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportExcel(InventorySkuCostDTO.PagingParamDTO dto);
 
     /**
      * 下载导入模板

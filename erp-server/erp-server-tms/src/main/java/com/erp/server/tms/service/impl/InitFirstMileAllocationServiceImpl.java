@@ -178,25 +178,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
      */
     @Override
     public void exportExcel(InitFirstMileAllocationDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("费用分摊明细导出", EXPORT_TMS_FIRST_MILE_COST_ALLOCATION.getCode(), dto);
-//        dto.setPermissionSql(dto.getPermissionSql());
-//        List<InitFirstMileAllocationDTO.PagingVO> list = baseMapper.exportList(dto);
-//        if (CollectionUtils.isEmpty(list)) {
-//            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-//        }
-//        // 填充字段值
-//        fillPagingDb(list);
-//        StringBuffer sb = new StringBuffer();
-//        String excelPath = "excel/initFirstMileAllocationExport.xlsx";
-//        String name = "期初头程分摊导出";
-//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-//        sb.append(date);
-//        sb.append(name);
-//        try {
-//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-//        } catch (IOException e) {
-//            throw new ServiceException(ApiError.ERROR_1015);
-//        }
+        downloadTaskFeign.saveDownloadTask("期初头程分摊导出", EXPORT_TMS_FIRST_MILE_COST_ALLOCATION.getCode(), dto);
     }
 
     @Override
