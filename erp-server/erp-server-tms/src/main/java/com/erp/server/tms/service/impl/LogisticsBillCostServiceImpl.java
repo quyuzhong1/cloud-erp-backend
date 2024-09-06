@@ -689,8 +689,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByIds(billIds);
         List<LogisticsBillCostEntity> updateBillList = new ArrayList<>();
         //根据物流单进行处理
-        detailEntityList = detailEntityList.stream().filter(e -> DetailReconciliationTypeEnum.ACTUAL.getCode().equals(e.getType())).collect(Collectors.toList());
-        for (TmsFirstMileReconciliationDetailEntity detailEntity : detailEntityList){
+        List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> DetailReconciliationTypeEnum.ACTUAL.getCode().equals(e.getType())).collect(Collectors.toList());
+        for (TmsFirstMileReconciliationDetailEntity detailEntity : detailEntityList1){
             //获取费用记录
             LogisticsBillCostEntity entity = billEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(detailEntity.getSourceId(), e.getLogisticsBillId())
                         && Objects.equals(mainEntity.getId(), e.getReconciliationId())).findFirst().orElse(null);
@@ -729,7 +729,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 entity.setUpdateList(updateList);
             }else {
                 //如果费用明细为空，则判断对账单次数是否大于1 大于1则创建费用明细
-                if (Objects.equals(DetailReconciliationTypeEnum.ACTUAL.getCode(), detailEntity.getType()) || Objects.equals(DetailReconciliationTypeEnum.ESTIMATED.getCode(), detailEntity.getType())){
+                if (Objects.equals(DetailReconciliationTypeEnum.ACTUAL.getCode(), detailEntity.getType())){
                     buildFirstMileCostDetail(detailEntity,entity);
                 }
             }
