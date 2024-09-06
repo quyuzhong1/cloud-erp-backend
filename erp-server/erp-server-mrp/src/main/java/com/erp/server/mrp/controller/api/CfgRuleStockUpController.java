@@ -65,7 +65,7 @@ public class CfgRuleStockUpController extends BaseController {
      */
     @GetMapping("/viewByRefId")
     @LogViewService
-    public ApiResult<CfgRuleStockUpDTO.ViewDTO> view(@RequestParam("platformType") String platformType,@RequestParam("refId") String refId) {
+    public ApiResult<CfgRuleStockUpDTO.ViewDTO> viewByRefId(@RequestParam("platformType") String platformType,@RequestParam("refId") String refId) {
         return success(cfgRuleStockUpService.view(platformType,refId));
     }
 }

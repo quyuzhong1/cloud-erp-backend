@@ -461,4 +461,149 @@ public class CfgRuleStockUpDTO implements Serializable {
         }
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class StockUpExportDTO {
+        /**
+         * 平台
+         */
+        private String platform;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 店铺
+         */
+        private String shopName;
+
+        /**
+         * 采购审批（天）
+         */
+        private Integer purchaseApproveDays;
+
+        /**
+         * 生产周期（天）
+         */
+        private Integer productionDays;
+
+        /**
+         * 供应商发货（天）
+         */
+        private Integer supplierDeliveryDays;
+
+        /**
+         * 质检入库（天）
+         */
+        private Integer qcDays;
+
+        /**
+         * 采购频率（天）
+         */
+        private Integer purchaseCycleDays;
+
+        /**
+         * 物流时效（空运）
+         */
+        private Integer oneLogisticsDays;
+
+        /**
+         * 发货频率（空运)
+         */
+        private Integer oneLogisticsCycleDays;
+
+        /**
+         * 优先级（空运)
+         */
+        private Integer oneIndex;
+
+        /**
+         * 物流时效（快递）
+         */
+        private Integer twoLogisticsDays;
+
+        /**
+         * 发货频率（快递)
+         */
+        private Integer twoLogisticsCycleDays;
+
+        /**
+         * 优先级（快递)
+         */
+        private Integer twoIndex;
+
+        /**
+         * 物流时效（海运散装）
+         */
+        private Integer threeLogisticsDays;
+
+        /**
+         * 发货频率（海运散装)
+         */
+        private Integer threeLogisticsCycleDays;
+
+        /**
+         * 优先级（海运散装)
+         */
+        private Integer threeIndex;
+
+        /**
+         * 物流时效（海运整柜）
+         */
+        private Integer fourLogisticsDays;
+
+        /**
+         * 发货频率（海运整柜)
+         */
+        private Integer fourLogisticsCycleDays;
+
+        /**
+         * 优先级（海运整柜)
+         */
+        private Integer fourIndex;
+
+        /**
+         * 物流时效（铁运散装）
+         */
+        private Integer fiveLogisticsDays;
+
+        /**
+         * 发货频率（铁运散装)
+         */
+        private Integer fiveLogisticsCycleDays;
+
+        /**
+         * 优先级（铁运散装)
+         */
+        private Integer fiveIndex;
+
+        /**
+         * 物流时效（铁运整柜）
+         */
+        private Integer sixLogisticsDays;
+
+        /**
+         * 发货频率（铁运整柜)
+         */
+        private Integer sixLogisticsCycleDays;
+
+        /**
+         * 优先级（铁运整柜)
+         */
+        private Integer sixIndex;
+
+        /**
+         * 安全天数
+         */
+        private Integer safeDays;
+
+        /**
+         * 默认备货系数
+         */
+        private BigDecimal stockingRatio;
+
+    }
+
 }

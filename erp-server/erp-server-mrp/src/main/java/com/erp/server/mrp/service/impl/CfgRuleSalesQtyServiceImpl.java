@@ -106,6 +106,9 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         //销量去噪
         cfgRuleSalesDenoisingService.update(updateDetailDTO.getSalesDenoisingList(),cfgRuleSalesQtyEntity.getId(),updateDetailDTO.getIsCustom());
 
+        if (CollectionUtils.isEmpty(oldList)) {
+            return Boolean.TRUE;
+        }
         // 记录主单操作日志
         log.info("编辑 开始记录销量（规则设置）日志数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleSalesQtyEntity.getId(), "销量（规则设置）");

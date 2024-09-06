@@ -2,27 +2,31 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.mrp.entity.PurchaseSuggestEntity;
-import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
-import com.erp.server.mrp.service.PurchaseSuggestService;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.mrp.service.OperateLogService;
-import com.erp.server.mrp.service.CommonService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.mrp.dto.PurchaseSuggestDTO;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.mrp.entity.PurchaseSuggestEntity;
+import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
+import com.erp.server.mrp.service.OperateLogService;
+import com.erp.server.mrp.service.PurchaseSuggestService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.mrp.dto.PurchaseSuggestDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 建议采购 服务实现类
@@ -38,6 +42,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     private OperateLogService operateLogService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -95,6 +101,20 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         return Boolean.TRUE;
     }
 
+    @Override
+    public PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> listPurchaseSuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
+        Page<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> pagingVO = baseMapper.pagingExportPurchaseSuggestion(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
+        if (!CollectionUtils.isEmpty(pagingVO.getRecords())) {
+            handleExport(pagingVO.getRecords());
+        }
+        return new PagingVO<>(pagingVO);
+    }
+
+    private void handleExport (List<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+    }
 
     /**
     * 新增修改处理数据

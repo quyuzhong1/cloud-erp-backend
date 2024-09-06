@@ -44,7 +44,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "*默认日销量类型", index = 3)
     @FieldValid(fieldName = "默认日销量类型", isNotBlank = true, maxLength = 32,enumClass = CfgRuleSalesFormulaDefaultTypeEnum.class)
-    private String defaultType;
+    private String defaultTypeName;
 
     /**
      * 固定日销量
@@ -107,7 +107,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "180天日均（%）", index = 11)
     @FieldValid(fieldName = "180天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private String oneHandredEightyDaysRatio;
+    private String oneHundredEightyDaysRatio;
 
 
     /**
@@ -115,7 +115,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "270天日均（%）", index = 12)
     @FieldValid(fieldName = "270天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private String twoHandredSeventyDaysRatio;
+    private String twoHundredSeventyDaysRatio;
 
 
     /**
@@ -123,7 +123,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "360天日均（%）", index = 13)
     @FieldValid(fieldName = "360天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private String threeHandredSixtyDaysRatio;
+    private String threeHundredSixtyDaysRatio;
 
     /**
      * 错误数据

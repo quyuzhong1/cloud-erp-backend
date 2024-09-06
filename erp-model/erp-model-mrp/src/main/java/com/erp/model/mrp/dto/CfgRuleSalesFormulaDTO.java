@@ -280,15 +280,15 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
          * 一百八十天日均
          */
-        private BigDecimal oneHandredEightyDaysRatio;
+        private BigDecimal oneHundredEightyDaysRatio;
         /**
          * 二百七十天日均
          */
-        private BigDecimal twoHandredSeventyDaysRatio;
+        private BigDecimal twoHundredSeventyDaysRatio;
         /**
          * 三百六十天日均
          */
-        private BigDecimal threeHandredSixtyDaysRatio;
+        private BigDecimal threeHundredSixtyDaysRatio;
 
         /**
          * 总百分比
@@ -300,11 +300,84 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
                     .add(ObjectUtil.isEmpty(thirtyDaysRatio) ? BigDecimal.ZERO : thirtyDaysRatio)
                     .add(ObjectUtil.isEmpty(sixtyDaysRatio) ? BigDecimal.ZERO : sixtyDaysRatio)
                     .add(ObjectUtil.isEmpty(ninetyDaysRatio) ? BigDecimal.ZERO : ninetyDaysRatio)
-                    .add(ObjectUtil.isEmpty(oneHandredEightyDaysRatio) ? BigDecimal.ZERO : oneHandredEightyDaysRatio)
-                    .add(ObjectUtil.isEmpty(twoHandredSeventyDaysRatio) ? BigDecimal.ZERO : twoHandredSeventyDaysRatio)
-                    .add(ObjectUtil.isEmpty(threeHandredSixtyDaysRatio) ? BigDecimal.ZERO : threeHandredSixtyDaysRatio);
+                    .add(ObjectUtil.isEmpty(oneHundredEightyDaysRatio) ? BigDecimal.ZERO : oneHundredEightyDaysRatio)
+                    .add(ObjectUtil.isEmpty(twoHundredSeventyDaysRatio) ? BigDecimal.ZERO : twoHundredSeventyDaysRatio)
+                    .add(ObjectUtil.isEmpty(threeHundredSixtyDaysRatio) ? BigDecimal.ZERO : threeHundredSixtyDaysRatio);
             return totalRatio;
         }
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SalesFormulaExportDTO {
+        /**
+         * 平台
+         */
+        private String platform;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 店铺
+         */
+        private String shopName;
+
+        /**
+         * 默认日销量类型
+         */
+        private String defaultTypeName;
+
+        /**
+         * 固定日销量
+         */
+        private Integer fixedValue;
+
+        /**
+         * 3天日均（%）
+         */
+        private BigDecimal threeDaysRatio;
+
+        /**
+         * 7天日均（%）
+         */
+        private BigDecimal sevenDaysRatio;
+
+        /**
+         * 14天日均（%）
+         */
+        private BigDecimal fourteenDaysRatio;
+
+        /**
+         * 30天日均（%）
+         */
+        private BigDecimal thirtyDaysRatio;
+
+        /**
+         * 60天日均（%）
+         */
+        private BigDecimal sixtyDaysRatio;
+
+        /**
+         * 90天日均（%）
+         */
+        private BigDecimal ninetyDaysRatio;
+
+        /**
+         * 180天日均（%）
+         */
+        private BigDecimal oneHundredEightyDaysRatio;
+
+        /**
+         * 270天日均（%）
+         */
+        private BigDecimal twoHundredSeventyDaysRatio;
+
+        /**
+         * 360天日均（%）
+         */
+        private BigDecimal threeHundredSixtyDaysRatio;
+    }
 }

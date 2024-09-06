@@ -156,4 +156,42 @@ public class CfgRuleStockingRatioDTO implements Serializable {
         private String type;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class StockingRatioExportDTO {
+        /**
+         * 平台
+         */
+        private String platform;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 店铺
+         */
+        private String shopName;
+
+        /**
+         * 规则名称
+         */
+        private String name;
+
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+
+        /**
+         * 备货系数
+         */
+        private BigDecimal stockingRatio;
+    }
 }

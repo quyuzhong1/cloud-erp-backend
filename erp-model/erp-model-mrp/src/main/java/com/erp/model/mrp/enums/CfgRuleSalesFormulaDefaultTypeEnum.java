@@ -53,4 +53,17 @@ public enum CfgRuleSalesFormulaDefaultTypeEnum implements EnumMessage {
         }
         return "";
     }
+
+
+    public static String getCode(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (CfgRuleSalesFormulaDefaultTypeEnum statusEnum : CfgRuleSalesFormulaDefaultTypeEnum.values()) {
+            if (statusEnum.getName().equals(name)) {
+                return statusEnum.getCode();
+            }
+        }
+        return "";
+    }
 }

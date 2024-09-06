@@ -1,0 +1,65 @@
+package com.erp.server.mrp.controller.feign;
+
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.DynamicExcelDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
+import com.erp.server.mrp.service.PurchaseSuggestService;
+import com.erp.server.mrp.service.ReplenishmentSuggestionService;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+
+@RestController
+@RequestMapping("/feign/export")
+public class ExportMrpFeignController {
+
+    @Resource
+    private ReplenishmentSuggestionService replenishmentSuggestionService;
+
+    @Resource
+    private PurchaseSuggestService purchaseSuggestService;
+
+    /**
+     * 历史销量导出数据查询
+     * @author will
+     * @date 2024/9/6 14:53
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
+    @PostMapping("/listHistorySalesQty")
+    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
+    public PagingVO<DynamicExcelDTO> listHistorySalesQty(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
+        return replenishmentSuggestionService.listHistorySalesQty(dto);
+    }
+    /**
+     * 采购建议导出数据查询
+     * @author will
+     * @date 2024/9/6 14:53
+     * @param dto
+     * @return PagingVO<PurchaseSuggestionDTO>
+     */
+    @PostMapping("/listPurchaseSuggestion")
+    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
+    public PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> listPurchaseSuggestion(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
+        return purchaseSuggestService.listPurchaseSuggestion(dto);
+    }
+
+    /**
+     * 备货规则导出数据查询
+     * @author will
+     * @date 2024/9/6 14:53
+     * @param dto
+     * @return PagingVO<ReplenishmentRuleDTO>
+     */
+    @PostMapping("/listReplenishmentRule")
+    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
+    public PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
+        return replenishmentSuggestionService.listReplenishmentRule(dto);
+    }
+}

@@ -16,21 +16,21 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class ExportMrpReplenishmentRuleHandler extends AbstractPageFileEventHandler<ReplenishmentSuggestionDTO.ReplenishmentRuleDTO, ReplenishmentSuggestionDTO.PagingParamDTO> {
+public class ExportMrpReplenishmentRuleHandler extends AbstractPageFileEventHandler<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO, ReplenishmentSuggestionDTO.PagingParamDTO> {
 
     @Resource
     private ExportMrpFeign exportMrpFeign;
 
     @Override
-    protected List<ReplenishmentSuggestionDTO.ReplenishmentRuleDTO> getData(FileTask fileTask) {
+    protected List<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> getData(FileTask fileTask) {
         ReplenishmentSuggestionDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ReplenishmentSuggestionDTO.PagingParamDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleDTO> getPageData(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
-        return exportMrpFeign.exportReplenishmentRule(dto);
+    protected PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> getPageData(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
+        return exportMrpFeign.listReplenishmentRule(dto);
     }
 
     @Override
@@ -40,6 +40,6 @@ public class ExportMrpReplenishmentRuleHandler extends AbstractPageFileEventHand
 
     @Override
     public String getExcelPath() {
-           return "excel/wms/otherInstock.xlsx";
+           return "excel/mrp/replenishmentRule.xlsx";
     }
 }

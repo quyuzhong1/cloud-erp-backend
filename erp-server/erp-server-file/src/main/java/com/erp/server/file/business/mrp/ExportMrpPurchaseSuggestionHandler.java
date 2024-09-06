@@ -30,7 +30,7 @@ public class ExportMrpPurchaseSuggestionHandler extends AbstractPageFileEventHan
 
     @Override
     protected PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> getPageData(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
-        return exportMrpFeign.exportPurchaseSuggestion(dto);
+        return exportMrpFeign.listPurchaseSuggestion(dto);
     }
 
     @Override

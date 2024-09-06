@@ -125,5 +125,54 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class salesDenoisingExportDTO {
+
+        /**
+         * 平台
+         */
+        private String platform;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 店铺
+         */
+        private String shopName;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+
+        /**
+         * 去噪类型
+         */
+        private String denoisingTypeName;
+
+        /**
+         * 百分比去噪（%）
+         */
+        private Integer percentageValue;
+
+        /**
+         * 固定值去噪
+         */
+        private Integer fixedValue;
+    }
 
 }

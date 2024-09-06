@@ -25,10 +25,7 @@ import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
-import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
-import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
+import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -628,7 +625,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     private List<CfgRuleSalesFormulaDTO.UpdateDTO>  formatDefaultSalesQty (DefaultSalesQtyImportExcelDTO excelDTO) {
         CfgRuleSalesFormulaDTO.UpdateDTO updateDTO = new CfgRuleSalesFormulaDTO.UpdateDTO();
         updateDTO.setType(CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode());
-        updateDTO.setDefaultType(excelDTO.getDefaultType());
+        updateDTO.setDefaultType(CfgRuleSalesFormulaDefaultTypeEnum.getCode(excelDTO.getDefaultTypeName()));
         updateDTO.setPriority(MathUtil.THREE);
         updateDTO.setFixedValue(MathUtil.valueOf(excelDTO.getFixedValue()));
         CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = formatPercentJson(excelDTO);
@@ -652,9 +649,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         percentJsonDTO.setThirtyDaysRatio(MathUtil.valueOf(excelDTO.getThirtyDaysRatio()));
         percentJsonDTO.setSixtyDaysRatio(MathUtil.valueOf(excelDTO.getSixtyDaysRatio()));
         percentJsonDTO.setNinetyDaysRatio(MathUtil.valueOf(excelDTO.getNinetyDaysRatio()));
-        percentJsonDTO.setOneHandredEightyDaysRatio(MathUtil.valueOf(excelDTO.getOneHandredEightyDaysRatio()));
-        percentJsonDTO.setTwoHandredSeventyDaysRatio(MathUtil.valueOf(excelDTO.getTwoHandredSeventyDaysRatio()));
-        percentJsonDTO.setThreeHandredSixtyDaysRatio(MathUtil.valueOf(excelDTO.getThreeHandredSixtyDaysRatio()));
+        percentJsonDTO.setOneHundredEightyDaysRatio(MathUtil.valueOf(excelDTO.getOneHundredEightyDaysRatio()));
+        percentJsonDTO.setTwoHundredSeventyDaysRatio(MathUtil.valueOf(excelDTO.getTwoHundredSeventyDaysRatio()));
+        percentJsonDTO.setThreeHundredSixtyDaysRatio(MathUtil.valueOf(excelDTO.getThreeHundredSixtyDaysRatio()));
         return percentJsonDTO;
     }
 

@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
@@ -13,6 +14,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -20,11 +22,14 @@ import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.mrp.vo.*;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -104,6 +109,14 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private CustomerFeign customerFeign;
+
+    @Resource
+    private CfgRuleStockingRatioService cfgRuleStockingRatioService;
+
+    @Resource
+    private CfgRuleSalesDenoisingService cfgRuleSalesDenoisingService;
 
     @Override
     public PagingVO<ReplenishmentSuggestionVO.PagingView> paging(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
@@ -585,5 +598,36 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     public Boolean exportPurchaseSuggestion(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         downloadTaskFeign.saveDownloadTask("补货计划_采购建议", FileTaskEventEnum.EXPORT_MRP_PURCHASE_SUGGESTION.getCode(), pagingParamDTO);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<DynamicExcelDTO> listHistorySalesQty(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
+        PagingVO<ReplenishmentSuggestionVO.PagingView> pagingVO = this.paging(params);
+        if (CollectionUtils.isEmpty(pagingVO.getList())) {
+            return new PagingVO<>();
+        }
+        PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> exportPagingVO = handleExport((List<ReplenishmentSuggestionVO.PagingView>)pagingVO.getList());
+        return new PagingVO<>();
+    }
+
+    private PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> handleExport(List<ReplenishmentSuggestionVO.PagingView> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>();
+        }
+        //店铺
+        List<String> shopIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getShopId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+
+        //平台
+        List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        //建议id集合
+        List<String> suggestIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getId).distinct().collect(Collectors.toList());
+        //备货
+        return new PagingVO<>();
     }
 }

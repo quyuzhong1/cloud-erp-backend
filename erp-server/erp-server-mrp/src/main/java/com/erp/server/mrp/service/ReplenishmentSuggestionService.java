@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service;
 
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -229,4 +230,21 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return Boolean
      */
     Boolean exportPurchaseSuggestion(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO);
+    /**
+     * 历史销量导出数据查询
+     * @author will
+     * @date 2024/9/6 14:54
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
+    PagingVO<DynamicExcelDTO> listHistorySalesQty(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
+
+    /**
+     * 备货规则导出数据查询
+     * @author will
+     * @date 2024/9/6 14:54
+     * @param dto
+     * @return PagingVO<ReplenishmentRuleDTO>
+     */
+    PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
 }

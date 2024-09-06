@@ -114,7 +114,7 @@ public class DynamicSalesQtyImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "180天日均（%）", index = 12)
     @FieldValid(fieldName = "180天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private String oneHandredEightyDaysRatio;
+    private String oneHundredEightyDaysRatio;
 
 
     /**
@@ -122,7 +122,7 @@ public class DynamicSalesQtyImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "270天日均（%）", index = 13)
     @FieldValid(fieldName = "270天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private String twoHandredSeventyDaysRatio;
+    private String twoHundredSeventyDaysRatio;
 
 
     /**
@@ -130,7 +130,7 @@ public class DynamicSalesQtyImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "360天日均（%）", index = 14)
     @FieldValid(fieldName = "360天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private String threeHandredSixtyDaysRatio;
+    private String threeHundredSixtyDaysRatio;
 
     /**
      * 错误数据
