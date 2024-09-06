@@ -244,6 +244,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
                 List<String> codeKeyList = getSourceCodeKeys(dmpCfgOutputEntity.getOutputClass());
                 if (CollectionUtils.isNotEmpty(codeKeyList)) {
+                    ////查询黑名单用于校验是否存在，避免重复添加
+                    checkOutpuBlackExist(dmpCfgOutputEntity.getId(), codeKeyList, params.getSourceCodeList());
+
                     //添加黑名单
                     DmpCfgOutputBlackDTO.AddDTO addDTO = new DmpCfgOutputBlackDTO.AddDTO();
                     addDTO.setCompareSign(QueryConditionEnum.EQ.getCompareCode());
@@ -329,15 +332,8 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                     .map(DmpOutputTaskRecordEntity::getSourceCode)
                     .collect(Collectors.toList());
 
-            //查询黑名单用于校验是否存在，避免重复添加
-            List<DmpCfgOutputBlackEntity> list = dmpCfgOutputBlackService.lambdaQuery()
-                    .eq(DmpCfgOutputBlackEntity::getMainId, cfgOutputId)
-                    .eq(DmpCfgOutputBlackEntity::getFieldName, sourceCodeKeys.get(0))
-                    .eq(DmpCfgOutputBlackEntity::getFieldValue, String.join(",", sourceCodeList))
-                    .list();
-            if (CollectionUtils.isNotEmpty(list)) {
-                throw new ServiceException("数据已在黑名单存在，请不要重复添加！");
-            }
+            ////查询黑名单用于校验是否存在，避免重复添加
+            checkOutpuBlackExist(cfgOutputId, sourceCodeKeys, sourceCodeList);
 
             //添加黑名单
             DmpCfgOutputBlackDTO.AddDTO addDTO = new DmpCfgOutputBlackDTO.AddDTO();
@@ -348,6 +344,24 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             addDTO.setMainId(cfgOutputId);
             addDTO.setRemark(dto.getRemark());
             dmpCfgOutputBlackService.add(addDTO);
+        }
+    }
+
+    /**
+     * 校验黑名单是否存在
+     * @param cfgOutputId
+     * @param sourceCodeKeys
+     * @param sourceCodeList
+     */
+    private void checkOutpuBlackExist(String cfgOutputId, List<String> sourceCodeKeys, List<String> sourceCodeList) {
+        //查询黑名单用于校验是否存在，避免重复添加
+        List<DmpCfgOutputBlackEntity> list = dmpCfgOutputBlackService.lambdaQuery()
+                .eq(DmpCfgOutputBlackEntity::getMainId, cfgOutputId)
+                .eq(DmpCfgOutputBlackEntity::getFieldName, sourceCodeKeys.get(0))
+                .eq(DmpCfgOutputBlackEntity::getFieldValue, String.join(",", sourceCodeList))
+                .list();
+        if (CollectionUtils.isNotEmpty(list)) {
+            throw new ServiceException("数据已在黑名单存在，请不要重复添加！");
         }
     }
 
