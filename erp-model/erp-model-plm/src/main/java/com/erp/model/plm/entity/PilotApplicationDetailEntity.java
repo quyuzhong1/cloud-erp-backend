@@ -78,6 +78,11 @@ public class PilotApplicationDetailEntity extends BaseEntity<PilotApplicationDet
      */
     @TableField("purchase_apply_qty")
     private int purchaseApplyQty;
+    /**
+     * 采购申请数量
+     */
+    @TableField("order_status")
+    private int orderStatus;
 
 
     public static final String MAIN_ID = "main_id";
@@ -101,6 +106,10 @@ public class PilotApplicationDetailEntity extends BaseEntity<PilotApplicationDet
     public static final String EXPECT_ARRIVE_DATE = "expect_arrive_date";
 
     public static final String REMARK = "remark";
+
+    public static final String PURCHASE_APPLY_QTY = "purchase_apply_qty";
+
+    public static final String ORDER_STATUS = "order_status";
 
     @Override
     public Serializable pkVal() {

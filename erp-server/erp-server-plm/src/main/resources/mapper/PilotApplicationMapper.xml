@@ -187,7 +187,6 @@
         select  pa.id,
                 pa.code,
                 pa.approve_status approveStatus,
-                pa.order_status orderStatus,
                 pa.bill_date billDate,
                 pa.remark,
                 pa.approve_user_id approveUserId,
@@ -198,9 +197,6 @@
                 pad.type,
                 pad.sku_id skuId,
                 pad.sku_no skuNo,
-                pad.apply_qty appluQty,
-                pad.approve_qty approveQty,
-                pad.business_type businesType,
                 pad.main_supplier_id mainSupplierId,
                 pad.second_supplier_id secondSupplierId,
                 pad.expect_arrive_date expectArriveDate,
@@ -208,7 +204,8 @@
                 pad.apply_qty applyQty,
                 pad.approve_qty approveQty,
                 pad.purchase_apply_qty purchaseApplyQty,
-                pad.business_type businessType
+                pad.business_type businessType,
+                pad.order_status orderStatus
         from pilot_application pa
         left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
         <where>

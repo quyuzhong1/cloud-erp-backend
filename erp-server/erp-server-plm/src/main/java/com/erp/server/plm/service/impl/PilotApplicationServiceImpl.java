@@ -22,9 +22,7 @@ import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
-import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
@@ -809,7 +807,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
         for(PilotApplicationDTO.ListDTO item : list) {
             item.setApproveStatusName(ApproveStatusEnum.getName(item.getApproveStatus()));
-            item.setOrderStatusName(PilotApplicationTabEnum.getName(item.getOrderStatus()));
+            item.setOrderStatusName(PilotPushPurchaseStatusEnum.getName(item.getOrderStatus()));
             item.setProductName(productDetailMap.get(item.getSkuId()));
             item.setMainSupplierName(supplierMap.containsKey(item.getMainSupplierId()) ? supplierMap.get(item.getMainSupplierId()).getName() : "");
             item.setApproveUserName(userMap.get(item.getApproveUserId()));
@@ -861,6 +859,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : applicationDTOList) {
+            if(dto.getPurchaseApplyQty() > dto.getSpareApplyQty()){
+                throw new ServiceException("采购申请量不能大于审核数量");
+            }
+
             PurchaseApplicationDetailDTO.AddDTO purchaseDTO = new PurchaseApplicationDetailDTO.AddDTO();
             purchaseDTO.setApplyQty(dto.getPurchaseApplyQty());
             purchaseDTO.setDestWarehouseId(dto.getToWarehouseId());
@@ -877,7 +879,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             purchaseDTO.setPurchaseApplicationId("");
             detailList.add(purchaseDTO);
             //更新采购申请数量
-            pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getPurchaseApplyQty, dto.getPurchaseApplyQty()).eq(PilotApplicationDetailEntity::getId, dto.getDetailId());
+            pilotApplicationDetailService.lambdaUpdate()
+                    .set(PilotApplicationDetailEntity::getPurchaseApplyQty, dto.getPurchaseApplyQty())
+                    .set(PilotApplicationDetailEntity::getOrderStatus, dto.getPurchaseApplyQty() < dto.getSpareApplyQty() ? PilotPushPurchaseStatusEnum.PART_ORDER.getCode() : PilotPushPurchaseStatusEnum.ORDER.getCode())
+                    .eq(PilotApplicationDetailEntity::getId, dto.getDetailId());
         }
         PurchaseApplicationDTO.AddDTO paramDto = new PurchaseApplicationDTO.AddDTO();
         paramDto.setApplyDate(LocalDate.now());
