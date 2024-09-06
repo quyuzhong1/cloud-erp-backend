@@ -22,6 +22,6 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        return false;
+
     }
 }

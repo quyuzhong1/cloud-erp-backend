@@ -19,6 +19,6 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        return false;
+
     }
 }

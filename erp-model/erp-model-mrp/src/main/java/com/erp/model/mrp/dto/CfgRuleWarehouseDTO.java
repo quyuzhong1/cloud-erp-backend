@@ -75,25 +75,6 @@ public class CfgRuleWarehouseDTO implements Serializable {
         private List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgOverseasWarehouseList;
     }
 
-    /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-        /**
-         * 本地仓设置
-         */
-        @Valid
-        private List<CfgRuleWarehouseDetailDTO.AddDTO> cfgLocalWarehouseList;
-
-        /**
-         * 海外仓设置
-         */
-        @Valid
-        private List<CfgRuleWarehouseDetailDTO.AddDTO> cfgOverseasWarehouseList;
-    }
 
     /**
     * 修改
@@ -107,6 +88,12 @@ public class CfgRuleWarehouseDTO implements Serializable {
          */
         @Valid
         private List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalWarehouseList;
+
+        /**
+         * 本地仓设置（虚拟仓数据）
+         */
+        @Valid
+        private List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalVirtualWarehouseList;
 
         /**
          * 海外仓设置

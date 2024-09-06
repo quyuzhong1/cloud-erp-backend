@@ -166,21 +166,25 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
             List<String> channelIdList = detailEntity.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
             viewDTO.setChannelIdList(channelIdList);
 
-            //按平台
-            if (StrUtil.equals(detailEntity.getChannelType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())) {
-                viewDTO.setDictPlatform(channelIdList.get(0));
-            }
-
             //关联类型
             String channelType = detailEntity.getChannelType();
             viewDTO.setChannelTypeName(VitualWarehouseChannelTypeEnum.getName(channelType));
 
             if (VitualWarehouseChannelTypeEnum.SHOP.getCode().equals(channelType)) {
-                String shopNames = shopInfoList.stream().filter(obj -> channelIdList.contains(obj.getId())).map(ShopInfoEntity::getName).collect(Collectors.joining(","));
-                viewDTO.setChannelIdJsonName(shopNames);
+                List<ShopInfoEntity> shopList = shopInfoList.stream().filter(obj -> channelIdList.contains(obj.getId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(shopList)) {
+                    //渠道名称
+                    String shopNames = shopList.stream().map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
+                    viewDTO.setChannelIdJsonName(shopNames);
+                    //平台
+                    viewDTO.setDictPlatform(shopList.get(0).getDictPlatform());
+                }
             } else {
-                String platformNames = dictBasicList.stream().filter(obj -> channelIdList.contains(obj.getValue())).map(DictBasicEntity::getName).collect(Collectors.joining(","));
+                //渠道名称
+                String platformNames = dictBasicList.stream().filter(obj -> channelIdList.contains(obj.getValue())).map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
                 viewDTO.setChannelIdJsonName(platformNames);
+                //平台
+                viewDTO.setDictPlatform(channelIdList.get(0));
             }
             resultList.add(viewDTO);
         }

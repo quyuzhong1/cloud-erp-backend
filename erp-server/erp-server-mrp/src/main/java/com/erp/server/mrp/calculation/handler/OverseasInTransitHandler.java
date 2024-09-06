@@ -25,6 +25,6 @@ public class OverseasInTransitHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        return false;
+
     }
 }

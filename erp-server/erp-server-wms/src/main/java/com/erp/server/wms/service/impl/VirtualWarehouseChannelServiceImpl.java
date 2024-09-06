@@ -316,7 +316,10 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         if (CollectionUtils.isEmpty(platformList)) {
             return resultList;
         }
-        List<VirtualWarehouseChannelEntity> virtualWarehouseChannelList = listByPlatform(platformList);
+        //根据平台查询
+        VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO = new VirtualWarehouseChannelDTO.ListPlatformDTO();
+        listPlatformDTO.setDictPlatformList(platformList);
+        List<VirtualWarehouseChannelEntity> virtualWarehouseChannelList = baseMapper.listVirtualWarehouseByPlatform(listPlatformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseChannelList)) {
             return resultList;
         }
@@ -360,20 +363,6 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      */
     private VirtualWarehouseChannelEntity getByPlatform(VirtualWarehouseChannelDTO.PlatformDTO platformDTO) {
         return baseMapper.getByPlatform(platformDTO);
-    }
-
-    /**
-     * 根据平台查询
-     * @author will
-     * @date 2024/9/3 18:16
-     * @param platformList
-     * @return List<VirtualWarehouseChannelEntity>
-     */
-    private List<VirtualWarehouseChannelEntity> listByPlatform (List<String> platformList) {
-        if (CollectionUtils.isEmpty(platformList)) {
-            return Collections.EMPTY_LIST;
-        }
-        return lambdaQuery().in(VirtualWarehouseChannelEntity::getDictPlatform,platformList).list();
     }
 
 
