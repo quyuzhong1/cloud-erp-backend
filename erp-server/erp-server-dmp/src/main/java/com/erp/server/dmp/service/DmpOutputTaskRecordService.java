@@ -91,4 +91,13 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @return com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.PagingDTO>
      **/
     PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportNewDmpPushTask(PagingDTO<DmpOutputTaskRecordDTO.ExpotParamDTO> dto);
+
+    /**
+     * 重新同步（批量同步）
+     * @Author Luo_WG
+     * @Date 2024/9/6 15:58
+     * @param dmpOutputTaskRecordEntityList
+     * @return java.lang.Boolean
+     **/
+    Boolean batchSync(List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList);
 }

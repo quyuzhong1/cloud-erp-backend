@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -23,6 +24,7 @@ import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpCfgOutputBlackDataTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -262,29 +264,22 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
     private List<String> getSourceCodeKeys(String outputClassName) {
-        try {
-            Object bean = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClassName));
-
-            if (bean != null) {
-                try {
-                    // 使用反射获取 getSourceCodeKeys 方法
-                    Method method = bean.getClass().getDeclaredMethod("getSourceCodeKeys");
-                    method.setAccessible(Boolean.TRUE);
-                    // 调用方法并获取返回值
-                    Object result = method.invoke(bean);
-
-                    return (List<String>) result;
-
-                } catch (NoSuchMethodException e) {
-                    throw new ServiceException("没有找到方法: getSourceCodeKeys");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                throw new ServiceException("没有找到" + outputClassName + "的Bean方法");
+        Object bean = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClassName));
+        if (bean != null) {
+            try {
+                // 使用反射获取 getSourceCodeKeys 方法
+                Method method = bean.getClass().getDeclaredMethod("getSourceCodeKeys");
+                method.setAccessible(Boolean.TRUE);
+                // 调用方法并获取返回值
+                Object result = method.invoke(bean);
+                return (List<String>) result;
+            } catch (NoSuchMethodException e) {
+                throw new ServiceException("没有找到方法: getSourceCodeKeys");
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } else {
+            throw new ServiceException("没有找到" + outputClassName + "的Bean方法");
         }
         return Collections.emptyList();
     }
@@ -373,5 +368,37 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             doOpHandleDmpPushTask(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public Boolean batchSync(List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList) {
+        if (CollectionUtils.isEmpty(dmpOutputTaskRecordEntityList)) {
+            return false;
+        }
+
+        Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
+                .in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
+                .select(DmpOutputTaskEntity::getId , DmpOutputTaskEntity::getCfgOutputId)
+                .list().stream().collect(Collectors.toMap(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId));
+
+        Map<String, DmpCfgOutputEntity> outputIdEntityMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
+                .list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, d -> d));
+
+        Map<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMaps = new HashMap<>();
+        for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+            String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
+            List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMaps.get(cfgOutputId);
+            if(CollUtil.isEmpty(list)) {
+                list = new ArrayList<>();
+            }
+            list.add(dmpOutputTaskRecordEntity);
+            cfgOutputRecordEntityListMaps.put(cfgOutputId, list);
+        }
+        for(Map.Entry<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMap : cfgOutputRecordEntityListMaps.entrySet()) {
+            DmpCfgOutputEntity dmpCfgOutputEntity = outputIdEntityMaps.get(cfgOutputRecordEntityListMap.getKey());
+            DmpOutputTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(dmpCfgOutputEntity.getOutputClass()) , DmpOutputTaskHandler.class);
+            dmpOutputTaskHandler.dealDmpOutputTaskRecordEntityList(dmpCfgOutputEntity, cfgOutputRecordEntityListMap.getValue());
+        }
+        return null;
     }
 }
