@@ -92,7 +92,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      * @date 2022-08-10 16:57
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ProcessNodeDTO taskPass(ApproveProcessDTO dto) {
         String processInstanceId = dto.getProcessInstanceId();
         Map<String, Object> map = dto.getParameterMap();
