@@ -83,4 +83,8 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
     List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentView(@Param("ids") List<String> cartonIds);
 
     List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO> fbaBindShipmentDetailView(@Param("params") RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto);
+
+    List<RequisitionApplicationDTO.DeliverRecordView> listFbaDeliverRecord(String id);
+
+    List<RequisitionApplicationDTO.DeliverRecordView> listWarehouseDeliverRecord(@Param("params") String id);
 }

@@ -1331,7 +1331,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(FirstMileDeliveryEntity::getSourceId, sourceIds).list();
+        return lambdaQuery().in(FirstMileDeliveryEntity::getSourceId, sourceIds).orderByDesc(FirstMileDeliveryEntity::getCreateTime).list();
     }
 
     @Override

@@ -13,6 +13,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -525,5 +526,13 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult<T> generateDeliveryWithFba(@RequestBody @Validated RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto) {
         requisitionApplicationService.generateDeliveryWithFba(dto);
         return success();
+    }
+    /**
+     * 查询发货记录
+     **/
+    @GetMapping("/listDeliverRecord")
+    public ApiResult<List<RequisitionApplicationDTO.DeliverRecordView>> listDeliverRecord(@RequestParam("id") String id) {
+        List<RequisitionApplicationDTO.DeliverRecordView> result = requisitionApplicationService.listDeliverRecord(id);
+        return success(result);
     }
 }

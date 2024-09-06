@@ -6,6 +6,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
+import jnr.ffi.annotations.In;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -28,6 +29,33 @@ import java.util.Map;
 @NoArgsConstructor
 public class RequisitionApplicationDTO implements Serializable {
 
+    /**
+     * 发货详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliverRecordView {
+
+        /**
+         * 发货单号
+         */
+        private String code;
+
+        /**
+         * 货件/入库单号
+         */
+        private String fbaShipmentCode;
+
+        /**
+         * 发货状态
+         */
+        private String status;
+
+        /**
+         * 发货量
+         */
+        private Integer qty;
+    }
     /**
      * fba下推发货单绑定货件View
      */
@@ -809,6 +837,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 主表id
          */
         private String sourceId;
+        /**
+         * type
+         */
+        private String type;
         /**
          * 单据编号
          */

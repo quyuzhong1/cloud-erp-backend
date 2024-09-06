@@ -14,7 +14,9 @@
         fs.country_name AS countryName,
         fs.fulfillment_center AS fulfillmentCenter,
         fs.delivery_status AS deliveryStatus,
-        (SELECT fd.code FROM first_mile_delivery fd WHERE fd.source_id = fs.id AND fd.is_deleted = FALSE ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
+        (SELECT fd.code FROM first_mile_delivery fd
+                        INNER Join first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
+                        WHERE fdd.fba_shipment_code = fs.code AND fd.is_deleted = FALSE ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
         fs.platform_shipment_status AS platformShipmentStatus,
         fs.shipment_create_time AS shipmentCreateTime,
         fsd.receive_date AS shipmentReceiveTime,

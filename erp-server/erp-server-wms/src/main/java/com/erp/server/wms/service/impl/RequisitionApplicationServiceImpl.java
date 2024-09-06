@@ -117,6 +117,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
     @Resource
+    private OverseasWarehouseInboundService overseasWarehouseInboundService;
+    @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private PickingListsService pickingListsService;
@@ -1309,6 +1311,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
     }
 
+    @Override
+    public List<RequisitionApplicationDTO.DeliverRecordView> listDeliverRecord(String id) {
+        RequisitionApplicationEntity requisitionApplicationEntity = Optional.ofNullable(this.getById(id)).orElseThrow(()->new ServiceException("要货申请为空"));
+        if(requisitionApplicationEntity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
+            return baseMapper.listFbaDeliverRecord(id);
+        }else{
+            return baseMapper.listWarehouseDeliverRecord(id);
+        }
+    }
+
     /**
      * 处理申请单
      */
@@ -1755,7 +1767,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
-
+        List<String> ids = list.stream().map(RequisitionApplicationDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listBySourceIds(ids);
+        List<String> deliveryIds = firstMileDeliveryEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(deliveryIds);
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntityList = overseasWarehouseInboundService.listBySourceIds(deliveryIds);
         Map<String,Integer> qtyMap = new HashMap<>();
         for (RequisitionApplicationDTO.ListDTO listDTO : list) {
             if (org.apache.commons.lang3.StringUtils.isNotBlank(listDTO.getPackingStatus())) {
@@ -1798,6 +1814,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     qtyMap.put(key,listDTO.getPackingQty() - listDTO.getPickingQty());
                     listDTO.setPackingQty(listDTO.getPickingQty());
                 }
+            }
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(listDTO.getId())).findFirst().orElse(new FirstMileDeliveryEntity());
+            if(RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(listDTO.getType())){
+                OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntityList.stream().filter(v->v.getSourceId().equals(firstMileDeliveryEntity.getId())).findFirst().orElse(new OverseasWarehouseInboundEntity());
+                listDTO.setFbaShipmentCode(overseasWarehouseInboundEntity.getCode());
+            }else{
+                FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailEntityList.stream().filter(v->v.getMainId().equals(firstMileDeliveryEntity.getId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
+                listDTO.setFbaShipmentCode(firstMileDeliveryDetailEntity.getFbaShipmentCode());
             }
         }
     }

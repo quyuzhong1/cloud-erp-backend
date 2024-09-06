@@ -120,6 +120,7 @@
             rad.id AS sourceDetailId,
             ra.requisition_warehouse_id AS requisitionWarehouseId,
             ra.requisition_warehouse_name AS requisitionWarehouseName,
+            ra.type,
             rad.from_virtual_warehouse_id as fromVirtualWarehouseId,
         rad.from_virtual_warehouse_name as fromVirtualWarehouseName,
             ra.status AS status,
@@ -343,5 +344,30 @@
         from fba_shipment_detail fsd
                  left join erp_packing ep on ep.fn_sku = fsd.fn_sku
         where fsd.main_id = #{params.fbaShipmentId} and fsd.is_deleted = false
+    </select>
+    <select id="listFbaDeliverRecord"
+            resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$DeliverRecordView">
+        select fmd.code,
+               fmdd.fba_shipment_code as fbaShipmentCode,
+               case when fmd.approve_status  = 'approve'then '已发货' else '未发货' end as status,
+               sum(fmdd.delivery_qty) as qty
+        from first_mile_delivery fmd
+        inner join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        where fmd.is_deleted = false and fmd.source_id = #{id}
+        group by fmd.code,fmd.create_time,fmdd.fba_shipment_code,fmd.approve_status
+        order by fmd.create_time desc
+    </select>
+    <select id="listWarehouseDeliverRecord"
+            resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$DeliverRecordView">
+        select fmd.code,
+               owi.code as fbaShipmentCode,
+               case when fmd.approve_status  = 'approve'then '已发货' else '未发货' end as status,
+               sum(fmdd.delivery_qty) as qty
+        from first_mile_delivery fmd
+            inner join overseas_warehouse_inbound owi on fmd.id = owi.source_id and owi.is_deleted = false
+                 inner join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        where fmd.is_deleted = false and fmd.source_id = #{id}
+        group by fmd.code,fmd.create_time,fmd.approve_status,owi.code
+        order by fmd.create_time desc
     </select>
 </mapper>

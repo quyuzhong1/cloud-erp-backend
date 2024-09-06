@@ -220,4 +220,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO> fbaBindShipmentDetailView(RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto);
 
     void generateDeliveryWithFba(RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto);
+
+    List<RequisitionApplicationDTO.DeliverRecordView> listDeliverRecord(String id);
 }
