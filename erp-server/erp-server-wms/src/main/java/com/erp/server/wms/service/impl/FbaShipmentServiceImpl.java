@@ -1414,10 +1414,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deliveryStatus(FirstMileDeliveryEntity deliveryEntity) {
-        FbaShipmentEntity shipmentEntity = this.getById(deliveryEntity.getSourceId());
-        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(deliveryEntity.getSourceId()));
-        //查询本次发货数量
-        List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(deliveryEntity.getId()));
+        List<FirstMileDeliveryDetailEntity> detailList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(deliveryEntity.getId()));
+        String fbaCode = detailList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).findFirst().orElse(null);
+        if(StringUtils.isBlank(fbaCode)){
+            return true;
+        }
+        FbaShipmentEntity shipmentEntity = this.getByCode(fbaCode);
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(shipmentEntity.getId()));
 
         //查询所有关联的发货单
         List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
@@ -1430,22 +1433,17 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                             && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
                     .mapToInt(req -> req.getDeliveryQty())
                     .sum();
-            FirstMileDeliveryDetailEntity detailEntity = deliveryDetailEntities.stream()
-                    .filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId()))
-                    .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(detailEntity)) {
-                //发货数量=总发货数量
-                fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty);
-                //收发差异=收货数量-总发货数量
-                fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty);
-            }
+            //发货数量=总发货数量
+            fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty);
+            //收发差异=收货数量-总发货数量
+            fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty);
         }
 
         //完结不修改状态
         if (ObjectUtils.isNotEmpty(shipmentEntity)
                 && !FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
                 && !FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())) {
-            lambdaUpdate().eq(FbaShipmentEntity::getId, deliveryEntity.getSourceId()).set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.SHIPPED.getCode()).update();
+            lambdaUpdate().eq(FbaShipmentEntity::getId, shipmentEntity.getId()).set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.SHIPPED.getCode()).update();
         }
         return fbaShipmentDetailService.updateBatchById(fbaShipmentDetailEntities);
     }
@@ -1453,10 +1451,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deliveryDisApprove(FirstMileDeliveryEntity deliveryEntity) {
-        FbaShipmentEntity shipmentEntity = this.getById(deliveryEntity.getSourceId());
-        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(deliveryEntity.getSourceId()));
-        //查询本次发货数量
-        List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(deliveryEntity.getId()));
+        List<FirstMileDeliveryDetailEntity> detailList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(deliveryEntity.getId()));
+        String fbaCode = detailList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).findFirst().orElse(null);
+        if(StringUtils.isBlank(fbaCode)){
+            return true;
+        }
+        FbaShipmentEntity shipmentEntity = this.getByCode(fbaCode);
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(shipmentEntity.getId()));
 
         //查询所有关联的发货单
         List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
@@ -1469,13 +1470,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                             && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
                     .mapToInt(req -> req.getDeliveryQty())
                     .sum();
-            FirstMileDeliveryDetailEntity deliveryDetailEntity = deliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(deliveryDetailEntity)) {
-                //发货数量=总发货数量
-                fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty);
-                //收发差异=收货数量-总发货数量+本次反审的发货数量
-                fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty);
-            }
+            //发货数量=总发货数量
+            fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty);
+            //收发差异=收货数量-总发货数量+本次反审的发货数量
+            fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty);
         }
         List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Arrays.asList(shipmentEntity.getId()));
         long count = deliveryEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
@@ -1484,7 +1482,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 && !FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
                 && !FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
                 && count <= 1) {
-            lambdaUpdate().eq(FbaShipmentEntity::getId, deliveryEntity.getSourceId()).set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.UN_SHIPPED.getCode()).update();
+            lambdaUpdate().eq(FbaShipmentEntity::getId, shipmentEntity.getId()).set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.UN_SHIPPED.getCode()).update();
         }
         return fbaShipmentDetailService.updateBatchById(fbaShipmentDetailEntities);
     }

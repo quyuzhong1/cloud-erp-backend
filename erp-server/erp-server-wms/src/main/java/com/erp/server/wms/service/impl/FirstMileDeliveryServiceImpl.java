@@ -77,6 +77,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -549,11 +550,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //如果是FBA货件来源，反审核修改货件发货状态和发货数量
-        if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
-            FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
-            if (ObjectUtil.isNotEmpty(shipmentEntity)) {
-                fbaShipmentService.deliveryDisApprove(entity);
-            }
+        if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+            fbaShipmentService.deliveryDisApprove(entity);
         }
 
         //如果是发货计划来源，反审核修改发货状态
@@ -738,10 +736,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if (ObjectUtil.isNotEmpty(application)) {
                 //如果是FBA货件来源，审核通过修改货件发货状态为已发货
                 if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
-                    FbaShipmentEntity shipmentEntity = fbaShipmentService.getOne(Wrappers.<FbaShipmentEntity>lambdaQuery().eq(FbaShipmentEntity::getCode, application.getFbaShipmentCode()));
-                    if (ObjectUtil.isNotEmpty(shipmentEntity)) {
-                        fbaShipmentService.deliveryStatus(entity);
-                    }
+                    fbaShipmentService.deliveryStatus(entity);
                 } else {
                     //如果是发货计划来源
                     //审核通过修改发货状态为已发货
