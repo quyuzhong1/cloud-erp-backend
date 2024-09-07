@@ -498,6 +498,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          */
         private String reconciliationId;
         /**
+         * 对账单类型
+         */
+        private String reconciliationType;
+        /**
          * 对账单明细id
          */
         private String reconciliationDetailId;
@@ -847,6 +851,8 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private boolean currencyReconciliation = false;
         //同一个核算期间内是否有其他对账月份的对账单
         private boolean hasOtherReconciliation = false;
+        //发货单费用分摊数据是否有期初对账单费用分摊数据
+        private boolean hasEstimatedReconciliation = false;
     }
 
     @Data
