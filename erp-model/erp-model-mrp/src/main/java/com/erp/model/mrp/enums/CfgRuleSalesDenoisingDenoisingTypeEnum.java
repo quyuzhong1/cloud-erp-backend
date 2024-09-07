@@ -66,4 +66,14 @@ public enum CfgRuleSalesDenoisingDenoisingTypeEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static CfgRuleSalesDenoisingDenoisingTypeEnum getEnumByCode(String code) {
+        CfgRuleSalesDenoisingDenoisingTypeEnum[] enums = values();
+        for (CfgRuleSalesDenoisingDenoisingTypeEnum typeEnum : enums) {
+            if (typeEnum.getCode().equals(code)) {
+                return typeEnum;
+            }
+        }
+        return null;
+    }
 }

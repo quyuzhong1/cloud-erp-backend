@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import cn.hutool.json.JSONObject;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import lombok.Data;
 import lombok.Getter;
@@ -12,6 +13,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -321,13 +324,87 @@ public class CfgRuleSalesQtyDTO implements Serializable {
     @Getter
     @Setter
     public static class StrategyDenoisingResultDTO {
-
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 序号
+         */
+        private Integer index;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+        /**
+         * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪  枚举：CfgRuleSalesDenoisingDenoisingTypeEnum
+         */
+        private String denoisingType;
+        /**
+         * 有效值（去噪后的）
+         */
+        private Integer effectiveValue;
     }
 
     @Getter
     @Setter
     public static class StrategyFormulaResultDTO {
-
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 销量类型：default=默认，dynamic=动态、fixed=固定  枚举：CfgRuleSalesFormulaTypeEnum
+         */
+        private String type;
+        /**
+         * 销量默认类型：dynamic=动态、fixed=固定  枚举：CfgRuleSalesFormulaDefaultTypeEnum
+         */
+        private String defaultType;
+        /**
+         * 排序字段
+         */
+        private Integer index;
+        /**
+         * 优先级字段
+         */
+        private Integer priority;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+        /**
+         * 销量id(cfg_rule_sales_qty)
+         */
+        private String salesQtyId;
+        /**
+         * 固定值
+         */
+        private BigDecimal fixedValue;
+        /**
+         * 百分比json
+         */
+        private JSONObject percentJson;
+        /**
+         * 百分比对象
+         */
+        private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
     }
 
 }

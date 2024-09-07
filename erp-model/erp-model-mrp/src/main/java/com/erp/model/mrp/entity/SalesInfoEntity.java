@@ -55,7 +55,7 @@ public class SalesInfoEntity extends BaseEntity<SalesInfoEntity> {
     private Boolean isIgnoreOutOfStock;
 
     /**
-     * sales_qty_type	｜ 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量	销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
+     * sales_qty_type
      */
     @TableField("sales_qty_type")
     private String salesQtyType;

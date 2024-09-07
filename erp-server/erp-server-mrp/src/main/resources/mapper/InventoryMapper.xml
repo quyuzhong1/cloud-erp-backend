@@ -93,5 +93,20 @@
             #{code}
         </foreach>
     </select>
+    <select id="isTableExist" resultType="java.lang.Boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM pg_tables
+            WHERE tablename = #{tableName}
+              AND schemaname = 'public'
+        )
+    </select>
+    <select id="getFbaOldUsable" resultType="java.lang.Integer">
+        select fulfillable_qty
+        from #{tableName}
+        where is_deleted = false
+          and sku_no = #{result.replenishment.skuNo}
+          and warehouse_id = #{result.replenishment.fbaWarehouseId}
+    </select>
 
 </mapper>

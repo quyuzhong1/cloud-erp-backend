@@ -21,4 +21,10 @@ public interface InventoryService {
      * @param stockUpResult
      */
     int getFbaInTransit(ReplenishmentResultDTO replenishmentResultDTO, String code, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult);
+
+    /**
+     * 获取历史库存
+     * @param replenishmentResult 补货结果
+     */
+    void getHistoryInventory(ReplenishmentResultDTO replenishmentResult);
 }

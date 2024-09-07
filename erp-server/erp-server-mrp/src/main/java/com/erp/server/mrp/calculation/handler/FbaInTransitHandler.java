@@ -32,7 +32,7 @@ public class FbaInTransitHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        //获取需要计算库存的FBA可用配置
+        //获取需要计算库存的FBA在途配置
         CfgRuleCommonDTO.StrategyResultDTO inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         CfgRuleCommonDTO.StrategyResultDTO inTransit = TreeUtils.findByCode(inventoryResult, CfgRuleInventoryNodeEnum.FBA_IN_TRANSIT.getCode());
         if (ObjectUtils.isEmpty(inTransit) || CollectionUtils.isEmpty(inTransit.getChildrenList())) {

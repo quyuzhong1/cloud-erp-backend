@@ -108,6 +108,8 @@ public class BasicReplenishmentDataService {
         List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList = cfgRuleSalesQtyService.list();
         CfgSettingEntity newDaysSetting = cfgSettingService.getCfgSetting(CfgSettingEnum.NEW_DAYS.getCode());
         CfgSettingEntity replenishmentDaysSetting = cfgSettingService.getCfgSetting(CfgSettingEnum.REPLENISHMENT_DAYS.getCode());
+        // 获取采购单价 todo
+
         //查询所有需要计算得数据
         List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData();
         List<String> skuIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getSkuId).distinct().collect(Collectors.toList());

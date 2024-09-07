@@ -33,38 +33,16 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
         int totalQty = 0;
         CfgRuleCommonDTO.StrategyResultDTO inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         CfgRuleCommonDTO.StrategyResultDTO totalResult = TreeUtils.findByCode(inventoryResult, TOTAL_INVENTORY.getCode());
-        CfgRuleCommonDTO.StrategyResultDTO fbaResult = totalResult.getChildrenList().stream()
-                .filter(v -> TOTAL_FBA_INVENTORY.getCode().equals(v.getCode()))
-                .findFirst()
-                .orElse(null);
-        if (!ObjectUtils.isEmpty(fbaResult)) {
-            List<String> codes = fbaResult.getChildrenList().stream().filter(v -> "true".equals(v.getValue())).map(CfgRuleCommonDTO.StrategyResultDTO::getCode).collect(Collectors.toList());
-            if (codes.contains(FBA_USABLE.getCode())) {
-                totalQty += replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty();
-            }
-            if (codes.contains(FBA_IN_TRANSIT.getCode())) {
-                totalQty += replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty();
-            }
-            if (codes.contains(FBA_ESTIMATED_DELIVERY.getCode())) {
-                totalQty += replenishmentResultDTO.getReplenishmentDetail().getFbaPlanDeliveryQty();
-            }
-        }
-        CfgRuleCommonDTO.StrategyResultDTO overseasResult = totalResult.getChildrenList().stream()
-                .filter(v -> TOTAL_OVERSEAS_INVENTORY.getCode().equals(v.getCode()))
-                .findFirst()
-                .orElse(null);
-        if (!ObjectUtils.isEmpty(overseasResult)) {
-            List<String> codes = overseasResult.getChildrenList().stream().filter(v -> "true".equals(v.getValue())).map(CfgRuleCommonDTO.StrategyResultDTO::getCode).collect(Collectors.toList());
-            if (codes.contains(OVERSEAS_USABLE.getCode())) {
-                totalQty += replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty();
-            }
-            if (codes.contains(OVERSEAS_IN_TRANSIT.getCode())) {
-                totalQty += replenishmentResultDTO.getReplenishmentDetail().getOverseasInTransitQty();
-            }
-            if (codes.contains(OVERSEAS_ESTIMATED_DELIVERY.getCode())) {
-                totalQty += replenishmentResultDTO.getReplenishmentDetail().getOverseasPlanDeliveryQty();
-            }
-        }
+        //计算FBA的库存
+        totalQty = getFBATotalQty(replenishmentResultDTO, totalResult, totalQty);
+        //计算海外仓的库存
+        totalQty = getTotalQty(replenishmentResultDTO, totalResult, totalQty);
+        //计算本地的库存
+        totalQty = getLocalTotalQty(replenishmentResultDTO, totalResult, totalQty);
+        replenishmentResultDTO.getReplenishmentDetail().setTotalInventoryQty(totalQty);
+    }
+
+    private static int getLocalTotalQty(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleCommonDTO.StrategyResultDTO totalResult, int totalQty) {
         CfgRuleCommonDTO.StrategyResultDTO localResult = totalResult.getChildrenList().stream()
                 .filter(v -> TOTAL_LOCAL_INVENTORY.getCode().equals(v.getCode()))
                 .findFirst()
@@ -81,6 +59,46 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getLocalPlanPurchaseQty();
             }
         }
-        replenishmentResultDTO.getReplenishmentDetail().setTotalInventoryQty(totalQty);
+        return totalQty;
+    }
+
+    private static int getTotalQty(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleCommonDTO.StrategyResultDTO totalResult, int totalQty) {
+        CfgRuleCommonDTO.StrategyResultDTO overseasResult = totalResult.getChildrenList().stream()
+                .filter(v -> TOTAL_OVERSEAS_INVENTORY.getCode().equals(v.getCode()))
+                .findFirst()
+                .orElse(null);
+        if (!ObjectUtils.isEmpty(overseasResult)) {
+            List<String> codes = overseasResult.getChildrenList().stream().filter(v -> "true".equals(v.getValue())).map(CfgRuleCommonDTO.StrategyResultDTO::getCode).collect(Collectors.toList());
+            if (codes.contains(OVERSEAS_USABLE.getCode())) {
+                totalQty += replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty();
+            }
+            if (codes.contains(OVERSEAS_IN_TRANSIT.getCode())) {
+                totalQty += replenishmentResultDTO.getReplenishmentDetail().getOverseasInTransitQty();
+            }
+            if (codes.contains(OVERSEAS_ESTIMATED_DELIVERY.getCode())) {
+                totalQty += replenishmentResultDTO.getReplenishmentDetail().getOverseasPlanDeliveryQty();
+            }
+        }
+        return totalQty;
+    }
+
+    private static int getFBATotalQty(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleCommonDTO.StrategyResultDTO totalResult, int totalQty) {
+        CfgRuleCommonDTO.StrategyResultDTO fbaResult = totalResult.getChildrenList().stream()
+                .filter(v -> TOTAL_FBA_INVENTORY.getCode().equals(v.getCode()))
+                .findFirst()
+                .orElse(null);
+        if (!ObjectUtils.isEmpty(fbaResult)) {
+            List<String> codes = fbaResult.getChildrenList().stream().filter(v -> "true".equals(v.getValue())).map(CfgRuleCommonDTO.StrategyResultDTO::getCode).collect(Collectors.toList());
+            if (codes.contains(FBA_USABLE.getCode())) {
+                totalQty += replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty();
+            }
+            if (codes.contains(FBA_IN_TRANSIT.getCode())) {
+                totalQty += replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty();
+            }
+            if (codes.contains(FBA_ESTIMATED_DELIVERY.getCode())) {
+                totalQty += replenishmentResultDTO.getReplenishmentDetail().getFbaPlanDeliveryQty();
+            }
+        }
+        return totalQty;
     }
 }

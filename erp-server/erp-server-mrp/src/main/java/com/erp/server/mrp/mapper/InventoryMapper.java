@@ -15,6 +15,8 @@ public interface InventoryMapper {
 
     int getFbaUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO,@Param("code") String code, @Param("tableName") String tableName);
 
+    int getFbaOldUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName);
+
     List<ReplenishmentResultDTO.FbaInTransitDetailDTO> getFbaShipment(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     List<ReplenishmentResultDTO.FbaInTransitDetailDTO> getFbaDelivery(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName,@Param("shipmentName") String shipmentName, @Param("shipmentDetailName") String shipmentDetailName);
@@ -24,4 +26,7 @@ public interface InventoryMapper {
     List<LogisticsChannelEntity> listLogisticsChannelByIds(@Param("channelIds") List<String> channelIds, @Param("tableName") String tableName);
 
     List<FirstMileDeliveryDTO.FbaShipmentDTO> listFirstMileDelivery(@Param("codes") List<String> codes, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+
+    boolean isTableExist(@Param("tableName") String tableName);
+
 }

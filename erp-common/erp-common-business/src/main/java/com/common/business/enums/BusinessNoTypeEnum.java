@@ -87,6 +87,8 @@ public enum BusinessNoTypeEnum {
     CODE_JHBC(66, "JHBC","拣货波次",BusinessNoConstant.JHBC),
 
     CODE_JSRQ(70, "JSRQ","计算日期",BusinessNoConstant.JSRQ),
+    CODE_FHJY(71, "FHJY","发货建议",BusinessNoConstant.FHJY),
+    CODE_CGJY(72, "CGJY","采购建议",BusinessNoConstant.CGJY),
 
     ;
 

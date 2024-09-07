@@ -1,6 +1,10 @@
 package com.erp.model.mrp.dto;
 
+import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.mrp.enums.TimePeriodEnum;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -32,6 +36,38 @@ public class ReplenishmentResultDTO {
      */
     private List<RptOutOfStockDTO> rptOutOfStocks;
 
+    /**
+     * 销量
+     */
+    private List<SalesInfoDTO> salesInfos;
+
+    /**
+     * 分时段销量
+     */
+    private List<TimePeriodSales> timePeriodSales;
+    /**
+     * 分时段日均销量
+     */
+    private List<TimePeriodSales> avgTimePeriodSales;
+
+    /**
+     * 销量预估
+     */
+    private List<SalesEstimateDTO> salesEstimates;
+    /**
+     * 建议发货
+     */
+    private List<DeliverySuggestDTO> deliverySuggests;
+
+    /**
+     * 建议采购
+     */
+    private List<PurchaseSuggestDTO> purchaseSuggests;
+
+    /**
+     * 采购单价
+     */
+    private BigDecimal purchasePrice;
 
     @Getter
     @Setter
@@ -79,6 +115,11 @@ public class ReplenishmentResultDTO {
     @Getter
     @Setter
     public static class DetailDTO {
+
+        /**
+         * 明细id
+         */
+        private String detailId;
         /**
          * sku类型 新品/常规品
          */
@@ -334,5 +375,190 @@ public class ReplenishmentResultDTO {
          * 金额
          */
         private BigDecimal amount;
+    }
+
+    @Getter
+    @Setter
+    public static class SalesInfoDTO {
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        /**
+         * 销量
+         */
+        private BigDecimal salesQty;
+
+        /**
+         * 断货数据是否从历史销量中排除,true是，false否
+         */
+        private Boolean isIgnoreOutOfStock;
+
+        /**
+         * denoisingType 去噪类型
+         */
+        private String denoisingType;
+
+        /**
+         * 原始销量
+         */
+        private Integer originalSalesQty;
+
+        /**
+         * 原始库存
+         */
+        private Integer originalInventoryQty;
+    }
+
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TimePeriodSales {
+
+        private TimePeriodEnum code;
+
+        private BigDecimal qty;
+    }
+
+
+    @Getter
+    @Setter
+    public static class DeliverySuggestDTO {
+
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 创建类型（auto系统，manual人工）
+         */
+        private String createType;
+        /**
+         * 建议发货量
+         */
+        private Integer suggestDeliveryQty;
+        /**
+         * 建议发货日期
+         */
+        private LocalDate suggestDeliveryDate;
+        /**
+         * 物流方式,LogisticsMethodEnum枚举
+         */
+        private String logisticsMethod;
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+        /**
+         * 物流成本
+         */
+        private BigDecimal logisticsCost;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+
+        public static DeliverySuggestDTO buildDeliverySuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, String detailId, String createType) {
+            DeliverySuggestDTO dto = new DeliverySuggestDTO();
+            dto.setCode(code);
+            dto.setCreateType(createType);
+            dto.setLogisticsDays(logisticsResult.getLogisticsDays());
+            dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
+            dto.setSourceId(detailId);
+            dto.setSourceType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            return dto;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class PurchaseSuggestDTO {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 创建类型（auto系统，manual人工）
+         */
+        private String createType;
+        /**
+         * 建议采购量
+         */
+        private Integer suggestPurchaseQty;
+        /**
+         * 建议采购日期
+         */
+        private LocalDate suggestPurchaseDate;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimateInstockDate;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+        /**
+         * 采购成本
+         */
+        private BigDecimal purchaseCost;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        public static PurchaseSuggestDTO buildPurchaseSuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, String detailId, String createType) {
+            PurchaseSuggestDTO dto = new PurchaseSuggestDTO();
+            dto.setCode(code);
+            dto.setCreateType(createType);
+            dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
+            dto.setLogisticsDays(logisticsResult.getLogisticsDays());
+            dto.setSourceId(detailId);
+            dto.setSourceType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            return dto;
+        }
+    }
+
+
+    @Getter
+    @Setter
+    public static class SalesEstimateDTO {
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        /**
+         * 销量
+         */
+        private BigDecimal salesQty;
+
+        /**
+         * 所属月份
+         */
+        private String month;
     }
 }

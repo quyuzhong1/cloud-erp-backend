@@ -14,6 +14,10 @@ public enum SnapshotTableEnum implements EnumMessage {
     FIRST_MILE_DELIVERY("first_mile_delivery", "发货单"),
     FIRST_MILE_DELIVERY_DETAIL("first_mile_delivery_detail", "发货单明细"),
     LOGISTICS_BILL("logistics_bill", "物流单"),
+    SO_B2C("so_b2c", "B2C销售订单表"),
+    SO_B2C_DETAIL("so_b2c_detail", "B2C销售订单明细表"),
+    SO_OUT_STOCK("so_outstock", "销售订单出库单"),
+    SO_OUT_STOCK_DETAIL("so_outstock_detail", "销售订单出库明细"),
     ;
 
     private final String code;
@@ -27,5 +31,9 @@ public enum SnapshotTableEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+    public static String getTableName(SnapshotTableEnum snapshotTable, String calcDate) {
+        return snapshotTable.getCode() + "_" + calcDate;
     }
 }
