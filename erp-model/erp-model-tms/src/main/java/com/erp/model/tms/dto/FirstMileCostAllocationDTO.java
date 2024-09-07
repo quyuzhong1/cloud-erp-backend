@@ -3,7 +3,6 @@ package com.erp.model.tms.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -16,7 +15,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -852,7 +850,9 @@ public class FirstMileCostAllocationDTO implements Serializable {
         //同一个核算期间内是否有其他对账月份的对账单
         private boolean hasOtherReconciliation = false;
         //发货单费用分摊数据是否有期初对账单费用分摊数据
-        private boolean hasEstimatedReconciliation = false;
+        private boolean hasInitCostReconciliation = false;
+        //有其他对账月份对账单，并且对账单未期初实际对账单，且对账单已分摊完成（最后分摊月份中 实际账单/期末在途为0）
+        private boolean isHasInitCostReconciliationAndEnd = false;
     }
 
     @Data
