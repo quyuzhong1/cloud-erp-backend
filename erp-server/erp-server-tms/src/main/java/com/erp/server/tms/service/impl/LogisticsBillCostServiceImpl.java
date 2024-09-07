@@ -921,11 +921,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public void removeByReconciliationIds(List<String> reconciliationIds) {
-        if (CollectionUtils.isEmpty(reconciliationIds)){
+    public void removeByReconciliationIds(String reconciliationId, List<String> logisticsBillIds) {
+        if (CollectionUtils.isEmpty(logisticsBillIds) || StrUtil.isBlank(reconciliationId)){
             return;
         }
-        List<LogisticsBillCostEntity> list = this.lambdaQuery().in(LogisticsBillCostEntity::getReconciliationId, reconciliationIds).list();
+        List<LogisticsBillCostEntity> list = this.lambdaQuery().eq(LogisticsBillCostEntity::getReconciliationId, reconciliationId).in(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillIds).list();
         if (CollectionUtils.isNotEmpty(list)){
             List<String> costIds = list.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
             this.tmsCostDetailService.removeByMainIds(costIds);
@@ -999,5 +999,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         }
         return errorMsgList;
+    }
+
+
+    @Override
+    public void removeRefByReconciliationIds(String reconciliationId, List<String> logisticsBillIds) {
+        if (CollectionUtils.isEmpty(logisticsBillIds) || StrUtil.isBlank(reconciliationId)){
+            return;
+        }
+        this.lambdaUpdate().eq(LogisticsBillCostEntity::getReconciliationId, reconciliationId).in(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillIds)
+                .set(LogisticsBillCostEntity::getReconciliationId, "").update();
     }
 }

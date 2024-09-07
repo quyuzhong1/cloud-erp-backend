@@ -192,7 +192,14 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     /**
      * 根据对账id删除已生成对账单产生的费用明细
-     * @param reconciliationIds
+     * @param reconciliationId
+     * @param logisticsBillIds
      */
-    void removeByReconciliationIds(List<String> reconciliationIds);
+    void removeByReconciliationIds(String reconciliationId, List<String> logisticsBillIds);
+    /**
+     * 删除对账单费用记录
+     * @param reconciliationId
+     * @param logisticsBillIds
+     */
+    void removeRefByReconciliationIds(String reconciliationId, List<String> logisticsBillIds);
 }

@@ -289,10 +289,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //核算期间id
         String reportPeriodId = reportPeriodMonthService.createOrUpdatePeriod(company, entity);
         //重量分摊记录--费用状态为{未分摊，部分分摊}
-        List<String> statusList = new ArrayList<>(2);
-        statusList.add(CostAllocationStatusEnum.NOT.getCode());
-        statusList.add(CostAllocationStatusEnum.PART.getCode());
-        List<FirstMileWeightAllocationEntity> weightAllocationEntityList = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(firstMileDeliveryEntity.getId()), statusList);
+//        List<String> statusList = new ArrayList<>(2);
+//        statusList.add(CostAllocationStatusEnum.NOT.getCode());
+//        statusList.add(CostAllocationStatusEnum.PART.getCode());
+        List<FirstMileWeightAllocationEntity> weightAllocationEntityList = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(firstMileDeliveryEntity.getId()), null);
         //物流单
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByOutstockIdList(Collections.singletonList(firstMileDeliveryEntity.getId()));
         if (CollectionUtils.isEmpty(logisticsBillEntityList)) {
@@ -946,11 +946,11 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (null == reportPeriodMonth) {
             throw new ServiceException("核算期间时间为空");
         }
-        List<String> statusList = new ArrayList<>(2);
-        statusList.add(CostAllocationStatusEnum.NOT.getCode());
-        statusList.add(CostAllocationStatusEnum.PART.getCode());
+//        List<String> statusList = new ArrayList<>(2);
+//        statusList.add(CostAllocationStatusEnum.NOT.getCode());
+//        statusList.add(CostAllocationStatusEnum.PART.getCode());
         // 头程重量分摊-费用状态为{未分摊，部分分摊}+本期账单数据 判断是否进入头程费用分摊表
-        List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(sourceId), statusList);
+        List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(sourceId), null);
         if (CollectionUtils.isEmpty(list)) {
             log.error("重量分摊记录不存在 sourceId:{}", sourceId);
             return;

@@ -261,7 +261,7 @@ public class FirstMileCostAllocationController extends BaseController {
                     continue;
                 }
             }
-            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getSourceId().equals(sourceId)).findFirst().orElse(new FirstMileCostAllocationEntity());
+            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getSourceId().equals(sourceId) && dto.getReportPeriodId().equals(v.getReportPeriodId())).findFirst().orElse(new FirstMileCostAllocationEntity());
             entity.setSourceId(sourceId);
             entity.setReportPeriodId(dto.getReportPeriodId());
             try {
