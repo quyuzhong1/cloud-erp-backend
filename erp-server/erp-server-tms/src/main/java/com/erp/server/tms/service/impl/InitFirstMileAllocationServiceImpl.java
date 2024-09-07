@@ -17,8 +17,6 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.TabApproveStatusEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
@@ -62,7 +60,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_COST_ALLOCATION;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_INIT_FIRST_MILE_ALLOCATION;
 
 /**
  * <p>
@@ -178,7 +176,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
      */
     @Override
     public void exportExcel(InitFirstMileAllocationDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("期初头程分摊导出", EXPORT_TMS_FIRST_MILE_COST_ALLOCATION.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("期初头程分摊导出", EXPORT_TMS_INIT_FIRST_MILE_ALLOCATION.getCode(), dto);
     }
 
     @Override
