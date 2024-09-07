@@ -936,9 +936,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         // 计费方式
         List<String> channelIds = records.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
-        Map<String, LogisticsChannelEntity> channelMap = logisticsChannelService.listByIds(channelIds)
-                .stream()
-                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        Map<String, LogisticsChannelEntity> channelMap = null;
+        if (!CollectionUtils.isEmpty(channelIds)){
+            channelMap = logisticsChannelService.listByIds(channelIds)
+                    .stream()
+                    .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        }
 
         // 国家信息
         List<DictCountryDTO.ListDTO> conuntryList = sysUserFeign.countryList();
@@ -985,7 +988,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             FmLogisticTrackStatusEnum statusEnum = FmLogisticTrackStatusEnum.getNameByCode(record.getTransportStatus());
             record.setTransportStatusName(null == statusEnum ? "" : statusEnum.getName());
             // 计费方式
-            LogisticsChannelEntity logisticsChannelEntity = channelMap.get(record.getLogisticsChannelId());
+            LogisticsChannelEntity logisticsChannelEntity = null;
+            if (Objects.nonNull(channelMap)){
+                logisticsChannelEntity = channelMap.get(record.getLogisticsChannelId());
+            }
             if (null != logisticsChannelEntity) {
                 record.setFeeRule(logisticsChannelEntity.getFeeRule());
                 record.setFeeRuleName(ShippingFeeRuleEnum.getName(logisticsChannelEntity.getFeeRule()));

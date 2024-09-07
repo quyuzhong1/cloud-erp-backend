@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -9,11 +10,13 @@ import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
+import com.erp.model.tms.entity.ReportPeriodMonthEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.query.FirstMileCostAllocationQueryHandler;
 import com.erp.server.tms.service.FirstMileWeightAllocationService;
+import com.erp.server.tms.service.ReportPeriodMonthService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -55,7 +58,8 @@ public class FirstMileCostAllocationController extends BaseController {
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
     @Resource
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
-
+    @Resource
+    private ReportPeriodMonthService reportPeriodMonthService;
     /**
      * tab 列表
      *
@@ -228,9 +232,14 @@ public class FirstMileCostAllocationController extends BaseController {
         List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
         List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(sourceIds.size());
-        List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listBySourceIds(sourceIds,dto.getReportPeriodId());
+        List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listBySourceIds(sourceIds, null);
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
+        ReportPeriodMonthEntity reportPeriodMonth = reportPeriodMonthService.getById(dto.getReportPeriodId());
+        if (Objects.isNull(reportPeriodMonth)){
+            resultDTOS.add(BatchResultDTO.fail(dto.getReportPeriodId(),"","核算区间不存在"));
+            return failure(resultDTOS);
+        }
         for (String sourceId : sourceIds) {
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
             if(Objects.isNull(firstMileDeliveryEntity)){
@@ -241,6 +250,16 @@ public class FirstMileCostAllocationController extends BaseController {
             if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
                 resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId,"费用分摊发货单明细记录不存在"));
                 continue;
+            }
+            //已生成的费用分摊记录
+            if (!CollectionUtils.isEmpty(entityList)){
+                FirstMileCostAllocationEntity entity = entityList.stream().filter(e -> Objects.nonNull(e)
+                        && ConfirmStatusEnum.CONFIRM.getCode().equals(e.getStatus()) && Objects.equals(e.getSourceId(), sourceId))
+                        .max(Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth)).orElse(null);
+                if (Objects.nonNull(entity) && !reportPeriodMonth.getMonth().isAfter(entity.getReportPeriodMonth())){
+                    resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId, StrUtil.format("已存在核算区间【{}】不能下推发货单【{}】的核算区间【{}】", entity.getReportPeriodMonth(),entity.getSourceCode(),reportPeriodMonth.getMonth())));
+                    continue;
+                }
             }
             FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getSourceId().equals(sourceId)).findFirst().orElse(new FirstMileCostAllocationEntity());
             entity.setSourceId(sourceId);

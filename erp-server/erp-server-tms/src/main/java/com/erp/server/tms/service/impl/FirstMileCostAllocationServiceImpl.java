@@ -821,7 +821,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     if (judgeReconciliationDTO.isHasOtherReconciliation()){
                         detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(currentMonthReceiveQty), 4));
                     }else {
-                        detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(asCurrentMonthReceiveQty), 4));
+                        //对账单来源判断 如果来源于期初分摊对账单 取期初签收 实际账单取本月累计签收
+                        if (Objects.nonNull(reconciliationDetailEntity) && ReconciliationTypeEnum.ACTUAL.getCode().equals(reconciliationDetailEntity.getReconciliationType())){
+                            detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(asCurrentMonthReceiveQty), 4));
+                        }else {
+                            detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(initReceiveQty), 4));
+                        }
                     }
                 } else {
                     detailEntity.setCurrentPeriodAllocatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(deliveryQty), 4));
