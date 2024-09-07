@@ -424,6 +424,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         @Size(max = 30, message = "出库code最大长度不能超过30位")
         private String outstockCode;
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
 
         /**
          * 渠道id
