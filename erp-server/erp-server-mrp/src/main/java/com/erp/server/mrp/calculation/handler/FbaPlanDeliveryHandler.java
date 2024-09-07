@@ -11,14 +11,14 @@ import javax.annotation.Resource;
 @Component
 public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
     @Resource
-    private OverseasUsableHandler overseasUsableHandler;
+    private HistorySalesHandler historySalesHandler;
 
     @Resource
     private InventoryService inventoryService;
 
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
-        return overseasUsableHandler;
+        return historySalesHandler;
     }
 
     @Override

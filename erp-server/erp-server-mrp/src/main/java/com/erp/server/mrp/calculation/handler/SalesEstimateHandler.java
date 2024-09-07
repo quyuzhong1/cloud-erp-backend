@@ -9,11 +9,11 @@ import javax.annotation.Resource;
 @Component
 public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
     @Resource
-    private StockingTimeHandler stockingTimeHandler;
+    private OverseasUsableHandler overseasUsableHandler;
 
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
-        return stockingTimeHandler;
+        return overseasUsableHandler;
     }
 
     @Override
