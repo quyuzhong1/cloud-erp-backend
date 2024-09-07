@@ -1007,7 +1007,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 //        statusList.add(CostAllocationStatusEnum.NOT.getCode());
 //        statusList.add(CostAllocationStatusEnum.PART.getCode());
         // 头程重量分摊-费用状态为{未分摊，部分分摊}+本期账单数据 判断是否进入头程费用分摊表
-        List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(sourceId), null);
+        List<FirstMileWeightAllocationEntity> list = null;
+        if (StrUtil.isBlank(sourceId)){
+            list = firstMileWeightAllocationService.listBySourceIds(null, null);
+        }else {
+            list = firstMileWeightAllocationService.listBySourceIds(Collections.singletonList(sourceId), null);
+        }
         if (CollectionUtils.isEmpty(list)) {
             log.error("重量分摊记录不存在 sourceId:{}", sourceId);
             return;
