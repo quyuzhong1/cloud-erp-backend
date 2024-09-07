@@ -1007,7 +1007,22 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if (CollectionUtils.isEmpty(logisticsBillIds) || StrUtil.isBlank(reconciliationId)){
             return;
         }
+        List<LogisticsBillCostEntity> list = this.lambdaQuery().eq(LogisticsBillCostEntity::getReconciliationId, reconciliationId).in(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillIds).list();
+        //移除对账单id记录
         this.lambdaUpdate().eq(LogisticsBillCostEntity::getReconciliationId, reconciliationId).in(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillIds)
                 .set(LogisticsBillCostEntity::getReconciliationId, "").update();
+
+        if (CollectionUtils.isNotEmpty(list)){
+            List<String> costIds = list.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(costIds)){
+                List<TmsCostDetailEntity> tmsCostDetailEntities = tmsCostDetailService.listByMainIdList(costIds);
+                if (CollectionUtils.isNotEmpty(tmsCostDetailEntities)){
+                    List<String> ids = tmsCostDetailEntities.stream().filter(e -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(e.getType())).map(TmsCostDetailEntity::getId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(ids)){
+                        tmsCostDetailService.removeByIds(ids);
+                    }
+                }
+            }
+        }
     }
 }
