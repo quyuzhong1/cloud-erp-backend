@@ -700,7 +700,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //获取发货单所有分摊记录(本核算之前的记录)
         //前一个费用分摊是暂估时 根据核算月份比较  前一个时实际账单时 根据 核算月份+对账月份比较
         List<FirstMileCostAllocationDTO.PagingVO> beforeList = voList.stream().filter(e -> Objects.nonNull(e)
-                && Objects.nonNull(e.getReportPeriodMonth()) && e.getReportPeriodMonth().isBefore(reportPeriodMonth)).collect(Collectors.toList());
+                && Objects.nonNull(e.getReportPeriodMonth()) && Objects.nonNull(reportPeriodMonth) && e.getReportPeriodMonth().isBefore(reportPeriodMonth)).collect(Collectors.toList());
 
         List<FirstMileSkuCostAllocationDetailEntity> beforeSkuDetailList = null;
         //判断是否存在账单
