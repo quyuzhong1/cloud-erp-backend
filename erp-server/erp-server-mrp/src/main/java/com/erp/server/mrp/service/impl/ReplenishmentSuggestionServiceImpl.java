@@ -520,6 +520,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         ReplenishmentRefLabelDTO.UpdateDTO dto = new ReplenishmentRefLabelDTO.UpdateDTO();
         dto.setLabelIdList(labelIdList);
         dto.setType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+        dto.setIsIncrement(Boolean.TRUE);
         replenishmentRefLabelService.update(dto,entity.getId());
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }

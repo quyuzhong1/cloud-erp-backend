@@ -41,4 +41,12 @@ public interface ReplenishmentRefLabelService extends SuperService<Replenishment
      * @return List<ViewDTO>
      */
     List<LabelInfoDTO.ViewDTO> listLabelInfoByRefId(String refId);
+    /**
+     * 根据标签id查询
+     * @author will
+     * @date 2024/9/8 17:06
+     * @param labelId
+     * @return List<ReplenishmentRefLabelEntity>
+     */
+    List<ReplenishmentRefLabelEntity> listLabelInfoByLabelId(String labelId);
 }

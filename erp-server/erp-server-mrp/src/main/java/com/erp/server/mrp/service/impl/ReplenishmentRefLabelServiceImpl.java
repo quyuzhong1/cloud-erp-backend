@@ -48,12 +48,14 @@ public class ReplenishmentRefLabelServiceImpl extends SuperServiceImpl<Replenish
         List<ReplenishmentRefLabelEntity> list = handleData(updateDTO, refId);
 
         List<ReplenishmentRefLabelEntity> oldList = listByRefIdList(Arrays.asList(refId));
-        //删除明细
-        List<String> deleteIds = getDeleteIds(list, oldList);
-        if (CollectionUtils.isNotEmpty(deleteIds)) {
-            this.removeByIds(deleteIds);
-        }
 
+        if (!updateDTO.getIsIncrement()) {
+            //删除明细
+            List<String> deleteIds = getDeleteIds(list, oldList);
+            if (CollectionUtils.isNotEmpty(deleteIds)) {
+                this.removeByIds(deleteIds);
+            }
+        }
         log.info("编辑 开始修改补货建议标签关系单数据，id：【{}】", refId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -64,6 +66,9 @@ public class ReplenishmentRefLabelServiceImpl extends SuperServiceImpl<Replenish
 
     @Override
     public void deleteLabel(List<String> labelIdList, String refId) {
+        if (CollectionUtils.isEmpty(labelIdList)) {
+            return;
+        }
         lambdaUpdate().in(ReplenishmentRefLabelEntity::getLabelId,labelIdList)
                 .eq(ReplenishmentRefLabelEntity::getRefId,refId)
                 .remove();
@@ -72,6 +77,11 @@ public class ReplenishmentRefLabelServiceImpl extends SuperServiceImpl<Replenish
     @Override
     public List<LabelInfoDTO.ViewDTO> listLabelInfoByRefId(String refId) {
         return baseMapper.listLabelInfoByRefId(refId);
+    }
+
+    @Override
+    public List<ReplenishmentRefLabelEntity> listLabelInfoByLabelId(String labelId) {
+        return lambdaQuery().eq(ReplenishmentRefLabelEntity::getLabelId,labelId).list();
     }
 
     /**

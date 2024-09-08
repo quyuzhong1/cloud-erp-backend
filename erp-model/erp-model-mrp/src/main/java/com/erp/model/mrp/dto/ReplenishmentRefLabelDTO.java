@@ -74,6 +74,11 @@ public class ReplenishmentRefLabelDTO implements Serializable {
         @NotBlank(message = "类型   补货建议不能为空")
         @Size(max = 255,message = "类型   补货建议最大长度不能超过255位")
         private String type;
+
+        /**
+         * 是否增量
+         */
+        private Boolean isIncrement = Boolean.FALSE;
     }
 
 

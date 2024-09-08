@@ -10,10 +10,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.LabelInfoDTO;
 import com.erp.model.mrp.entity.LabelInfoEntity;
+import com.erp.model.mrp.entity.ReplenishmentRefLabelEntity;
 import com.erp.model.mrp.vo.LabelVO;
 import com.erp.server.mrp.mapper.LabelInfoMapper;
 import com.erp.server.mrp.service.LabelInfoService;
 import com.erp.server.mrp.service.OperateLogService;
+import com.erp.server.mrp.service.ReplenishmentRefLabelService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +42,9 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
     @Autowired
     private OperateLogService operateLogService;
 
+    @Autowired
+    private ReplenishmentRefLabelService replenishmentRefLabelService;
+
     /**
     * 修改
     */
@@ -55,7 +60,7 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
         //删除明细
         List<String> deleteIds = getDeleteIds(list, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-            this.removeByIds(deleteIds);
+            deleteIds.stream().forEach(obj -> this.delete(obj));
         }
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;
@@ -74,6 +79,10 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
     public BatchResultDTO delete(String id) {
         LabelInfoEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "标签信息单"));
+        List<ReplenishmentRefLabelEntity> refLabelList = replenishmentRefLabelService.listLabelInfoByLabelId(id);
+        if (CollectionUtils.isNotEmpty(refLabelList)) {
+            throw new ServiceException("标签已被引用不支持删除");
+        }
         //删除标签
         this.removeById(old.getId());
         return BatchResultDTO.success(old.getId(), old.getName(), OperationTypeEnum.UPDATE);
