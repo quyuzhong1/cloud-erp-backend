@@ -56,6 +56,9 @@ public class ReplenishmentRefLabelServiceImpl extends SuperServiceImpl<Replenish
                 this.removeByIds(deleteIds);
             }
         }
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
         log.info("编辑 开始修改补货建议标签关系单数据，id：【{}】", refId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -114,19 +117,22 @@ public class ReplenishmentRefLabelServiceImpl extends SuperServiceImpl<Replenish
     */
     private List<ReplenishmentRefLabelEntity> handleData(ReplenishmentRefLabelDTO.UpdateDTO updateDTO,String refId) {
             List<ReplenishmentRefLabelEntity> resultList = new ArrayList<>();
-        //标签数据
-        List<ReplenishmentRefLabelEntity> replenishmentRefLabelList = listByLabelIdListAndRefIdList(updateDTO.getLabelIdList(), Arrays.asList(refId));
-        for (String labelId : updateDTO.getLabelIdList()) {
-            ReplenishmentRefLabelEntity resultEntity = new ReplenishmentRefLabelEntity();
-            resultEntity.setRefId(refId);
-            resultEntity.setLabelId(labelId);
-            resultEntity.setType(updateDTO.getType());
-            ReplenishmentRefLabelEntity entity = replenishmentRefLabelList.stream().filter(obj -> StrUtil.equals(obj.getLabelId(), labelId) && StrUtil.equals(refId, obj.getRefId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(entity)) {
-                resultEntity.setId(entity.getId());
+            if (CollectionUtils.isEmpty(updateDTO.getLabelIdList())) {
+                return resultList;
             }
-            resultList.add(resultEntity);
-        }
+            //标签数据
+            List<ReplenishmentRefLabelEntity> replenishmentRefLabelList = listByLabelIdListAndRefIdList(updateDTO.getLabelIdList(), Arrays.asList(refId));
+            for (String labelId : updateDTO.getLabelIdList()) {
+                ReplenishmentRefLabelEntity resultEntity = new ReplenishmentRefLabelEntity();
+                resultEntity.setRefId(refId);
+                resultEntity.setLabelId(labelId);
+                resultEntity.setType(updateDTO.getType());
+                ReplenishmentRefLabelEntity entity = replenishmentRefLabelList.stream().filter(obj -> StrUtil.equals(obj.getLabelId(), labelId) && StrUtil.equals(refId, obj.getRefId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(entity)) {
+                    resultEntity.setId(entity.getId());
+                }
+                resultList.add(resultEntity);
+            }
         return resultList;
     }
 

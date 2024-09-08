@@ -39,7 +39,7 @@
             li.color,
             li.disabled
         from  replenishment_ref_label rrl
-        left join label_info li on rrl.label_id = li.id and li.is_deleted =false
+        inner join label_info li on rrl.label_id = li.id and li.is_deleted =false
         <where>
             rrl.is_deleted = false and rrl.ref_id = #{refId}
         </where>

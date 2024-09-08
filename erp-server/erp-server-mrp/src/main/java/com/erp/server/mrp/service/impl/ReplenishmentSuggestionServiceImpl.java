@@ -580,7 +580,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (CollectionUtils.isEmpty(list)) {
             return  Collections.EMPTY_LIST;
         }
-        return list.stream().map(LabelInfoDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
+        return list.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(LabelInfoDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
     }
 
     @Override
