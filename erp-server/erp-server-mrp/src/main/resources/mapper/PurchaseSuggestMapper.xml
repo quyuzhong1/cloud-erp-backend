@@ -39,7 +39,7 @@
         ps.version,
         ps.is_deleted,
         ps.code, ps.create_type, ps.suggest_purchase_qty, ps.suggest_purchase_date, ps.logistics_method, ps.logistics_days, ps.estimate_instock_date, ps.estimate_sales_date, ps.purchase_cost, ps.invalid_status, ps.invalid_remark, ps.source_id, ps.source_type,
-        rs.sku_id,rs.sku_no,rs.platform,rs.shop_id
+        rs.sku_id,rs.sku_id,rs.sku_no,rs.platform,rs.shop_id
     </sql>
 
     <!-- 采购建议导出分页 -->

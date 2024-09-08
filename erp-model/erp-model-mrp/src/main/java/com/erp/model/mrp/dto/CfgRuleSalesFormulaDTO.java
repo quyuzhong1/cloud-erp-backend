@@ -326,6 +326,21 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         private String shopName;
 
         /**
+         * 规则名称
+         */
+        private String name;
+
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+
+        /**
          * 默认日销量类型
          */
         private String defaultTypeName;
@@ -333,7 +348,7 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
          * 固定日销量
          */
-        private Integer fixedValue;
+        private BigDecimal fixedValue;
 
         /**
          * 3天日均（%）

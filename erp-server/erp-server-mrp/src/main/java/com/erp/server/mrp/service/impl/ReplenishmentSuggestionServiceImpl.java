@@ -1,7 +1,10 @@
 package com.erp.server.mrp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.DynamicExcelDTO;
@@ -25,9 +28,11 @@ import com.erp.model.mrp.vo.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -35,6 +40,8 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.mrp.mapper.ReplenishmentSuggestionMapper;
 import com.erp.server.mrp.service.*;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +50,7 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -117,6 +125,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Resource
     private CfgRuleSalesDenoisingService cfgRuleSalesDenoisingService;
+
+    @Resource
+    private CfgRuleSalesFormulaService cfgRuleSalesFormulaService;
+
+    @Resource
+    private CfgRuleLogisticsService cfgRuleLogisticsService;
 
     @Override
     public PagingVO<ReplenishmentSuggestionVO.PagingView> paging(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
@@ -601,33 +615,356 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public PagingVO<DynamicExcelDTO> listHistorySalesQty(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<DynamicExcelDTO> listHistorySalesQty(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
+        Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
+        List<ReplenishmentSuggestionVO.PagingView> list = pagingVO.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>();
+        }
+        //历史销量数据处理
+        List<LinkedHashMap> linkedHashMapList = handleHistorySalesQty(list);
+        return new PagingVO(linkedHashMapList, (int) pagingVO.getTotal(),(int) pagingVO.getSize(), (int)pagingVO.getCurrent());
+    }
+
+    /**
+     * 历史销量数据处理
+     * @author will
+     * @date 2024/9/8 16:03
+     * @param list
+     * @return List<LinkedHashMap>
+     */
+    private List<LinkedHashMap> handleHistorySalesQty (List<ReplenishmentSuggestionVO.PagingView> list) {
+        List<LinkedHashMap> resultList = Lists.newArrayList();
+        LinkedHashMap<String, Object> resultMap = Maps.newLinkedHashMap();
+        // 标题
+        LinkedHashMap headMap = Maps.newLinkedHashMap();
+        // 结果集
+        List<LinkedHashMap> convertDataList = Lists.newArrayListWithExpectedSize(list.size());
+
+        // 公共标题字段
+        Arrays.asList(SalesInfoExportHeaderEnum.values()).forEach(headerEnum -> {
+            headMap.put(headerEnum.getCode(), headerEnum.getName());
+        });
+
+        //历史销量
+        List<String> detailIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getDetailId).distinct().collect(Collectors.toList());
+        List<SalesInfoEntity> salesInfoList = salesInfoService.listHistorySalesInfo(detailIdList);
+
+        // 动态字段标题
+        if (CollUtil.isNotEmpty(salesInfoList)) {
+            salesInfoList.forEach(obj -> headMap.put(obj.getDate(),LocalDateTimeUtil.format(obj.getDate(), DateTimeFormatter.ofPattern("yyyy年MM月dd"))));
+        }
+        //平台
+        List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+
+        //店铺
+        List<String> shopIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getShopId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+
+        //SKU
+        List<String> skuIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+
+        for (ReplenishmentSuggestionVO.PagingView pagingView : list) {
+            LinkedHashMap<String, Object> convertMap = new LinkedHashMap<>();
+            //店铺名称
+            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), pagingView.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            //平台名称
+            String platformName = platformViewList.stream().filter(obj -> StrUtil.equals(obj.getValue(), pagingView.getPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+            //产品名称
+            String productName = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), pagingView.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+
+            List<SalesInfoEntity> salesList = salesInfoList.stream().filter(obj -> StrUtil.equals(obj.getReplenishmentDetailId(), pagingView.getDetailId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(salesList)) {
+                continue;
+            }
+            convertMap.put("platform",platformName);
+            convertMap.put("shopName",shopName);
+            convertMap.put("skuNo",pagingView.getSkuNo());
+            convertMap.put("productName",productName);
+            convertMap.put("typeName","FBA");
+            //历史销量
+            for (SalesInfoEntity salesInfoEntity : salesList) {
+                convertMap.put(salesInfoEntity.getDate().toString(),salesInfoEntity.getOriginalSalesQty());
+            }
+            convertDataList.add(convertMap);
+        }
+        resultMap.put("head", headMap);
+        resultMap.put("data", convertDataList);
+        resultList.add(resultMap);
+        return resultList;
     }
 
     @Override
     public PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
-        PagingVO<ReplenishmentSuggestionVO.PagingView> pagingVO = this.paging(params);
-        if (CollectionUtils.isEmpty(pagingVO.getList())) {
+        Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
+        if (CollectionUtils.isEmpty(pagingVO.getRecords())) {
             return new PagingVO<>();
         }
-        PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> exportPagingVO = handleExport((List<ReplenishmentSuggestionVO.PagingView>)pagingVO.getList());
-        return new PagingVO<>();
+        List<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> exportPagingVO = handleExport(pagingVO.getRecords());
+        return new PagingVO(exportPagingVO,(int)pagingVO.getTotal(),(int)pagingVO.getSize(),(int)pagingVO.getCurrent());
     }
 
-    private PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> handleExport(List<ReplenishmentSuggestionVO.PagingView> list) {
+    /**
+     * 导出数据处理
+     * @author will
+     * @date 2024/9/8 11:52
+     * @param list
+     * @return PagingVO<ReplenishmentRuleExportDTO>
+     */
+    private List<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> handleExport(List<ReplenishmentSuggestionVO.PagingView> list) {
+        List<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> exportList = new ArrayList<>();
         if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO<>();
+            return exportList;
         }
+
         //店铺
         List<String> shopIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getShopId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
 
         //平台
         List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+
         //建议id集合
         List<String> suggestIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getId).distinct().collect(Collectors.toList());
         //备货
-        return new PagingVO<>();
+        List<CfgRuleStockUpEntity> cfgRuleStockUpList = cfgRuleStockUpService.listByRefIdList(suggestIdList);
+
+        //动态备货系数
+        List<String> stockUpIdList = cfgRuleStockUpList.stream().map(CfgRuleStockUpEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(stockUpIdList);
+
+        //物流信息
+        List<CfgRuleLogisticsEntity> cfgRuleLogisticList = cfgRuleLogisticsService.listByStockUpIdList(stockUpIdList);
+
+        //销量主表
+        List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList = cfgRuleSalesQtyService.listByRefIdList(suggestIdList);
+
+        //日销量信息
+        List<String> salesQtyIdList = cfgRuleSalesQtyList.stream().map(CfgRuleSalesQtyEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgRuleSalesFormulaEntity> salesFormulaList = cfgRuleSalesFormulaService.listBySalesQtyIdList(salesQtyIdList);
+
+       //销量去噪
+        List<CfgRuleSalesDenoisingEntity> cfgRuleSalesDenoisingList = cfgRuleSalesDenoisingService.listBySalesQtyIdList(salesQtyIdList);
+
+        for (ReplenishmentSuggestionVO.PagingView pagingView :list) {
+             ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO exportDTO = new ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO();
+
+            //店铺名称
+            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), pagingView.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+
+            //平台名称
+            String platformName = platformViewList.stream().filter(obj -> StrUtil.equals(obj.getValue(), pagingView.getPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+
+            List<CfgRuleStockUpDTO.StockUpExportDTO> stockUpExportList = formatExportStockUp(pagingView, cfgRuleStockUpList, cfgRuleLogisticList, shopName, platformName);
+            exportDTO.setStockUpExportList(stockUpExportList);
+            List<CfgRuleStockingRatioDTO.StockingRatioExportDTO> stockingRatioExportList = formatExportStockingRatio(pagingView, cfgRuleStockingRatioList, shopName, platformName);
+            exportDTO.setStockingRatioExportList(stockingRatioExportList);
+            List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> defaultSalesQtyExportList = formatDefaultSalesQty(pagingView, salesFormulaList, shopName, platformName);
+            exportDTO.setDefaultSalesQtyExportList(defaultSalesQtyExportList);
+            List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> dynamicSalesQtyExportList = formatDynamicSalesQty(pagingView, salesFormulaList, shopName, platformName);
+            exportDTO.setDynamicSalesQtyExportList(dynamicSalesQtyExportList);
+            List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> fixedSalesQtyExportList = formatFixedSalesQty(pagingView, salesFormulaList, shopName, platformName);
+            exportDTO.setFixedSalesQtyExportList(fixedSalesQtyExportList);
+            List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> salesDenoisingExportList = formatSalesDenoising(pagingView, cfgRuleSalesDenoisingList, shopName, platformName);
+            exportDTO.setSalesDenoisingExportList(salesDenoisingExportList);
+            exportList.add(exportDTO);
+        }
+        return exportList;
+    }
+    /**
+     * 备货信息
+     */
+    private List<CfgRuleStockUpDTO.StockUpExportDTO> formatExportStockUp (ReplenishmentSuggestionVO.PagingView pagingView,List<CfgRuleStockUpEntity> cfgRuleStockUpList,
+                                                                          List<CfgRuleLogisticsEntity> cfgRuleLogisticList,String shopName,String platformName) {
+        List<CfgRuleStockUpDTO.StockUpExportDTO> stockUpList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(cfgRuleStockUpList)) {
+            return stockUpList;
+        }
+        for (CfgRuleStockUpEntity stockUpEntity : cfgRuleStockUpList) {
+            CfgRuleStockUpDTO.StockUpExportDTO stockUpExportDTO = new CfgRuleStockUpDTO.StockUpExportDTO();
+            BeanMapperUtils.copy(stockUpEntity,stockUpExportDTO);
+            stockUpExportDTO.setPlatform(platformName);
+            stockUpExportDTO.setSkuNo(pagingView.getSkuNo());
+            stockUpExportDTO.setShopName(shopName);
+            //空运
+            CfgRuleLogisticsEntity oneLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.AIRFREIGHT.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            stockUpExportDTO.setOneLogisticsCycleDays(oneLogisticsEntity.getLogisticsCycleDays());
+            stockUpExportDTO.setOneLogisticsDays(oneLogisticsEntity.getLogisticsDays());
+            stockUpExportDTO.setOneIndex(oneLogisticsEntity.getIndex());
+
+            //快递
+            CfgRuleLogisticsEntity twoLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.EXPRESS.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            stockUpExportDTO.setTwoLogisticsCycleDays(twoLogisticsEntity.getLogisticsCycleDays());
+            stockUpExportDTO.setTwoLogisticsDays(twoLogisticsEntity.getLogisticsDays());
+            stockUpExportDTO.setTwoIndex(twoLogisticsEntity.getIndex());
+
+            //海运散装
+            CfgRuleLogisticsEntity threeLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.OCEAN_FREIGHT_BULK.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            stockUpExportDTO.setThreeLogisticsCycleDays(threeLogisticsEntity.getLogisticsCycleDays());
+            stockUpExportDTO.setThreeLogisticsDays(threeLogisticsEntity.getLogisticsDays());
+            stockUpExportDTO.setThreeIndex(threeLogisticsEntity.getIndex());
+
+            //海运整柜
+            CfgRuleLogisticsEntity fourLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.OCEAN_FREIGHT_FCL.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            stockUpExportDTO.setFourLogisticsCycleDays(fourLogisticsEntity.getLogisticsCycleDays());
+            stockUpExportDTO.setFourLogisticsDays(fourLogisticsEntity.getLogisticsDays());
+            stockUpExportDTO.setFourIndex(fourLogisticsEntity.getIndex());
+
+            //铁运散装
+            CfgRuleLogisticsEntity fiveLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            stockUpExportDTO.setFiveLogisticsCycleDays(fiveLogisticsEntity.getLogisticsCycleDays());
+            stockUpExportDTO.setFiveLogisticsDays(fiveLogisticsEntity.getLogisticsDays());
+            stockUpExportDTO.setFiveIndex(fiveLogisticsEntity.getIndex());
+
+            //铁运整柜
+            CfgRuleLogisticsEntity sixLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            stockUpExportDTO.setSixLogisticsCycleDays(sixLogisticsEntity.getLogisticsCycleDays());
+            stockUpExportDTO.setSixLogisticsDays(sixLogisticsEntity.getLogisticsDays());
+            stockUpExportDTO.setSixIndex(sixLogisticsEntity.getIndex());
+            stockUpList.add(stockUpExportDTO);
+        }
+        return stockUpList;
+    }
+
+    /**
+     * 备货系数
+     */
+    private List<CfgRuleStockingRatioDTO.StockingRatioExportDTO> formatExportStockingRatio (ReplenishmentSuggestionVO.PagingView pagingView,List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList,String shopName,String platformName) {
+        List<CfgRuleStockingRatioDTO.StockingRatioExportDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(cfgRuleStockingRatioList)) {
+            return resultList;
+        }
+        for (CfgRuleStockingRatioEntity stockingRatioEntity : cfgRuleStockingRatioList) {
+            CfgRuleStockingRatioDTO.StockingRatioExportDTO exportDTO = new CfgRuleStockingRatioDTO.StockingRatioExportDTO();
+            BeanMapperUtils.copy(stockingRatioEntity,exportDTO);
+            exportDTO.setPlatform(platformName);
+            exportDTO.setSkuNo(pagingView.getSkuNo());
+            exportDTO.setShopName(shopName);
+            resultList.add(exportDTO);
+        }
+        return resultList;
+    }
+
+    /**
+     * 默认销量
+     */
+    private List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> formatDefaultSalesQty (ReplenishmentSuggestionVO.PagingView pagingView, List<CfgRuleSalesFormulaEntity> salesFormulaList, String shopName, String platformName) {
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> resultList = new ArrayList<>();
+        //默认销量
+        List<CfgRuleSalesFormulaEntity> defaultList = salesFormulaList.stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(defaultList)) {
+            return resultList;
+        }
+        for (CfgRuleSalesFormulaEntity salesFormulaEntity : defaultList) {
+            CfgRuleSalesFormulaDTO.SalesFormulaExportDTO exportDTO = new CfgRuleSalesFormulaDTO.SalesFormulaExportDTO();
+            exportDTO.setPlatform(platformName);
+            exportDTO.setSkuNo(pagingView.getSkuNo());
+            exportDTO.setShopName(shopName);
+            exportDTO.setDefaultTypeName(CfgRuleSalesFormulaDefaultTypeEnum.getName(salesFormulaEntity.getDefaultType()));
+            exportDTO.setFixedValue(salesFormulaEntity.getFixedValue());
+            //格式化动态销量百分比
+            handlePercentJson(salesFormulaEntity,exportDTO);
+            resultList.add(exportDTO);
+        }
+        return resultList;
+    }
+    /**
+     * 动态销量
+     */
+    private List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> formatDynamicSalesQty (ReplenishmentSuggestionVO.PagingView pagingView, List<CfgRuleSalesFormulaEntity> salesFormulaList, String shopName, String platformName) {
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> resultList = new ArrayList<>();
+        //默认销量
+        List<CfgRuleSalesFormulaEntity> dynamicList = salesFormulaList.stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(dynamicList)) {
+            return resultList;
+        }
+        for (CfgRuleSalesFormulaEntity salesFormulaEntity : dynamicList) {
+            CfgRuleSalesFormulaDTO.SalesFormulaExportDTO exportDTO = new CfgRuleSalesFormulaDTO.SalesFormulaExportDTO();
+            exportDTO.setPlatform(platformName);
+            exportDTO.setSkuNo(pagingView.getSkuNo());
+            exportDTO.setShopName(shopName);
+            exportDTO.setName(salesFormulaEntity.getName());
+            exportDTO.setStartDate(salesFormulaEntity.getStartDate());
+            exportDTO.setEndDate(salesFormulaEntity.getEndDate());
+            //格式化动态销量百分比
+            handlePercentJson(salesFormulaEntity,exportDTO);
+            resultList.add(exportDTO);
+        }
+        return resultList;
+    }
+    /**
+     * 固定销量
+     */
+    private List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> formatFixedSalesQty (ReplenishmentSuggestionVO.PagingView pagingView,List<CfgRuleSalesFormulaEntity> salesFormulaList, String shopName, String platformName) {
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> resultList = new ArrayList<>();
+        //默认销量
+        List<CfgRuleSalesFormulaEntity> fixedList = salesFormulaList.stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(fixedList)) {
+            return resultList;
+        }
+        for (CfgRuleSalesFormulaEntity salesFormulaEntity :fixedList) {
+            CfgRuleSalesFormulaDTO.SalesFormulaExportDTO exportDTO = new CfgRuleSalesFormulaDTO.SalesFormulaExportDTO();
+            exportDTO.setPlatform(platformName);
+            exportDTO.setSkuNo(pagingView.getSkuNo());
+            exportDTO.setShopName(shopName);
+            exportDTO.setName(salesFormulaEntity.getName());
+            exportDTO.setStartDate(salesFormulaEntity.getStartDate());
+            exportDTO.setEndDate(salesFormulaEntity.getEndDate());
+            exportDTO.setFixedValue(salesFormulaEntity.getFixedValue());
+            resultList.add(exportDTO);
+        }
+        return resultList;
+    }
+
+    /**
+     * 销量去噪
+     */
+    private List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> formatSalesDenoising (ReplenishmentSuggestionVO.PagingView pagingView,List<CfgRuleSalesDenoisingEntity> cfgRuleSalesDenoisingList, String shopName, String platformName) {
+        List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(cfgRuleSalesDenoisingList)) {
+            return resultList;
+        }
+        for (CfgRuleSalesDenoisingEntity salesDenoisingEntity : cfgRuleSalesDenoisingList) {
+            CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO  exportDTO = new CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO();
+            exportDTO.setPlatform(platformName);
+            exportDTO.setSkuNo(pagingView.getSkuNo());
+            exportDTO.setShopName(shopName);
+            exportDTO.setName(salesDenoisingEntity.getName());
+            exportDTO.setStartDate(salesDenoisingEntity.getStartDate());
+            exportDTO.setEndDate(salesDenoisingEntity.getEndDate());
+            exportDTO.setDenoisingTypeName(CfgRuleSalesDenoisingDenoisingTypeEnum.getName(salesDenoisingEntity.getDenoisingType()));
+            //百分比去噪
+            if (StrUtil.equals(CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode(),salesDenoisingEntity.getDenoisingType())) {
+                exportDTO.setPercentageValue(salesDenoisingEntity.getEffectiveValue());
+            }
+            //固定值去噪
+            if (StrUtil.equals(CfgRuleSalesDenoisingDenoisingTypeEnum.FIXED_VALUE.getCode(),salesDenoisingEntity.getDenoisingType())) {
+                exportDTO.setFixedValue(salesDenoisingEntity.getEffectiveValue());
+            }
+            resultList.add(exportDTO);
+        }
+        return resultList;
+    }
+
+    /**
+     * 动态百分比格式化
+     * @author will
+     * @date 2024/9/8 10:22
+     * @param salesFormulaEntity
+     * @param exportDTO
+     */
+    private void handlePercentJson (CfgRuleSalesFormulaEntity salesFormulaEntity,CfgRuleSalesFormulaDTO.SalesFormulaExportDTO exportDTO) {
+        //动态百分比格式化
+        CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = JSONUtil.toBean(salesFormulaEntity.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class);
+        exportDTO.setThreeDaysRatio(percentJsonDTO.getThreeDaysRatio());
+        exportDTO.setSevenDaysRatio(percentJsonDTO.getSevenDaysRatio());
+        exportDTO.setFourteenDaysRatio(percentJsonDTO.getFourteenDaysRatio());
+        exportDTO.setThirtyDaysRatio(percentJsonDTO.getThirtyDaysRatio());
+        exportDTO.setSixtyDaysRatio(percentJsonDTO.getSixtyDaysRatio());
+        exportDTO.setNinetyDaysRatio(percentJsonDTO.getNinetyDaysRatio());
+        exportDTO.setOneHundredEightyDaysRatio(percentJsonDTO.getOneHundredEightyDaysRatio());
+        exportDTO.setTwoHundredSeventyDaysRatio(percentJsonDTO.getTwoHundredSeventyDaysRatio());
+        exportDTO.setThreeHundredSixtyDaysRatio(percentJsonDTO.getThreeHundredSixtyDaysRatio());
     }
 }

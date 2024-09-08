@@ -3,6 +3,9 @@ package com.erp.server.mrp.mapper;
 import com.erp.model.mrp.entity.SalesInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,5 +17,12 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface SalesInfoMapper extends BaseMapper<SalesInfoEntity> {
-
+    /**
+     * 查询历史销量
+     * @author will
+     * @date 2024/9/8 14:22
+     * @param detailIdList
+     * @return List<SalesInfoEntity>
+     */
+    List<SalesInfoEntity> listHistorySalesInfo(@Param("detailIdList") List<String> detailIdList);
 }

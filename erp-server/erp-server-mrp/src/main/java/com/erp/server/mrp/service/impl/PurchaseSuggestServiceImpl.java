@@ -9,12 +9,14 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
 import com.erp.server.mrp.service.OperateLogService;
 import com.erp.server.mrp.service.PurchaseSuggestService;
@@ -27,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 建议采购 服务实现类
@@ -110,9 +114,22 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         return new PagingVO<>(pagingVO);
     }
 
+    /**
+     * 导出处理
+     * @author will
+     * @date 2024/9/8 12:21
+     * @param list
+     */
     private void handleExport (List<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
+        }
+        List<String> skuIdList = list.stream().map(ReplenishmentSuggestionDTO.PurchaseSuggestionDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+        for (ReplenishmentSuggestionDTO.PurchaseSuggestionDTO purchaseSuggestionDTO : list) {
+            //产品名称
+            String productName = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), purchaseSuggestionDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            purchaseSuggestionDTO.setProductName(productName);
         }
     }
 

@@ -38,5 +38,20 @@
         type, default_type, index, priority, name, start_date, end_date, sales_qty_id, fixed_value, percent_json
     </sql>
 
+    <!-- 根据关联id集合查询 -->
+    <select id="listFormulaByRefIdList"
+            resultType="com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO$SalesFormulaExportDTO">
+        select
+            <include refid="Base_Column_List" />
+        from cfg_rule_sales_qty crsq
+        left join cfg_rule_sales_formula crsf on crsq.id = crsf.sales_qty_id and crsf.is_deleted = false
+        <where>
+            crsq.is_deleted = false and crsq.ref_id in
+            <foreach collection="refIdList" item="item" separator="," close="(" open=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
 
 </mapper>

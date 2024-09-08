@@ -48,4 +48,12 @@ public interface CfgRuleSalesFormulaService extends SuperService<CfgRuleSalesFor
      * @param id 销量配置id
      */
     List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> listFormulaBySalesId(String id);
+    /**
+     * 根据来源id集合查询销量数据
+     * @author will
+     * @date 2024/9/6 16:30
+     * @param refIdList
+     * @return List<SalesFormulaExportDTO>
+     */
+    List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> listFormulaByRefIdList(List<String> refIdList);
 }

@@ -1,10 +1,10 @@
 package com.erp.server.mrp.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.mrp.entity.SalesInfoEntity;
 import com.erp.server.mrp.mapper.SalesInfoMapper;
 import com.erp.server.mrp.service.SalesInfoService;
-import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -28,5 +28,10 @@ public class SalesInfoServiceImpl extends SuperServiceImpl<SalesInfoMapper, Sale
                 .between(SalesInfoEntity::getDate, startDate, endDate)
                 .orderByAsc(SalesInfoEntity::getDate)
         );
+    }
+
+    @Override
+    public List<SalesInfoEntity> listHistorySalesInfo(List<String> detailIdList) {
+        return baseMapper.listHistorySalesInfo(detailIdList);
     }
 }

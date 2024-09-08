@@ -121,6 +121,11 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
                 }).collect(Collectors.toList());
     }
 
+    @Override
+    public List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> listFormulaByRefIdList(List<String> refIdList) {
+        return baseMapper.listFormulaByRefIdList(refIdList);
+    }
+
     /**
      * 查询需要删除的数据
      */

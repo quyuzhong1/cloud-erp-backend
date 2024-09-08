@@ -192,6 +192,12 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          */
         private String code;
 
+
+        /**
+         * SKUID
+         */
+        private String skuId;
+
         /**
          * SKU
          */

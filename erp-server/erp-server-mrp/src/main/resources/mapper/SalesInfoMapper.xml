@@ -24,4 +24,22 @@
         <result column="calc_version" property="calcVersion" />
     </resultMap>
 
+    <!-- 查询历史销量 -->
+    <select id="listHistorySalesInfo" resultType="com.erp.model.mrp.entity.SalesInfoEntity">
+        select
+            si.replenishment_detail_id,
+            si.date,
+            si.sales_qty,
+            si.month,
+            si.avg_daily_sales_qty
+        from sales_info si
+        <where>
+            si.is_deleted = false and now() > si.date and  si.replenishment_detail_id in
+            <foreach collection="detailIdList" separator="," open="(" close=")" item="item">
+                 #{item}
+            </foreach>
+        </where>
+        order by si.date desc
+    </select>
+
 </mapper>
