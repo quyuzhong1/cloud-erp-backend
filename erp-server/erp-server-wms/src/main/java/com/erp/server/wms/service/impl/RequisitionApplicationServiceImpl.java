@@ -1284,6 +1284,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<String> fbaShipmentIdList = detailList.stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDTO::getFbaShipmentId).distinct().collect(Collectors.toList());
 
         RequisitionApplicationEntity entity = this.getById(detailList.get(0).getId());
+        RequisitionApplicationDetailEntity detailEntity = requisitionApplicationDetailService.listByMainIds(Arrays.asList(entity.getId())).get(0);
         //根据货件生成发货单
         List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByIds(fbaShipmentIdList);
         List<FbaShipmentDetailEntity> allFbaDetailList = fbaShipmentDetailService.listByMainIds(fbaShipmentIdList);
@@ -1294,6 +1295,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
         ShopInfoEntity shopInfo = Optional.ofNullable(FeignQuery.getById(ShopInfoEntity.class,entity.getChannelId())).orElseThrow(()->new ServiceException("查询不到店铺"));
 
+        List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
+        CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
+                .filter(staging -> staging.getWarehouseId().equals(detailEntity.getToWarehouseId()))
+                .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
         for (FbaShipmentEntity fbaShipmentEntity : fbaShipmentEntityList) {
             //映射主表信息
             FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverFDD(fbaShipmentEntity,entity,shopInfo);
@@ -1308,9 +1314,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 detailAddDto.setFbaShipmentCode(fbaShipmentEntity.getCode());
                 FbaShipmentPackingEntity fbaPackingList = allFbaPackingList.stream().filter(v->v.getMainId().equals(fbaShipmentEntity.getId()) && v.getFnSku().equals(fbaShipmentDetailEntity.getFnSku())).findFirst().orElseThrow(()->new ServiceException("{}-{}查询不到对于装箱信息",fbaShipmentEntity.getCode(),fbaShipmentDetailEntity.getFnSku()));
                 detailAddDto.setDeliveryQty(fbaPackingList.getQty());
-
-                //TODO 仓位待处理
-                detailAddDto.setWarehouseLocation("");
+                detailAddDto.setWarehouseLocation(pickingStaging.getWarehouseLocation());
                 detailAddList.add(detailAddDto);
             }
             addDTO.setDetailList(detailAddList);
