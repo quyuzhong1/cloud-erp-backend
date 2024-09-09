@@ -117,5 +117,10 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台库存
      */
     public static final String DMP_FBA_INVENTORY_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inventory_to_wms_group";
+    
+    /**
+     * 新中台推送产品上架时间
+     */
+    public static final String DMP_PRODUCT_LISTING_TO_PLM_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_product_listing_to_plm_group";
 
 }
