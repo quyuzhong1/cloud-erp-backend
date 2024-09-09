@@ -973,6 +973,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationEntity> existBinds = lambdaQuery().in(RequisitionApplicationEntity::getFbaShipmentCode, shipmentCode).list();
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         List<RequisitionApplicationEntity> updateList = new ArrayList<>();
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listBySourceIds(ids);
+        List<String> deliveryIds = firstMileDeliveryEntityList.stream().map(v->v.getId()).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(deliveryIds);
         //判断dto里面的shipmentId有没有重复
         if(dto.stream().map(RequisitionApplicationDTO.BindShipment::getShipmentId).distinct().count() != dto.size()){
             throw new ServiceException("货件单号重复");
@@ -1004,6 +1007,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(), requisitionApplicationEntity.getCode(), "货件单号已绑定"));
                 continue;
             }
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(requisitionApplicationEntity.getId())).findFirst().orElse(null);
+            if(Objects.isNull(firstMileDeliveryEntity) || !firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(), requisitionApplicationEntity.getCode(), "没有关联的发货单，或发货单未审核"));
+                continue;
+            }
+            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailList = firstMileDeliveryDetailEntityList.stream().filter(v->v.getMainId().equals(firstMileDeliveryEntity.getId())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(firstMileDeliveryDetailList) || (StringUtils.isNotBlank(firstMileDeliveryDetailList.get(0).getFbaShipmentCode()) && StringUtils.isBlank(requisitionApplicationEntity.getFbaShipmentCode()))){
+                resultDTOList.add(BatchResultDTO.fail(requisitionApplicationEntity.getId(), requisitionApplicationEntity.getCode(), "通过下推发货单绑定的货件号不允许修改"));
+                continue;
+            }
+
             requisitionApplicationEntity.setFbaShipmentCode(fbaShipmentEntity.getCode());
             updateList.add(requisitionApplicationEntity);
 
@@ -1011,15 +1025,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "绑定货件");
 
             //更新头程发货单中的FBA货件号
-            FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.getOne(new LambdaQueryWrapper<FirstMileDeliveryEntity>()
-                    .eq(FirstMileDeliveryEntity::getSourceCode, requisitionApplicationEntity.getCode())
-                    .eq(FirstMileDeliveryEntity::getSourceType, SourceTypeEnum.REQUISITION_APPLICATION.getCode()));
-            if(firstMileDelivery != null){
-                firstMileDeliveryDetailService.lambdaUpdate()
-                        .eq(FirstMileDeliveryDetailEntity::getMainId, firstMileDelivery.getId())
-                        .set(FirstMileDeliveryDetailEntity::getFbaShipmentCode, requisitionApplicationEntity.getFbaShipmentCode())
-                        .update();
-            }
+            firstMileDeliveryDetailList.forEach(v->{
+                v.setFbaShipmentCode(requisitionApplicationEntity.getFbaShipmentCode());
+            });
+            firstMileDeliveryDetailService.updateBatchById(firstMileDeliveryDetailList);
+
+            fbaShipmentService.deliveryStatus(firstMileDeliveryEntity);
         }
         if(CollectionUtils.isNotEmpty(updateList)){
             service.updateBatchById(updateList);
