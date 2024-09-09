@@ -178,6 +178,8 @@ public class WmsCartonDetailDTO implements Serializable {
         private String sku;
         private String skuId;
         private String skuNo;
+
+        private Integer packQty;
         /**
          * 箱号
          */
@@ -262,6 +264,19 @@ public class WmsCartonDetailDTO implements Serializable {
          * 异常原因
          */
         private String errorMsg;
+
+        /**
+         * 外部箱号
+         */
+        private String outCode;
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+        /**
+         * fnsku
+         */
+        private String fnSku;
     }
 
     /**
