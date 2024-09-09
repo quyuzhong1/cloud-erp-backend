@@ -414,4 +414,8 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		}
 		return false;
 	}
+	
+	protected List<String> getSourceCodeKeys() {
+		return null;
+	}
 }

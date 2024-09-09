@@ -228,5 +228,8 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		dmpOutputUtils.updateStatus(id, status, responseData , message);
 	}
 
-	
+	@Override
+	protected List<String> getSourceCodeKeys() {
+		return Arrays.asList("sourceCode");
+	}
 }
