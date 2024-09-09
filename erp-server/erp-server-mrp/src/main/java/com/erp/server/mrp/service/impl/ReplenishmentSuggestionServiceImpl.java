@@ -452,10 +452,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (ruleTypeList.contains(ReplenishmentRuleTypeEnum.SALES.getCode())) {
             cfgRuleSalesQtyService.deleteByRefId(entity.getId());
         }
-        // 操作日志
-        String ruleNames = ruleTypeList.stream().map(obj -> ReplenishmentRuleTypeEnum.getName(obj)).collect(Collectors.joining(","));
-        String msg = StrUtil.format("用户【{}】SKU为【{}】的【{}】单据恢复【{}】规则配置操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSkuNo(), "补货建议", ruleNames);
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "恢复规则配置操作");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
 
@@ -501,6 +497,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateLabel(ReplenishmentSuggestionDTO.UpdateLabelDTO updateLabelDTO) {
         ReplenishmentSuggestionEntity entity = super.getByIdOpt(updateLabelDTO.getId()).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
 
@@ -509,28 +506,52 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         dto.setLabelIdList(updateLabelDTO.getLabelIdList());
         dto.setType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
         replenishmentRefLabelService.update(dto,entity.getId());
+
+        //现标签
+        List<LabelInfoEntity> labelInfoList = labelInfoService.listByIds(updateLabelDTO.getLabelIdList());
+        String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
+        //原标签
+        List<LabelInfoDTO.ViewDTO> oldList = replenishmentRefLabelService.listLabelInfoByRefId(updateLabelDTO.getId());
+        String oldLabelNames = oldList.stream().map(LabelInfoDTO.ViewDTO::getName).distinct().collect(Collectors.joining(","));
+        // 操作日志
+        String msg = StrUtil.format("设置了标签：从【{}}】修改为【{}}】",oldLabelNames,labelNames);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "设置标签");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchAddLabel(String id, List<String> labelIdList) {
         ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
-
+        if (CollectionUtils.isEmpty(labelIdList)) {
+            return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
+        }
         //新增标签
         ReplenishmentRefLabelDTO.UpdateDTO dto = new ReplenishmentRefLabelDTO.UpdateDTO();
         dto.setLabelIdList(labelIdList);
         dto.setType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
         dto.setIsIncrement(Boolean.TRUE);
         replenishmentRefLabelService.update(dto,entity.getId());
+        // 操作日志
+        List<LabelInfoEntity> labelInfoList = labelInfoService.listByIds(labelIdList);
+        String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
+        String msg = StrUtil.format("添加了标签【{}】",labelNames);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "添加标签");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelLabel(String id, List<String> labelIdList) {
         ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
 
         //取消标签
         replenishmentRefLabelService.deleteLabel(labelIdList,entity.getId());
+
+        List<LabelInfoEntity> labelInfoList = labelInfoService.listByIds(labelIdList);
+        String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
+        String msg = StrUtil.format("删除了标签【{}】",labelNames);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "删除标签");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DELETE);
     }
 
@@ -584,6 +605,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateRemark(String id, String remark) {
         ReplenishmentSuggestionEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
         //新建对象
