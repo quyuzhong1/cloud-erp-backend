@@ -1,11 +1,14 @@
 package com.erp.server.mrp.mapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -28,4 +31,12 @@ public interface PurchaseSuggestMapper extends BaseMapper<PurchaseSuggestEntity>
      * @return Page<PurchaseSuggestionDTO>
      */
     Page<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> pagingExportPurchaseSuggestion(Page page, @Param("params") ReplenishmentSuggestionDTO.PagingParamDTO params);
+    /**
+     * 列表查询
+     * @author will
+     * @date 2024/9/9 11:49
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<PurchaseSuggestDTO.ListDTO> list(@Param("params") PurchaseSuggestDTO.ListParamDTO params);
 }

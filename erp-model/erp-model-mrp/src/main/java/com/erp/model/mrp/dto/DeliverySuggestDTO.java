@@ -1,16 +1,15 @@
 package com.erp.model.mrp.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -25,6 +24,73 @@ import javax.validation.constraints.Digits;
 public class DeliverySuggestDTO implements Serializable {
 
 
+    /**
+     * 列表参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListParamDTO {
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+    }
+
+
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 创建类型（auto系统，manual人工）
+         */
+        private String createType;
+
+        /**
+         * 建议发货量
+         */
+        private Integer suggestDeliveryQty;
+
+        /**
+         * 建议发货日期
+         */
+        private LocalDate suggestDeliveryDate;
+
+        /**
+         * 物流方式,LogisticsMethodEnum枚举
+         */
+        private String logisticsMethod;
+
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 物流成本
+         */
+        private BigDecimal logisticsCost;
+
+    }
 
 
     /**

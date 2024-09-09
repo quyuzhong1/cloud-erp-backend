@@ -38,8 +38,8 @@
         ps.update_time,
         ps.version,
         ps.is_deleted,
-        ps.code, ps.create_type, ps.suggest_purchase_qty, ps.suggest_purchase_date, ps.logistics_method, ps.logistics_days, ps.estimate_instock_date, ps.estimate_sales_date, ps.purchase_cost, ps.invalid_status, ps.invalid_remark, ps.source_id, ps.source_type,
-        rs.sku_id,rs.sku_id,rs.sku_no,rs.platform,rs.shop_id
+        ps.code, ps.create_type, ps.suggest_purchase_qty, ps.suggest_purchase_date, ps.logistics_method, ps.logistics_days, ps.estimate_instock_date, ps.estimate_sales_date, ps.purchase_cost, ps.invalid_status, ps.invalid_remark, ps.source_id, ps.source_type
+
     </sql>
 
     <!-- 采购建议导出分页 -->
@@ -47,6 +47,7 @@
             resultType="com.erp.model.mrp.dto.ReplenishmentSuggestionDTO$PurchaseSuggestionDTO">
         select
             <include refid="Base_Column_List"/>
+            ,rs.sku_id,rs.sku_id,rs.sku_no,rs.platform,rs.shop_id
         from purchase_suggest ps
         left join replenishment_suggestion rs on ps.source_id = rs.id and rs.is_deleted = false
         <where>
@@ -60,6 +61,16 @@
             </foreach>
         </if>
         rs.id asc
+    </select>
+
+    <!-- 列表查询 -->
+    <select id="list" resultType="com.erp.model.mrp.dto.PurchaseSuggestDTO$ListDTO">
+        select
+            <include refid="Base_Column_List"/>
+        from purchase_suggest ps
+        <where>
+            ps.is_deleted = false and source_id = #{params.sourceId}
+        </where>
     </select>
 
 

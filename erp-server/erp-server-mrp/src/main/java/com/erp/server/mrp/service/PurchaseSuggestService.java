@@ -1,10 +1,13 @@
 package com.erp.server.mrp.service;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.mrp.dto.PurchaseSuggestDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,6 +18,14 @@ import com.erp.model.mrp.dto.PurchaseSuggestDTO;
  * @since 2024-08-29
  */
 public interface PurchaseSuggestService extends SuperService<PurchaseSuggestEntity> {
+    /**
+     * 列表查询
+     * @author will
+     * @date 2024/9/9 11:48
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<PurchaseSuggestDTO.ListDTO> list(PurchaseSuggestDTO.ListParamDTO params);
 
     /**
     * 新增
@@ -42,4 +53,5 @@ public interface PurchaseSuggestService extends SuperService<PurchaseSuggestEnti
      * @return PagingVO<PurchaseSuggestionDTO>
      */
     PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> listPurchaseSuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
+
 }

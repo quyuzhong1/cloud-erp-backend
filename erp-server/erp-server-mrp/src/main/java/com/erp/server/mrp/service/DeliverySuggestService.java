@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 发货计划 服务类
@@ -32,5 +34,12 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
     */
     Boolean update(DeliverySuggestDTO.UpdateDTO dto);
 
-
+    /**
+     * 列表查询
+     * @author will
+     * @date 2024/9/9 14:12
+     * @param params
+     * @return List<DeliverySuggestEntity>
+     */
+    List<DeliverySuggestDTO.ListDTO> list(DeliverySuggestDTO.ListParamDTO params);
 }

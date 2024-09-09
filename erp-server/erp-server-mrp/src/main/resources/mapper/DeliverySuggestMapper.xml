@@ -40,5 +40,16 @@
         code, create_type, suggest_delivery_qty, suggest_delivery_date, logistics_method, logistics_days, estimate_sales_date, logistics_cost, invalid_status, invalid_remark, source_id, source_type
     </sql>
 
+    <!-- 列表查询 -->
+    <select id="list" resultType="com.erp.model.mrp.dto.DeliverySuggestDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"/>
+        from delivery_suggest flt
+        <where>
+            flt.is_deleted = false and source_id = #{params.sourceId}
+        </where>
+    </select>
+
+
 
 </mapper>

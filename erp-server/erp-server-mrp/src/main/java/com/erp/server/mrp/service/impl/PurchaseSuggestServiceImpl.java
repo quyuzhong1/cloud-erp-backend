@@ -16,6 +16,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
+import com.erp.model.mrp.enums.CreateTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
 import com.erp.server.mrp.service.OperateLogService;
@@ -48,6 +49,12 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     private DocNoGenHelper docNoGenHelper;
 
 
+    @Override
+    public List<PurchaseSuggestDTO.ListDTO> list(PurchaseSuggestDTO.ListParamDTO params) {
+        List<PurchaseSuggestDTO.ListDTO> list = baseMapper.list(params);
+        handleList(list);
+        return list;
+    }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -138,5 +145,20 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     */
     private void handleData(PurchaseSuggestEntity purchaseSuggestEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+     * 处理数据
+     * @author will
+     * @date 2024/9/9 11:55
+     * @param list
+     */
+    private void handleList(List<PurchaseSuggestDTO.ListDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (PurchaseSuggestDTO.ListDTO listDTO : list) {
+            listDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(listDTO.getCreateType()));
+        }
     }
 }

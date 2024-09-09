@@ -1,8 +1,11 @@
 package com.erp.server.mrp.mapper;
+import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +18,12 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface DeliverySuggestMapper extends BaseMapper<DeliverySuggestEntity> {
-
+    /**
+     * 列表查询
+     * @author will
+     * @date 2024/9/9 14:14
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<DeliverySuggestDTO.ListDTO> list(DeliverySuggestDTO.ListParamDTO params);
 }
