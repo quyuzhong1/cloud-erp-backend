@@ -31,7 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -177,14 +179,24 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
      */
     private List<CfgRuleWarehouseDetailDTO.UpdateDTO> handleRefreshVirtual(List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> list) {
         List<CfgRuleWarehouseDetailDTO.UpdateDTO> resultList = new ArrayList<>();
-        for (VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO virtualWarehouseDTO : list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
+        /**
+         * 根据实体仓、虚拟仓、平台合并
+         */
+        Map<String, List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getWarehouseId().concat(obj.getVirtualWarehouseId()).concat(obj.getDictPlatform()).concat(obj.getType())));
+        for (Map.Entry<String, List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO>> entry : map.entrySet()) {
+            List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> value = entry.getValue();
             CfgRuleWarehouseDetailDTO.UpdateDTO updateDTO = new CfgRuleWarehouseDetailDTO.UpdateDTO();
-            updateDTO.setWarehouseId(virtualWarehouseDTO.getWarehouseId());
-            updateDTO.setVirtualWarehouseId(virtualWarehouseDTO.getVirtualWarehouseId());
-            updateDTO.setChannelType(virtualWarehouseDTO.getType());
-            updateDTO.setDictPlatform(virtualWarehouseDTO.getDictPlatform());
-            updateDTO.setChannelIdList(virtualWarehouseDTO.getRelationIdList());
+            updateDTO.setWarehouseId(value.get(0).getWarehouseId());
+            updateDTO.setVirtualWarehouseId(value.get(0).getVirtualWarehouseId());
+            updateDTO.setChannelType(value.get(0).getType());
+            updateDTO.setDictPlatform(value.get(0).getDictPlatform());
             updateDTO.setInventoryAllocateType(CfgRuleInventoryAllocateTypeEnum.AUTO_ALLOCATION.getCode());
+            //店铺数据
+            List<String> relationIdList = value.stream().flatMap(obj -> Stream.of(obj.getRelationIdList().stream().toArray(String[]::new))).distinct().collect(Collectors.toList());
+            updateDTO.setChannelIdList(relationIdList);
             resultList.add(updateDTO);
         }
         return resultList;

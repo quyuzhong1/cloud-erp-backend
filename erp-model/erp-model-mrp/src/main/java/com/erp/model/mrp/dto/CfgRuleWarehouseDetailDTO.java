@@ -71,24 +71,24 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         private String channelTypeName;
 
         /**
-        * 渠道id的json
-        */
-        private String channelIdJson;
-
-        /**
-         * 渠道id的json
-         */
-        private String channelIdJsonName;
-
-        /**
          * 平台
          */
         private String dictPlatform;
 
         /**
+         * 平台名称
+         */
+        private String dictPlatformName;
+
+        /**
          * 渠道(店铺)id的json
          */
         private List<String> channelIdList;
+
+        /**
+         * 渠道id的名称
+         */
+        private String channelIdJsonName;
 
         /**
         * 库存分配类型

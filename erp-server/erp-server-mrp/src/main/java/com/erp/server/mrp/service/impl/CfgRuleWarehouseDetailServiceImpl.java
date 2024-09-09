@@ -138,11 +138,8 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         List<String> virtualWarehouseIdList = list.stream().map(CfgRuleWarehouseDetailEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseEntity> virtualWarehouseList = CollectionUtils.isEmpty(virtualWarehouseIdList) ? Collections.EMPTY_LIST : FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
 
-        //店铺信息
-        List<String> shopIdList = list.stream().filter(obj -> StrUtil.equals(obj.getChannelType(), VitualWarehouseChannelTypeEnum.SHOP.getCode()))
-                .flatMap(obj -> Stream.of(obj.getChannelIdJson().stream().map(Object::toString).toArray(String[]::new))).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = CollectionUtils.isEmpty(shopIdList) ? Collections.EMPTY_LIST : FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
-
+        //所有店铺
+        List<ShopInfoEntity> shopInfoList = FeignQuery.list(ShopInfoEntity.class);
 
         //平台信息
         List<String> platformList = list.stream().filter(obj -> StrUtil.equals(obj.getChannelType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode()))
@@ -178,13 +175,19 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
                     viewDTO.setChannelIdJsonName(shopNames);
                     //平台
                     viewDTO.setDictPlatform(shopList.get(0).getDictPlatform());
+                    String platformNames = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(),shopList.get(0).getDictPlatform())).map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
+                    viewDTO.setDictPlatformName(platformNames);
                 }
             } else {
-                //渠道名称
-                String platformNames = dictBasicList.stream().filter(obj -> channelIdList.contains(obj.getValue())).map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
-                viewDTO.setChannelIdJsonName(platformNames);
                 //平台
+                String platformNames = dictBasicList.stream().filter(obj -> channelIdList.contains(obj.getValue())).map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
                 viewDTO.setDictPlatform(channelIdList.get(0));
+                viewDTO.setDictPlatformName(platformNames);
+                //店铺
+                List<String> shopIdList = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), viewDTO.getDictPlatform())).map(ShopInfoEntity::getId).collect(Collectors.toList());
+                viewDTO.setChannelIdList(shopIdList);
+                String shopNames = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), viewDTO.getDictPlatform())).map(ShopInfoEntity::getName).collect(Collectors.joining(","));
+                viewDTO.setChannelIdJsonName(shopNames);
             }
             resultList.add(viewDTO);
         }
