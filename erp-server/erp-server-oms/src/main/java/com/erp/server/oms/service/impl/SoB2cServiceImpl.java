@@ -5545,6 +5545,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
             ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
             String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
+            ruleDTO.setFromWarehouse(deliveryWarehouseId);
             CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferAndWarehouse(new CfgRuleOutDTO.MatchTransferDTO(deliveryWarehouseId,ruleDTO));
             isTransit = resultDTO.getIsTransit();
             transitWarehouseId = resultDTO.getTransitWarehouseId();
