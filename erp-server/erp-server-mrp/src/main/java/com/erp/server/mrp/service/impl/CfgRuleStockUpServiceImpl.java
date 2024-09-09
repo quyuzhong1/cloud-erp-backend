@@ -110,7 +110,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
             viewDTO.setStockingRatioList(oldStockingRatioList);
         }
         //新品
-        List<CfgRuleStockingRatioEntity> newList = stockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())).collect(Collectors.toList());
+        List<CfgRuleStockingRatioEntity> newList = stockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleStockingRatioTypeEnum.NEW.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(newList)) {
             List<CfgRuleStockingRatioDTO.ViewDTO> oldStockingRatioList = BeanMapperUtils.copyList(CfgRuleStockingRatioDTO.ViewDTO.class, newList);
             viewDTO.setNewStockingRatioList(oldStockingRatioList);

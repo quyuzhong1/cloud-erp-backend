@@ -47,6 +47,11 @@ public class HistoryImportRecordDTO implements Serializable {
         private String type;
 
         /**
+         * 文件url
+         */
+        private String fileUrl;
+
+        /**
          * 创建人名称
          */
         private String createUserName;
