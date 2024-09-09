@@ -222,4 +222,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     void generateDeliveryWithFba(RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto);
 
     List<RequisitionApplicationDTO.DeliverRecordView> listDeliverRecord(String id);
+
+    void assembleDownload(List<String> ids, HttpServletResponse response);
 }

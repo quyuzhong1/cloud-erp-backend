@@ -13,27 +13,22 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
-import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.PickingListsService;
 import com.erp.server.wms.service.RequisitionApplicationService;
-import com.erp.server.wms.service.impl.PackingTaskServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -534,5 +529,14 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult<List<RequisitionApplicationDTO.DeliverRecordView>> listDeliverRecord(@RequestParam("id") String id) {
         List<RequisitionApplicationDTO.DeliverRecordView> result = requisitionApplicationService.listDeliverRecord(id);
         return success(result);
+    }
+
+    /**
+     * 组装清单下载
+     **/
+    @PostMapping("/assembleDownload")
+    public ApiResult assembleDownload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
+        requisitionApplicationService.assembleDownload(dto.getIds(), response);
+        return success();
     }
 }

@@ -4,7 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -22,11 +22,9 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelExportFillCellMergeStrategy;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.LengthConverterUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -36,6 +34,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.RequisitionApplicationAssembleExportDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
@@ -65,6 +64,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1330,6 +1330,38 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }else{
             return baseMapper.listWarehouseDeliverRecord(id);
         }
+    }
+
+    @Override
+    public void assembleDownload(List<String> ids, HttpServletResponse response) {
+        List<RequisitionApplicationEntity> entityList = Optional.ofNullable(this.listByIds(ids)).filter(list -> !list.isEmpty()).orElseThrow(() -> new ServiceException("要货申请为空"));
+        List<RequisitionApplicationDetailEntity> detailEntityList = Optional.ofNullable(requisitionApplicationDetailService.listByMainIds(ids)).filter(list -> !list.isEmpty()).orElseThrow(() -> new ServiceException("要货申请明细为空"));
+        List<String> skuNo = detailEntityList.stream().map(RequisitionApplicationDetailEntity::getSkuNo).collect(Collectors.toList());
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuNos(skuNo);
+        List<RequisitionApplicationAssembleExportDTO> datas = new ArrayList<>();
+        for (RequisitionApplicationDetailEntity requisitionApplicationDetailEntity : detailEntityList) {
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenList.stream().filter(v->v.getParentSkuId().equals(requisitionApplicationDetailEntity.getSkuId()) && v.getBomVersion().equals(requisitionApplicationDetailEntity.getBomVersion())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(bomChildrenSkuDTOS)){
+                continue;
+            }
+            RequisitionApplicationEntity requisitionApplicationEntity = entityList.stream().filter(v->v.getId().equals(requisitionApplicationDetailEntity.getMainId())).findFirst().orElse(new RequisitionApplicationEntity());
+            bomChildrenSkuDTOS.forEach(v->{
+                RequisitionApplicationAssembleExportDTO dto = new RequisitionApplicationAssembleExportDTO();
+                dto.setCode(requisitionApplicationEntity.getCode());
+                dto.setSku(requisitionApplicationDetailEntity.getSkuNo());
+                dto.setAssembleQty(requisitionApplicationDetailEntity.getPickingQty());
+                dto.setChildSku(v.getSkuNo());
+                dto.setBomQty(v.getQuantity());
+                dto.setChildQty(v.getQuantity() * requisitionApplicationDetailEntity.getPickingQty());
+                datas.add(dto);
+            });
+        }
+        if(CollectionUtils.isEmpty(datas)){
+            throw new ServiceException("要货申请无需要组装的产品");
+        }
+        ExcelUtil.export("要货申请组装清单", "要货申请组装清单", datas, RequisitionApplicationAssembleExportDTO.class, response,new ExcelExportFillCellMergeStrategy(2,Arrays.asList(0,1)));
+
     }
 
     /**
