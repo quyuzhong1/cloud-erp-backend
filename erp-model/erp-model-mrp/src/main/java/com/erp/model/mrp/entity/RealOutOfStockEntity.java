@@ -38,16 +38,10 @@ public class RealOutOfStockEntity extends BaseEntity<RealOutOfStockEntity> {
     private LocalDate date;
 
     /**
-     * 断货开始日期
+     * 是否断货
      */
-    @TableField("start_date")
-    private LocalDate startDate;
-
-    /**
-     * 断货结束日期
-     */
-    @TableField("end_date")
-    private LocalDate endDate;
+    @TableField("is_out_of_stock")
+    private Boolean isOutOfStock;
 
     /**
      * 销量

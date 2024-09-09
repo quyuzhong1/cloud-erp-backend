@@ -27,6 +27,26 @@ public class ReplenishmentResultDTO {
      */
     private List<FbaInTransitDetailDTO> fbaInTransitDetails;
     /**
+     * FBA到货明细
+     */
+    private List<EstimatedDeliveryDetailDTO> fbaDeliveryDetails;
+    /**
+     * 海外仓在途明细
+     */
+    private List<OverseasInTransitDetailDTO> overseasInTransitDetails;
+    /**
+     * 海外仓到货明细
+     */
+    private List<EstimatedDeliveryDetailDTO> overseasDeliveryDetails;
+    /**
+     * 本地在途明细
+     */
+    private List<LocalInTransitDetailDTO> localInTransitDetails;
+    /**
+     * 本地采购明细
+     */
+    private List<EstimatedPurchaseDetailDTO> localDeliveryDetails;
+    /**
      * 备货期
      */
     private List<AvgSalesEstimateDTO> avgSalesEstimates;
@@ -68,6 +88,11 @@ public class ReplenishmentResultDTO {
      * 采购单价
      */
     private BigDecimal purchasePrice;
+
+    /**
+     * 销售价
+     */
+    private BigDecimal salesPrice;
 
     @Getter
     @Setter
@@ -327,9 +352,9 @@ public class ReplenishmentResultDTO {
         private Integer inTransitQty;
 
         /**
-         * 预计到货日期
+         * 预计可售日期
          */
-        private LocalDate planArrivalDate;
+        private LocalDate estimateSalesDate;
 
         /**
          * 计算版本  所有子表加   根据单号生成规则
@@ -349,6 +374,8 @@ public class ReplenishmentResultDTO {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class RptOutOfStockDTO {
 
         /**
@@ -369,7 +396,7 @@ public class ReplenishmentResultDTO {
         /**
          * 销量
          */
-        private Integer salesQty;
+        private BigDecimal salesQty;
 
         /**
          * 金额
@@ -560,5 +587,171 @@ public class ReplenishmentResultDTO {
          * 所属月份
          */
         private String month;
+    }
+
+    @Getter
+    @Setter
+    public static class EstimatedDeliveryDetailDTO {
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 业务类型 FBA/海外仓
+         */
+        private String type;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+    }
+
+
+    @Getter
+    @Setter
+    public static class EstimatedPurchaseDetailDTO {
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimatedPutAwayDate;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 业务类型 本地
+         */
+        private String type;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+    }
+
+
+    @Getter
+    @Setter
+    public static class LocalInTransitDetailDTO {
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 计算版本  所有子表加   根据单号生成规则
+         */
+        private String calcVersion;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+    }
+
+    @Getter
+    @Setter
+    public static class OverseasInTransitDetailDTO {
+
+        /**
+         * 发货单id
+         */
+        private String deliveryPlanId;
+
+        /**
+         * 发货单code
+         */
+        private String deliveryPlanCode;
+
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 发货日期
+         */
+        private LocalDate deliveryDate;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 在途
+         */
+        private Integer inTransitQty;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
     }
 }
