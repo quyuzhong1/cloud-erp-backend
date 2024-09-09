@@ -14,4 +14,5 @@ public class DynamicExcelDTO {
 
     private List<LinkedHashMap<String, Object>> data;
 
+    private String sheetName;
 }

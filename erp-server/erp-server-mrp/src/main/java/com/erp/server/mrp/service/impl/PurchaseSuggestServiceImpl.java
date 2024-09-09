@@ -115,7 +115,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Override
     public PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> listPurchaseSuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         Page<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> pagingVO = baseMapper.pagingExportPurchaseSuggestion(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
-        if (!CollectionUtils.isEmpty(pagingVO.getRecords())) {
+        if (CollectionUtils.isNotEmpty(pagingVO.getRecords())) {
             handleExport(pagingVO.getRecords());
         }
         return new PagingVO<>(pagingVO);
@@ -137,6 +137,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             //产品名称
             String productName = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), purchaseSuggestionDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             purchaseSuggestionDTO.setProductName(productName);
+            //创建名称
+            purchaseSuggestionDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(purchaseSuggestionDTO.getCreateType()));
         }
     }
 

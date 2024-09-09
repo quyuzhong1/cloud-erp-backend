@@ -645,8 +645,14 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             return new PagingVO<>();
         }
         //历史销量数据处理
-        List<LinkedHashMap> linkedHashMapList = handleHistorySalesQty(list);
-        return new PagingVO(linkedHashMapList, (int) pagingVO.getTotal(),(int) pagingVO.getSize(), (int)pagingVO.getCurrent());
+        List<LinkedHashMap> resultList = handleHistorySalesQty(list);
+        LinkedHashMap headMap = (LinkedHashMap) resultList.get(0).get("head");
+        List<LinkedHashMap<String ,Object>> convertDataList = (List<LinkedHashMap<String ,Object>>) resultList.get(0).get("data");
+        DynamicExcelDTO excelDTO = new DynamicExcelDTO();
+        excelDTO.setHeaders(headMap);
+        excelDTO.setData(convertDataList);
+        excelDTO.setSheetName("销售订单");
+        return new PagingVO(Collections.singletonList(excelDTO), (int) pagingVO.getTotal(),(int) pagingVO.getSize(), (int)pagingVO.getCurrent());
     }
 
     /**
@@ -675,7 +681,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
         // 动态字段标题
         if (CollUtil.isNotEmpty(salesInfoList)) {
-            salesInfoList.forEach(obj -> headMap.put(obj.getDate(),LocalDateTimeUtil.format(obj.getDate(), DateTimeFormatter.ofPattern("yyyy年MM月dd"))));
+            salesInfoList.forEach(obj -> headMap.put(obj.getDate().toString(),LocalDateTimeUtil.format(obj.getDate(), DateTimeFormatter.ofPattern("yyyy年MM月dd"))));
         }
         //平台
         List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
@@ -708,7 +714,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             convertMap.put("typeName","FBA");
             //历史销量
             for (SalesInfoEntity salesInfoEntity : salesList) {
-                convertMap.put(salesInfoEntity.getDate().toString(),salesInfoEntity.getOriginalSalesQty());
+                convertMap.put(salesInfoEntity.getDate().toString(),salesInfoEntity.getSalesQty());
             }
             convertDataList.add(convertMap);
         }

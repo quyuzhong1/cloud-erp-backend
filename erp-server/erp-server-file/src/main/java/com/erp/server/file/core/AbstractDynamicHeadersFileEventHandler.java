@@ -36,8 +36,10 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
+        sb.append(".xlsx");
+        List<String> sheetName = getSheetName();
         try {
-            byte[] bytes = new ExcelPrintUtils().exportDynamicHeadersExcel(name, header, data);
+            byte[] bytes = new ExcelPrintUtils().exportDynamicHeadersExcel(CollectionUtils.isEmpty(sheetName) ? name : sheetName.get(0), header, data);
             String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
             fileTask.setFileUrl(s);
         } catch (Exception e) {

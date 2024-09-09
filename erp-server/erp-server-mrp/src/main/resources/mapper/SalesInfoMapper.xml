@@ -30,7 +30,6 @@
             si.replenishment_detail_id,
             si.date,
             si.sales_qty,
-            si.month,
             si.avg_daily_sales_qty
         from sales_info si
         <where>
