@@ -14,26 +14,42 @@ package com.erp.server.dmp.amz;
 
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.client.JSON;
+import com.erp.sdk.oms.amz.spapi.documents.DownloadHandler;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmazonFbaInboundPlanApiInitHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
+import io.jsonwebtoken.io.SerialException;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
-import java.util.List;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.rmi.ServerException;
+import java.util.*;
 
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 
@@ -441,126 +457,33 @@ public class FbaInboundApiTest {
      * @throws LWAException If calls to fetch LWA access token fails
      */
     @Test
-    public void listInboundPlanPalletsTest() throws ApiException, LWAException {
-        String inboundPlanId = null;
-        Integer pageSize = null;
-        String paginationToken = null;
-        ListInboundPlanPalletsResponse response = api.listInboundPlanPallets(inboundPlanId, pageSize, paginationToken);
-
-// TODO: test validations
-    }
-
-    /**
-     * Provides a list of inbound plans with minimal information.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 6 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
-     *
-     * @throws ApiException if the Api call fails
-     * @throws LWAException If calls to fetch LWA access token fails
-     */
-    @Test
-    public void listInboundPlansTest() throws ApiException, LWAException {
-        String shopId = "1735516266715680769";
+    public void getShipmentsTest() throws ApiException {
+        String shopId = "1735588142481674247";
+        // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
-        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
-
-        Integer pageSize = 30;
-        String paginationToken = null;
-        // Value	Description
-        //ACTIVE	An inbound plan that is being worked on.
-        //VOIDED	An inbound plan with all shipment cancelled and can no longer be modified.
-        //SHIPPED	A completed inbound plan. Only minor modifications can be made at this time.
-        String status = "ACTIVE";
-        // LAST_UPDATED_TIME	Last updated time of the inbound plan.
-        // CREATION_TIME	Inbound plan creation time.
-        String sortBy = "LAST_UPDATED_TIME";
-        // ASC	Ascending order.
-        // DESC	Descending order.
-        String sortOrder = "DESC";
-//        ListInboundPlansResponse response = api.listInboundPlans(pageSize, paginationToken, status, sortBy, sortOrder);
-        ApiResponse<ListInboundPlansResponse> response = api.listInboundPlansWithHttpInfo(pageSize, paginationToken, status, sortBy, sortOrder);
-        System.out.println("入库计划列表");
-        System.out.println(JSONUtil.toJsonStr(response));
-
-        // TODO: test validations
-    }
-
-    @Test
-    public void allListInboundPlansTest() throws ApiException, LWAException {
-        String shopId = "1735516266715680769";
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
-        // Value	Description
-        //ACTIVE	An inbound plan that is being worked on.
-        //VOIDED	An inbound plan with all shipment cancelled and can no longer be modified.
-        //SHIPPED	A completed inbound plan. Only minor modifications can be made at this time.
-        String status = "ACTIVE";
-        // LAST_UPDATED_TIME	Last updated time of the inbound plan.
-        // CREATION_TIME	Inbound plan creation time.
-        String sortBy = "LAST_UPDATED_TIME";
-        // ASC	Ascending order.
-        // DESC	Descending order.
-        String sortOrder = "DESC";
-//        ListInboundPlansResponse response = api.listInboundPlans(pageSize, paginationToken, status, sortBy, sortOrder);
-
-        List<InboundPlanSummary> list = dmpInputAmazonFbaInboundPlanApiInitHandler.requestAmazonFbaInboundPlan(shopInfoDTO, "");
-        System.out.println("入库计划列表");
-        System.out.println(JSONUtil.toJsonStr(list));
-
-        // TODO: test validations
-    }
-
-    @Test
-    public void listAndDetail(){
-        String shopId = "1735516266715680769";
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
-
-
-        List<InboundPlanSummary> list = dmpInputAmazonFbaInboundPlanApiInitHandler.requestAmazonFbaInboundPlan(shopInfoDTO, "{\"status\":\"ACTIVE\"}");
-        System.out.println("入库计划列表");
-        System.out.println(JSONUtil.toJsonStr(list));
-        // api
-        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
-        for (InboundPlanSummary inboundPlanSummary : list) {
-            String inboundPlanId = inboundPlanSummary.getInboundPlanId();
-            try {
-                InboundPlan sourceEntity = api.getInboundPlan(inboundPlanId);
-                System.out.println("入库计划明细");
-                System.out.println(JSONUtil.toJsonStr(sourceEntity));
-            } catch (ApiException | LWAException e) {
-                log.error("请求失败：inboundPlanId={}, error={}", inboundPlanId, ExceptionUtil.stacktraceToString(e));
-                continue;
-            }
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
         }
-    }
-
-    /**
-     * List the inbound compliance details for MSKUs in a given marketplace.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 6 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
-     *
-     * @throws ApiException if the Api call fails
-     * @throws LWAException If calls to fetch LWA access token fails
-     */
-    @Test
-    public void listItemComplianceDetailsTest() throws ApiException, LWAException {
-        List<String> mskus = null;
-        String marketplaceId = null;
-        ListItemComplianceDetailsResponse response = api.listItemComplianceDetails(mskus, marketplaceId);
-
-// TODO: test validations
-    }
-
-    /**
-     * Retrieves a page of boxes from a given packing group. These boxes were previously provided through the &#x60;setPackingInformation&#x60; operation. This API is used for workflows where boxes are packed before Amazon determines shipment splits.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
-     *
-     * @throws ApiException if the Api call fails
-     * @throws LWAException If calls to fetch LWA access token fails
-     */
-    @Test
-    public void listPackingGroupBoxesTest() throws ApiException, LWAException {
-        String inboundPlanId = null;
-        String packingGroupId = null;
-        Integer pageSize = null;
-        String paginationToken = null;
-        ListPackingGroupBoxesResponse response = api.listPackingGroupBoxes(inboundPlanId, packingGroupId, pageSize, paginationToken);
-
-// TODO: test validations
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        String queryType = "SHIPMENT";
+//        String queryType = "DATE_RANGE";
+//        String queryType = AmazonFbaQueryTypeEnum.NEXT_TOKEN.getCode();
+        String marketplaceId = marketplaceEnum.getMarketplaceId();
+        List<String> shipmentStatusList = null;
+        List<String> shipmentIdList = Arrays.asList("FBA15HMCLVH2");
+//        LocalDateTime startTime = LocalDateTime.of(2023, 11, 1, 0, 0, 0);
+//        LocalDateTime now = LocalDateTime.now();
+//        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
+//        String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(now).toString();
+        String lastUpdatedAfter = null;
+        String lastUpdatedBefore = null;
+        String nextToken = null;
+//        String nextToken = "AAAAAAAAAAC+Qqz8LL08LOj0DOtm6jc55wEAAAAAAACYz902f0AjXDETsiNeDKlnpPMySCR107y4nGltTWt+rnw87weJ+9zv9CLmPcRf4hiSSCfF52xQLGA/hq1Ab24WKhbU5aFl9/uDAn0QTs48jZe8s+FIX6N5ECslLH8+LPS2h0Xh2/YshZ5S1ZvpWkU/cnZ39ffkjZmgE1MoriD3v1nqQ6JfxzbJSzFQNo9JTFSSBSqStod7npOeaWnlDpR6Rsd+X3YGi9uj8wW8qENbl3MiK4gJh+qHZA6V2mtHJnv2A9571TphAls3oPBev5ubLRJPUhGyRH9V2g16Rzzi84eA7iQ/wn6kLnRKIstfIHvgN5aQEo/s+l0r6Az7IYs2jSjkjQIQ6c5OGS5tQoxVHGAJm3gP4ZxqP4vsZJBZbhizhpA8qEwtfHs0c8fqxUtHxqO0/bcEtBdkUSBR9eQF0twYQLaQyvAI5IRlSEw/Ecw0eSuMg7Ql6+ShhjVKP55JikOhl7LvNy9jtaTkjFvP28t2xeV0ujvUyVOsrzfjmiHDGDXhxq9gjuWTiSC68QI28+heqH5bsYHgyzdQa/zoe0MazcKIi62rpNWyF95kBh0zzBTSSLopvqCiezOpLjiyKqVKEOT0TsDZ715Zbe9JxcOnutb1PBxJFxBfoMjtk3ZmTJhGbNqa";
+        GetShipmentsResponse response = api.getShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken);
+        System.out.println("货件信息");
+        System.out.println(JSONUtil.toJsonStr(response));
+        // TODO: test validations
     }
 
     /**
@@ -604,12 +527,16 @@ public class FbaInboundApiTest {
      */
     @Test
     public void listPlacementOptionsTest() throws ApiException, LWAException {
-        String inboundPlanId = null;
-        Integer pageSize = null;
+        String shopId = "1735516266715680769";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        String inboundPlanId = "wf04b6e5ea-8720-4906-8b2d-0d1d3b08001d";
+        Integer pageSize = 1;
         String paginationToken = null;
         ListPlacementOptionsResponse response = api.listPlacementOptions(inboundPlanId, pageSize, paginationToken);
-
-// TODO: test validations
+        System.out.println("分仓选项");
+        System.out.println(JSONUtil.toJsonStr(response));
+        // TODO: test validations
     }
 
     /**
@@ -795,8 +722,7 @@ public class FbaInboundApiTest {
         String inboundPlanId = null;
         String shipmentId = null;
         UpdateShipmentSourceAddressResponse response = api.updateShipmentSourceAddress(body, inboundPlanId, shipmentId);
-
-// TODO: test validations
+        // TODO: test validations
     }
 
     /**
@@ -813,5 +739,285 @@ public class FbaInboundApiTest {
         UpdateShipmentTrackingDetailsResponse response = api.updateShipmentTrackingDetails(body, inboundPlanId, shipmentId);
 
 // TODO: test validations
+    }
+
+    /**
+     * Returns package/pallet labels for faster and more accurate shipment processing at the Amazon fulfillment center.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     *
+     * @throws ApiException if the Api call fails
+     */
+    @Test
+    public void getLabelsTest() throws ApiException, Exception {
+        String shipmentId = "FBA15GB678Z1";
+        String shopId = "1735512797405515777";
+
+        String pageType = "PackageLabel_Thermal";
+//        String pageType = "PackageLabel_Plain_Paper_CarrierBottom";
+        // 箱麦
+//        String labelType = "UNIQUE";
+//        String labelType = "BARCODE_2D";
+        String labelType = "INTERACTIVE";
+        Integer numberOfPackages = null;
+        List<String> packageLabelsToPrint = null;
+        Integer numberOfPallets = null;
+        Integer pageSize = 30;
+        Integer pageStartIndex = null;
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        try {
+            GetLabelsResponse response = api.getLabels(shipmentId, pageType, labelType, numberOfPackages, packageLabelsToPrint, numberOfPallets, pageSize, pageStartIndex);
+            System.out.println("label结果");
+            System.out.println(JSONUtil.toJsonStr(response));
+            // 上传到FastDFS
+            String downloadURL = response.getPayload().getDownloadURL();
+            if (StringUtils.isBlank(downloadURL)) {
+                throw new ServiceException("空路径");
+            }
+
+            Response fileResponse = DownloadHandler.sendRequest(downloadURL);
+
+            String fileName = StrUtil.format("{}.pdf", shipmentId);
+            try (ResponseBody responseBody = fileResponse.body()) {
+                try (InputStream inputStream = responseBody.byteStream()) {
+                    if (null == inputStream) {
+                        String msg = StrUtil.format("下载失败:无法解析获取到流:url={}", downloadURL);
+                        throw new ServerException(msg);
+                    }
+                    // 保存到FastDFS
+                    String uploadFile = FastDFSClientUtil.uploadFile(inputStream, fileName, new HashMap<>());
+                    System.out.println("上传后的路径");
+                    System.out.println(uploadFile);
+                }
+            }
+
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+        // TODO: test validations
+    }
+
+    @Test
+    public void uploadFile() throws Exception {
+        String url = "https://fba-labels-prod-na.s3.amazonaws.com/FBA180CYLNTY-1725953834178.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20240910T073714Z&X-Amz-SignedHeaders=host&X-Amz-Expires=14999&X-Amz-Credential=AKIA2GPVWO6A67PXQ6FP%2F20240910%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=2a3dc31efcea0f3d9e73e9cd3448ddaeba2a296bd66d042f70da8fbcbc9f78d5";
+        Response response = DownloadHandler.sendRequest(url);
+
+        String fileName = "FBA180CYLNTY.pdf";
+        try (ResponseBody responseBody = response.body()) {
+            try (InputStream inputStream = responseBody.byteStream()) {
+                if (null == inputStream) {
+                    String msg = StrUtil.format("下载失败:无法解析获取到流:url={}", url);
+                    throw new ServerException(msg);
+                }
+                // 保存到FastDFS
+                String uploadFile = FastDFSClientUtil.uploadFile(inputStream, fileName, new HashMap<>());
+                System.out.println("上传后的路径");
+                System.out.println(uploadFile);
+            }
+        }
+    }
+
+    @Test
+    public void getShipmentsOldTest() throws ApiException {
+        String shipmentId = "FBA15GB678Z1";
+        String shopId = "1735512797405515777";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        String queryType = "SHIPMENT";
+//        String queryType = "DATE_RANGE";
+//        String queryType = AmazonFbaQueryTypeEnum.NEXT_TOKEN.getCode();
+        String marketplaceId = marketplaceEnum.getMarketplaceId();
+        List<String> shipmentStatusList = null;
+        List<String> shipmentIdList = Arrays.asList(shipmentId);
+//        LocalDateTime startTime = LocalDateTime.of(2023, 11, 1, 0, 0, 0);
+//        LocalDateTime now = LocalDateTime.now();
+//        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
+//        String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(now).toString();
+        String lastUpdatedAfter = null;
+        String lastUpdatedBefore = null;
+        String nextToken = null;
+//        String nextToken = "AAAAAAAAAAC+Qqz8LL08LOj0DOtm6jc55wEAAAAAAACYz902f0AjXDETsiNeDKlnpPMySCR107y4nGltTWt+rnw87weJ+9zv9CLmPcRf4hiSSCfF52xQLGA/hq1Ab24WKhbU5aFl9/uDAn0QTs48jZe8s+FIX6N5ECslLH8+LPS2h0Xh2/YshZ5S1ZvpWkU/cnZ39ffkjZmgE1MoriD3v1nqQ6JfxzbJSzFQNo9JTFSSBSqStod7npOeaWnlDpR6Rsd+X3YGi9uj8wW8qENbl3MiK4gJh+qHZA6V2mtHJnv2A9571TphAls3oPBev5ubLRJPUhGyRH9V2g16Rzzi84eA7iQ/wn6kLnRKIstfIHvgN5aQEo/s+l0r6Az7IYs2jSjkjQIQ6c5OGS5tQoxVHGAJm3gP4ZxqP4vsZJBZbhizhpA8qEwtfHs0c8fqxUtHxqO0/bcEtBdkUSBR9eQF0twYQLaQyvAI5IRlSEw/Ecw0eSuMg7Ql6+ShhjVKP55JikOhl7LvNy9jtaTkjFvP28t2xeV0ujvUyVOsrzfjmiHDGDXhxq9gjuWTiSC68QI28+heqH5bsYHgyzdQa/zoe0MazcKIi62rpNWyF95kBh0zzBTSSLopvqCiezOpLjiyKqVKEOT0TsDZ715Zbe9JxcOnutb1PBxJFxBfoMjtk3ZmTJhGbNqa";
+        GetShipmentsResponse response = api.getShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken);
+        System.out.println("货件信息");
+        System.out.println(JSON.toJsonStr(response));
+        // TODO: test validations
+    }
+
+    /**
+     * Returns a list of items in a specified inbound shipment.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     *
+     * @throws ApiException if the Api call fails
+     */
+    @Test
+    public void getShipmentItemsByShipmentIdTest() throws ApiException {
+        String shipmentId = "FBA17DZ9039Z";
+        String shopId = "";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        String dictCountryCode = shopInfoDTO.getDictCountryCode();
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(dictCountryCode);
+        String marketplaceId = marketplaceEnum.getMarketplaceId();
+        GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(shipmentId, marketplaceId);
+        System.out.println("通过shipmentId查询货件详情");
+        System.out.println(JSONUtil.toJsonStr(response));
+        // TODO: test validations
+    }
+
+    /**
+     * Provides a paginated list of pallet packages in an inbound plan. An inbound plan will have pallets when the related details are provided after generating Less-Than-Truckload (LTL) carrier shipments.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 6 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     *
+     * @throws ApiException if the Api call fails
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    @Test
+    public void listInboundPlanPalletsTest() throws ApiException, LWAException {
+        String inboundPlanId = null;
+        Integer pageSize = null;
+        String paginationToken = null;
+        ListInboundPlanPalletsResponse response = api.listInboundPlanPallets(inboundPlanId, pageSize, paginationToken);
+
+// TODO: test validations
+    }
+
+    /**
+     * Provides a list of inbound plans with minimal information.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 6 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values than those shown here. For more information, refer to [Usage Plans and Rate Limits in the Selling Partner API](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api).
+     *
+     * @throws ApiException if the Api call fails
+     * @throws LWAException If calls to fetch LWA access token fails
+     */
+    @Test
+    public void listInboundPlansTest() throws ApiException, LWAException {
+        String shopId = "1735516266715680769";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+
+        Integer pageSize = 30;
+        String paginationToken = null;
+        // Value	Description
+        //ACTIVE	An inbound plan that is being worked on.
+        //VOIDED	An inbound plan with all shipment cancelled and can no longer be modified.
+        //SHIPPED	A completed inbound plan. Only minor modifications can be made at this time.
+        String status = "ACTIVE";
+        // LAST_UPDATED_TIME	Last updated time of the inbound plan.
+        // CREATION_TIME	Inbound plan creation time.
+        String sortBy = "LAST_UPDATED_TIME";
+        // ASC	Ascending order.
+        // DESC	Descending order.
+        String sortOrder = "DESC";
+//        ListInboundPlansResponse response = api.listInboundPlans(pageSize, paginationToken, status, sortBy, sortOrder);
+        ApiResponse<ListInboundPlansResponse> response = api.listInboundPlansWithHttpInfo(pageSize, paginationToken, status, sortBy, sortOrder);
+        System.out.println("入库计划列表");
+        System.out.println(JSONUtil.toJsonStr(response));
+
+        // TODO: test validations
+    }
+
+    @Test
+    public void allListInboundPlansTest() throws ApiException, LWAException {
+        String shopId = "1735516266715680769";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        // Value	Description
+        //ACTIVE	An inbound plan that is being worked on.
+        //VOIDED	An inbound plan with all shipment cancelled and can no longer be modified.
+        //SHIPPED	A completed inbound plan. Only minor modifications can be made at this time.
+        String status = "ACTIVE";
+        // LAST_UPDATED_TIME	Last updated time of the inbound plan.
+        // CREATION_TIME	Inbound plan creation time.
+        String sortBy = "LAST_UPDATED_TIME";
+        // ASC	Ascending order.
+        // DESC	Descending order.
+        String sortOrder = "DESC";
+//        ListInboundPlansResponse response = api.listInboundPlans(pageSize, paginationToken, status, sortBy, sortOrder);
+
+        List<InboundPlanSummary> list = dmpInputAmazonFbaInboundPlanApiInitHandler.requestAmazonFbaInboundPlan(shopInfoDTO, "");
+        System.out.println("入库计划列表");
+        System.out.println(JSONUtil.toJsonStr(list));
+
+        // TODO: test validations
+    }
+
+    @Test
+    public void listAndDetail() {
+        String shopId = "1735516266715680769";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+
+
+        List<InboundPlanSummary> list = dmpInputAmazonFbaInboundPlanApiInitHandler.requestAmazonFbaInboundPlan(shopInfoDTO, "{\"status\":\"ACTIVE\"}");
+        System.out.println("入库计划列表");
+        System.out.println(JSONUtil.toJsonStr(list));
+
+        // api
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        List<InboundPlan> inboundPlanList = new ArrayList<>();
+
+        for (InboundPlanSummary inboundPlanSummary : list) {
+            String inboundPlanId = inboundPlanSummary.getInboundPlanId();
+            try {
+                InboundPlan sourceEntity = api.getInboundPlan(inboundPlanId);
+                System.out.println("入库计划明细");
+                System.out.println(JSONUtil.toJsonStr(sourceEntity));
+                inboundPlanList.add(sourceEntity);
+            } catch (ApiException | LWAException e) {
+                log.error("请求失败：inboundPlanId={}, error={}", inboundPlanId, ExceptionUtil.stacktraceToString(e));
+            }
+        }
+        System.out.println("入库计划明细总信息");
+        System.out.println(JSONUtil.toJsonStr(inboundPlanList));
+    }
+
+    @Test
+    public void listPlacement() {
+        String shopId = "1735516266715680769";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        List<InboundPlanSummary> list = JSONUtil.toList("[{\"createdAt\":1725242349000,\"inboundPlanId\":\"wf7c272c39-be01-4619-b27c-f40b89ca4630\",\"lastUpdatedAt\":1725242480000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1725239212000,\"inboundPlanId\":\"wf41e4d7d0-fd87-4e13-b273-7fe35a127558\",\"lastUpdatedAt\":1725239217000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1723080639000,\"inboundPlanId\":\"wf6f8a3bde-c93f-4bfd-8317-06b1410ec3e3\",\"lastUpdatedAt\":1723080698000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1722238889000,\"inboundPlanId\":\"wf49e611ab-8104-4beb-bc57-4cc38c586bd9\",\"lastUpdatedAt\":1722239086000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1721959367000,\"inboundPlanId\":\"wf920ca58c-6bb6-4287-b5b0-a1dd96f1ae5c\",\"lastUpdatedAt\":1721959574000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1721959173000,\"inboundPlanId\":\"wf75d576ac-f7ff-4ee5-83fc-6a92a785bc77\",\"lastUpdatedAt\":1721959176000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1721959114000,\"inboundPlanId\":\"wfe1b014f7-84ce-408c-a8a7-ea57c7be4014\",\"lastUpdatedAt\":1721959121000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1720766576000,\"inboundPlanId\":\"wfd413c07e-d504-4b59-a664-21ae12f95a8e\",\"lastUpdatedAt\":1720766580000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1720405837000,\"inboundPlanId\":\"wf85a2484a-3b4a-47c3-9289-58db0552cc0d\",\"lastUpdatedAt\":1720405846000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1719457399000,\"inboundPlanId\":\"wfdf7d524d-e3f0-4bef-a741-80f3a307ad7c\",\"lastUpdatedAt\":1719459782000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"八街市八街ほ445-4\",\"city\":\"八街市\",\"countryCode\":\"JP\",\"name\":\"seigyoku\",\"phoneNumber\":\"0804160151\",\"postalCode\":\"289-1115\",\"stateOrProvinceCode\":\"Chiba\"},\"status\":\"ACTIVE\"},{\"createdAt\":1718874576000,\"inboundPlanId\":\"wff4aa87ff-bee6-4b64-b722-86ed7c3da38a\",\"lastUpdatedAt\":1718874580000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1718358251000,\"inboundPlanId\":\"wfecb1cdc9-5970-424b-8fc0-f1e335347c34\",\"lastUpdatedAt\":1718358257000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1718338906000,\"inboundPlanId\":\"wf01ddd100-3031-4fcc-8764-e40dfef062c3\",\"lastUpdatedAt\":1718338912000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1718180106000,\"inboundPlanId\":\"wf7d8dc70f-14f1-4f71-bdce-a7853b64c6f1\",\"lastUpdatedAt\":1718180109000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1718177236000,\"inboundPlanId\":\"wff0ccfa34-a099-44ac-bd8d-55854aa5670a\",\"lastUpdatedAt\":1718177576000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1717488115000,\"inboundPlanId\":\"wf2bb5a0dc-ade3-4726-859f-1ac9e1d1b9ee\",\"lastUpdatedAt\":1717488138000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1717487784000,\"inboundPlanId\":\"wf7befb3d5-99d7-4f54-9a80-2bca2b53fa2a\",\"lastUpdatedAt\":1717488085000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1716861654000,\"inboundPlanId\":\"wf4336a404-a5a9-4faf-9d1b-f3ac416809c1\",\"lastUpdatedAt\":1716861654000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1716793621000,\"inboundPlanId\":\"wfa849ed63-1e74-4fed-8650-dc43d5f2dd9e\",\"lastUpdatedAt\":1716793628000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1713518640000,\"inboundPlanId\":\"wfef09b6ff-e191-4a64-a366-fa4a53482461\",\"lastUpdatedAt\":1713518645000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1711941415000,\"inboundPlanId\":\"wf6d7a8817-a416-47fe-98a8-d32d60c92080\",\"lastUpdatedAt\":1711941439000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1710752067000,\"inboundPlanId\":\"wfadfb97a7-527b-4b84-8d36-06b322c6da09\",\"lastUpdatedAt\":1710752071000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1710472323000,\"inboundPlanId\":\"wf0122cd77-f60f-4ba0-8bce-6c67fe364218\",\"lastUpdatedAt\":1710472334000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1709518070000,\"inboundPlanId\":\"wfc884d7d0-6eca-4b5c-9193-f8ac095674b0\",\"lastUpdatedAt\":1709518266000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1708913540000,\"inboundPlanId\":\"wf600775b8-822c-4759-a6ba-f955ef9b0cb0\",\"lastUpdatedAt\":1708913542000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1708396024000,\"inboundPlanId\":\"wf3efd9345-fed8-4e86-b1c2-86d4af8e2d7a\",\"lastUpdatedAt\":1708396026000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1708310350000,\"inboundPlanId\":\"wf5285c056-5cae-4615-b1b4-eb736d95ca05\",\"lastUpdatedAt\":1708310353000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1706757896000,\"inboundPlanId\":\"wfb61d72b7-18fa-4417-ac97-39897a5c7efc\",\"lastUpdatedAt\":1706757899000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1706757821000,\"inboundPlanId\":\"wf1bd28bb2-df9e-464a-8c5b-ac53d4e3160f\",\"lastUpdatedAt\":1706757823000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1704162839000,\"inboundPlanId\":\"wf88fda52b-d976-420b-bccb-cb96b208a7f6\",\"lastUpdatedAt\":1704162841000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1703146582000,\"inboundPlanId\":\"wf54291221-44dd-4422-9fb6-74a4cb4a87ec\",\"lastUpdatedAt\":1703146624000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1701913276000,\"inboundPlanId\":\"wfe74124e0-24d2-4b1e-8030-a8616502ce06\",\"lastUpdatedAt\":1701913281000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1700640392000,\"inboundPlanId\":\"wfa18a2418-93d7-4b8c-98a0-7d553a5e0476\",\"lastUpdatedAt\":1700640395000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1700453278000,\"inboundPlanId\":\"wfecfb4c28-d5f8-4bec-b9af-8b5e12edc619\",\"lastUpdatedAt\":1700453297000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1700447527000,\"inboundPlanId\":\"wf77fa2c32-fbdb-44f5-9fc0-7da3cc51ddae\",\"lastUpdatedAt\":1700447890000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1700036686000,\"inboundPlanId\":\"wfddede494-384f-4dc9-b5b7-85c25aea495e\",\"lastUpdatedAt\":1700036721000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1700036573000,\"inboundPlanId\":\"wf12b4e698-232e-4f8e-9df3-5b64692eda8c\",\"lastUpdatedAt\":1700036584000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1699242202000,\"inboundPlanId\":\"wf5cbb3c26-8147-4315-91e1-600b25019620\",\"lastUpdatedAt\":1699242206000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1699000771000,\"inboundPlanId\":\"wfb9b030fa-df17-4c98-86f9-0a8a98a44ff1\",\"lastUpdatedAt\":1699000775000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1699000135000,\"inboundPlanId\":\"wf9be28a82-ee31-4cee-8188-2b2188b5351c\",\"lastUpdatedAt\":1699000139000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1698997968000,\"inboundPlanId\":\"wfb45680a3-7044-4895-a6cb-b7e27f3951db\",\"lastUpdatedAt\":1698997975000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1698996338000,\"inboundPlanId\":\"wf21b44c12-8851-444c-9d1d-92709b8092aa\",\"lastUpdatedAt\":1698996362000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1695364004000,\"inboundPlanId\":\"wf202716ef-a344-4881-bf2a-a6d65a513850\",\"lastUpdatedAt\":1695364009000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1692066447000,\"inboundPlanId\":\"wfdf63a5f0-2cc7-441d-9dc5-a3beb9cba463\",\"lastUpdatedAt\":1692066452000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1691735750000,\"inboundPlanId\":\"wf8dced334-5827-4a89-922d-6f2b7b9eaf53\",\"lastUpdatedAt\":1691735750000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"八街市八街ほ445-4\",\"city\":\"八街市\",\"countryCode\":\"JP\",\"name\":\"seigyoku\",\"phoneNumber\":\"0804160151\",\"postalCode\":\"289-1115\",\"stateOrProvinceCode\":\"Chiba\"},\"status\":\"ACTIVE\"},{\"createdAt\":1691057923000,\"inboundPlanId\":\"wf630434c2-f268-4904-bde7-b6af518fd53d\",\"lastUpdatedAt\":1691057923000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"八街市八街ほ445-4\",\"city\":\"八街市\",\"countryCode\":\"JP\",\"name\":\"seigyoku\",\"phoneNumber\":\"0804160151\",\"postalCode\":\"289-1115\",\"stateOrProvinceCode\":\"Chiba\"},\"status\":\"ACTIVE\"}]", InboundPlanSummary.class);
+
+        List<PlacementOption> placementOptionList = new LinkedList<>();
+        for (InboundPlanSummary inboundPlan : list) {
+            String inboundPlanId = inboundPlan.getInboundPlanId();
+
+            try {
+                ListPlacementOptionsResponse detailResp = api.listPlacementOptions(inboundPlan.getInboundPlanId(), 20, null);
+                List<PlacementOption> placementOptions = detailResp.getPlacementOptions();
+                System.out.println("位置选项信息");
+                System.out.println(JSONUtil.toJsonStr(detailResp));
+                placementOptionList.addAll(placementOptions);
+            } catch (ApiException | LWAException e) {
+                log.error("请求失败：inboundPlanId={}, error={}", inboundPlanId,
+                        ExceptionUtil.stacktraceToString(e));
+            }
+        }
+        System.out.println("最后分仓信息结果");
+        System.out.println(JSONUtil.toJsonStr(placementOptionList));
+    }
+
+    @Test
+    public void listBoxes() {
+        String shopId = "1735516266715680769";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        List<InboundPlanSummary> list = JSONUtil.toList("[{\"createdAt\":1725242349000,\"inboundPlanId\":\"wf7c272c39-be01-4619-b27c-f40b89ca4630\",\"lastUpdatedAt\":1725242480000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1725239212000,\"inboundPlanId\":\"wf41e4d7d0-fd87-4e13-b273-7fe35a127558\",\"lastUpdatedAt\":1725239217000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1723080639000,\"inboundPlanId\":\"wf6f8a3bde-c93f-4bfd-8317-06b1410ec3e3\",\"lastUpdatedAt\":1723080698000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1722238889000,\"inboundPlanId\":\"wf49e611ab-8104-4beb-bc57-4cc38c586bd9\",\"lastUpdatedAt\":1722239086000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1721959367000,\"inboundPlanId\":\"wf920ca58c-6bb6-4287-b5b0-a1dd96f1ae5c\",\"lastUpdatedAt\":1721959574000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1721959173000,\"inboundPlanId\":\"wf75d576ac-f7ff-4ee5-83fc-6a92a785bc77\",\"lastUpdatedAt\":1721959176000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1721959114000,\"inboundPlanId\":\"wfe1b014f7-84ce-408c-a8a7-ea57c7be4014\",\"lastUpdatedAt\":1721959121000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1720766576000,\"inboundPlanId\":\"wfd413c07e-d504-4b59-a664-21ae12f95a8e\",\"lastUpdatedAt\":1720766580000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1720405837000,\"inboundPlanId\":\"wf85a2484a-3b4a-47c3-9289-58db0552cc0d\",\"lastUpdatedAt\":1720405846000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1719457399000,\"inboundPlanId\":\"wfdf7d524d-e3f0-4bef-a741-80f3a307ad7c\",\"lastUpdatedAt\":1719459782000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"八街市八街ほ445-4\",\"city\":\"八街市\",\"countryCode\":\"JP\",\"name\":\"seigyoku\",\"phoneNumber\":\"0804160151\",\"postalCode\":\"289-1115\",\"stateOrProvinceCode\":\"Chiba\"},\"status\":\"ACTIVE\"},{\"createdAt\":1718874576000,\"inboundPlanId\":\"wff4aa87ff-bee6-4b64-b722-86ed7c3da38a\",\"lastUpdatedAt\":1718874580000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1718358251000,\"inboundPlanId\":\"wfecb1cdc9-5970-424b-8fc0-f1e335347c34\",\"lastUpdatedAt\":1718358257000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1718338906000,\"inboundPlanId\":\"wf01ddd100-3031-4fcc-8764-e40dfef062c3\",\"lastUpdatedAt\":1718338912000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1718180106000,\"inboundPlanId\":\"wf7d8dc70f-14f1-4f71-bdce-a7853b64c6f1\",\"lastUpdatedAt\":1718180109000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1718177236000,\"inboundPlanId\":\"wff0ccfa34-a099-44ac-bd8d-55854aa5670a\",\"lastUpdatedAt\":1718177576000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1717488115000,\"inboundPlanId\":\"wf2bb5a0dc-ade3-4726-859f-1ac9e1d1b9ee\",\"lastUpdatedAt\":1717488138000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1717487784000,\"inboundPlanId\":\"wf7befb3d5-99d7-4f54-9a80-2bca2b53fa2a\",\"lastUpdatedAt\":1717488085000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1716861654000,\"inboundPlanId\":\"wf4336a404-a5a9-4faf-9d1b-f3ac416809c1\",\"lastUpdatedAt\":1716861654000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1716793621000,\"inboundPlanId\":\"wfa849ed63-1e74-4fed-8650-dc43d5f2dd9e\",\"lastUpdatedAt\":1716793628000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1713518640000,\"inboundPlanId\":\"wfef09b6ff-e191-4a64-a366-fa4a53482461\",\"lastUpdatedAt\":1713518645000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1711941415000,\"inboundPlanId\":\"wf6d7a8817-a416-47fe-98a8-d32d60c92080\",\"lastUpdatedAt\":1711941439000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1710752067000,\"inboundPlanId\":\"wfadfb97a7-527b-4b84-8d36-06b322c6da09\",\"lastUpdatedAt\":1710752071000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1710472323000,\"inboundPlanId\":\"wf0122cd77-f60f-4ba0-8bce-6c67fe364218\",\"lastUpdatedAt\":1710472334000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1709518070000,\"inboundPlanId\":\"wfc884d7d0-6eca-4b5c-9193-f8ac095674b0\",\"lastUpdatedAt\":1709518266000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1708913540000,\"inboundPlanId\":\"wf600775b8-822c-4759-a6ba-f955ef9b0cb0\",\"lastUpdatedAt\":1708913542000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1708396024000,\"inboundPlanId\":\"wf3efd9345-fed8-4e86-b1c2-86d4af8e2d7a\",\"lastUpdatedAt\":1708396026000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1708310350000,\"inboundPlanId\":\"wf5285c056-5cae-4615-b1b4-eb736d95ca05\",\"lastUpdatedAt\":1708310353000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1706757896000,\"inboundPlanId\":\"wfb61d72b7-18fa-4417-ac97-39897a5c7efc\",\"lastUpdatedAt\":1706757899000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1706757821000,\"inboundPlanId\":\"wf1bd28bb2-df9e-464a-8c5b-ac53d4e3160f\",\"lastUpdatedAt\":1706757823000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1704162839000,\"inboundPlanId\":\"wf88fda52b-d976-420b-bccb-cb96b208a7f6\",\"lastUpdatedAt\":1704162841000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1703146582000,\"inboundPlanId\":\"wf54291221-44dd-4422-9fb6-74a4cb4a87ec\",\"lastUpdatedAt\":1703146624000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1701913276000,\"inboundPlanId\":\"wfe74124e0-24d2-4b1e-8030-a8616502ce06\",\"lastUpdatedAt\":1701913281000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1700640392000,\"inboundPlanId\":\"wfa18a2418-93d7-4b8c-98a0-7d553a5e0476\",\"lastUpdatedAt\":1700640395000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1700453278000,\"inboundPlanId\":\"wfecfb4c28-d5f8-4bec-b9af-8b5e12edc619\",\"lastUpdatedAt\":1700453297000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1700447527000,\"inboundPlanId\":\"wf77fa2c32-fbdb-44f5-9fc0-7da3cc51ddae\",\"lastUpdatedAt\":1700447890000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1700036686000,\"inboundPlanId\":\"wfddede494-384f-4dc9-b5b7-85c25aea495e\",\"lastUpdatedAt\":1700036721000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1700036573000,\"inboundPlanId\":\"wf12b4e698-232e-4f8e-9df3-5b64692eda8c\",\"lastUpdatedAt\":1700036584000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1699242202000,\"inboundPlanId\":\"wf5cbb3c26-8147-4315-91e1-600b25019620\",\"lastUpdatedAt\":1699242206000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1699000771000,\"inboundPlanId\":\"wfb9b030fa-df17-4c98-86f9-0a8a98a44ff1\",\"lastUpdatedAt\":1699000775000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1699000135000,\"inboundPlanId\":\"wf9be28a82-ee31-4cee-8188-2b2188b5351c\",\"lastUpdatedAt\":1699000139000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1698997968000,\"inboundPlanId\":\"wfb45680a3-7044-4895-a6cb-b7e27f3951db\",\"lastUpdatedAt\":1698997975000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1698996338000,\"inboundPlanId\":\"wf21b44c12-8851-444c-9d1d-92709b8092aa\",\"lastUpdatedAt\":1698996362000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1695364004000,\"inboundPlanId\":\"wf202716ef-a344-4881-bf2a-a6d65a513850\",\"lastUpdatedAt\":1695364009000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1692066447000,\"inboundPlanId\":\"wfdf63a5f0-2cc7-441d-9dc5-a3beb9cba463\",\"lastUpdatedAt\":1692066452000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"minzhi zhangkeng3qu 34dong3room\",\"city\":\"shenzhen\",\"countryCode\":\"CN\",\"name\":\"Ulanzi\",\"phoneNumber\":\"8618675521702\",\"postalCode\":\"518000\",\"stateOrProvinceCode\":\"Guangdong\"},\"status\":\"ACTIVE\"},{\"createdAt\":1691735750000,\"inboundPlanId\":\"wf8dced334-5827-4a89-922d-6f2b7b9eaf53\",\"lastUpdatedAt\":1691735750000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"八街市八街ほ445-4\",\"city\":\"八街市\",\"countryCode\":\"JP\",\"name\":\"seigyoku\",\"phoneNumber\":\"0804160151\",\"postalCode\":\"289-1115\",\"stateOrProvinceCode\":\"Chiba\"},\"status\":\"ACTIVE\"},{\"createdAt\":1691057923000,\"inboundPlanId\":\"wf630434c2-f268-4904-bde7-b6af518fd53d\",\"lastUpdatedAt\":1691057923000,\"marketplaceIds\":[\"A1VC38T7YXB528\"],\"name\":\"\",\"sourceAddress\":{\"addressLine1\":\"八街市八街ほ445-4\",\"city\":\"八街市\",\"countryCode\":\"JP\",\"name\":\"seigyoku\",\"phoneNumber\":\"0804160151\",\"postalCode\":\"289-1115\",\"stateOrProvinceCode\":\"Chiba\"},\"status\":\"ACTIVE\"}]", InboundPlanSummary.class);
+
+        List<Box> resultList = new LinkedList<>();
+        for (InboundPlanSummary inboundPlan : list) {
+            String inboundPlanId = inboundPlan.getInboundPlanId();
+
+            try {
+                ListInboundPlanBoxesResponse response = api.listInboundPlanBoxes(inboundPlan.getInboundPlanId(), 20, null);
+                List<Box> boxes = response.getBoxes();
+                System.out.println("装箱信息");
+                System.out.println(JSONUtil.toJsonStr(boxes));
+                resultList.addAll(boxes);
+            } catch (ApiException | LWAException e) {
+                log.error("请求失败：inboundPlanId={}, error={}", inboundPlanId,
+                        ExceptionUtil.stacktraceToString(e));
+            }
+        }
+        System.out.println("最后装箱信息结果");
+        System.out.println(JSONUtil.toJsonStr(resultList));
     }
 }
