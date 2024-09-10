@@ -902,6 +902,20 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
+        List<String> pilotApplicationIds = applicationDTOList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+        List<PilotApplicationEntity> entityList = this.lambdaQuery().in(PilotApplicationEntity::getId, pilotApplicationIds).list();
+        List<String> detailIds = applicationDTOList.stream().map(item -> item.getDetailId()).distinct().collect(Collectors.toList());
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getId, detailIds).list();
+        for (PilotApplicationEntity entity : entityList) {
+            if(ObjectUtil.notEqual(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)){
+                throw new ServiceException("只有已审核的单据允许下推采购申请单");
+            }
+        }
+        for (PilotApplicationDetailEntity detailEntity : detailList) {
+            if(ObjectUtil.equal(detailEntity.getOrderStatus(), PilotPushPurchaseStatusEnum.ORDER.getCode())){
+                throw new ServiceException("只有未下单或部分下单的SKU允许下推采购申请单");
+            }
+        }
         PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(applicationDTOList);
         BatchResultDTO resultDTO = purchaseApplicationFeign.add(paramDto);
         String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据下推采购申请单，单号为：【%s】", UserContext.getNonLoginUser().getUserName(), applicationDTOList.get(0).getCode(), resultDTO.getCode());
