@@ -83,7 +83,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetailDTO) {
+    public String update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetailDTO) {
         CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity =  BeanMapperUtils.map(CfgRuleSalesQtyEntity.class, updateDetailDTO);
         //旧数据
         List<CfgRuleSalesQtyEntity> oldList = this.getDefaultByPlatformType(updateDetailDTO.getPlatformType(),updateDetailDTO.getRefId(),updateDetailDTO.getType());
@@ -107,13 +107,13 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         cfgRuleSalesDenoisingService.update(updateDetailDTO.getSalesDenoisingList(),cfgRuleSalesQtyEntity.getId(),updateDetailDTO.getIsCustom());
 
         if (CollectionUtils.isEmpty(oldList)) {
-            return Boolean.TRUE;
+            return cfgRuleSalesQtyEntity.getId();
         }
         // 记录主单操作日志
         log.info("编辑 开始记录销量（规则设置）日志数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleSalesQtyEntity.getId(), "销量（规则设置）");
         operateLogService.addModuleOperateLogByObj(oldList.get(0), cfgRuleSalesQtyEntity, ModuleTypeEnum.CFG_RULE_COMMON.getCode(), cfgRuleSalesQtyEntity.getId(), msg);
-        return Boolean.TRUE;
+        return cfgRuleSalesQtyEntity.getId();
     }
 
     @Override
@@ -285,9 +285,11 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     private List<CfgRuleSalesFormulaDTO.UpdateDTO> handleSalesFormula (CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO) {
         List<CfgRuleSalesFormulaDTO.UpdateDTO> list = new ArrayList<>();
         //默认日销量
-        CfgRuleSalesFormulaDTO.UpdateDTO defaultDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.UpdateDTO.class, updateDTO.getDefaultSalesQtyDTO());
-        defaultDTO.setType(CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()).setPriority(MathUtil.THREE);
-        list.add(defaultDTO);
+        if (ObjectUtil.isNotEmpty(updateDTO.getDefaultSalesQtyDTO())) {
+            CfgRuleSalesFormulaDTO.UpdateDTO defaultDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.UpdateDTO.class, updateDTO.getDefaultSalesQtyDTO());
+            defaultDTO.setType(CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()).setPriority(MathUtil.THREE);
+            list.add(defaultDTO);
+        }
         //动态日销量
         if (CollectionUtils.isNotEmpty(updateDTO.getDynamicSalesQtyList())) {
             List<CfgRuleSalesFormulaDTO.UpdateDTO> dynamicList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.UpdateDTO.class, updateDTO.getDynamicSalesQtyList());

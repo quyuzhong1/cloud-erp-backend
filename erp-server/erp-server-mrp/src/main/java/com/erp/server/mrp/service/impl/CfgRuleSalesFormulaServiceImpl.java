@@ -147,7 +147,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
         //销量信息
         CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyService.getById(salesQtyId);
         if (ObjectUtil.isEmpty(salesQtyEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（备货）");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（销量）");
         }
 
         Integer index = MathUtil.ONE;

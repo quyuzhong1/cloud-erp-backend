@@ -33,7 +33,7 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @param updateDTO
      * @return Boolean
      */
-    Boolean update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO);
+    String update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO);
 
     /**
      * 查看详情
