@@ -20,7 +20,7 @@ import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.dmp.mapper.DmpSkuCostMapper;
 import com.erp.server.dmp.service.DmpSkuCostCustomService;
 import com.erp.server.dmp.service.DmpSkuCostService;

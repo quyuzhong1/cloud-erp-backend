@@ -30,7 +30,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.tms.convert.CfgReconciliationFieldConverter;
 import com.erp.server.tms.listener.CfgReconciliationFieldExcelListener;
 import com.erp.server.tms.mapper.CfgReconciliationFieldMapper;
