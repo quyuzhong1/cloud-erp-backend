@@ -458,7 +458,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 if(productDTO.getApproveQty() > productDTO.getApplyQty()){
                     throw new ServiceException("产品审核数量不能大于申请数量：" + productDTO.getSkuNo());
                 }
-                pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getApproveQty, productDTO.getApproveQty()).eq(PilotApplicationDetailEntity::getId, productDTO.getId()).update();
+                if(Objects.equals(approveType, ApproveTypeEnum.PASS)){
+                    pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getApproveQty, productDTO.getApproveQty()).eq(PilotApplicationDetailEntity::getId, productDTO.getId()).update();
+                }
             }
         }else {
             List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, approveDTO.getIds()).list();
