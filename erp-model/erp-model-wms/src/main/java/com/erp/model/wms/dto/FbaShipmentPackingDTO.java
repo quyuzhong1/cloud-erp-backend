@@ -54,6 +54,11 @@ public class FbaShipmentPackingDTO implements Serializable {
     public static class PackingDTO {
 
         /**
+         * 文件路径
+         */
+        private String fileUrl;
+
+        /**
          * 货件号
          */
         private String fbaShipmentCode;
