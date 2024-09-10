@@ -207,6 +207,12 @@ public class ReplenishmentSuggestionDetailEntity extends BaseEntity<Replenishmen
     private Integer totalSellableDays;
 
     /**
+     * fba在途配置
+     */
+    @TableField("cfg_fba_in_transit")
+    private String cfgFbaInTransit;
+
+    /**
      * 计算版本  所有子表加   根据单号生成规则
      */
     @TableField("calc_version")

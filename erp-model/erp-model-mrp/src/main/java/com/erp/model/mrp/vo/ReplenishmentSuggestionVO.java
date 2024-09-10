@@ -275,6 +275,10 @@ public class ReplenishmentSuggestionVO {
          * 备注
          */
         private String remark;
+        /**
+         * fba在途配置
+         */
+        private String cfgFbaInTransit;
     }
 
     @Getter
@@ -465,6 +469,10 @@ public class ReplenishmentSuggestionVO {
          * 备注
          */
         private String remark;
+        /**
+         * fba在途配置
+         */
+        private String cfgFbaInTransit;
     }
 
     @Getter

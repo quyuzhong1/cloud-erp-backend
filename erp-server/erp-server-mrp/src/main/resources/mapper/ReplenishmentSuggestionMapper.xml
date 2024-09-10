@@ -43,7 +43,8 @@
                rsd.total_sellable_days,
                rsd.delivery_min_days,
                rsd.delivery_default_days,
-               rsd.delivery_max_days
+               rsd.delivery_max_days,
+               rsd.cfg_fba_in_transit
         from replenishment_suggestion rs
                  inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
     </select>
@@ -90,7 +91,8 @@
                rsd.total_sellable_days,
                rsd.delivery_min_days,
                rsd.delivery_default_days,
-               rsd.delivery_max_days
+               rsd.delivery_max_days,
+               rsd.cfg_fba_in_transit
         from replenishment_suggestion rs
                  inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
     </select>
