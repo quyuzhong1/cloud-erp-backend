@@ -1012,6 +1012,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 dto.setSkuNo(sku.getSkuNo());
             }
             dto.setType(detailEntity.getType());
+            dto.setTypeName(PilotApplicationTypeEnum.getName(detailEntity.getType()));
             if(purchaseMap.containsKey(detailEntity.getSkuId())){
                 //待申请量=批准数量-已下推的SKU申请累计申请量（查询采购申请单中该sku已申请的数量）
                 Integer qty = purchaseMap.get(detailEntity.getSkuId());

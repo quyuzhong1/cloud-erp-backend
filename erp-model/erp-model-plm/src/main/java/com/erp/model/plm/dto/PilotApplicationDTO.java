@@ -464,6 +464,11 @@ public class PilotApplicationDTO implements Serializable {
         private String type;
 
         /**
+         * 下单类型名称
+         */
+        private String typeName;
+
+        /**
          * 批准数量
          */
         private int approveQty;
