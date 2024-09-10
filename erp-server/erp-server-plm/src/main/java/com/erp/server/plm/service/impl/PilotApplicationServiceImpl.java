@@ -745,7 +745,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
                 if(detailDTO.getApplyQty() >= priceViewDTO.getMinQty() && detailDTO.getApplyQty() <= priceViewDTO.getMaxQty()){
                     detailDTO.setActualTaxCost(priceViewDTO.getTaxPrice());
-                    detailDTO.setActualNoTaxCost(priceViewDTO.getTaxPrice().divide(priceViewDTO.getTaxRate().add(BigDecimal.valueOf(1)), 4, RoundingMode.HALF_UP));
+                    BigDecimal divide = priceViewDTO.getTaxRate().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                    BigDecimal add = divide.add(BigDecimal.ONE);
+                    detailDTO.setActualNoTaxCost(priceViewDTO.getTaxPrice().divide(add, 4, RoundingMode.HALF_UP));
                     break;
                 }
             }
