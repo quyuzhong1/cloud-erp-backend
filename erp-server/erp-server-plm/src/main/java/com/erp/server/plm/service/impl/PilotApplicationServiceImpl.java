@@ -18,6 +18,7 @@ import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
@@ -38,6 +39,8 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -118,6 +121,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private ProcessTaskManagementFeign processTaskManagementFeign;
     @Resource
     private PurchasePriceDetailFeign purchasePriceDetailFeign;
+    @Resource
+    private PurchaseApplicationDetailFeign purchaseApplicationDetailFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1042,6 +1047,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //采购申请单
         List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> purchaseList = purchaseApplicationFeign.listSkuAndQty(skuIds);
         Map<String, Integer> purchaseMap = purchaseList.stream().collect(Collectors.toMap(item1 -> item1.getSkuId(), item2 -> item2.getQty()));
+        List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationFeign.listBySourceIds(ids);
+        Map<String, String> purchaseIdMap = purchaseApplicationList.stream().collect(Collectors.toMap(item -> item.getSourceId(), item2 -> item2.getId()));
+        //采购申请单明细
+        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = new ArrayList<>();
+        if(!purchaseApplicationList.isEmpty()){
+            List<String> mainIds = purchaseApplicationList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+            purchaseApplicationDetailList = purchaseApplicationDetailFeign.listByMainIds(mainIds);
+        }
+
+
         List<PilotApplicationDTO.PushPurchaseApplicationDTO> resultList = new ArrayList<>(detailList.size());
         for (PilotApplicationDetailEntity detailEntity : detailList) {
             PilotApplicationDTO.PushPurchaseApplicationDTO dto = new PilotApplicationDTO.PushPurchaseApplicationDTO();
@@ -1062,15 +1077,19 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             dto.setTypeName(PilotApplicationTypeEnum.getName(detailEntity.getType()));
             if(purchaseMap.containsKey(detailEntity.getSkuId())){
                 //待申请量=批准数量-已下推的SKU申请累计申请量（查询采购申请单中该sku已申请的数量）
-                Integer qty = purchaseMap.get(detailEntity.getSkuId());
-                int spareApplyQty = detailEntity.getApproveQty() - qty;
+                String purchaseApplicationId = purchaseIdMap.get(detailEntity.getMainId());
+                PurchaseApplicationDetailEntity purchaseDetailEntity = purchaseApplicationDetailList.stream()
+                        .filter(item -> item.getPurchaseApplicationId().equals(purchaseApplicationId))
+                        .filter(item -> item.getSkuId().equals(detailEntity.getSkuId()))
+                        .findFirst().orElse(new PurchaseApplicationDetailEntity().setApplyQty(0));
+                int spareApplyQty = detailEntity.getApproveQty() - purchaseDetailEntity.getApplyQty();
                 dto.setSpareApplyQty(spareApplyQty);
             }else {
                 dto.setSpareApplyQty(detailEntity.getApproveQty());
             }
             resultList.add(dto);
         }
-        return resultList;
+        return resultList.stream().filter(item -> item.getSpareApplyQty() > 0).collect(Collectors.toList());
     }
 
     @Override
