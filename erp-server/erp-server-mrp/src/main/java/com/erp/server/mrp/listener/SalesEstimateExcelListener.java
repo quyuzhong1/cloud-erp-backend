@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 销售预估月销导入
@@ -70,5 +71,18 @@ public class SalesEstimateExcelListener extends AnalysisEventListener<Map<Intege
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
 
+    }
+
+    @Override
+    public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
+        List<String> headList = map.values().stream().map(obj -> obj.toString()).collect(Collectors.toList());
+        headList.add("错误信息");
+        map.put(map.size(),"错误信息");
+        this.headMap = map;
+        this.headList = headList;
+    }
+
+    public List<String> getHeadList() {
+        return headList;
     }
 }

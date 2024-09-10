@@ -1,5 +1,6 @@
 package com.common.core.dto;
 
+import cn.hutool.core.lang.Pair;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,10 +24,21 @@ public class FileExcelDTO {
          * 文件名称
          */
         private String fileName;
+
         /**
-         * sheet集合
+         * 文件Url
          */
-        private List<ExportFileSheetDTO> sheetList;
+        private String pathUrl;
+
+        /**
+         * 多sheet页数据
+         */
+        private List<Pair<Integer, List<?>>> sheetList;
+
+        /**
+         * 动态sheet页导出
+         */
+        private ExportFileSheetDTO customSheet;
     }
 
     @Data
@@ -51,5 +63,4 @@ public class FileExcelDTO {
          */
         List<String> heads;
     }
-
 }

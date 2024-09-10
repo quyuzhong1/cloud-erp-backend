@@ -8,6 +8,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.SalesEstimateManualDTO;
 import com.erp.model.mrp.entity.SalesEstimateManualEntity;
 import com.erp.server.mrp.mapper.SalesEstimateManualMapper;
@@ -51,7 +52,7 @@ public class SalesEstimateManualServiceImpl extends SuperServiceImpl<SalesEstima
         // 数据处理
         handleData(salesEstimateManualEntity);
         log.info("编辑 开始修改运营销量预估数据");
-        boolean save = super.updateById(salesEstimateManualEntity);
+        boolean save = super.saveOrUpdate(salesEstimateManualEntity);
         if(!save) {
             throw new ServiceException("运营销量预估保存失败");
         }
@@ -96,7 +97,8 @@ public class SalesEstimateManualServiceImpl extends SuperServiceImpl<SalesEstima
         /**
          * 当月剩余有效预估 = 当月初始整月预估值 / 当月的天数 * 剩余天数
          */
-        BigDecimal currentMonthSurplusSalesQty = currentMonthSalesQty.divide(new BigDecimal(thisMonthDays)).multiply(new BigDecimal(thisMonthDays - thisDays));
+        Integer days = thisMonthDays - thisDays;
+        BigDecimal currentMonthSurplusSalesQty = MathUtil.multiply(MathUtil.divide(currentMonthSalesQty,new BigDecimal(thisMonthDays)),new BigDecimal(days));
         salesEstimateManualEntity.setCurrentMonthSurplusSalesQty(currentMonthSurplusSalesQty);
     }
 

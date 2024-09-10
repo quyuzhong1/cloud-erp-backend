@@ -138,8 +138,10 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         List<String> virtualWarehouseIdList = list.stream().map(CfgRuleWarehouseDetailEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseEntity> virtualWarehouseList = CollectionUtils.isEmpty(virtualWarehouseIdList) ? Collections.EMPTY_LIST : FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
 
-        //所有店铺
-        List<ShopInfoEntity> shopInfoList = FeignQuery.list(ShopInfoEntity.class);
+        //店铺信息
+        List<String> shopIdList = list.stream().filter(obj -> StrUtil.equals(obj.getChannelType(), VitualWarehouseChannelTypeEnum.SHOP.getCode()))
+                .flatMap(obj -> Stream.of(obj.getChannelIdJson().stream().map(Object::toString).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = CollectionUtils.isEmpty(shopIdList) ? Collections.EMPTY_LIST : FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
 
         //平台信息
         List<String> platformList = list.stream().filter(obj -> StrUtil.equals(obj.getChannelType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode()))
@@ -184,10 +186,8 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
                 viewDTO.setDictPlatform(channelIdList.get(0));
                 viewDTO.setDictPlatformName(platformNames);
                 //店铺
-                List<String> shopIdList = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), viewDTO.getDictPlatform())).map(ShopInfoEntity::getId).collect(Collectors.toList());
-                viewDTO.setChannelIdList(shopIdList);
-                String shopNames = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), viewDTO.getDictPlatform())).map(ShopInfoEntity::getName).collect(Collectors.joining(","));
-                viewDTO.setChannelIdJsonName(shopNames);
+                viewDTO.setChannelIdList(channelIdList);
+                viewDTO.setChannelIdJsonName("全部店铺");
             }
             resultList.add(viewDTO);
         }

@@ -195,7 +195,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
             updateDTO.setDictPlatform(value.get(0).getDictPlatform());
             updateDTO.setInventoryAllocateType(CfgRuleInventoryAllocateTypeEnum.AUTO_ALLOCATION.getCode());
             //店铺数据
-            List<String> relationIdList = value.stream().flatMap(obj -> Stream.of(obj.getRelationIdList().stream().toArray(String[]::new))).distinct().collect(Collectors.toList());
+            List<String> relationIdList = value.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getRelationIdList())).flatMap(obj -> Stream.of(obj.getRelationIdList().stream().toArray(String[]::new))).distinct().collect(Collectors.toList());
             updateDTO.setChannelIdList(relationIdList);
             resultList.add(updateDTO);
         }

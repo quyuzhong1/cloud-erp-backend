@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONNull;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -37,6 +38,7 @@ import com.erp.server.mrp.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -89,6 +91,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void importRule(MultipartFile excelFile, HttpServletResponse response) {
         //平台信息
         List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
@@ -132,27 +135,17 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             return;
         }
         String fileName = "补货规则.xlsx";
+        String pathUrl = "excel/replenishmentRule.xlsx";
         FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
         exportFileDTO.setFileName(fileName);
-        List<FileExcelDTO.ExportFileSheetDTO> sheetList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(stockUpList)) {
-            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("销量",stockUpList,StockUpImportExcelDTO.class,null));
-        }
-        if (CollectionUtils.isNotEmpty(stockingRatioList)) {
-            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("动态备货系数",stockingRatioList,StockingRatioImportExcelDTO.class,null));
-        }
-        if (CollectionUtils.isNotEmpty(defaultSalesQtyList)) {
-            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("默认日销量",defaultSalesQtyList,DefaultSalesQtyImportExcelDTO.class,null));
-        }
-        if (CollectionUtils.isNotEmpty(dynamicSalesQtyList)) {
-            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("动态日销量",dynamicSalesQtyList,DynamicSalesQtyImportExcelDTO.class,null));
-        }
-        if (CollectionUtils.isNotEmpty(fixedSalesQtyList)) {
-            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("固定日销量",fixedSalesQtyList,FixedSalesQtyImportExcelDTO.class,null));
-        }
-        if (CollectionUtils.isNotEmpty(salesDenoisingList)) {
-            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("销量去噪",salesDenoisingList,SalesDenoisingImportExcelDTO.class,null));
-        }
+        exportFileDTO.setPathUrl(pathUrl);
+        List<Pair<Integer, List<?>>> sheetList = new ArrayList<>();
+        sheetList.add(new Pair<>(MathUtil.ZERO,stockUpList));
+        sheetList.add(new Pair<>(MathUtil.ONE,stockingRatioList));
+        sheetList.add(new Pair<>(MathUtil.TWO,defaultSalesQtyList));
+        sheetList.add(new Pair<>(MathUtil.THREE,dynamicSalesQtyList));
+        sheetList.add(new Pair<>(MathUtil.FOUR,fixedSalesQtyList));
+        sheetList.add(new Pair<>(MathUtil.FIVE,salesDenoisingList));
         exportFileDTO.setSheetList(sheetList);
 
         //添加导入记录
@@ -1133,18 +1126,18 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * 运营月销预估表头
      * @author will
      * @date 2024/9/5 10:13
-     * @return LinkedList<String>
+     * @return JSONObject
      */
-    private  Map<String,String> getImportHeader () {
+    private  JSONObject getImportHeader () {
         LocalDate now = LocalDate.now();
-        Map<String,String> map = new HashMap<>();
-        map.put("*平台","platform");
-        map.put("*SKU","skuNo");
-        map.put("*店铺","shopName");
-        map.put(now.format(DateTimeFormatter.ofPattern("yyyy年MM月dd")),"currentMonthSalesQty");
-        map.put(now.plusMonths(1L).format(DateTimeFormatter.ofPattern("yyyy年MM月dd")),"nextMonthSales");
-        map.put(now.plusMonths(2L).format(DateTimeFormatter.ofPattern("yyyy年MM月dd")),"followingMonthSales");
-        return map;
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.set("*平台","platform");
+        jsonObject.set("*SKU","skuNo");
+        jsonObject.set("*店铺","shopName");
+        jsonObject.set(now.format(DateTimeFormatter.ofPattern("yyyy年MM月")),"currentMonthSalesQty");
+        jsonObject.set(now.plusMonths(1L).format(DateTimeFormatter.ofPattern("yyyy年MM月")),"nextMonthSales");
+        jsonObject.set(now.plusMonths(2L).format(DateTimeFormatter.ofPattern("yyyy年MM月")),"followingMonthSales");
+        return jsonObject;
     }
 
     @Override
@@ -1210,9 +1203,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         String fileName = "运营月销预估.xlsx";
         FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
         exportFileDTO.setFileName(fileName);
-        List<FileExcelDTO.ExportFileSheetDTO> sheetList = new ArrayList<>();
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("运营月销预估",successList,null,headList));
-        exportFileDTO.setSheetList(sheetList);
+        List<List<Object>> exportList = successList.stream().map(obj -> checkToList(obj.values())).collect(Collectors.toList());
+        exportFileDTO.setCustomSheet(new FileExcelDTO.ExportFileSheetDTO("运营月销预估",exportList,null,headList));
 
         //添加导入记录
         HistoryImportRecordDTO.AddDTO dto = new HistoryImportRecordDTO.AddDTO();
@@ -1221,6 +1213,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         dto.setType(HistoryImportRecordTypeEnum.SALES_ESTIMATE_MANUAL.getCode());
         dto.setExportFileDTO(exportFileDTO);
         historyImportRecordService.add(dto);
+    }
+
+    private List<Object> checkToList(Collection<Object> values) {
+        return values.stream().map(e -> e instanceof JSONNull ? null : e).collect(Collectors.toList());
     }
 
     /**
@@ -1235,21 +1231,22 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             return;
         }
         //表头
-        Map<String,String> headMap = getImportHeader();
+        JSONObject headMap = getImportHeader();
         //平台
-        List<String> platformList = successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get(MathUtil.ZERO))).map(obj -> obj.get(MathUtil.ZERO).toString()).collect(Collectors.toList());
+        List<String> platformList = successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get("0"))).map(obj -> obj.get("0").toString()).collect(Collectors.toList());
         List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         List<String> platformCodeList = platformViewList.stream().filter(obj -> platformList.contains(obj.getName())).map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
 
+        //SKU
+        List<String> skuNoList = successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get("1"))).map(obj -> obj.get("1").toString()).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getSkuNo, skuNoList).list();
+        List<String> skuIdList = productDetailList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+
         //店铺
-        List<String> shopNameList = successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get(MathUtil.ONE))).map(obj -> obj.get(MathUtil.ONE).toString()).collect(Collectors.toList());
+        List<String> shopNameList = successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get("2"))).map(obj -> obj.get("2").toString()).collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
         List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
 
-        //SKU
-        List<String> skuNoList = successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get(MathUtil.TWO))).map(obj -> obj.get(MathUtil.TWO).toString()).collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getSkuNo, skuNoList).list();
-        List<String> skuIdList = productDetailList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
 
         //根据平台、店铺、skuId查询补货建议数据
         List<ReplenishmentSuggestionEntity> replenishmentSuggestionList = replenishmentSuggestionService.listByUnique(platformCodeList, shopIdList, skuIdList);
@@ -1265,7 +1262,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 //字段名称
                 String field = headList.get(Integer.valueOf(entry.getKey()));
                 //字段编码
-                String fieldCode = headMap.get(field);
+                String fieldCode = ObjectUtil.isEmpty(headMap.get(field)) ? "" : headMap.get(field).toString();
                 //json数据
                 successJson.set(fieldCode,entry.getValue());
             }
@@ -1308,7 +1305,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 continue;
             }
         }
-        successList.addAll(wrongList);
+        successList.removeAll(wrongList);
     }
 
     /**
@@ -1324,6 +1321,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         updateDTO.setReplenishmentId(entity.getId());
         updateDTO.setCurrentMonthSalesQty(MathUtil.valueOf(excelDTO.getCurrentMonthSalesQty()));
         updateDTO.setNextMonthSales(MathUtil.valueOf(excelDTO.getNextMonthSales()));
+        updateDTO.setFollowingMonthSales(MathUtil.valueOf(excelDTO.getFollowingMonthSales()));
         return updateDTO;
     }
 }
