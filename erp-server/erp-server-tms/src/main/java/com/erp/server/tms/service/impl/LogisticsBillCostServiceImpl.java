@@ -987,15 +987,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     errorMsgList.add(StrUtil.format("需要导入【{}】物流单费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
                 }
             }
-            //币别为空则取费用单币别
-            excelDTO.setCurrency(StrUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency());
-            if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !StrUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
-                errorMsgList.add("导入币别与物流费用单币别不一致");
+            if (ObjectUtil.isNotEmpty(logisticsBillCostEntity)){
+                excelDTO.setCurrency(StrUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency());
+
+                if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !StrUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
+                    errorMsgList.add("导入币别与物流费用单币别不一致");
+                }
+                if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())
+                        || ReconciliationStatusEnum.INVALID.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())) {
+                    errorMsgList.add("物流费用单已确认或已作废不支持更新");
+                }
             }
-            if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())
-            || ReconciliationStatusEnum.INVALID.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())) {
-                errorMsgList.add("物流费用单已确认或已作废不支持更新");
-            }
+
 
         }
         return errorMsgList;
