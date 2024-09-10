@@ -6467,6 +6467,103 @@ public class FbaInboundApi {
         return call;
     }
 
+    /**
+     *
+     * Returns package/pallet labels for faster and more accurate shipment processing at the Amazon fulfillment center.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * @param shipmentId A shipment identifier originally returned by the createInboundShipmentPlan operation. (required)
+     * @param pageType The page type to use to print the labels. Submitting a PageType value that is not supported in your marketplace returns an error. (required)
+     * @param labelType The type of labels requested.  (required)
+     * @param numberOfPackages The number of packages in the shipment. (optional)
+     * @param packageLabelsToPrint A list of identifiers that specify packages for which you want package labels printed.  Must match CartonId values previously passed using the FBA Inbound Shipment Carton Information Feed. If not, the operation returns the IncorrectPackageIdentifier error code. (optional)
+     * @param numberOfPallets The number of pallets in the shipment. This returns four identical labels for each pallet. (optional)
+     * @param pageSize The page size for paginating through the total packages&#39; labels. This is a required parameter for Non-Partnered LTL Shipments. Max value:1000. (optional)
+     * @param pageStartIndex The page start index for paginating through the total packages&#39; labels. This is a required parameter for Non-Partnered LTL Shipments. (optional)
+     * @return GetLabelsResponse
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     */
+    public GetLabelsResponse getLabels(String shipmentId, String pageType, String labelType, Integer numberOfPackages, List<String> packageLabelsToPrint, Integer numberOfPallets, Integer pageSize, Integer pageStartIndex) throws ApiException {
+        ApiResponse<GetLabelsResponse> resp = getLabelsWithHttpInfo(shipmentId, pageType, labelType, numberOfPackages, packageLabelsToPrint, numberOfPallets, pageSize, pageStartIndex);
+        return resp.getData();
+    }
+
+    public ApiResponse<GetLabelsResponse> getLabelsWithHttpInfo(String shipmentId, String pageType, String labelType, Integer numberOfPackages, List<String> packageLabelsToPrint, Integer numberOfPallets, Integer pageSize, Integer pageStartIndex) throws ApiException {
+        Call call = getLabelsCall(shipmentId, pageType, labelType, numberOfPackages, packageLabelsToPrint, numberOfPallets, pageSize, pageStartIndex, null, null);
+        Type localVarReturnType = new TypeToken<GetLabelsResponse>(){}.getType();
+        return apiClient.execute(call, localVarReturnType);
+    }
+
+    private Call getLabelsCall(String shipmentId, String pageType, String labelType, Integer numberOfPackages, List<String> packageLabelsToPrint, Integer numberOfPallets, Integer pageSize, Integer pageStartIndex, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+        Object localVarPostBody = null;
+
+        // verify the required parameter 'shipmentId' is set
+        if (shipmentId == null) {
+            throw new ApiException("Missing the required parameter 'shipmentId' when calling getLabels(Async)");
+        }
+
+        // verify the required parameter 'pageType' is set
+        if (pageType == null) {
+            throw new ApiException("Missing the required parameter 'pageType' when calling getLabels(Async)");
+        }
+
+        // verify the required parameter 'labelType' is set
+        if (labelType == null) {
+            throw new ApiException("Missing the required parameter 'labelType' when calling getLabels(Async)");
+        }
+
+
+        // create path and map variables
+        String localVarPath = "/fba/inbound/v0/shipments/{shipmentId}/labels".replaceAll("\\{format\\}","json")
+                .replaceAll("\\{" + "shipmentId" + "\\}", apiClient.escapeString(shipmentId.toString()));
+
+        List<Pair> localVarQueryParams = new ArrayList<Pair>();
+        List<Pair> localVarCollectionQueryParams = new ArrayList<Pair>();
+        if (pageType != null)
+            localVarQueryParams.addAll(apiClient.parameterToPair("PageType", pageType));
+        if (labelType != null)
+            localVarQueryParams.addAll(apiClient.parameterToPair("LabelType", labelType));
+        if (numberOfPackages != null)
+            localVarQueryParams.addAll(apiClient.parameterToPair("NumberOfPackages", numberOfPackages));
+        if (packageLabelsToPrint != null)
+            localVarCollectionQueryParams.addAll(apiClient.parameterToPairs("csv", "PackageLabelsToPrint", packageLabelsToPrint));
+        if (numberOfPallets != null)
+            localVarQueryParams.addAll(apiClient.parameterToPair( "NumberOfPallets", numberOfPallets));
+        if (pageSize != null)
+            localVarQueryParams.addAll(apiClient.parameterToPair( "PageSize", pageSize));
+        if (pageStartIndex != null)
+            localVarQueryParams.addAll(apiClient.parameterToPair( "PageStartIndex", pageStartIndex));
+
+        Map<String, String> localVarHeaderParams = new HashMap<String, String>();
+
+        Map<String, Object> localVarFormParams = new HashMap<String, Object>();
+
+        final String[] localVarAccepts = {
+                "application/json"
+        };
+        final String localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        if (localVarAccept != null) localVarHeaderParams.put("Accept", localVarAccept);
+
+        final String[] localVarContentTypes = {
+                "application/json"
+        };
+        final String localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+        localVarHeaderParams.put("Content-Type", localVarContentType);
+
+        if(progressListener != null) {
+            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
+                @Override
+                public Response intercept(Chain chain) throws IOException {
+                    Response originalResponse = chain.proceed(chain.request());
+                    return originalResponse.newBuilder()
+                            .body(new ProgressResponseBody(originalResponse.body(), progressListener))
+                            .build();
+                }
+            });
+        }
+
+        String[] localVarAuthNames = new String[] {  };
+        return apiClient.buildCall(localVarPath, "GET", localVarQueryParams,localVarCollectionQueryParams, localVarPostBody, localVarHeaderParams, localVarFormParams, localVarAuthNames, progressRequestListener);
+    }
+
 
 
 
