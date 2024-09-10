@@ -1,5 +1,6 @@
 package com.erp.server.mrp.mapper;
 
+import com.erp.model.mrp.dto.LocalInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -33,5 +34,7 @@ public interface InventoryMapper {
 
     int getOverseasUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("code") String code, @Param("tableName") String tableName);
 
-    int getLocalUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("codes") List<String> codes,@Param("tableName") String tableName);
+    List<LocalInventoryDTO> getLocalUsable(@Param("skuId") String skuId, @Param("codes") List<String> codes, @Param("tableName") String tableName);
+
+    List<LocalInventoryDTO> getVirtualUsable(@Param("skuId") String skuId, @Param("codes") List<String> codes, @Param("tableName") String tableName);
 }

@@ -156,6 +156,37 @@
           and sku_id = #{result.replenishment.skuId}
           and warehouse_id = #{result.replenishment.fbaWarehouseId}
     </select>
-    <select id="getLocalUsable" resultType="java.lang.Integer"></select>
+
+    <select id="getLocalUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
+        SELECT
+        warehouse_id AS warehouseId,
+        SUM ( qty ) AS qty
+        FROM
+        #{tableName}
+        WHERE is_deleted = false
+        AND dict_inventory_status IN
+        <foreach item="code" collection="codes" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+        AND sku_id = #{skuId}
+        GROUP BY
+        warehouse_id
+    </select>
+
+    <select id="getVirtualUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
+        SELECT
+        virtual_warehouse_id AS warehouseId,
+        SUM ( qty ) AS qty
+        FROM
+        #{tableName}
+        WHERE is_deleted = false
+        AND dict_inventory_status IN
+        <foreach item="code" collection="codes" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+        AND sku_id = #{skuId}
+        GROUP BY
+        virtual_warehouse_id
+    </select>
 
 </mapper>
