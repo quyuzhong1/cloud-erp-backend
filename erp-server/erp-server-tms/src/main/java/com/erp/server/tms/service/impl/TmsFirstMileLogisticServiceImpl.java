@@ -518,6 +518,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(CollectionUtils.isEmpty(list)){
             return;
         }
+        List<String> ids = list.stream().map(TmsFirstMileLogisticDTO.PagingVO::getId).distinct().collect(Collectors.toList());
         List<String> channelIdList = list.stream().map(TmsFirstMileLogisticDTO.PagingVO::getLogisticsChannelId).collect(Collectors.toList());
         List<LogisticsChannelEntity> logisticsChannelEntityList = logisticsChannelService.listByIds(channelIdList);
 
@@ -533,7 +534,18 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<LogisticsCarrierEntity> carrierList = logisticsCarrierService.listByIds(carrierIds);
         //业务单号查询
         List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(outstockIdList);
+        //根据物流单获取对账单数据
+        List<TmsFirstMileLogisticDTO.ReconciliationDTO> reconciliationDTOList = tmsFirstMileReconciliationService.listReconciliationAndCostByBillIds(ids);
         list.forEach(pagingVO ->{
+            //对账单信息填充
+            TmsFirstMileLogisticDTO.ReconciliationDTO reconciliationDTO = reconciliationDTOList.stream().filter(e -> StrUtil.isNotBlank(e.getLogisticsBillId()) && Objects.equals(e.getLogisticsBillId(), pagingVO.getId())).findFirst().orElse(null);
+            if (Objects.nonNull(reconciliationDTO)){
+                pagingVO.setReconciliationStatus(reconciliationDTO.getReconciliationStatus());
+                pagingVO.setWeight(reconciliationDTO.getActualWeight());
+                pagingVO.setVolumeWeight(reconciliationDTO.getVolumeWeight());
+                pagingVO.setWeightUnit(reconciliationDTO.getWeightUnit());
+                pagingVO.setCurrency(reconciliationDTO.getCurrency());
+            }
             //处理枚举值
             pagingVO.setLogisticsStatusName(EnumMessage.getNameByCode(FmLogisticTrackStatusEnum.class,pagingVO.getLogisticsStatus()));
             pagingVO.setInvoicesStatusName(EnumMessage.getNameByCode(InvoicesStatusEnum.class,pagingVO.getInvoicesStatus()));
@@ -612,6 +624,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     private void fillViewDb(TmsFirstMileLogisticDTO.ViewDTO dto) {
+        List<TmsFirstMileLogisticDTO.ReconciliationDTO> reconciliationDTOS = tmsFirstMileReconciliationService.listReconciliationAndCostByBillIds(Collections.singletonList(dto.getId()));
+        if (CollectionUtils.isNotEmpty(reconciliationDTOS)){
+            TmsFirstMileLogisticDTO.ReconciliationDTO reconciliationDTO = reconciliationDTOS.get(0);
+            dto.setActualWeight(reconciliationDTO.getWeightLogistics());
+            dto.setActualVolumeWeight(reconciliationDTO.getVolumeWeightLogistics());
+            dto.setCurrency(reconciliationDTO.getCurrency());
+        }
         //设置店铺负责人
         if(StringUtils.isNotBlank(dto.getShopId())){
             ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
@@ -843,10 +862,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 continue;
             }
 
-            if(StringUtils.isBlank(logisticsBillEntity.getCounterNo()) && FmLogisticTrackStatusEnum.ORDERED != statusEnum){
-                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"尚未填写柜号，请填写后更新"));
-                continue;
-            }
+//            if(StringUtils.isBlank(logisticsBillEntity.getCounterNo()) && FmLogisticTrackStatusEnum.ORDERED != statusEnum){
+//                batchResultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"尚未填写柜号，请填写后更新"));
+//                continue;
+//            }
             logisticsBillEntity.setDeliveryTime(firstMileDeliveryEntity.getApproveTime());
             detailEntityList.forEach(v->{
                 if(statusEnum == FmLogisticTrackStatusEnum.SIGN){

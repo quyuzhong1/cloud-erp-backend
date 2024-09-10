@@ -331,4 +331,10 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * 导出
      */
     PagingVO<FirstMileDeliveryDTO.ListDTO> exportFbaDelivery(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto);
+    /**
+     * 根据发货单获取业务单号
+     * @param deliveryCodes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(List<String> deliveryCodes);
 }

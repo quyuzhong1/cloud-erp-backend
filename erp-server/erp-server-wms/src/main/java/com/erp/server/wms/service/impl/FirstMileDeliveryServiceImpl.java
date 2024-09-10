@@ -1752,7 +1752,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@Param("ids") List<String> ids) {
+    public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds( List<String> ids) {
         if (CollectionUtils.isEmpty(ids)){
             return Collections.emptyList();
         }
@@ -1768,6 +1768,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             fillList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(List<String> deliveryCodes) {
+        if (CollectionUtils.isEmpty(deliveryCodes)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getBusinessCodeByCodes(deliveryCodes);
     }
 
     @Override
