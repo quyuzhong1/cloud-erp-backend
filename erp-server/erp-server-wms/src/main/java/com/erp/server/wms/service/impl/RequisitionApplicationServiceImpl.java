@@ -1232,6 +1232,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if(fbaShipmentPackingEntityList.stream().anyMatch(v->StringUtils.isNotBlank(v.getCartonId()))){
             throw new ServiceException("{}货件装箱已绑定，无法重复绑定",fbaShipmentEntity.getCode());
         }
+        //过滤掉混装的
         //箱号分组，组成sku*qty 匹配
         Map<String,List<FbaShipmentPackingEntity>> fbaPackingMap = fbaShipmentPackingEntityList.stream().collect(Collectors.groupingBy(FbaShipmentPackingEntity::getBoxNo));
         for(Map.Entry<String, List<FbaShipmentPackingEntity>> entry : fbaPackingMap.entrySet()) {
@@ -1289,6 +1290,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByIds(fbaShipmentIdList);
         List<FbaShipmentDetailEntity> allFbaDetailList = fbaShipmentDetailService.listByMainIds(fbaShipmentIdList);
         List<FbaShipmentPackingEntity> allFbaPackingList = fbaShipmentPackingService.listByMains(fbaShipmentIdList);
+
+        //校验货件是否都已绑定箱子
+        List<String> checkFbaBoxNoList = detailList.stream().filter(v->StringUtils.isNotBlank(v.getFbaBoxNo())).map(v->v.getFbaBoxNo()).distinct().collect(Collectors.toList());
+        List<String> dbFbaBoxNoList = allFbaPackingList.stream().map(v->v.getBoxNo()).distinct().collect(Collectors.toList());
+        dbFbaBoxNoList.removeAll(checkFbaBoxNoList);
+        if(CollectionUtils.isNotEmpty(dbFbaBoxNoList)){
+            throw new ServiceException("{}货件箱号未绑定",dbFbaBoxNoList);
+        }
 
         List<String> skuIdList = allFbaDetailList.stream().map(FbaShipmentDetailEntity::getSkuId).collect(Collectors.toList());
         //获取sku信息
