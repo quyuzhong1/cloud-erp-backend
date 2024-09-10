@@ -135,12 +135,24 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
         exportFileDTO.setFileName(fileName);
         List<FileExcelDTO.ExportFileSheetDTO> sheetList = new ArrayList<>();
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("销量",stockUpList,StockUpImportExcelDTO.class,null));
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("动态备货系数",stockingRatioList,StockingRatioImportExcelDTO.class,null));
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("默认日销量",defaultSalesQtyList,DefaultSalesQtyImportExcelDTO.class,null));
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("动态日销量",dynamicSalesQtyList,DynamicSalesQtyImportExcelDTO.class,null));
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("固定日销量",fixedSalesQtyList,FixedSalesQtyImportExcelDTO.class,null));
-        sheetList.add(new FileExcelDTO.ExportFileSheetDTO("销量去噪",salesDenoisingList,SalesDenoisingImportExcelDTO.class,null));
+        if (CollectionUtils.isNotEmpty(stockUpList)) {
+            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("销量",stockUpList,StockUpImportExcelDTO.class,null));
+        }
+        if (CollectionUtils.isNotEmpty(stockingRatioList)) {
+            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("动态备货系数",stockingRatioList,StockingRatioImportExcelDTO.class,null));
+        }
+        if (CollectionUtils.isNotEmpty(defaultSalesQtyList)) {
+            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("默认日销量",defaultSalesQtyList,DefaultSalesQtyImportExcelDTO.class,null));
+        }
+        if (CollectionUtils.isNotEmpty(dynamicSalesQtyList)) {
+            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("动态日销量",dynamicSalesQtyList,DynamicSalesQtyImportExcelDTO.class,null));
+        }
+        if (CollectionUtils.isNotEmpty(fixedSalesQtyList)) {
+            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("固定日销量",fixedSalesQtyList,FixedSalesQtyImportExcelDTO.class,null));
+        }
+        if (CollectionUtils.isNotEmpty(salesDenoisingList)) {
+            sheetList.add(new FileExcelDTO.ExportFileSheetDTO("销量去噪",salesDenoisingList,SalesDenoisingImportExcelDTO.class,null));
+        }
         exportFileDTO.setSheetList(sheetList);
 
         //添加导入记录
@@ -172,7 +184,6 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         pairList.add(new Pair<>(MathUtil.THREE,dynamicSalesQtyList));
         pairList.add(new Pair<>(MathUtil.FOUR,fixedSalesQtyList));
         pairList.add(new Pair<>(MathUtil.FIVE,salesDenoisingList));
-
         String name = "补货规则错误数据";
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -194,7 +205,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         StockUpImportExcelListener excelListenerUtil = new StockUpImportExcelListener();
 
         try {
-            EasyExcel.read(excelFile.getInputStream(), StockUpImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), StockUpImportExcelDTO.class, excelListenerUtil).headRowNumber(2).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -205,7 +216,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //验证导入数据是否为空
         List<StockUpImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            return new Pair<>(new ArrayList<>(),new ArrayList<>());
         }
         //导入数据处理
         List<StockUpImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -409,7 +420,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //验证导入数据是否为空
         List<StockingRatioImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            return new Pair<>(new ArrayList<>(),new ArrayList<>());
         }
         //导入数据处理
         List<StockingRatioImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -529,7 +540,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         DefaultSalesQtyImportExcelListener excelListenerUtil = new DefaultSalesQtyImportExcelListener();
 
         try {
-            EasyExcel.read(excelFile.getInputStream(), DefaultSalesQtyImportExcelDTO.class, excelListenerUtil).sheet(2).doRead();
+            EasyExcel.read(excelFile.getInputStream(), DefaultSalesQtyImportExcelDTO.class, excelListenerUtil).headRowNumber(2).sheet(2).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -540,7 +551,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //验证导入数据是否为空
         List<DefaultSalesQtyImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            return new Pair<>(new ArrayList<>(),new ArrayList<>());
         }
         //导入数据处理
         List<DefaultSalesQtyImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -662,7 +673,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         DynamicSalesQtyImportExcelListener excelListenerUtil = new DynamicSalesQtyImportExcelListener();
 
         try {
-            EasyExcel.read(excelFile.getInputStream(), DynamicSalesQtyImportExcelDTO.class, excelListenerUtil).sheet(3).doRead();
+            EasyExcel.read(excelFile.getInputStream(), DynamicSalesQtyImportExcelDTO.class, excelListenerUtil).headRowNumber(2).sheet(3).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -673,7 +684,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //验证导入数据是否为空
         List<DynamicSalesQtyImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            return new Pair<>(new ArrayList<>(),new ArrayList<>());
         }
         //导入数据处理
         List<DynamicSalesQtyImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -788,7 +799,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //验证导入数据是否为空
         List<FixedSalesQtyImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            return new Pair<>(new ArrayList<>(),new ArrayList<>());
         }
         //导入数据处理
         List<FixedSalesQtyImportExcelDTO> successList = excelListenerUtil.getSuccessList();
@@ -903,7 +914,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //验证导入数据是否为空
         List<SalesDenoisingImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            return new Pair<>(new ArrayList<>(),new ArrayList<>());
         }
         //导入数据处理
         List<SalesDenoisingImportExcelDTO> successList = excelListenerUtil.getSuccessList();
