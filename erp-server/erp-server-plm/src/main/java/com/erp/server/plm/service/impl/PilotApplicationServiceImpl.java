@@ -23,6 +23,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
@@ -820,12 +821,17 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
         //产品费用
         List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
+        //根据单据id查询审核流程
+        List<String> ids = list.stream().map(item -> item.getId()).collect(Collectors.toList());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessId(ids);
         for(PilotApplicationDTO.ListDTO item : list) {
             item.setApproveStatusName(ApproveStatusEnum.getName(item.getApproveStatus()));
             item.setOrderStatusName(PilotPushPurchaseStatusEnum.getName(item.getOrderStatus()));
             item.setProductName(productDetailMap.get(item.getSkuId()));
             item.setMainSupplierName(supplierMap.containsKey(item.getMainSupplierId()) ? supplierMap.get(item.getMainSupplierId()).getName() : "");
-            item.setApproveUserName(userMap.get(item.getApproveUserId()));
+            List<String> curApproveName = processTaskManagementList.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+            String waitApproveUserName = StringUtils.join(curApproveName, ",");
+            item.setApproveUserName(waitApproveUserName);
             item.setCreateUserName(userMap.get(item.getCreateUserId()));
             item.setTypeName(PilotApplicationTypeEnum.getName(item.getType()));
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(v -> v.getSkuId().equals(item.getSkuId())).findFirst();
