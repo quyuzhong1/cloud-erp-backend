@@ -111,6 +111,14 @@ public class PilotApplicationDetailDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+        /**
+         * sku审核状态
+         */
+        private int status;
+        /**
+         * sku审核状态名称
+         */
+        private String statusName;
     }
 
     /**

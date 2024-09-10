@@ -671,7 +671,11 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             }
             //产品名称
             Optional<ProductDetailEntity> skuOptional = skuList.stream().filter(item -> item.getId().equals(detailDTO.getSkuId())).findFirst();
-            skuOptional.ifPresent(sku -> detailDTO.setProductName(sku.getName()));
+            skuOptional.ifPresent(sku -> {
+                detailDTO.setProductName(sku.getName());
+                detailDTO.setStatus(sku.getStatus());
+                detailDTO.setStatusName(ProductDetailStatusEnum.getName(sku.getStatus()));
+            });
         }
         //处理关联任务
         for (PilotApplicationRefTaskDTO.ViewDTO taskDTO : taskViewList) {
