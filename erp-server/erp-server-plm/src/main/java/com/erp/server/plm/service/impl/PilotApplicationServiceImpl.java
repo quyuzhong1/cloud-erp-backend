@@ -967,7 +967,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             pilotApplicationDetailService.lambdaUpdate()
                     .set(PilotApplicationDetailEntity::getPurchaseApplyQty, dto.getPurchaseApplyQty())
                     .set(PilotApplicationDetailEntity::getOrderStatus, dto.getPurchaseApplyQty() < dto.getSpareApplyQty() ? PilotPushPurchaseStatusEnum.PART_ORDER.getCode() : PilotPushPurchaseStatusEnum.ORDER.getCode())
-                    .eq(PilotApplicationDetailEntity::getId, dto.getDetailId());
+                    .eq(PilotApplicationDetailEntity::getId, dto.getDetailId())
+                    .update();
         }
         PurchaseApplicationDTO.AddDTO paramDto = new PurchaseApplicationDTO.AddDTO();
         paramDto.setApplyDate(LocalDate.now());
