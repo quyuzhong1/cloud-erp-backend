@@ -208,6 +208,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
 
     /**
      * 账单类型： actual=实际， initPeriod=期初
+     * ReconciliationTypeEnum
      */
     @TableField("reconciliation_type")
     private String reconciliationType;

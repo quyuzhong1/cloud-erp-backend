@@ -38,9 +38,7 @@
             rpm.month as reportPeriodMonth,
             to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr
         FROM report_period_month rpm
-        LEFT JOIN first_mile_cost_allocation a on a.report_period_id = rpm.id and a.is_deleted = FALSE
         where rpm.is_deleted = FALSE
-          and (a.status is null or a.status != 'confirm')
         <if test="orgIds != null and orgIds.size > 0">
             and rpm.org_id in
             <foreach collection="orgIds" item="item" open="(" close=")" separator=",">

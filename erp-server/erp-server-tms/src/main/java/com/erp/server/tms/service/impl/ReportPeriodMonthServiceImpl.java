@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
@@ -12,12 +13,14 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.mapper.ReportPeriodMonthMapper;
+import com.erp.server.tms.service.FirstMileCostAllocationService;
 import com.erp.server.tms.service.FirstMileWeightAllocationService;
 import com.erp.server.tms.service.ReportPeriodMonthService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +57,9 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    @Lazy
+    private FirstMileCostAllocationService firstMileCostAllocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -160,7 +166,16 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
         if (orgIds.size() > 1){
             throw new ServiceException("不同的核算组织不能同时下推费用分摊");
         }
-        return baseMapper.queryList(orgIds);
+        List<ReportPeriodMonthDTO.SelectDTO> selectDTOS = baseMapper.queryList(orgIds);
+        //已生成的费用分摊记录
+        List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = firstMileCostAllocationService.listBySourceIds(deliveryIds, null);
+        if (!CollectionUtils.isEmpty(firstMileCostAllocationEntityList)){
+            FirstMileCostAllocationEntity entity = firstMileCostAllocationEntityList.stream().filter(e -> Objects.nonNull(e) && ConfirmStatusEnum.CONFIRM.getCode().equals(e.getStatus())).max(Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth)).orElse(null);
+            if (Objects.nonNull(entity)){
+                selectDTOS = selectDTOS.stream().filter(e -> e.getReportPeriodMonth().isAfter(entity.getReportPeriodMonth())).collect(Collectors.toList());
+            }
+        }
+        return selectDTOS;
     }
 
     @Override

@@ -921,11 +921,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public void removeByReconciliationIds(List<String> reconciliationIds) {
-        if (CollectionUtils.isEmpty(reconciliationIds)){
+    public void removeByReconciliationIds(String reconciliationId, List<String> logisticsBillIds) {
+        if (CollectionUtils.isEmpty(logisticsBillIds) || StrUtil.isBlank(reconciliationId)){
             return;
         }
-        List<LogisticsBillCostEntity> list = this.lambdaQuery().in(LogisticsBillCostEntity::getReconciliationId, reconciliationIds).list();
+        List<LogisticsBillCostEntity> list = this.lambdaQuery().eq(LogisticsBillCostEntity::getReconciliationId, reconciliationId).in(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillIds).list();
         if (CollectionUtils.isNotEmpty(list)){
             List<String> costIds = list.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
             this.tmsCostDetailService.removeByMainIds(costIds);
@@ -999,5 +999,30 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         }
         return errorMsgList;
+    }
+
+
+    @Override
+    public void removeRefByReconciliationIds(String reconciliationId, List<String> logisticsBillIds) {
+        if (CollectionUtils.isEmpty(logisticsBillIds) || StrUtil.isBlank(reconciliationId)){
+            return;
+        }
+        List<LogisticsBillCostEntity> list = this.lambdaQuery().eq(LogisticsBillCostEntity::getReconciliationId, reconciliationId).in(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillIds).list();
+        //移除对账单id记录
+        this.lambdaUpdate().eq(LogisticsBillCostEntity::getReconciliationId, reconciliationId).in(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillIds)
+                .set(LogisticsBillCostEntity::getReconciliationId, "").update();
+
+        if (CollectionUtils.isNotEmpty(list)){
+            List<String> costIds = list.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(costIds)){
+                List<TmsCostDetailEntity> tmsCostDetailEntities = tmsCostDetailService.listByMainIdList(costIds);
+                if (CollectionUtils.isNotEmpty(tmsCostDetailEntities)){
+                    List<String> ids = tmsCostDetailEntities.stream().filter(e -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(e.getType())).map(TmsCostDetailEntity::getId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(ids)){
+                        tmsCostDetailService.removeByIds(ids);
+                    }
+                }
+            }
+        }
     }
 }

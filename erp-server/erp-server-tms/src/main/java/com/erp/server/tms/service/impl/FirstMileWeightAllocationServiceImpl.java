@@ -371,9 +371,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     public List<FirstMileWeightAllocationEntity> listBySourceIds(List<String> sourceIds, List<String> statusList) {
-        if (CollectionUtils.isEmpty(sourceIds) && CollectionUtils.isEmpty(statusList)){
-            return Collections.emptyList();
-        }
+//        if (CollectionUtils.isEmpty(sourceIds) && CollectionUtils.isEmpty(statusList)){
+//            return Collections.emptyList();
+//        }
         return baseMapper.listBySourceIds(sourceIds,statusList);
     }
 
