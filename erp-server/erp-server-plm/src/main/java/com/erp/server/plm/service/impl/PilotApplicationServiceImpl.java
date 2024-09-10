@@ -968,9 +968,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : applicationDTOList) {
-            /*if(dto.getPurchaseApplyQty() > dto.getSpareApplyQty()){
-                throw new ServiceException("采购申请量不能大于审核数量");
-            }*/
+            if(dto.getPurchaseApplyQty() > dto.getSpareApplyQty()){
+                throw new ServiceException("采购申请量不能大于待申请量");
+            }
 
             PurchaseApplicationDetailDTO.AddDTO purchaseDTO = new PurchaseApplicationDetailDTO.AddDTO();
             purchaseDTO.setApplyQty(dto.getPurchaseApplyQty());
@@ -1000,6 +1000,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         paramDto.setApplyDeptId(userList.get(0).getDepartmentId());
         paramDto.setIsFirstMassProduct(Boolean.TRUE);
         paramDto.setDetails(detailList);
+        paramDto.setSourceType(SourceTypeEnum.PILOT_APPLICATION.getCode());
         return paramDto;
     }
 
