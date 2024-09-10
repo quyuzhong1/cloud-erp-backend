@@ -47,7 +47,7 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
             BigDecimal balanceInventory = BigDecimal.valueOf(replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty());
             //结余库存 = 前日结余库存 - 预估销量 + 到货库存
             for (int i = 0; i <= days; i++) {
-                LocalDate calcDate = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE).plusDays(i);
+                LocalDate calcDate = basicCalcDate.plusDays(i);
                 //获取到货库存
                 Integer fbaInTransit = replenishmentResultDTO.getFbaInTransitDetails()
                         .parallelStream()

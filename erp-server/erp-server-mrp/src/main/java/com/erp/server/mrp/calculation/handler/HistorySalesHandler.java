@@ -63,9 +63,9 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
     private void calculationTimePeriodSales(ReplenishmentResultDTO replenishmentResultDTO) {
 
         //分时段销量
-        List<ReplenishmentResultDTO.TimePeriodSales> timePeriodSales = new ArrayList<>();
+        List<ReplenishmentResultDTO.TimePeriodSalesDTO> timePeriodSales = new ArrayList<>();
         //分时段日均销量
-        List<ReplenishmentResultDTO.TimePeriodSales> avgTimePeriodSales = new ArrayList<>();
+        List<ReplenishmentResultDTO.TimePeriodSalesDTO> avgTimePeriodSales = new ArrayList<>();
         List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos = replenishmentResultDTO.getSalesInfos();
         LocalDate now = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         LocalDate endDate = now.minusDays(2);
@@ -74,7 +74,7 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
                     .filter(v -> !now.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
                     .map(ReplenishmentResultDTO.SalesInfoDTO::getSalesQty)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            timePeriodSales.add(new ReplenishmentResultDTO.TimePeriodSales(value, qty));
+            timePeriodSales.add(new ReplenishmentResultDTO.TimePeriodSalesDTO(value, qty));
             long count = salesInfos.stream()
                     .filter(v -> !now.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
                     .filter(v -> !v.getIsIgnoreOutOfStock())
@@ -84,7 +84,7 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
             if (count != 0) {
                 avgQty = qty.divide(BigDecimal.valueOf(count), 2 , RoundingMode.HALF_UP);
             }
-            avgTimePeriodSales.add(new ReplenishmentResultDTO.TimePeriodSales(value, avgQty));
+            avgTimePeriodSales.add(new ReplenishmentResultDTO.TimePeriodSalesDTO(value, avgQty));
         }
         replenishmentResultDTO.setTimePeriodSales(timePeriodSales);
         replenishmentResultDTO.setAvgTimePeriodSales(avgTimePeriodSales);

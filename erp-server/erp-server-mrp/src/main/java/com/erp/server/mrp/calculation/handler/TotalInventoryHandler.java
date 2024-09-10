@@ -17,10 +17,10 @@ import static com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum.*;
 @Component
 public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
     @Resource
-    private StockingTimeHandler stockingTimeHandler;
+    private SellableDaysHandler sellableDaysHandler;
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
-        return stockingTimeHandler;
+        return sellableDaysHandler;
     }
 
     @Override

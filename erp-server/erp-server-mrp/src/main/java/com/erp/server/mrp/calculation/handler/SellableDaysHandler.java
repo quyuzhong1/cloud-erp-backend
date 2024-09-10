@@ -28,9 +28,9 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
         ReplenishmentResultDTO.DetailDTO detail = replenishmentResultDTO.getReplenishmentDetail();
-        List<ReplenishmentResultDTO.AvgSalesEstimateDTO> estimates = replenishmentResultDTO.getAvgSalesEstimates();
-        ReplenishmentResultDTO.AvgSalesEstimateDTO salesEstimate = estimates.stream()
-                .filter(v -> v.getType().equals(RecentTimePeriodEnum.STOCKING_DATE.name()))
+        List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> estimates = replenishmentResultDTO.getTimePeriodSalesEstimates();
+        ReplenishmentResultDTO.TimePeriodSalesEstimateDTO salesEstimate = estimates.stream()
+                .filter(v -> v.getCode().equals(RecentTimePeriodEnum.STOCKING_DATE))
                 .findFirst().orElse(null);
         if (ObjectUtils.isEmpty(salesEstimate)) {
             return;
@@ -38,22 +38,22 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
         //FBA可售天数 FBA可用 / 备货期日均销量
         if (!ObjectUtils.isEmpty(detail.getFbaUsableQty())) {
             replenishmentResultDTO.getReplenishmentDetail().setFbaSellableDays(new BigDecimal(detail.getFbaUsableQty())
-                    .divide(new BigDecimal(salesEstimate.getQty()), 0, RoundingMode.FLOOR).intValue());
+                    .divide(salesEstimate.getQty(), 0, RoundingMode.FLOOR).intValue());
         }
         //海外仓可售天数 海外仓总库存 / 备货期日均销量
         if (!ObjectUtils.isEmpty(detail.getOverseasUsableQty())) {
             replenishmentResultDTO.getReplenishmentDetail().setOverseasSellableDays(new BigDecimal(detail.getOverseasUsableQty())
-                    .divide(new BigDecimal(salesEstimate.getQty()), 0, RoundingMode.FLOOR).intValue());
+                    .divide(salesEstimate.getQty(), 0, RoundingMode.FLOOR).intValue());
         }
         //本地可售天数 本地总库存 / 备货期日均销量
         if (!ObjectUtils.isEmpty(detail.getLocalUsableQty())) {
             replenishmentResultDTO.getReplenishmentDetail().setLocalSellableDays(new BigDecimal(detail.getLocalUsableQty())
-                    .divide(new BigDecimal(salesEstimate.getQty()), 0, RoundingMode.FLOOR).intValue());
+                    .divide(salesEstimate.getQty(), 0, RoundingMode.FLOOR).intValue());
         }
         //总库存可售天数 总库存 / 备货期日均销量
         if (!ObjectUtils.isEmpty(detail.getTotalInventoryQty())) {
             replenishmentResultDTO.getReplenishmentDetail().setTotalSellableDays(new BigDecimal(detail.getTotalInventoryQty())
-                    .divide(new BigDecimal(salesEstimate.getQty()), 0, RoundingMode.FLOOR).intValue());
+                    .divide(salesEstimate.getQty(), 0, RoundingMode.FLOOR).intValue());
         }
     }
 }

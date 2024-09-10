@@ -1,6 +1,7 @@
 package com.erp.model.mrp.dto;
 
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.mrp.enums.RecentTimePeriodEnum;
 import com.erp.model.mrp.enums.TimePeriodEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -64,16 +65,27 @@ public class ReplenishmentResultDTO {
     /**
      * 分时段销量
      */
-    private List<TimePeriodSales> timePeriodSales;
+    private List<TimePeriodSalesDTO> timePeriodSales;
     /**
      * 分时段日均销量
      */
-    private List<TimePeriodSales> avgTimePeriodSales;
+    private List<TimePeriodSalesDTO> avgTimePeriodSales;
 
     /**
      * 销量预估
      */
     private List<SalesEstimateDTO> salesEstimates;
+
+    /**
+     * 分时段销量预估
+     */
+    private List<TimePeriodSalesEstimateDTO> timePeriodSalesEstimates;
+
+    /**
+     * 分时段日均销量预估
+     */
+    private List<TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates;
+
     /**
      * 建议发货
      */
@@ -443,13 +455,23 @@ public class ReplenishmentResultDTO {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class TimePeriodSales {
+    public static class TimePeriodSalesDTO {
 
         private TimePeriodEnum code;
 
         private BigDecimal qty;
     }
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TimePeriodSalesEstimateDTO {
+
+        private RecentTimePeriodEnum code;
+
+        private BigDecimal qty;
+    }
 
     @Getter
     @Setter
@@ -572,6 +594,8 @@ public class ReplenishmentResultDTO {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SalesEstimateDTO {
         /**
          * 日期

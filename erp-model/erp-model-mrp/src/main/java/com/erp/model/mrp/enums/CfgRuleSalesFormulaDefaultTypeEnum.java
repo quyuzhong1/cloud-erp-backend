@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum CfgRuleSalesFormulaDefaultTypeEnum implements EnumMessage {
 	DYNAMIC("dynamic", "动态"),
-    FIXED("fixed", "固态"),
+    FIXED("fixed", "固定"),
     ;
     /**
      * 类型
