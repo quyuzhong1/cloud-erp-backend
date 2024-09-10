@@ -10,6 +10,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDetailDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
+import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
 import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
@@ -182,18 +183,32 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
+        List<String> warehouseIdList = list.stream().map(VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> virtualWarehouseIdList = list.stream().map(VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<String> dictPlatformList = list.stream().map(VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO::getDictPlatform).distinct().collect(Collectors.toList());
+        //虚拟仓数据
+        List<CfgRuleWarehouseDetailEntity> virtualList = cfgRuleWarehouseDetailService.listRefreshVirtual(warehouseIdList, virtualWarehouseIdList, dictPlatformList, CfgRuleWarehouseTypeEnum.LOCAL.getCode());
+
         /**
          * 根据实体仓、虚拟仓、平台合并
          */
         Map<String, List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getWarehouseId().concat(obj.getVirtualWarehouseId()).concat(obj.getDictPlatform()).concat(obj.getType())));
         for (Map.Entry<String, List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO>> entry : map.entrySet()) {
             List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> value = entry.getValue();
+            VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO virtualWarehouseDTO = value.get(0);
+            //库存分配类型
+            String inventoryAllocateType = virtualList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), virtualWarehouseDTO.getWarehouseId())
+                            && StrUtil.equals(obj.getVirtualWarehouseId(), virtualWarehouseDTO.getVirtualWarehouseId())
+                            && StrUtil.equals(obj.getDictPlatform(), virtualWarehouseDTO.getDictPlatform()))
+                    .map(CfgRuleWarehouseDetailEntity::getInventoryAllocateType).findFirst().orElse("");
+
             CfgRuleWarehouseDetailDTO.UpdateDTO updateDTO = new CfgRuleWarehouseDetailDTO.UpdateDTO();
-            updateDTO.setWarehouseId(value.get(0).getWarehouseId());
-            updateDTO.setVirtualWarehouseId(value.get(0).getVirtualWarehouseId());
-            updateDTO.setChannelType(value.get(0).getType());
-            updateDTO.setDictPlatform(value.get(0).getDictPlatform());
+            updateDTO.setWarehouseId(virtualWarehouseDTO.getWarehouseId());
+            updateDTO.setVirtualWarehouseId(virtualWarehouseDTO.getVirtualWarehouseId());
+            updateDTO.setChannelType(virtualWarehouseDTO.getType());
+            updateDTO.setDictPlatform(virtualWarehouseDTO.getDictPlatform());
             updateDTO.setInventoryAllocateType(CfgRuleInventoryAllocateTypeEnum.AUTO_ALLOCATION.getCode());
+            updateDTO.setInventoryAllocateType(inventoryAllocateType);
             //店铺数据
             List<String> relationIdList = value.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getRelationIdList())).flatMap(obj -> Stream.of(obj.getRelationIdList().stream().toArray(String[]::new))).distinct().collect(Collectors.toList());
             updateDTO.setChannelIdList(relationIdList);

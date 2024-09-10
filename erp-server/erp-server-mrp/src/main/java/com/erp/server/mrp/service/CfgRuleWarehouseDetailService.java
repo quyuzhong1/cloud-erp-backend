@@ -49,4 +49,15 @@ public interface CfgRuleWarehouseDetailService extends SuperService<CfgRuleWareh
      * @return List<ViewDTO>
      */
     List<CfgRuleWarehouseDetailDTO.ViewDTO> listViewByMainIdList(List<String> mainIdList);
+    /**
+     * 根据仓库、虚拟仓库、平台、类型查询
+     * @author will
+     * @date 2024/9/10 18:56
+     * @param warehouseIdList
+     * @param virtualWarehouseIdList
+     * @param dictPlatformList
+     * @param type
+     * @return List<CfgRuleWarehouseDetailEntity>
+     */
+    List<CfgRuleWarehouseDetailEntity> listRefreshVirtual(List<String> warehouseIdList, List<String> virtualWarehouseIdList, List<String> dictPlatformList, String type);
 }

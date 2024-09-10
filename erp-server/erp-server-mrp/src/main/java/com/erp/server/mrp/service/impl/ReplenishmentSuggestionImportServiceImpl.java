@@ -1251,6 +1251,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //根据平台、店铺、skuId查询补货建议数据
         List<ReplenishmentSuggestionEntity> replenishmentSuggestionList = replenishmentSuggestionService.listByUnique(platformCodeList, shopIdList, skuIdList);
 
+        //错误信息序号
+        Integer errorIndex = getMapKey(headMap, "错误信息");
+
         //记录错误数据
         List<JSONObject>  wrongList = new ArrayList<>();
         for (JSONObject jsonObject : successList) {
@@ -1287,6 +1290,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 wrongList.add(jsonObject);
+                jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(jsonObject);
                 continue;
@@ -1300,12 +1304,37 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //保存里面的验证
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 wrongList.add(jsonObject);
+                jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(jsonObject);
                 continue;
             }
         }
         successList.removeAll(wrongList);
+    }
+
+    /**
+     * @description: 根据value获取对应的key
+     * @author Will
+     * @date: 2024/5/11 11:41
+     * @param headMap
+     * @param targetValue
+     * @return String
+     */
+    private Integer getMapKey (JSONObject headMap,String targetValue) {
+        Integer resultKey = null;
+        for (Object key : headMap.keySet()) {
+            // 获取对应的value
+            Object value = headMap.get(key);
+
+            // 如果value等于目标值，输出对应的key
+            if (value.equals(targetValue)) {
+                resultKey = Integer.valueOf(key.toString());
+                // 如果只需要找到一个匹配的key，可以break
+                break;
+            }
+        }
+        return  resultKey;
     }
 
     /**

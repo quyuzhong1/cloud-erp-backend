@@ -57,10 +57,10 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             logisticsList = Collections.EMPTY_LIST;
         }
         List<CfgRuleLogisticsEntity> list = BeanMapperUtils.copyList(CfgRuleLogisticsEntity.class, logisticsList);
+        //原物流信息
+        List<CfgRuleLogisticsEntity> oldList = listByStockUpIdList(Arrays.asList(stockUpId));
         //自定义更新无需删除
         if (!isCustom) {
-            //原物流信息
-            List<CfgRuleLogisticsEntity> oldList = listByStockUpIdList(Arrays.asList(stockUpId));
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -71,7 +71,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             return  Boolean.TRUE;
         }
         // 数据处理
-        handleData(list,stockUpId);
+        handleData(list,stockUpId,oldList);
         log.info("编辑 开始修改备货物流（规则设置）数据，id：【{}】", stockUpId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -286,13 +286,16 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleLogisticsEntity> list,String stockUpId) {
+    private void handleData(List<CfgRuleLogisticsEntity> list,String stockUpId,List<CfgRuleLogisticsEntity> oldList) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        for (CfgRuleLogisticsEntity logisticsEntity : list) {
+        for (CfgRuleLogisticsEntity  logisticsEntity: list) {
             //备货主表id
             logisticsEntity.setStockUpId(stockUpId);
+            //相同物流方式赋值id
+            String id = oldList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsMethod(), logisticsEntity.getLogisticsMethod())).findFirst().map(CfgRuleLogisticsEntity::getId).orElse("");
+            logisticsEntity.setId(id);
         }
     }
 }

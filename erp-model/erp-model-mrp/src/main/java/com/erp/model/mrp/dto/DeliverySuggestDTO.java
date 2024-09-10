@@ -61,6 +61,11 @@ public class DeliverySuggestDTO implements Serializable {
         private String createType;
 
         /**
+         * 创建类型（auto系统，manual人工）
+         */
+        private String createTypeName;
+
+        /**
          * 建议发货量
          */
         private Integer suggestDeliveryQty;

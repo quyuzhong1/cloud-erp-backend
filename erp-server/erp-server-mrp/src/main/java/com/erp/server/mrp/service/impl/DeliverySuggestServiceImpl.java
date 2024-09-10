@@ -11,11 +11,13 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
+import com.erp.model.mrp.enums.CreateTypeEnum;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
 import com.erp.server.mrp.service.DeliverySuggestService;
 import com.erp.server.mrp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,7 +98,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Override
     public List<DeliverySuggestDTO.ListDTO> list(DeliverySuggestDTO.ListParamDTO params) {
-        return baseMapper.list(params);
+        List<DeliverySuggestDTO.ListDTO> list = baseMapper.list(params);
+        handleList(list);
+        return list;
     }
 
 
@@ -105,5 +109,15 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     */
     private void handleData(DeliverySuggestEntity deliverySuggestEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+
+    private void handleList(List<DeliverySuggestDTO.ListDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (DeliverySuggestDTO.ListDTO listDTO : list) {
+            listDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(listDTO.getCreateType()));
+        }
     }
 }

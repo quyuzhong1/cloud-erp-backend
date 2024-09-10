@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -119,11 +120,20 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        Integer index = MathUtil.ONE;
+        List<CfgRuleSalesDenoisingEntity> oldSalesDenoisingList = this.listBySalesQtyIdList(Arrays.asList(salesQtyId));
+        //最大排序
+        Integer maxIndex = oldSalesDenoisingList.stream().max(Comparator.comparingInt(CfgRuleSalesDenoisingEntity::getIndex)).map(CfgRuleSalesDenoisingEntity::getIndex).orElse(MathUtil.ZERO);
+
         for (CfgRuleSalesDenoisingEntity denoisingEntity : list) {
+            //主键id赋值
+            String id = oldSalesDenoisingList.stream().filter(obj -> StrUtil.equals(obj.getName(), denoisingEntity.getName())).map(CfgRuleSalesDenoisingEntity::getId).findFirst().orElse("");
+            if (StrUtil.isNotBlank(id)) {
+                denoisingEntity.setId(id);
+            } else {
+                //排序
+                denoisingEntity.setIndex(maxIndex + 1);
+            }
             denoisingEntity.setSalesQtyId(salesQtyId);
-            //排序
-            denoisingEntity.setIndex(index);
 
             boolean isCompare = (StrUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode())
                     || StrUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.FIXED_VALUE.getCode()))
@@ -143,7 +153,7 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
             }
             denoisingEntity.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
             denoisingEntity.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
-            index ++;
+            maxIndex ++;
         }
     }
 }

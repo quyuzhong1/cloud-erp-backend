@@ -1,6 +1,5 @@
 package com.erp.server.mrp.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -21,6 +20,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
@@ -753,6 +753,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         LinkedHashMap<String, Object> resultMap = Maps.newLinkedHashMap();
         // 标题
         LinkedHashMap headMap = Maps.newLinkedHashMap();
+
+        // 动态标题
+        LinkedHashMap dyHeadMap = Maps.newLinkedHashMap();
         // 结果集
         List<LinkedHashMap> convertDataList = Lists.newArrayListWithExpectedSize(list.size());
 
@@ -764,11 +767,15 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         //历史销量
         List<String> detailIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getDetailId).distinct().collect(Collectors.toList());
         List<SalesInfoEntity> salesInfoList = salesInfoService.listHistorySalesInfo(detailIdList);
-
-        // 动态字段标题
-        if (CollUtil.isNotEmpty(salesInfoList)) {
-            salesInfoList.forEach(obj -> headMap.put(obj.getDate().toString(),LocalDateTimeUtil.format(obj.getDate(), DateTimeFormatter.ofPattern("yyyy年MM月dd"))));
+        if (CollectionUtils.isEmpty(salesInfoList)) {
+            return Collections.EMPTY_LIST;
         }
+        // 动态字段标题
+        salesInfoList.stream().forEach(obj ->{
+            headMap.put(obj.getDate().toString(),LocalDateTimeUtil.format(obj.getDate(), DateTimeFormatter.ofPattern("yyyy年MM月dd")));
+            dyHeadMap.put(obj.getDate().toString(),LocalDateTimeUtil.format(obj.getDate(), DateTimeFormatter.ofPattern("yyyy年MM月dd")));
+        });
+
         //平台
         List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
 
@@ -793,15 +800,18 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             if (CollectionUtils.isEmpty(salesList)) {
                 continue;
             }
+
             convertMap.put("platform",platformName);
             convertMap.put("shopName",shopName);
             convertMap.put("skuNo",pagingView.getSkuNo());
             convertMap.put("productName",productName);
             convertMap.put("typeName","FBA");
             //历史销量
-            for (SalesInfoEntity salesInfoEntity : salesList) {
-                convertMap.put(salesInfoEntity.getDate().toString(),salesInfoEntity.getSalesQty());
-            }
+            dyHeadMap.keySet().stream().forEach(obj ->{
+                SalesInfoEntity salesInfoEntity = salesList.stream().filter(e -> StrUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
+                Integer salesQty = ObjectUtil.isNotEmpty(salesInfoEntity) ? salesInfoEntity.getSalesQty() : MathUtil.ZERO;
+                convertMap.put(obj.toString(),salesQty);
+            });
             convertDataList.add(convertMap);
         }
         resultMap.put("head", headMap);

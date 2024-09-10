@@ -194,6 +194,15 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         return resultList;
     }
 
+    @Override
+    public List<CfgRuleWarehouseDetailEntity> listRefreshVirtual(List<String> warehouseIdList, List<String> virtualWarehouseIdList, List<String> dictPlatformList, String type) {
+        return  lambdaQuery().in(CollectionUtils.isNotEmpty(warehouseIdList),CfgRuleWarehouseDetailEntity::getWarehouseId,warehouseIdList)
+                .in(CollectionUtils.isNotEmpty(virtualWarehouseIdList),CfgRuleWarehouseDetailEntity::getVirtualWarehouseId,virtualWarehouseIdList)
+                .in(CollectionUtils.isNotEmpty(dictPlatformList),CfgRuleWarehouseDetailEntity::getDictPlatform,dictPlatformList)
+                .eq(CfgRuleWarehouseDetailEntity::getWarehouseType,type)
+                .list();
+    }
+
     /**
      * 查询需要删除的数据
      */
