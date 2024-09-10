@@ -1,13 +1,20 @@
 package com.erp.server.wms.wdt.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.wms.service.*;
@@ -49,12 +56,22 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
     private VirtualWarehousePushHandleDetailService virtualWarehousePushHandleDetailService;
     @Resource
     private VirtualWarehousePushHandleService virtualWarehousePushHandleService;
+    @Resource
+    private WmsPushMsgService wmsPushMsgService;
 
     @Override
     public List<DmpPushTaskEntity> saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,
                                                 String vwAllocationCode, String operateCode, String sourceType) {
 
-        List<DmpPushTaskFeignDTO> dmpPushTaskEntityList = new ArrayList<>();
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> cfgSettingEntityList = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_OUTSTOCK.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+    	List<DmpPushTaskFeignDTO> dmpPushTaskEntityList = new ArrayList<>();
+    	List<WmsPushMsgEntity> wmsPushMsgEntityList = new ArrayList<>();
+        
         //单据类型:1:锁定分配,2:释放出库,3:虚拟仓间调拨,4:采购入库
         handleDetailList.forEach(handleDetail -> {
             DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
@@ -125,20 +142,34 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             request.setDetailList(detailList);
             request.setRemark("原始单据号：" + vwAllocationCode);
 
-            //添加推送任务
-            dmpSyncTaskDTO.setSourceId(handleDetail.getId());
-            dmpSyncTaskDTO.setSourceCode(vwAllocationCode);
-            dmpSyncTaskDTO.setSourceType(sourceType);
-            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
-            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG.getName());
-            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
-            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
-            dmpSyncTaskDTO.setSyncOperate(operateCode);
+            if(CollUtil.isEmpty(cfgSettingEntityList)) {
+            	//添加推送任务
+                dmpSyncTaskDTO.setSourceId(handleDetail.getId());
+                dmpSyncTaskDTO.setSourceCode(vwAllocationCode);
+                dmpSyncTaskDTO.setSourceType(sourceType);
+                dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
+                dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG.getName());
+                dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
+                dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+                dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
+                dmpSyncTaskDTO.setSyncOperate(operateCode);
 
-            dmpPushTaskEntityList.add(dmpSyncTaskDTO);
+                dmpPushTaskEntityList.add(dmpSyncTaskDTO);
+            }else {
+            	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+                wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+                wmsPushMsgEntity.setSourceType(sourceType);
+                wmsPushMsgEntity.setSourceId(handleDetail.getId());
+                wmsPushMsgEntity.setSourceCode(vwAllocationCode);
+                wmsPushMsgEntity.setSyncOperate(operateCode);
+                wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
+                wmsPushMsgEntityList.add(wmsPushMsgEntity);
+            }
         });
-
+        if(CollUtil.isNotEmpty(wmsPushMsgEntityList)) {
+        	wmsPushMsgService.saveBatch(wmsPushMsgEntityList);
+        }
+        
         return dmpMqFeign.saveTaskList(dmpPushTaskEntityList);
     }
 }
