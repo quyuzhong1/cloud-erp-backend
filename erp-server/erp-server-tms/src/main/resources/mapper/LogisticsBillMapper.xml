@@ -235,18 +235,13 @@
         CASE WHEN lbd.track_no !=''    then
         (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false and lt.content !='' order by lt.track_time desc limit 1) else '' end  as logisticsTrack ,
                lb.invoices_status as invoicesStatus,
---                lbc.reconciliation_status as reconciliationStatus,
                lb.shipping_method as shippingMethod,
                lb.channel_id as logisticsChannelId,
                lb.logistics_supplier_id as logisticsSupplierId,
                lb.shop_name as shopName,
                lb.to_country as country,
---                lbc.actual_weight as weight,
---                lbc.volume_weight as volumeWeight,
---                lbc.weight_unit as weightUnit,
-               (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false where lbc.logistics_bill_id = lb.id and lbcd.TYPE = 'estimated') as estimatedFee,
-               (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false where lbc.logistics_bill_id = lb.id  and lbcd.TYPE = 'actual') as actualFee,
---                lbc.currency as  currency,
+               (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false and lb.id = lbc.logistics_bill_id and lbc.is_deleted = false where lbc.logistics_bill_id = lb.id and lbcd.TYPE = 'estimated') as estimatedFee,
+               (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false and lb.id = lbc.logistics_bill_id and lbc.is_deleted = false where lbc.logistics_bill_id = lb.id  and lbcd.TYPE = 'actual') as actualFee,
                lb.order_time as orderTime,
                lbd.sign_time as  signTime,
                lb.remark,
@@ -255,7 +250,6 @@
         from
             logistics_bill lb
             inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
-            left join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id and lbc.is_deleted = false
         where
             ${params.sqlMap.default}
           and lb.order_type = #{params.orderType}
@@ -280,29 +274,21 @@
                lb.carrier_id as carrierId,
         lb.source_code as businessCode,
         lb.invoices_status as invoicesStatus,
---         lbc.reconciliation_status as reconciliationStatus,
         lb.shipping_method as shippingMethod,
         lb.remark,
         lb.channel_id as logisticsChannelId,
         lb.logistics_supplier_id as logisticsSupplierId,
         lb.to_country as toCountryName,
---         lbc.actual_weight as weight,
---         lbc.volume_weight as volumeWeight,
---         lbc.weight_logistics as actualWeight,
---         lbc.volume_weight_logistics as actualVolumeWeight,
---         lbc.weight_unit as weightUnit,
         (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false where lbc.logistics_bill_id = lb.id and lbcd.TYPE = 'estimated') as estimatedFee,
---         lbc.currency as  currency,
         lb.ship_time as shipTime,
         lb.order_time as orderTime,
         lbd.sign_time as  signTime,
         lb.remark,
-        (select lbcd.exchange_rate from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated' limit 1) as exchangeRate,
+        (select lbcd.exchange_rate from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false  where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated' limit 1) as exchangeRate,
          case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600) else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
         from
         logistics_bill lb
         inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
-        left join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id and lbc.is_deleted = false
         where lb.id = #{id}
         and lb.is_deleted =false
         limit 1
