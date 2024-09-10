@@ -681,6 +681,9 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
     @Override
     public List<DmpPushTaskEntity> saveWdtTaskList(List<DmpPushTaskFeignDTO> dtoList) {
+    	if(CollUtil.isEmpty(dtoList)) {
+    		return null;
+    	}
         List<String> sourceIdList = dtoList.stream().map(item -> item.getSourceId()).collect(Collectors.toList());
         DmpPushTaskServiceImpl bean = ApplicationContextUtils.getBean(DmpPushTaskServiceImpl.class);
         List<DmpPushTaskEntity> list = bean.queryList(sourceIdList);
