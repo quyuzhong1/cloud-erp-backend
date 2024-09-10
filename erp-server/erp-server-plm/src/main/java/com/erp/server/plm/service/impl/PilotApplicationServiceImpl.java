@@ -144,7 +144,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             entity.setBusinessId(pilotApplicationEntity.getId());
             plmAttachmentService.save(entity);
         }
-        sysLogService.addSysLogBySave("新增试产申请", "", pilotApplicationEntity.getId(), "");
+        String format = String.format("用户【%s】新增【试产量产单】单据编号为【%s】", UserContext.getNonLoginUser().getUserName(), code);
+        sysLogService.addSysLogBySave(format, "", pilotApplicationEntity.getId(), "");
 
         //保存产品明细
         saveProductDetail(addDTO, pilotApplicationEntity);
@@ -411,9 +412,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
         log.info("提交 开始启动试产申请流程，id=：【{}】", entity.getId());
         startProcess(entity);
-        // 记录操作日志
-        log.info("提交 开始记录试产申请日志数据，id：【{}】", id);
-        this.addLog(entity.getId(), "审核操作", "审核操作", "审核状态", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+
+        String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据提交审核", UserContext.getNonLoginUser().getUserName(), entity.getCode());
+        this.addLog(entity.getId(), "提交操作", format, "审核状态", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -522,7 +523,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
-        this.addLog(id, "反审核", "反审核", "审核状态", entity.getApproveStatus().getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+        String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据反审核", UserContext.getNonLoginUser().getUserName(), entity.getCode());
+        this.addLog(id, "反审核", format, "审核状态", entity.getApproveStatus().getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -580,11 +582,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             throw new ServiceException(ApiError.ERROR_98007);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
-        log.info("撤销 开始修改试产申请状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
+        String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据撤销流程", UserContext.getNonLoginUser().getUserName(), entity.getCode());
+        this.addLog(id, "撤销操作", format, null, null, null);
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
@@ -900,7 +903,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
         PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(applicationDTOList);
-        return purchaseApplicationFeign.add(paramDto);
+        BatchResultDTO resultDTO = purchaseApplicationFeign.add(paramDto);
+        String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据下推采购申请单，单号为：【%s】", UserContext.getNonLoginUser().getUserName(), applicationDTOList.get(0).getCode(), resultDTO.getCode());
+        this.addLog(applicationDTOList.get(0).getId(), "下推操作", format, null, null, null);
+        return resultDTO;
     }
 
     private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
