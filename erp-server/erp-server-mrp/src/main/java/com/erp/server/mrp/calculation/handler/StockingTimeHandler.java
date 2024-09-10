@@ -11,10 +11,10 @@ import javax.annotation.Resource;
 @Component
 public class StockingTimeHandler extends AbstractSkuCalculationHandler {
     @Resource
-    private SellableDaysHandler sellableDaysHandler;
+    private FbaUsableHandler fbaUsableHandler;
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
-        return sellableDaysHandler;
+        return fbaUsableHandler;
     }
 
     @Override
