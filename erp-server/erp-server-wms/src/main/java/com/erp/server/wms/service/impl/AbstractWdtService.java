@@ -301,7 +301,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
 
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.OTHER_OUTSTOCK.getCode())
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.WDT_OTHER_OUTSTOCK.getCode())
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();
@@ -325,7 +325,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         if(SyncStatusEnum.NO_NEED_SYNC != syncStatusEnum) {
         	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
             wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
-            wmsPushMsgEntity.setSourceType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_OTHER_OUTSTOCK.getCode());
             wmsPushMsgEntity.setSourceId(sourceId);
             wmsPushMsgEntity.setSourceCode(sourceCode);
             wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
@@ -353,7 +353,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
 
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.OTHER_INSTOCK.getCode())
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.WDT_OTHER_INSTOCK.getCode())
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();
@@ -376,7 +376,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         if(SyncStatusEnum.NO_NEED_SYNC != syncStatusEnum) {
         	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
             wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
-            wmsPushMsgEntity.setSourceType(SourceTypeEnum.OTHER_INSTOCK.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_OTHER_INSTOCK.getCode());
             wmsPushMsgEntity.setSourceId(sourceId);
             wmsPushMsgEntity.setSourceCode(sourceCode);
             wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
