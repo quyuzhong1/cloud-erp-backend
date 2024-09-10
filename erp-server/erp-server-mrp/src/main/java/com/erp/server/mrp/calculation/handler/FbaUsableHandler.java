@@ -8,6 +8,7 @@ import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
 import com.erp.server.mrp.calculation.utils.TreeUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -35,7 +36,7 @@ public class FbaUsableHandler extends AbstractSkuCalculationHandler {
         //获取需要计算库存的FBA可用配置
         CfgRuleCommonDTO.StrategyResultDTO inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         CfgRuleCommonDTO.StrategyResultDTO usable = TreeUtils.findByCode(inventoryResult, CfgRuleInventoryNodeEnum.FBA_USABLE.getCode());
-        if (ObjectUtils.isEmpty(usable)) {
+        if (ObjectUtils.isEmpty(usable) || CollectionUtils.isEmpty(usable.getChildrenList())) {
             replenishmentResultDTO.getReplenishmentDetail().setFbaUsableQty(0);
         }
         List<String> codes = usable.getChildrenList().stream()

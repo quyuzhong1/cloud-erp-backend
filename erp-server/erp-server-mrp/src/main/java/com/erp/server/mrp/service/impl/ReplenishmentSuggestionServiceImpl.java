@@ -275,7 +275,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         salesAnalysisVO.setHistorySales(new SalesAnalysisVO.SalesVO(dates, originalSales));
         List<SalesEstimateEntity> estimateEntityList = salesEstimateService.list(Wrappers.<SalesEstimateEntity>lambdaQuery()
                 .eq(SalesEstimateEntity::getReplenishmentDetailId, dto.getDetailId())
-                .between(SalesEstimateEntity::getDate, LocalDate.now(), LocalDate.now().plusDays(TimePeriodEnum.of(dto.getTimePeriod()).getDays()))
+                .between(SalesEstimateEntity::getDate, LocalDate.now(), LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays()))
                 .orderByAsc(SalesEstimateEntity::getDate)
         );
         List<Integer> salesEstimates = estimateEntityList.stream().map(SalesEstimateEntity::getSalesQty).collect(Collectors.toList());
@@ -732,6 +732,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         List<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> exportPagingVO = handleExport(pagingVO.getRecords());
         return new PagingVO(exportPagingVO,(int)pagingVO.getTotal(),(int)pagingVO.getSize(),(int)pagingVO.getCurrent());
+    }
+
+    @Override
+    public List<ReplenishmentSuggestionDTO.SalesDTO> listSalesBySkuId(String skuId) {
+        return null;
     }
 
     /**

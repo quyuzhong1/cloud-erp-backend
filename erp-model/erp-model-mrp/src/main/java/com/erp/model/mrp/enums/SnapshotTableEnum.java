@@ -18,6 +18,10 @@ public enum SnapshotTableEnum implements EnumMessage {
     SO_B2C_DETAIL("so_b2c_detail", "B2C销售订单明细表"),
     SO_OUT_STOCK("so_outstock", "销售订单出库单"),
     SO_OUT_STOCK_DETAIL("so_outstock_detail", "销售订单出库明细"),
+    WMS_DELIVERY_PLAN("wms_delivery_plan", "发货计划"),
+    WMS_DELIVERY_PLAN_DETAIL("wms_delivery_plan_detail", "发货计划详情表"),
+    OVERSEAS_INVENTORY("overseas_inventory", "海外仓库存"),
+    INVENTORY("inventory", "库存表"),
     ;
 
     private final String code;

@@ -1,14 +1,20 @@
 package com.erp.server.mrp.calculation.service.impl;
 
+import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
+import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
+import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.SnapshotTableEnum;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
+import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
 import com.erp.server.mrp.mapper.InventoryMapper;
+import com.erp.server.mrp.service.ReplenishmentSuggestionService;
 import com.google.common.collect.Lists;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -29,6 +35,9 @@ import static com.erp.model.mrp.enums.SnapshotTableEnum.*;
 public class InventoryServiceImpl implements InventoryService {
     @Resource
     private InventoryMapper inventoryMapper;
+
+    @Resource
+    private ReplenishmentSuggestionService replenishmentSuggestionService;
     @Resource(name = "mrpExecutor")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
@@ -126,6 +135,47 @@ public class InventoryServiceImpl implements InventoryService {
                 }
             }, threadPoolTaskExecutor);
         }
+    }
+
+    @Override
+    public void getFbaPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, List<String> strategyCodes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
+        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
+        List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> estimatedDeliveryDetails = inventoryMapper.getPlanDelivery(DeliveryPlanTypeEnum.FBA.getCode(), strategyCodes, replenishmentResultDTO, SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN, calcDate), SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN_DETAIL, calcDate));
+        for (ReplenishmentResultDTO.EstimatedDeliveryDetailDTO detail : estimatedDeliveryDetails) {
+            detail.setType(CfgRulePlatformTypeEnum.AMAZON.getCode());
+            detail.setEstimateSalesDate(detail.getEstimateSalesDate().plusDays(stockUpResult.getInstockDays()).plusDays(stockUpResult.getLogisticsResult().getLogisticsDays()).plusDays(stockUpResult.getLogisticsResult().getLogisticsCycleDays()));
+            detail.setSourceType(SourceTypeEnum.DELIVERY_PLAN.getCode());
+        }
+        if (CollectionUtils.isEmpty(replenishmentResultDTO.getFbaDeliveryDetails())) {
+            replenishmentResultDTO.setFbaDeliveryDetails(estimatedDeliveryDetails);
+        } else {
+            replenishmentResultDTO.getFbaDeliveryDetails().addAll(estimatedDeliveryDetails);
+        }
+    }
+
+    @Override
+    public int getOverseasUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+        String code = String.join("+", codes);
+        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
+        int overseasUsable = inventoryMapper.getOverseasUsable(replenishmentResultDTO, code, getTableName(OVERSEAS_INVENTORY, calcDate));
+        replenishmentSuggestionService.listSalesBySkuId(replenishmentResultDTO.getReplenishment().getSkuId());
+        CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
+        List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> allPlatformWarehouse = warehouseResult.getOverseasWarehouseList().
+                stream().filter(v -> VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()))
+                .collect(Collectors.toList());
+
+        List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouse = warehouseResult.getOverseasWarehouseList().
+                stream().filter(v -> v.getChannelIdJson().contains(replenishmentResultDTO.getReplenishment().getShopId()))
+                .collect(Collectors.toList());
+
+        return 0;
+    }
+
+    @Override
+    public int getLocalUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
+        inventoryMapper.getLocalUsable(replenishmentResultDTO, codes, getTableName(INVENTORY, calcDate));
+        return 0;
     }
 
     /**

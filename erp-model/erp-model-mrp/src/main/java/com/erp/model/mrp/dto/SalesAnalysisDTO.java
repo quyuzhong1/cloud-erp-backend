@@ -1,6 +1,6 @@
 package com.erp.model.mrp.dto;
 
-import com.erp.model.mrp.enums.TimePeriodEnum;
+import com.erp.model.mrp.enums.TimePeriodEstimateEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,7 +24,7 @@ public class SalesAnalysisDTO {
     private LocalDate endDate;
     /**
      * 时间段
-     * @see TimePeriodEnum
+     * @see TimePeriodEstimateEnum
      */
     private String timePeriod;
 }
