@@ -79,10 +79,10 @@ public class PilotApplicationDetailEntity extends BaseEntity<PilotApplicationDet
     @TableField("purchase_apply_qty")
     private int purchaseApplyQty;
     /**
-     * 采购申请数量
+     * 采购申请单状态
      */
     @TableField("order_status")
-    private int orderStatus;
+    private String orderStatus;
 
 
     public static final String MAIN_ID = "main_id";
