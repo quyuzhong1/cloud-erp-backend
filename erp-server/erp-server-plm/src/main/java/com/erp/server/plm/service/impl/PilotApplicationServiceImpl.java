@@ -935,7 +935,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
+    public List<BatchResultDTO> pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
         List<String> pilotApplicationIds = applicationDTOList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
         List<PilotApplicationEntity> entityList = this.lambdaQuery().in(PilotApplicationEntity::getId, pilotApplicationIds).list();
         List<String> detailIds = applicationDTOList.stream().map(item -> item.getDetailId()).distinct().collect(Collectors.toList());
@@ -950,21 +950,30 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 throw new ServiceException("只有未下单或部分下单的SKU允许下推采购申请单");
             }
         }
-        PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(applicationDTOList);
-        BatchResultDTO resultDTO = purchaseApplicationFeign.add(paramDto);
-        String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据下推采购申请单，单号为：【%s】", UserContext.getNonLoginUser().getUserName(), applicationDTOList.get(0).getCode(), resultDTO.getCode());
-        this.addLog(applicationDTOList.get(0).getId(), "下推操作", format, null, null, null);
-        return resultDTO;
+
+        //根据单号拆分后下推
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        Map<String, List<PilotApplicationDTO.PushPurchaseApplicationDTO>> map = applicationDTOList.stream().collect(Collectors.groupingBy(item -> item.getId()));
+        for (Map.Entry<String, List<PilotApplicationDTO.PushPurchaseApplicationDTO>> entry : map.entrySet()) {
+            PilotApplicationEntity entity = entityList.stream().filter(item -> item.getId().equals(entry.getKey())).findFirst().orElse(new PilotApplicationEntity());
+            //下推
+            PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(entry.getValue());
+            BatchResultDTO resultDTO = purchaseApplicationFeign.add(paramDto);
+            //记录日志
+            String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据下推采购申请单，单号为：【%s】", UserContext.getNonLoginUser().getUserName(), entity.getCode(), resultDTO.getCode());
+            this.addLog(entity.getId(), "下推操作", format, null, null, null);
+            resultList.add(resultDTO);
+        }
+        return resultList;
     }
 
     private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
-        List<String> ids = applicationDTOList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
-        this.lambdaUpdate().set(PilotApplicationEntity::getOrderStatus, "order").in(PilotApplicationEntity::getId, ids);
-
         LoginUser loginUser = UserContext.getNonLoginUser();
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUid()));
         List<String> warehouseIds = applicationDTOList.stream().map(item -> item.getToWarehouseId()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseFeign.listWarehouseByIds(warehouseIds);
+        String sourceId = applicationDTOList.get(0).getId();
+        String sourceCode = applicationDTOList.get(0).getCode();
 
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : applicationDTOList) {
@@ -1000,6 +1009,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         paramDto.setApplyDeptId(userList.get(0).getDepartmentId());
         paramDto.setIsFirstMassProduct(Boolean.TRUE);
         paramDto.setDetails(detailList);
+        paramDto.setSourceId(sourceId);
+        paramDto.setSourceCode(sourceCode);
         paramDto.setSourceType(SourceTypeEnum.PILOT_APPLICATION.getCode());
         return paramDto;
     }

@@ -148,7 +148,7 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
     /**
      * 下推采购申请
      */
-    BatchResultDTO pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList);
+    List<BatchResultDTO> pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList);
 
     /**
      * 预览采购申请
