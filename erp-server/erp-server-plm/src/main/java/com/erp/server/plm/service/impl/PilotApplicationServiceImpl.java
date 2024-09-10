@@ -1100,9 +1100,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             //sku状态名称
             skuListDTO.setStatusName(ProductDetailStatusEnum.getName(skuListDTO.getStatus()));
             //供应商名称
-            ProductSearchDTO.SkuListDTO finalSkuListDTO = skuListDTO;
-            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(finalSkuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            skuListDTO.setMainSupplierName(supplierName);
+            skuListDTO.setMainSupplier("");
+//            ProductSearchDTO.SkuListDTO finalSkuListDTO = skuListDTO;
+//            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(finalSkuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+//            skuListDTO.setMainSupplierName(supplierName);
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(skuNo2IdMap.get(skuNo))).findFirst();
             if(productCostEntityOptional.isPresent()){
                 ProductCostEntity productCostEntity = productCostEntityOptional.get();
