@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -13,6 +14,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -23,6 +25,7 @@ import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStocktakingLossService;
 import com.erp.server.wms.service.StocktakingProfitLossDetailService;
@@ -64,6 +67,9 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
     @Resource
     private DmpMqFeign dmpMqFeign;
 
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+    
     @Resource
     private WmsPushMsgService wmsPushMsgService;
 
@@ -115,7 +121,6 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
         String warehouseOrgCode = "";
         List<String> warehouseIdList = detailDbList.stream().map(StocktakingProfitLossDetailDTO.ViewDTO::getWarehouseId).collect(Collectors.toList());
         //仓库
-        String warehouseId = detailDbList.get(0).getWarehouseId();
         List<WarehouseEntity> warehouseList = CollectionUtils.isNotEmpty(warehouseIdList) ? warehouseService.listByIds(warehouseIdList) : Collections.emptyList();
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             String orgId=warehouseList.get(0).getOrgId();
@@ -128,6 +133,10 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
 
         //仓库组织 货主
         resultMap.put("warehouseOrgCode", warehouseOrgCode);
+
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(warehouseIdList);
+
         List<JSONObject> list = new ArrayList<>(detailDbList.size());
         for (StocktakingProfitLossDetailDTO.ViewDTO item : detailDbList) {
             JSONObject jsonObject = new JSONObject();
@@ -140,7 +149,13 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             Integer inventoryQty = item.getFrozenQty() + item.getUsableQty();
             jsonObject.set("inventoryQty", inventoryQty);
-            jsonObject.set("warehouseLocation", item.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), item.getWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                jsonObject.set("warehouseLocation", item.getWarehouseLocation());
+            }
             jsonObject.set("warehouseOrgCode", warehouseOrgCode);
             jsonObject.set("diffQty", Math.abs(item.getDiffQty()));
             list.add(jsonObject);

@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
@@ -19,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -39,13 +41,13 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
 import com.erp.server.wms.service.PoInstockDetailService;
-import com.erp.server.wms.service.WarehouseReceiveDetailService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WmsPushMsgService;
 
@@ -83,10 +85,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
     @Resource
     private WarehouseService warehouseService;
 
-
-
     @Resource
-    private WarehouseReceiveDetailService warehouseReceiveDetailService;
+    private DmpTaskFeign dmpTaskFeign;
 
     @Resource
     private KingdeeFeign kingdeeFeign;
@@ -230,12 +230,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
         List<JSONObject> list = new ArrayList<>();
 
-
-
-
-        List<String> ids = detailList.stream().map(req -> req.getSourceDetailId()).collect(Collectors.toList());
-        List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listByIds(ids);
-
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getDeliveryWarehouseId()));
 
         for (PoInstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -256,8 +252,14 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
                 //交货仓库
                 jsonObject.set("deliveryWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
             }
-            //库位
-            jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getDeliveryWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //库位
+                jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            }
+
             //入库备注
             jsonObject.set("remark", detail.getRemark());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());

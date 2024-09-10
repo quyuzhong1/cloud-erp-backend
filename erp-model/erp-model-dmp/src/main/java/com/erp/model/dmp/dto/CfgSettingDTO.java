@@ -2,11 +2,11 @@ package com.erp.model.dmp.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -128,5 +128,17 @@ public class CfgSettingDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseLocationSettingDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
 
+        /**
+         * 是否推送仓位
+         */
+        private Boolean isPush;
+    }
 }

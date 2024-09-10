@@ -136,7 +136,7 @@ public class TikTokSdkClientService {
             System.out.println(ordersBean);
         }*/
 
-        //订单查询
+        /*//订单查询
         //每次最多获取200条
         Integer pageSize = 100;
         //分页token
@@ -218,7 +218,7 @@ public class TikTokSdkClientService {
                 break;
             }
             pageToken = orderDTO.getData().getNextPageToken();
-        }
+        }*/
 
     }
 

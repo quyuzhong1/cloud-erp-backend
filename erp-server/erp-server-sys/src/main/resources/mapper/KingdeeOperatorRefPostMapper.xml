@@ -69,7 +69,7 @@
     <select id="find" resultType="com.erp.model.sys.dto.KingdeeOperatorRefPostDTO$OperatorDTO">
 
         SELECT ko.id,
-               ko.code AS userPostCode,
+               krp.code AS userPostCode,
                kd.kingdee_dept_code AS  deptCode
         FROM kingdee_operator_ref_post ko
         LEFT JOIN kingdee_user_ref_post krp ON krp.id = ko.user_post_id AND krp.is_deleted = FALSE and ko.use_org_id = krp.use_org_id

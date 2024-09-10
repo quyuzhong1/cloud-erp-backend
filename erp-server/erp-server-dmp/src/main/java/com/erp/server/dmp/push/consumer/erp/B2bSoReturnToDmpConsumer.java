@@ -43,8 +43,8 @@ public class B2bSoReturnToDmpConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
     private BiReturnOrderInfoService biReturnOrderInfoService;
 
     @Override
-    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
-        dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpPushTaskService.updateStatus(paramDTO);
     }
 
     @Override

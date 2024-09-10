@@ -72,6 +72,9 @@
         <if test="params.code!=null and params.code!=''">
             and  op.code = #{params.code}
         </if>
+        <if test="params.shortName!=null and params.shortName!=''">
+            and  op.short_name = #{params.shortName}
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((opw.id = #{params.searchKeyword}) or (opw.platform_warehouse_code = #{params.searchKeyword}) or opw.platform_warehouse_name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>

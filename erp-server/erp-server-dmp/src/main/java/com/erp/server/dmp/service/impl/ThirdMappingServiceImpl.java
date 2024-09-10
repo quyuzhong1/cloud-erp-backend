@@ -135,7 +135,6 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 //        return strategy.add(addDTO);
 //    }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {

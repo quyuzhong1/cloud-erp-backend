@@ -124,7 +124,7 @@ public class SoDetailController extends BaseController {
         for (String id : dto.getDetailIdList()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = soDetailService.batchUnLockVirtualInventory(id);
+                resultDTO = soDetailService.batchUnLockVirtualInventory(id,null);
             }catch (Exception e){
                 log.error("销售订单明细释放库存失败",e);
                 SoDetailEntity entity = soDetailService.getById(id);

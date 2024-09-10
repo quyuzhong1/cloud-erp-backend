@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -165,10 +166,15 @@ public class DmpInoutController extends BaseController {
     	dmpHandlerCache.initCache(false);
     	return success();
     }
-    
-    @PostMapping("querySyncByIds")
-    public ApiResult<?> querySyncIds(@RequestBody List<String> ids) {
-    	return this.querySync(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", ids)));
+
+	/**
+	 * 查询同步
+	 * @param dto
+	 * @return
+	 */
+	@PostMapping("querySyncByIds")
+    public ApiResult<?> querySyncIds(@RequestBody BaseIdsDTO.IdsDTO dto) {
+    	return this.querySync(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", dto.getIds())));
     }
     
     @PostMapping("querySync")

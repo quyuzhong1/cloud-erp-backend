@@ -15,6 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSON;
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -28,6 +32,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -40,7 +45,7 @@ import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeMachineInfoService;
 import com.erp.server.wms.service.MachineDetailService;
@@ -67,7 +72,7 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private PlmTaskFeign plmTaskFeign;
+    private DmpTaskFeign dmpTaskFeign;
 
     @Resource
     private MachineDetailService machineDetailService;
@@ -80,7 +85,7 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
 
     @Resource
     private MachineSubComponentsService machineSubComponentsService;
-    
+
     @Resource
     private WmsPushMsgService wmsPushMsgService;
 
@@ -166,6 +171,9 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         //领料组织编码
         resultMap.put("inventoryOrgCode", inventoryOrgCode);
 
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(warehouseIds);
+
         List<JSONObject> list = new ArrayList<>();
         for (MachineDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -183,8 +191,14 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
                 //调出仓库
                 jsonObject.set("warehouseCode", warehouseCode);
             }
-            //仓位
-            jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            }
+
 
             String referenceVersion = detail.getSkuNo() + "_" + detail.getReferenceVersion();
             //参照版本
@@ -262,7 +276,7 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
             dmpSyncTaskDTO.setSyncOperate(operate);
             return dmpMqFeign.saveTask(dmpSyncTaskDTO);
         }
-    	
+
     	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
         wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
         wmsPushMsgEntity.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
@@ -270,9 +284,9 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         wmsPushMsgEntity.setSourceCode(entity.getCode());
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        
+
         wmsPushMsgService.save(wmsPushMsgEntity);
-        
+
         return null;
     }
 }

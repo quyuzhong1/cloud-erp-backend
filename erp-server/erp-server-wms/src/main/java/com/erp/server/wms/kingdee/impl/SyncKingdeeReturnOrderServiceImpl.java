@@ -19,6 +19,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -41,6 +42,7 @@ import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
@@ -91,6 +93,10 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     
     @Resource
     private WmsPushMsgService wmsPushMsgService;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
 
     /**
      * 发送消息同步金蝶
@@ -235,6 +241,10 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
 
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getReturnWarehouseId());
+
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getReturnWarehouseId()));
+
         List<JSONObject> list = new ArrayList<>();
         for (PoReturnDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -261,8 +271,14 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
             //退款单价
             jsonObject.set("returnPrice", detail.getReturnPrice());
-            //仓位
-            jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getReturnWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            }
+
             //采购单号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
 

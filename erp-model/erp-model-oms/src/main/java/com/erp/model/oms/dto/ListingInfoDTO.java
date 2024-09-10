@@ -49,6 +49,11 @@ public class ListingInfoDTO implements Serializable {
         private String shopId;
 
         /**
+         * 授权id
+         */
+        private String authId;
+
+        /**
          * 服务商code
          */
         @JsonIgnore

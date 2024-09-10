@@ -1325,6 +1325,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids) {
+        ids = ids.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyList();
         }

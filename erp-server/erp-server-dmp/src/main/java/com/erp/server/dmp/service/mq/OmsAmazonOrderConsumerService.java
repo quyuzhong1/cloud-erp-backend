@@ -1,7 +1,7 @@
 package com.erp.server.dmp.service.mq;
 
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
@@ -28,8 +28,8 @@ public class OmsAmazonOrderConsumerService extends AbstractPlatformConsumerHandl
     private DmpPullTaskService dmpPullTaskService;
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
-        dmpPullTaskService.updateSyncInfo(id, code.getCode(), msg);
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(), paramDTO.getSyncStatus(), paramDTO.getResponseMsg());
     }
 
     @Override

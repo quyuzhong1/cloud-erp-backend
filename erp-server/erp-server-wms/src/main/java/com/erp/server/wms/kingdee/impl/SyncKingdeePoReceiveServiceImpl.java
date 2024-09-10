@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
@@ -21,6 +22,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -257,6 +259,10 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
 
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getDeliveryWarehouseId());
+
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getDeliveryWarehouseId()));
+
         List<JSONObject> list = new ArrayList<>();
         for (WarehouseReceiveDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -279,9 +285,14 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
 
             SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntities.stream().filter(req -> req.getId().equals(purchaseOrderDetailEntity.getSourceDetailId())).findFirst().orElse(new SubcontractOrderDetailEntity());
-            //仓位
-            jsonObject.set("warehouseLocation", subcontractOrderDetailEntity.getWarehouseLocation());
 
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getDeliveryWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                jsonObject.set("warehouseLocation", subcontractOrderDetailEntity.getWarehouseLocation());
+            }
             //采购单号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
             if (StringUtils.isNotBlank(entity.getPurchaseOrderCode())) {
