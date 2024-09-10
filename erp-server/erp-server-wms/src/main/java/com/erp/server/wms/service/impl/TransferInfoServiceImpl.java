@@ -157,17 +157,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private DmpMqFeign dmpMqFeign;
 
     @Resource
-    private SyncWdtOtherInStockService syncWdtOtherInStockService;
-
-    @Resource
-    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
-
-    @Resource
-    private TransferInfoDetailMapper transferInfoDetailMapper;
-    @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
-    @Resource
-    private DmpPushWdtFeign dmpPushWdtFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
 
@@ -183,8 +173,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
 
-    @Resource
-    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
@@ -259,10 +247,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         doOpHandleDataId(entity);
         log.info("直接调拨单新增");
         if (StringUtils.isBlank(dto.getCode())) {
-
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZJDB);
-
             entity.setCode(code);
         }
         //新增主表数据
@@ -1309,7 +1295,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<String> warehouseIdList = records.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).distinct().collect(Collectors.toList());
         List<String> warehouseLocationCodeList = records.stream().flatMap(obj -> Stream.of(obj.getInWarehouseLocation(), obj.getOutWarehouseLocation())).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndCodeList(warehouseIdList,warehouseLocationCodeList);
-
+        // 获取当前审批人
+        Map<String, String> curApproveUserNameMap = getCurApproveUserNameList(records);
         for (TransferInfoDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
@@ -1329,7 +1316,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-
+            String approveUserName = curApproveUserNameMap.get(obj.getId());
+            if(StrUtil.isNotBlank(approveUserName)){
+                obj.setApproveUserName(approveUserName);
+            }
             //仓位名称
             String inWarehouseLocationName = warehouseLocationList.stream().filter(req -> req.getWarehouseId().equals(obj.getInWarehouseId()) && req.getCode().equals(obj.getInWarehouseLocation()))
                     .map(WarehouseLocationEntity::getName).findFirst().orElse("");
@@ -1339,6 +1329,32 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             obj.setOutWarehouseLocationName(outWarehouseLocationName);
         }
     }
+
+    private Map<String, String> getCurApproveUserNameList(List<TransferInfoDTO.ListDTO> records) {
+        // 如果开启工作流，且审核中，查询工作流当前审核节点审核人，如果有多个审核人使用‘，’拼接
+        List<TransferInfoDTO.ListDTO> approvingList = records.stream()
+                .filter(item -> ApproveStatusEnum.APPROVE_ING.getCode().equals(item.getApproveStatus()))
+                .collect(Collectors.toList());
+        // 当前页，是否存在审核中的单据
+        Map<String, String> curApproveUserNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(approvingList)){
+            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+            approvingList.forEach(obj -> {
+                dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.TRANSFER_INFO.getCode(), obj.getId()));
+            });
+            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+            if (ObjectUtil.isNotEmpty(listApiResult) && 200 == listApiResult.getCode() && CollUtil.isNotEmpty(listApiResult.getData())) {
+                curApproveUserNameMap = listApiResult.getData().stream()
+                        .collect(Collectors.toMap(
+                                ProcessManagementDTO.CurApproveInfoDTO::getBusinessId,
+                                ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName,
+                                (existing, replacement) -> existing + "," + replacement));
+
+            }
+        }
+        return curApproveUserNameMap;
+    }
+
     /**
      * 处理数据id
      */
