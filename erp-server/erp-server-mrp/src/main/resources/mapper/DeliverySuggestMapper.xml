@@ -44,9 +44,9 @@
     <select id="list" resultType="com.erp.model.mrp.dto.DeliverySuggestDTO$ListDTO">
         select
         <include refid="Base_Column_List"/>
-        from delivery_suggest flt
+        from delivery_suggest ds
         <where>
-            flt.is_deleted = false and source_id = #{params.sourceId}
+            ds.is_deleted = false and ds.source_id = #{params.sourceId}
         </where>
     </select>
 

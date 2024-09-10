@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author Will
@@ -92,13 +93,17 @@ public class OperateLogDTO implements Serializable {
         /**
          * 业务id(对应模块id)
          */
-        @NotBlank(message = "业务id不能为空")
         private String businessId;
 
         /**
          * 父级id(用于综合数据查询)
          */
         private String pid;
+
+        /**
+         * 业务id集合
+         */
+        private List<String> businessIdList;
     }
 
 }

@@ -97,7 +97,33 @@
 
     <!-- 根据唯一键查询（平台、店铺、sku） -->
     <select id="listByUnique" resultType="com.erp.model.mrp.entity.ReplenishmentSuggestionEntity">
-
+        select
+           rs.id,
+           rs.update_time,
+           rs.platform_type,
+           rs.sku_id,
+           rs.sku_no,
+           rs.country,
+           rs.shop_id,
+           rs.platform,
+           rs.replenishment_type,
+           rs.remark
+        from replenishment_suggestion rs
+        <where>
+               rs.is_deleted = false
+               and rs.platform in
+                <foreach collection="platformCodeList" item="item" open="(" close=")" separator=",">
+                   #{item}
+                </foreach>
+               and rs.shop_id in
+               <foreach collection="shopIdList" item="item" open="(" close=")" separator=",">
+                      #{item}
+               </foreach>
+               and rs.sku_id in
+               <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+                      #{item}
+               </foreach>
+        </where>
     </select>
 
 </mapper>

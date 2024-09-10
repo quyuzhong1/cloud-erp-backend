@@ -39,6 +39,12 @@
             <if test="params.pid !=null and params.pid!=''">
                 AND ol.pid = #{params.pid}
             </if>
+            <if test="params.businessIdList !=null and params.businessIdList.size > 0">
+                AND ol.business_id in
+                <foreach collection="params.businessIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
         </where>
         group by ol.module_type,ol.business_id,ol.create_time
         order by ol.create_time desc

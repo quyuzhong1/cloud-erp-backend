@@ -269,7 +269,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             checkLogisticsData(excelDTO,errorMsgList);
 
             //补货建议主表信息
-            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, excelDTO.getPlatform())).findFirst().orElse(null);
+            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
             }
@@ -352,53 +352,65 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList = new ArrayList<>();
 
         //空运
-        CfgRuleLogisticsDTO.UpdateDTO oneUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
-        oneUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.AIRFREIGHT.getCode());
-        oneUpdateDTO.setIndex(Integer.valueOf(excelDTO.getOneIndex()));
-        oneUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getOneLogisticsDays()));
-        oneUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getOneLogisticsCycleDays()));
-        cfgLogisticsList.add(oneUpdateDTO);
+        if (StrUtil.isNotBlank(excelDTO.getOneIndex())) {
+            CfgRuleLogisticsDTO.UpdateDTO oneUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+            oneUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.AIRFREIGHT.getCode());
+            oneUpdateDTO.setIndex(Integer.valueOf(excelDTO.getOneIndex()));
+            oneUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getOneLogisticsDays()));
+            oneUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getOneLogisticsCycleDays()));
+            cfgLogisticsList.add(oneUpdateDTO);
+        }
 
         //快递
-        CfgRuleLogisticsDTO.UpdateDTO twoUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
-        twoUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.EXPRESS.getCode());
-        twoUpdateDTO.setIndex(Integer.valueOf(excelDTO.getTwoIndex()));
-        twoUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getTwoLogisticsDays()));
-        twoUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getTwoLogisticsCycleDays()));
-        cfgLogisticsList.add(twoUpdateDTO);
+        if (StrUtil.isNotBlank(excelDTO.getTwoIndex())) {
+            CfgRuleLogisticsDTO.UpdateDTO twoUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+            twoUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.EXPRESS.getCode());
+            twoUpdateDTO.setIndex(Integer.valueOf(excelDTO.getTwoIndex()));
+            twoUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getTwoLogisticsDays()));
+            twoUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getTwoLogisticsCycleDays()));
+            cfgLogisticsList.add(twoUpdateDTO);
+        }
 
         //海运散装
-        CfgRuleLogisticsDTO.UpdateDTO threeUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
-        threeUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.OCEAN_FREIGHT_BULK.getCode());
-        threeUpdateDTO.setIndex(Integer.valueOf(excelDTO.getThreeIndex()));
-        threeUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getThreeLogisticsDays()));
-        threeUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getThreeLogisticsCycleDays()));
-        cfgLogisticsList.add(threeUpdateDTO);
+        if (StrUtil.isNotBlank(excelDTO.getThreeIndex())) {
+            CfgRuleLogisticsDTO.UpdateDTO threeUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+            threeUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.OCEAN_FREIGHT_BULK.getCode());
+            threeUpdateDTO.setIndex(Integer.valueOf(excelDTO.getThreeIndex()));
+            threeUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getThreeLogisticsDays()));
+            threeUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getThreeLogisticsCycleDays()));
+            cfgLogisticsList.add(threeUpdateDTO);
+        }
 
         //海运整柜
-        CfgRuleLogisticsDTO.UpdateDTO fourUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
-        fourUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.OCEAN_FREIGHT_FCL.getCode());
-        fourUpdateDTO.setIndex(Integer.valueOf(excelDTO.getFourIndex()));
-        fourUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getFourLogisticsDays()));
-        fourUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getFourLogisticsCycleDays()));
-        cfgLogisticsList.add(fourUpdateDTO);
+        if (StrUtil.isNotBlank(excelDTO.getFourIndex())) {
+            CfgRuleLogisticsDTO.UpdateDTO fourUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+            fourUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.OCEAN_FREIGHT_FCL.getCode());
+            fourUpdateDTO.setIndex(Integer.valueOf(excelDTO.getFourIndex()));
+            fourUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getFourLogisticsDays()));
+            fourUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getFourLogisticsCycleDays()));
+            cfgLogisticsList.add(fourUpdateDTO);
+        }
 
         //铁运散装
-        CfgRuleLogisticsDTO.UpdateDTO fiveUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
-        fiveUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK.getCode());
-        fiveUpdateDTO.setIndex(Integer.valueOf(excelDTO.getFiveIndex()));
-        fiveUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getFiveLogisticsDays()));
-        fiveUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getFiveLogisticsCycleDays()));
-        cfgLogisticsList.add(fiveUpdateDTO);
+        if (StrUtil.isNotBlank(excelDTO.getFiveIndex())) {
+            CfgRuleLogisticsDTO.UpdateDTO fiveUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+            fiveUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK.getCode());
+            fiveUpdateDTO.setIndex(Integer.valueOf(excelDTO.getFiveIndex()));
+            fiveUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getFiveLogisticsDays()));
+            fiveUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getFiveLogisticsCycleDays()));
+            cfgLogisticsList.add(fiveUpdateDTO);
+        }
 
         //铁运散装
-        CfgRuleLogisticsDTO.UpdateDTO sixUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
-        sixUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL.getCode());
-        sixUpdateDTO.setIndex(Integer.valueOf(excelDTO.getSixIndex()));
-        sixUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getSixLogisticsDays()));
-        sixUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getSixLogisticsCycleDays()));
-        cfgLogisticsList.add(sixUpdateDTO);
-        resultDTO.setCfgLogisticsList(cfgLogisticsList);
+        if (StrUtil.isNotBlank(excelDTO.getSixIndex())) {
+            CfgRuleLogisticsDTO.UpdateDTO sixUpdateDTO = new CfgRuleLogisticsDTO.UpdateDTO();
+            sixUpdateDTO.setLogisticsMethod(LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL.getCode());
+            sixUpdateDTO.setIndex(Integer.valueOf(excelDTO.getSixIndex()));
+            sixUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getSixLogisticsDays()));
+            sixUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getSixLogisticsCycleDays()));
+            cfgLogisticsList.add(sixUpdateDTO);
+            resultDTO.setCfgLogisticsList(cfgLogisticsList);
+        }
         return resultDTO;
     }
 

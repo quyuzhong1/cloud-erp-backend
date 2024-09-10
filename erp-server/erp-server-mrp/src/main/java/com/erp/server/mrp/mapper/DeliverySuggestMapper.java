@@ -4,6 +4,7 @@ import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -25,5 +26,5 @@ public interface DeliverySuggestMapper extends BaseMapper<DeliverySuggestEntity>
      * @param params
      * @return List<ListDTO>
      */
-    List<DeliverySuggestDTO.ListDTO> list(DeliverySuggestDTO.ListParamDTO params);
+    List<DeliverySuggestDTO.ListDTO> list(@Param("params") DeliverySuggestDTO.ListParamDTO params);
 }
