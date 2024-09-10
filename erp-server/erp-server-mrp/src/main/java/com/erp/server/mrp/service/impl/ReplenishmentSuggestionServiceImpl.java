@@ -132,6 +132,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Resource
     private CfgRuleLogisticsService cfgRuleLogisticsService;
 
+    @Resource
+    private ReplenishmentSuggestionDetailService replenishmentSuggestionDetailService;
+
+
     @Override
     public PagingVO<ReplenishmentSuggestionVO.PagingView> paging(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
@@ -398,13 +402,13 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             throw new ServiceException("备货、销量设置不能全部为空！");
         }
         //更新备货信息
-        if (ObjectUtil.isEmpty(dto.getStockUpUpdateDTO())) {
+        if (ObjectUtil.isNotEmpty(dto.getStockUpUpdateDTO())) {
             dto.getStockUpUpdateDTO().setRefId(dto.getId());
             dto.getStockUpUpdateDTO().setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
             cfgRuleStockUpService.update(dto.getStockUpUpdateDTO());
         }
         //更新销量信息
-        if (ObjectUtil.isEmpty(dto.getSalesQtyUpdateDTO())) {
+        if (ObjectUtil.isNotEmpty(dto.getSalesQtyUpdateDTO())) {
             dto.getSalesQtyUpdateDTO().setRefId(dto.getId());
             dto.getSalesQtyUpdateDTO().setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
             cfgRuleSalesQtyService.update(dto.getSalesQtyUpdateDTO());
@@ -418,12 +422,18 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             throw new ServiceException("备货、销量设置不能全部为空！");
         }
         ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"补货建议");
+        }
 
         //更新备货信息
         if (ObjectUtil.isNotEmpty(stockUpUpdateDTO)) {
-            CfgRuleStockUpEntity ruleStockUpEntity = cfgRuleStockUpService.getByRefId(id);
-            if (ObjectUtil.isNotEmpty(ruleStockUpEntity)) {
-                stockUpUpdateDTO.setId(ruleStockUpEntity.getId());
+            CfgRuleStockUpEntity oldStockUpEntity = cfgRuleStockUpService.getByRefId(id);
+            if (ObjectUtil.isNotEmpty(oldStockUpEntity)) {
+                stockUpUpdateDTO.setId(oldStockUpEntity.getId());
+            } else {
+                //添加默认
+                formatStockUpDefaultData(entity,stockUpUpdateDTO);
             }
             stockUpUpdateDTO.setRefId(id);
             stockUpUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
@@ -432,12 +442,88 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         //更新销量信息
         if (ObjectUtil.isNotEmpty(salesQtyUpdateDTO)) {
+            CfgRuleSalesQtyEntity oldSalesQtyEntity = cfgRuleSalesQtyService.getByRefId(id);
+            if (ObjectUtil.isEmpty(oldSalesQtyEntity)) {
+                //添加默认
+                formatSalesQtyDefaultData(entity,salesQtyUpdateDTO);
+            }
             salesQtyUpdateDTO.setRefId(id);
             salesQtyUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
             stockUpUpdateDTO.setIsCustom(Boolean.TRUE);
             cfgRuleSalesQtyService.update(salesQtyUpdateDTO);
         }
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
+    }
+    /**
+     * 销量添加默认设置
+     * @author will
+     * @date 2024/9/10 18:23
+     * @param entity
+     * @param updateDetailDTO
+     */
+    private void formatSalesQtyDefaultData (ReplenishmentSuggestionEntity entity,CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetailDTO) {
+        List<ReplenishmentSuggestionDetailEntity> detailList = replenishmentSuggestionDetailService.listByMainIdList(Arrays.asList(entity.getId()));
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        String skuType = detailList.get(0).getSkuType();
+        CfgRuleSalesQtyDTO.StrategyResultDTO defaultCfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultCfgRuleSalesQty(entity.getPlatformType(), skuType);
+        if (ObjectUtil.isEmpty(defaultCfgRuleSalesQty) || CollectionUtils.isEmpty(defaultCfgRuleSalesQty.getFormulaResults())) {
+            return;
+        }
+        CfgRuleSalesQtyDTO.StrategyFormulaResultDTO strategyFormulaResultDTO = defaultCfgRuleSalesQty.getFormulaResults().stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode())).findFirst().orElse(null);
+        if (ObjectUtil.isEmpty(strategyFormulaResultDTO)) {
+            return;
+        }
+        CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultUpdateDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.DefaultUpdateDTO.class, strategyFormulaResultDTO);
+        defaultUpdateDTO.setId(null);
+        CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = JSONUtil.toBean(strategyFormulaResultDTO.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class);
+        defaultUpdateDTO.setPercentJsonDTO(percentJsonDTO);
+        updateDetailDTO.setDefaultSalesQtyDTO(defaultUpdateDTO);
+    }
+
+
+    /**
+     * 备货设置添加默认信息
+     * @author will
+     * @date 2024/9/10 17:59
+     * @param entity
+     * @param stockUpUpdateDTO
+     */
+    private void formatStockUpDefaultData (ReplenishmentSuggestionEntity entity,CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO) {
+        CfgRuleStockUpEntity defaultCfgRuleStockUp = cfgRuleStockUpService.getDefaultCfgRuleStockUp(entity.getPlatformType());
+        if (ObjectUtil.isEmpty(defaultCfgRuleStockUp)) {
+            return;
+        }
+        //采购审批
+        Integer purchaseApproveDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getPurchaseApproveDays()) ? defaultCfgRuleStockUp.getPurchaseApproveDays() : null;
+        stockUpUpdateDTO.setPurchaseApproveDays(purchaseApproveDays);
+        //生产周期
+        Integer productionDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getProductionDays()) ? defaultCfgRuleStockUp.getProductionDays() : null;
+        stockUpUpdateDTO.setProductionDays(productionDays);
+        //供应商发货
+        Integer supplierDeliveryDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getSupplierDeliveryDays()) ? defaultCfgRuleStockUp.getSupplierDeliveryDays() : null;
+        stockUpUpdateDTO.setSupplierDeliveryDays(supplierDeliveryDays);
+        //质检入库
+        Integer qcDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getQcDays()) ? defaultCfgRuleStockUp.getQcDays() : null;
+        stockUpUpdateDTO.setQcDays(qcDays);
+        //采购频率
+        Integer purchaseCycleDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getPurchaseCycleDays()) ? defaultCfgRuleStockUp.getPurchaseCycleDays() : null;
+        stockUpUpdateDTO.setPurchaseCycleDays(purchaseCycleDays);
+        //FBA安全天数
+        Integer safeDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getSafeDays()) ? defaultCfgRuleStockUp.getSafeDays() : null;
+        stockUpUpdateDTO.setSafeDays(safeDays);
+        //默认备货系数
+        BigDecimal stockingRatio = ObjectUtil.isEmpty(stockUpUpdateDTO.getStockingRatio()) ? defaultCfgRuleStockUp.getStockingRatio() : null;
+        stockUpUpdateDTO.setStockingRatio(stockingRatio);
+
+        //默认物流信息
+        List<CfgRuleLogisticsEntity> cfgRuleLogisticsList = cfgRuleLogisticsService.listByStockUpIdList(Arrays.asList(defaultCfgRuleStockUp.getId()));
+        if (CollectionUtils.isNotEmpty(cfgRuleLogisticsList)) {
+            List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList = BeanMapperUtils.copyList(CfgRuleLogisticsDTO.UpdateDTO.class,cfgRuleLogisticsList);
+            cfgLogisticsList.stream().forEach(obj -> obj.setId(null));
+            stockUpUpdateDTO.setCfgLogisticsList(cfgLogisticsList);
+        }
     }
 
     @Override
