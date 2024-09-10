@@ -542,7 +542,11 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if(entity.getApproveStatus().compareTo(ApproveStatusEnum.APPROVE) != 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
+        // 已下推采购申请单，不能反审
+        List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationFeign.listBySourceIds(Collections.singletonList(entity.getId()));
+        if (!purchaseApplicationList.isEmpty()) {
+            throw new ServiceException("已下推采购申请单，不能反审核");
+        }
         return true;
     }
 
