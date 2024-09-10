@@ -9,6 +9,7 @@ import java.util.Arrays;
  * @Date 2023/3/27 17:37
  **/
 public enum WdtSourcePlatformEnum {
+	wdt0("127","其他（自有商城）"),
 	wdt1("0","线下"),
 	wdt2("1","淘宝"),
 	wdt3("2","淘宝分销"),
