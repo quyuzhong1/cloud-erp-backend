@@ -1721,14 +1721,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(list.isEmpty()){
             return BatchResultDTO.fail(id, id, "只有下单后的物流单才能推送重量分摊");
         }
-        BatchResultDTO resultDTO;
-        try{
-            resultDTO = firstMileWeightAllocationService.add(id);
-        }catch (Exception e){
-            e.printStackTrace();
-            return BatchResultDTO.fail(id, id, OperationTypeEnum.ADD);
-        }
-        return resultDTO;
+        return firstMileWeightAllocationService.add(id);
     }
 
     @Override
