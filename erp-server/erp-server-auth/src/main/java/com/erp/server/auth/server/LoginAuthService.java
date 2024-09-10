@@ -14,8 +14,9 @@ import com.erp.model.sys.dto.AccountLoginDTO;
 import com.erp.model.sys.dto.SysLoginIpDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.vo.SysLoginUserVO;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.SupplierFeign;
+
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;

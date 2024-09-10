@@ -1,4 +1,4 @@
-package com.erp.rpc.wms.feign;
+package com.erp.rpc.scm.feign;
 
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;

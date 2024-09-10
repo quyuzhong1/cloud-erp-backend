@@ -3,8 +3,11 @@ package com.erp.server.dmp.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.QueryParam;
+import com.common.business.wrapper.QueryTypeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +29,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -143,4 +147,21 @@ public class DmpOutputTaskRecordController extends BaseController {
         Boolean flag = dmpOutputTaskRecordService.addOutputBlack(dto);
         return flag ? success() : failure();
     }
+
+    /**
+     * 重新同步（批量同步）
+     * @Author Luo_WG
+     * @Date 2024/9/6 15:58
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/batchSync")
+    public ApiResult batchSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<DmpOutputTaskRecordEntity> list = dmpOutputTaskRecordService.lambdaQuery()
+                .in(DmpOutputTaskRecordEntity::getId, dto.getIds())
+                .list();
+        Boolean flag = dmpOutputTaskRecordService.batchSync(list);
+        return flag == true ? success() : failure();
+    }
+
 }

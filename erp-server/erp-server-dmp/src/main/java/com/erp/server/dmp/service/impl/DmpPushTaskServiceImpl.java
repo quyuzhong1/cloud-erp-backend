@@ -42,8 +42,8 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.mapper.DmpPushTaskHistoryMapper;
 import com.erp.server.dmp.mapper.DmpPushTaskMapper;
@@ -134,6 +134,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             String mqData = entity.getMqData();
             JSONObject jsonObject = JSONUtil.parseObj(mqData);
             jsonObject.set("dmpSyncTaskId",entity.getId());
+            jsonObject.set("version",entity.getVersion());
             // delayLevel=0 无延时
             SendResult result = mqProducerService.syncClassMsgWithDelayLevel(entity.getMqTopic(),
                     entity.getMqTag(),
@@ -152,6 +153,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     public void updateStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         LambdaUpdateWrapper<DmpPushTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(DmpPushTaskEntity::getId, paramDTO.getDmpSyncTaskId());
+        updateWrapper.eq(ObjectUtil.isNotEmpty(paramDTO.getVersion()), DmpPushTaskEntity::getVersion, paramDTO.getVersion());
         updateWrapper.set(DmpPushTaskEntity::getLastSyncTime, LocalDateTime.now());
         updateWrapper.set(DmpPushTaskEntity::getStatus, paramDTO.getSyncStatus());
         updateWrapper.set(StrUtil.isNotBlank(paramDTO.getResponseMsg()), DmpPushTaskEntity::getReturnMsg, paramDTO.getResponseMsg());
@@ -274,7 +276,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                     updateList.add(dmpPushTaskEntity);
                     continue;
                 }
-                DmpPushTaskHistoryServiceImpl.sendMq(dmpPushTaskEntity.getMqData(), dmpPushTaskEntity.getId(), mqProducerService, dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), dmpPushTaskEntity.getSourceId());
+                DmpPushTaskHistoryServiceImpl.sendMq(dmpPushTaskEntity.getMqData(), dmpPushTaskEntity.getId(),dmpPushTaskEntity.getVersion(), mqProducerService, dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), dmpPushTaskEntity.getSourceId());
             }catch (Exception e){
                 String sourceTypeName = SourceTypeEnum.getName(dmpPushTaskEntity.getSourceType());
                 log.error("从{}推送{}到{}发送消息异常", dmpPushTaskEntity.getSourcePlatformName(), sourceTypeName, dmpPushTaskEntity.getTargetPlatformName(), e);
@@ -401,7 +403,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                     updateList.add(dmpPushTaskEntity);
                     continue;
                 }
-                DmpPushTaskHistoryServiceImpl.sendMq(dmpPushTaskEntity.getMqData(), dmpPushTaskEntity.getId(), mqProducerService, dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), dmpPushTaskEntity.getSourceId());
+                DmpPushTaskHistoryServiceImpl.sendMq(dmpPushTaskEntity.getMqData(), dmpPushTaskEntity.getId(),dmpPushTaskEntity.getVersion(), mqProducerService, dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), dmpPushTaskEntity.getSourceId());
             }catch (Exception e){
                 String sourceTypeName = SourceTypeEnum.getName(dmpPushTaskEntity.getSourceType());
                 log.error("从{}推送{}到{}发送消息异常", dmpPushTaskEntity.getSourcePlatformName(), sourceTypeName, dmpPushTaskEntity.getTargetPlatformName(), e);
@@ -616,6 +618,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             entity.setId(found.getId());
             entity.setCreateTime(LocalDateTime.now());
             entity.setUpdateTime(LocalDateTime.now());
+            entity.setVersion(found.getVersion());
             bean.updateDmpSyncTask(entity);
         }else {
 			bean.saveDmpSyncTask(entity);
@@ -649,11 +652,12 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     /**
      * 修改
      */
+    @Override
     @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
     public void updateDmpSyncTask(DmpPushTaskEntity entity) {
     	try {
-			this.updateById(entity);
+			baseMapper.updateById(entity);
 		} catch (Exception e) {
 			log.error("更新推送表失败：{}" , entity.getId() , e);
 		}
@@ -681,6 +685,9 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
     @Override
     public List<DmpPushTaskEntity> saveWdtTaskList(List<DmpPushTaskFeignDTO> dtoList) {
+    	if(CollUtil.isEmpty(dtoList)) {
+    		return null;
+    	}
         List<String> sourceIdList = dtoList.stream().map(item -> item.getSourceId()).collect(Collectors.toList());
         DmpPushTaskServiceImpl bean = ApplicationContextUtils.getBean(DmpPushTaskServiceImpl.class);
         List<DmpPushTaskEntity> list = bean.queryList(sourceIdList);

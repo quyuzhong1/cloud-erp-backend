@@ -1,7 +1,11 @@
 package com.erp.model.dmp.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -24,9 +28,6 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class DmpOutputTaskRecordDTO implements Serializable {
-
-
-
 
     /**
     * 详情
@@ -122,7 +123,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class PagingDTO {
+    public static class PagingDTO {
         /**
          * 主键id
          */
@@ -175,18 +176,12 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         /**
          * 同步状态中文
          */
-
         private String statusName;
 
         /**
          * 推送失败原因
          */
         private String returnMsg;
-
-        /**
-         * 推送数据
-         */
-        private String pushData;
 
         /**
          * 是否需要同步
@@ -201,7 +196,8 @@ public class DmpOutputTaskRecordDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class PagingParamDTO extends PermissionsDTO {
+    @AllArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
 
         /**
          * 页面高级查询
@@ -221,7 +217,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     public static class TabListDTO {
         /**
          * 类型：/dmp/common/enumDropDown?type=DmpOutputTaskRecordStatus
-         * all全部、init:待推送、mqsuccess:mq推送成功、mqerror:mq推送失败、cosumererror:消费失败、finish:推送成功、error:推送失败
+         * all全部、init:待推送、mqsuccess:mq推送成功、mqerror:mq推送失败、cosumererror:消费失败、finish:推送成功、error:推送失败、0:无需同步
          */
         private String tabFlag;
 
@@ -262,9 +258,9 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          */
         private String sourcePlatformCode;
         /**
-         * 单据类型（级联）
+         * 单据类型（级联：关联来源系统）
          * 接口：/dmp/dmpCfgInput/listDmpCfgInput?id = 来源系统code
-         * 接口入参：来源系统code 或者 目标平台code
+         * 接口入参：来源系统code
          */
         private String billTypeId;
 
@@ -283,7 +279,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public class ExpotParamDTO extends PagingParamDTO {
+    public static class ExpotParamDTO extends PagingParamDTO {
         /**
          * 主键id
          */

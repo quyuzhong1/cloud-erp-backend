@@ -9,11 +9,16 @@ import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_NEW_DMP_PUSH_TASK;
+
+@Component
+@Slf4j
 public class ExportNewDmpPushTaskHandler extends AbstractPageFileEventHandler<DmpOutputTaskRecordDTO.PagingDTO, DmpOutputTaskRecordDTO.ExpotParamDTO> {
 
     @Resource
@@ -38,6 +43,6 @@ public class ExportNewDmpPushTaskHandler extends AbstractPageFileEventHandler<Dm
 
     @Override
     public String getExcelPath() {
-        return "excel/dmp/dmpPushTask.xlsx";
+        return "excel/dmp/newDmpPushTask.xlsx";
     }
 }
