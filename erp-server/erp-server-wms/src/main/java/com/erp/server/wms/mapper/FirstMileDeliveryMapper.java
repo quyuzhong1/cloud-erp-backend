@@ -116,4 +116,11 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @return
      */
     List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@Param("ids") List<String> ids);
+
+    /**
+     * 根据发货单获取业务单号
+     * @param deliveryCodes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(@Param("deliveryCodes") List<String> deliveryCodes);
 }

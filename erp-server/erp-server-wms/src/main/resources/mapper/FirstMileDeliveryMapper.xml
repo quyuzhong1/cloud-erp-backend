@@ -406,6 +406,7 @@
     <select id="getBusinessCodeByIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
         SELECT
             fd.id,
+            fd.code,
             fdd.id as detailId,
             concat(fdd.fba_shipment_code,owi.code) AS businessCode,
             fdd.fba_shipment_code as fbaShipmentCode,
@@ -417,6 +418,25 @@
         <if test="ids != null and ids.size > 0">
             and fd.id in
             <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="getBusinessCodeByCodes" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
+        SELECT
+        fd.id,
+        fd.code,
+        fdd.id as detailId,
+        concat(fdd.fba_shipment_code,owi.code) AS businessCode,
+        fdd.fba_shipment_code as fbaShipmentCode,
+        owi.code as overseasWarehouseCode
+        FROM first_mile_delivery fd
+        LEFT JOIN first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE
+        where fd.is_deleted = FALSE
+        <if test="deliveryCodes != null and deliveryCodes.size > 0">
+            and fd.code in
+            <foreach collection="deliveryCodes" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>

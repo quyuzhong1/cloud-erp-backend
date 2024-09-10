@@ -35,6 +35,7 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -487,6 +488,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     .stream()
                     .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
         }
+        //发货单
+        List<String> deliveryCodes = viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getRelationCode).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByCodes(deliveryCodes);
         // 计费方式
         List<String> channelIds = viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
         Map<String, LogisticsChannelEntity> channelMap = logisticsChannelService.listByIds(channelIds)
@@ -547,6 +551,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 }else {
                     viewDTO.setReconciliationCountName(viewDTO.getReconciliationCount()+"次对账");
                 }
+            }
+            //业务单号查询逻辑修改 展示FBA发货单号和第三方货号-同期初展示逻辑
+            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.stream().filter(e -> Objects.equals(e.getCode(), viewDTO.getRelationCode())).findFirst().orElse(null);
+            if (Objects.nonNull(businessDTO)){
+                viewDTO.setBusinessCode(businessDTO.getBusinessCode());
+            }else {
+                viewDTO.setBusinessCode("");
             }
         }
     }

@@ -1301,6 +1301,7 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 发货单id
          */
         private String id;
+        private String code;
         /**
          * 发货单明细id
          */

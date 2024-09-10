@@ -148,4 +148,14 @@ public class WmsFirstMileDeliveryController {
     public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@RequestBody List<String> ids){
         return firstMileDeliveryService.getBusinessCodeByIds(ids);
     }
+
+    /**发货单查询业务单号
+     *
+     * @param deliveryCodes
+     * @return
+     */
+    @PostMapping("/getBusinessCodeByCodes")
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(@RequestBody List<String> deliveryCodes){
+        return firstMileDeliveryService.getBusinessCodeByCodes(deliveryCodes);
+    }
 }

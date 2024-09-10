@@ -178,4 +178,11 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
     void updateReconciliation(TmsFirstMileReconciliationDTO.UpdateDTO dto);
 
     PagingVO<TmsFirstMileReconciliationDTO.ListDTO> exportFirstMileReconciliation(PagingDTO<TmsFirstMileReconciliationDTO.ExportDTO> dto);
+
+    /**
+     * 根据物流单获取对账单信息和费用数据
+     * @param ids
+     * @return
+     */
+    List<TmsFirstMileLogisticDTO.ReconciliationDTO> listReconciliationAndCostByBillIds(List<String> ids);
 }

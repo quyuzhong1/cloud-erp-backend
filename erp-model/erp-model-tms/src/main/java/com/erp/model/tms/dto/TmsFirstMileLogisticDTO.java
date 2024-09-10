@@ -1571,4 +1571,19 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String channelId;
     }
 
+    /**
+     * 对账单参数和费用表记录
+     */
+    @Data
+    public static class ReconciliationDTO {
+        private String id;
+        private String logisticsBillId;
+        private String reconciliationStatus;
+        private BigDecimal actualWeight;
+        private BigDecimal volumeWeight;
+        private BigDecimal weightLogistics;
+        private BigDecimal volumeWeightLogistics;
+        private String weightUnit;
+        private String currency;
+    }
 }

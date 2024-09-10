@@ -166,5 +166,32 @@
         </if>
         GROUP BY approve_status
     </select>
+    <select id="listReconciliationAndCostByBillIds"
+            resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ReconciliationDTO">
+        select id,logistics_bill_id,reconciliation_status,actual_weight,volume_weight,weight_logistics,volume_weight_logistics,weight_unit,currency,rn
+        from (
+            select
+                bill.id,
+                bill.logistics_bill_id,
+                bill.reconciliation_status,
+                bill.actual_weight,
+                bill.volume_weight,
+                bill.weight_logistics,
+                bill.volume_weight_logistics,
+                bill.weight_unit,
+                bill.currency,
+                ROW_NUMBER() OVER (PARTITION BY bill.logistics_bill_id ORDER BY bill.create_time) AS rn
+            from logistics_bill_cost bill
+            left join tms_first_mile_reconciliation_detail tfmrd
+                on bill.reconciliation_id = tfmrd.main_id and tfmrd.is_deleted = false and tfmrd."type" = 'actual' and tfmrd.reconciliation_count = 1
+            where bill.is_deleted = false
+            <if test="ids != null and ids.size > 0">
+                AND bill.logistics_bill_id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+             ) as detail where rn = 1
+    </select>
 
 </mapper>

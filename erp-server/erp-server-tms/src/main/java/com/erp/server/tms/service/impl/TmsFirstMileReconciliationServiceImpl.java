@@ -742,4 +742,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         fillList(page.getRecords());
         return new PagingVO<>(page);
     }
+
+    @Override
+    public List<TmsFirstMileLogisticDTO.ReconciliationDTO> listReconciliationAndCostByBillIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listReconciliationAndCostByBillIds(ids);
+    }
 }
