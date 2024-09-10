@@ -979,6 +979,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseFeign.listWarehouseByIds(warehouseIds);
         String sourceId = applicationDTOList.get(0).getId();
         String sourceCode = applicationDTOList.get(0).getCode();
+        List<String> skuIds = applicationDTOList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
 
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : applicationDTOList) {
@@ -1012,7 +1013,20 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         paramDto.setApplyDate(LocalDate.now());
         paramDto.setApplyUserId(userList.get(0).getUserId());
         paramDto.setApplyDeptId(userList.get(0).getDepartmentId());
-        paramDto.setIsFirstMassProduct(Boolean.TRUE);
+
+        //是否新品首批
+        List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationFeign.listBySourceIds(Collections.singletonList(sourceId));
+        if(purchaseApplicationList.isEmpty()){
+            paramDto.setIsFirstMassProduct(Boolean.TRUE);
+        }else {
+            List<String> mainIds = purchaseApplicationList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+            List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailFeign.listByMainIds(mainIds);
+            if(purchaseApplicationDetailList.isEmpty()){
+                paramDto.setIsFirstMassProduct(Boolean.TRUE);
+            }else {
+                paramDto.setIsFirstMassProduct(purchaseApplicationDetailList.stream().anyMatch(item -> skuIds.contains(item.getSkuId())) ? Boolean.FALSE : Boolean.TRUE);
+            }
+        }
         paramDto.setDetails(detailList);
         paramDto.setSourceId(sourceId);
         paramDto.setSourceCode(sourceCode);
