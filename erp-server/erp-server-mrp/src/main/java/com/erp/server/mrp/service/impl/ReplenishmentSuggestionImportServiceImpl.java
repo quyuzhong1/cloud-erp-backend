@@ -282,7 +282,19 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 continue;
             }
             CfgRuleStockUpDTO.CustomUpdateDTO customUpdateDTO = formatCfgRuleStockUpDTO(excelDTO,entity);
-            cgRuleStockUpService.customUpdate(customUpdateDTO);
+            try {
+                cgRuleStockUpService.customUpdate(customUpdateDTO);
+            }catch (Exception e) {
+                errorMsgList.add(e.getMessage());
+            }
+            //添加错误数据
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                //错误数据
+                wrongList.add(excelDTO);
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
         }
         successList.removeAll(wrongList);
     }
@@ -497,13 +509,14 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             String skuId = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
 
             //补货建议主表信息
-            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, excelDTO.getPlatform())).findFirst().orElse(null);
+            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
             }
             //备货信息
-            CfgRuleStockUpEntity cfgRuleStockUpEntity = cfgRuleStockUpList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), entity.getId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity)) {
+            String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
+            CfgRuleStockUpEntity cfgRuleStockUpEntity = cfgRuleStockUpList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), suggestId)).findFirst().orElse(new CfgRuleStockUpEntity());
+            if (StrUtil.isBlank(cfgRuleStockUpEntity.getId())) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的备货设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
             }
             //备货系数
@@ -616,6 +629,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //SKU
             String skuId = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
 
+            if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(excelDTO.getDefaultTypeName()) && StrUtil.isBlank(excelDTO.getFixedValue())) {
+                errorMsgList.add("默认固定销量类型，固定日销量必填");
+            }
             //补货建议主表信息
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, excelDTO.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
@@ -626,16 +642,52 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             if (ObjectUtil.isEmpty(salesQtyEntity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的销量设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
             }
+            //错误数据
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 wrongList.add(excelDTO);
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(excelDTO);
                 continue;
             }
+            //销量主表
+            CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO = formatSalesQty(entity);
+            //默认销量
             List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = formatDefaultSalesQty(excelDTO);
-            cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+            try {
+                //更新产品销量配置
+                cfgRuleSalesQtyService.update(updateDTO);
+
+                //添加默认配置
+                cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+            } catch (Exception e) {
+                errorMsgList.add(e.getMessage());
+            }
+            //保存里面的验证
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                wrongList.add(excelDTO);
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
         }
         successList.removeAll(wrongList);
+    }
+
+    /**
+     * 销量主表数据
+     * @author will
+     * @date 2024/9/10 11:45
+     * @param entity
+     * @return UpdateDetailDTO
+     */
+    private CfgRuleSalesQtyDTO.UpdateDetailDTO  formatSalesQty (ReplenishmentSuggestionEntity entity) {
+        CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO = new CfgRuleSalesQtyDTO.UpdateDetailDTO();
+        updateDTO.setType(CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode());
+        updateDTO.setPlatformType(entity.getPlatformType());
+        updateDTO.setRefId(entity.getId());
+        updateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+        updateDTO.setIsCustom(Boolean.TRUE);
+        return updateDTO;
     }
 
     /**
@@ -768,7 +820,18 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 continue;
             }
             List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = formatDynamicSalesQty(excelDTO);
-            cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+            try {
+                cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+            } catch (Exception e) {
+                errorMsgList.add(e.getMessage());
+            }
+            //保存里面的验证
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                wrongList.add(excelDTO);
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
         }
         successList.removeAll(wrongList);
     }
@@ -884,7 +947,18 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 continue;
             }
             List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = formatFixedSalesQty(excelDTO);
-            cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+            try {
+                cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+            } catch (Exception e) {
+                errorMsgList.add(e.getMessage());
+            }
+            //保存里面的验证
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                wrongList.add(excelDTO);
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
         }
         successList.removeAll(wrongList);
     }
@@ -998,7 +1072,18 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 continue;
             }
             List<CfgRuleSalesDenoisingDTO.UpdateDTO> updateDTOList = formatSalesDenoising(excelDTO);
-            cfgRuleSalesDenoisingService.update(updateDTOList,salesQtyEntity.getId(),Boolean.TRUE);
+            try {
+                cfgRuleSalesDenoisingService.update(updateDTOList,salesQtyEntity.getId(),Boolean.TRUE);
+            } catch (Exception e) {
+                errorMsgList.add(e.getMessage());
+            }
+            //保存里面的验证
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                wrongList.add(excelDTO);
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
         }
         successList.removeAll(wrongList);
     }
@@ -1201,7 +1286,18 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 continue;
             }
             SalesEstimateManualDTO.UpdateDTO salesEstimateManualList = formatSalesEstimateManual(excelDTO,entity);
-            salesEstimateManualService.update(salesEstimateManualList,entity.getId());
+            try {
+                salesEstimateManualService.update(salesEstimateManualList,entity.getId());
+            } catch (Exception e) {
+                errorMsgList.add(e.getMessage());
+            }
+            //保存里面的验证
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                wrongList.add(jsonObject);
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(jsonObject);
+                continue;
+            }
         }
         successList.addAll(wrongList);
     }

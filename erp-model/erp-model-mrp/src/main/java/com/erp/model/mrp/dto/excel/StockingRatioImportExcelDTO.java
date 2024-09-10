@@ -49,14 +49,14 @@ public class StockingRatioImportExcelDTO implements Serializable {
      * 开始日期
      */
     @ExcelProperty(value = "*开始日期", index = 4)
-    @FieldValid(fieldName = "开始日期", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DATE_S)
+    @FieldValid(fieldName = "开始日期", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String startDateStr;
 
     /**
      * 结束日期
      */
     @ExcelProperty(value = "*结束日期", index = 5)
-    @FieldValid(fieldName = "结束日期", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DATE_S)
+    @FieldValid(fieldName = "结束日期", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String endDateStr;
 
     /**

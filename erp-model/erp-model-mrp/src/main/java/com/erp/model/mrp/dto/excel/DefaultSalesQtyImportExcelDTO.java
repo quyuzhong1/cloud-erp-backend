@@ -57,14 +57,14 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      * 3天日均（%）
      */
     @ExcelProperty(value = "3天日均（%）", index = 5)
-    @FieldValid(fieldName = "3天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "3天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String threeDaysRatio;
 
     /**
      * 7天日均（%）
      */
     @ExcelProperty(value = "7天日均（%）", index = 6)
-    @FieldValid(fieldName = "7天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "7天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String sevenDaysRatio;
 
 
@@ -72,7 +72,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      * 14天日均（%）
      */
     @ExcelProperty(value = "14天日均（%）", index = 7)
-    @FieldValid(fieldName = "14天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "14天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String fourteenDaysRatio;
 
 
@@ -81,7 +81,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      * 30天日均（%）
      */
     @ExcelProperty(value = "30天日均（%）", index = 8)
-    @FieldValid(fieldName = "30天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "30天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String thirtyDaysRatio;
 
 
@@ -90,7 +90,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      * 60天日均（%）
      */
     @ExcelProperty(value = "60天日均（%）", index = 9)
-    @FieldValid(fieldName = "60天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "60天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String sixtyDaysRatio;
 
 
@@ -98,7 +98,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      * 90天日均（%）
      */
     @ExcelProperty(value = "90天日均（%）", index = 10)
-    @FieldValid(fieldName = "90天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "90天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String ninetyDaysRatio;
 
 
@@ -106,7 +106,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      * 180天日均（%）
      */
     @ExcelProperty(value = "180天日均（%）", index = 11)
-    @FieldValid(fieldName = "180天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "180天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String oneHundredEightyDaysRatio;
 
 
@@ -114,7 +114,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      * 270天日均（%）
      */
     @ExcelProperty(value = "270天日均（%）", index = 12)
-    @FieldValid(fieldName = "270天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "270天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String twoHundredSeventyDaysRatio;
 
 
@@ -122,7 +122,7 @@ public class DefaultSalesQtyImportExcelDTO implements Serializable {
      * 360天日均（%）
      */
     @ExcelProperty(value = "360天日均（%）", index = 13)
-    @FieldValid(fieldName = "360天日均（%）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "360天日均（%）",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String threeHundredSixtyDaysRatio;
 
     /**
