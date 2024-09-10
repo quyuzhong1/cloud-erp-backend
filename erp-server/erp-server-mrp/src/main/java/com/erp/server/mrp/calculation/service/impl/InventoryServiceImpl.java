@@ -1,18 +1,14 @@
 package com.erp.server.mrp.calculation.service.impl;
 
 import com.common.business.enums.SourceTypeEnum;
-import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
-import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
-import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
-import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
-import com.erp.model.mrp.enums.SnapshotTableEnum;
+import com.erp.model.mrp.dto.*;
+import com.erp.model.mrp.enums.*;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
+import com.erp.server.mrp.calculation.service.ShopInfoService;
 import com.erp.server.mrp.mapper.InventoryMapper;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
 import com.google.common.collect.Lists;
@@ -22,9 +18,12 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -35,6 +34,8 @@ import static com.erp.model.mrp.enums.SnapshotTableEnum.*;
 public class InventoryServiceImpl implements InventoryService {
     @Resource
     private InventoryMapper inventoryMapper;
+    @Resource
+    private ShopInfoService shopInfoService;
 
     @Resource
     private ReplenishmentSuggestionService replenishmentSuggestionService;
@@ -173,9 +174,65 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public int getLocalUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+        int qty = 0;
+        CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
-        inventoryMapper.getLocalUsable(replenishmentResultDTO, codes, getTableName(INVENTORY, calcDate));
-        return 0;
+        List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localUsableDetail = new ArrayList<>();
+        if (warehouseResult.getIsEnableVirtual()) {
+            List<LocalInventoryDTO> invetoryList = inventoryMapper.getVirtualUsable(replenishmentResultDTO.getReplenishment().getSkuId(), codes, getTableName(VIRTUAL_INVENTORY, calcDate));
+            for (LocalInventoryDTO dto : invetoryList) {
+                for (CfgRuleWarehouseDTO.StrategyDetailResultDTO result : warehouseResult.getLocalWarehouseList()) {
+                    if (!result.getVirtualWarehouseId().equals(dto.getWarehouseId()) || (VitualWarehouseChannelTypeEnum.SHOP.getCode().equals(result.getChannelType())
+                            && !result.getChannelIdJson().contains(replenishmentResultDTO.getReplenishment().getShopId()))) {
+                        continue;
+                    }
+                    //根据库存分配配置
+                    qty = getInventoryQty(replenishmentResultDTO, qty, localUsableDetail, dto, result);
+                }
+            }
+        } else {
+            List<LocalInventoryDTO> invetoryList = inventoryMapper.getLocalUsable(replenishmentResultDTO.getReplenishment().getSkuId(), codes, getTableName(INVENTORY, calcDate));
+            for (LocalInventoryDTO dto : invetoryList) {
+                for (CfgRuleWarehouseDTO.StrategyDetailResultDTO result : warehouseResult.getLocalWarehouseList()) {
+                    if (!result.getWarehouseId().equals(dto.getWarehouseId()) || (VitualWarehouseChannelTypeEnum.SHOP.getCode().equals(result.getChannelType())
+                            && !result.getChannelIdJson().contains(replenishmentResultDTO.getReplenishment().getShopId()))) {
+                        continue;
+                    }
+                    //根据库存分配配置
+                    qty = getInventoryQty(replenishmentResultDTO, qty, localUsableDetail, dto, result);
+                }
+            }
+        }
+        replenishmentResultDTO.setLocalUsableDetail(localUsableDetail);
+        return qty;
+    }
+
+    private int getInventoryQty(ReplenishmentResultDTO replenishmentResultDTO, int qty, List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localUsableDetail, LocalInventoryDTO dto, CfgRuleWarehouseDTO.StrategyDetailResultDTO result) {
+        if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(result.getInventoryAllocateType())) {
+            qty += dto.getQty();
+            localUsableDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO
+                    .buildReplenishmentInventoryDetailDTO(ReplenishmentInventoryTypeEnum.LOCAL_USABLE.getCode(), result, dto.getQty(), Collections.emptyList()));
+        } else {
+            List<String> shopIds;
+            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(result.getChannelType())) {
+                //查询平台对应店铺
+                shopIds = shopInfoService.getShopInfoByPlatform(String.valueOf(result.getChannelIdJson().get(0)));
+            } else {
+                shopIds = result.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
+            }
+            List<LocalInventoryDTO.ShopSalesDTO> shopSales = replenishmentSuggestionService.getSalesByShopIds(shopIds, replenishmentResultDTO.getReplenishment().getSkuId());
+            int total = shopSales.stream()
+                    .map(LocalInventoryDTO.ShopSalesDTO::getQty)
+                    .reduce(0, Math::addExact);
+            // 计算每个店铺的占比
+            List<ReplenishmentResultDTO.ShopInventoryDetailDTO> detailDTOS = new ArrayList<>();
+            for (LocalInventoryDTO.ShopSalesDTO shopSale : shopSales) {
+                detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(shopSale.getShopId(), new BigDecimal(dto.getQty()).multiply(new BigDecimal(shopSale.getQty()).divide(new BigDecimal(total), 2 , RoundingMode.HALF_UP))));
+            }
+            localUsableDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO
+                    .buildReplenishmentInventoryDetailDTO(ReplenishmentInventoryTypeEnum.LOCAL_USABLE.getCode(), result, dto.getQty(), detailDTOS));
+        }
+        return qty;
     }
 
     /**

@@ -22,6 +22,7 @@ public enum SnapshotTableEnum implements EnumMessage {
     WMS_DELIVERY_PLAN_DETAIL("wms_delivery_plan_detail", "发货计划详情表"),
     OVERSEAS_INVENTORY("overseas_inventory", "海外仓库存"),
     INVENTORY("inventory", "库存表"),
+    VIRTUAL_INVENTORY("virtual_inventory", "库存表"),
     ;
 
     private final String code;

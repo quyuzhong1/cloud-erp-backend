@@ -159,6 +159,15 @@ public class CfgRuleWarehouseDTO implements Serializable {
     @Setter
     public static class StrategyResultDTO {
         /**
+         * 是否启禁用虚拟仓，true启用，false禁用
+         */
+        private Boolean isEnableVirtual;
+        /**
+         * 是否启禁用海外仓，true启用，false禁用
+         */
+        private Boolean isEnableOverseas;
+
+        /**
          * 本地仓
          */
         private List<StrategyDetailResultDTO> localWarehouseList;

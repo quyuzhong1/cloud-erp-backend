@@ -739,6 +739,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return null;
     }
 
+    @Override
+    public List<LocalInventoryDTO.ShopSalesDTO> getSalesByShopIds(List<String> shopIds, String skuId) {
+        return baseMapper.getSalesByShopIds(shopIds, skuId);
+    }
+
     /**
      * 导出数据处理
      * @author will

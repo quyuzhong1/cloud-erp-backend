@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.mrp.enums.RecentTimePeriodEnum;
 import com.erp.model.mrp.enums.TimePeriodEnum;
@@ -39,6 +40,11 @@ public class ReplenishmentResultDTO {
      * 海外仓到货明细
      */
     private List<EstimatedDeliveryDetailDTO> overseasDeliveryDetails;
+    /**
+     * 本地可用明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> localUsableDetail;
+
     /**
      * 本地在途明细
      */
@@ -777,5 +783,86 @@ public class ReplenishmentResultDTO {
          */
         private LocalDate estimateSalesDate;
 
+    }
+
+
+    @Getter
+    @Setter
+    public static class ReplenishmentInventoryDetailDTO {
+        /**
+         * 类型   海外仓可用/海外仓在途/预计发货/本地仓可用/本地仓在途/预计采购
+         */
+        private String inventoryType;
+
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+
+        /**
+         * 仓库类型，local本地，overseas海外
+         */
+        private String warehouseType;
+
+        /**
+         * 关联店铺类型，platform按平台，shop按店铺
+         */
+        private String channelType;
+
+        /**
+         * 店铺id的json
+         */
+        private JSONArray channelIdJson;
+
+        /**
+         * 库存分配类型
+         */
+        private String inventoryAllocateType;
+
+        /**
+         * 总数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 店铺明细
+         */
+        private List<ShopInventoryDetailDTO> shopInventoryDetails;
+
+        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, CfgRuleWarehouseDTO.StrategyDetailResultDTO result, Integer totalQty, List<ShopInventoryDetailDTO> shopInventoryDetails){
+            ReplenishmentInventoryDetailDTO dto = new ReplenishmentInventoryDetailDTO();
+            dto.setInventoryType(inventoryType);
+            dto.setWarehouseId(result.getWarehouseId());
+            dto.setVirtualWarehouseId(result.getVirtualWarehouseId());
+            dto.setWarehouseType(result.getWarehouseType());
+            dto.setChannelType(result.getChannelType());
+            dto.setChannelIdJson(result.getChannelIdJson());
+            dto.setInventoryAllocateType(result.getInventoryAllocateType());
+            dto.setTotalQty(totalQty);
+            dto.setShopInventoryDetails(shopInventoryDetails);
+            return dto;
+        }
+    }
+
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ShopInventoryDetailDTO {
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 数量
+         */
+        private BigDecimal qty;
     }
 }

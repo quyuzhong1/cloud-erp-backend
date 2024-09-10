@@ -1,6 +1,7 @@
 package com.erp.server.mrp.mapper;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.mrp.dto.LocalInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -34,4 +35,6 @@ public interface ReplenishmentSuggestionMapper extends BaseMapper<ReplenishmentS
      * @return List<ReplenishmentSuggestionEntity>
      */
     List<ReplenishmentSuggestionEntity> listByUnique(@Param("platformCodeList") List<String> platformCodeList,@Param("shopIdList")  List<String> shopIdList,@Param("skuIdList")  List<String> skuIdList);
+
+    List<LocalInventoryDTO.ShopSalesDTO> getSalesByShopIds(@Param("shopIds") List<String> shopIds,@Param("skuId") String skuId);
 }

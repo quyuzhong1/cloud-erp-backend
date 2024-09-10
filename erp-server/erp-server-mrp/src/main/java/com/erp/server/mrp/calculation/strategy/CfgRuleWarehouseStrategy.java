@@ -32,6 +32,8 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
     public CfgRuleWarehouseDTO.StrategyResultDTO process(CfgRuleWarehouseDTO.StrategyDTO strategyDTO) {
         CfgRuleWarehouseDTO.StrategyResultDTO strategyResultDTO = new CfgRuleWarehouseDTO.StrategyResultDTO();
         CfgRuleWarehouseEntity cfgRuleWarehouse = cfgRuleWarehouseService.getByPlatformType(strategyDTO.getPlatformType());
+        strategyResultDTO.setIsEnableOverseas(cfgRuleWarehouse.getIsEnableOverseas());
+        strategyResultDTO.setIsEnableVirtual(cfgRuleWarehouse.getIsEnableVirtual());
         List<CfgRuleWarehouseDetailEntity> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listByMainIdList(Collections.singletonList(cfgRuleWarehouse.getId()));
         //本地仓/虚拟仓
         List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> localWarehouse = cfgRuleWarehouseDetailList.stream()
