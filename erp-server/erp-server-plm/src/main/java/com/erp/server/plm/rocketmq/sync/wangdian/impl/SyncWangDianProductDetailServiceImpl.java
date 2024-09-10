@@ -98,7 +98,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.PRODUCT_DETAIL.getCode())
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.WDT_PRODUCT_DETAIL.getCode())
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();
@@ -119,7 +119,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         
         PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
         plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
-        plmPushMsgEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.WDT_PRODUCT_DETAIL.getCode());
         plmPushMsgEntity.setSourceId(entity.getId());
         plmPushMsgEntity.setSourceCode(entity.getSkuNo());
         plmPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
