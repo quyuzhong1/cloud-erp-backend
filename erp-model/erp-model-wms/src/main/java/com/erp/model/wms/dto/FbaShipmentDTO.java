@@ -77,6 +77,13 @@ public class FbaShipmentDTO implements Serializable {
         @ColumnWidth(20)
         @ExcelProperty(value = "发货单号", index = 5)
         private String deliveryCode;
+
+        /**
+         * 装箱清单状态
+         */
+        @ColumnWidth(20)
+        @ExcelIgnore
+        private String packingDownload;
         /**
          * 平台货件状态
          */
