@@ -1,4 +1,4 @@
-package com.erp.rpc.wms.feign;
+package com.erp.rpc.scm.feign;
 
 import org.springframework.cloud.openfeign.FeignClient;
 
