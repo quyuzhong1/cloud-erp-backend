@@ -108,5 +108,54 @@
           and sku_no = #{result.replenishment.skuNo}
           and warehouse_id = #{result.replenishment.fbaWarehouseId}
     </select>
+    <select id="getPlanDelivery"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedDeliveryDetailDTO">
+        SELECT
+            wdp.approve_status AS status,
+            wdpd.qty AS qty,
+            wdp.create_time AS estimateSalesDate,
+            wdp.id AS sourceId,
+            wdp.code AS sourceCode
+        FROM
+            #{tableName} AS wdp
+                INNER JOIN #{tableDetailName} AS wdpd ON wdpd.is_deleted = FALSE
+                AND wdpd.main_id = wdp.id
+        WHERE
+            wdp.is_deleted = FALSE
+          AND wdp."type" = #{type} AND wdp.shop_id =  #{result.replenishment.shopId} AND wdpd.sku_id = #{result.replenishment.skuId}
+        <if test="codes != null and !codes.isEmpty()">
+            <!-- 当 codes 包含 'approve' 时 -->
+            <if test="'approve' in codes">
+                AND (
+                (wdp.status = 'approve' AND wdp.delivery_status = 'unShipped')
+                <!-- 检查并处理其他状态 -->
+                <if test="codes.size() > 1">
+                    OR wdp.status IN
+                    <foreach item="code" collection="codes" open="(" separator="," close=")">
+                        <!-- 跳过 'approve'，因为已单独处理 -->
+                        <if test="code != 'approve'">
+                            #{code}
+                        </if>
+                    </foreach>
+                </if>
+                )
+            </if>
+            <!-- 当 codes 不包含 'approve' 时，使用 IN 查询 -->
+            <if test="'approve' not in codes">
+                AND wdp.status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </if>
+    </select>
+    <select id="getOverseasUsable" resultType="java.lang.Integer">
+        select sum(#{code})
+        from #{tableName}
+        where is_deleted = false
+          and sku_id = #{result.replenishment.skuId}
+          and warehouse_id = #{result.replenishment.fbaWarehouseId}
+    </select>
+    <select id="getLocalUsable" resultType="java.lang.Integer"></select>
 
 </mapper>

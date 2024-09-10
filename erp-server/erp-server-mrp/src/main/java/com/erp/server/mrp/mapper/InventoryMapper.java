@@ -13,13 +13,13 @@ import java.util.List;
 public interface InventoryMapper {
 
 
-    int getFbaUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO,@Param("code") String code, @Param("tableName") String tableName);
+    int getFbaUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("code") String code, @Param("tableName") String tableName);
 
     int getFbaOldUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName);
 
     List<ReplenishmentResultDTO.FbaInTransitDetailDTO> getFbaShipment(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
-    List<ReplenishmentResultDTO.FbaInTransitDetailDTO> getFbaDelivery(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName,@Param("shipmentName") String shipmentName, @Param("shipmentDetailName") String shipmentDetailName);
+    List<ReplenishmentResultDTO.FbaInTransitDetailDTO> getFbaDelivery(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("shipmentName") String shipmentName, @Param("shipmentDetailName") String shipmentDetailName);
 
     List<LogisticsBillEntity> getLogisticsBillBySourceIds(@Param("sourceIds") List<String> firstMileDeliveryIds, @Param("tableName") String tableName);
 
@@ -29,4 +29,9 @@ public interface InventoryMapper {
 
     boolean isTableExist(@Param("tableName") String tableName);
 
+    List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getPlanDelivery(@Param("type") String type, @Param("codes") List<String> strategyCodes, @Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+
+    int getOverseasUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("code") String code, @Param("tableName") String tableName);
+
+    int getLocalUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("codes") List<String> codes,@Param("tableName") String tableName);
 }

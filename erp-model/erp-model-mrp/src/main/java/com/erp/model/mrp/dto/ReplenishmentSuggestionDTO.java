@@ -302,4 +302,15 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         private List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> salesDenoisingExportList;
     }
 
+
+    @Getter
+    @Setter
+    public static class SalesDTO {
+
+        private String skuId;
+
+        private String shopId;
+
+        private String originalSalesQty;
+    }
 }

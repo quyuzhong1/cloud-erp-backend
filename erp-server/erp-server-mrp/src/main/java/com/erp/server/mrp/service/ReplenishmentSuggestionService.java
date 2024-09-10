@@ -247,4 +247,6 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return PagingVO<ReplenishmentRuleDTO>
      */
     PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
+
+    List<ReplenishmentSuggestionDTO.SalesDTO> listSalesBySkuId(String skuId);
 }
