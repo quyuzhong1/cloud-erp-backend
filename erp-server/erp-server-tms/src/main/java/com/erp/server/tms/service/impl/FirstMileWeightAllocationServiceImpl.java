@@ -380,19 +380,20 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO add(String logisticsBillId) {
+        //物流单
+        LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillId);
+
         Integer count = this.lambdaQuery().eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).count();
         if(count > 0){
-            throw new ServiceException("已下推重量分摊，不能再次下推");
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "已下推重量分摊，不能再次下推");
         }
 
         FirstMileWeightAllocationDTO.LogisticsBillInfoDTO logisticsBillInfo = baseMapper.getLogisticsBillInfo(logisticsBillId);
         //物流渠道
         LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsBillInfo.getChannelId());
         if(logisticsChannelEntity == null){
-            throw new ServiceException("没有找到物流渠道");
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "没有找到物流渠道");
         }
-        //物流单
-        LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillId);
         //发货单
         String deliveryId = logisticsBillEntity.getOutstockId();
         List<FirstMileDeliveryEntity> firstMileDeliveryList = wmsFirstMileDeliveryFeign.listByIds(Collections.singletonList(deliveryId));
@@ -410,7 +411,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getId());
         }
         if(packingTaskEntity == null){
-            throw new ServiceException("没有找到装箱任务");
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "没有找到装箱任务");
         }
         //装箱内容物详情
         List<WmsCartonDTO.DetailDTO> cartonDetailList = wmsCartonFeign.listByPackingTaskId(packingTaskEntity.getId());
@@ -439,7 +440,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             //备货第三方仓：取海外仓入库单号
             List<OverseasWarehouseInboundEntity> warehouseInboundEntity = overseaWarehouseInboundFeign.listBySourceIds(Collections.singletonList(deliveryId));
             if(!warehouseInboundEntity.isEmpty()){
-//                throw new ServiceException("没有找到有效的海外仓入库单号");
                 weightAllocationDTO.setBusinessCode(warehouseInboundEntity.get(0).getCode());
             }
         }
@@ -494,7 +494,8 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             BigDecimal boxSize = cartonDetail.getBoxLength().multiply(cartonDetail.getBoxWidth()).multiply(cartonDetail.getBoxHeight());
             BigDecimal volumeSetting = BigDecimal.valueOf(weightAllocationDTO.getVolumeSetting());
             if(volumeSetting.compareTo(BigDecimal.ZERO) == 0){
-                throw new ServiceException("物流渠道【{}】的材积设置不能为0", logisticsChannelEntity.getName());
+                String format = String.format("物流渠道【%s】的材积设置不能为0", logisticsChannelEntity.getName());
+                return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), format);
             }
             BigDecimal volumeWeight = boxSize.divide(volumeSetting, 4, RoundingMode.HALF_UP);
             entity.setVolumeWeight(volumeWeight);
@@ -522,7 +523,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         if(success){
             updateCostAllocationStatus(logisticsBillId);
         }
-        return success ? BatchResultDTO.success(logisticsBillId, logisticsBillId) : BatchResultDTO.fail(logisticsBillId, logisticsBillId, OperationTypeEnum.ADD);
+        return success ? BatchResultDTO.success(logisticsBillId, logisticsBillEntity.getTransportNo()) : BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "保存失败");
     }
 
     /**

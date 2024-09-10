@@ -274,7 +274,7 @@
                  LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
                  LEFT JOIN first_mile_sku_cost_allocation_detail cad ON cad.cost_main_id = ca.id AND cad.is_deleted = FALSE
                  LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
-        where a.logistics_bill_id = #{logisticsBillId}
+        where a.is_deleted = false and a.logistics_bill_id = #{logisticsBillId}
     </select>
 
 
