@@ -56,6 +56,7 @@ import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
@@ -674,15 +675,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             detailDTO.setMainSupplierName(supplierMap.containsKey(detailDTO.getMainSupplierId()) ? supplierMap.get(detailDTO.getMainSupplierId()).getName() : "");
             //二级供应商名称
             detailDTO.setSecondSupplierName(supplierMap.containsKey(detailDTO.getSecondSupplierId()) ? supplierMap.get(detailDTO.getSecondSupplierId()).getName() : "");
-            //产品费用
+            //目标成本
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(detailDTO.getSkuId())).findFirst();
             if(productCostEntityOptional.isPresent()){
                 ProductCostEntity productCostEntity = productCostEntityOptional.get();
                 detailDTO.setTargetTaxCost(productCostEntity.getTargetTaxCost());
                 detailDTO.setTargetNoTaxCost(productCostEntity.getTargetNoTaxCost());
-                detailDTO.setActualTaxCost(productCostEntity.getActualTaxCost());
-                detailDTO.setActualNoTaxCost(productCostEntity.getActualNoTaxCost());
             }
+            //实际成本
+            fillActualCost(detailDTO);
             //产品名称
             Optional<ProductDetailEntity> skuOptional = skuList.stream().filter(item -> item.getId().equals(detailDTO.getSkuId())).findFirst();
             skuOptional.ifPresent(sku -> {
@@ -723,6 +724,29 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<PilotApplicationDTO.AuditorHandleDTO> approveList = this.getApproveProcessList(pilotApplicationEntity);
         view.setApproveFlowList(approveList);
         return view;
+    }
+
+    /**
+     * 查询采购价目表，设置实际含税单价，实际不含税单价
+     */
+    private void fillActualCost(PilotApplicationDetailDTO.ViewDTO detailDTO) {
+        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+        searchDTO.setPurchaseQty(detailDTO.getApplyQty());
+        searchDTO.setSupplierId(detailDTO.getMainSupplierId());
+        searchDTO.setSkuId(detailDTO.getSkuId());
+        searchDTO.setSkuNo(detailDTO.getSkuNo());
+        try{
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailFeign.getTaxPrice(searchDTO);
+            for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+                if(detailDTO.getApplyQty() >= priceViewDTO.getMinQty() && detailDTO.getApplyQty() <= priceViewDTO.getMaxQty()){
+                    detailDTO.setActualTaxCost(priceViewDTO.getTaxPrice());
+                    detailDTO.setActualNoTaxCost(priceViewDTO.getTaxPrice().divide(priceViewDTO.getTaxRate().add(BigDecimal.valueOf(1)), 4, RoundingMode.HALF_UP));
+                    break;
+                }
+            }
+        }catch (Exception e){
+            log.error("没有找到价目表：{} {}", detailDTO.getSkuNo(), detailDTO.getMainSupplierName());
+        }
     }
 
     /**
