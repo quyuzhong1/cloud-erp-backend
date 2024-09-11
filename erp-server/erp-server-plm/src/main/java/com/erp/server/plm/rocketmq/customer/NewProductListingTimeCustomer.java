@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.utils.RedisUtil;
 import com.common.business.wrapper.FeignQuery;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
@@ -33,6 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 public class NewProductListingTimeCustomer implements RocketMQListener<String> {
     @Resource
     private ProductSaleService productSaleService;
+    
+    @Resource
+    private RedisUtil redisUtil;
 
     @Override
     public void onMessage(String data) {
@@ -69,6 +74,8 @@ public class NewProductListingTimeCustomer implements RocketMQListener<String> {
 			        .in(ProductSaleEntity::getSkuId, productIdList)
 			        .isNull(ProductSaleEntity::getListingTime)
 			        .update();
+			String key = RedisKeyConstant.PRODUCT_LISTING_TIME + sourcePlatform + ":" + platformSkuNo;
+			redisUtil.set(key, listingTime);
 		} catch (Throwable e) {
 			log.error("新中台监听到上市时间需要修改失败：{}", data , e);
 		}
