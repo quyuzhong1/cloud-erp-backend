@@ -467,6 +467,26 @@ public class FbaShipmentDTO implements Serializable {
         private String id;
         private String code;
     }
+    /**
+     * 快粘贴dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class QuickPasteDTO {
+
+        /**
+         * codes
+         */
+        @NotEmpty(message = "单号不能为空")
+        private List<String> codeList;
+
+        /**
+         * 要货申请id
+         */
+        @NotBlank(message = "要货申请不能为空")
+        private String requisitionId;
+    }
+
 
     /**
      * 列表查询返回值

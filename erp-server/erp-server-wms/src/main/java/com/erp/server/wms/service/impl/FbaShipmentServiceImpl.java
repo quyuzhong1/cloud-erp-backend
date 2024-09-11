@@ -1802,4 +1802,22 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         return new PagingVO(searchData);
     }
+
+    @Override
+    public List<String> requisitionFbaQuickPaste(FbaShipmentDTO.QuickPasteDTO dto) {
+        RequisitionApplicationEntity requisitionApplicationEntity = Optional.ofNullable(requisitionApplicationService.getById(dto.getRequisitionId())).orElseThrow(()->new ServiceException("要货申请为空"));
+        String shopId = requisitionApplicationEntity.getChannelId();
+        List<String> codeList = dto.getCodeList();
+        List<FbaShipmentEntity> fbaShipmentEntityList = this.lambdaQuery().eq(FbaShipmentEntity::getShopId,shopId).in(FbaShipmentEntity::getCode,codeList).list();
+        List<String> list = new ArrayList<>();
+        for (String code : codeList) {
+            FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntityList.stream().filter(v->v.getCode().equals(code)).findFirst().orElse(null);
+            if(Objects.isNull(fbaShipmentEntity)){
+                list.add("");
+            }else{
+                list.add(code);
+            }
+        }
+        return list;
+    }
 }

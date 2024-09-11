@@ -279,7 +279,7 @@
         </if>
     </select>
     <select id="fbaBindShipmentView"
-            resultType="com.erp.model.wms.dto.RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO">
+            resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$FbaBindShipmentViewDetailDTO">
         with erp_packing as (
             SELECT
                 DISTINCT wc.id as cartonId,
