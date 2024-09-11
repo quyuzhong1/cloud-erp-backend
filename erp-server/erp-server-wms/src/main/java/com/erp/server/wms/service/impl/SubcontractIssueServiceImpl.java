@@ -39,6 +39,7 @@ import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
@@ -316,9 +317,9 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         // 更新审核信息
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
         // 审核完成自动退料扣库存
-        autoOutStockInventory(entity,Boolean.FALSE);
+        inventoryTransCoreService.unApprove(new InventoryUnApproveDTO(InventorySourceTypeEnum.RECEIVE_MATERIAL, entity.getId()));
+//        autoOutStockInventory(entity,Boolean.FALSE);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
@@ -897,11 +898,12 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         for (SubcontractIssueDetailEntity detailEntity : subcontractIssueDetailList) {
             //操作请求实体
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            if (isDelivery) {
-                inOutStockDTO.setSourceType(InventorySourceTypeEnum.RECEIVE_MATERIAL);
-            } else {
-                inOutStockDTO.setSourceType(InventorySourceTypeEnum.RETURN_MATERIAL);
-            }
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.RECEIVE_MATERIAL);
+//            if (isDelivery) {
+//
+//            } else {
+//                inOutStockDTO.setSourceType(InventorySourceTypeEnum.RETURN_MATERIAL);
+//            }
             inOutStockDTO.setSourceId(entity.getId());
             inOutStockDTO.setSourceCode(entity.getCode());
             inOutStockDTO.setSourceDetailId(detailEntity.getId());
@@ -916,11 +918,11 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //生成领料出库单，需要按比例出库（父级SKU入库数量/父级SKU采购数量）（现没有领料出库单据，则直接调用领料库存变化逻辑）
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setParamList(inOutStockList);
-        if (isDelivery) {
+//        if (isDelivery) {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_PICK.getCode());
-        } else {
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_RETURN.getCode());
-        }
+//        } else {
+//            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_RETURN.getCode());
+//        }
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
 
     }

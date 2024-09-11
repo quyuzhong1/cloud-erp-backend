@@ -38,8 +38,8 @@ public enum InventoryBusinessTypeEnum {
     STOCKTAKING_PROFIT("stocktaking_profit_loss", "13", "盘盈"),
     STOCKTAKING_LOSS("stocktaking_profit_loss", "14", "盘亏"),
 
-    ASSEMBLE_PICK("assemble_pick", "15", "领料"),
-    ASSEMBLE_RETURN("assemble_return", "16", "退料"),
+    ASSEMBLE_PICK("assemble_pick", "15", "领料出库"),
+    ASSEMBLE_RETURN("assemble_return", "16", "领料入库"),
     ASSEMBLE_IN_PARENT("assemble_in_parent", "17", "加工单组装（父SKU增加）"),
     DISASSEMBLE_IN_PARENT("disassemble_in_parent", "18", "加工单拆卸（父SKU减少）"),
 
@@ -86,6 +86,8 @@ public enum InventoryBusinessTypeEnum {
     FIRST_MILE_PUSH_TRANSFER("first_mile_push_transfer", "46", "直接调拨单（头程发货单下推）"),
     ASSEMBLE_IN_PARENT_FREEZE("assemble_in_parent_freeze", "47", "加工单组装（父SKU冻结增加）"),
     ASSEMBLE_IN_CHILD_FREEZE("assemble_in_child_freeze", "48", "加工单组装（子SKU冻结减少）"),
+    SUBCONTRACT_RETURN_IN("subcontract_return_in", "49", "退料入库"),
+    SUBCONTRACT_RETURN_OUT("subcontract_return_out", "50", "退料出库"),
     ;
 
     private String code;
