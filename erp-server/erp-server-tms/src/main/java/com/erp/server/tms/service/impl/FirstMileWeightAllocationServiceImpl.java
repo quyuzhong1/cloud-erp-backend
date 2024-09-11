@@ -248,9 +248,17 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         //发货单明细
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailList = firstMileDeliveryDetailFeign.listByMainId(Collections.singletonList(firstMileDeliveryEntity.getId()));
         //装箱任务
-        PackingTaskEntity packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getSourceId());
+        PackingTaskEntity packingTaskEntity;
+        if(firstMileDeliveryEntity.getSourceType().equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode())){
+            packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getSourceId());
+            if(packingTaskEntity == null){
+                packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getId());
+            }
+        }else {
+            packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getId());
+        }
         if(packingTaskEntity == null){
-            throw new ServiceException("没有找到装箱任务");
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "没有找到装箱任务");
         }
         //系统配置
         CfgSettingDTO.ViewDTO cfgSettingView = cfgSettingService.view();
