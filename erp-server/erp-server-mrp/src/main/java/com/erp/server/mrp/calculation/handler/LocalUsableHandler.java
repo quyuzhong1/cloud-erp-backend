@@ -33,7 +33,7 @@ public class LocalUsableHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        CfgRuleCommonDTO.StrategyResultDTO inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
+        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         CfgRuleCommonDTO.StrategyResultDTO usable = TreeUtils.findByCode(inventoryResult, CfgRuleInventoryNodeEnum.LOCAL_USABLE.getCode());
         if (ObjectUtils.isEmpty(usable) || CollectionUtils.isEmpty(usable.getChildrenList())) {
             replenishmentResultDTO.getReplenishmentDetail().setFbaUsableQty(0);

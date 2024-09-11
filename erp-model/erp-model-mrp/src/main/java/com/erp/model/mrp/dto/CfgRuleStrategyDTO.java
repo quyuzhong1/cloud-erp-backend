@@ -20,11 +20,11 @@ public class CfgRuleStrategyDTO {
     /**
      * 库存
      */
-    private CfgRuleCommonDTO.StrategyResultDTO inventoryResult;
+    private List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult;
     /**
      * 建议
      */
-    private CfgRuleCommonDTO.StrategyResultDTO suggestAmountResult;
+    private List<CfgRuleCommonDTO.StrategyResultDTO> suggestAmountResult;
     /**
      * 仓库
      */

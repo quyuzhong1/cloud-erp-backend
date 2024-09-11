@@ -12,6 +12,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @Component
 public class FbaInTransitHandler extends AbstractSkuCalculationHandler {
@@ -33,7 +34,7 @@ public class FbaInTransitHandler extends AbstractSkuCalculationHandler {
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
         //获取需要计算库存的FBA在途配置
-        CfgRuleCommonDTO.StrategyResultDTO inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
+        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         CfgRuleCommonDTO.StrategyResultDTO inTransit = TreeUtils.findByCode(inventoryResult, CfgRuleInventoryNodeEnum.FBA_IN_TRANSIT.getCode());
         if (ObjectUtils.isEmpty(inTransit) || CollectionUtils.isEmpty(inTransit.getChildrenList())) {
             replenishmentResultDTO.getReplenishmentDetail().setFbaInTransitQty(0);

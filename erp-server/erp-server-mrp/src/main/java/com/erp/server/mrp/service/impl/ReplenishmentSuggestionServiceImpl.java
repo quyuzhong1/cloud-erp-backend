@@ -455,24 +455,24 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
      * @param updateDetailDTO
      */
     private void formatSalesQtyDefaultData (ReplenishmentSuggestionEntity entity,CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetailDTO) {
-        List<ReplenishmentSuggestionDetailEntity> detailList = replenishmentSuggestionDetailService.listByMainIdList(Arrays.asList(entity.getId()));
-        if (CollectionUtils.isEmpty(detailList)) {
-            return;
-        }
-        String skuType = detailList.get(0).getSkuType();
-        CfgRuleSalesQtyDTO.StrategyResultDTO defaultCfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultCfgRuleSalesQty(entity.getPlatformType(), skuType);
-        if (ObjectUtil.isEmpty(defaultCfgRuleSalesQty) || CollectionUtils.isEmpty(defaultCfgRuleSalesQty.getFormulaResults())) {
-            return;
-        }
-        CfgRuleSalesQtyDTO.StrategyFormulaResultDTO strategyFormulaResultDTO = defaultCfgRuleSalesQty.getFormulaResults().stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode())).findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(strategyFormulaResultDTO)) {
-            return;
-        }
-        CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultUpdateDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.DefaultUpdateDTO.class, strategyFormulaResultDTO);
-        defaultUpdateDTO.setId(null);
-        CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = JSONUtil.toBean(strategyFormulaResultDTO.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class);
-        defaultUpdateDTO.setPercentJsonDTO(percentJsonDTO);
-        updateDetailDTO.setDefaultSalesQtyDTO(defaultUpdateDTO);
+//        List<ReplenishmentSuggestionDetailEntity> detailList = replenishmentSuggestionDetailService.listByMainIdList(Arrays.asList(entity.getId()));
+//        if (CollectionUtils.isEmpty(detailList)) {
+//            return;
+//        }
+//        String skuType = detailList.get(0).getSkuType();
+//        CfgRuleSalesQtyDTO.StrategyResultDTO defaultCfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultCfgRuleSalesQty(entity.getPlatformType(), skuType);
+//        if (ObjectUtil.isEmpty(defaultCfgRuleSalesQty) || CollectionUtils.isEmpty(defaultCfgRuleSalesQty.getFormulaResults())) {
+//            return;
+//        }
+//        CfgRuleSalesQtyDTO.StrategyFormulaResultDTO strategyFormulaResultDTO = defaultCfgRuleSalesQty.getFormulaResults().stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode())).findFirst().orElse(null);
+//        if (ObjectUtil.isEmpty(strategyFormulaResultDTO)) {
+//            return;
+//        }
+//        CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultUpdateDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.DefaultUpdateDTO.class, strategyFormulaResultDTO);
+//        defaultUpdateDTO.setId(null);
+//        CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = JSONUtil.toBean(strategyFormulaResultDTO.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class);
+//        defaultUpdateDTO.setPercentJsonDTO(percentJsonDTO);
+//        updateDetailDTO.setDefaultSalesQtyDTO(defaultUpdateDTO);
     }
 
 

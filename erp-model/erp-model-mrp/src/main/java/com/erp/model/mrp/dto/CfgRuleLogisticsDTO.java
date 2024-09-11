@@ -161,20 +161,24 @@ public class CfgRuleLogisticsDTO implements Serializable {
          */
         private String warehouseId;
 
-        public void buildLogisticsResult(CfgRuleLogisticsDetailEntity detail, CfgRuleLogisticsEntity logistics) {
-            this.setLogisticsDays(detail.getLogisticsDays());
-            this.setLogisticsMethod(logistics.getLogisticsMethod());
-            this.setArea(detail.getArea());
-            this.setType(detail.getType());
-            this.setLogisticsCycleDays(logistics.getLogisticsCycleDays());
-            this.setShopIdJson(detail.getShopIdJson());
-            this.setWarehouseId(detail.getWarehouseId());
+        public static LogisticsResultDTO buildLogisticsResult(CfgRuleLogisticsDetailEntity detail, CfgRuleLogisticsEntity logistics) {
+            LogisticsResultDTO dto = new LogisticsResultDTO();
+            dto.setLogisticsDays(detail.getLogisticsDays());
+            dto.setLogisticsMethod(logistics.getLogisticsMethod());
+            dto.setArea(detail.getArea());
+            dto.setType(detail.getType());
+            dto.setLogisticsCycleDays(logistics.getLogisticsCycleDays());
+            dto.setShopIdJson(detail.getShopIdJson());
+            dto.setWarehouseId(detail.getWarehouseId());
+            return dto;
         }
 
-        public void buildLogisticsResult(CfgRuleLogisticsEntity logistics) {
-            this.setLogisticsDays(logistics.getLogisticsDays());
-            this.setLogisticsMethod(logistics.getLogisticsMethod());
-            this.setLogisticsCycleDays(logistics.getLogisticsCycleDays());
+        public static LogisticsResultDTO buildLogisticsResult(CfgRuleLogisticsEntity logistics) {
+            LogisticsResultDTO dto = new LogisticsResultDTO();
+            dto.setLogisticsDays(logistics.getLogisticsDays());
+            dto.setLogisticsMethod(logistics.getLogisticsMethod());
+            dto.setLogisticsCycleDays(logistics.getLogisticsCycleDays());
+            return dto;
         }
     }
 

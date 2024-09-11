@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.service;
 
+import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
@@ -57,4 +58,20 @@ public interface InventoryService {
      * @param cfgRuleStrategyDTO     配置
      */
     int getLocalUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO);
+
+    /**
+     * 获取本地仓在途
+     * @param replenishmentResultDTO 参数
+     * @param codes                  编码
+     * @param cfgRuleStrategyDTO     配置
+     */
+    int getLocalInTransit(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO);
+
+    /**
+     * 获取本地仓在途
+     * @param replenishmentResultDTO 参数
+     * @param localPurchase          本地采购
+     * @param cfgRuleStrategyDTO     配置
+     */
+    int getLocalPurchase(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleCommonDTO.StrategyResultDTO localPurchase, CfgRuleStrategyDTO cfgRuleStrategyDTO);
 }

@@ -1,6 +1,8 @@
 package com.erp.server.mrp.service.impl;
 
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionDetailEntity;
 import com.erp.server.mrp.mapper.ReplenishmentSuggestionDetailMapper;
 import com.erp.server.mrp.service.ReplenishmentSuggestionDetailService;
@@ -27,5 +29,12 @@ public class ReplenishmentSuggestionDetailServiceImpl extends SuperServiceImpl<R
             return Collections.EMPTY_LIST;
         }
         return lambdaQuery().in(ReplenishmentSuggestionDetailEntity::getMainId,mainIdList).list();
+    }
+
+    @Override
+    public void saveDetail(ReplenishmentResultDTO.DetailDTO replenishmentDetail) {
+        ReplenishmentSuggestionDetailEntity entity = BeanMapperUtils.map(ReplenishmentSuggestionDetailEntity.class, replenishmentDetail);
+        entity.setId(replenishmentDetail.getDetailId());
+        save(entity);
     }
 }

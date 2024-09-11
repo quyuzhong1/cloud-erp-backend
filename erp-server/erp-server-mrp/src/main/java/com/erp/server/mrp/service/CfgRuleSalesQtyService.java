@@ -64,13 +64,6 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @return
      */
     CfgRuleSalesQtyEntity getByRefId(String refId);
-
-    /**
-     * 获取默认销量配置
-     * @param platformType 平台类型
-     * @param type sku类型
-     */
-    CfgRuleSalesQtyDTO.StrategyResultDTO getDefaultCfgRuleSalesQty(String platformType, String type);
     /**
      *
      * @author will
@@ -88,4 +81,9 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @return ViewDetailDTO
      */
     CfgRuleSalesQtyDTO.ViewDetailDTO viewDetail(String platformType, String refId);
+
+    /**
+     * 获取默认销量配置
+     */
+    List<CfgRuleSalesQtyEntity> getDefaultCfgRuleSalesQty();
 }

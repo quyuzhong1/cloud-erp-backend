@@ -1,10 +1,7 @@
 package com.erp.model.mrp.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -226,6 +223,8 @@ public class CfgRuleCommonDTO implements Serializable {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class StrategyDTO {
         /**
          * 平台类型

@@ -54,6 +54,12 @@ public class ReplenishmentSuggestionEntity extends BaseEntity<ReplenishmentSugge
     private String shopId;
 
     /**
+     * 区域
+     */
+    @TableField("area")
+    private String area;
+
+    /**
      * 平台
      */
     @TableField("platform")

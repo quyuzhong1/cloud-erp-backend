@@ -71,6 +71,19 @@
         </where>
         order by crc.index asc
     </select>
+    <select id="listByPlatformTypeAndType"
+            resultType="com.erp.model.mrp.dto.CfgRuleCommonDTO$StrategyResultDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from cfg_rule_common crc
+        <where>
+            crc.is_deleted = false and is_default = #{isDefault}
+            and crc.platform_type = #{platformType}
+            and crc.type = #{type}
+        </where>
+        order by crc.index asc
+
+    </select>
 
 
 </mapper>

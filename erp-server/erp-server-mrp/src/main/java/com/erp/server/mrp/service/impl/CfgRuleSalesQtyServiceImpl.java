@@ -223,6 +223,11 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     }
 
     @Override
+    public List<CfgRuleSalesQtyEntity> getDefaultCfgRuleSalesQty() {
+        return list(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery().eq(CfgRuleSalesQtyEntity::getRefId, ""));
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteByRefId(String refId) {
         //销量数据
@@ -252,16 +257,6 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         return lambdaQuery().in(CfgRuleSalesQtyEntity::getRefId,refIdList).list();
     }
 
-
-
-    @Override
-    @Cacheable(cacheNames = "cache:mrp:getDefaultCfgRuleSalesQty",keyGenerator = "myKeyGenerator")
-    public CfgRuleSalesQtyDTO.StrategyResultDTO getDefaultCfgRuleSalesQty(String platformType, String type) {
-        CfgRuleSalesQtyEntity cfgRuleSalesQty = getByPlatformTypeAndType(platformType, type);
-        List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults = cfgRuleSalesFormulaService.listFormulaBySalesId(cfgRuleSalesQty.getId());
-        List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults = cfgRuleSalesDenoisingService.listDenoisingBySalesId(cfgRuleSalesQty.getId());
-        return CfgRuleSalesQtyDTO.StrategyResultDTO.buildStrategyResultDTO(cfgRuleSalesQty, formulaResults, denoisingResults);
-    }
 
     /**
      * 根据来源id查询

@@ -2,10 +2,7 @@ package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONArray;
 import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -139,6 +136,8 @@ public class CfgRuleWarehouseDTO implements Serializable {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class StrategyDTO {
 
         /**

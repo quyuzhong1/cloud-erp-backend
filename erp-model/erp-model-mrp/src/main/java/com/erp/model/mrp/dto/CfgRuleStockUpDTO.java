@@ -1,18 +1,17 @@
 package com.erp.model.mrp.dto;
 
-import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
+import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.springframework.util.ObjectUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * <p>
@@ -21,84 +20,82 @@ import java.util.List;
  *
  * @author will
  * @since 2024-08-23
-*/
+ */
 @Data
 @NoArgsConstructor
 public class CfgRuleStockUpDTO implements Serializable {
 
 
-
-
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 采购审批天数（天）
-        */
+         * 采购审批天数（天）
+         */
         private Integer purchaseApproveDays;
 
         /**
-        * 生产周期天数（天）
-        */
+         * 生产周期天数（天）
+         */
         private Integer productionDays;
 
         /**
-        * 供应商发货天数（天）
-        */
+         * 供应商发货天数（天）
+         */
         private Integer supplierDeliveryDays;
 
         /**
-        * 质检入库天数（天）
-        */
+         * 质检入库天数（天）
+         */
         private Integer qcDays;
 
         /**
-        * 采购频率天数（天）
-        */
+         * 采购频率天数（天）
+         */
         private Integer purchaseCycleDays;
 
         /**
-        * 安全天数（天）
-        */
+         * 安全天数（天）
+         */
         private Integer safeDays;
 
         /**
-        * 入库天数（天）
-        */
+         * 入库天数（天）
+         */
         private Integer instockDays;
 
         /**
-        * 常规品备货系数
-        */
+         * 常规品备货系数
+         */
         private BigDecimal stockingRatio;
 
         /**
-        * 新品备货系数
-        */
+         * 新品备货系数
+         */
         private BigDecimal newStockingRatio;
 
         /**
-        * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-        */
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
         private String platformType;
 
         /**
-        * 关联id
-        */
+         * 关联id
+         */
         private String refId;
 
         /**
-        * 关联类型
-        */
+         * 关联类型
+         */
         private String refType;
 
         /**
@@ -173,19 +170,19 @@ public class CfgRuleStockUpDTO implements Serializable {
          * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
          */
         @NotBlank(message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)不能为空")
-        @Size(max = 32,message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)最大长度不能超过32位")
+        @Size(max = 32, message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)最大长度不能超过32位")
         private String platformType;
 
         /**
          * 关联id
          */
-        @Size(max = 19,message = "关联id最大长度不能超过19位")
+        @Size(max = 19, message = "关联id最大长度不能超过19位")
         private String refId;
 
         /**
          * 关联类型
          */
-        @Size(max = 32,message = "关联类型最大长度不能超过32位")
+        @Size(max = 32, message = "关联类型最大长度不能超过32位")
         private String refType;
 
         /**
@@ -209,8 +206,8 @@ public class CfgRuleStockUpDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
@@ -245,100 +242,101 @@ public class CfgRuleStockUpDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 采购审批天数（天）
-        */
+         * 采购审批天数（天）
+         */
         @NotNull(message = "采购审批天数（天）不能为空")
-        @Min(value = 0,message = "采购审批天数（天）最小值为0")
-        @Max(value = 365,message = "采购审批天数（天）最大值为365")
+        @Min(value = 0, message = "采购审批天数（天）最小值为0")
+        @Max(value = 365, message = "采购审批天数（天）最大值为365")
         private Integer purchaseApproveDays;
 
         /**
-        * 生产周期天数（天）
-        */
+         * 生产周期天数（天）
+         */
         @NotNull(message = "生产周期天数（天）不能为空")
-        @Min(value = 0,message = "生产周期天数（天）最小值为0")
-        @Max(value = 365,message = "生产周期天数（天）最大值为365")
+        @Min(value = 0, message = "生产周期天数（天）最小值为0")
+        @Max(value = 365, message = "生产周期天数（天）最大值为365")
         private Integer productionDays;
 
         /**
-        * 供应商发货天数（天）
-        */
+         * 供应商发货天数（天）
+         */
         @NotNull(message = "供应商发货天数（天）不能为空")
-        @Min(value = 0,message = "供应商发货天数（天）最小值为0")
-        @Max(value = 365,message = "供应商发货天数（天）最大值为365")
+        @Min(value = 0, message = "供应商发货天数（天）最小值为0")
+        @Max(value = 365, message = "供应商发货天数（天）最大值为365")
         private Integer supplierDeliveryDays;
 
         /**
-        * 质检入库天数（天）
-        */
+         * 质检入库天数（天）
+         */
         @NotNull(message = "质检入库天数（天）不能为空")
-        @Min(value = 0,message = "质检入库天数（天）最小值为0")
-        @Max(value = 365,message = "质检入库天数（天）最大值为365")
+        @Min(value = 0, message = "质检入库天数（天）最小值为0")
+        @Max(value = 365, message = "质检入库天数（天）最大值为365")
         private Integer qcDays;
 
         /**
-        * 采购频率天数（天）
-        */
+         * 采购频率天数（天）
+         */
         @NotNull(message = "采购频率天数（天）不能为空")
-        @Min(value = 0,message = "采购频率天数（天）最小值为0")
-        @Max(value = 365,message = "采购频率天数（天）最大值为365")
+        @Min(value = 0, message = "采购频率天数（天）最小值为0")
+        @Max(value = 365, message = "采购频率天数（天）最大值为365")
         private Integer purchaseCycleDays;
 
         /**
-        * 安全天数（天）
-        */
+         * 安全天数（天）
+         */
         @NotNull(message = "安全天数（天）不能为空")
-        @Min(value = 0,message = "安全天数（天）最小值为0")
-        @Max(value = 365,message = "安全天数（天）最大值为365")
+        @Min(value = 0, message = "安全天数（天）最小值为0")
+        @Max(value = 365, message = "安全天数（天）最大值为365")
         private Integer safeDays;
 
         /**
-        * 入库天数（天）
-        */
+         * 入库天数（天）
+         */
         @NotNull(message = "入库天数（天）不能为空")
-        @Min(value = 0,message = "入库天数（天）最小值为0")
-        @Max(value = 365,message = "入库天数（天）最大值为365")
+        @Min(value = 0, message = "入库天数（天）最小值为0")
+        @Max(value = 365, message = "入库天数（天）最大值为365")
         private Integer instockDays;
 
         /**
-        * 常规品备货系数
-        */
+         * 常规品备货系数
+         */
         @NotNull(message = "常规品备货系数不能为空")
         @Digits(integer = 12, fraction = 4, message = "常规品备货系数整数位不能超过12位，小数位不能超过4位")
         private BigDecimal stockingRatio;
 
         /**
-        * 新品备货系数
-        */
+         * 新品备货系数
+         */
         @NotNull(message = "新品备货系数不能为空")
         @Digits(integer = 12, fraction = 4, message = "新品备货系数整数位不能超过12位，小数位不能超过4位")
         private BigDecimal newStockingRatio;
 
         /**
-        * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-        */
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
         @NotBlank(message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)不能为空")
-        @Size(max = 32,message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)最大长度不能超过32位")
+        @Size(max = 32, message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)最大长度不能超过32位")
         private String platformType;
 
         /**
-        * 关联id
-        */
-        @Size(max = 19,message = "关联id最大长度不能超过19位")
+         * 关联id
+         */
+        @Size(max = 19, message = "关联id最大长度不能超过19位")
         private String refId;
 
         /**
-        * 关联类型
-        */
-        @Size(max = 32,message = "关联类型最大长度不能超过32位")
+         * 关联类型
+         */
+        @Size(max = 32, message = "关联类型最大长度不能超过32位")
         private String refType;
 
     }
 
 
-
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class StrategyDTO {
 
         /**
@@ -347,11 +345,13 @@ public class CfgRuleStockUpDTO implements Serializable {
         private String refId;
         /**
          * 平台类型
+         *
          * @see CfgRulePlatformTypeEnum
          */
         private String platformType;
         /**
          * sku类型
+         *
          * @see CfgRuleStockingRatioTypeEnum
          */
         private String skuType;
@@ -367,6 +367,37 @@ public class CfgRuleStockUpDTO implements Serializable {
          * 海外仓id
          */
         private String warehouseId;
+        /**
+         * 默认备货配置
+         */
+        private CfgRuleStockUpEntity defaultStockUp;
+        /**
+         * 默认备货系数配置
+         */
+        private List<CfgRuleStockingRatioEntity> defaultStockingRatio;
+        /**
+         * 默认物流配置
+         */
+        private List<CfgRuleLogisticsEntity> defaultLogistics;
+        /**
+         * 默认物流明细配置
+         */
+        private List<CfgRuleLogisticsDetailEntity> logisticsDetails;
+
+        public static StrategyDTO buildStrategyDTO(ReplenishmentSuggestionEntity entity, String skuType, CfgRuleStockUpEntity defaultStockUp, List<CfgRuleStockingRatioEntity> defaultStockingRatio,
+                                                   List<CfgRuleLogisticsEntity> defaultLogistics, List<CfgRuleLogisticsDetailEntity> logisticsDetails) {
+            StrategyDTO dto = new StrategyDTO();
+            dto.setRefId(entity.getId());
+            dto.setPlatformType(entity.getPlatformType());
+            dto.setSkuType(skuType);
+            dto.setArea(entity.getArea());
+            dto.setShopId(entity.getShopId());
+            dto.setDefaultStockUp(defaultStockUp);
+            dto.setDefaultStockingRatio(defaultStockingRatio);
+            dto.setDefaultLogistics(defaultLogistics);
+            dto.setLogisticsDetails(logisticsDetails);
+            return dto;
+        }
 
     }
 
@@ -414,6 +445,10 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         private BigDecimal newStockingRatio;
         /**
+         * sku备货系数
+         */
+        private BigDecimal refStockingRatio;
+        /**
          * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
          */
         private String platformType;
@@ -434,30 +469,36 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         private CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult;
         /**
-         * 备货明细系数
+         * 备货默认明细系数
          */
         private List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults;
+        /**
+         * 备货明细系数
+         */
+        private List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> refStockingRatioResults;
 
 
-        public void buildStrategyResultDTO(CfgRuleStockUpEntity entity, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult,
-                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult,
-                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult
-        ){
-            this.setId(entity.getId());
-            this.setPurchaseApproveDays(entity.getPurchaseApproveDays());
-            this.setSupplierDeliveryDays(entity.getSupplierDeliveryDays());
-            this.setQcDays(entity.getQcDays());
-            this.setPurchaseCycleDays(entity.getPurchaseCycleDays());
-            this.setSafeDays(entity.getSafeDays());
-            this.setInstockDays(entity.getInstockDays());
-            this.setStockingRatio(entity.getStockingRatio());
-            this.setNewStockingRatio(entity.getNewStockingRatio());
-            this.setPlatformType(entity.getPlatformType());
-            this.setRefId(entity.getRefId());
+        public void buildStrategyResultDTO(CfgRuleStockUpEntity entity, CfgRuleStockUpEntity defaultStockUp, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults,
+                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult,
+                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult,List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> refStockingRatioResults
+        ) {
+            this.setId(Optional.ofNullable(entity).orElse(defaultStockUp).getId());
+            this.setPurchaseApproveDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getPurchaseApproveDays())) ? defaultStockUp.getPurchaseApproveDays() : entity.getPurchaseApproveDays());
+            this.setSupplierDeliveryDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getSupplierDeliveryDays())) ? defaultStockUp.getSupplierDeliveryDays() : entity.getSupplierDeliveryDays());
+            this.setQcDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getQcDays())) ? defaultStockUp.getQcDays() : entity.getQcDays());
+            this.setPurchaseCycleDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getPurchaseCycleDays())) ? defaultStockUp.getPurchaseCycleDays() : entity.getPurchaseCycleDays());
+            this.setSafeDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getSafeDays())) ? defaultStockUp.getSafeDays() : entity.getSafeDays());
+            this.setInstockDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getInstockDays())) ? defaultStockUp.getInstockDays() : entity.getInstockDays());
+            this.setStockingRatio(defaultStockUp.getStockingRatio());
+            this.setNewStockingRatio(defaultStockUp.getNewStockingRatio());
+            this.setRefStockingRatio(ObjectUtils.isEmpty(entity) ? null : entity.getStockingRatio());
+            this.setPlatformType((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getPlatformType())) ? defaultStockUp.getPlatformType() : entity.getPlatformType());
+            this.setRefId((ObjectUtils.isEmpty(entity)) ? "" : entity.getRefId());
             this.setLogisticsResult(logisticsResult);
             this.setLogisticsMinResult(logisticsMinResult);
             this.setLogisticsMaxResult(logisticsMaxResult);
             this.setStockingRatioResults(stockingRatioResults);
+            this.setRefStockingRatioResults(refStockingRatioResults);
         }
     }
 

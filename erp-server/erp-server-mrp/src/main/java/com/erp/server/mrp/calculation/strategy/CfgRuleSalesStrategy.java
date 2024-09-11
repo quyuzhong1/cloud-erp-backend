@@ -10,7 +10,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.erp.model.mrp.enums.CfgRuleSettingEnum.GET_SALES_QTY;
 
@@ -26,13 +28,19 @@ public class CfgRuleSalesStrategy implements CfgRuleSettingStrategy<CfgRuleSales
     @Override
     public CfgRuleSalesQtyDTO.StrategyResultDTO process(CfgRuleSalesQtyDTO.StrategyDTO dto) {
         CfgRuleSalesQtyEntity cfgRuleSalesQty = cfgRuleSalesQtyService.getByRefId(dto.getRefId());
-        if (ObjectUtils.isEmpty(cfgRuleSalesQty)) {
-            //获取默认配置
-            return cfgRuleSalesQtyService.getDefaultCfgRuleSalesQty(dto.getPlatformType(), dto.getSkuType());
+        List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults = new ArrayList<>();
+        List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults = new ArrayList<>();
+        if (!ObjectUtils.isEmpty(cfgRuleSalesQty)) {
+            formulaResults = cfgRuleSalesFormulaService.listFormulaBySalesId(cfgRuleSalesQty.getId());
+            denoisingResults = cfgRuleSalesDenoisingService.listDenoisingBySalesId(cfgRuleSalesQty.getId());
         }
-        List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults = cfgRuleSalesFormulaService.listFormulaBySalesId(cfgRuleSalesQty.getId());
-        List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults = cfgRuleSalesDenoisingService.listDenoisingBySalesId(cfgRuleSalesQty.getId());
-        return CfgRuleSalesQtyDTO.StrategyResultDTO.buildStrategyResultDTO(cfgRuleSalesQty, formulaResults, denoisingResults);
+        List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoising = dto.getDefaultDenoising().stream()
+                .map(CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO::buildStrategyDenoisingResultDTO)
+                .collect(Collectors.toList());
+        List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormula = dto.getDefaultFormula().stream()
+                .map(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::buildFormulaResultDTO)
+                .collect(Collectors.toList());
+        return CfgRuleSalesQtyDTO.StrategyResultDTO.buildStrategyResultDTO(dto.getDefaultSalesQty(), formulaResults, denoisingResults, defaultFormula, defaultDenoising);
     }
 
     @Override

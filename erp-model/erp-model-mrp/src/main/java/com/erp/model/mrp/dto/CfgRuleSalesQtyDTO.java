@@ -1,11 +1,12 @@
 package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
+import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
+import lombok.*;
 import lombok.experimental.Accessors;
 
 import javax.validation.Valid;
@@ -250,19 +251,42 @@ public class CfgRuleSalesQtyDTO implements Serializable {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class StrategyDTO {
         /**
          * 建议id
          */
         private String refId;
         /**
+         * 平台类型
+         */
+        private String platformType;
+        /**
          * sku类型
          */
         private String skuType;
         /**
-         * 平台类型
+         * 默认销量配置
          */
-        private String platformType;
+        private CfgRuleSalesQtyEntity defaultSalesQty;
+        /**
+         * 默认日销量配置
+         */
+        private List<CfgRuleSalesFormulaEntity> defaultFormula;
+        /**
+         * 默认去噪配置
+         */
+        private List<CfgRuleSalesDenoisingEntity> defaultDenoising;
+
+        public static StrategyDTO buildStrategyDTO(ReplenishmentSuggestionEntity entity, String skuType, CfgRuleSalesQtyEntity defaultSalesQty, List<CfgRuleSalesFormulaEntity> defaultFormula, List<CfgRuleSalesDenoisingEntity> defaultDenoising) {
+            StrategyDTO resultDTO = new StrategyDTO();
+            resultDTO.setRefId(entity.getId());
+            resultDTO.setPlatformType(entity.getPlatformType());
+            resultDTO.setSkuType(skuType);
+            resultDTO.setDefaultSalesQty(defaultSalesQty);
+            return resultDTO;
+        }
     }
 
     @Getter
@@ -306,7 +330,18 @@ public class CfgRuleSalesQtyDTO implements Serializable {
          */
         private List<StrategyFormulaResultDTO> formulaResults;
 
-        public static StrategyResultDTO buildStrategyResultDTO(CfgRuleSalesQtyEntity cfgRuleSalesQty, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults, List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults) {
+        /**
+         * 默认降噪配置
+         */
+        private List<StrategyDenoisingResultDTO> defaultDenoisingResults;
+        /**
+         * 默认销量计算配置
+         */
+        private List<StrategyFormulaResultDTO> defaultFormulaResults;
+
+        public static StrategyResultDTO buildStrategyResultDTO(CfgRuleSalesQtyEntity cfgRuleSalesQty, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults,
+                                                               List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults,
+                                                               List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoisingResults) {
             StrategyResultDTO resultDTO = new StrategyResultDTO();
             resultDTO.setIsCfgSame(cfgRuleSalesQty.getIsCfgSame());
             resultDTO.setIsIgnoreOutOfStock(cfgRuleSalesQty.getIsIgnoreOutOfStock());
@@ -317,6 +352,8 @@ public class CfgRuleSalesQtyDTO implements Serializable {
             resultDTO.setType(cfgRuleSalesQty.getType());
             resultDTO.setFormulaResults(formulaResults);
             resultDTO.setDenoisingResults(denoisingResults);
+            resultDTO.setDefaultFormulaResults(defaultFormulaResults);
+            resultDTO.setDefaultDenoisingResults(defaultDenoisingResults);
             return resultDTO;
         }
     }
@@ -352,6 +389,18 @@ public class CfgRuleSalesQtyDTO implements Serializable {
          * 有效值（去噪后的）
          */
         private Integer effectiveValue;
+
+        public static CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO buildStrategyDenoisingResultDTO(CfgRuleSalesDenoisingEntity entity) {
+            StrategyDenoisingResultDTO dto = new StrategyDenoisingResultDTO();
+            dto.setId(entity.getId());
+            dto.setIndex(entity.getIndex());
+            dto.setName(entity.getName());
+            dto.setStartDate(entity.getStartDate());
+            dto.setEndDate(entity.getEndDate());
+            dto.setDenoisingType(entity.getDenoisingType());
+            dto.setEffectiveValue(entity.getEffectiveValue());
+            return dto;
+        }
     }
 
     @Getter
@@ -405,6 +454,23 @@ public class CfgRuleSalesQtyDTO implements Serializable {
          * 百分比对象
          */
         private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
+
+        public static CfgRuleSalesQtyDTO.StrategyFormulaResultDTO buildFormulaResultDTO(CfgRuleSalesFormulaEntity entity) {
+            StrategyFormulaResultDTO dto = new StrategyFormulaResultDTO();
+            dto.setId(entity.getId());
+            dto.setType(entity.getType());
+            dto.setDefaultType(entity.getDefaultType());
+            dto.setIndex(entity.getIndex());
+            dto.setPriority(entity.getPriority());
+            dto.setName(entity.getName());
+            dto.setStartDate(entity.getStartDate());
+            dto.setEndDate(entity.getEndDate());
+            dto.setSalesQtyId(entity.getSalesQtyId());
+            dto.setFixedValue(entity.getFixedValue());
+            dto.setPercentJson(entity.getPercentJson());
+            dto.setPercentJsonDTO(JSONUtil.toBean(entity.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class));
+            return dto;
+        }
     }
 
 }

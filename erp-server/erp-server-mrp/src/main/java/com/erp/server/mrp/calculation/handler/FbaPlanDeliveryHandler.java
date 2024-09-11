@@ -38,7 +38,7 @@ public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
         int qty = 0;
 
         //获取需要计算库存的FBA预计发货配置
-        CfgRuleCommonDTO.StrategyResultDTO inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
+        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         //补货计划
         CfgRuleCommonDTO.StrategyResultDTO replenishmentPlan = TreeUtils.findByCode(inventoryResult, CfgRuleInventoryNodeEnum.FBA_REPLENISHMENT_PLAN.getCode());
         if (!ObjectUtils.isEmpty(replenishmentPlan) && !CollectionUtils.isEmpty(replenishmentPlan.getChildrenList())) {

@@ -23,6 +23,13 @@ public enum SnapshotTableEnum implements EnumMessage {
     OVERSEAS_INVENTORY("overseas_inventory", "海外仓库存"),
     INVENTORY("inventory", "库存表"),
     VIRTUAL_INVENTORY("virtual_inventory", "库存表"),
+    PURCHASE_APPLICATION("purchase_application", "采购申请表"),
+    PURCHASE_APPLICATION_DETAIL("purchase_application_detail", "采购申请单明细表"),
+    PURCHASE_ORDER("purchase_order", "采购订单表"),
+    PURCHASE_ORDER_DETAIL("purchase_order_detail", "采购订单明细表"),
+    SUBCONTRACT_ORDER("subcontract_order", "委外订单"),
+    SUBCONTRACT_ORDER_DETAIL("subcontract_order_detail", "委外订单明细"),
+    PURCHASE_APPLICATION_REF_PO("purchase_application_ref_po", "采购申请单和采购订单关联表"),
     ;
 
     private final String code;

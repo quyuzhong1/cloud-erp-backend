@@ -3,9 +3,8 @@ package com.erp.server.mrp.calculation.handler;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.enums.*;
-import com.erp.server.mrp.calculation.service.InventoryService;
-import com.erp.server.mrp.calculation.service.SalesService;
+import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
+import com.erp.model.mrp.enums.TimePeriodEnum;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -26,10 +25,6 @@ import static com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum.COM
 public class HistorySalesHandler extends AbstractSkuCalculationHandler {
     @Resource
     private SalesEstimateHandler salesEstimateHandler;
-    @Resource
-    private SalesService salesService;
-    @Resource
-    private InventoryService inventoryService;
 
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
@@ -46,14 +41,6 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
         //获取销量配置
         CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
         boolean isIgnoreOutOfStock = salesQtyResult.getIsIgnoreOutOfStock();
-        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
-            getFbaHistorySales(salesQtyResult, replenishmentResultDTO);
-        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
-            //todo 后期做
-        } else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType()) ||
-                CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
-            //todo 后期做
-        }
         //开始计算去噪销量
         calculationSales(isIgnoreOutOfStock, replenishmentResultDTO, salesQtyResult.getDenoisingResults());
         //开始计算分时段销量和日均
@@ -126,24 +113,6 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
                 }
 
             }
-        }
-    }
-
-    private void getFbaHistorySales(CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult, ReplenishmentResultDTO replenishmentResult) {
-        if (FbaOrderTypeEnum.FBA.name().equals(salesQtyResult.getOrderType())) {
-            List<ReplenishmentResultDTO.SalesInfoDTO> sales;
-            // 以销售订单订单创建时间计算销量
-            if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyResult.getSalesQtyType())) {
-                sales = salesService.listSalesBySob2c(replenishmentResult);
-            } else {
-                // 以销售出库单出库时间计算销量
-                sales = salesService.listSalesBySoOutStock(replenishmentResult);
-            }
-            replenishmentResult.setSalesInfos(sales);
-            //获取历史库存
-            inventoryService.getHistoryInventory(replenishmentResult);
-        }else {
-            // todo 后期做
         }
     }
 }

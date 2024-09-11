@@ -31,7 +31,7 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
         int totalQty = 0;
-        CfgRuleCommonDTO.StrategyResultDTO inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
+        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         CfgRuleCommonDTO.StrategyResultDTO totalResult = TreeUtils.findByCode(inventoryResult, TOTAL_INVENTORY.getCode());
         //计算FBA的库存
         totalQty = getFBATotalQty(replenishmentResultDTO, totalResult, totalQty);

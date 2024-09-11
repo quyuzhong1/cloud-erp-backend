@@ -14,6 +14,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
+import com.erp.server.mrp.calculation.service.BasicReplenishmentDataService;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.ReplenishmentSuggestionImportService;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +45,9 @@ public class ReplenishmentSuggestionController extends BaseController {
 
     @Resource
     private ReplenishmentSuggestionImportService replenishmentSuggestionImportService;
+
+    @Resource
+    private BasicReplenishmentDataService basicReplenishmentDataService;
 
 
     /**
@@ -591,5 +596,11 @@ public class ReplenishmentSuggestionController extends BaseController {
     public ApiResult exportPurchaseSuggestion(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportPurchaseSuggestion(pagingParamDTO);
         return flag == true ? success() : failure();
+    }
+
+
+    @GetMapping("/initReplenishmentSku")
+    public void initReplenishmentSku(@RequestParam(required = false) LocalDate calculationDate) {
+        basicReplenishmentDataService.initReplenishmentSku(calculationDate);
     }
 }

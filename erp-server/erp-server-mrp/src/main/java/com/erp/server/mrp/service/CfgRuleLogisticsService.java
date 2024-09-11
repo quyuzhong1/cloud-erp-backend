@@ -49,21 +49,4 @@ public interface CfgRuleLogisticsService extends SuperService<CfgRuleLogisticsEn
      * @param stockUpId
      */
     void deleteByStockUpId(String stockUpId);
-
-    /**
-     * 获取最高优先级物流时效
-     *
-     * @param stockUpId 备货id
-     */
-    CfgRuleLogisticsDTO.LogisticsResultDTO getLogisticsMaxPriority(String stockUpId, String platformType, String area, String shopId, String warehouseId);
-    /**
-     * 获取最短物流时效
-     *
-     */
-    CfgRuleLogisticsDTO.LogisticsResultDTO getMinLogistics(String stockUpId, String platformType, String area, String shopId, String warehouseId);
-    /**
-     * 获取最长物流时效
-     *
-     */
-    CfgRuleLogisticsDTO.LogisticsResultDTO getMaxLogistics(String stockUpId, String platformType, String area, String shopId, String warehouseId);
 }

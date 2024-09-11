@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -154,6 +155,17 @@ public class CfgRuleStockingRatioDTO implements Serializable {
          * 类型，conventional常规品，new新品
          */
         private String type;
+
+        public static StockingRatioResultDTO buildStockingRatioResult(CfgRuleStockingRatioEntity entity) {
+            StockingRatioResultDTO dto = new StockingRatioResultDTO();
+            dto.setIndex(entity.getIndex());
+            dto.setName(entity.getName());
+            dto.setStartDate(entity.getStartDate());
+            dto.setEndDate(entity.getEndDate());
+            dto.setStockingRatio(entity.getStockingRatio());
+            dto.setType(entity.getType());
+            return dto;
+        }
     }
 
     @Data

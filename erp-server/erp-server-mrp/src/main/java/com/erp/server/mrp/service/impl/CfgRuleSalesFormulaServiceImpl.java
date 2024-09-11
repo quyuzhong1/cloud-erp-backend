@@ -126,13 +126,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
     public List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> listFormulaBySalesId(String id) {
         List<CfgRuleSalesFormulaEntity> list = list(Wrappers.<CfgRuleSalesFormulaEntity>lambdaQuery().eq(CfgRuleSalesFormulaEntity::getSalesQtyId, id));
         return list.stream()
-                .map(v -> {
-                    CfgRuleSalesQtyDTO.StrategyFormulaResultDTO resultDTO = BeanMapperUtils.map(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO.class, v);
-                    //百分比json
-                    CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = JSONUtil.toBean(resultDTO.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class);
-                    resultDTO.setPercentJsonDTO(percentJsonDTO);
-                    return resultDTO;
-                }).collect(Collectors.toList());
+                .map(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::buildFormulaResultDTO).collect(Collectors.toList());
     }
 
     @Override

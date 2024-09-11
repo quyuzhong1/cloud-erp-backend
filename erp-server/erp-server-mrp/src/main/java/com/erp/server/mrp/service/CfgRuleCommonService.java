@@ -36,8 +36,9 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
 
     /**
      * 根据平台和类型获取建议或库存
+     *
      * @param platformType 平台类型
-     * @param type 类型
+     * @param type         类型
      */
-    CfgRuleCommonDTO.StrategyResultDTO getCfgRuleCommon(String platformType, String type);
+    List<CfgRuleCommonDTO.StrategyResultDTO> getCfgRuleCommon(String platformType, String type);
 }

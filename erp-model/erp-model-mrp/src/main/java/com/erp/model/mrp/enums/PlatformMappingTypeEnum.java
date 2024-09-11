@@ -1,20 +1,22 @@
 package com.erp.model.mrp.enums;
 
 import com.common.core.constant.EnumMessage;
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
 public enum PlatformMappingTypeEnum implements EnumMessage {
-    AMAZON_PLATFORM("amazonPlatform", "AMAZON"),
-    OVERSEAS_PLATFORM("overseasPlatform", "海外"),
-    INTERNAL_PLATFORM("internalPlatform", "国内"),
-    B2B_PLATFORM("b2bPlatform", "B2B"),
+    AMAZON_PLATFORM("amazonPlatform", "AMAZON", CfgRulePlatformTypeEnum.AMAZON),
+    OVERSEAS_PLATFORM("overseasPlatform", "海外", CfgRulePlatformTypeEnum.OVERSEAS),
+    INTERNAL_PLATFORM("internalPlatform", "国内", CfgRulePlatformTypeEnum.INTERNAL),
+    B2B_PLATFORM("b2bPlatform", "B2B", CfgRulePlatformTypeEnum.B2B),
     ;
 
     private final String code;
     private final String name;
+    private final CfgRulePlatformTypeEnum platformType;
 
     @Override
     public String getCode() {
@@ -43,5 +45,14 @@ public enum PlatformMappingTypeEnum implements EnumMessage {
             return B2B_PLATFORM.getCode();
         }
         return "";
+    }
+
+    public static PlatformMappingTypeEnum getEnum(String code) {
+        for (PlatformMappingTypeEnum typeEnum : PlatformMappingTypeEnum.values()) {
+            if (typeEnum.getCode().equals(code)) {
+                return typeEnum;
+            }
+        }
+        throw new ServiceException("枚举不存在");
     }
 }

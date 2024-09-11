@@ -1,7 +1,10 @@
 package com.erp.server.mrp.service;
 
+import com.erp.model.mrp.dto.CfgSettingDTO;
 import com.erp.model.mrp.entity.CfgSettingEntity;
 import com.common.business.service.SuperService;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,5 +17,7 @@ import com.common.business.service.SuperService;
 public interface CfgSettingService extends SuperService<CfgSettingEntity> {
 
     CfgSettingEntity getCfgSetting(String code);
+
+    List<CfgSettingDTO> listAllSetting();
 
 }

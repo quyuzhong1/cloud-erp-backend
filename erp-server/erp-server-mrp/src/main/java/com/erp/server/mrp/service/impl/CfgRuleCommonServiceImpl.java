@@ -15,6 +15,7 @@ import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -112,10 +113,49 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     }
 
     @Override
-    public CfgRuleCommonDTO.StrategyResultDTO getCfgRuleCommon(String platformType, String type) {
+    @Cacheable(cacheNames = "cache:mrp:getCfgRuleCommon",keyGenerator = "myKeyGenerator")
+    public List<CfgRuleCommonDTO.StrategyResultDTO> getCfgRuleCommon(String platformType, String type) {
+        List<CfgRuleCommonDTO.StrategyResultDTO> strategyList = baseMapper.listByPlatformTypeAndType(platformType, type, false);
+        if (CollectionUtils.isEmpty(strategyList)) {
+            //返回初始化数据
+            strategyList  = baseMapper.listByPlatformTypeAndType(platformType,type, true);
+        }
+        return buildTree(strategyList);
+    }
 
 
-        return null;
+    /**
+     * 根据 platformType 和 type 构建树形结构
+     *
+     * @param strategyList 所有的 StrategyResultDTO 数据
+     * @return 构建好的树形结构列表
+     */
+    public List<CfgRuleCommonDTO.StrategyResultDTO> buildTree(List<CfgRuleCommonDTO.StrategyResultDTO> strategyList) {
+        // 获取所有的根节点（没有父级的节点，通常 parentId 为 null 或空）
+        List<CfgRuleCommonDTO.StrategyResultDTO> rootNodes = strategyList.stream()
+                .filter(item -> item.getParentId() == null || item.getParentId().isEmpty())
+                .collect(Collectors.toList());
+
+        // 递归设置子节点
+        rootNodes.forEach(root -> setChildren(root, strategyList));
+        return rootNodes;
+    }
+
+    /**
+     * 递归设置子节点
+     *
+     * @param parentNode 父节点
+     * @param allNodes   所有的节点数据
+     */
+    private void setChildren(CfgRuleCommonDTO.StrategyResultDTO parentNode, List<CfgRuleCommonDTO.StrategyResultDTO> allNodes) {
+        // 找到所有 parentId 等于父节点 id 的节点，作为其子节点
+        List<CfgRuleCommonDTO.StrategyResultDTO> children = allNodes.stream()
+                .filter(item -> parentNode.getId().equals(item.getParentId()))
+                .collect(Collectors.toList());
+        // 设置子节点
+        parentNode.setChildrenList(children);
+        // 对每个子节点递归查找其子节点
+        children.forEach(child -> setChildren(child, allNodes));
     }
 
 

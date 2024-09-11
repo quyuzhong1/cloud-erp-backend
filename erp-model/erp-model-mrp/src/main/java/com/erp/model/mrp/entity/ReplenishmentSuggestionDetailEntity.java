@@ -218,6 +218,12 @@ public class ReplenishmentSuggestionDetailEntity extends BaseEntity<Replenishmen
     @TableField("calc_version")
     private String calcVersion;
 
+    /**
+     * 计算日期
+     */
+    @TableField("calc_date")
+    private String calcDate;
+
 
     public static final String MAIN_ID = "main_id";
 

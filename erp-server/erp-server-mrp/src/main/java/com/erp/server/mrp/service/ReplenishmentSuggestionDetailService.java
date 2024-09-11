@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service;
 
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionDetailEntity;
 import com.common.business.service.SuperService;
 
@@ -22,4 +23,6 @@ public interface ReplenishmentSuggestionDetailService extends SuperService<Reple
      * @return List<ReplenishmentSuggestionDetailEntity>
      */
     List<ReplenishmentSuggestionDetailEntity> listByMainIdList(List<String> suggestIdList);
+
+    void saveDetail(ReplenishmentResultDTO.DetailDTO replenishmentDetail);
 }

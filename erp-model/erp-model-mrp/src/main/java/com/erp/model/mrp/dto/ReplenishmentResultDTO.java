@@ -2,6 +2,7 @@ package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONArray;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.enums.RecentTimePeriodEnum;
 import com.erp.model.mrp.enums.TimePeriodEnum;
 import lombok.AllArgsConstructor;
@@ -41,18 +42,25 @@ public class ReplenishmentResultDTO {
      */
     private List<EstimatedDeliveryDetailDTO> overseasDeliveryDetails;
     /**
-     * 本地可用明细
+     * 本地可用库存明细
      */
     private List<ReplenishmentInventoryDetailDTO> localUsableDetail;
-
     /**
      * 本地在途明细
      */
     private List<LocalInTransitDetailDTO> localInTransitDetails;
     /**
+     * 本地在途库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> localInTransitDetail;
+    /**
      * 本地采购明细
      */
-    private List<EstimatedPurchaseDetailDTO> localDeliveryDetails;
+    private List<EstimatedPurchaseDetailDTO> localPurchaseDetails;
+    /**
+     * 本地采购库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> localPurchaseDetail;
     /**
      * 备货期
      */
@@ -144,15 +152,23 @@ public class ReplenishmentResultDTO {
          */
         private String shopId;
 
-        /**
-         * fba店铺的仓库id
-         */
-        private String fbaWarehouseId;
 
         /**
          * 平台
          */
         private String platform;
+
+        public static BasicDTO buildBasicDTO(ReplenishmentSuggestionEntity entity) {
+            BasicDTO dto = new BasicDTO();
+            dto.setId(entity.getId());
+            dto.setPlatformType(entity.getPlatformType());
+            dto.setSkuId(entity.getSkuId());
+            dto.setSkuNo(entity.getSkuNo());
+            dto.setCountry(entity.getCountry());
+            dto.setShopId(entity.getShopId());
+            dto.setPlatform(entity.getPlatform());
+            return dto;
+        }
     }
 
     @Getter
@@ -163,6 +179,10 @@ public class ReplenishmentResultDTO {
          * 明细id
          */
         private String detailId;
+        /**
+         * 主表id
+         */
+        private String mainId;
         /**
          * sku类型 新品/常规品
          */
@@ -701,6 +721,18 @@ public class ReplenishmentResultDTO {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 采购订单生成状态
+         */
+        private String createPoType;
+        /**
+         * 明细id
+         */
+        private String detailId;
     }
 
 

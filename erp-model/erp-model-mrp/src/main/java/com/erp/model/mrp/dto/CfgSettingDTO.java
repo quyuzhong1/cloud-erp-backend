@@ -25,4 +25,18 @@ public class CfgSettingDTO {
      * 是否禁用
      */
     private Boolean disabled;
+
+
+    @Getter
+    @Setter
+    public static class ReplenishmentDays {
+        /**
+         * 开始
+         */
+        private Integer start;
+        /**
+         * 结束
+         */
+        private Integer end;
+    }
 }

@@ -74,7 +74,7 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                Integer localDelivery = replenishmentResultDTO.getLocalDeliveryDetails()
+                Integer localDelivery = replenishmentResultDTO.getLocalPurchaseDetails()
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getQty)
@@ -112,7 +112,7 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                Integer localDelivery = replenishmentResultDTO.getLocalDeliveryDetails()
+                Integer localDelivery = replenishmentResultDTO.getLocalPurchaseDetails()
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getQty)
@@ -139,7 +139,7 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                Integer localDelivery = replenishmentResultDTO.getLocalDeliveryDetails()
+                Integer localDelivery = replenishmentResultDTO.getLocalPurchaseDetails()
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getQty)

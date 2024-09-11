@@ -2,6 +2,8 @@ package com.erp.server.mrp.mapper;
 
 import com.erp.model.mrp.dto.LocalInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
+import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -37,4 +39,12 @@ public interface InventoryMapper {
     List<LocalInventoryDTO> getLocalUsable(@Param("skuId") String skuId, @Param("codes") List<String> codes, @Param("tableName") String tableName);
 
     List<LocalInventoryDTO> getVirtualUsable(@Param("skuId") String skuId, @Param("codes") List<String> codes, @Param("tableName") String tableName);
+
+    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchasePlan(@Param("codes") List<String> codes,@Param("skuId") String skuId, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+
+    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchase(@Param("codes") List<String> codes, @Param("skuId") String skuId, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+
+    List<PurchaseApplicationRefPoDTO.ListDTO> listPurchaseApplicationRefPo(@Param("detailIds") List<String> detailIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("otherTableName") String otherTableName);
+
+    List<SubcontractOrderDetailEntity> listSubcontractOrderDetail(@Param("detailIds") List<String> detailIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("otherTableName") String otherTableName);
 }

@@ -67,4 +67,8 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      * @param platformType 平台类型
      */
     CfgRuleStockUpEntity getDefaultCfgRuleStockUp(String platformType);
+    /**
+     * 获取默认配置
+     */
+    List<CfgRuleStockUpEntity> getDefaultCfgRuleStockUp();
 }

@@ -35,4 +35,6 @@ public interface CfgRuleCommonMapper extends BaseMapper<CfgRuleCommonEntity> {
      * @return List<ViewDTO>
      */
     List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommon(@Param("platformType")String platformType,@Param("type") String type);
+
+    List<CfgRuleCommonDTO.StrategyResultDTO> listByPlatformTypeAndType(@Param("platformType") String platformType,@Param("type") String type, @Param("isDefault") Boolean isDefault);
 }
