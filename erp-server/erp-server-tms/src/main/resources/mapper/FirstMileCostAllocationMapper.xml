@@ -69,7 +69,12 @@
         cad.mid_period_transit_cost as midPeriodTransitCost, cad.current_period_allocated_cost as currentPeriodAllocatedCost,
         cad.end_period_transit_cost as endPeriodTransitCost, cad.end_period_estimated_cost as endPeriodEstimatedCost,
         a.create_time as createTime,a.create_user_name as createUserName, a.update_user_name as updateUserName,a.update_time as updateTime,
-        rpm.month as reportPeriodMonth,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr
+        rpm.month as reportPeriodMonth,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr,
+        case when cad.fee_type = 'shippingCost' then 1
+            when cad.fee_type = 'declareCost' then 2
+            when cad.fee_type = 'otherTaxFee' then 3
+            when cad.fee_type = 'otherCost' then 4
+        else 0 end as feeOrder
         FROM first_mile_cost_allocation a
         LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
         LEFT JOIN first_mile_sku_cost_allocation_detail cad ON cad.cost_main_id = ca.id AND cad.is_deleted = FALSE
