@@ -74,10 +74,6 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;
         }
-        CfgRuleStockUpEntity ruleStockUpEntity = cfgRuleStockUpService.getById(salesQtyId);
-        if (ObjectUtil.isEmpty(ruleStockUpEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"备货规则");
-        }
 
         // 数据处理
         handleData(list,salesQtyId);
