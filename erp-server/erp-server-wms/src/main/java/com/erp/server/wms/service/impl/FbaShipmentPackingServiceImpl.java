@@ -18,6 +18,7 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FbaShipmentPackingDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentPackingEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -105,7 +106,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         if(CollectionUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
             if(!fbaShipmentEntity.getIsPackingDownload()){
-                fbaShipmentService.updatePackingStatus(fbaShipmentEntity.getId());
+                fbaShipmentService.updatePackingStatus(Arrays.asList(fbaShipmentEntity.getId()));
             }
         }
     }
@@ -150,5 +151,22 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
     @Override
     public void updateCartonId(String cartonId, String fbaShipmentId, String fbaBoxNo) {
         this.lambdaUpdate().set(FbaShipmentPackingEntity::getCartonId,cartonId).eq(FbaShipmentPackingEntity::getMainId,fbaShipmentId).eq(FbaShipmentPackingEntity::getBoxNo,fbaBoxNo).update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void generateByBindDTO(List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailList) {
+        List<FbaShipmentPackingEntity> addList = new ArrayList<>();
+        for (RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO fbaBindShipmentViewDetailDTO : detailList) {
+            FbaShipmentPackingEntity fbaShipmentPackingEntity = new FbaShipmentPackingEntity();
+            fbaShipmentPackingEntity.setMainId(fbaBindShipmentViewDetailDTO.getFbaShipmentId());
+            fbaShipmentPackingEntity.setBoxNo(fbaBindShipmentViewDetailDTO.getFbaBoxNo());
+            addList.add(fbaShipmentPackingEntity);
+        }
+        if(CollectionUtil.isNotEmpty(addList)){
+            this.saveBatch(addList);
+            List<String> fbaIds = addList.stream().map(FbaShipmentPackingEntity::getMainId).distinct().collect(Collectors.toList());
+            fbaShipmentService.updatePackingStatus(fbaIds);
+        }
     }
 }

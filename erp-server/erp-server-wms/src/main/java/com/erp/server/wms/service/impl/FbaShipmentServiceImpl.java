@@ -23,12 +23,10 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -1777,11 +1775,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public boolean updatePackingStatus(String id) {
-        if(StringUtils.isBlank(id)){
+    public boolean updatePackingStatus(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
             return false;
         }
-        return lambdaUpdate().eq(FbaShipmentEntity::getId,id).set(FbaShipmentEntity::getIsPackingDownload,true).update();
+        return lambdaUpdate().in(FbaShipmentEntity::getId, ids).set(FbaShipmentEntity::getIsPackingDownload,true).update();
     }
 
     @Override

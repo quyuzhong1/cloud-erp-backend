@@ -1291,7 +1291,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailList = dto.getFbaBindShipmentViewDetailDTOS();
         detailList = detailList.stream().filter(v->StringUtils.isBlank(v.getDeliveryCode()) && StringUtils.isNotBlank(v.getFbaShipmentId())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(detailList)){
-            throw new ServiceException("已生成发货单，无法重复生成");
+            throw new ServiceException("要货申请已全部生成发货单，无法重复生成");
         }
         List<String> fbaShipmentIdList = detailList.stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getFbaShipmentId).distinct().collect(Collectors.toList());
 
@@ -1300,14 +1300,31 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //根据货件生成发货单
         List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByIds(fbaShipmentIdList);
         List<FbaShipmentDetailEntity> allFbaDetailList = fbaShipmentDetailService.listByMainIds(fbaShipmentIdList);
-        List<FbaShipmentPackingEntity> allFbaPackingList = fbaShipmentPackingService.listByMains(fbaShipmentIdList);
 
-        //校验货件是否都已绑定箱子
-        List<String> checkFbaBoxNoList = detailList.stream().filter(v->StringUtils.isNotBlank(v.getFbaBoxNo())).map(v->v.getFbaBoxNo()).distinct().collect(Collectors.toList());
-        List<String> dbFbaBoxNoList = allFbaPackingList.stream().map(v->v.getBoxNo()).distinct().collect(Collectors.toList());
-        dbFbaBoxNoList.removeAll(checkFbaBoxNoList);
-        if(CollectionUtils.isNotEmpty(dbFbaBoxNoList)){
-            throw new ServiceException("{}货件箱号未绑定",dbFbaBoxNoList);
+        List<FbaShipmentPackingEntity> allFbaPackingList = fbaShipmentPackingService.listByMains(fbaShipmentIdList);
+        if(CollectionUtils.isNotEmpty(allFbaPackingList)){
+            List<String> errorList = allFbaDetailList.stream().map(FbaShipmentDetailEntity::getMainId).distinct().collect(Collectors.toList());
+            List<String> errorCodeList = fbaShipmentEntityList.stream().filter(v->errorList.contains(v.getId())).map(FbaShipmentEntity::getCode).collect(Collectors.toList());
+            throw new ServiceException("{}已绑定下推发货单，无法重复下推",errorCodeList);
+        }
+
+        //校验箱号是否连续
+        Map<String,List<String>> fbaBoxMap = detailList.stream()
+                .collect(Collectors.groupingBy(
+                        RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getFbaShipmentCode,
+                        Collectors.mapping(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getFbaBoxNo, Collectors.toList())
+                ));
+        for (Map.Entry<String, List<String>> entry : fbaBoxMap.entrySet()) {
+            List<Integer> fbaBoxNos = entry.getValue().stream()
+                    .map(Integer::parseInt)
+                    .sorted()
+                    .collect(Collectors.toList());
+            //校验箱号必须从1开始并且不能重复，必须连续
+            for (int i = 0; i < fbaBoxNos.size(); i++) {
+                if (fbaBoxNos.get(i) != i + 1) {
+                    throw new ServiceException("{},FBA箱号必须从1开始并且不能重复，必须连续",entry.getKey());
+                }
+            }
         }
 
         List<String> skuIdList = allFbaDetailList.stream().map(FbaShipmentDetailEntity::getSkuId).collect(Collectors.toList());
@@ -1320,6 +1337,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
                 .filter(staging -> staging.getWarehouseId().equals(detailEntity.getToWarehouseId()))
                 .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+
         for (FbaShipmentEntity fbaShipmentEntity : fbaShipmentEntityList) {
             //映射主表信息
             FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverFDD(fbaShipmentEntity,entity,shopInfo);
@@ -1332,8 +1350,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(fbaShipmentDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
                 FirstMileDeliveryDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverDetailFDD(fbaShipmentDetailEntity,skuVO);
                 detailAddDto.setFbaShipmentCode(fbaShipmentEntity.getCode());
-                FbaShipmentPackingEntity fbaPackingList = allFbaPackingList.stream().filter(v->v.getMainId().equals(fbaShipmentEntity.getId()) && v.getFnSku().equals(fbaShipmentDetailEntity.getFnSku())).findFirst().orElseThrow(()->new ServiceException("{}-{}查询不到对于装箱信息",fbaShipmentEntity.getCode(),fbaShipmentDetailEntity.getFnSku()));
-                detailAddDto.setDeliveryQty(fbaPackingList.getQty());
+
+//                detailAddDto.setDeliveryQty(fbaPackingList.getQty());
                 detailAddDto.setWarehouseLocation(pickingStaging.getWarehouseLocation());
                 detailAddList.add(detailAddDto);
             }
@@ -1344,6 +1362,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 fbaShipmentPackingService.updateCartonId(v.getCartonId(),v.getFbaShipmentId(),v.getFbaBoxNo());
             });
         }
+        //生成FBA装箱数据
+        fbaShipmentPackingService.generateByBindDTO(detailList);
     }
 
     @Override
