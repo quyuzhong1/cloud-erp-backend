@@ -7027,6 +7027,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 未找到B2C销售订单明细信息
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
+        detailList = detailList.stream().filter(v->StringUtils.isBlank(v.getSplitDetailId())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(detailList)){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
+        }
         // 检查
         skuMappingCheck(entity, detailList);
 
