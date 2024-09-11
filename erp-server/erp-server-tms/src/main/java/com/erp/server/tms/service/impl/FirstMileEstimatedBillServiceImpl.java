@@ -75,6 +75,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     private FirstMileCostAllocationService firstMileCostAllocationService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private TmsFirstMileReconciliationService tmsFirstMileReconciliationService;
 
     @Override
     public PagingVO<FirstMileEstimatedBillDTO.View> paging(PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto) {
@@ -99,13 +101,14 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         //业务单号
         List<String> outStockIds = records.stream().map(item -> item.getOutStockId()).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(outStockIds);
+        //根据物流单获取对账单数据
+        List<TmsFirstMileLogisticDTO.ReconciliationDTO> reconciliationDTOList = tmsFirstMileReconciliationService.listReconciliationAndCostByBillIds(logisticsBillIds);
         for (FirstMileEstimatedBillDTO.View item : records) {
             item.setStatusName(ConfirmStatusEnum.getName(item.getStatus()));
             item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
             item.setToCountryName(item.getToCountry());
             item.setToCountry(countryMap.getOrDefault(item.getToCountryName(), ""));
             item.setFeeRuleName(ShippingFeeRuleEnum.getName(item.getFeeRule()));
-            item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(item.getCurrency()));
 
             //预计费用
             if(estimatedCostMap.containsKey(item.getLogisticsBillId())){
@@ -157,6 +160,15 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 item.setBusinessCode(businessDTO.getBusinessCode());
             }else {
                 item.setBusinessCode("");
+            }
+
+            //对账单信息
+            TmsFirstMileLogisticDTO.ReconciliationDTO reconciliationDTO = reconciliationDTOList.stream().filter(e -> StrUtil.isNotBlank(e.getLogisticsBillId()) && Objects.equals(e.getLogisticsBillId(), item.getLogisticsBillId())).findFirst().orElse(null);
+            if (Objects.nonNull(reconciliationDTO)){
+                item.setActualBillStatus(reconciliationDTO.getReconciliationStatus());
+                item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
+                item.setCurrency(reconciliationDTO.getCurrency());
+                item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(reconciliationDTO.getCurrency()));
             }
         }
     }

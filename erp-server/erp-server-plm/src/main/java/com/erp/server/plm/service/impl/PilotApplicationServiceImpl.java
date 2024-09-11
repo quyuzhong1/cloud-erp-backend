@@ -476,7 +476,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         // 调用流程审核
         approveProcess(entity, dto, approveDTO);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        updateForApprove(entity.getId(), approveStatus.getStatus());
 
         //记录日志
         String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据审核操作 审核结果：【%s】 审核意见：【%s】", UserContext.getNonLoginUser().getUserName(), entity.getCode(), approveType.getName(), dto.getComment());
@@ -609,7 +608,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-//        updateForApprove(entity.getId(), approveStatus.getStatus());
+        updateForApprove(entity.getId(), approveStatus.getStatus());
         return Boolean.TRUE;
     }
 

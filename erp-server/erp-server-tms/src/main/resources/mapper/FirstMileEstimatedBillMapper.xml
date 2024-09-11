@@ -12,9 +12,6 @@
                lb.shop_name shopName,
                lb.to_country toCountry,
                lc.fee_rule feeRule,
-               lbc.id logisticsBillCostId,
-               lbc.currency,
-               lbc.reconciliation_status actualBillStatus,
                lbd.track_status transportStatus,
                lbd.sign_time signTime,
                eb.confirm_time confirmTime,
@@ -25,7 +22,6 @@
                  inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
                  left join logistics_channel lc on lb.channel_id = lc.id
                  left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-                 left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and eb.is_deleted = false
