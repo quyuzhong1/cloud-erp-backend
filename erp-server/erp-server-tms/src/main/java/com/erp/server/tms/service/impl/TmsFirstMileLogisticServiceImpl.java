@@ -1322,7 +1322,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         boolean update = logisticsBillCostService.lambdaUpdate()
                 .set(LogisticsBillCostEntity::getReconciliationStatus, status)
                 .in(LogisticsBillCostEntity::getLogisticsBillId, mainId)
-                .eq(StrUtil.isNotBlank(reconciliationId), LogisticsBillCostEntity::getLogisticsBillId, reconciliationId)
+                .eq(StrUtil.isNotBlank(reconciliationId), LogisticsBillCostEntity::getReconciliationId, reconciliationId)
                 .update();
     }
 
