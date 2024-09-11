@@ -580,6 +580,14 @@ public class LogisticsBillDTO implements Serializable {
     @NoArgsConstructor
     public static class LogisticsBillVo {
         /**
+         * 物流单id
+         */
+        private String id;
+        /**
+         * 物流单明细id
+         */
+        private String detailId;
+        /**
          * 店铺id
          */
         private String shopId;
@@ -599,6 +607,14 @@ public class LogisticsBillDTO implements Serializable {
          * 来源单号
          */
         private String sourceCode;
+        /**
+         * 出库单id
+         */
+        private String outstockId;
+        /**
+         * 出库单编码
+         */
+        private String outstockCode;
         /**
          * 运输单号
          */
