@@ -29,6 +29,7 @@ import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
+import com.erp.model.dmp.enums.DmpCfgInputChildTransactionalTypeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputChildCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
@@ -392,13 +393,17 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 		if(CollUtil.isNotEmpty(nextLevelIdList)) {
 			List<DmpCfgInputChildEntity> cfgInputChildList = this.getCfgInputChildList(dmpRequest , dmpResponse);
 			if(CollUtil.isNotEmpty(cfgInputChildList)) {
-				List<String> childCfgInputIdList = cfgInputChildList.stream().map(DmpCfgInputChildEntity::getChildId).collect(Collectors.toList());
-				for(String childCfgInputId : childCfgInputIdList) {
+				for(DmpCfgInputChildEntity cfgInputChild : cfgInputChildList) {
+					String childCfgInputId = cfgInputChild.getChildId();
 					DmpInputChildCreateRequest dmpInputHotfixCreateRequest = new DmpInputChildCreateRequest();
 			    	dmpInputHotfixCreateRequest.setCfgInputId(childCfgInputId);
 			    	dmpInputHotfixCreateRequest.setNextLevelIdList(nextLevelIdList);
 			    	dmpInputHotfixCreateRequest.setParentInputTaskId(inputTaskId);
-			    	cfgInputChildFinishResponseMap.put(childCfgInputId, dmpInputCreateFactory.doChildInputTask(dmpInputHotfixCreateRequest));
+			    	if(DmpCfgInputChildTransactionalTypeEnum.SINGLE.getCode().equals(cfgInputChild.getTransactionalType())) {
+			    		cfgInputChildFinishResponseMap.put(childCfgInputId, dmpInputCreateFactory.doChildInputTaskSingle(dmpInputHotfixCreateRequest));
+			    	}else {
+			    		cfgInputChildFinishResponseMap.put(childCfgInputId, dmpInputCreateFactory.doChildInputTaskGlobal(dmpInputHotfixCreateRequest));
+			    	}
 				}
 			}
 		}
