@@ -1071,6 +1071,11 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.listByIds(paramDTO.getDetailIds());
         List<String> ids = detailList.stream().map(PilotApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<PilotApplicationEntity> pilotList = this.lambdaQuery().in(PilotApplicationEntity::getId, ids).list();
+        for (PilotApplicationEntity entity : pilotList) {
+            if (entity.getApproveStatus().compareTo(ApproveStatusEnum.APPROVE) != 0){
+                throw new ServiceException("只有已审核的单据允许下推采购申请单");
+            }
+        }
         Map<String, PilotApplicationEntity> pilotMap = pilotList.stream().collect(Collectors.toMap(BaseEntity::getId, item2 -> item2));
         //sku信息
         List<String> skuIds = detailList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
@@ -1121,7 +1126,11 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             }
             resultList.add(dto);
         }
-        return resultList.stream().filter(item -> item.getSpareApplyQty() > 0).collect(Collectors.toList());
+        List<PilotApplicationDTO.PushPurchaseApplicationDTO> collect = resultList.stream().filter(item -> item.getSpareApplyQty() > 0).collect(Collectors.toList());
+        if(collect.isEmpty()){
+            throw new ServiceException("没有可下推的数据");
+        }
+        return collect;
     }
 
     @Override
