@@ -1308,7 +1308,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         // 更新已成功对账单
         List<String> sourceIds = Collections.singletonList(curListDTO.getSourceId());
-        this.updateReconciliation(sourceIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), reconciliationId);
+        this.updateReconciliation(sourceIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), reconciliationEntity.getId());
 
         return BatchResultDTO.success(id, curListDTO.getTransportNo(), OperationTypeEnum.ADD);
     }
