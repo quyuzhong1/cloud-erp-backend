@@ -93,7 +93,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        a.create_time DESC,a.id,ca.id,cad.fee_type
+        a.create_time DESC,a.id,ca.id,feeOrder
     </sql>
     <select id="tabList" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$TabListDTO">
         SELECT
