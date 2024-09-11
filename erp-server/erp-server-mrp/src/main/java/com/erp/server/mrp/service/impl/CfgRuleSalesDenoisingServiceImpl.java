@@ -1,18 +1,23 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
+import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesDenoisingMapper;
 import com.erp.server.mrp.service.CfgRuleSalesDenoisingService;
+import com.erp.server.mrp.service.CfgRuleStockUpService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -42,6 +47,9 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
     @Autowired
     private OperateLogService operateLogService;
 
+    @Autowired
+    private CfgRuleStockUpService cfgRuleStockUpService;
+
     /**
     * 修改
     */
@@ -66,12 +74,23 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;
         }
+        CfgRuleStockUpEntity ruleStockUpEntity = cfgRuleStockUpService.getById(salesQtyId);
+        if (ObjectUtil.isEmpty(ruleStockUpEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"备货规则");
+        }
+
         // 数据处理
         handleData(list,salesQtyId);
         log.info("编辑 开始修改销量去噪信息数据，id：【{}】", salesQtyId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("销量去噪信息保存失败");
+        }
+        //日志
+        for (CfgRuleSalesDenoisingEntity denoisingEntity : list) {
+            String dateStr = StrUtil.format("{}_{}", denoisingEntity.getStartDate(), denoisingEntity.getEndDate());
+            String msg = StrUtil.format("销量去噪:序号【{}】、名称【{}】、时间段【{}】、去噪类型【{}，{}】", denoisingEntity.getIndex(), denoisingEntity.getName(),dateStr,CfgRuleSalesDenoisingDenoisingTypeEnum.getName(denoisingEntity.getDenoisingType()),denoisingEntity.getEffectiveValue());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), salesQtyId, "设置规则");
         }
         return Boolean.TRUE;
     }

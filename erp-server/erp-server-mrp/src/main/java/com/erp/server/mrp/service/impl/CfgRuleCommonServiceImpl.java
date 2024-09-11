@@ -54,8 +54,12 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         if(!save) {
             throw new ServiceException("公共配置（规则设置）保存失败");
         }
+        //操作日志
+
         return Boolean.TRUE;
     }
+
+
 
     @Override
     public List<CfgRuleCommonDTO.ViewDTO> view(String platformType,String type) {

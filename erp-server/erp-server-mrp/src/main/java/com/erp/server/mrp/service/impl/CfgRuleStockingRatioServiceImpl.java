@@ -10,6 +10,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
 import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
+import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleStockingRatioMapper;
 import com.erp.server.mrp.service.CfgRuleStockingRatioService;
 import com.erp.server.mrp.service.OperateLogService;
@@ -70,6 +72,12 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("备货系数（规则设置）保存失败");
+        }
+        //日志
+        for (CfgRuleStockingRatioEntity ratioEntity : list) {
+            String ratioType = ratioEntity.getType();
+            String msg = StrUtil.format("【{}】_动态备货系数,序号【{}】、名称【{}】、时间段【{}】、备货系数【{}】", CfgRuleStockingRatioTypeEnum.getName(ratioType), ratioEntity.getIndex(),ratioEntity.getName(),ratioEntity.getStartDate().toString().concat(ratioEntity.getEndDate().toString()),ratioEntity.getStockingRatio());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), stockUpId, "设置规则");
         }
         return Boolean.TRUE;
     }

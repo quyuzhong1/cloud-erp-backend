@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -16,6 +17,8 @@ import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesFormulaMapper;
 import com.erp.server.mrp.service.CfgRuleSalesFormulaService;
 import com.erp.server.mrp.service.CfgRuleSalesQtyService;
@@ -74,12 +77,23 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;
         }
+        //销量信息
+        CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyService.getById(salesQtyId);
+        if (ObjectUtil.isEmpty(salesQtyEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（销量）");
+        }
         // 数据处理
         handleData(list,salesQtyId);
         log.info("编辑 开始修改销量公式（规则设置）数据，id：【{}】", salesQtyId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("销量公式（规则设置）保存失败");
+        }
+        //日志
+        for (CfgRuleSalesFormulaEntity formulaEntity : list) {
+            String type = formulaEntity.getType();
+            String msg = StrUtil.format("{}_{}日销量:序号【{}】、名称【{}】、时间段【{}】", CfgRuleStockingRatioTypeEnum.getName(salesQtyEntity.getType()),CfgRuleSalesFormulaTypeEnum.getName(type) ,formulaEntity.getIndex(),formulaEntity.getName(),StrUtil.format("{}_{}",formulaEntity.getStartDate(),formulaEntity.getEndDate()));
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), salesQtyId, "设置规则");
         }
         return Boolean.TRUE;
     }
@@ -142,12 +156,6 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
     private void handleData(List<CfgRuleSalesFormulaEntity> list,String salesQtyId) {
         if (CollectionUtils.isEmpty(list)) {
             return;
-        }
-
-        //销量信息
-        CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyService.getById(salesQtyId);
-        if (ObjectUtil.isEmpty(salesQtyEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（销量）");
         }
 
         Integer index = MathUtil.ONE;

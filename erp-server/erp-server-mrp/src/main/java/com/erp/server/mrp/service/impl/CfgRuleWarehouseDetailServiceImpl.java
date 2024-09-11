@@ -1,23 +1,30 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDetailDTO;
 import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
+import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
+import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleWarehouseDetailMapper;
 import com.erp.server.mrp.service.CfgRuleWarehouseDetailService;
+import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -47,6 +54,8 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
     @Autowired
     private OperateLogService operateLogService;
 
+    @Autowired
+    private CfgRuleWarehouseService cfgRuleWarehouseService;
 
     /**
     * 修改
@@ -59,8 +68,8 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         }
         List<CfgRuleWarehouseDetailEntity> list = BeanMapperUtils.copyList(CfgRuleWarehouseDetailEntity.class, cfgLocalWarehouseList);
         //原仓库配置明细
-        List<String> vitrualWarehouseIdList = cfgLocalWarehouseList.stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).map(CfgRuleWarehouseDetailDTO.UpdateDTO::getVirtualWarehouseId).collect(Collectors.toList());
-        List<CfgRuleWarehouseDetailEntity> oldList = listByWarehouseType(CollectionUtils.isNotEmpty(vitrualWarehouseIdList) ? Boolean.TRUE :Boolean.FALSE ,Collections.singletonList(mainId),type);
+        List<String> virtualWarehouseIdList = cfgLocalWarehouseList.stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).map(CfgRuleWarehouseDetailDTO.UpdateDTO::getVirtualWarehouseId).collect(Collectors.toList());
+        List<CfgRuleWarehouseDetailEntity> oldList = listByWarehouseType(CollectionUtils.isNotEmpty(virtualWarehouseIdList) ? Boolean.TRUE :Boolean.FALSE ,Collections.singletonList(mainId),type);
 
         //删除明细
         List<String> deleteIds = getDeleteIds(list, oldList);
@@ -70,12 +79,55 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;
         }
+        CfgRuleWarehouseEntity ruleWarehouseEntity = cfgRuleWarehouseService.getById(mainId);
+        if (ObjectUtil.isEmpty(ruleWarehouseEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"仓库规则");
+        }
+        //仓库
+        List<String> warehouseIdList = list.stream().map(CfgRuleWarehouseDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class,warehouseIdList);
+
         // 数据处理
-        handleData(list,mainId,type);
+        handleData(list,mainId,type,warehouseEntityList);
         log.info("编辑 开始修改仓库（规则设置）明细数据，id：【{}】", mainId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("仓库（规则设置）明细保存失败");
+        }
+        //虚拟仓
+        List<VirtualWarehouseEntity> virtualWarehouseList = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
+
+        //店铺信息
+        List<String> shopIdList = list.stream().filter(obj -> StrUtil.equals(obj.getChannelType(), VitualWarehouseChannelTypeEnum.SHOP.getCode()))
+                .flatMap(obj -> Stream.of(obj.getChannelIdJson().stream().map(Object::toString).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = CollectionUtils.isEmpty(shopIdList) ? Collections.EMPTY_LIST : FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+
+        //平台信息
+        List<String> platformList = list.stream().filter(obj -> StrUtil.equals(obj.getChannelType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode()))
+                .flatMap(obj -> Stream.of(obj.getChannelIdJson().stream().map(Object::toString).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+
+        //日志
+        for (CfgRuleWarehouseDetailEntity detailEntity : list) {
+            //实体仓
+            String warehouseName = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            //虚拟仓
+            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+            //店铺
+            String shopNames = shopInfoList.stream().filter(obj -> detailEntity.getChannelIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
+            //平台
+            String dictPlatformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(), detailEntity.getDictPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            String msg = "";
+            if (CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(detailEntity.getWarehouseType())) {
+                if (StrUtil.isBlank(detailEntity.getVirtualWarehouseId())) {
+                     msg = StrUtil.format("本地仓:实体仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】",  warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType()));
+                } else {
+                     msg = StrUtil.format("虚拟仓:虚拟仓【{}】、关联实体仓【{}】、关联平台【{}】、关联店铺【{}】、库存分配【{}】",  warehouseName,virtualWarehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType()));
+                }
+            } else {
+                 msg = StrUtil.format("海外仓:海外备货仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】", warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType()));
+            }
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), mainId, "设置规则");
         }
         return Boolean.TRUE;
     }
@@ -212,13 +264,10 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleWarehouseDetailEntity> list,String mainId,String type) {
+    private void handleData(List<CfgRuleWarehouseDetailEntity> list,String mainId,String type, List<WarehouseEntity> warehouseEntityList) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<String> warehouseIdList = list.stream().map(CfgRuleWarehouseDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
-        List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class,warehouseIdList);
-
         for (CfgRuleWarehouseDetailEntity warehouseDetailEntity : list) {
             //数据验证
             checkData(list,warehouseDetailEntity,warehouseEntityList);

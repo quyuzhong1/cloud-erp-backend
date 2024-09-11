@@ -1,11 +1,13 @@
 package com.erp.model.mrp.enums;
 
+import com.common.core.constant.EnumMessage;
+
 /**
  * 创建类型
  * @author will
  * @date 2024/9/9 11:54
  */
-public enum CreateTypeEnum {
+public enum CreateTypeEnum implements EnumMessage {
 
     //系统
     AUTO("auto", "系统"),
@@ -22,9 +24,11 @@ public enum CreateTypeEnum {
     }
 
 
+    @Override
     public String getCode() {
         return code;
     }
+    @Override
     public String getName() {
         return name;
     }
