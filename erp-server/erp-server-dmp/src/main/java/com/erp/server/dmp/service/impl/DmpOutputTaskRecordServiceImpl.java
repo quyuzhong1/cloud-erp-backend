@@ -148,6 +148,34 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         all.setTabFlag(DmpConstant.ALL);
         countList.add(all);
 
+        //同步成功
+        DmpOutputTaskRecordDTO.TabListDTO success = new DmpOutputTaskRecordDTO.TabListDTO();
+        success.setTabFlag(SyncStatusEnum.SUCCESS_SYNC.getCode());
+        int successCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        success.setCount(successCount);
+        result.add(success);
+
+        //同步失败
+        DmpOutputTaskRecordDTO.TabListDTO failed = new DmpOutputTaskRecordDTO.TabListDTO();
+        failed.setTabFlag(SyncStatusEnum.FAILED_SYNC.getCode());
+        int failedCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+                || DmpOutputTaskRecordStatusEnum.MQERROR.getCode().equals(a.getTabFlag())
+                || DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode().equals(a.getTabFlag())
+        ).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        failed.setCount(failedCount);
+        result.add(failed);
+
+        //同步中
+        DmpOutputTaskRecordDTO.TabListDTO syncIng = new DmpOutputTaskRecordDTO.TabListDTO();
+        syncIng.setTabFlag(SyncStatusEnum.IN_SYNC.getCode());
+        int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.INIT.getCode())
+                || DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode().equals(a.getTabFlag())
+        ).mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
+        syncIng.setCount(syncIngCount);
+        result.add(syncIng);
+
         //无需同步
         Integer count = this.lambdaQuery()
                 .eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
@@ -156,8 +184,8 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         DmpOutputTaskRecordDTO.TabListDTO noNeedSync = new DmpOutputTaskRecordDTO.TabListDTO();
         noNeedSync.setTabFlag(SyncStatusEnum.NO_NEED_SYNC.getCode());
         noNeedSync.setCount(count);
-        countList.add(noNeedSync);
-        return countList;
+        result.add(noNeedSync);
+        return result;
     }
 
     @Override
@@ -209,6 +237,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addOutputBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto) {
         //勾选方式添加黑名单
         if (CollectionUtils.isNotEmpty(dto.getIds())) {
@@ -224,6 +253,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     /**
      * 自定义条件方式添加黑名单
+     *
      * @param dto
      */
     private void customizeBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto) {
@@ -238,26 +268,31 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         List<DmpCfgOutputEntity> dmpCfgOutputEntityList = dmpCfgOutputService.lambdaQuery()
                 .eq(DmpCfgOutputEntity::getSystemId, params.getTargetPlatformCode())
                 .list();
-
         for (DmpCfgOutputEntity dmpCfgOutputEntity : dmpCfgOutputEntityList) {
+
             //匹配输入配置对应的输出任务
             DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.stream().filter(req -> req.getId().equals(dmpCfgOutputEntity.getInputConvertId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(dmpCfgInputConvertEntity)) {
 
+                //获取输出任务配置的主键字段
                 List<String> codeKeyList = getSourceCodeKeys(dmpCfgOutputEntity.getOutputClass());
                 if (CollectionUtils.isNotEmpty(codeKeyList)) {
-                    ////查询黑名单用于校验是否存在，避免重复添加
-                    checkOutpuBlackExist(dmpCfgOutputEntity.getId(), codeKeyList, params.getSourceCodeList());
 
-                    //添加黑名单
-                    DmpCfgOutputBlackDTO.AddDTO addDTO = new DmpCfgOutputBlackDTO.AddDTO();
-                    addDTO.setCompareSign(QueryConditionEnum.EQ.getCompareCode());
-                    addDTO.setDataType(DmpCfgOutputBlackDataTypeEnum.STRING.getCode());
-                    addDTO.setFieldName(codeKeyList.get(0));
-                    addDTO.setFieldValue(String.join(",", params.getSourceCodeList()));
-                    addDTO.setMainId(dmpCfgOutputEntity.getId());
-                    addDTO.setRemark(dto.getRemark());
-                    dmpCfgOutputBlackService.add(addDTO);
+                    for (String sourceCode : params.getSourceCodeList()) {
+                        //查询黑名单用于校验是否存在，避免重复添加
+                        checkOutpuBlackExist(dmpCfgOutputEntity.getId(), codeKeyList, sourceCode);
+
+                        //添加黑名单
+                        DmpCfgOutputBlackDTO.AddDTO addDTO = new DmpCfgOutputBlackDTO.AddDTO();
+                        addDTO.setCompareSign(QueryConditionEnum.EQ.getCompareCode());
+                        addDTO.setDataType(DmpCfgOutputBlackDataTypeEnum.STRING.getCode());
+                        addDTO.setFieldName(codeKeyList.get(0));
+                        addDTO.setFieldValue(sourceCode);
+                        addDTO.setMainId(dmpCfgOutputEntity.getId());
+                        addDTO.setRemark(dto.getRemark());
+                        dmpCfgOutputBlackService.add(addDTO);
+                    }
+
                 }
             }
         }
@@ -286,6 +321,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     /**
      * 勾选添加黑名单
+     *
      * @param dto
      */
     private void checkAddBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto) {
@@ -304,12 +340,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                 .in(DmpCfgOutputEntity::getId, cfgOutputIdList)
                 .list();
 
-        //根据输出任务分组添加黑名单
-        Map<String, List<DmpOutputTaskEntity>> outputTaskGroup = dmpOutputTaskEntityList.stream().collect(Collectors.groupingBy(DmpOutputTaskEntity::getCfgOutputId));
-        for (Map.Entry<String, List<DmpOutputTaskEntity>> outputTaskGroupMap : outputTaskGroup.entrySet()) {
-
+        for (DmpOutputTaskRecordEntity recordEntity : recordEntityList) {
             //获取对应的输出配置
-            String cfgOutputId = outputTaskGroupMap.getKey();
+            String cfgOutputId = recordEntity.getMainId();
             DmpCfgOutputEntity dmpCfgOutputEntity = cfgOutputEntityList.stream().filter(req -> req.getId().equals(cfgOutputId)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(dmpCfgOutputEntity)) {
                 continue;
@@ -321,39 +354,35 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                 throw new ServiceException("没有找到" + dmpCfgOutputEntity.getOutputClass() + " 类的sourceCodeKeys方法返回值");
             }
 
-            //获取到这个分组下的所有单号，根据单号添加黑名单
-            List<String> sourceCodeList = recordEntityList.stream()
-                    .filter(req -> req.getMainId().equals(outputTaskGroupMap.getKey()))
-                    .map(DmpOutputTaskRecordEntity::getSourceCode)
-                    .collect(Collectors.toList());
-
-            ////查询黑名单用于校验是否存在，避免重复添加
-            checkOutpuBlackExist(cfgOutputId, sourceCodeKeys, sourceCodeList);
+            //查询黑名单用于校验是否存在，避免重复添加
+            checkOutpuBlackExist(cfgOutputId, sourceCodeKeys, recordEntity.getSourceCode());
 
             //添加黑名单
             DmpCfgOutputBlackDTO.AddDTO addDTO = new DmpCfgOutputBlackDTO.AddDTO();
             addDTO.setCompareSign(QueryConditionEnum.EQ.getCompareCode());
             addDTO.setDataType(DmpCfgOutputBlackDataTypeEnum.STRING.getCode());
             addDTO.setFieldName(sourceCodeKeys.get(0));
-            addDTO.setFieldValue(String.join(",", sourceCodeList));
+            addDTO.setFieldValue(recordEntity.getSourceCode());
             addDTO.setMainId(cfgOutputId);
             addDTO.setRemark(dto.getRemark());
             dmpCfgOutputBlackService.add(addDTO);
+
         }
     }
 
     /**
      * 校验黑名单是否存在
+     *
      * @param cfgOutputId
      * @param sourceCodeKeys
-     * @param sourceCodeList
+     * @param sourceCode
      */
-    private void checkOutpuBlackExist(String cfgOutputId, List<String> sourceCodeKeys, List<String> sourceCodeList) {
+    private void checkOutpuBlackExist(String cfgOutputId, List<String> sourceCodeKeys, String sourceCode) {
         //查询黑名单用于校验是否存在，避免重复添加
         List<DmpCfgOutputBlackEntity> list = dmpCfgOutputBlackService.lambdaQuery()
                 .eq(DmpCfgOutputBlackEntity::getMainId, cfgOutputId)
                 .eq(DmpCfgOutputBlackEntity::getFieldName, sourceCodeKeys.get(0))
-                .eq(DmpCfgOutputBlackEntity::getFieldValue, String.join(",", sourceCodeList))
+                .eq(DmpCfgOutputBlackEntity::getFieldValue, sourceCode)
                 .list();
         if (CollectionUtils.isNotEmpty(list)) {
             throw new ServiceException("数据已在黑名单存在，请不要重复添加！");
@@ -362,7 +391,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Override
     public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportNewDmpPushTask(PagingDTO<DmpOutputTaskRecordDTO.ExpotParamDTO> dto) {
-        Page<DmpOutputTaskRecordDTO.PagingDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        Page<DmpOutputTaskRecordDTO.PagingDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             //数据处理
             doOpHandleDmpPushTask(page.getRecords());
@@ -378,25 +407,25 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
         Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
                 .in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
-                .select(DmpOutputTaskEntity::getId , DmpOutputTaskEntity::getCfgOutputId)
+                .select(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId)
                 .list().stream().collect(Collectors.toMap(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId));
 
         Map<String, DmpCfgOutputEntity> outputIdEntityMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
                 .list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, d -> d));
 
         Map<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMaps = new HashMap<>();
-        for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+        for (DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
             String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
             List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMaps.get(cfgOutputId);
-            if(CollUtil.isEmpty(list)) {
+            if (CollUtil.isEmpty(list)) {
                 list = new ArrayList<>();
             }
             list.add(dmpOutputTaskRecordEntity);
             cfgOutputRecordEntityListMaps.put(cfgOutputId, list);
         }
-        for(Map.Entry<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMap : cfgOutputRecordEntityListMaps.entrySet()) {
+        for (Map.Entry<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMap : cfgOutputRecordEntityListMaps.entrySet()) {
             DmpCfgOutputEntity dmpCfgOutputEntity = outputIdEntityMaps.get(cfgOutputRecordEntityListMap.getKey());
-            DmpOutputTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(dmpCfgOutputEntity.getOutputClass()) , DmpOutputTaskHandler.class);
+            DmpOutputTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(dmpCfgOutputEntity.getOutputClass()), DmpOutputTaskHandler.class);
             dmpOutputTaskHandler.dealDmpOutputTaskRecordEntityList(dmpCfgOutputEntity, cfgOutputRecordEntityListMap.getValue());
         }
         return null;
