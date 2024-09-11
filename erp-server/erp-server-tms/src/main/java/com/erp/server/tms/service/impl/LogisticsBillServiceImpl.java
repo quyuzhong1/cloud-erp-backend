@@ -1091,6 +1091,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     }
 
     @Override
+    public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByTrackNo(List<String> trackNoList) {
+        if (CollectionUtils.isEmpty(trackNoList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listLogisticsBillVoByTrackNo(trackNoList);
+    }
+
+    @Override
     public LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(String logisticsCode) {
         if (StringUtils.isBlank(logisticsCode)) {
             return new LogisticsBillDTO.BaseDTO();

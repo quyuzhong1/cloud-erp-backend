@@ -111,12 +111,16 @@
     </select>
     <select id="listLogisticsBillVoByTrackNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
         SELECT
+            lb.id,
             lb.shop_id,
             lb.shop_name,
             lb.source_type,
             lb.source_id,
             lb.source_code,
+            lb.outstock_id,
+            lb.outstock_code,
             lb.transport_no,
+            lbd.id as detailId,
             lbd.track_status,
             lbd.track_no
         FROM logistics_bill lb
