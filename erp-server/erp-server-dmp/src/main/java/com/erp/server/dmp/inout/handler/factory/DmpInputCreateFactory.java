@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.common.business.utils.ApplicationContextUtils;
@@ -135,12 +136,26 @@ public class DmpInputCreateFactory{
 	}
 	
 	/**
-	 * 创建子类任务并立马执行
+	 * 创建子类任务并立马执行，并且跟随父任务事务
 	 * @param dmpInputHotfixCreateRequest
 	 * @return
 	 */
 	@Transactional(rollbackFor = Exception.class)
-	public List<DmpInputFinishResponse> doChildInputTask(DmpInputChildCreateRequest dmpInputChildCreateRequest) {
+	public List<DmpInputFinishResponse> doChildInputTaskGlobal(DmpInputChildCreateRequest dmpInputChildCreateRequest) {
+		return this.doChildInputTask(dmpInputChildCreateRequest);
+	}
+	
+	/**
+	 * 创建子类任务并立马执行，单独事务，不跟随父任务事务
+	 * @param dmpInputHotfixCreateRequest
+	 * @return
+	 */
+	@Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
+	public List<DmpInputFinishResponse> doChildInputTaskSingle(DmpInputChildCreateRequest dmpInputChildCreateRequest) {
+		return this.doChildInputTask(dmpInputChildCreateRequest);
+	}
+	
+	private List<DmpInputFinishResponse> doChildInputTask(DmpInputChildCreateRequest dmpInputChildCreateRequest) {
 		List<DmpInputFinishResponse> dmpInputFinishResponseList = new ArrayList<>();
 		DmpInputCreateResponse dmpInputCreateResponse = this.createChildInputTask(dmpInputChildCreateRequest);
 		List<DmpInputTaskEntity> afterDmpInputTaskEntityList = dmpInputCreateResponse.getAfterDmpInputTaskEntityList();
