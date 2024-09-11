@@ -92,6 +92,9 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
         List<FirstMileEstimatedBillDTO.EstimatedCost> estimatedCostList = this.baseMapper.listEstimatedCost(logisticsBillIds);
         Map<String, List<FirstMileEstimatedBillDTO.EstimatedCost>> estimatedCostMap = estimatedCostList.stream().collect(Collectors.groupingBy(item -> item.getLogisticsBillId()));
+        //业务单号
+        List<String> outStockIds = records.stream().map(item -> item.getOutStockId()).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(outStockIds);
         for (FirstMileEstimatedBillDTO.View item : records) {
             item.setStatusName(ConfirmStatusEnum.getName(item.getStatus()));
             item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
@@ -144,6 +147,13 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 }
             }
             item.setTransportStatusName(FmLogisticTrackStatusEnum.getNameByCode(item.getTransportStatus()).getName());
+            //业务单号查询逻辑修改 展示FBA发货单号和第三方货号-同期初展示逻辑
+            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.stream().filter(e -> Objects.equals(e.getId(), item.getOutStockId())).findFirst().orElse(null);
+            if (Objects.nonNull(businessDTO)){
+                item.setBusinessCode(businessDTO.getBusinessCode());
+            }else {
+                item.setBusinessCode("");
+            }
         }
     }
 
