@@ -350,8 +350,6 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        //数据赋值处理
-        fillPageData(list);
         return new PagingVO<>(list, resultList.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
     }
 
