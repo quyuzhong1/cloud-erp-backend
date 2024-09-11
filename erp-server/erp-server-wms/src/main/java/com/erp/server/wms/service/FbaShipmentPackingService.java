@@ -34,4 +34,6 @@ public interface FbaShipmentPackingService extends SuperService<FbaShipmentPacki
     void updateCartonId(String cartonId, String fbaShipmentId, String fbaBoxNo);
 
     void generateByBindDTO(List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailList);
+
+    void removeByFbaCodeList(List<String> fbaCodeList);
 }

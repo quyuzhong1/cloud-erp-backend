@@ -63,7 +63,7 @@ public class RequisitionApplicationDTO implements Serializable {
 
         @NotEmpty(message = "详情不能为空")
         @Valid
-        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDetailDTOS;;
+        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;;
     }
     /**
      * fba下推发货单绑定货件View
@@ -160,7 +160,7 @@ public class RequisitionApplicationDTO implements Serializable {
          * 未匹配的装箱信息
          */
         @NotEmpty(message = "待匹配装箱信息不能为空")
-        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDetailDTOList;
+        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOList;
     }
 
     /**

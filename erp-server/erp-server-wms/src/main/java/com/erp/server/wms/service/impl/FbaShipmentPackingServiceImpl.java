@@ -21,6 +21,7 @@ import com.erp.model.wms.dto.FbaShipmentPackingDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentPackingEntity;
+import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.wms.convert.FbaShipmentPackingConverter;
@@ -161,12 +162,25 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
             FbaShipmentPackingEntity fbaShipmentPackingEntity = new FbaShipmentPackingEntity();
             fbaShipmentPackingEntity.setMainId(fbaBindShipmentViewDetailDTO.getFbaShipmentId());
             fbaShipmentPackingEntity.setBoxNo(fbaBindShipmentViewDetailDTO.getFbaBoxNo());
+            fbaShipmentPackingEntity.setCartonId(fbaBindShipmentViewDetailDTO.getCartonId());
             addList.add(fbaShipmentPackingEntity);
         }
         if(CollectionUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
             List<String> fbaIds = addList.stream().map(FbaShipmentPackingEntity::getMainId).distinct().collect(Collectors.toList());
             fbaShipmentService.updatePackingStatus(fbaIds);
+        }
+    }
+
+    @Override
+    public void removeByFbaCodeList(List<String> fbaCodeList) {
+        if(CollectionUtil.isEmpty(fbaCodeList)){
+            return;
+        }
+        List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(fbaCodeList);
+        List<String> fbaIds = fbaShipmentEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        if(CollectionUtil.isNotEmpty(fbaIds)){
+            lambdaUpdate().in(FbaShipmentPackingEntity::getMainId,fbaIds).remove();
         }
     }
 }

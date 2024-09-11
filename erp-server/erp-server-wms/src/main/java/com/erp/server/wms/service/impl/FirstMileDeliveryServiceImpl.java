@@ -171,6 +171,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private CfgSettingService cfgSettingService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private FbaShipmentPackingService fbaShipmentPackingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -652,6 +654,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         String id = entity.getId();
+        // 删除fba装箱信息
+        List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listDetailByMainId(id);
+        List<String> fbaCodeList = detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        fbaShipmentPackingService.removeByFbaCodeList(fbaCodeList);
         // 删除明细数据
         firstMileDeliveryDetailService.removeByMainIds(Arrays.asList(id));
         // 删除主单数据
