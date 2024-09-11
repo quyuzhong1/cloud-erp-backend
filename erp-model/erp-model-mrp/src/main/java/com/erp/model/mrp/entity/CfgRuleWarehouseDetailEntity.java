@@ -66,7 +66,7 @@ public class CfgRuleWarehouseDetailEntity extends BaseEntity<CfgRuleWarehouseDet
     /**
      * 平台
      */
-    @TableField(exist = false)
+    @TableField("dict_platform")
     private String dictPlatform;
 
     /**

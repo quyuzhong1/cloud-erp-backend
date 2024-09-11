@@ -207,8 +207,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
             updateDTO.setVirtualWarehouseId(virtualWarehouseDTO.getVirtualWarehouseId());
             updateDTO.setChannelType(virtualWarehouseDTO.getType());
             updateDTO.setDictPlatform(virtualWarehouseDTO.getDictPlatform());
-            updateDTO.setInventoryAllocateType(CfgRuleInventoryAllocateTypeEnum.AUTO_ALLOCATION.getCode());
-            updateDTO.setInventoryAllocateType(inventoryAllocateType);
+            updateDTO.setInventoryAllocateType(StrUtil.isBlank(inventoryAllocateType) ? CfgRuleInventoryAllocateTypeEnum.AUTO_ALLOCATION.getCode() : inventoryAllocateType);
             //店铺数据
             List<String> relationIdList = value.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getRelationIdList())).flatMap(obj -> Stream.of(obj.getRelationIdList().stream().toArray(String[]::new))).distinct().collect(Collectors.toList());
             updateDTO.setChannelIdList(relationIdList);
