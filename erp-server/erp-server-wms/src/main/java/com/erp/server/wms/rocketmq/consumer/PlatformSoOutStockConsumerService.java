@@ -78,8 +78,8 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
 
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
-        dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpTaskFeign.updateSyncInfo(paramDTO);
     }
 
     @Override

@@ -1,16 +1,26 @@
 package com.erp.server.sys.rocketmq.sync.kingdee.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.sys.entity.SysPushMsgEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
+import com.erp.server.sys.service.SysPushMsgService;
+
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,6 +43,9 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    
+    @Resource
+    private SysPushMsgService sysPushMsgService;
 
     /**
      * 组装数据发送到金蝶
@@ -83,17 +97,37 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (SysUserInfoEntity entity, String operate, Map<String, Object> resultMap) {
-        //添加推送任务
-        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-        dmpSyncTaskDTO.setSourceId(entity.getUid());
-        dmpSyncTaskDTO.setSourceCode(entity.getCode());
-        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SYS_USER_INFO.getCode());
-        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SYS_USER_INFO_TAG.getName());
-        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        dmpSyncTaskDTO.setSyncOperate(operate);
-        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SYS_USER_INFO.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+            dmpSyncTaskDTO.setSourceId(entity.getUid());
+            dmpSyncTaskDTO.setSourceCode(entity.getCode());
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SYS_USER_INFO.getCode());
+            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SYS_USER_INFO_TAG.getName());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            dmpSyncTaskDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+        }
+        
+        SysPushMsgEntity sysPushMsgEntity = new SysPushMsgEntity();
+    	sysPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+    	sysPushMsgEntity.setSourceType(SourceTypeEnum.SYS_USER_INFO.getCode());
+    	sysPushMsgEntity.setSourceId(entity.getUid());
+    	sysPushMsgEntity.setSourceCode(entity.getCode());
+    	sysPushMsgEntity.setSyncOperate(operate);
+    	sysPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+    	sysPushMsgService.save(sysPushMsgEntity);
+        
+        return null;
     }
 }

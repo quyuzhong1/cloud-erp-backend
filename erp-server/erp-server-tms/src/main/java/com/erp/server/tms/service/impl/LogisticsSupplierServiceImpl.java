@@ -32,7 +32,7 @@ import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsFbaOverseasFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsSupplierConverter;

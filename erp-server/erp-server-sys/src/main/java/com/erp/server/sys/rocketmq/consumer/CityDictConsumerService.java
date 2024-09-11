@@ -82,8 +82,8 @@ public class CityDictConsumerService<T extends DmpSyncTaskIdDTO> extends Abstrac
     }
 
     @Override
-    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
-        dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpTaskFeign.updateSyncInfo(paramDTO);
     }
 
     @Override

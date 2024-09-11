@@ -5,7 +5,7 @@ import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.rpc.wms.feign.SupplierFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.server.srm.service.CommonService;
 import org.springframework.stereotype.Service;
 

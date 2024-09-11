@@ -26,7 +26,7 @@ import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsAuthStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.tms.convert.TransferLogisticsChannelConverter;
 import com.erp.server.tms.convert.TransferLogisticsSupplierConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;

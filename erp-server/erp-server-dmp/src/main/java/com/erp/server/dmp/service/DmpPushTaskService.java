@@ -157,6 +157,8 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      */
     String saveOrUpdateDmpSyncTask(DmpPushTaskEntity entity);
 
+    public void updateDmpSyncTask(DmpPushTaskEntity entity);
+
     /**
      * 根据id集合删除数据
      * @param ids
