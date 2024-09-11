@@ -137,6 +137,23 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     }
 
     /**
+     * 获取委外入库-自动入库配置
+     * @return
+     */
+    @Override
+    public String getSubcontractInStockSetting() {
+        CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.SUBCONTRACT_IN_STOCK.getCode());
+        if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
+            return "";
+        }
+        CfgSettingValueDTO.SubcontractInStock dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
+        if(Objects.isNull(dto) || StrUtil.isBlank(dto.getAutoInStockSetting())){
+            return "";
+        }
+        return dto.getAutoInStockSetting();
+    }
+
+    /**
     * 新增修改处理数据
     */
     private List<CfgSettingEntity> handleData(CfgSettingDTO.AddDTO addDTO) {
@@ -199,6 +216,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 break;
             case CFG_PRINT:
                 jsonObject = JSONUtil.parseObj(addDTO.getCfgPrint());
+                break;
+            case SUBCONTRACT_IN_STOCK:
+                jsonObject = JSONUtil.parseObj(addDTO.getSubcontractInStock());
                 break;
             default:
                 break;
@@ -268,6 +288,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case CFG_PRINT:
                 CfgSettingValueDTO.CfgPrint cfgPrint = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.CfgPrint.class);
                 viewDTO.setCfgPrint(cfgPrint);
+                break;
+            case SUBCONTRACT_IN_STOCK:
+                CfgSettingValueDTO.SubcontractInStock subcontractInStock = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
+                viewDTO.setSubcontractInStock(subcontractInStock);
                 break;
             default:
                 break;
