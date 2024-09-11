@@ -5,7 +5,6 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -29,13 +28,13 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
 
     /**
      * 导出Excel
+     *
      * @param dto
-     * @param response
      * @return
      * @date: 2024-08-22
      * @author: tanmujin
      */
-    void exportExcel(FirstMileWeightAllocationDTO.ExportParamDTO dto, HttpServletResponse response);
+    void exportExcel(FirstMileWeightAllocationDTO.ExportParamDTO dto);
 
     /**
      * tab页统计

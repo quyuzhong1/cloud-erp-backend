@@ -1,13 +1,17 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import javax.validation.Valid;
 
 @FeignClient(name = "erp-tms", contextId = "exportTmsFeign", configuration = ExportFeignConfig.class)
 public interface ExportTmsFeign {
@@ -58,4 +62,8 @@ public interface ExportTmsFeign {
     PagingVO<InitFirstMileAllocationDTO.PagingVO> exportInitFirstMileAllocation(@RequestBody PagingDTO<InitFirstMileAllocationDTO.PagingParamDTO> params);
     @PostMapping("/feign/export/exportInventorySkuCost")
     PagingVO<InventorySkuCostDTO.PagingVO> exportInventorySkuCost(@RequestBody PagingDTO<InventorySkuCostDTO.PagingParamDTO> params);
+    @PostMapping("/feign/export/exportFirstMileEstimatedBill")
+    PagingVO<FirstMileEstimatedBillDTO.View> exportFirstMileEstimatedBill(@RequestBody PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto);
+    @PostMapping("/feign/export/exportFirstMileWeightAllocation")
+    PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto);
 }

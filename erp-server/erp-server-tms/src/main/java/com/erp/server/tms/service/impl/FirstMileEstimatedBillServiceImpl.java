@@ -1,7 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.NumberUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import cn.hutool.core.util.StrUtil;
@@ -27,6 +26,7 @@ import com.erp.model.tms.dto.excel.FirstMileEstimatedBillExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.listener.FirstMileEstimatedBillExcelListener;
@@ -34,7 +34,6 @@ import com.erp.server.tms.mapper.FirstMileEstimatedBillMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,6 +46,9 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_COST_ALLOCATION;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_ESTIMATED_BILL;
 
 /**
  * 头程暂估账单业务类
@@ -71,6 +73,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     private TmsCfgCostService tmsCfgCostService;
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<FirstMileEstimatedBillDTO.View> paging(PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto) {
@@ -294,8 +298,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     }
 
     @Override
-    public void exportExcel(FirstMileEstimatedBillDTO.ExportParam dto, HttpServletResponse response) {
-        List<FirstMileEstimatedBillDTO.View> viewList;
+    public void exportExcel(FirstMileEstimatedBillDTO.ExportParam dto) {
+        /*List<FirstMileEstimatedBillDTO.View> viewList;
         if(dto.getIds() == null || ArrayUtils.isEmpty(dto.getIds().toArray())){
             viewList = baseMapper.listByParam(dto);
         }else {
@@ -309,7 +313,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             new ExcelPrintUtils().patchExport(viewList, response, builder.toString(), "excel/firstMileEstimatedBillExport.xlsx");
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
-        }
+        }*/
+        downloadTaskFeign.saveDownloadTask("头程暂估账单导出", EXPORT_TMS_FM_ESTIMATED_BILL.getCode(), dto);
     }
 
     @Override

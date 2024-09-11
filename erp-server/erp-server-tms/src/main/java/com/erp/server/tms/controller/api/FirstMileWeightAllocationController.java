@@ -65,8 +65,8 @@ public class FirstMileWeightAllocationController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody FirstMileWeightAllocationDTO.ExportParamDTO dto, HttpServletResponse response){
-        firstMileWeightAllocationService.exportExcel(dto, response);
+    public ApiResult<?> exportExcel(@RequestBody FirstMileWeightAllocationDTO.ExportParamDTO dto){
+        firstMileWeightAllocationService.exportExcel(dto);
         return ApiResult.success();
     }
 

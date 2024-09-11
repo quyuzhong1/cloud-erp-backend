@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -62,6 +65,10 @@ public class ExportTmsFeignController {
     private InitFirstMileAllocationService initFirstMileAllocationService;
     @Resource
     private InventorySkuCostService inventorySkuCostService;
+    @Resource
+    private FirstMileEstimatedBillService firstMileEstimatedBillService;
+    @Resource
+    private FirstMileWeightAllocationService firstMileWeightAllocationService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -263,5 +270,23 @@ public class ExportTmsFeignController {
     @PostMapping("/exportInventorySkuCost")
     PagingVO<InventorySkuCostDTO.PagingVO> exportInventorySkuCost(@RequestBody PagingDTO<InventorySkuCostDTO.PagingParamDTO> params){
         return inventorySkuCostService.paging(params);
+    }
+
+    /**
+     * 暂估账单
+     */
+    @PostMapping("/exportFirstMileEstimatedBill")
+    @WebAdvanceQuery(handler = FirstMileEstimatedQueryHandler.class)
+    public PagingVO<FirstMileEstimatedBillDTO.View> exportFirstMileEstimatedBill(@RequestBody PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto){
+        return firstMileEstimatedBillService.paging(dto);
+    }
+
+    /**
+     * 重量分摊
+     */
+    @PostMapping("/exportFirstMileWeightAllocation")
+    @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
+    public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
+        return firstMileWeightAllocationService.paging(dto);
     }
 }

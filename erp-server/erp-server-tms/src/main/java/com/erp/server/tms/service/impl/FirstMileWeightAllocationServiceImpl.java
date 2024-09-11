@@ -13,7 +13,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgSettingDTO;
@@ -23,6 +22,7 @@ import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.rpc.plm.feign.ProductPackFeign;
@@ -32,7 +32,6 @@ import com.erp.server.tms.mapper.FirstMileWeightAllocationMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +49,9 @@ import com.common.core.enums.ApiError;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_ESTIMATED_BILL;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_WEIGHT_ALLOCATION;
 
 /**
  * <p>
@@ -104,7 +105,8 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     private WmsCartonFeign wmsCartonFeign;
     @Resource
     private BomSkuFeign bomSkuFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @Override
@@ -171,8 +173,8 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     }
 
     @Override
-    public void exportExcel(FirstMileWeightAllocationDTO.ExportParamDTO dto, HttpServletResponse response) {
-        List<FirstMileWeightAllocationDTO.ViewDTO> list = baseMapper.listByParam(dto);
+    public void exportExcel(FirstMileWeightAllocationDTO.ExportParamDTO dto) {
+        /*List<FirstMileWeightAllocationDTO.ViewDTO> list = baseMapper.listByParam(dto);
         fillData(list);
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         StringBuilder builder = new StringBuilder();
@@ -181,7 +183,8 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             new ExcelPrintUtils().patchExport(list, response, builder.toString(), "excel/firstMileWeightAllocationExport.xlsx");
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
-        }
+        }*/
+        downloadTaskFeign.saveDownloadTask("头程重量分摊导出", EXPORT_TMS_FM_WEIGHT_ALLOCATION.getCode(), dto);
     }
 
     @Override

@@ -77,8 +77,8 @@ public class FirstMileEstimatedBillController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery(handler = FirstMileEstimatedQueryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody FirstMileEstimatedBillDTO.ExportParam dto, HttpServletResponse response){
-        firstMileEstimatedBillService.exportExcel(dto, response);
+    public ApiResult<?> exportExcel(@RequestBody FirstMileEstimatedBillDTO.ExportParam dto){
+        firstMileEstimatedBillService.exportExcel(dto);
         return ApiResult.success();
     }
 
