@@ -374,8 +374,8 @@ public class PilotApplicationController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "试产申请导出Excel数据")
     @WebAdvanceQuery(handler = PilotApplicationQueryHandler.class)
-    public ApiResult<?> exportList(@RequestBody @Validated PilotApplicationDTO.ExportDTO dto, HttpServletResponse response) {
-        pilotApplicationService.exportList(dto, response);
+    public ApiResult<?> exportList(@RequestBody @Validated PilotApplicationDTO.ExportDTO dto) {
+        pilotApplicationService.exportList(dto);
         return success();
     }
 

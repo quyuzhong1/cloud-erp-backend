@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.BetweenFormatter;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
@@ -25,6 +24,7 @@ import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
@@ -39,8 +39,6 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +55,6 @@ import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -68,6 +65,10 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PILOT_APPLICATION;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_ESTIMATED_BILL;
+
 /**
  * <p>
  * 试产申请 服务实现类
@@ -123,6 +124,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private PurchasePriceDetailFeign purchasePriceDetailFeign;
     @Resource
     private PurchaseApplicationDetailFeign purchaseApplicationDetailFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -339,12 +342,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     @Override
-    public void exportList(PilotApplicationDTO.ExportDTO param, HttpServletResponse response) {
-        List<PilotApplicationDTO.ListDTO> list = this.baseMapper.exportList(param);
+    public void exportList(PilotApplicationDTO.ExportDTO param) {
+        /*List<PilotApplicationDTO.ListDTO> list = this.baseMapper.exportList(param);
         // 数据处理
-        fillList(list);
+        fillList(list);*/
 
-        // 导出数据
+        /*// 导出数据
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/pilotApplicationExport.xlsx";
         String name = "试产申请导出";
@@ -354,7 +357,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
-        }
+        }*/
+
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        StringBuilder builder = new StringBuilder();
+        builder.append("试产量产单导出").append(date);
+        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_PLM_PILOT_APPLICATION.getCode(), param);
     }
 
     /**
