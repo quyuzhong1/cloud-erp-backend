@@ -482,6 +482,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         // 调用流程审核
         approveProcess(entity, dto, approveDTO);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        updateForApprove(entity.getId(), approveStatus.getStatus());
 
         //记录日志
         String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据审核操作 审核结果：【%s】 审核意见：【%s】", UserContext.getNonLoginUser().getUserName(), entity.getCode(), approveType.getName(), dto.getComment());
@@ -512,7 +513,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if (200 != code) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        updateForApprove(entity.getId(), dto.getType());
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
