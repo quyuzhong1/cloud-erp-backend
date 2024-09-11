@@ -1,6 +1,5 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -11,17 +10,16 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
-import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
-import com.erp.sdk.oms.amz.spapi.client.ApiClient;
+import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
-import com.erp.sdk.oms.amz.spapi.model.orders.GetOrderItemsResponse;
-import com.erp.sdk.oms.amz.spapi.model.orders.OrderItem;
-import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
+import com.erp.sdk.oms.amz.spapi.model.fbainventory.InventorySummary;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentItemsResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -36,6 +34,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -55,102 +54,74 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputInitHandler
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        List<Map<String, Object>> findMongoData = null;
         String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        if (StringUtils.isNotBlank(parentStorageName)) {
-            List<ParamData> paramDataList = new ArrayList<>();
-            paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-            findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
+        if (StringUtils.isBlank(parentStorageName)) {
+            return Collections.emptyList();
         }
-        if (CollUtil.isEmpty(findMongoData)) {
-            return new ArrayList<>();
+        List<ParamData> paramDataList = new ArrayList<>();
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
+        List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
+        if (CollectionUtils.isEmpty(findMongoData)) {
+            ServiceException.runError("未找到mongo报告信息:taskId=" + dmpInputTaskEntity.getId());
         }
-        String nextLevelId = dmpCfgInputDetailEntity.getNextLevelId();
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(nextLevelId);
-        if (null == shopInfoDTO) {
-            throw new ServiceException("未找到店铺授权:" + nextLevelId);
+        String shopId = findMongoData.get(0).getOrDefault("nextLevelId", "").toString();
+        if (StringUtils.isBlank(shopId)){
+            ServiceException.runError("未找到mongo中nextLevelId信息:taskId=" + dmpInputTaskEntity.getId());
         }
+        // 获取店铺授权
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        // 当前站点
+        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        // 初始化API
+        FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
 
         List<JSONObject> allItemList = new LinkedList<>();
         for (Map<String, Object> findMongo : findMongoData) {
-            String amazonOrderId = findMongo.get("amazonOrderId").toString();
+            String shipmentId = findMongo.get("shipmentId").toString();
             // 检查来源
-            if (StringUtils.isBlank(amazonOrderId)) {
-                String msg = StrUtil.format("订单来源ID:{}", JSONUtil.toJsonStr(findMongo));
+            if (StringUtils.isBlank(shipmentId)) {
+                String msg = StrUtil.format("FBA货件来源ID为空:{}", JSONUtil.toJsonStr(findMongo));
                 throw new ServiceException(msg);
             }
             // 缓存获取结果
-            String amazonOrderIdResultKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS.getBusinessTypeName(), amazonOrderId);
-            Object resultObj = redisUtil.get(amazonOrderIdResultKey);
+            String shipmentIdResultKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT_DETAIL.getBusinessTypeName(), shipmentId);
+            Object resultObj = redisUtil.get(shipmentIdResultKey);
             if (null != resultObj) {
                 List<JSONObject> curItemList = JSONUtil.toList(resultObj.toString(), JSONObject.class);
                 allItemList.addAll(curItemList);
                 continue;
             }
-
-            AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
+            AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT_DETAIL;
             // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
             String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(), shopInfoDTO.getPlatformShopCode(), requestTypeRateLimiterEnum.getBusinessTypeName());
             // 默认请求速率配置
             // 获取动态速率
             Object limitObj = redisUtil.get(limitKey);
             if (null != limitObj) {
-                String msg = StrUtil.format("【订单明细拉取】 amazonOrderId={}, platformShopCode={},存在429等待恢复:放弃当前请求任务", amazonOrderId, shopInfoDTO.getPlatformShopCode());
+                log.warn("【FBA货件列表拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+                String msg = StrUtil.format("【FBA货件明细拉取】 amazonOrderId={}, platformShopCode={},存在429等待恢复:放弃当前请求任务", shipmentId, shopInfoDTO.getPlatformShopCode());
                 throw new ServiceException(msg);
             }
             String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
-
-            AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-            OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
-            OrderItemList curOrderItems = null;
             try {
-                // 查询订单详情
-                ApiResponse<GetOrderItemsResponse> itemResponse = ordersVoApi.getOrderItemsWithHttpInfo(amazonOrderId, null);
-                List<String> limitArray = itemResponse.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
-                rateLimitStr = limitArray.get(0);
-                GetOrderItemsResponse orderItems = itemResponse.getData();
-
-                String currentNextToken = orderItems.getPayload().getNextToken();
-                OrderItemList resultOrderItemsList = orderItems.getPayload().getOrderItems();
-                while (StringUtils.isNotBlank(currentNextToken)) {
-                    ApiResponse<GetOrderItemsResponse> currentOrderItemsResp = ordersVoApi.getOrderItemsWithHttpInfo(amazonOrderId, currentNextToken);
-                    GetOrderItemsResponse currentOrderItems = currentOrderItemsResp.getData();
-                    List<String> currentLimitArray = itemResponse.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
-                    rateLimitStr = currentLimitArray.get(0);
-                    resultOrderItemsList.addAll(currentOrderItems.getPayload().getOrderItems());
-                    currentNextToken = currentOrderItems.getPayload().getNextToken();
-                }
-                curOrderItems = resultOrderItemsList;
+                // 查询FBA货件item
+                GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(shipmentId, marketPlaceEnum.getMarketplaceId());
+                InboundShipmentItemList itemData = response.getPayload().getItemData();
+                List<JSONObject> curJsonList = itemData.stream().map(e -> (JSONObject) JSON.toJSON(e)).collect(Collectors.toList());
+                // 缓存倒redis
+                redisUtil.set(shipmentIdResultKey, JSONUtil.toJsonStr(curJsonList), 600);
+                allItemList.addAll(curJsonList);
             } catch (ApiException e) {
                 if (429 == e.getCode()) {
                     // 设置动态速率，失效时间=1/limit
                     BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
                     redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
                 }
-                throw new ServiceException("查询亚马逊订单详情失败：API异常：" + JSONUtil.toJsonStr(e));
-            } catch (Exception e) {
-                throw new ServiceException("查询亚马逊订单详情失败：" + JSONUtil.toJsonStr(e));
+                throw new ServiceException("[Amazon SP-APi] 查询FBA货件item失败" + e);
             }
-            if (CollectionUtils.isEmpty(curOrderItems)) {
-                continue;
-            }
-            List<JSONObject> curJsonList = curOrderItems.stream().map(e -> setAmazonOrderIdAndToJsonObject(e, amazonOrderId)).collect(Collectors.toList());
-            allItemList.addAll(curJsonList);
-            // 缓存倒redis
-//            redisUtil.set(amazonOrderIdResultKey, JSONUtil.toJsonStr(curOrderItems), 600);
-            log.warn("查询亚马逊订单详情成功, amazonOrderId={}, platformShopCode={}", amazonOrderId, shopInfoDTO.getPlatformShopCode());
+            log.warn("查询亚马逊FBA货件详情成功, shipmentId={}, platformShopCode={}", shipmentId, shopInfoDTO.getPlatformShopCode());
         }
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allItemList)));
     }
-
-    /**
-     * 设置亚马逊订单ID和转换JSON
-     */
-    private JSONObject setAmazonOrderIdAndToJsonObject(OrderItem orderItem, String amazonOrderId) {
-        JSONObject json = (JSONObject) JSON.toJSON(orderItem);
-        json.put("amazonOrderId", amazonOrderId);
-        return json;
-    }
-
 
 }

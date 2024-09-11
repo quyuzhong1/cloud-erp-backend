@@ -1,12 +1,8 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -14,47 +10,33 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
-import com.erp.oms.aliexpress.api.IopClient;
-import com.erp.oms.aliexpress.api.IopClientImpl;
-import com.erp.oms.aliexpress.api.IopRequest;
-import com.erp.oms.aliexpress.api.IopResponse;
-import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
-import com.erp.oms.aliexpress.enums.Protocol;
-import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiClient;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
-import com.erp.sdk.oms.amz.spapi.handler.AmazonOrderHandler;
 import com.erp.sdk.oms.amz.spapi.model.orders.GetOrdersResponse;
 import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
-import com.erp.server.dmp.service.CfgSettingService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.net.ssl.SSLHandshakeException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * dmp输入init任务基础处理器下的旺店通api获取数据方式
@@ -92,12 +74,8 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         // 当前站点
         AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 
-        Boolean autoCheckNow = false;
-        String extendJson = dmpCfgInputEntity.getExtendJson();
-        if (StringUtils.isNotBlank(extendJson)){
-            JSONObject jsonObject = JSON.parseObject(extendJson);
-            autoCheckNow = jsonObject.getBoolean("autoCheckNow");
-        }
+        // 是否检查当前时间
+        Boolean autoCheckNow = dmpCfgInputEntity.parseExtendAutoCheckNow();
         // 开始时间
         LocalDateTime startTime = dmpInputTaskEntity.getStartTime();
         // 结束时间
@@ -157,20 +135,24 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
      * 检查并转换结束时间
      */
     public LocalDateTime checkAndConvertEntTime(Boolean autoCheckNow) {
-        LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
+        LocalDateTime endTime = dmpCfgInputDetailEntity.getNextTime();
 
         // 正常任务对比当前时间(最大间隙取1个小时)自动补充中断情况
         if (DmpInputTaskTaskTypeEnum.NORMAL.getCode().equalsIgnoreCase(dmpCfgInputDetailEntity.getTaskType())
                 && null != autoCheckNow
                 && autoCheckNow
         ){
-            long minutesDifference = Duration.between(LocalDateTime.now(), dmpInputTaskEntity.getEndTime()).toMinutes();
-            if (minutesDifference > 10 && minutesDifference <= 35) {
-                // 正常任务结束时间增加30分钟
-                endTime = dmpInputTaskEntity.getEndTime().plusMinutes(30);
-            } else if (minutesDifference > 35 ) {
-                // 正常任务结束时间增加60分钟
-                endTime = dmpInputTaskEntity.getEndTime().plusMinutes(60);
+            // 期望的目标时间 = 当前时间-延时时间
+            LocalDateTime targetNow = LocalDateTime.now().minusSeconds(dmpCfgInputDetailEntity.getDealyTime());
+            // 间隔分钟
+            long minutesDifference = Duration.between(targetNow, dmpCfgInputDetailEntity.getNextTime()).toMinutes();
+
+            if (minutesDifference >= 60) {
+                // 间隔时间超过480分钟按480分钟间隔拉取
+                endTime = dmpCfgInputDetailEntity.getNextTime().plusMinutes(60);
+            } else if (minutesDifference > dmpCfgInputDetailEntity.getIntervalTime() * 2) {
+                // 正常任务结束时间超过间隔时间2倍按当时期望时间
+                endTime = targetNow;
             }
         }
         return endTime;

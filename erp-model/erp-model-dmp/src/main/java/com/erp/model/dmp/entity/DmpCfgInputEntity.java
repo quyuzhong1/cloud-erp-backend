@@ -1,5 +1,7 @@
 package com.erp.model.dmp.entity;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -8,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import org.apache.commons.lang3.StringUtils;
 
 
 /**
@@ -74,9 +77,17 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
 
     public static final String EXTEND_JSON = "extend_json";
 
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
+    /**
+     * 解析扩展参数 autoCheckNow
+     */
+    public Boolean parseExtendAutoCheckNow() {
+        Boolean autoCheckNow = false;
+        String extendJson = this.getExtendJson();
+        if (StringUtils.isNotBlank(extendJson)) {
+            JSONObject jsonObject = JSON.parseObject(extendJson);
+            autoCheckNow = jsonObject.getBoolean("autoCheckNow");
+        }
+        return autoCheckNow;
+    }
 }

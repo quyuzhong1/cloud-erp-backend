@@ -24,7 +24,7 @@ import java.util.Map;
  */
 @Service
 @Scope("prototype")
-public class DmpInputAmzReportDonwloadDmpHandler extends DmpInputDoChildDmpHandler {
+public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandler {
 
     @Override
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
