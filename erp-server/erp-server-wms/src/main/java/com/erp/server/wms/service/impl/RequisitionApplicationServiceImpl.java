@@ -4,7 +4,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -1194,7 +1193,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
-    public List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentView(String id) {
+    public List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(String id) {
         RequisitionApplicationEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(()-> new ServiceException("要货申请不存在"));
         if(!entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
             throw new ServiceException("非FBA来源无法绑定货件");
@@ -1206,7 +1205,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         List<String> cartonIds = cartonEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
-        List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> resultList = baseMapper.fbaBindShipmentView(cartonIds);
+        List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> resultList = baseMapper.fbaBindShipmentView(cartonIds);
         resultList.forEach(v->v.setId(id));
         if(resultList.stream().noneMatch(v->StringUtils.isBlank(v.getFbaShipmentId()))){
             throw new ServiceException("要货申请所有装箱已关联货件，无法再次绑定");
@@ -1215,8 +1214,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
-    public List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentMatching(RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto) {
-        List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> waitMatchList = dto.getFbaBindShipmentViewDTOList();
+    public RequisitionApplicationDTO.FbaBindShipmentViewDTO fbaBindShipmentMatching(RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto) {
+        List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> waitMatchList = dto.getFbaBindShipmentViewDetailDTOList();
         waitMatchList = waitMatchList.stream().filter(v->StringUtils.isBlank(v.getFbaShipmentId())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(waitMatchList)){
             throw new ServiceException("待匹配数据为空");
@@ -1232,7 +1231,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if(fbaShipmentPackingEntityList.stream().anyMatch(v->StringUtils.isNotBlank(v.getCartonId()))){
             throw new ServiceException("{}货件装箱已绑定，无法重复绑定",fbaShipmentEntity.getCode());
         }
-        //过滤掉混装的
+        //过滤掉混装和单装分开的
+        List<FbaShipmentPackingEntity> mixedSkuList = fbaShipmentPackingEntityList.stream().filter(v->StringUtils.isBlank(v.getMsku())).collect(Collectors.toList());
+        fbaShipmentPackingEntityList = fbaShipmentPackingEntityList.stream().filter(v->StringUtils.isNotBlank(v.getMsku())).collect(Collectors.toList());
         //箱号分组，组成sku*qty 匹配
         Map<String,List<FbaShipmentPackingEntity>> fbaPackingMap = fbaShipmentPackingEntityList.stream().collect(Collectors.groupingBy(FbaShipmentPackingEntity::getBoxNo));
         for(Map.Entry<String, List<FbaShipmentPackingEntity>> entry : fbaPackingMap.entrySet()) {
@@ -1241,22 +1242,32 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             List<String> fbaPackingList = entityList.stream().map(v->v.getSkuNo()+"*"+v.getQty()).collect(Collectors.toList());
             List<String> fbaFnPackingList = entityList.stream().map(v->v.getFnSku()+"*"+v.getQty()).collect(Collectors.toList());
             boolean matchResult = false;
-            for (RequisitionApplicationDTO.FbaBindShipmentViewDTO fbaBindShipmentViewDTO : waitMatchList) {
-                List<String> packingSkuArr = Arrays.asList(fbaBindShipmentViewDTO.getPackingSku().split(";"));
+            for (RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO fbaBindShipmentViewDetailDTO : waitMatchList) {
+                List<String> packingSkuArr = Arrays.asList(fbaBindShipmentViewDetailDTO.getPackingSku().split(";"));
                 if(com.common.business.utils.CollectionUtils.areListsEqualWithFrequency(fbaPackingList,packingSkuArr)){
                     matchResult = true;
-                    fbaBindShipmentViewDTO.setFbaShipmentId(fbaShipmentEntity.getId());
-                    fbaBindShipmentViewDTO.setFbaShipmentCode(fbaShipmentEntity.getCode());
-                    fbaBindShipmentViewDTO.setFbaBoxNo(fbaBoxNo);
-                    fbaBindShipmentViewDTO.setFbaPackingSku(String.join(";", fbaPackingList));
-                    fbaBindShipmentViewDTO.setFbaPackingFnSku(String.join(";", fbaFnPackingList));
+                    fbaBindShipmentViewDetailDTO.setFbaShipmentId(fbaShipmentEntity.getId());
+                    fbaBindShipmentViewDetailDTO.setFbaShipmentCode(fbaShipmentEntity.getCode());
+                    fbaBindShipmentViewDetailDTO.setFbaBoxNo(fbaBoxNo);
+                    fbaBindShipmentViewDetailDTO.setFbaPackingSku(String.join(";", fbaPackingList));
+                    fbaBindShipmentViewDetailDTO.setFbaPackingFnSku(String.join(";", fbaFnPackingList));
                 }
             }
             if(!matchResult){
                 throw new ServiceException("【{}】的装箱信息无法匹配系统装箱，请核对要货申请是否对应该货件发货",fbaBoxNo);
             }
         }
-        return waitMatchList;
+        RequisitionApplicationDTO.FbaBindShipmentViewDTO result = new RequisitionApplicationDTO.FbaBindShipmentViewDTO();
+        result.setFbaBindShipmentViewDetailDTOList(waitMatchList);
+        if(CollectionUtils.isNotEmpty(mixedSkuList)){
+            List<String> fbaBoxList = mixedSkuList.stream().map(v->v.getBoxNo()).distinct().collect(Collectors.toList());
+            RequisitionApplicationDTO.FbaRelationDTO fbaRelationDTO = new RequisitionApplicationDTO.FbaRelationDTO();
+            fbaRelationDTO.setFbaShipmentId(fbaShipmentEntity.getId());
+            fbaRelationDTO.setFbaShipmentCode(fbaShipmentEntity.getCode());
+            fbaRelationDTO.setFbaBoxNo(fbaBoxList);
+            result.setFbaRelationDTO(fbaRelationDTO);
+        }
+        return result;
     }
 
     @Override
@@ -1277,12 +1288,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void generateDeliveryWithFba(RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto) {
-        List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> detailList = dto.getFbaBindShipmentViewDTOS();
+        List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailList = dto.getFbaBindShipmentViewDetailDTOS();
         detailList = detailList.stream().filter(v->StringUtils.isBlank(v.getDeliveryCode()) && StringUtils.isNotBlank(v.getFbaShipmentId())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(detailList)){
             throw new ServiceException("已生成发货单，无法重复生成");
         }
-        List<String> fbaShipmentIdList = detailList.stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDTO::getFbaShipmentId).distinct().collect(Collectors.toList());
+        List<String> fbaShipmentIdList = detailList.stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getFbaShipmentId).distinct().collect(Collectors.toList());
 
         RequisitionApplicationEntity entity = this.getById(detailList.get(0).getId());
         RequisitionApplicationDetailEntity detailEntity = requisitionApplicationDetailService.listByMainIds(Arrays.asList(entity.getId())).get(0);
@@ -1328,7 +1339,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
             addDTO.setDetailList(detailAddList);
             BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
-            List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> updateList = detailList.stream().filter(v->v.getFbaShipmentId().equals(fbaShipmentEntity.getId())).collect(Collectors.toList());
+            List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> updateList = detailList.stream().filter(v->v.getFbaShipmentId().equals(fbaShipmentEntity.getId())).collect(Collectors.toList());
             updateList.forEach(v->{
                 fbaShipmentPackingService.updateCartonId(v.getCartonId(),v.getFbaShipmentId(),v.getFbaBoxNo());
             });

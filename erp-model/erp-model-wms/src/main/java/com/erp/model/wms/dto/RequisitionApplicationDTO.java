@@ -1,12 +1,10 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
-import jnr.ffi.annotations.In;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -65,7 +63,7 @@ public class RequisitionApplicationDTO implements Serializable {
 
         @NotEmpty(message = "详情不能为空")
         @Valid
-        private List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentViewDTOS;;
+        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDetailDTOS;;
     }
     /**
      * fba下推发货单绑定货件View
@@ -162,15 +160,52 @@ public class RequisitionApplicationDTO implements Serializable {
          * 未匹配的装箱信息
          */
         @NotEmpty(message = "待匹配装箱信息不能为空")
-        private List<FbaBindShipmentViewDTO> fbaBindShipmentViewDTOList;
+        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDetailDTOList;
     }
 
+    /**
+     * fba关系dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaRelationDTO {
+        /**
+         * Fba货件Id
+         */
+        private String fbaShipmentId;
+
+        /**
+         * Fba货件号
+         */
+        private String fbaShipmentCode;
+
+        /**
+         * Fba货件箱号
+         */
+        private List<String> fbaBoxNo;
+    }
     /**
      * fba下推发货单绑定货件View
      */
     @Data
     @NoArgsConstructor
     public static class FbaBindShipmentViewDTO {
+
+        /**
+         * 未匹配到的fba箱号信息
+         */
+        private FbaRelationDTO fbaRelationDTO;
+        /**
+         * 列表明细
+         */
+        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDetailDTOList;
+    }
+    /**
+     * fba下推发货单绑定货件详情View
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaBindShipmentViewDetailDTO {
 
         /**
          * 要货申请id

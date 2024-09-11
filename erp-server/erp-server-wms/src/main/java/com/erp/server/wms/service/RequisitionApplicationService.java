@@ -213,9 +213,9 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      */
     PagingVO<RequisitionApplicationDTO.ListDTO> exportRequisitionApplication(PagingDTO<RequisitionApplicationDTO.PagingParamDTO> dto);
 
-    List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentView(String id);
+    List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(String id);
 
-    List<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentMatching(RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto);
+    RequisitionApplicationDTO.FbaBindShipmentViewDTO fbaBindShipmentMatching(RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto);
 
     List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO> fbaBindShipmentDetailView(RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto);
 

@@ -494,7 +494,7 @@ public class RequisitionApplicationController extends BaseController {
      * 下推发货单绑定货件页面
      **/
     @PostMapping("/fbaBindShipmentView")
-    public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentViewDTO>> fbaBindShipmentView(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO>> fbaBindShipmentView(@RequestBody @Validated BaseIdDTO dto) {
         return success(requisitionApplicationService.fbaBindShipmentView(dto.getId()));
     }
 
@@ -502,7 +502,7 @@ public class RequisitionApplicationController extends BaseController {
      * 下推发货单绑定货件页面 --模糊匹配货件单号
      **/
     @PostMapping("/fbaBindShipmentMatching")
-    public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentViewDTO>> fbaBindShipmentMatching(@RequestBody @Validated RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto) {
+    public ApiResult<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentMatching(@RequestBody @Validated RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto) {
         return success(requisitionApplicationService.fbaBindShipmentMatching(dto));
     }
 
