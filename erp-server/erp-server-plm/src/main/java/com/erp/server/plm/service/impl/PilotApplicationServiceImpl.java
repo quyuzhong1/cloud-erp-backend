@@ -512,6 +512,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if (200 != code) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
+        updateForApprove(entity.getId(), dto.getType());
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
@@ -614,7 +615,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
+//        updateForApprove(entity.getId(), approveStatus.getStatus());
         return Boolean.TRUE;
     }
 
