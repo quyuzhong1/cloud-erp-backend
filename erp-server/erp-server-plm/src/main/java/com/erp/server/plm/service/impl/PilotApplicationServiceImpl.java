@@ -340,21 +340,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     @Override
     public void exportList(PilotApplicationDTO.ExportDTO param, HttpServletResponse response) {
-        Optional<AdvanceQueryDTO> tab = param.getAdvanceQueryDTOList().stream().filter(item -> item.getField().equals("tab")).findFirst();
-        if(!tab.isPresent()){
-            throw new ServiceException("缺少tab参数");
-        }
-        List<PilotApplicationDTO.ListDTO> list;
-        if(!param.getIds().isEmpty()){
-            list = this.baseMapper.listExportByIds(param.getIds());
-        }else {
-            list = queryExportList(param, (String) tab.get().getValue());
-        }
-
-        if(CollUtil.isEmpty(list)) {
-            log.warn("导出没有查询到数据：{}", param);
-            return;
-        }
+        List<PilotApplicationDTO.ListDTO> list = this.baseMapper.exportList(param);
         // 数据处理
         fillList(list);
 
