@@ -272,7 +272,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Arrays.asList(id), Boolean.TRUE);
+        this.submit(Arrays.asList(id), Boolean.FALSE);
         return id;
     }
 
