@@ -992,7 +992,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
         LoginUser loginUser = UserContext.getNonLoginUser();
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(loginUser.getUid()));
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(loginUser.getUid());
         List<String> warehouseIds = applicationDTOList.stream().map(item -> item.getToWarehouseId()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseFeign.listWarehouseByIds(warehouseIds);
         String sourceId = applicationDTOList.get(0).getId();
@@ -1029,8 +1029,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
         PurchaseApplicationDTO.AddDTO paramDto = new PurchaseApplicationDTO.AddDTO();
         paramDto.setApplyDate(LocalDate.now());
-        paramDto.setApplyUserId(userList.get(0).getUserId());
-        paramDto.setApplyDeptId(userList.get(0).getDepartmentId());
+        paramDto.setApplyUserId(findUserDTO.getUserId());
+        paramDto.setApplyDeptId(findUserDTO.getDepartmentId());
 
         //是否新品首批
         List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationFeign.listBySourceIds(Collections.singletonList(sourceId));
