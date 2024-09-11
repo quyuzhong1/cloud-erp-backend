@@ -76,4 +76,12 @@ public class PurchaseApplicationFeignController {
     List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(@RequestBody List<String> skuIds){
         return purchaseApplicationDetailService.listSkuAndQty(skuIds);
     }
+
+    /**
+     * 查询入库数量
+     */
+    @PostMapping("/listStockInQty")
+    List<PurchaseApplicationDTO.ListDTO> listStockInQty(@RequestBody List<PurchaseApplicationDTO.ListDTO> purchaseList){
+        return purchaseApplicationService.listStockInQty(purchaseList);
+    }
 }

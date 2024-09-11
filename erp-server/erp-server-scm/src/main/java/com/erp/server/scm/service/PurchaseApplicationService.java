@@ -190,4 +190,6 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
     Boolean close(PurchaseApplicationDTO.CloseDTO dto);
 
     PagingVO<PurchaseApplicationDTO.ListDTO> exportPurchaseApplication(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto);
+
+    List<PurchaseApplicationDTO.ListDTO> listStockInQty(List<PurchaseApplicationDTO.ListDTO> purchaseList);
 }
