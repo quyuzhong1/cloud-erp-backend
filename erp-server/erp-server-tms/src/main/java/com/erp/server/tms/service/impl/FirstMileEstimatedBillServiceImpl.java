@@ -314,7 +314,10 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }*/
-        downloadTaskFeign.saveDownloadTask("头程暂估账单导出", EXPORT_TMS_FM_ESTIMATED_BILL.getCode(), dto);
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        StringBuilder builder = new StringBuilder();
+        builder.append("头程暂估账单导出").append(date);
+        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_TMS_FM_ESTIMATED_BILL.getCode(), dto);
     }
 
     @Override

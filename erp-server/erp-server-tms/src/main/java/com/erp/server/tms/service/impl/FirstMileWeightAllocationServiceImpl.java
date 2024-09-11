@@ -184,7 +184,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }*/
-        downloadTaskFeign.saveDownloadTask("头程重量分摊导出", EXPORT_TMS_FM_WEIGHT_ALLOCATION.getCode(), dto);
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        StringBuilder builder = new StringBuilder();
+        builder.append("头程重量分摊导出").append(date);
+        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_TMS_FM_WEIGHT_ALLOCATION.getCode(), dto);
     }
 
     @Override
