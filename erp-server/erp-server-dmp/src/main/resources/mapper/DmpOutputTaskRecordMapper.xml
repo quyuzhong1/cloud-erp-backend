@@ -35,15 +35,38 @@
 
     <!-- 根据状态分组查询数量 -->
     <select id="listStatusCount" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$TabListDTO">
-        select
-        t.status as tabFlag,
-        count(t.id) as count
-        from dmp_output_task_record t
-        where t.is_deleted = false
+        SELECT
+            t.status AS tabFlag,
+            COUNT(t.id) AS count
+        FROM
+            dmp_output_task_record t
+        WHERE t.is_deleted = false
+        AND NOT EXISTS (
+            SELECT 1
+            FROM dmp_cfg_output_black b
+            WHERE b.field_name = t.source_code
+        )
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
-        group by t.status
+        GROUP BY t.status
+    </select>
+
+    <!--添加进黑名单的数量-->
+    <select id="listBlackCount" resultType="java.lang.Integer">
+        SELECT
+            COUNT(t.id) AS count
+        FROM
+        dmp_output_task_record t
+        WHERE t.is_deleted = false
+        AND EXISTS (
+            SELECT 1
+            FROM dmp_cfg_output_black b
+            WHERE b.field_name = t.source_code
+        )
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
     </select>
 
     <!--推送任务列表分页查询-->
