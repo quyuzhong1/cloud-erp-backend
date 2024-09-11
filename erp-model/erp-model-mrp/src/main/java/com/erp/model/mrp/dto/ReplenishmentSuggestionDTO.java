@@ -243,9 +243,12 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 系统建议值
          */
         private Integer suggestPurchaseQty;
-
         /**
          * 物流方式（系统）
+         */
+        private String logisticsMethod;
+        /**
+         * 物流方式名称（系统）
          */
         private String logisticsMethodName;
 

@@ -22,6 +22,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
 import com.erp.server.mrp.service.OperateLogService;
 import com.erp.server.mrp.service.PurchaseSuggestService;
@@ -152,7 +153,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             //平台类型
             purchaseSuggestionDTO.setPlatformTypeName(CfgRulePlatformTypeEnum.getName(purchaseSuggestionDTO.getPlatformType()));
 
-            //物流
+            //物流方式
+            purchaseSuggestionDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(purchaseSuggestionDTO.getLogisticsMethod()));
 
             //平台名称
             String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(),purchaseSuggestionDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
