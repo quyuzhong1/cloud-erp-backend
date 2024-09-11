@@ -1160,6 +1160,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if (Objects.isNull(cartonEntity)){
                 throw new ServiceException(ApiError.ERROR_92146);
             }
+            //存在则删除之前装箱明细
+            wmsCartonDetailService.deleteByCartonIds(Collections.singletonList(cartonEntity.getId()));
         }
         //不同物流属性配置校验
         List<String> skuIds = addDTO.getDetailList().stream().map(WmsCartonDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
@@ -1191,8 +1193,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }else {
             specId = cartonEntity.getSpecId();
             WmsCartonSpecEntity wmsCartonSpecEntity = wmsCartonSpecService.getById(specId);
-            //存在则删除之前装箱明细
-            wmsCartonDetailService.deleteByCartonIds(Collections.singletonList(cartonEntity.getId()));
             addDTO.setCartonId(cartonEntity.getId());
             String cartonId = wmsCartonService.add(addDTO,wmsCartonSpecEntity);
             //更新装箱状态
