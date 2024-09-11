@@ -1,7 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -9,6 +12,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.message.constant.RocketMqTopic;
@@ -16,17 +20,22 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.entity.WdtWarehouseLocationMappingEntity;
+import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.WdtWarehouseLocationMappingService;
+import com.erp.server.wms.service.WmsPushMsgService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -63,6 +72,8 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
     private DmpMqFeign dmpMqFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private WmsPushMsgService wmsPushMsgService;
 
     protected List<T> handleGoodsList(List<T> goodsList) {
         if(CollectionUtils.isEmpty(goodsList)){
@@ -288,20 +299,43 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         request.setCreateTime(LocalDateTime.now());
         request.setRemark("原始单据号：" + sourceCode);
 
-        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-        dmpSyncTaskDTO.setSourceId(sourceId);
-        dmpSyncTaskDTO.setSourceCode(sourceCode);
-        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
-        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
-        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName());
-        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
-        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
-        dmpSyncTaskDTO.setSyncOperate(operateEnum.getCode());
-        dmpSyncTaskDTO.setThirdCode(outerCode);
-        dmpSyncTaskDTO.setStatus(syncStatusEnum.getCode());
+        SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.WDT_OTHER_OUTSTOCK.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+            dmpSyncTaskDTO.setSourceId(sourceId);
+            dmpSyncTaskDTO.setSourceCode(sourceCode);
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
+            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_OTHER_OUT_STOCK_TAG.getName());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
+            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
+            dmpSyncTaskDTO.setSyncOperate(operateEnum.getCode());
+            dmpSyncTaskDTO.setThirdCode(outerCode);
+            dmpSyncTaskDTO.setStatus(syncStatusEnum.getCode());
 
-        return dmpMqFeign.saveTaskList(Collections.singletonList(dmpSyncTaskDTO));
+            return dmpMqFeign.saveTaskList(Collections.singletonList(dmpSyncTaskDTO));
+        }
+        
+        if(SyncStatusEnum.NO_NEED_SYNC != syncStatusEnum) {
+        	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_OTHER_OUTSTOCK.getCode());
+            wmsPushMsgEntity.setSourceId(sourceId);
+            wmsPushMsgEntity.setSourceCode(sourceCode);
+            wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
+            wmsPushMsgEntity.setThirdCode(outerCode);
+            wmsPushMsgService.save(wmsPushMsgEntity);
+        }
+        
+        return null;
+        
     }
 
     private List<DmpPushTaskEntity> generateStockInTask(List<T> combinationList, SyncOperateEnum operateEnum, String outerCode, String thirdWarehouseCode, String sourceCode, String sourceId, SyncStatusEnum syncStatusEnum) {
@@ -317,18 +351,40 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         request.setCreateTime(LocalDateTime.now());
         request.setRemark("原始单据号：" + sourceCode);
 
-        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-        dmpSyncTaskDTO.setSourceId(sourceId);
-        dmpSyncTaskDTO.setSourceCode(sourceCode);
-        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.OTHER_INSTOCK.getCode());
-        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
-        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_OTHER_IN_STOCK_TAG.getName());
-        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
-        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
-        dmpSyncTaskDTO.setSyncOperate(operateEnum.getCode());
-        dmpSyncTaskDTO.setThirdCode(outerCode);
-        dmpSyncTaskDTO.setStatus(syncStatusEnum.getCode());
-        return dmpMqFeign.saveTaskList(Collections.singletonList(dmpSyncTaskDTO));
+        SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.WDT_OTHER_INSTOCK.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+            dmpSyncTaskDTO.setSourceId(sourceId);
+            dmpSyncTaskDTO.setSourceCode(sourceCode);
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.OTHER_INSTOCK.getCode());
+            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.WDT_OTHER_IN_STOCK_TAG.getName());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(request));
+            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
+            dmpSyncTaskDTO.setSyncOperate(operateEnum.getCode());
+            dmpSyncTaskDTO.setThirdCode(outerCode);
+            dmpSyncTaskDTO.setStatus(syncStatusEnum.getCode());
+            return dmpMqFeign.saveTaskList(Collections.singletonList(dmpSyncTaskDTO));
+        }
+        
+        if(SyncStatusEnum.NO_NEED_SYNC != syncStatusEnum) {
+        	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_OTHER_INSTOCK.getCode());
+            wmsPushMsgEntity.setSourceId(sourceId);
+            wmsPushMsgEntity.setSourceCode(sourceCode);
+            wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
+            wmsPushMsgEntity.setThirdCode(outerCode);
+            wmsPushMsgService.save(wmsPushMsgEntity);
+        }
+        
+        return null;
     }
 }

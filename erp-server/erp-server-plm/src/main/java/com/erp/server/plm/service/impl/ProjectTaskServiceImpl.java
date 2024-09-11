@@ -3884,7 +3884,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-20 14:06
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approvalPass(TaskOperateDTO dto) {
         List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());

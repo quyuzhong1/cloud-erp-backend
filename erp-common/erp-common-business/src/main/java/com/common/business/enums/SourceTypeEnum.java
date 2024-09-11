@@ -45,7 +45,9 @@ public enum SourceTypeEnum {
     STOCKTAKING_TASK("stocktakingTask", "盘点任务单","stocktaking_task"),
     STOCKTAKING_PLAN("stocktakingPlan", "盘点计划单","stocktaking_plan"),
     OTHER_INSTOCK("otherInstock", "其他入库","other_instock"),
+    WDT_OTHER_INSTOCK("wdtOtherInstock", "其他入库","other_instock"),
     OTHER_OUTSTOCK("otherOutstock", "其他出库","other_outstock"),
+    WDT_OTHER_OUTSTOCK("wdtOtherOutstock", "其他出库","other_outstock"),
     WAREHOUSE("warehouse", "仓库","warehouse"),
     SO_B2C_DELIVERY("soB2cDelivery", "B2C发货单","so_b2c_delivery"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
@@ -53,6 +55,8 @@ public enum SourceTypeEnum {
 
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
+    STOCKTAKING_LOSS("stocktakingTaskLoss", "盘亏单","stocktaking_profit_loss"),
+    STOCKTAKING_PROFIT("stocktakingTaskProfit", "盘盈单","stocktaking_profit_loss"),
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单","first_mile_delivery"),
@@ -103,6 +107,7 @@ public enum SourceTypeEnum {
     PRODUCT_COMBINATION("productCombination", "组合产品",""),
 
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
+    WDT_PRODUCT_DETAIL("wdtProductDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),

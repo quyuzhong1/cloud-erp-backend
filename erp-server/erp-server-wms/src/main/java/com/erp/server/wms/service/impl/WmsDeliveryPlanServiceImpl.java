@@ -566,7 +566,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 deliverRecordViews.forEach(view -> view.setRefCode(requisitionApplication.getFbaShipmentCode()));
             }
         }else{
-            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().findFirst().orElse(null);
+            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().findFirst().orElse(new RequisitionApplicationEntity());
             deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id,requisitionApplication.getId()));
         }
         return deliverRecordViews;

@@ -343,4 +343,12 @@ public interface WmsTaskFeign {
      */
     @PostMapping("/feign/wmsSyncTask/findWdtDataSendSyncTask")
     void findWdtDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+    /**
+     * 直接调拨单审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/transferInfoApprove")
+    List<BatchResultDTO> transferInfoApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
 }

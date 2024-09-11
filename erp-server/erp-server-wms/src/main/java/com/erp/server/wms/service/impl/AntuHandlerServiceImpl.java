@@ -16,6 +16,7 @@ import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.antu.service.AntuService;
 import com.sdk.wms.antu.dto.request.AntuBaseRequest;
 import com.sdk.wms.antu.dto.request.AntuCreateInboundReq;
@@ -57,6 +58,12 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         AntuCreateInboundReq antuCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToAntu(createInboundReq);
+        //中转代发并且自发头程，默认物流产品
+        if(AntuEnums.TransitTypeEnum.TRANSFER.getCode().equals(antuCreateInboundReq.getReceivingType()) &&
+                AntuEnums.IncomeTypeEnum.SELF_DELIVERY.getCode().equals(antuCreateInboundReq.getIncomeType()) &&
+            StringUtils.isBlank(antuCreateInboundReq.getSmCode())){
+            antuCreateInboundReq.setSmCode("TCHY");
+        }
         log.warn("安兔创建入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
         AntuResponse<String> antuResponse = antuService.createInboundBill(antuCreateInboundReq);
         return isSuccess(antuResponse.getAsk()) ? success(antuResponse.getData()) : failure(antuResponse.getMessage());
@@ -66,6 +73,12 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         AntuCreateInboundReq antuCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToAntu(createInboundReq);
         log.warn("安兔编辑入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
+        //中转代发并且自发头程，默认物流产品
+        if(AntuEnums.TransitTypeEnum.TRANSFER.getCode().equals(antuCreateInboundReq.getReceivingType()) &&
+                AntuEnums.IncomeTypeEnum.SELF_DELIVERY.getCode().equals(antuCreateInboundReq.getIncomeType()) &&
+                StringUtils.isBlank(antuCreateInboundReq.getSmCode())){
+            antuCreateInboundReq.setSmCode("TCHY");
+        }
         // 修改入库单
         AntuResponse<String> antuResponse = antuService.editInboundBill(antuCreateInboundReq);
         return isSuccess(antuResponse.getAsk()) ? success(antuResponse.getData()) : failure(antuResponse.getMessage());

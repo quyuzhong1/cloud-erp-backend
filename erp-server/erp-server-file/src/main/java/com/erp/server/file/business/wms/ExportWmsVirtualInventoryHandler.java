@@ -56,7 +56,7 @@ public class ExportWmsVirtualInventoryHandler extends AbstractPageFileEventHandl
         sb.append(excelPath.substring(excelPath.lastIndexOf(".")));
         try {
             byte[] bytes = new ExcelPrintUtils().sheetPatchExport(pairList, sb.toString(),excelPath);
-            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
+            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString() + ".xlsx", null);
             fileTask.setFileUrl(s);
         } catch (IOException e) {
             log.error("上传文件失败{}", e.getMessage(), e);

@@ -35,5 +35,13 @@
         system_id, code, name, type, type_id, disabled, extend_json
     </sql>
 
+    <select id="listDmpCfgInput" resultType="com.erp.model.dmp.dto.DmpCfgInputDTO$ListDmpCfgInputDTO">
+        SELECT
+            id AS code,
+            name
+        FROM dmp_cfg_input
+        WHERE is_deleted = FALSE
+        AND system_id = #{id}
+    </select>
 
 </mapper>

@@ -1,7 +1,10 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -10,20 +13,27 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseLocationService;
+import com.erp.server.wms.service.WmsPushMsgService;
+
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,7 +63,9 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
-
+    @Resource
+    private WmsPushMsgService wmsPushMsgService;
+    
     /**
      * 发送消息同步金蝶
      * @Author Luo_WG
@@ -171,17 +183,37 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (WarehouseEntity entity, String operate, Map<String, Object> resultMap) {
-        //添加推送任务
-        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-        dmpSyncTaskDTO.setSourceId(entity.getId());
-        dmpSyncTaskDTO.setSourceCode(entity.getKingdeeWarehouseCode());
-        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.WAREHOUSE.getCode());
-        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_WAREHOUSE_TAG.getName());
-        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        dmpSyncTaskDTO.setSyncOperate(operate);
-        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.WAREHOUSE.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+            dmpSyncTaskDTO.setSourceId(entity.getId());
+            dmpSyncTaskDTO.setSourceCode(entity.getKingdeeWarehouseCode());
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.WAREHOUSE.getCode());
+            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_WAREHOUSE_TAG.getName());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            dmpSyncTaskDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+        }
+        
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.WAREHOUSE.getCode());
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getKingdeeWarehouseCode());
+        wmsPushMsgEntity.setSyncOperate(operate);
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+        wmsPushMsgService.save(wmsPushMsgEntity);
+        
+        return null;
     }
 }

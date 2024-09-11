@@ -345,6 +345,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             if(CollectionUtils.isNotEmpty(viewDTOS)){
                 OverseasProviderWarehouseDTO.ViewDTO viewDTO = viewDTOS.get(0);
                 pagingParamDTO.setProviderCode(viewDTO.getProviderCode());
+                pagingParamDTO.setAuthId(viewDTO.getMainId());
             }
         }
         IPage<ListingInfoDTO.PageDTO> iPage = baseMapper.paging(query,pagingParamDTO);

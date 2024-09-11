@@ -37,6 +37,11 @@ public class DmpSyncMqDTO extends DmpSyncTaskIdDTO implements Serializable {
         private String dmpSyncTaskId;
 
         /**
+         * 版本
+         */
+        private Integer version;
+
+        /**
          * 同步状态
          */
         private String syncStatus;
@@ -45,6 +50,12 @@ public class DmpSyncMqDTO extends DmpSyncTaskIdDTO implements Serializable {
          * 响应消息
          */
         private String responseMsg;
+
+        public ParamDTO (String dmpSyncTaskId,String syncStatus,String responseMsg) {
+            this.dmpSyncTaskId = dmpSyncTaskId;
+            this.syncStatus = syncStatus;
+            this.responseMsg = responseMsg;
+        }
     }
 
     @Data

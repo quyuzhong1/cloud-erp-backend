@@ -38,7 +38,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
 
     @Override
     public List<ProductCustomsEntity> listByProductId(String productId) {
-        if (StringUtils.isBlank(productId)){
+/*        if (StringUtils.isBlank(productId)){
             return Collections.emptyList();
         }
         //根据产品id获取sku列表
@@ -47,7 +47,9 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             return Collections.emptyList();
         }
         List<String> skuIds = productDetailEntityList.stream().map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
-        return baseMapper.listBySkuIds(skuIds);
+        return baseMapper.listBySkuIds(skuIds);*/
+
+        return baseMapper.listByProductId(productId);
     }
 
     @Override

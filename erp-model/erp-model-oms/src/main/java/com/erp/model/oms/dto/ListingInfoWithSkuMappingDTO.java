@@ -55,7 +55,8 @@ public class ListingInfoWithSkuMappingDTO {
      * {@link com.erp.model.oms.enums.RuleTypeEnum}
      */
     private String type;
-    
+
+    private String authId;
     /**
      * 仓库id
      */

@@ -70,6 +70,12 @@ public class WmsPushMsgEntity extends BaseEntity<WmsPushMsgEntity> {
      */
     @TableField("parent_id")
     private String parentId;
+    
+    /**
+     * 第三方单号
+     */
+    @TableField("third_code")
+    private String thirdCode;
 
 
     public static final String TARGET_PLATFORM = "target_platform";

@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -61,6 +62,11 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
             if (CollUtil.isEmpty(overseasProviderEntityList)) {
                 return Collections.emptyList();
             }
+
+            if (overseasProviderEntityList.get(0).getEnableDate().compareTo(LocalDate.now()) > 0) {
+                return Collections.emptyList();
+            }
+
             ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
             //列表数据较多情况下，进行分割集合
             List<List<String>> partition = ListUtil.partition(receiveCodeList, MathUtil.NUMBER_100);

@@ -1,9 +1,12 @@
 package com.erp.server.scm.kingdee.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -13,14 +16,18 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -73,6 +80,9 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    
+    @Resource
+    private ScmPushMsgService scmPushMsgService;
 
     /**
      * 组装数据发送到金蝶
@@ -272,23 +282,49 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (PurchaseOrderEntity entity, String operate, Map<String, Object> resultMap) {
-        //添加推送任务
-        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-        taskFeignDTO.setSourceId(entity.getId());
-        taskFeignDTO.setSourceCode(entity.getCode());
-        taskFeignDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
-        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_ORDER_TAG.getName());
-        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        taskFeignDTO.setSyncOperate(operate);
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.PURCHASE_ORDER.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+            taskFeignDTO.setSourceId(entity.getId());
+            taskFeignDTO.setSourceCode(entity.getCode());
+            taskFeignDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_ORDER_TAG.getName());
+            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            taskFeignDTO.setSyncOperate(operate);
+            if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())) {
+                taskFeignDTO.setParentId(entity.getSourceId());
+            }
+            if (SourceTypeEnum.PO_RETURN.getCode().equals(entity.getSourceType())) {
+                taskFeignDTO.setParentId(entity.getSourceId());
+            }
+            return dmpMqFeign.saveTask(taskFeignDTO);
+        }
+        
+        ScmPushMsgEntity scmPushMsgEntity = new ScmPushMsgEntity();
+        scmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        scmPushMsgEntity.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+        scmPushMsgEntity.setSourceId(entity.getId());
+        scmPushMsgEntity.setSourceCode(entity.getCode());
+        scmPushMsgEntity.setSyncOperate(operate);
+        scmPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
         if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())) {
-            taskFeignDTO.setParentId(entity.getSourceId());
+        	scmPushMsgEntity.setParentId(entity.getSourceId());
         }
         if (SourceTypeEnum.PO_RETURN.getCode().equals(entity.getSourceType())) {
-            taskFeignDTO.setParentId(entity.getSourceId());
+        	scmPushMsgEntity.setParentId(entity.getSourceId());
         }
-        return dmpMqFeign.saveTask(taskFeignDTO);
+        
+        scmPushMsgService.save(scmPushMsgEntity);
+        
+        return null;
     }
 }

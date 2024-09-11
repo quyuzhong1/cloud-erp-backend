@@ -378,7 +378,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         // 历史map
         Map<String, SoB2cDetailEntity> oldDetailMap = oldDetailEntityList.stream()
                 .filter(e -> StringUtils.isNotEmpty(e.getSourceDetailId()))
-                .collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
+                .collect(Collectors.toMap(
+                        SoB2cDetailEntity::getSourceDetailId,
+                        Function.identity(),
+                        (existing, replacement) -> existing // 保留现有的值，丢弃重复的
+                ));
 
         //查询速卖通仓库名称是否映射ERP仓库
         List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = new ArrayList<>();

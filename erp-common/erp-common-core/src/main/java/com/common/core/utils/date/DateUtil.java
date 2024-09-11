@@ -41,7 +41,7 @@ public class DateUtil {
 
             fmt_hms = "HH:mm:ss";
 
-    public final static String FMT_YEAR4 = "yyyy", DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm", DATE_PATTERN_SHORT_YEAR_NO_SP = "yyyyMMdd";
+    public final static String FMT_YEAR4 = "yyyy", DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm", DATE_PATTERN_SHORT_YEAR_NO_SP = "yyyyMMdd", DATE_PATTERN_SHORT_TIME_NO_SP = "yyyyMMddHHmmss";
 
 
     public static LocalDateTime nowDay() {

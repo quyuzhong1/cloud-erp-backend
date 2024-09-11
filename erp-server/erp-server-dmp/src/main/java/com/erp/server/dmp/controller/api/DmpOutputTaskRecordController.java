@@ -1,6 +1,15 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.QueryParam;
+import com.common.business.wrapper.QueryTypeEnum;
+import com.erp.model.dmp.dto.DmpOutputTaskDTO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
+import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -19,6 +28,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 推送任务记录
@@ -67,6 +79,89 @@ public class DmpOutputTaskRecordController extends BaseController {
         return success();
     }
 
+    /**
+     * 获取 tab列表
+     * @Author Luo_WG
+     * @Date 2024/9/3 15:15
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.dmp.dto.DmpOutputTaskDTO.TabListDTO>>
+     **/
+    @PostMapping("/tabList")
+    public ApiResult<List<DmpOutputTaskRecordDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<DmpOutputTaskRecordDTO.TabListDTO> tabList = dmpOutputTaskRecordService.tabList(dto);
+        return success(tabList);
+    }
 
+    /**
+     * 推送任务列表分页查询
+     * @Author Luo_WG
+     * @Date 2024/9/3 14:28
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpOutputTaskDTO.PagingDTO>>
+     **/
+    @PostMapping("/paging")
+    @WebAdvanceQuery(handler = DmpOutputTaskRecordQueryHandler.class)
+    public ApiResult<PagingVO<DmpOutputTaskRecordDTO.PagingDTO>> paging(@RequestBody @Validated PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
+        PagingVO<DmpOutputTaskRecordDTO.PagingDTO> pagingVO = dmpOutputTaskRecordService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2024/9/5 17:30
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/exportExcel")
+    public ApiResult exportExcel(@RequestBody DmpOutputTaskRecordDTO.ExpotParamDTO dto) {
+        Boolean flag = dmpOutputTaskRecordService.exportExcel(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 无需同步
+     * @Author Luo_WG
+     * @Date 2024/9/5 16:29
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "修改为无需同步")
+    @PostMapping(value = "/batchNoNeedSync")
+    public ApiResult batchNoNeedSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = dmpOutputTaskRecordService.batchNoNeedSync(dto.getIds());
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 加入黑名单
+     * @Author Luo_WG
+     * @Date 2024/9/5 16:27
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.dto.base.BaseResultDTO.AddDTO>
+     **/
+    @PostMapping("/addOutputBlack")
+    @LogAction(value = LogActionEnum.INSERT, desc = "加入黑名单")
+    public ApiResult<BaseResultDTO.AddDTO> addOutputBlack(@RequestBody @Validated DmpOutputTaskRecordDTO.AddOutputBlackDTO dto) {
+        Boolean flag = dmpOutputTaskRecordService.addOutputBlack(dto);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 重新同步（批量同步）
+     * @Author Luo_WG
+     * @Date 2024/9/6 15:58
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/batchSync")
+    public ApiResult batchSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<DmpOutputTaskRecordEntity> list = dmpOutputTaskRecordService.lambdaQuery()
+                .in(DmpOutputTaskRecordEntity::getId, dto.getIds())
+                .list();
+        Boolean flag = dmpOutputTaskRecordService.batchSync(list);
+        return flag == true ? success() : failure();
+    }
 
 }
