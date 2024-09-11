@@ -2148,12 +2148,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
         }
         //提交
-        transferInfoService.submit(Arrays.asList(transferId));
+        transferInfoService.submit(Arrays.asList(transferId), Boolean.FALSE);
         //审核
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setIds(Arrays.asList(transferId));
         baseApproveParamDTO.setType(ApproveType.PASS);
-        transferInfoService.approve(entity,ApproveType.PASS,"", null, Boolean.TRUE);
+        transferInfoService.approve(entity,ApproveType.PASS,"", null, Boolean.TRUE, Boolean.FALSE);
     }
 }
 
