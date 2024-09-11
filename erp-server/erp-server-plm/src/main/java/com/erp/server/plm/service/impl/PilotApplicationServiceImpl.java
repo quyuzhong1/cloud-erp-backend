@@ -860,6 +860,18 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //根据单据id查询审核流程
         List<String> ids = list.stream().map(item -> item.getId()).collect(Collectors.toList());
         List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessId(ids);
+        //采购申请
+        List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationFeign.listBySourceIds(ids);
+        List<String> purchaseIds = purchaseApplicationList.stream()
+                .filter(item -> item.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode()))
+                .map(BaseEntity::getId).distinct()
+                .collect(Collectors.toList());
+//        Map<String, String> purchaseIdMap = purchaseApplicationList.stream().collect(Collectors.toMap(item1 -> item1.getSourceId(), item2 -> item2.getId()));
+        //采购申请明细
+        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = new ArrayList<>();
+        if(!purchaseIds.isEmpty()){
+            purchaseApplicationDetailList = purchaseApplicationDetailFeign.listByMainIds(purchaseIds);
+        }
         for(PilotApplicationDTO.ListDTO item : list) {
             item.setApproveStatusName(ApproveStatusEnum.getName(item.getApproveStatus()));
             item.setOrderStatusName(PilotPushPurchaseStatusEnum.getName(item.getOrderStatus()));
@@ -875,7 +887,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 ProductCostEntity productCostEntity = productCostEntityOptional.get();
                 item.setTargetTaxCost(productCostEntity.getTargetTaxCost() != null ? productCostEntity.getTargetTaxCost().toPlainString() : "");
             }
-            //一级供应商的价目表
+            //实际含税单价
             PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
             searchDTO.setPurchaseQty(item.getApplyQty());
             searchDTO.setSupplierId(item.getMainSupplierId());
@@ -894,6 +906,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 }
             }catch (Exception e){
                 item.setActualTaxCost("无价目表");
+            }
+            //采购申请量
+            List<PurchaseApplicationEntity> collect = purchaseApplicationList.stream().filter(obj -> obj.getSourceId().equals(item.getId())).collect(Collectors.toList());
+            if(!collect.isEmpty()){
+                List<String> purchaseAppIds = collect.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+                List<PurchaseApplicationDetailEntity> detailEntityList = purchaseApplicationDetailList.stream()
+                        .filter(obj -> purchaseAppIds.contains(obj.getPurchaseApplicationId()) && obj.getSkuId().equals(item.getSkuId()))
+                        .collect(Collectors.toList());
+                int sum = detailEntityList.stream().mapToInt(PurchaseApplicationDetailEntity::getApplyQty).sum();
+                item.setPurchaseApplyQty(sum);
             }
         }
     }
