@@ -152,6 +152,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             //平台类型
             purchaseSuggestionDTO.setPlatformTypeName(CfgRulePlatformTypeEnum.getName(purchaseSuggestionDTO.getPlatformType()));
 
+            //物流
+
             //平台名称
             String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(),purchaseSuggestionDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
             purchaseSuggestionDTO.setPlatformName(platformName);

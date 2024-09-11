@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
@@ -13,6 +14,7 @@ import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -78,13 +80,23 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         if(!save) {
             throw new ServiceException("备货物流（规则设置）保存失败");
         }
-
         //更新物流明细信息
         list.stream().forEach(obj -> cfgRuleLogisticsDetailService.update(obj.getDetailList(),obj.getId()));
+
+        //店铺
+        List<ShopInfoEntity> shopInfoList = FeignQuery.list(ShopInfoEntity.class);
         //日志
         for (CfgRuleLogisticsEntity logisticsEntity : list) {
-            String msg = StrUtil.format("本地发FBA:物流方式【{}】、物流时效【{}】、发货频率【{}】",LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()),logisticsEntity.getLogisticsDays(),logisticsEntity.getLogisticsCycleDays());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), stockUpId, "设置规则");
+            StringBuffer msg = new StringBuffer();
+            String parentMsg = StrUtil.format("本地发FBA:物流方式【{}】、物流时效【{}】、发货频率【{}】",LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()),logisticsEntity.getLogisticsDays(),logisticsEntity.getLogisticsCycleDays());
+            msg.append(parentMsg);
+            List<CfgRuleLogisticsDetailDTO.UpdateDTO> detailList = logisticsEntity.getDetailList();
+            for (CfgRuleLogisticsDetailDTO.UpdateDTO updateDTO : detailList) {
+                String shopNames = CollectionUtils.isEmpty(shopInfoList) ? "" : shopInfoList.stream().filter(obj -> updateDTO.getShopIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
+                String childMsg = StrUtil.format("区域【{}】、店铺【{}】、时效【{}】", updateDTO.getArea(), shopNames, logisticsEntity.getLogisticsCycleDays());
+                msg.append(childMsg);
+            }
+            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), stockUpId, "设置规则");
         }
         return Boolean.TRUE;
     }

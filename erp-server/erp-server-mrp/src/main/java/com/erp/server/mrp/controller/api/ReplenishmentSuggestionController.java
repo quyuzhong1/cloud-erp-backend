@@ -243,18 +243,6 @@ public class ReplenishmentSuggestionController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    /**
-     * 单个设置规则
-     * @author will
-     * @date 2024/8/29 15:56
-     * @param dto
-     * @return ApiResult<?>
-     */
-    @PostMapping("/updateRule")
-    public ApiResult<?> updateRule(@RequestBody @Validated ReplenishmentSuggestionDTO.UpdateRuleDTO dto) {
-        replenishmentSuggestionService.updateRule(dto);
-        return success();
-    }
 
     /**
      * 批量设置规则

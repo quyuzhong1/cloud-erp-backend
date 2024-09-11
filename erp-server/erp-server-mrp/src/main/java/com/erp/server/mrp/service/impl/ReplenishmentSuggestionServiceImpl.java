@@ -428,13 +428,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
         //更新备货信息
         if (ObjectUtil.isNotEmpty(stockUpUpdateDTO)) {
-            CfgRuleStockUpEntity oldStockUpEntity = cfgRuleStockUpService.getByRefId(id);
-            if (ObjectUtil.isNotEmpty(oldStockUpEntity)) {
-                stockUpUpdateDTO.setId(oldStockUpEntity.getId());
-            } else {
-                //添加默认
-                formatStockUpDefaultData(entity,stockUpUpdateDTO);
-            }
             stockUpUpdateDTO.setRefId(id);
             stockUpUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
             CfgRuleStockUpDTO.UpdateDTO updateDTO = BeanMapperUtils.map(CfgRuleStockUpDTO.UpdateDTO.class, stockUpUpdateDTO);
@@ -442,10 +435,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         //更新销量信息
         if (ObjectUtil.isNotEmpty(salesQtyUpdateDTO)) {
-            CfgRuleSalesQtyEntity oldSalesQtyEntity = cfgRuleSalesQtyService.getByRefId(id);
-            if (ObjectUtil.isEmpty(oldSalesQtyEntity)) {
-                //添加默认
-                formatSalesQtyDefaultData(entity,salesQtyUpdateDTO);
+            List<ReplenishmentSuggestionDetailEntity> detailList = replenishmentSuggestionDetailService.listByMainIdList(Arrays.asList(entity.getId()));
+            if (CollectionUtils.isNotEmpty(detailList)) {
+                String skuType = detailList.get(0).getSkuType();
+                salesQtyUpdateDTO.setType(skuType);
             }
             salesQtyUpdateDTO.setRefId(id);
             salesQtyUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());

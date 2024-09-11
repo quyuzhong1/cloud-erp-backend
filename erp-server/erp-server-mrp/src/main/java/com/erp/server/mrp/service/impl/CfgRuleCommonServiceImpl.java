@@ -49,17 +49,51 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     public Boolean update(List<CfgRuleCommonDTO.UpdateDTO> updateList) {
         // 数据处理
         List<CfgRuleCommonEntity> list = handleData(updateList);
-
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("公共配置（规则设置）保存失败");
         }
         //操作日志
-
+        addOperateLog(updateList);
         return Boolean.TRUE;
     }
 
-
+    /**
+     * 添加日志
+     * @author will
+     * @date 2024/9/11 16:32
+     * @param updateList
+     */
+    private void addOperateLog (List<CfgRuleCommonDTO.UpdateDTO> updateList) {
+        if (CollectionUtils.isEmpty(updateList)) {
+            return;
+        }
+        StringBuffer msg = new StringBuffer();
+        for (CfgRuleCommonDTO.UpdateDTO updateDTO : updateList) {
+            appendOperateLog(updateDTO,msg);
+        }
+    }
+    /**
+     * 添加日志
+     * @author will
+     * @date 2024/9/11 16:18
+     * @param updateDTO
+     * @param msg
+     */
+    private void appendOperateLog (CfgRuleCommonDTO.UpdateDTO updateDTO,StringBuffer msg) {
+        //循环添加
+        if (CollectionUtils.isNotEmpty(updateDTO.getChildrenList())) {
+            msg.append(updateDTO.getName());
+            updateDTO.getChildrenList().stream().forEach(obj -> appendOperateLog(obj, msg));
+        }  else {
+            if (StrUtil.equals(updateDTO.getValue(),"true")) {
+                msg.append(updateDTO.getName());
+            }
+        }
+    }
 
     @Override
     public List<CfgRuleCommonDTO.ViewDTO> view(String platformType,String type) {

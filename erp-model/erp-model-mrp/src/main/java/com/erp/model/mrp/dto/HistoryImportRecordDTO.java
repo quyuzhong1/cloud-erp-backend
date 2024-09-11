@@ -80,9 +80,14 @@ public class HistoryImportRecordDTO implements Serializable {
         private String type;
 
         /**
-         * 模块类型，取sourceType
+         * 模块类型，取sourceType,replenishmentSuggestion补货建议
          */
         private String module;
+
+        /**
+         * 平台
+         */
+        private String platformType;
     }
 
     /**
