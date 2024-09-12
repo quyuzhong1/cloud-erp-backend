@@ -28,7 +28,7 @@ public class DmpOutputTaskRecordQueryHandler extends AbstractQueryHandler {
                         " OR t.status = '" + DmpOutputTaskRecordStatusEnum.MQERROR.getCode() + "'" +
                         " OR t.status = '" + DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode() + "')";
             } else if (DmpPushMonitorTabEnum.BLACK.getCode().equals(searchType)) {
-                return "EXISTS ( SELECT 1 FROM dmp_cfg_output_black b WHERE b.field_value = t.source_code ) ";
+                return "EXISTS ( SELECT 1 FROM dmp_cfg_output_black b WHERE b.field_value = t.source_code ) AND dcob.ID IS NOT NULL";
             } else {
                 super.buildDefaultDTO("t.status", searchType);
             }
